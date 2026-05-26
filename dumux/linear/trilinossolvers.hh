@@ -17,9 +17,11 @@
 #include <numeric>
 #include <limits>
 #include <algorithm>
+#include <functional>
 
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
@@ -66,6 +68,16 @@ struct AmesosGridTypes<LSTraits, true> {
     static constexpr int dofCodim = LSTraits::dofCodim;
 };
 
+// Helper to extract sub-vector types from MultiTypeBlockVector without instantiating
+// std::tuple_element on non-tuple types.
+template<class V, bool IsMT>
+struct MTSubVecs { using Mom = V; using Mass = V; };
+template<class V>
+struct MTSubVecs<V, true> {
+    using Mom = std::tuple_element_t<0, V>;
+    using Mass = std::tuple_element_t<1, V>;
+};
+
 } // end namespace Detail
 
 /*!
@@ -105,6 +117,13 @@ class DirectSolverAmesos2 : public LinearSolver
         if constexpr (isMultiTypeBlockVector<XVector>::value) return 1;
         else return XVector::block_type::size();
     }();
+
+    // Sub-vector types and scalar block sizes per subdomain (MultiType only).
+    // When !isMultiType, Mom/Mass fall back to XVector — values are unused.
+    using MomBlockVec_  = typename Detail::MTSubVecs<XVector, isMultiType>::Mom;
+    using MassBlockVec_ = typename Detail::MTSubVecs<XVector, isMultiType>::Mass;
+    static constexpr std::size_t momScalarBS_  = MomBlockVec_::block_type::size();
+    static constexpr std::size_t massScalarBS_ = MassBlockVec_::block_type::size();
 
 public:
     struct SolverResult : public Dune::InverseOperatorResult
@@ -154,14 +173,121 @@ public:
         colMap_ = buildColMap_();
     }
 
+    // Constructor for parallel MultiType (multidomain) problems.
+    // Takes both subdomain grid geometries to build combined parallel DOF maps.
+    template<class MomGG, class MassGG>
+    DirectSolverAmesos2(const MomGG& momGG, const MassGG& massGG,
+                        const std::string& paramGroup = "")
+    requires (isMultiType)
+    : LinearSolver(paramGroup)
+    , isParallel_(momGG.gridView().comm().size() > 1)
+    {
+        comm_ = Teuchos::rcp(new Teuchos::MpiComm<int>(
+            static_cast<MPI_Comm>(momGG.gridView().comm())));
+        fos_ = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+        rank_ = comm_->getRank();
+        if (rank_ == 0)
+            *fos_ << "\n" << Amesos2::version() << std::endl;
+
+        using MomTraits = LinearSolverTraits<MomGG>;
+        using MassTraits = LinearSolverTraits<MassGG>;
+
+        std::vector<GlobalIDType> momGIDs, massGIDs;
+        std::vector<bool> momOwned, momGhost, massOwned, massGhost;
+
+        const auto nMomGlobal = buildSubdomainGIDs_<MomTraits>(
+            momGG.gridView(), momGG.dofMapper(), 0, momGIDs, momOwned, momGhost);
+        const auto nMassGlobal = buildSubdomainGIDs_<MassTraits>(
+            massGG.gridView(), massGG.dofMapper(), nMomGlobal, massGIDs, massOwned, massGhost);
+
+        // Expand block-level GIDs to scalar level.
+        // multiTypeToBCRSMatrix expands momentum DOF i to momScalarBS_ scalar rows (2 for 2D),
+        // so localToGlobal_, isOwned_, isGhost_ must be sized at the scalar row count.
+        nMomBlockLocal_  = momGIDs.size();
+        nMassBlockLocal_ = massGIDs.size();
+        nMomLocal_  = momScalarBS_  * nMomBlockLocal_;
+        nMassLocal_ = massScalarBS_ * nMassBlockLocal_;
+
+        const GlobalIDType nMomScalarGlobal  = static_cast<GlobalIDType>(momScalarBS_)  * nMomGlobal;
+        const GlobalIDType nMassScalarGlobal = static_cast<GlobalIDType>(massScalarBS_) * nMassGlobal;
+        numBlocksGlobal_ = static_cast<std::size_t>(nMomScalarGlobal + nMassScalarGlobal);
+
+        localToGlobal_.resize(nMomLocal_ + nMassLocal_);
+        isOwned_.resize(nMomLocal_ + nMassLocal_);
+        isGhost_.resize(nMomLocal_ + nMassLocal_);
+
+        for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+            for (std::size_t k = 0; k < momScalarBS_; ++k) {
+                localToGlobal_[momScalarBS_*i + k] = momScalarBS_ * momGIDs[i] + static_cast<GlobalIDType>(k);
+                isOwned_[momScalarBS_*i + k] = momOwned[i];
+                isGhost_[momScalarBS_*i + k] = momGhost[i];
+            }
+
+        for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+            for (std::size_t k = 0; k < massScalarBS_; ++k) {
+                // massGIDs[j] is the block GID offset from nMomGlobal; expand to scalar
+                localToGlobal_[nMomLocal_ + massScalarBS_*j + k] =
+                    nMomScalarGlobal + massScalarBS_ * (massGIDs[j] - nMomGlobal) + static_cast<GlobalIDType>(k);
+                isOwned_[nMomLocal_ + massScalarBS_*j + k] = massOwned[j];
+                isGhost_[nMomLocal_ + massScalarBS_*j + k] = massGhost[j];
+            }
+
+        rowMap_ = buildRowMap_();
+        colMap_ = buildColMap_();
+
+        if (isParallel_)
+            setupParallelMultiTypeFuncs_<MomTraits, MassTraits>(momGG, massGG);
+    }
+
     SolverResult solve(const Matrix& A, XVector& x, const BVector& b)
     { return solve_(A, x, b); }
 
     Scalar norm(const XVector& x) const
     {
         if constexpr (isMultiType) {
-            auto y = VectorConverter<XVector>::multiTypeToBlockVector(x);
-            return y.two_norm();
+            if (!isParallel_ || localToGlobal_.empty())
+            {
+                auto y = VectorConverter<XVector>::multiTypeToBlockVector(x);
+                return y.two_norm();
+            }
+            // Parallel: apply makeNonOverlappingConsistent to sum border DOF contributions
+            // from all processes before computing the owned-DOF global norm.
+            // Without this, border DOF partial contributions inflate the partial norm
+            // and it stays constant even as the solution converges.
+            MomBlockVec_ bMomBlock(nMomBlockLocal_);
+            for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                bMomBlock[i] = x[Dune::Indices::_0][i];
+            if (momRhsPreprocess_)
+                momRhsPreprocess_(bMomBlock);
+
+            MassBlockVec_ bMassBlock(nMassBlockLocal_);
+            for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                bMassBlock[j] = x[Dune::Indices::_1][j];
+            if (massRhsPreprocess_)
+                massRhsPreprocess_(bMassBlock);
+
+            double localSumSq = 0.0;
+            for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                if (isOwned_[momScalarBS_*i])
+                    for (std::size_t k = 0; k < momScalarBS_; ++k)
+                    {
+                        const auto v = bMomBlock[i][k];
+                        localSumSq += v * v;
+                    }
+
+            // Mass owned contributions (preprocessed if needed)
+            for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                if (isOwned_[nMomLocal_ + massScalarBS_*j])
+                    for (std::size_t k = 0; k < massScalarBS_; ++k)
+                    {
+                        const auto v = bMassBlock[j][k];
+                        localSumSq += v * v;
+                    }
+
+            double globalSumSq = 0.0;
+            Teuchos::reduceAll(*comm_, Teuchos::REDUCE_SUM, 1, &localSumSq, &globalSumSq);
+            using std::sqrt;
+            return sqrt(globalSumSq);
         } else {
             return x.two_norm();
         }
@@ -215,9 +341,15 @@ private:
 
                 // Propagate global IDs from owners to ghost DOFs via min communication
                 // (ghosts start with max value, owner sends real ID, min picks it up)
-                VectorCommDataHandleMin<DofMapper, std::vector<GlobalIDType>, dofCodim, GlobalIDType>
-                    handle(mapper, localToGlobal_);
-                gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                if constexpr (requires { LSTraits::dofCodims; }) {
+                    MultiCodimVectorCommDataHandleMin<DofMapper, std::vector<GlobalIDType>, GridView::dimension, GlobalIDType>
+                        handle(mapper, localToGlobal_, LSTraits::dofCodims);
+                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                } else {
+                    VectorCommDataHandleMin<DofMapper, std::vector<GlobalIDType>, dofCodim, GlobalIDType>
+                        handle(mapper, localToGlobal_);
+                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                }
 
                 return;
             }
@@ -242,6 +374,173 @@ private:
             localToGlobal_[i] = static_cast<GlobalIDType>(i);
         rowMap_ = buildRowMap_();
         colMap_ = buildColMap_();
+    }
+
+    // Build global DOF indices for one subdomain.
+    // Returns the total number of global block DOFs in this subdomain.
+    // gids[i] = global block ID for local DOF i; offset makes IDs globally unique.
+    template<class SubLSTraits, class GV, class Mapper>
+    GlobalIDType buildSubdomainGIDs_(const GV& gridView, const Mapper& mapper,
+                                     GlobalIDType globalOffset,
+                                     std::vector<GlobalIDType>& gids,
+                                     std::vector<bool>& owned,
+                                     std::vector<bool>& ghost)
+    {
+        const std::size_t nLocal = mapper.size();
+        gids.resize(nLocal, std::numeric_limits<GlobalIDType>::max());
+        owned.assign(nLocal, false);
+        ghost.assign(nLocal, false);
+
+        if constexpr (SubLSTraits::canCommunicate)
+        {
+            if (isParallel_)
+            {
+                ParallelISTLHelper<SubLSTraits> pHelper(gridView, mapper);
+                for (std::size_t i = 0; i < nLocal; ++i)
+                {
+                    owned[i] = pHelper.isOwned(i);
+                    ghost[i] = pHelper.isGhost(i);
+                }
+
+                GlobalIDType numOwned = static_cast<GlobalIDType>(
+                    std::count(owned.begin(), owned.end(), true));
+                const int commSize = gridView.comm().size();
+                const int myRank = gridView.comm().rank();
+                std::vector<GlobalIDType> counts(commSize);
+                gridView.comm().allgather(&numOwned, 1, counts.data());
+
+                GlobalIDType localOffset = globalOffset;
+                for (int p = 0; p < myRank; ++p)
+                    localOffset += counts[p];
+
+                GlobalIDType nGlobal = 0;
+                for (auto c : counts) nGlobal += c;
+
+                for (std::size_t i = 0; i < nLocal; ++i)
+                    if (owned[i])
+                        gids[i] = localOffset++;
+
+                // Propagate owned GIDs to ghost DOFs via min communication
+                if constexpr (requires { SubLSTraits::dofCodims; }) {
+                    MultiCodimVectorCommDataHandleMin<Mapper, std::vector<GlobalIDType>, GV::dimension, GlobalIDType>
+                        handle(mapper, gids, SubLSTraits::dofCodims);
+                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                } else {
+                    constexpr int codim = SubLSTraits::dofCodim;
+                    VectorCommDataHandleMin<Mapper, std::vector<GlobalIDType>, codim, GlobalIDType>
+                        handle(mapper, gids);
+                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                }
+                return nGlobal;
+            }
+        }
+
+        // Sequential path: all DOFs owned with consecutive IDs
+        std::fill(owned.begin(), owned.end(), true);
+        for (std::size_t i = 0; i < nLocal; ++i)
+            gids[i] = globalOffset + static_cast<GlobalIDType>(i);
+        return static_cast<GlobalIDType>(nLocal);
+    }
+
+    // Set up block-level RHS preprocessing and ghost broadcast closures for both subdomains.
+    // Matrix border-row accumulation is handled by Tpetra global assembly (convertMatrixGlobal_).
+    template<class MomTraits, class MassTraits, class MomGG, class MassGG>
+    void setupParallelMultiTypeFuncs_(const MomGG& momGG, const MassGG& massGG)
+    {
+        using MomGVType = typename MomGG::GridView;
+        using MomMapperType = typename MomGG::DofMapper;
+        using MassMapperType = typename MassGG::DofMapper;
+
+        const auto momGV = momGG.gridView();
+        const auto* momMapper = &momGG.dofMapper();
+        const auto massGV = massGG.gridView();
+        const auto* massMapper = &massGG.dofMapper();
+
+        // Block-level momentum ghost broadcast (operates on MomBlockVec_ = BlockVector<FV<dim>>)
+        if constexpr (requires { MomTraits::dofCodims; }) {
+            constexpr int numMomCodims = MomGVType::dimension;
+            momGhostBroadcastBlock_ = [momGV, momMapper](MomBlockVec_& vec) {
+                MultiCodimVectorCommDataHandleSum<MomMapperType, MomBlockVec_, numMomCodims>
+                    handle(*momMapper, vec, MomTraits::dofCodims);
+                momGV.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+            };
+        } else {
+            constexpr int momCodim = MomTraits::dofCodim;
+            momGhostBroadcastBlock_ = [momGV, momMapper](MomBlockVec_& vec) {
+                VectorCommDataHandleSum<MomMapperType, MomBlockVec_, momCodim>
+                    handle(*momMapper, vec);
+                momGV.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+            };
+        }
+
+        // Block-level mass ghost broadcast
+        constexpr int massCodim = MassTraits::dofCodim;
+        using MassGVType = typename MassGG::GridView;
+        massGhostBroadcastBlock_ = [massGV, massMapper](MassBlockVec_& vec) {
+            VectorCommDataHandleSum<MassMapperType, MassBlockVec_, massCodim>
+                handle(*massMapper, vec);
+            massGV.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+        };
+
+        // For vertex-based mass DOFs (Box, codim=dim) on non-overlapping decompositions,
+        // CVFELocalAssembler skips ghost-element contributions to border vertex DOFs,
+        // so owned border mass rows are INCOMPLETE — same as momentum.
+        // For face-based mass (FCDiamond, codim=1), interior assembly captures both sides.
+        constexpr bool massAtVertices = (MassTraits::dofCodim == MassGVType::dimension);
+        massRowsAreComplete_ = !(massAtVertices && MassTraits::isNonOverlapping(massGV));
+
+        if (!massRowsAreComplete_) {
+            // RHS: sum border mass DOF contributions from all processes
+            massRhsPreprocess_ = [massGV, massMapper](MassBlockVec_& bMass) {
+                ParallelVectorHelper<MassGVType, MassMapperType, massCodim>
+                    vecHelper(massGV, *massMapper);
+                vecHelper.makeNonOverlappingConsistent(bMass);
+            };
+            // Extra-count communication for pre-allocating Tpetra capacity
+            massExtraCountComm_ = [massGV, massMapper](std::vector<std::size_t>& counts) {
+                VectorCommDataHandleSum<MassMapperType, std::vector<std::size_t>, massCodim, std::size_t>
+                    handle(*massMapper, counts);
+                massGV.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+            };
+        }
+
+        // Block-level momentum RHS preprocessing for non-overlapping decomposition:
+        // sum border vertex DOF contributions across processes before scalar conversion.
+        if (MomTraits::isNonOverlapping(momGV)) {
+            if constexpr (requires { MomTraits::dofCodims; }) {
+                momRhsPreprocess_ = [momGV, momMapper](MomBlockVec_& bMom) {
+                    ParallelVectorHelper<MomGVType, MomMapperType, MomTraits::dofCodim>
+                        vecHelper(momGV, *momMapper);
+                    vecHelper.makeNonOverlappingConsistent(bMom, MomTraits::dofCodims);
+                };
+            } else {
+                constexpr int momCodim = MomTraits::dofCodim;
+                momRhsPreprocess_ = [momGV, momMapper](MomBlockVec_& bMom) {
+                    ParallelVectorHelper<MomGVType, MomMapperType, momCodim>
+                        vecHelper(momGV, *momMapper);
+                    vecHelper.makeNonOverlappingConsistent(bMom);
+                };
+            }
+        }
+
+        // Communication closure to sum up extra entry counts for border momentum DOFs.
+        // Non-owning processes send their partial row sizes; the owner accumulates the total
+        // so it can pre-allocate enough capacity for global Tpetra assembly.
+        if constexpr (requires { MomTraits::dofCodims; }) {
+            constexpr int numMomCodims = MomGVType::dimension;
+            momExtraCountComm_ = [momGV, momMapper](std::vector<std::size_t>& counts) {
+                MultiCodimVectorCommDataHandleSum<MomMapperType, std::vector<std::size_t>, numMomCodims, std::size_t>
+                    handle(*momMapper, counts, MomTraits::dofCodims);
+                momGV.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+            };
+        } else {
+            constexpr int momCodim = MomTraits::dofCodim;
+            momExtraCountComm_ = [momGV, momMapper](std::vector<std::size_t>& counts) {
+                VectorCommDataHandleSum<MomMapperType, std::vector<std::size_t>, momCodim, std::size_t>
+                    handle(*momMapper, counts);
+                momGV.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+            };
+        }
     }
 
     /*!
@@ -347,12 +646,44 @@ private:
             auto Ascalar = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
             auto bscalar = VectorConverter<BVector>::multiTypeToBlockVector(b);
 
-            // Build DOF maps lazily on first call (nDofs = total scalar DOF count)
+            // Build DOF maps lazily on first call for the sequential (no-arg constructor) path
             if (localToGlobal_.empty())
                 initSeqMaps_(Ascalar.N());
 
-            auto graph = buildGraph_(Ascalar);
-            auto AA = convertMatrix_(Ascalar, graph);
+            // Block-level RHS preprocessing: sum border DOF contributions across processes.
+            if (isParallel_ && momRhsPreprocess_)
+            {
+                MomBlockVec_ bMomBlock(nMomBlockLocal_);
+                for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                    bMomBlock[i] = b[Dune::Indices::_0][i];
+                momRhsPreprocess_(bMomBlock);
+                for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                    for (std::size_t k = 0; k < momScalarBS_; ++k)
+                        bscalar[momScalarBS_*i + k] = bMomBlock[i][k];
+            }
+            // For vertex-based mass (Box): also sum border mass DOF contributions
+            if (isParallel_ && massRhsPreprocess_)
+            {
+                MassBlockVec_ bMassBlock(nMassBlockLocal_);
+                for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                    bMassBlock[j] = b[Dune::Indices::_1][j];
+                massRhsPreprocess_(bMassBlock);
+                for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                    for (std::size_t k = 0; k < massScalarBS_; ++k)
+                        bscalar[nMomLocal_ + massScalarBS_*j + k] = bMassBlock[j][k];
+            }
+
+            // Build Tpetra matrix. Parallel: use global assembly so that non-local border-vertex
+            // row contributions are accumulated by fillComplete (replaces extendMatrix+sumEntries).
+            Teuchos::RCP<SolverMatrix> AA;
+            if (isParallel_)
+                AA = convertMatrixGlobal_(Ascalar);
+            else
+            {
+                auto graph = buildGraph_(Ascalar);
+                AA = convertMatrix_(Ascalar, graph);
+            }
+
             auto BB = convertBVector_(bscalar);
             auto XX = convertXVector_();
 
@@ -362,6 +693,37 @@ private:
 
             auto xscalar = bscalar;
             retrieveXVector_(XX, xscalar);
+
+            // Ghost broadcast at block level: split scalar solution into block sub-vectors,
+            // zero non-owned DOFs, communicate, then reassemble to scalar for VectorConverter.
+            if (isParallel_)
+            {
+                MomBlockVec_  xMomBlock(nMomBlockLocal_);
+                MassBlockVec_ xMassBlock(nMassBlockLocal_);
+
+                for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                    for (std::size_t k = 0; k < momScalarBS_; ++k)
+                        xMomBlock[i][k] = xscalar[momScalarBS_*i + k];
+                for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                    for (std::size_t k = 0; k < massScalarBS_; ++k)
+                        xMassBlock[j][k] = xscalar[nMomLocal_ + massScalarBS_*j + k];
+
+                for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                    if (!isOwned_[momScalarBS_*i]) xMomBlock[i] = 0;
+                for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                    if (!isOwned_[nMomLocal_ + massScalarBS_*j]) xMassBlock[j] = 0;
+
+                momGhostBroadcastBlock_(xMomBlock);
+                massGhostBroadcastBlock_(xMassBlock);
+
+                for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+                    for (std::size_t k = 0; k < momScalarBS_; ++k)
+                        xscalar[momScalarBS_*i + k] = xMomBlock[i][k];
+                for (std::size_t j = 0; j < nMassBlockLocal_; ++j)
+                    for (std::size_t k = 0; k < massScalarBS_; ++k)
+                        xscalar[nMomLocal_ + massScalarBS_*j + k] = xMassBlock[j][k];
+            }
+
             VectorConverter<XVector>::retrieveValues(x, xscalar);
         }
         else
@@ -411,8 +773,13 @@ private:
                     for (std::size_t i = 0; i < x.size(); ++i)
                         if (!isOwned_[i])
                             x[i] = 0;
-                    VectorCommDataHandleSum<DofMapper, XVector, dofCodim> handle(*mapper_, x);
-                    gridView_.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    if constexpr (requires { LSTraits::dofCodims; }) {
+                        MultiCodimVectorCommDataHandleSum<DofMapper, XVector, GridView::dimension> handle(*mapper_, x, LSTraits::dofCodims);
+                        gridView_.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    } else {
+                        VectorCommDataHandleSum<DofMapper, XVector, dofCodim> handle(*mapper_, x);
+                        gridView_.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    }
                 }
             }
         }
@@ -465,6 +832,104 @@ private:
         }
 
         AA->fillComplete();
+        return AA;
+    }
+
+    /*!
+     * Build and fill Tpetra matrix using two-pass global assembly for parallel MultiType.
+     * Pass 1: compute per-row Tpetra capacity, communicating non-local border row sizes.
+     * Pass 2: insert entries using insertGlobalValues; fillComplete handles communication.
+     * Momentum rows: submit if !isGhost_ (owned + border-non-owner both contribute).
+     * Mass rows: submit if !isGhost_ when rows are incomplete (vertex-based, e.g. Box),
+     *            or only if isOwned_ when rows are complete (face-based, e.g. FCDiamond).
+     * AMatrix must be the scalar BCRSMatrix<FM<1,1>> from multiTypeToBCRSMatrix.
+     */
+    template<class AMatrix>
+    Teuchos::RCP<SolverMatrix> convertMatrixGlobal_(const AMatrix& A)
+    {
+        // Pass 1: Per-row entry count + communication of non-local border row sizes.
+        const std::size_t nTpetraRows = rowMap_->getLocalNumElements();
+        Teuchos::ArrayRCP<std::size_t> numEntPerRow(nTpetraRows, std::size_t{0});
+
+        std::vector<std::size_t> momExtraCounts(nMomBlockLocal_, 0);
+        std::vector<std::size_t> massExtraCounts(massRowsAreComplete_ ? 0 : nMassBlockLocal_, 0);
+
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const std::size_t r = rowIt.index();
+            const bool isMomRow = r < nMomLocal_;
+            if (isMomRow)
+            {
+                if (isOwned_[r])
+                {
+                    numEntPerRow[rowMap_->getLocalElement(localToGlobal_[r])] = rowIt->size();
+                }
+                else if (!isGhost_[r] && r % momScalarBS_ == 0)
+                {
+                    momExtraCounts[r / momScalarBS_] = rowIt->size();
+                }
+            }
+            else
+            {
+                const std::size_t massR = r - nMomLocal_;
+                if (isOwned_[r])
+                {
+                    numEntPerRow[rowMap_->getLocalElement(localToGlobal_[r])] = rowIt->size();
+                }
+                else if (!massRowsAreComplete_ && !isGhost_[r] && massR % massScalarBS_ == 0)
+                {
+                    massExtraCounts[massR / massScalarBS_] = rowIt->size();
+                }
+            }
+        }
+
+        if (momExtraCountComm_)  momExtraCountComm_(momExtraCounts);
+        if (massExtraCountComm_) massExtraCountComm_(massExtraCounts);
+
+        for (std::size_t i = 0; i < nMomBlockLocal_; ++i)
+            if (momExtraCounts[i] > 0)
+                for (std::size_t k = 0; k < momScalarBS_; ++k)
+                    if (isOwned_[momScalarBS_*i + k])
+                        numEntPerRow[rowMap_->getLocalElement(localToGlobal_[momScalarBS_*i + k])]
+                            += momExtraCounts[i];
+
+        for (std::size_t j = 0; j < massExtraCounts.size(); ++j)
+            if (massExtraCounts[j] > 0)
+                for (std::size_t k = 0; k < massScalarBS_; ++k)
+                    if (isOwned_[nMomLocal_ + massScalarBS_*j + k])
+                        numEntPerRow[rowMap_->getLocalElement(
+                            localToGlobal_[nMomLocal_ + massScalarBS_*j + k])]
+                            += massExtraCounts[j];
+
+        // Pass 2: Create matrix with correct capacity and insert values
+        auto AA = Teuchos::rcp(new SolverMatrix(rowMap_, numEntPerRow()));
+
+        Teuchos::Array<GlobalIDType> gCols;
+        Teuchos::Array<Scalar> vals;
+
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const std::size_t r = rowIt.index();
+            const bool isMomRow = r < nMomLocal_;
+            bool shouldSubmit;
+            if (isMomRow)
+                shouldSubmit = !isGhost_[r];
+            else
+                shouldSubmit = massRowsAreComplete_ ? isOwned_[r] : !isGhost_[r];
+            if (!shouldSubmit) continue;
+
+            const GlobalIDType gRow = localToGlobal_[r];
+            gCols.clear();
+            vals.clear();
+            for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
+            {
+                gCols.push_back(localToGlobal_[colIt.index()]);
+                vals.push_back((*colIt)[0][0]);
+            }
+            AA->insertGlobalValues(gRow, gCols(), vals());
+        }
+
+        AA->fillComplete(rowMap_, rowMap_);
         return AA;
     }
 
@@ -522,6 +987,22 @@ private:
     std::vector<bool> isGhost_;
 
     Teuchos::ParameterList params_;
+
+    // Parallel MultiType: scalar-level and block-level DOF counts for each subdomain
+    std::size_t nMomLocal_ = 0;       // scalar rows for momentum  (= momScalarBS_ * nMomBlockLocal_)
+    std::size_t nMassLocal_ = 0;      // scalar rows for mass       (= massScalarBS_ * nMassBlockLocal_)
+    std::size_t nMomBlockLocal_ = 0;  // block DOFs for momentum
+    std::size_t nMassBlockLocal_ = 0; // block DOFs for mass
+    // True when mass DOF rows are complete on the owner (FCDiamond-like, face-based).
+    // False when mass rows need cross-process global assembly (Box-like, vertex-based).
+    bool massRowsAreComplete_ = true;
+    // Block-level closures (set by setupParallelMultiTypeFuncs_)
+    std::function<void(MomBlockVec_&)>           momRhsPreprocess_;
+    std::function<void(MassBlockVec_&)>          massRhsPreprocess_;
+    std::function<void(MomBlockVec_&)>           momGhostBroadcastBlock_;
+    std::function<void(MassBlockVec_&)>          massGhostBroadcastBlock_;
+    std::function<void(std::vector<std::size_t>&)> momExtraCountComm_;
+    std::function<void(std::vector<std::size_t>&)> massExtraCountComm_;
 };
 
 } // end namespace Dumux
