@@ -20,7 +20,11 @@
 #define TYPETAG_MASS DFGChannelTestMassTpfa
 #endif
 
-#include <dune/grid/uggrid.hh>
+#ifndef GRID_TYPE
+#define GRID_TYPE Dune::UGGrid<3>
+#endif
+
+#include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/pq1bubble.hh>
@@ -63,7 +67,7 @@ struct FluidSystem<TypeTag, TTag::DFGChannelTest>
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DFGChannelTest>
 {
-    using type = Dune::UGGrid<2>;
+    using type = GRID_TYPE;
 };
 
 // Set the problem property

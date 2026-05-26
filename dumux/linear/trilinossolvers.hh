@@ -20,6 +20,8 @@
 
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/linear/parallelhelpers.hh>
+#include <dumux/linear/matrixconverter.hh>
+#include <dumux/common/typetraits/vector.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 
 #if DUMUX_HAVE_TRILINOS
@@ -46,12 +48,33 @@
 
 namespace Dumux {
 
+namespace Detail {
+
+// Provides GridView, DofMapper, dofCodim from LSTraits when canCommunicate=true,
+// or inert dummy types when canCommunicate=false (SeqLinearSolverTraits).
+template<class LSTraits, bool = LSTraits::canCommunicate>
+struct AmesosGridTypes {
+    struct GridView {};
+    struct DofMapper { std::size_t size() const { return 0; } };
+    static constexpr int dofCodim = 0;
+};
+
+template<class LSTraits>
+struct AmesosGridTypes<LSTraits, true> {
+    using GridView = typename LSTraits::GridView;
+    using DofMapper = typename LSTraits::DofMapper;
+    static constexpr int dofCodim = LSTraits::dofCodim;
+};
+
+} // end namespace Detail
+
 /*!
  * \ingroup Linear
  * \brief Direct linear solvers from Trilinos Amesos2
  *
  * Wraps MUMPS (or other Amesos2 backends) via Tpetra for parallel direct solves.
  * Handles both sequential and parallel (non-overlapping and overlapping) decompositions.
+ * Also supports MultiTypeBlockMatrix/Vector (multidomain) via automatic conversion to scalar types.
  */
 template<class LSTraits, class LATraits>
 class DirectSolverAmesos2 : public LinearSolver
@@ -70,11 +93,18 @@ class DirectSolverAmesos2 : public LinearSolver
     using AmeSolver = Amesos2::Solver<SolverMatrix, SolverVector>;
     using Graph = Tpetra::CrsGraph<LocalIDType, GlobalIDType, NodeType>;
 
-    using GridView = typename LSTraits::GridView;
-    using DofMapper = typename LSTraits::DofMapper;
-    static constexpr int dofCodim = LSTraits::dofCodim;
-    // Scalar DOFs per block DOF (1 for scalar PDEs, N for N-component systems)
-    static constexpr std::size_t blockSize = XVector::block_type::size();
+    using GridTypes_ = Detail::AmesosGridTypes<LSTraits>;
+    using GridView = typename GridTypes_::GridView;
+    using DofMapper = typename GridTypes_::DofMapper;
+    static constexpr int dofCodim = GridTypes_::dofCodim;
+
+    // True when XVector is a MultiTypeBlockVector (multidomain assembler)
+    static constexpr bool isMultiType = isMultiTypeBlockVector<XVector>::value;
+    // Scalar DOFs per block DOF. MultiType is always converted to scalar (blockSize=1).
+    static constexpr std::size_t blockSize = []() constexpr -> std::size_t {
+        if constexpr (isMultiTypeBlockVector<XVector>::value) return 1;
+        else return XVector::block_type::size();
+    }();
 
 public:
     struct SolverResult : public Dune::InverseOperatorResult
@@ -87,14 +117,30 @@ public:
         operator bool() const { return this->converged; }
     };
 
+    // Constructor for sequential (SeqLinearSolverTraits) or single-type solvers with no grid.
+    // DOF maps are built lazily on the first solve() call.
+    explicit DirectSolverAmesos2(const std::string& paramGroup = "")
+    requires (!LSTraits::canCommunicate)
+    : LinearSolver(paramGroup)
+    , isParallel_(false)
+    {
+        comm_ = Teuchos::rcp(new Teuchos::MpiComm<int>(MPI_COMM_SELF));
+        fos_ = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+        rank_ = comm_->getRank();
+        if (rank_ == 0)
+            *fos_ << "\n" << Amesos2::version() << std::endl;
+    }
+
+    // Constructor for parallel/sequential solvers with a grid (canCommunicate=true).
     template<class GridGeometry>
     DirectSolverAmesos2(const GridGeometry& gridGeometry,
                         const GridView& gridView,
                         const DofMapper& dofMapper,
                         const std::string& paramGroup = "")
+    requires (LSTraits::canCommunicate)
     : LinearSolver(paramGroup)
     , gridView_(gridView)
-    , mapper_(dofMapper)
+    , mapper_(&dofMapper)
     , isParallel_(gridView.comm().size() > 1)
     {
         comm_ = Teuchos::rcp(new Teuchos::MpiComm<int>(static_cast<MPI_Comm>(gridView.comm())));
@@ -111,7 +157,15 @@ public:
     SolverResult solve(const Matrix& A, XVector& x, const BVector& b)
     { return solve_(A, x, b); }
 
-    Scalar norm(const XVector&) const { return 0.0; }
+    Scalar norm(const XVector& x) const
+    {
+        if constexpr (isMultiType) {
+            auto y = VectorConverter<XVector>::multiTypeToBlockVector(x);
+            return y.two_norm();
+        } else {
+            return x.two_norm();
+        }
+    }
 
     std::string name() const { return "Trilinos Amesos2 Direct Solver"; }
 
@@ -176,16 +230,31 @@ private:
             localToGlobal_[i] = static_cast<GlobalIDType>(i);
     }
 
+    // Initialize DOF maps for sequential use from a known scalar DOF count.
+    // Called lazily on first solve for !canCommunicate solvers.
+    void initSeqMaps_(std::size_t nDofs)
+    {
+        numBlocksGlobal_ = nDofs;
+        localToGlobal_.resize(nDofs);
+        isOwned_.assign(nDofs, true);
+        isGhost_.assign(nDofs, false);
+        for (std::size_t i = 0; i < nDofs; ++i)
+            localToGlobal_[i] = static_cast<GlobalIDType>(i);
+        rowMap_ = buildRowMap_();
+        colMap_ = buildColMap_();
+    }
+
     /*!
      * Row map: owned scalar DOFs only.
      * Scalar GID for (block i, sub k) = localToGlobal_[i] * blockSize + k.
      */
     Teuchos::RCP<const TpetraMap> buildRowMap_()
     {
+        const std::size_t nLocal = localToGlobal_.size();
         std::vector<GlobalIDType> ownedGIDs;
         ownedGIDs.reserve(
             static_cast<std::size_t>(std::count(isOwned_.begin(), isOwned_.end(), true)) * blockSize);
-        for (std::size_t i = 0; i < mapper_.size(); ++i)
+        for (std::size_t i = 0; i < nLocal; ++i)
             if (isOwned_[i])
                 for (std::size_t k = 0; k < blockSize; ++k)
                     ownedGIDs.push_back(localToGlobal_[i] * blockSize + k);
@@ -203,7 +272,7 @@ private:
      */
     Teuchos::RCP<const TpetraMap> buildColMap_()
     {
-        const std::size_t nLocal = mapper_.size();
+        const std::size_t nLocal = localToGlobal_.size();
         std::vector<GlobalIDType> allGIDs;
         allGIDs.reserve(nLocal * blockSize);
         for (std::size_t i = 0; i < nLocal; ++i)
@@ -219,9 +288,10 @@ private:
     /*!
      * Build Tpetra CrsGraph from the actual Dune matrix (which may have been
      * extended by extendMatrix for parallel runs).
-     * Uses the colMap invariant: Tpetra local col = blockCol*blockSize + subCol.
+     * Templated on AMatrix to handle both plain BCRSMatrix and scalar-converted types.
      */
-    Teuchos::RCP<const Graph> buildGraph_(const Matrix& A)
+    template<class AMatrix>
+    Teuchos::RCP<const Graph> buildGraph_(const AMatrix& A)
     {
         const std::size_t nLocalTpetraRows = rowMap_->getLocalNumElements();
 
@@ -271,53 +341,79 @@ private:
 
     SolverResult solve_(const Matrix& A, XVector& x, const BVector& b)
     {
-        auto Acopy = A;
-        auto bcopy = b;
-
-        if constexpr (LSTraits::canCommunicate)
+        if constexpr (isMultiType)
         {
-            if (isParallel_)
-            {
-                if (LSTraits::isNonOverlapping(gridView_))
-                {
-                    // Non-overlapping decomposition (e.g. BOX):
-                    // extend matrix pattern at border DOFs and accumulate cross-process contributions
-                    using MatHelper = ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim>;
-                    MatHelper matrixHelper(gridView_, mapper_);
-                    matrixHelper.extendMatrix(Acopy, [this](std::size_t idx){ return isGhost_[idx]; });
-                    matrixHelper.sumEntries(Acopy);
-                    ParallelVectorHelper<GridView, DofMapper, dofCodim> vecHelper(gridView_, mapper_);
-                    vecHelper.makeNonOverlappingConsistent(bcopy);
-                }
-                // For overlapping decompositions (e.g. BOX with YaspGrid overlap=1):
-                // The overlap layer already provides each process with a complete local
-                // neighbourhood for all interior/border DOFs — no preprocessing needed.
-                // Non-owned (overlap/ghost) DOF rows are simply skipped during Tpetra conversion.
-            }
+            // Flatten MultiTypeBlockMatrix/Vector to scalar BCRSMatrix/BlockVector for Tpetra
+            auto Ascalar = MatrixConverter<Matrix>::multiTypeToBCRSMatrix(A);
+            auto bscalar = VectorConverter<BVector>::multiTypeToBlockVector(b);
+
+            // Build DOF maps lazily on first call (nDofs = total scalar DOF count)
+            if (localToGlobal_.empty())
+                initSeqMaps_(Ascalar.N());
+
+            auto graph = buildGraph_(Ascalar);
+            auto AA = convertMatrix_(Ascalar, graph);
+            auto BB = convertBVector_(bscalar);
+            auto XX = convertXVector_();
+
+            Teuchos::RCP<AmeSolver> solver = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
+            solver->setParameters(Teuchos::rcpFromRef(params_));
+            solver->symbolicFactorization().numericFactorization().solve();
+
+            auto xscalar = bscalar;
+            retrieveXVector_(XX, xscalar);
+            VectorConverter<XVector>::retrieveValues(x, xscalar);
         }
-
-        auto graph = buildGraph_(Acopy);
-        auto AA = convertMatrix_(Acopy, graph);
-        auto BB = convertBVector_(bcopy);
-        auto XX = convertXVector_();
-
-        Teuchos::RCP<AmeSolver> solver = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
-        solver->setParameters(Teuchos::rcpFromRef(params_));
-        solver->symbolicFactorization().numericFactorization().solve();
-
-        retrieveXVector_(XX, x);
-
-        // Distribute solution: zero non-owned entries, then sum-communicate.
-        // Non-owners send 0, owner sends the real value; each DOF ends up with the owner's value.
-        if constexpr (LSTraits::canCommunicate)
+        else
         {
-            if (isParallel_)
+            auto Acopy = A;
+            auto bcopy = b;
+
+            if constexpr (LSTraits::canCommunicate)
             {
-                for (std::size_t i = 0; i < x.size(); ++i)
-                    if (!isOwned_[i])
-                        x[i] = 0;
-                VectorCommDataHandleSum<DofMapper, XVector, dofCodim> handle(mapper_, x);
-                gridView_.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                if (isParallel_)
+                {
+                    if (LSTraits::isNonOverlapping(gridView_))
+                    {
+                        // Non-overlapping decomposition (e.g. BOX):
+                        // extend matrix pattern at border DOFs and accumulate cross-process contributions
+                        using MatHelper = ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim>;
+                        MatHelper matrixHelper(gridView_, *mapper_);
+                        matrixHelper.extendMatrix(Acopy, [this](std::size_t idx){ return isGhost_[idx]; });
+                        matrixHelper.sumEntries(Acopy);
+                        ParallelVectorHelper<GridView, DofMapper, dofCodim> vecHelper(gridView_, *mapper_);
+                        vecHelper.makeNonOverlappingConsistent(bcopy);
+                    }
+                    // For overlapping decompositions (e.g. BOX with YaspGrid overlap=1):
+                    // The overlap layer already provides each process with a complete local
+                    // neighbourhood for all interior/border DOFs — no preprocessing needed.
+                    // Non-owned (overlap/ghost) DOF rows are simply skipped during Tpetra conversion.
+                }
+            }
+
+            auto graph = buildGraph_(Acopy);
+            auto AA = convertMatrix_(Acopy, graph);
+            auto BB = convertBVector_(bcopy);
+            auto XX = convertXVector_();
+
+            Teuchos::RCP<AmeSolver> solver = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
+            solver->setParameters(Teuchos::rcpFromRef(params_));
+            solver->symbolicFactorization().numericFactorization().solve();
+
+            retrieveXVector_(XX, x);
+
+            // Distribute solution: zero non-owned entries, then sum-communicate.
+            // Non-owners send 0, owner sends the real value; each DOF ends up with the owner's value.
+            if constexpr (LSTraits::canCommunicate)
+            {
+                if (isParallel_)
+                {
+                    for (std::size_t i = 0; i < x.size(); ++i)
+                        if (!isOwned_[i])
+                            x[i] = 0;
+                    VectorCommDataHandleSum<DofMapper, XVector, dofCodim> handle(*mapper_, x);
+                    gridView_.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                }
             }
         }
 
@@ -326,11 +422,12 @@ private:
         return result;
     }
 
-    Teuchos::RCP<SolverMatrix> convertMatrix_(const Matrix& A, const Teuchos::RCP<const Graph>& graph)
+    template<class AMatrix>
+    Teuchos::RCP<SolverMatrix> convertMatrix_(const AMatrix& A, const Teuchos::RCP<const Graph>& graph)
     {
         Teuchos::RCP<SolverMatrix> AA = Teuchos::rcp(new SolverMatrix(graph));
 
-        using BlockType = typename Matrix::block_type;
+        using BlockType = typename AMatrix::block_type;
         static constexpr int BS_I = BlockType::rows;
         static constexpr int BS_J = BlockType::cols;
 
@@ -371,7 +468,8 @@ private:
         return AA;
     }
 
-    Teuchos::RCP<SolverVector> convertBVector_(const BVector& b)
+    template<class BVec>
+    Teuchos::RCP<SolverVector> convertBVector_(const BVec& b)
     {
         Teuchos::RCP<SolverVector> BB = Teuchos::rcp(new SolverVector(rowMap_, 1, true));
         for (std::size_t blockIdx = 0; blockIdx < b.size(); ++blockIdx)
@@ -392,7 +490,8 @@ private:
         return Teuchos::rcp(new SolverVector(rowMap_, 1, true));
     }
 
-    void retrieveXVector_(const Teuchos::RCP<SolverVector>& XX, XVector& x)
+    template<class XVec>
+    void retrieveXVector_(const Teuchos::RCP<SolverVector>& XX, XVec& x)
     {
         const auto view = XX->getLocalViewHost(Tpetra::Access::ReadOnly);
         const auto subview = Kokkos::subview(view, Kokkos::ALL(), 0);
@@ -407,8 +506,8 @@ private:
         }
     }
 
-    const GridView gridView_;
-    const DofMapper& mapper_;
+    GridView gridView_;
+    const DofMapper* mapper_ = nullptr;
     bool isParallel_;
 
     Teuchos::RCP<const Teuchos::Comm<int>> comm_;

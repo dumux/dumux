@@ -19,10 +19,15 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager_ug.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/stokes_solver.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#if DUMUX_HAVE_TRILINOS
+#include <dumux/linear/trilinossolvers.hh>
+#endif
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
@@ -162,6 +167,18 @@ int main(int argc, char** argv)
         using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
         nonLinearSolver.solve(x);
+    }
+    else if (getParam<bool>("LinearSolver.UseTrilinos", false))
+    {
+#if DUMUX_HAVE_TRILINOS
+        using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+#else
+        DUNE_THROW(Dune::NotImplemented, "Trilinos not available");
+#endif
     }
     else
     {

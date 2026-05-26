@@ -86,3 +86,18 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms false
                              -Grid.File cylinder_channel_quad.msh")
+
+# Stokes (Navier-Stokes without inertia) using Trilinos Amesos2 direct solver
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassDiamond
+               COMPILE_DEFINITIONS GRID_TYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               LABELS freeflow navierstokes trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos
+               CMD_ARGS      params.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos
+                             -Problem.EnableInertiaTerms false
+                             -Grid.File cylinder_channel_quad.msh
+                             -LinearSolver.UseTrilinos true)
