@@ -74,11 +74,11 @@ public:
   {}
 
   //! returns true if data for this codim should be communicated
-  bool contains(int dim, int codim) const
+  bool contains(int, int codim) const
   { return (codim == entityCodim); }
 
   //! returns true if size per entity of given dim and codim is a constant
-  bool fixedSize(int dim, int codim) const
+  bool fixedSize(int, int) const
   { return true; }
 
   /*!
@@ -115,31 +115,32 @@ protected:
  * \ingroup Parallel
  * \brief A data handle class to exchange entries of a vector for multiple codims in one communication call
  */
-template<class Mapper, class Vector, std::size_t numCodims,
+template<class Mapper, class Vector, int dim,
          class ScatterOperator, class DataT = typename Vector::value_type>
 class MultiCodimVectorCommDataHandle
-  : public Dune::CommDataHandleIF<MultiCodimVectorCommDataHandle<Mapper, Vector, numCodims, ScatterOperator, DataT>, DataT>
+  : public Dune::CommDataHandleIF<MultiCodimVectorCommDataHandle<Mapper, Vector, dim, ScatterOperator, DataT>, DataT>
 {
 public:
   //! export type of data for message buffer
   using DataType = DataT;
+  static_assert(dim >= 0, "Grid dimension must be non-negative");
 
   MultiCodimVectorCommDataHandle(const Mapper& mapper,
                                  Vector& vector,
-                                 std::bitset<numCodims> activeCodims)
+                                 std::bitset<dim+1> activeCodims)
   : mapper_(mapper), vector_(vector), activeCodims_(std::move(activeCodims))
   {}
 
   //! returns true if data for this codim should be communicated
-  bool contains(int dim, int codim) const
+  bool contains(int, int codim) const
   {
       return codim >= 0
-             && codim < static_cast<int>(numCodims)
+             && codim <= static_cast<int>(dim)
              && activeCodims_.test(codim);
   }
 
   //! returns true if size per entity of given dim and codim is a constant
-  bool fixedSize(int dim, int codim) const
+  bool fixedSize(int, int codim) const
   { return true; }
 
   /*!
@@ -170,7 +171,7 @@ public:
 protected:
   const Mapper& mapper_;
   Vector& vector_;
-  std::bitset<numCodims> activeCodims_;
+  std::bitset<dim+1> activeCodims_;
 };
 
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
@@ -185,17 +186,17 @@ using VectorCommDataHandleMin = VectorCommDataHandle<Mapper, Vector, codim, Deta
 template<class Mapper, class Vector, int codim, class DataType = typename Vector::value_type>
 using VectorCommDataHandleMax = VectorCommDataHandle<Mapper, Vector, codim, Detail::Max, DataType>;
 
-template<class Mapper, class Vector, std::size_t numCodims, class DataType = typename Vector::value_type>
-using MultiCodimVectorCommDataHandleEqual = MultiCodimVectorCommDataHandle<Mapper, Vector, numCodims, Detail::SetEqual, DataType>;
+template<class Mapper, class Vector, int dim, class DataType = typename Vector::value_type>
+using MultiCodimVectorCommDataHandleEqual = MultiCodimVectorCommDataHandle<Mapper, Vector, dim, Detail::SetEqual, DataType>;
 
-template<class Mapper, class Vector, std::size_t numCodims, class DataType = typename Vector::value_type>
-using MultiCodimVectorCommDataHandleSum = MultiCodimVectorCommDataHandle<Mapper, Vector, numCodims, Detail::Sum, DataType>;
+template<class Mapper, class Vector, int dim, class DataType = typename Vector::value_type>
+using MultiCodimVectorCommDataHandleSum = MultiCodimVectorCommDataHandle<Mapper, Vector, dim, Detail::Sum, DataType>;
 
-template<class Mapper, class Vector, std::size_t numCodims, class DataType = typename Vector::value_type>
-using MultiCodimVectorCommDataHandleMin = MultiCodimVectorCommDataHandle<Mapper, Vector, numCodims, Detail::Min, DataType>;
+template<class Mapper, class Vector, int dim, class DataType = typename Vector::value_type>
+using MultiCodimVectorCommDataHandleMin = MultiCodimVectorCommDataHandle<Mapper, Vector, dim, Detail::Min, DataType>;
 
-template<class Mapper, class Vector, std::size_t numCodims, class DataType = typename Vector::value_type>
-using MultiCodimVectorCommDataHandleMax = MultiCodimVectorCommDataHandle<Mapper, Vector, numCodims, Detail::Max, DataType>;
+template<class Mapper, class Vector, int dim, class DataType = typename Vector::value_type>
+using MultiCodimVectorCommDataHandleMax = MultiCodimVectorCommDataHandle<Mapper, Vector, dim, Detail::Max, DataType>;
 
 } // end namespace Dumux
 

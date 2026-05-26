@@ -522,7 +522,7 @@ public:
 
         if (gridView_.comm().size() > 1)
         {
-            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, numCodims, Block> gs(
+            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
                 mapper_, v, activeCodims
             );
             gridView_.communicate(
@@ -571,7 +571,7 @@ public:
 
         if (gridView_.comm().size() > 1)
         {
-            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, numCodims, Block> gs(
+            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
                 mapper_, v, activeCodims
             );
             gridView_.communicate(gs, Dune::Overlap_All_Interface,

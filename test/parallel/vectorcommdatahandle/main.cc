@@ -68,7 +68,7 @@ int main(int argc, char** argv)
         std::bitset<dim + 1> activeCodims;
         activeCodims.set(0);
         activeCodims.set(dim);
-        Dumux::MultiCodimVectorCommDataHandleSum<Mapper, Vector, dim + 1, double> multiHandle(mapper, vMulti, activeCodims);
+        Dumux::MultiCodimVectorCommDataHandleSum<Mapper, Vector, dim, double> multiHandle(mapper, vMulti, activeCodims);
         gridView.communicate(multiHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
     }
 
