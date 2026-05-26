@@ -38,6 +38,7 @@
 #include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
@@ -96,7 +97,13 @@ void computeWallShearStress(
     CouplingManager& couplingManager,
     const Assembler& assembler
 ){
-    const auto& problem = gridVariables.curGridVolVars().problem();
+    const auto& curVariables = [&]() -> decltype(auto) {
+        if constexpr (requires { gridVariables.curGridVars(); })
+            return gridVariables.curGridVars();
+        else
+            return gridVariables.curGridVolVars();
+    }();
+    const auto& problem = curVariables.problem();
     const auto& gg = problem.gridGeometry();
     const auto& gv = gg.gridView();
 
@@ -191,7 +198,7 @@ void computeWallShearStress(
     std::vector<GlobalPosition> wallShearStress(bGrid->leafGridView().size(0));
 
     auto fvGeometry = localView(gg);
-    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    auto elemVolVars = localView(curVariables);
     for (const auto& element : elements(gv))
     {
         const auto h = Dumux::diameter(element.geometry());
@@ -323,7 +330,11 @@ int main(int argc, char** argv)
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
 
+#if NEW_PROBLEM_INTERFACE
+    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#else
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#endif
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
