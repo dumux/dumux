@@ -175,10 +175,13 @@ public:
             if(!bcTypes.hasFluxBoundary())
                 continue;
 
-            problem.addFEBoundaryFluxIntegral(residual, elemDisc, elemVars, boundaryFace, bcTypes);
+            if constexpr (Concepts::HybridElementDiscretization<ElementDiscretization>
+                       || Concepts::FEElementDiscretization<ElementDiscretization>)
+                problem.addFEBoundaryFluxIntegral(residual, elemDisc, elemVars, boundaryFace, bcTypes);
 
-            for(const auto& scvf : scvfs(elemDisc, boundaryFace))
-                problem.addFVBoundaryFluxIntegral(residual, elemDisc, elemVars, scvf, bcTypes);
+            if constexpr (Concepts::FVElementDiscretization<ElementDiscretization>)
+                for(const auto& scvf : scvfs(elemDisc, boundaryFace))
+                    problem.addFVBoundaryFluxIntegral(residual, elemDisc, elemVars, scvf, bcTypes);
         }
     }
 
