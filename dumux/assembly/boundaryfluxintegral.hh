@@ -45,7 +45,7 @@ void addFVBoundaryFluxIntegral(ResidualVector& residual,
         boundaryFlux += qpData.weight() * problem.boundaryFlux(elemDisc, elemVars, qpData.ipData());
 
     const auto& insideScv = elemDisc.scv(scvf.insideScvIdx());
-    boundaryFlux *= elemVars[insideScv].extrusionFactor();
+    //boundaryFlux *= elemVars[insideScv].extrusionFactor();
 
     for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
         if (bcTypes.isFluxBoundary(eqIdx))
