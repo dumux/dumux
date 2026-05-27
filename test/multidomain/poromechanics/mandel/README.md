@@ -52,8 +52,8 @@ See the [DuMux poro-elastic model documentation](https://dumux.org/docs/doxygen/
 The single-phase flow equation is
 
 $$
-\frac{\partial (\phi \varrho)}{\partial t}
-+ \nabla \cdot \left(-\varrho \frac{\mathbf{K}}{\mu} \nabla p \right) = 0.
+\frac{\partial (\phi \varrho)}{\partial t} +
+\nabla \cdot \left(-\varrho \frac{\mathbf{K}}{\mu} \nabla p \right) = 0.
 $$
 
 See the [DuMux single-phase model documentation](https://dumux.org/docs/doxygen/master/group___one_p_model.html).
@@ -222,10 +222,10 @@ Then
 $$
 u_x(x,y,t)
 = x\left[
-\frac{F\nu}{2Ga}
-- \frac{F\nu_u}{Ga}\sum_{n=0}^{N_\beta-1}S_n(t)
-\right]
-+ \frac{F}{G}\sum_{n=0}^{N_\beta-1}
+\frac{F\nu}{2Ga} -
+\frac{F\nu_u}{Ga}\sum_{n=0}^{N_\beta-1}S_n(t)
+\right] +
+\frac{F}{G}\sum_{n=0}^{N_\beta-1}
 \frac{\cos\beta_n}{\beta_n - \sin\beta_n\cos\beta_n}
 \sin\left(\frac{\beta_nx}{a}\right)T_n(t),
 $$
@@ -233,8 +233,8 @@ $$
 $$
 u_y(x,y,t)
 = y\left[
--\frac{F(1-\nu)}{2Ga}
-+ \frac{F(1-\nu_u)}{Ga}\sum_{n=0}^{N_\beta-1}S_n(t)
+-\frac{F(1-\nu)}{2Ga} +
+\frac{F(1-\nu_u)}{Ga}\sum_{n=0}^{N_\beta-1}S_n(t)
 \right].
 $$
 
