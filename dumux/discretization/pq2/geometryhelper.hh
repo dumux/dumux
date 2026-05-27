@@ -23,6 +23,7 @@
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -292,6 +293,63 @@ public:
 private:
     const typename Element::Geometry& geo_; //!< Reference to the element geometry
     BoxHelper boxHelper_;
+};
+
+/*!
+ * \ingroup PQ2Discretization
+ * \brief Geometry helper for the pure FE pq2 discretization.
+ *        Provides dof-related functions.
+ */
+template <class GridView>
+class FEPQ2GeometryHelper
+{
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
+
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static constexpr auto dim = GridView::dimension;
+
+public:
+
+    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
+    template<class LocalKey>
+    static auto localDofOnIntersection(Dune::GeometryType type, unsigned int iIdx, const LocalKey& localKey)
+    {
+        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
+        const auto numEntitiesIntersection = refElement.size(iIdx, 1, localKey.codim());
+        for (std::size_t idx = 0; idx < numEntitiesIntersection; idx++)
+            if (localKey.subEntity() == refElement.subEntity(iIdx, 1, idx, localKey.codim()))
+                return true;
+        return false;
+    }
+
+    template<class DofMapper, class LocalKey>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
+    {
+        // All dofs are directly related to grid entities, i.e localKey.index() is always zero
+        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim());
+    }
+
+    template<class Geometry, class LocalKey>
+    static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& localKey)
+    {
+        if (localKey.codim() == dim)
+            return geo.corner(localKey.subEntity());
+        else if (localKey.codim() == 0)
+            return geo.center();
+        else
+            return geo.global(localDofPosition(geo.type(), localKey));
+    }
+
+    //! local dof position
+    template<class LocalKey>
+    static typename Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
+    {
+        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
+    }
+
 };
 
 } // end namespace Dumux
