@@ -285,6 +285,27 @@ The figures compare numerical results with the analytical solution along the hor
 | $a, b$ | Domain half-width and half-height | m |
 | $\Gamma$ | Domain boundary | - |
 
+## 9. Additional Notes
+
+This test uses the **experimental multistage assembler**
+(`dumux/experimental/assembly/multistagemultidomainfvassembler.hh`) together with the
+experimental multistage time stepper
+(`dumux/experimental/timestepping/multistagetimestepper.hh`). Compared to the standard
+implicit-Euler-only assembler, this assembler is built around Runge-Kutta-style stage
+assembly and can therefore support a broader family of time integration schemes.
+
+The scheme is selected at runtime via the `TimeLoop.Scheme` parameter in `params.input`:
+
+| Value | Method |
+|---|---|
+| `ImplicitEuler` | First-order backward Euler |
+| `CrankNicolson` | Second-order Crank-Nicolson ($\theta = 0.5$) |
+| `DIRK3` | Third-order diagonally implicit Runge-Kutta (Alexander) |
+
+Additional Runge-Kutta schemes can be plugged in by extending the dispatch in
+`test_mandel.cc` with another `Experimental::MultiStageMethod` implementation. Because
+the components live under `dumux/experimental/`, their interfaces may still change.
+
 ## References
 
 1. Mandel, J. "Consolidation des sols (étude mathématique)." *Géotechnique*, 3(7), 1953. [DOI:10.1680/geot.1953.3.7.287](https://doi.org/10.1680/geot.1953.3.7.287)
