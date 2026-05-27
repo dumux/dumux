@@ -8,7 +8,7 @@
 #define DUMUX_HYPERELASTIC_INCOMPRESSIBLE_BLOCK_PROBLEM_HH
 
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/common/fvproblemwithspatialparams.hh>
+#include <dumux/common/problemwithspatialparams.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
@@ -37,19 +37,18 @@ namespace Dumux {
 //
 // Probe: |u_z(P)| at P=(w/2, l/2, h) = (50,50,50) mm (Tables 3.3 & 3.4, ref ≈ 20 mm)
 template<class TypeTag>
-class IncompressibleBlockMomentumProblem : public FVProblemWithSpatialParams<TypeTag>
+class IncompressibleBlockMomentumProblem : public Dumux::Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Dumux::Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Intersection = typename GridView::Intersection;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = Dumux::Experimental::BoundaryTypes<PrimaryVariables::size()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
@@ -74,11 +73,7 @@ public:
     , load_(getParam<Scalar>("Problem.Load"))
     , loadFactor_(1.0)
     {
-        CVFE::appendDirichletConstraints(*this,
-            [&](const auto& fvGeometry, const auto&, const auto& localDof) {
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            },
-            constraints_);
+        appendDirichletConstraints_();
     }
 
     void setLoadFactor(Scalar f) { loadFactor_ = f; }
@@ -110,12 +105,36 @@ public:
         return P;
     }
 
-    BoundaryTypes boundaryTypes(const FVElementGeometry&, const Intersection& is) const
-    { return boundaryTypesAtPos(is.geometry().center()); }
-
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& pos) const
     {
-        BoundaryTypes values;
+        BoundaryTypes values{};
+
+        if (pos[2] > h_ - eps_ && pos[0] > w2_ - a_ - eps_ && pos[1] > l2_ - b_ - eps_)
+            values.setAllFluxBoundary();
+
+        return values;
+    }
+
+    template<class ElementVariables, class IpData>
+    NumEqVector boundaryFlux(const FVElementGeometry&, const ElementVariables&,
+                             const IpData& ipData) const
+    {
+        NumEqVector flux(0.0);
+        const auto& pos = ipData.global();
+        // Compressive load q (Table 3.1) at z=h on patch x∈[w/2−a, w/2]×y∈[l/2−b, l/2]
+        // (Section 3.1). Applied traction T = −q·e_z → boundaryFlux[z] = +q.
+        if (pos[2] > h_ - eps_ && pos[0] > w2_ - a_ - eps_ && pos[1] > l2_ - b_ - eps_)
+            flux[2] = loadFactor_ * load_;
+
+        return flux;
+    }
+
+    const auto& constraints() const { return constraints_; }
+
+private:
+    auto boundaryTypesAtPos_(const GlobalPosition& globalPos) const
+    {
+        Dumux::BoundaryTypes<numEq> values;
         values.setAllNeumann();
 
         if (globalPos[2] < eps_)
@@ -133,38 +152,34 @@ public:
         return values;
     }
 
-    PrimaryVariables dirichletAtPos(const GlobalPosition&) const
-    { return PrimaryVariables(0.0); }
-
-    template<class ElementVariables, class IpData>
-    NumEqVector boundaryFlux(const FVElementGeometry&, const ElementVariables&,
-                             const IpData& ipData) const
+    void appendDirichletConstraints_()
     {
-        NumEqVector flux(0.0);
-        const auto& pos = ipData.global();
-        // Compressive load q (Table 3.1) at z=h on patch x∈[w/2−a, w/2]×y∈[l/2−b, l/2]
-        // (Section 3.1). Applied traction T = −q·e_z → boundaryFlux[z] = +q.
-        if (pos[2] > h_ - eps_
-            && pos[0] > w2_ - a_ - eps_
-            && pos[1] > l2_ - b_ - eps_)
-            flux[2] = loadFactor_ * load_;
-        return flux;
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+            {
+                const auto& bcTypes = this->boundaryTypesAtPos_(boundaryFace.center());
+                if (bcTypes.hasDirichlet())
+                {
+                    for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    {
+                        ConstraintInfo info;
+                        // set the Dirichlet constraints
+                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            if (bcTypes.isDirichlet(eqIdx))
+                                info.set(bcTypes.eqToDirichletIndex(eqIdx), eqIdx);
+
+                        auto dirichletValues = PrimaryVariables(0.0);
+                        constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
+                    }
+                }
+            }
+        }
+
     }
 
-    template<class ElementVariables>
-    NumEqVector boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
-                                     const ElementVariables& elemVars,
-                                     const SubControlVolumeFace& scvf) const
-    {
-        NumEqVector flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-            flux += qpData.weight() * this->boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-        return flux;
-    }
-
-    const auto& constraints() const { return constraints_; }
-
-private:
     static constexpr Scalar eps_ = 1e-6;
     std::shared_ptr<CouplingManager> couplingManager_;
     Scalar load_, loadFactor_;
@@ -175,16 +190,16 @@ private:
 // Pressure subdomain problem for the incompressible block P1BP1 (mini/mixed) formulation.
 // The equation is the local bulk pressure constraint — no spatial BCs needed.
 template<class TypeTag>
-class IncompressibleBlockPressureProblem : public FVProblemWithSpatialParams<TypeTag>
+class IncompressibleBlockPressureProblem : public Dumux::Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Dumux::Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = Dumux::Experimental::BoundaryTypes<PrimaryVariables::size()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
@@ -204,13 +219,9 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition&) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
+        values.setAllFluxBoundary();
         return values;
     }
-
-    template<class ElementVariables>
-    NumEqVector boundaryFluxIntegral(const auto&, const ElementVariables&, const auto&) const
-    { return NumEqVector(0.0); }
 
     PrimaryVariables initialAtPos(const GlobalPosition&) const
     { return PrimaryVariables(0.0); }
