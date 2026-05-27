@@ -12,6 +12,7 @@
 
 #include <config.h>
 #include <iostream>
+#include <fstream>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
@@ -275,6 +276,58 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
     } while (!timeLoop->finished());
+
+    // compute discrete L2 errors against the analytical solution at the final time
+    {
+        const Scalar tEval = timeLoop->time();
+
+        Scalar errorP = 0.0;
+        for (const auto& element : elements(onePFvGridGeometry->gridView()))
+        {
+            const auto eIdx = onePFvGridGeometry->elementMapper().index(element);
+            const auto& pos = element.geometry().center();
+            const auto delta = x[onePId][eIdx][0]
+                             - mandelAnalyticalSolution->pressure(pos, tEval);
+            errorP += element.geometry().volume() * delta * delta;
+        }
+        using std::sqrt;
+        errorP = sqrt(errorP);
+
+        Scalar errorUx = 0.0, errorUy = 0.0;
+        for (const auto& element : elements(poroMechFvGridGeometry->gridView()))
+        {
+            auto fvGeometry = localView(*poroMechFvGridGeometry);
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto vIdx = scv.dofIndex();
+                const auto uAna = mandelAnalyticalSolution->displacement(scv.dofPosition(), tEval);
+                const auto dUx = x[poroMechId][vIdx][0] - uAna[0];
+                const auto dUy = x[poroMechId][vIdx][1] - uAna[1];
+                errorUx += scv.volume() * dUx * dUx;
+                errorUy += scv.volume() * dUy * dUy;
+            }
+        }
+        errorUx = sqrt(errorUx);
+        errorUy = sqrt(errorUy);
+
+        if (leafGridView.comm().rank() == 0)
+        {
+            std::cout << "** L2 errors at t = " << tEval
+                      << ": L2(p) = "  << errorP
+                      << ", L2(ux) = " << errorUx
+                      << ", L2(uy) = " << errorUy << std::endl;
+
+            // fixed log-file names so the convergence-test script does not depend
+            // on Vtk.OutputName / Problem.Name conventions
+            std::ofstream flowLog("flow.log", std::ios::app);
+            flowLog << "[ConvergenceTest] L2(p) = " << errorP << std::endl;
+
+            std::ofstream mechLog("mech.log", std::ios::app);
+            mechLog << "[ConvergenceTest] L2(ux) = " << errorUx
+                    << " L2(uy) = " << errorUy << std::endl;
+        }
+    }
 
     // output some Newton statistics
     nonLinearSolver->report();
