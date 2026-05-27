@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <!-- Arrowhead for force arrows (thick) -->
+    <marker id="forceArrow" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <!-- Arrowhead for drainage arrows (thin) -->
+    <marker id="drainArrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <!-- Arrowhead for axes -->
+    <marker id="axisArrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <!-- Arrowhead for dimension lines (both ends) -->
+    <marker id="dimArrowStart" viewBox="0 0 10 10" refX="1" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 10 0 L 0 5 L 10 10 z" fill="#000"/>
+    </marker>
+    <marker id="dimArrowEnd" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="450" fill="white"/>
+
+  <!-- Top rigid plate -->
+  <rect x="100" y="80" width="400" height="14" fill="white" stroke="#000" stroke-width="1.5"/>
+
+  <!-- Bottom rigid plate -->
+  <rect x="100" y="356" width="400" height="14" fill="white" stroke="#000" stroke-width="1.5"/>
+
+  <!-- Rollers (circles) between plates and porous sample -->
+  <!-- Top rollers -->
+  <g fill="white" stroke="#000" stroke-width="1">
+    <circle cx="120" cy="102" r="6"/>
+    <circle cx="145" cy="102" r="6"/>
+    <circle cx="170" cy="102" r="6"/>
+    <circle cx="195" cy="102" r="6"/>
+    <circle cx="220" cy="102" r="6"/>
+    <circle cx="245" cy="102" r="6"/>
+    <circle cx="270" cy="102" r="6"/>
+    <circle cx="295" cy="102" r="6"/>
+    <circle cx="320" cy="102" r="6"/>
+    <circle cx="345" cy="102" r="6"/>
+    <circle cx="370" cy="102" r="6"/>
+    <circle cx="395" cy="102" r="6"/>
+    <circle cx="420" cy="102" r="6"/>
+    <circle cx="445" cy="102" r="6"/>
+    <circle cx="470" cy="102" r="6"/>
+  </g>
+  <!-- Bottom rollers -->
+  <g fill="white" stroke="#000" stroke-width="1">
+    <circle cx="120" cy="348" r="6"/>
+    <circle cx="145" cy="348" r="6"/>
+    <circle cx="170" cy="348" r="6"/>
+    <circle cx="195" cy="348" r="6"/>
+    <circle cx="220" cy="348" r="6"/>
+    <circle cx="245" cy="348" r="6"/>
+    <circle cx="270" cy="348" r="6"/>
+    <circle cx="295" cy="348" r="6"/>
+    <circle cx="320" cy="348" r="6"/>
+    <circle cx="345" cy="348" r="6"/>
+    <circle cx="370" cy="348" r="6"/>
+    <circle cx="395" cy="348" r="6"/>
+    <circle cx="420" cy="348" r="6"/>
+    <circle cx="445" cy="348" r="6"/>
+    <circle cx="470" cy="348" r="6"/>
+  </g>
+
+  <!-- Porous sample -->
+  <rect x="110" y="110" width="380" height="230" fill="white" stroke="#000" stroke-width="2.5"/>
+
+  <!-- Coordinate system (x,y) at center -->
+  <g stroke="#000" stroke-width="1.8" fill="none">
+    <!-- x-axis -->
+    <line x1="290" y1="200" x2="345" y2="200" marker-end="url(#axisArrow)"/>
+    <!-- y-axis -->
+    <line x1="290" y1="200" x2="290" y2="145" marker-end="url(#axisArrow)"/>
+  </g>
+  <text x="350" y="205" font-size="18" font-style="italic" fill="#000">x</text>
+  <text x="296" y="142" font-size="18" font-style="italic" fill="#000">y</text>
+
+  <!-- Top compressive force 2F (arrow pointing down onto the plate) -->
+  <line x1="300" y1="30" x2="300" y2="76" stroke="#000" stroke-width="4"
+        marker-end="url(#forceArrow)"/>
+  <text x="312" y="50" font-size="20" font-weight="bold" fill="#000">2F</text>
+
+  <!-- Bottom compressive force 2F (arrow pointing up onto the plate) -->
+  <line x1="300" y1="420" x2="300" y2="374" stroke="#000" stroke-width="4"
+        marker-end="url(#forceArrow)"/>
+  <text x="312" y="415" font-size="20" font-weight="bold" fill="#000">2F</text>
+
+  <!-- Drainage / fluid outflow arrows on the left side -->
+  <g stroke="#000" stroke-width="1.6" fill="none">
+    <line x1="105" y1="130" x2="75" y2="130" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="155" x2="75" y2="155" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="180" x2="75" y2="180" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="205" x2="75" y2="205" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="230" x2="75" y2="230" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="255" x2="75" y2="255" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="280" x2="75" y2="280" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="305" x2="75" y2="305" marker-end="url(#drainArrow)"/>
+    <line x1="105" y1="320" x2="75" y2="320" marker-end="url(#drainArrow)"/>
+  </g>
+
+  <!-- Drainage / fluid outflow arrows on the right side -->
+  <g stroke="#000" stroke-width="1.6" fill="none">
+    <line x1="495" y1="130" x2="525" y2="130" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="155" x2="525" y2="155" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="180" x2="525" y2="180" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="205" x2="525" y2="205" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="230" x2="525" y2="230" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="255" x2="525" y2="255" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="280" x2="525" y2="280" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="305" x2="525" y2="305" marker-end="url(#drainArrow)"/>
+    <line x1="495" y1="320" x2="525" y2="320" marker-end="url(#drainArrow)"/>
+  </g>
+
+  <!-- Dimension line: width 2l -->
+  <line x1="115" y1="320" x2="485" y2="320" stroke="#000" stroke-width="1.6"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrowEnd)"/>
+  <text x="295" y="338" font-size="20" font-style="italic" fill="#000">2l</text>
+
+  <!-- Dimension line: height 2b -->
+  <line x1="455" y1="115" x2="455" y2="335" stroke="#000" stroke-width="1.6"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrowEnd)"/>
+  <text x="463" y="230" font-size="20" font-style="italic" fill="#000">2b</text>
+</svg>

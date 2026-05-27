@@ -18,7 +18,7 @@ A rectangular plane-strain domain is initially at equilibrium with uniform pore 
 
 Due to symmetry, only one quarter of the domain is simulated.
 
-![Mandel domain and boundary conditions](boundary_conditions.png)
+![Mandel domain setup](mandel_setup.svg)
 
 ## 3. Model
 
