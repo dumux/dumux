@@ -84,8 +84,7 @@ public:
                                            const Problem& problem,
                                            const auto& element,
                                            const FVElementGeometry& fvGeometry,
-                                           const ElementVariables& elemVars,
-                                           const auto& elemBcTypes) const
+                                           const ElementVariables& elemVars) const
     {
         if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
         {
@@ -115,33 +114,6 @@ public:
             }
         }
 
-        if (!elemBcTypes.hasNeumann())
-            return;
-
-        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
-        {
-            if (!intersection.boundary())
-                continue;
-
-            const auto& isecBcTypes = elemBcTypes.get(fvGeometry, intersection);
-            if (!isecBcTypes.hasNeumann())
-                continue;
-
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
-            {
-                const auto& ipCache = cache(elemVars, qpData.ipData());
-                const auto flux = problem.boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-                const auto& shapeValues = ipCache.shapeValues();
-
-                for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
-                {
-                    const auto idx = nonCVdof.index();
-                    for (int eqIdx = 0; eqIdx < dim; ++eqIdx)
-                        if (isecBcTypes.isNeumann(eqIdx))
-                            residual[idx][eqIdx] += double(shapeValues[idx]) * flux[eqIdx] * qpData.weight();
-                }
-            }
-        }
         } // end if constexpr
     }
 
