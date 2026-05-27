@@ -53,7 +53,6 @@ class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLoca
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Tensor = Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension>;
@@ -84,8 +83,7 @@ public:
                                            const Problem& problem,
                                            const auto& element,
                                            const FVElementGeometry& fvGeometry,
-                                           const ElementVariables& elemVars,
-                                           const auto& elemBcTypes) const
+                                           const ElementVariables& elemVars) const
     {
         if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
         {
@@ -115,33 +113,6 @@ public:
             }
         }
 
-        if (!elemBcTypes.hasNeumann())
-            return;
-
-        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), element))
-        {
-            if (!intersection.boundary())
-                continue;
-
-            const auto& isecBcTypes = elemBcTypes.get(fvGeometry, intersection);
-            if (!isecBcTypes.hasNeumann())
-                continue;
-
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, intersection))
-            {
-                const auto& ipCache = cache(elemVars, qpData.ipData());
-                const auto flux = problem.boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-                const auto& shapeValues = ipCache.shapeValues();
-
-                for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
-                {
-                    const auto idx = nonCVdof.index();
-                    for (int eqIdx = 0; eqIdx < dim; ++eqIdx)
-                        if (isecBcTypes.isNeumann(eqIdx))
-                            residual[idx][eqIdx] += double(shapeValues[idx]) * flux[eqIdx] * qpData.weight();
-                }
-            }
-        }
         } // end if constexpr
     }
 
@@ -150,6 +121,7 @@ public:
      *
      * Called by Experimental::CVFELocalResidual::evalFlux for interior faces.
      */
+    template<class SubControlVolumeFace>
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
