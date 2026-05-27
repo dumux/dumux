@@ -25,7 +25,7 @@ for more information.
 
 | Image |                                Benchmark description                                 | Topics | Comment |
 |:------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:---------|:---------|
-| [![lid-driven cavity](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/liddrivencavity/img/result.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | [↗️ Shear-Driven Cavity Flow](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | 2D, free flow, @ref NavierStokesModel, @ref FCStaggeredDiscretization | Velocity profiles at Re = 1 and Re = 1000 compared against reference data from Ghia et al. (1982) and Jurjević (1999) |
+| [![lid-driven cavity](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/liddrivencavity/img/result.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | [↗️ Shear-Driven Cavity Flow](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | 2D, free flow, @ref NavierStokesModel, @ref FaceCenteredStaggeredDiscretization | Velocity profiles at Re = 1 and Re = 1000 compared against reference data from Ghia et al. (1982) and Jurjević (1999) |
 
 ## Benchmarks in external modules
 
