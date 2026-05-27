@@ -86,7 +86,7 @@ class NavierStokesMomentumCVFELocalResidual
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using BaseIpData = Dumux::CVFE::InterpolationPointData<typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate, GlobalPosition>;
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
-    using FeResidual = NavierStokesMomentumFELocalResidual<Scalar, NumEqVector, LocalBasis, Extrusion>;
+    using FeResidual = NavierStokesMomentumFELocalResidualTerms<Scalar, NumEqVector, LocalBasis, Extrusion>;
 
     using FluxFunctionHelper = NavierStokesMomentumFluxFunctionCVFE<GridGeometry, NumEqVector>;
 
@@ -220,12 +220,16 @@ public:
                                         + problem.density(fvGeometry.element(), fvGeometry, qpData.ipData()) * problem.gravity());
         }
 
-        // ToDo: point source data with ipData
-        // add contribution from possible point sources
-        if (!problem.pointSourceMap().empty())
-            source += Extrusion::volume(fvGeometry, scv) * problem.scvPointSources(fvGeometry.element(), fvGeometry, elemVars, scv);
-
         source *= elemVars[scv].extrusionFactor();
+
+        // add contribution from possible point sources
+        const auto& pointSources = problem.pointSources();
+        if (!pointSources.empty())
+            for (const auto& context : pointSources.contexts(fvGeometry, scv))
+            {
+                auto psValues = pointSources.eval(fvGeometry, elemVars, context);
+                source += psValues;
+            }
 
         return source;
     }
@@ -368,11 +372,10 @@ public:
                                            const Problem& problem,
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
-                                           const ElementVariables& elemVars,
-                                           const ElementBoundaryTypes &elemBcTypes) const
+                                           const ElementVariables& elemVars) const
     {
         FeResidual::addFluxAndSourceTerms(
-            residual, problem, fvGeometry, elemVars, elemBcTypes
+            residual, problem, fvGeometry, elemVars
         );
     }
 

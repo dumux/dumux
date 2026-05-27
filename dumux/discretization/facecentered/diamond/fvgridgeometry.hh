@@ -226,6 +226,10 @@ private:
         const auto& boundaryFaces(GridIndexType eIdx) const
         { return boundaryFaces_[eIdx]; }
 
+        //! For each boundary face of element eIdx, the {offset, count} subrange of scvfs(eIdx) belonging to that boundary face
+        const auto& boundaryFaceScvfRanges(GridIndexType eIdx) const
+        { return boundaryFaceScvfRanges_[eIdx]; }
+
     private:
         void clear_()
         {
@@ -233,12 +237,14 @@ private:
             scvfs_.clear();
             hasBoundaryScvf_.clear();
             boundaryFaces_.clear();
+            boundaryFaceScvfRanges_.clear();
         }
 
         std::vector<std::vector<SubControlVolume>> scvs_;
         std::vector<std::vector<SubControlVolumeFace>> scvfs_;
         std::vector<bool> hasBoundaryScvf_;
         std::vector<Dune::ReservedVector<BoundaryFace, 2*dim>> boundaryFaces_;
+        std::vector<Dune::ReservedVector<std::array<LocalIndexType, 2>, 2*dim>> boundaryFaceScvfRanges_;
 
         const FaceCenteredDiamondFVGridGeometry* gridGeometry_;
     };
@@ -263,6 +269,7 @@ private:
         cache_.scvfs_.resize(numElements);
         cache_.hasBoundaryScvf_.resize(numElements, false);
         cache_.boundaryFaces_.resize(numElements);
+        cache_.boundaryFaceScvfRanges_.resize(numElements);
 
         boundaryDofIndices_.assign(numDofs(), false);
 
@@ -347,6 +354,11 @@ private:
                             static_cast<LocalIndexType>(localFacetIndex),
                             typename BoundaryFace::Traits::BoundaryFlag{intersection}
                         });
+
+                        // record the scvf subrange for this boundary face: {offset, count=1}
+                        cache_.boundaryFaceScvfRanges_[eIdx].push_back(std::array<LocalIndexType, 2>{{
+                            localScvfIdx, 1
+                        }});
                     }
 
                     // add boundary scvf

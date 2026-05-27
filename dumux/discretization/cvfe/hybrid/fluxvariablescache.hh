@@ -36,7 +36,6 @@ class HybridCVFEFluxVariablesCache
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
 
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -48,8 +47,6 @@ class HybridCVFEFluxVariablesCache
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
 
 public:
-    using ScvfQuadratureRule = typename GridGeometry::ScvfQuadratureRule;
-
     //! whether the cache needs an update when the solution changes
     static bool constexpr isSolDependent = false;
 

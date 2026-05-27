@@ -98,7 +98,6 @@ template<class Problem,
 class NavierStokesMomentumFluxFunctionContext
 {
     using Element = typename FVElementGeometry::Element;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr int dim = FVElementGeometry::GridGeometry::GridView::dimension;

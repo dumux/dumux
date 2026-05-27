@@ -19,6 +19,7 @@
 #include <dumux/common/boundarytypes_.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
+#include <dumux/common/problemwithspatialparams.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -150,9 +151,9 @@ private:
 };
 
 template<class TypeTag>
-class CVFENavierStokesMassProblem : public FVProblemWithSpatialParams<TypeTag>
+class CVFENavierStokesMassProblem : public Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Experimental::ProblemWithSpatialParams<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -209,102 +210,6 @@ public:
     : CVFENavierStokesMassProblem(gridGeometry, {}, paramGroup)
     {}
 
-    using ParentType::source;
-    /*!
-     * \brief Evaluate the source term at a given interpolation point, related to the residual of a local dof
-     *
-     * This is the method for the case where the source term is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All volume variables for the element
-     * \param ipData Interpolation point data
-     *
-     * For this method, the return parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     */
-    template<class ElementVariables, class IpData>
-    Sources source(const FVElementGeometry& fvGeometry,
-                   const ElementVariables& elemVars,
-                   const IpData& ipData) const
-    {
-        return asImp_().sourceAtPos(ipData.global());
-    }
-
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary face.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param boundaryFace The boundary face
-     */
-    BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
-                                const FVElementGeometry::BoundaryFace& boundaryFace) const
-    {
-        // forward it to the method which only takes the global coordinate
-        return asImp_().boundaryTypesAtPos(boundaryFace.center());
-    }
-
-    using ParentType::dirichlet;
-    /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet
-     *        control volume.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param faceIpData Face interpolation point data
-     */
-    template<class FaceIpData>
-    DirichletValues dirichlet(const FVElementGeometry& fvGeometry,
-                              const FaceIpData& faceIpData) const
-    {
-        // forward it to the method which only takes the global coordinate
-        return asImp_().dirichletAtPos(faceIpData.global());
-    }
-
-    /*!
-     * \brief Evaluates the boundary flux integral for a scvf.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param elemFluxVarsCache The element flux variables cache
-     * \param scvf The sub-control volume face
-     */
-    template<class ElementVariables, class ElementFluxVariablesCache>
-    [[deprecated("This function is deprecated and will be removed after release 3.11. "
-                 "Use boundaryFluxIntegral(fvGeometry, elemVars, scvf) instead.")]]
-    BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
-                                        const ElementVariables& elemVars,
-                                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                                        const SubControlVolumeFace& scvf) const
-    {
-        BoundaryFluxes flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-            flux += qpData.weight() * asImp_().boundaryFlux(fvGeometry, elemVars, elemFluxVarsCache, qpData.ipData());
-
-        return flux * elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
-    }
-
-    /*!
-     * \brief Evaluates the boundary flux integral for a scvf.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param scvf The sub-control volume face
-     */
-    template<class ElementVariables>
-    BoundaryFluxes boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
-                                        const ElementVariables& elemVars,
-                                        const SubControlVolumeFace& scvf) const
-    {
-        BoundaryFluxes flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-            flux += qpData.weight() * asImp_().boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-
-        return flux * elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
-    }
-
     /*!
      * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
@@ -323,27 +228,6 @@ public:
     {
         return asImp_().boundaryFlux(fvGeometry, elemVars, faceIpData);
     }
-
-    /*!
-     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param faceIpData Face interpolation point data
-     */
-    template<class ElementVariables, class FaceIpData>
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
-                                const ElementVariables& elemVars,
-                                const FaceIpData& faceIpData) const
-    {
-        return asImp_().boundaryFluxAtPos(faceIpData.global());
-    }
-
-    /*!
-     * \brief Returns the boundary flux at a given position.
-     */
-    BoundaryFluxes boundaryFluxAtPos(const GlobalPosition& globalPos) const
-    { return BoundaryFluxes(0.0); } //! A default, i.e. if the user's does not overload any boundaryFlux method
 
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.

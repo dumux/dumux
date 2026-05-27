@@ -126,13 +126,11 @@ public:
      *
      * \param fvGeometry The finite-volume geometry
      * \param elemVars All variables related to the element
-     * \param elemFluxVarsCache The element flux variables cache
      * \param faceIpData Interpolation point data
      */
-    template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
+    template<class ElementVariables, class FaceIpData>
     BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
                                 const ElementVariables& elemVars,
-                                const ElementFluxVariablesCache& elemFluxVarsCache,
                                 const FaceIpData& faceIpData) const
     {
         BoundaryFluxes values(0.0);

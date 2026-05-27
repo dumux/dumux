@@ -27,7 +27,7 @@ namespace Dumux {
  * \brief Helper class for evaluating FE-based local residuals
  */
 template<class Scalar, class NumEqVector, class LocalBasis, class Extrusion>
-class NavierStokesMomentumFELocalResidual
+class NavierStokesMomentumFELocalResidualTerms
 {
     using RangeType = typename LocalBasis::Traits::RangeType;
 
@@ -121,8 +121,11 @@ public:
             if (nonCVLocalDofs(fvGeometry).empty())
                 return;
 
-            if (!problem.pointSourceMap().empty())
-                DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            if constexpr (requires { problem.pointSources(); })
+            {
+                if (!problem.pointSources().empty())
+                    DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            }
 
             static const bool enableUnsymmetrizedVelocityGradient
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -221,15 +224,12 @@ public:
      * \param problem The problem to solve
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemBcTypes The element boundary types
      */
-    template<class ResidualVector, class Problem, class FVElementGeometry,
-             class ElementVariables, class ElementBoundaryTypes>
+    template<class ResidualVector, class Problem, class FVElementGeometry, class ElementVariables>
     static void addFluxAndSourceTerms(ResidualVector& residual,
                                       const Problem& problem,
                                       const FVElementGeometry& fvGeometry,
-                                      const ElementVariables& elemVars,
-                                      const ElementBoundaryTypes& elemBcTypes)
+                                      const ElementVariables& elemVars)
     {
         if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
         {
@@ -237,8 +237,11 @@ public:
             if (nonCVLocalDofs(fvGeometry).empty())
                 return;
 
-            if (!problem.pointSourceMap().empty())
-                DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            if constexpr (requires { problem.pointSources(); })
+            {
+                if (!problem.pointSources().empty())
+                    DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
+            }
 
             static const bool enableUnsymmetrizedVelocityGradient
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -289,42 +292,9 @@ public:
                     }
                 }
             }
-
-            if (elemBcTypes.hasFluxBoundary())
-                addBoundaryFluxes(residual, problem, fvGeometry, elemVars, elemBcTypes);
         }
     }
-
-    /*!
-     * \brief Evaluate flux boundary contributions
-     *
-     * \param residual The element residual vector to add to
-     * \param problem The problem to solve
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param elemVars The variables for all local dofs of the element
-     * \param elemBcTypes The element boundary types
-     */
-    template<class ResidualVector, class Problem, class FVElementGeometry,
-             class ElementVariables, class ElementBoundaryTypes>
-    static void addBoundaryFluxes(ResidualVector& residual,
-                                  const Problem& problem,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVariables& elemVars,
-                                  const ElementBoundaryTypes& elemBcTypes)
-    {
-        ResidualVector flux(0.0);
-
-        const auto& element = fvGeometry.element();
-        for (const auto& boundaryFace : boundaryFaces(fvGeometry))
-        {
-            const auto& bcTypes = elemBcTypes.get(fvGeometry, boundaryFace);
-            if (!bcTypes.hasFluxBoundary())
-                continue;
-
-            problem.addBoundaryFluxIntegrals(flux, fvGeometry, elemVars, boundaryFace, bcTypes);
-        }
-        residual += flux;
-    }
+    
 };
 
 } // end namespace Dumux

@@ -44,6 +44,10 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
+#include <dumux/discretization/cvfe/gridvariablescache_.hh>
+#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/gridvariables.hh>
 
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
@@ -78,6 +82,55 @@ struct FluidSystem<TypeTag, TTag::ThreeDChannelTest>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
+
+#if NEW_PROBLEM_INTERFACE
+//! The grid variables for the PQ1Bubble momentum TypeTag
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ1Bubble>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! The grid variables for the PQ2 (hybrid) momentum TypeTag
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ2>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! The grid variables for the Box mass TypeTag
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::ThreeDChannelTestMassBox>
+{
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+#endif
 
 #if NEW_VARIABLES_INTERFACE
 // the variables

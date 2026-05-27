@@ -10,14 +10,11 @@
  * \brief Defines a type tag and some properties for models using the pq2 scheme.
  */
 
-#ifndef DUMUX_DISCRETIZTAION_PQ2_HH
-#define DUMUX_DISCRETIZTAION_PQ2_HH
+#ifndef DUMUX_DISCRETIZATION_PQ2_HH
+#define DUMUX_DISCRETIZATION_PQ2_HH
 
 #include <concepts>
 #include <type_traits>
-
-#include <dune/common/fvector.hh>
-#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
