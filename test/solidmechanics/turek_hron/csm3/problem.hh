@@ -14,6 +14,9 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/elementsolution.hh>
+
 #include <dumux/experimental/timestepping/newmarkbeta.hh>
 
 namespace Dumux {
@@ -125,9 +128,33 @@ public:
         return newmark_->acceleration(dofIndex, dt, d);
     }
 
+    // compute displacement at benchmark evaluation point A
+    template<class SolutionVector, class GridVariables>
+    GlobalPosition evalControlPointDisplacement(const GridVariables& gridVariables, const SolutionVector& p) const
+    {
+        if (!controlPointElement_)
+        {
+            const auto& tree = gridVariables.gridGeometry().boundingBoxTree();
+            auto entities = intersectingEntities(controlPointA_, tree);
+            if (entities.empty()) DUNE_THROW(Dune::Exception, "Control point A not found!");
+            controlPointElement_ = entities[0];
+        }
+
+        const auto& gg = gridVariables.gridGeometry();
+        const auto element = gg.element(*controlPointElement_);
+        const auto fvGeometry = localView(gg).bindElement(element);
+        const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, p);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+
+        return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, controlPointA_);
+    }
+
+
 private:
     static constexpr Scalar eps_ = 1e-7;
     Scalar gravity_;
+    GlobalPosition controlPointA_{{0.6, 0.2}};
+    mutable std::optional<std::size_t> controlPointElement_;
 
     std::shared_ptr<const Experimental::NewmarkBeta<Scalar, SolutionVector>> newmark_;
 };

@@ -6,6 +6,7 @@
 //
 #include <config.h>
 #include <iostream>
+#include <fstream>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
@@ -42,6 +43,10 @@ int main(int argc, char** argv)
     GridManager<Grid> gridManager;
     gridManager.init();
 
+    // get the refinement
+    const auto refinement = getParam<int>("Grid.Refinement", 0);
+    gridManager.grid().globalRefine(refinement);
+
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
@@ -49,9 +54,15 @@ int main(int argc, char** argv)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
+    const auto numElements = leafGridView.size(0);
+    const auto numDofs = gridGeometry->numDofs();
+
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
+
+    const std::string problemName = problem->name();
+    const std::string csvFileName = problemName + "_dumux_box.csv";
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -76,8 +87,8 @@ int main(int argc, char** argv)
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
+    const auto dtInitial = getParam<Scalar>("TimeLoop.DtInitial");
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dtInitial, tEnd);
 
     // the time stepping scheme
     auto newmarkBeta = std::make_shared<Experimental::NewmarkBeta<Scalar, SolutionVector>>();
@@ -99,6 +110,10 @@ int main(int argc, char** argv)
 
     const int vtkInterval = getParam<int>("VTKOutput.Every", 5);
 
+    // If the output already exist we overwrite it
+    std::ofstream csvFile(csvFileName, std::ios::out | std::ios::trunc);
+    csvFile << "t,dt,level,nel,ndof,ux,uy\n";
+
     // time loop
     timeLoop->start(); do
     {
@@ -106,7 +121,7 @@ int main(int argc, char** argv)
         nonLinearSolver->solve(x);
 
         // update the solution in the time stepping scheme
-        newmarkBeta->update(dt, x);
+        newmarkBeta->update(timeLoop->timeStepSize(), x);
 
         // make the new solution the old solution
         xOld = x;
@@ -114,6 +129,11 @@ int main(int argc, char** argv)
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+
+        const auto displacementA = problem->evalControlPointDisplacement(*gridVariables, x);
+        csvFile << timeLoop->time() << "," << timeLoop->timeStepSize() << ","
+                << refinement << "," <<numElements << "," << numDofs << ","
+                << displacementA[0] << "," << displacementA[1] << "\n";
 
         // write VTK output
         if (timeLoop->timeStepIndex() % vtkInterval == 0 || timeLoop->finished())
