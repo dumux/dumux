@@ -28,6 +28,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/geometry/intersectingentities.hh>
+#include <dumux/discretization/concepts.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
 
@@ -69,7 +70,19 @@ int main(int argc, char** argv)
     using MomGG = GetPropType<MomTypeTag, Properties::GridGeometry>;
     using PresGG = GetPropType<PresTypeTag, Properties::GridGeometry>;
     using MomDiscMethod = typename MomGG::DiscretizationMethod;
-    const std::string thisRunName = MomDiscMethod::name() + " FVM (this run)";
+    using MomElementDisc = typename MomGG::LocalView;
+    const std::string thisRunName = MomDiscMethod::name() + []()
+    {
+        using namespace Dumux::Experimental::Concepts;
+        if constexpr (HybridElementDiscretization<MomElementDisc>)
+            return std::string{" FVM-Hybrid (this run)"};
+        else if constexpr (FVElementDiscretization<MomElementDisc>)
+            return std::string{" FVM (this run)"};
+        else if constexpr (FEElementDiscretization<MomElementDisc>)
+            return std::string{" FE (this run)"};
+
+        return std::string{" (this run)"};
+    }();
     auto momGG = std::make_shared<MomGG>(leafGridView);
     auto presGG = std::make_shared<PresGG>(leafGridView);
 
