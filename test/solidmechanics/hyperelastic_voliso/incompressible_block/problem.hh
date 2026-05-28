@@ -42,7 +42,6 @@ class IncompressibleBlockMomentumProblem : public Dumux::Experimental::ProblemWi
     using ParentType = Dumux::Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Intersection = typename GridView::Intersection;
     using Element = typename GridView::template Codim<0>::Entity;
