@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 50 50 50
-Cells = 8 8 8
+Cells = 4 4 4
 
 [Problem]
 Name = test_hyperelastic_incompressible_block
