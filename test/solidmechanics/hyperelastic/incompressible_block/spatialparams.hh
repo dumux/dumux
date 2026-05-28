@@ -7,7 +7,7 @@
 #ifndef DUMUX_HYPERELASTIC_INCOMPRESSIBLE_BLOCK_SPATIAL_PARAMS_HH
 #define DUMUX_HYPERELASTIC_INCOMPRESSIBLE_BLOCK_SPATIAL_PARAMS_HH
 
-#include <dumux/common/fvspatialparams.hh>
+#include <dumux/common/spatialparams.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
@@ -16,10 +16,10 @@ namespace Dumux {
 // This avoids E/ν round-tripping for nearly-incompressible benchmark materials.
 template<class GridGeometry, class Scalar>
 class IncompressibleBlockSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, IncompressibleBlockSpatialParams<GridGeometry, Scalar>>
+: public Dumux::Experimental::SpatialParams<GridGeometry, Scalar, IncompressibleBlockSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar,
-                                       IncompressibleBlockSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = Dumux::Experimental::SpatialParams<GridGeometry, Scalar,
+                                                          IncompressibleBlockSpatialParams<GridGeometry, Scalar>>;
 public:
     IncompressibleBlockSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
