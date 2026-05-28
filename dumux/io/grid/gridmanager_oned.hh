@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for OneDGrid
+ * \anchor oned_grid_manager
  */
 #ifndef DUMUX_IO_GRID_MANAGER_ONED_HH
 #define DUMUX_IO_GRID_MANAGER_ONED_HH
@@ -22,18 +23,20 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for OneDGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
+ *
  * The following keys are recognized:
+ * - File : A dgf file to load from
  * - LeftBoundary : start coordinate
  * - RightBoundary : end coordinate
  * - Cells : the number of cell
+ * - Coordinates : coordinates vector
  * - RefinementType : local or copy
- * - Refinement : the number of global refines to apply initially.
- *
+ * - Refinement : the number of global refines to apply initially
  */
 template<>
 class GridManager<Dune::OneDGrid>
@@ -49,7 +52,7 @@ public:
     void init(const std::string& modelParamGroup = "")
     {
 
-        // try to create it from a DGF or msh file in GridParameterGroup.File
+        // First, try to create it from a DGF file in GridParameterGroup.File
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
@@ -57,7 +60,7 @@ public:
             return;
         }
 
-        // Look for the necessary keys to construct from the input file
+        // Then look for the necessary keys to construct from the input file
         else if (hasParamInGroup(modelParamGroup, "Grid.RightBoundary"))
         {
             // The required parameters
@@ -71,7 +74,7 @@ public:
             return;
         }
 
-        // Look for the necessary keys to construct from the input file with just a coordinates vector
+        // Then look for the necessary keys to construct from the input file with just a coordinates vector
         else if (hasParamInGroup(modelParamGroup, "Grid.Coordinates"))
         {
             const auto coordinates = getParamFromGroup<std::vector<typename Grid::ctype>>(modelParamGroup, "Grid.Coordinates");

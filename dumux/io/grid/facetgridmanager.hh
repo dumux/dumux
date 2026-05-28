@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for extracting a grid from the facets of a host grid
  */
 #ifndef DUMUX_IO_FACET_GRID_MANAGER_HH
@@ -89,7 +89,7 @@ auto fillFactory(Dune::GridFactory<Grid>& factory,
 namespace Concept {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Concept for selecting grid intersections to be included in a facet grid.
  */
 template<typename T, typename Element, typename Intersection>
@@ -100,7 +100,7 @@ concept FacetSelector
 } // end namespace Concept
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager for grids living on the facets of a host grid.
  * \note Each facet is only visited from one side when selecting the facets to be extracted.
  * \note On surface grids as host grids, this implementation assumes that there are no bifurcations.

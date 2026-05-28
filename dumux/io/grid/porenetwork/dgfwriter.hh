@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Write pore-network grids with attached data to dgf file
  */
 #ifndef DUMUX_PORE_NETWORK_DGF_WRITER_HH
@@ -19,7 +19,7 @@
 namespace Dumux::PoreNetwork {
 
  /*!
-  * \ingroup PoreNetworkModels
+  * \ingroup PoreNetworkModelGrids
   * \brief Write pore-network grids with attached data to dgf file
   */
 template<class GridView, class GridData>
