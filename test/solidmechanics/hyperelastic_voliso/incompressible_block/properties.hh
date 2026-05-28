@@ -29,6 +29,10 @@
 #include "../../hyperelastic/incompressible_block/spatialparams.hh"
 #include "problem.hh"
 
+#ifndef ALU_ELEMENT_TYPE
+#define ALU_ELEMENT_TYPE Dune::simplex
+#endif
+
 namespace Dumux::Properties {
 
 namespace TTag {
@@ -40,7 +44,7 @@ struct IncompressibleBlockMomentumP1B
     template<class TypeTag>
     using Problem = IncompressibleBlockMomentumProblem<TypeTag>;
 
-    using Grid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
+    using Grid = Dune::ALUGrid<3, 3, ALU_ELEMENT_TYPE, Dune::nonconforming>;
 
     using InheritsFrom = std::tuple<
         HyperelasticVolIsoMomentumModel,
@@ -51,12 +55,12 @@ struct IncompressibleBlockMomentumP1B
     using EnableGridVolumeVariablesCache = std::true_type;
 };
 
-struct IncompressibleBlockMomentumP2
+struct IncompressibleBlockMomentumPQ2
 {
     template<class TypeTag>
     using Problem = IncompressibleBlockMomentumProblem<TypeTag>;
 
-    using Grid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
+    using Grid = Dune::ALUGrid<3, 3, ALU_ELEMENT_TYPE, Dune::nonconforming>;
 
     using InheritsFrom = std::tuple<
         HyperelasticVolIsoMomentumModel,
@@ -72,7 +76,7 @@ struct IncompressibleBlockPressure
     template<class TypeTag>
     using Problem = IncompressibleBlockPressureProblem<TypeTag>;
 
-    using Grid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
+    using Grid = Dune::ALUGrid<3, 3, ALU_ELEMENT_TYPE, Dune::nonconforming>;
 
     using InheritsFrom = std::tuple<
         HyperelasticVolIsoPressureModel,
@@ -109,7 +113,7 @@ public:
 };
 
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::IncompressibleBlockMomentumP2>
+struct GridVariables<TypeTag, TTag::IncompressibleBlockMomentumPQ2>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
