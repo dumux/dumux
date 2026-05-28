@@ -71,6 +71,22 @@ struct IncompressibleBlockMomentumPQ2
     using EnableGridVolumeVariablesCache = std::true_type;
 };
 
+struct IncompressibleBlockMomentumPQ2Fe
+{
+    template<class TypeTag>
+    using Problem = IncompressibleBlockMomentumProblem<TypeTag>;
+
+    using Grid = Dune::ALUGrid<3, 3, ALU_ELEMENT_TYPE, Dune::nonconforming>;
+
+    using InheritsFrom = std::tuple<
+        HyperelasticVolIsoMomentumModel,
+        PQ2FEModel,
+        IncompressibleBlockCommon>;
+
+    using EnableGridGeometryCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::true_type;
+};
+
 struct IncompressibleBlockPressure
 {
     template<class TypeTag>
