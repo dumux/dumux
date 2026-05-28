@@ -146,47 +146,6 @@ public:
      *
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemFluxVarsCache the flux variable caches for the element's flux stencils
-     * \param scvf The sub control volume face
-     *
-     */
-    template<class ElementFluxVariablesCache>
-    [[deprecated("This function is deprecated and will be removed after release 3.11. "
-                 "Use fluxIntegral(fvGeometry, elemVars, scvf) instead.")]]
-    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
-                             const ElementVariables& elemVars,
-                             const ElementFluxVariablesCache& elemFluxVarsCache,
-                             const SubControlVolumeFace& scvf) const
-    {
-        const auto& problem = this->asImp().problem();
-        NumEqVector flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-        {
-            const auto& faceIpData = qpData.ipData();
-            flux += qpData.weight() * (problem.velocity(fvGeometry, faceIpData) * faceIpData.unitOuterNormal());
-        }
-
-        static const auto upwindWeight
-            = getParamFromGroup<Scalar>(this->problem().paramGroup(), "Flux.UpwindWeight", 1.0);
-
-        const auto& insideVars = elemVars[fvGeometry.scv(scvf.insideScvIdx())];
-        const auto& outsideVars = elemVars[fvGeometry.scv(scvf.outsideScvIdx())];
-
-        flux *= (upwindWeight * insideVars.density() + (1.0 - upwindWeight) * outsideVars.density());
-
-        // the auxiliary flux is enabled if the trait is specialized for the problem
-        // this can be used, for example, to implement flux stabilization terms
-        if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
-            flux += problem.auxiliaryFlux(fvGeometry.element(), fvGeometry, elemVars, elemFluxVarsCache, scvf);
-
-        return flux * insideVars.extrusionFactor();
-    }
-
-    /*!
-     * \brief Calculates the flux integral over a face of a sub control volume.
-     *
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face
      *
      */
