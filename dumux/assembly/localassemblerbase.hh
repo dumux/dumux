@@ -36,7 +36,6 @@ class LocalAssemblerBase
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
@@ -141,7 +140,7 @@ public:
      */
     ElementResidualVector evalLocalFluxAndSourceResidual(const ElementVariables& elemVars) const
     {
-        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVars, elemBcTypes_);
+        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVars);
     }
 
     /*!
@@ -219,10 +218,6 @@ public:
     LocalResidual& localResidual()
     { return localResidual_; }
 
-    //! The element's boundary types
-    ElementBoundaryTypes& elemBcTypes()
-    { return elemBcTypes_; }
-
     //! The finite volume geometry
     const FVElementGeometry& fvGeometry() const
     { return fvGeometry_; }
@@ -234,10 +229,6 @@ public:
     //! The element variables of the previous time step
     const ElementVariables& prevElemVars() const
     { return prevElemVars_; }
-
-    //! The element's boundary types
-    const ElementBoundaryTypes& elemBcTypes() const
-    { return elemBcTypes_; }
 
     //! The local residual for the current element
     const LocalResidual& localResidual() const
@@ -259,7 +250,6 @@ private:
     FVElementGeometry fvGeometry_;
     ElementVariables curElemVars_;
     ElementVariables prevElemVars_;
-    ElementBoundaryTypes elemBcTypes_;
 
     LocalResidual localResidual_; //!< the local residual evaluating the equations per element
     bool elementIsGhost_; //!< whether the element's partitionType is ghost

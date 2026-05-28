@@ -193,8 +193,6 @@ public:
             curElemVars.bindElement(element, fvGeometry, curSol);
             prevElemVars.bind(element, fvGeometry, prevSol);
         }
-
-        this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
     }
 
     //! return reference to the underlying problem

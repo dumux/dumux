@@ -47,7 +47,6 @@ class LocalResidual
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Extrusion = Extrusion_t<GridGeometry>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
     using TimeLoop = TimeLoopBase<Scalar>;
@@ -110,12 +109,10 @@ public:
      *                ought to be calculated
      * \param elemDisc The element discretization
      * \param elemVars The variables for all local dofs of the element at the current time level
-     * \param bcTypes The element boundary types
      */
     ElementResidualVector evalFluxAndSource(const Element& element,
                                             const ElementDiscretization& elemDisc,
-                                            const ElementVariables& elemVars,
-                                            const ElementBoundaryTypes& bcTypes) const
+                                            const ElementVariables& elemVars) const
     {
         // initialize the residual vector for all local dofs in this element
         ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));

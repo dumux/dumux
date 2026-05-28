@@ -80,7 +80,6 @@ public:
     void bindLocalViews()
     {
         ParentType::bindLocalViews();
-        this->elemBcTypes().update(this->asImp_().problem(), this->element(), this->fvGeometry());
     }
 
     /*!
