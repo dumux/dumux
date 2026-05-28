@@ -71,6 +71,22 @@ struct IncompressibleBlockMomentumPQ2
     using EnableGridVolumeVariablesCache = std::true_type;
 };
 
+struct IncompressibleBlockMomentumPQ2Fe
+{
+    template<class TypeTag>
+    using Problem = IncompressibleBlockMomentumProblem<TypeTag>;
+
+    using Grid = Dune::ALUGrid<3, 3, ALU_ELEMENT_TYPE, Dune::nonconforming>;
+
+    using InheritsFrom = std::tuple<
+        HyperelasticVolIsoMomentumModel,
+        PQ2FEModel,
+        IncompressibleBlockCommon>;
+
+    using EnableGridGeometryCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::true_type;
+};
+
 struct IncompressibleBlockPressure
 {
     template<class TypeTag>
@@ -81,6 +97,22 @@ struct IncompressibleBlockPressure
     using InheritsFrom = std::tuple<
         HyperelasticVolIsoPressureModel,
         BoxModel,
+        IncompressibleBlockCommon>;
+
+    using EnableGridGeometryCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::true_type;
+};
+
+struct IncompressibleBlockPressureFe
+{
+    template<class TypeTag>
+    using Problem = IncompressibleBlockPressureProblem<TypeTag>;
+
+    using Grid = Dune::ALUGrid<3, 3, ALU_ELEMENT_TYPE, Dune::nonconforming>;
+
+    using InheritsFrom = std::tuple<
+        HyperelasticVolIsoPressureModel,
+        PQ1FEModel,
         IncompressibleBlockCommon>;
 
     using EnableGridGeometryCache = std::true_type;
@@ -146,15 +178,19 @@ public:
 #define MOMENTUM_DISCRETIZATION IncompressibleBlockMomentumP1B
 #endif
 
+#ifndef PRESSURE_DISCRETIZATION
+#define PRESSURE_DISCRETIZATION IncompressibleBlockPressure
+#endif
+
 template<class TypeTagA, class TypeTagB>
 using TheCouplingManager = HyperelasticVolIsoCouplingManager<MultiDomainTraits<TypeTagA, TypeTagB>>;
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::MOMENTUM_DISCRETIZATION>
-{ using type = TheCouplingManager<TTag::MOMENTUM_DISCRETIZATION, TTag::IncompressibleBlockPressure>; };
+{ using type = TheCouplingManager<TTag::MOMENTUM_DISCRETIZATION, TTag::PRESSURE_DISCRETIZATION>; };
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::IncompressibleBlockPressure>
-{ using type = TheCouplingManager<TTag::MOMENTUM_DISCRETIZATION, TTag::IncompressibleBlockPressure>; };
+struct CouplingManager<TypeTag, TTag::PRESSURE_DISCRETIZATION>
+{ using type = TheCouplingManager<TTag::MOMENTUM_DISCRETIZATION, TTag::PRESSURE_DISCRETIZATION>; };
 
 } // end namespace Dumux::Properties
 #endif

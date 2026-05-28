@@ -49,3 +49,19 @@ dumux_add_test(
                       ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_q2_q1-00005.vtu
               --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_q2_q1 params.input -Problem.Name test_hyperelastic_incompressible_block_q2_q1"
 )
+
+dumux_add_test(
+    NAME test_hyperelastic_incompressible_block_p2fe_p1fe
+    LABELS geomechanics elastic
+    SOURCES main.cc
+    COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION=IncompressibleBlockMomentumPQ2Fe
+    COMPILE_DEFINITIONS PRESSURE_DISCRETIZATION=IncompressibleBlockPressureFe
+    CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+    COMMAND ${DUMUX_RUNTEST}
+    CMD_ARGS  --script fuzzy
+              --files ${CMAKE_SOURCE_DIR}/test/references/test_hyperelastic_incompressible_block_p2fe_p1fe-reference.vtu
+                      ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p2fe_p1fe-00005.vtu
+              --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p2fe_p1fe params.input
+                        -Problem.Name test_hyperelastic_incompressible_block_p2fe_p1fe
+                        -Grid.File block_delaunay.msh"
+)
