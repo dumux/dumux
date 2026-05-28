@@ -53,7 +53,6 @@ class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLoca
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Tensor = Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension>;
@@ -122,6 +121,7 @@ public:
      *
      * Called by Experimental::CVFELocalResidual::evalFlux for interior faces.
      */
+    template<class SubControlVolumeFace>
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
