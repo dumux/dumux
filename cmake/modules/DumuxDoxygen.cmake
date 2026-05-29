@@ -13,6 +13,17 @@ macro (add_dumux_doxygen_target)
     add_doxygen_target()
     add_custom_target(doxygen_${ProjectName}_prebuild
                       COMMAND rm -rf ${CMAKE_BINARY_DIR}/doc/doxygen/html)
-    add_dependencies(doxygen_${ProjectName} doxygen_${ProjectName}_prebuild)
+
+    if(TARGET doxygen_${ProjectName})
+      add_dependencies(doxygen_${ProjectName} doxygen_${ProjectName}_prebuild)
+    elseif(TARGET doxygen_${ProjectName}_build)
+      add_dependencies(doxygen_${ProjectName}_build doxygen_${ProjectName}_prebuild)
+    else()
+      message(WARNING
+        "Neither doxygen_${ProjectName} nor doxygen_${ProjectName}_build exists; "
+        "cannot add DuMux Doxygen prebuild dependency"
+      )
+    endif()
+
   endif()
 endmacro ()
