@@ -66,6 +66,7 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
 #include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/pq3.hh>
 #include <dumux/discretization/cvfe/gridvariablescache_.hh>
 #include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
@@ -84,6 +85,7 @@ struct DoneaTestMomentumBox { using InheritsFrom = std::tuple<DoneaTest, NavierS
 struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
+struct DoneaTestMomentumPQ3Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ3HybridModel>; };
 } // end namespace TTag
 
 // Set the problem property
