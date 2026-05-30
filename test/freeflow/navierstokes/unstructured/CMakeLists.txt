@@ -101,3 +101,46 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_tr
                              -Problem.EnableInertiaTerms false
                              -Grid.File cylinder_channel_quad.msh
                              -LinearSolver.UseTrilinos true)
+
+# Parallel Stokes using Trilinos Amesos2 (2 MPI ranks, PQ1Bubble + FCDiamond)
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos_parallel
+               TARGET test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos
+               LABELS freeflow navierstokes trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS      ${MPIEXEC_NUMPROC_FLAG} 2
+                             ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos
+                             params.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond_trilinos_parallel
+                             -Problem.EnableInertiaTerms false
+                             -Grid.File cylinder_channel_quad.msh
+                             -LinearSolver.UseTrilinos true)
+
+# Stokes (Navier-Stokes without inertia) using Trilinos Amesos2, PQ1Bubble (Mini) + Box on simplices
+# Mini element on triangles is inf-sup stable; this also tests the NS nonlinear path in parallel.
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassBox
+               COMPILE_DEFINITIONS GRID_TYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               LABELS freeflow navierstokes trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos
+               CMD_ARGS      params.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos
+                             -Problem.EnableInertiaTerms false
+                             -LinearSolver.UseTrilinos true)
+
+# Parallel NS using Trilinos Amesos2 (2 MPI ranks, Mini element + Box on simplices)
+# Mini element is inf-sup stable on triangles; tests nonlinear NS parallel direct solve.
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box_trilinos_parallel
+               TARGET test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos
+               LABELS freeflow navierstokes trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS      ${MPIEXEC_NUMPROC_FLAG} 2
+                             ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos
+                             params.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box_trilinos_parallel
+                             -Problem.EnableInertiaTerms true
+                             -LinearSolver.UseTrilinos true)

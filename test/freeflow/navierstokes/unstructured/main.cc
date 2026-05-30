@@ -171,11 +171,25 @@ int main(int argc, char** argv)
     else if (getParam<bool>("LinearSolver.UseTrilinos", false))
     {
 #if DUMUX_HAVE_TRILINOS
-        using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-        auto linearSolver = std::make_shared<LinearSolver>();
-        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
+        using LATraits = LinearAlgebraTraitsFromAssembler<Assembler>;
+        if (mpiHelper.size() > 1)
+        {
+            // Parallel: use the two-subdomain constructor to build combined DOF maps
+            using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LATraits>;
+            auto linearSolver = std::make_shared<LinearSolver>(*momentumGridGeometry, *massGridGeometry);
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+            nonLinearSolver.solve(x);
+        }
+        else
+        {
+            // Sequential: use the no-arg constructor with lazy DOF map init
+            using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LATraits>;
+            auto linearSolver = std::make_shared<LinearSolver>();
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+            nonLinearSolver.solve(x);
+        }
 #else
         DUNE_THROW(Dune::NotImplemented, "Trilinos not available");
 #endif
