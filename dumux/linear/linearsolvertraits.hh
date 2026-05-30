@@ -170,6 +170,33 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
     { return { gg.dofMapper() }; }
 };
 
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ3>
+: public LinearSolverTraitsBase<GridGeometry>
+{
+    using DofMapper = typename GridGeometry::DofMapper;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+
+    static constexpr int dofCodim = Grid::dimension;
+
+    // PQ3 has DOFs on all mesh entities: vertices, edges, faces (3D), and element interiors
+    // (P3 triangles: 1 interior DOF; Q3 quads: 4; P3 tets: 0; Q3 hexes: 8)
+    // We set bits for all codimensions to ensure correct parallel communication setup
+    static constexpr std::bitset<Grid::dimension+1> dofCodims{
+        (1UL << (Grid::dimension+1)) - 1UL  // bits 0..dim all set
+    };
+
+    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
+                                          && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return gridView.overlapSize(0) == 0; }
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return gg.dofMapper(); }
+};
+
 //! Cell-centered tpfa: use overlapping model
 template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa>
