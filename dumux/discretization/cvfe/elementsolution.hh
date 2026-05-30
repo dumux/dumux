@@ -85,7 +85,11 @@ public:
     void update(const Element& element, const SolutionVector& sol,
                 const GridGeometry& gridGeometry)
     {
-        // TODO: this implementation only works if there is only one dof per codim/entity
+        // For schemes with multiple DOFs per entity (e.g. PQ3 with 2 DOFs per edge)
+        // the formula subIndex + localKey.index() may need an orientation flip for
+        // simplex elements (see HybridPQ3GeometryHelper::dofIndex for details).
+        // If the grid geometry exposes a flip-aware dofIndex(element, localKey)
+        // method, use it; otherwise fall back to the generic formula.
         // As local-global mappings are provided by the grid geometry
         // this logic should maybe become part of the grid geometry.
         const auto& localCoeff = gridGeometry.feCache().get(element.type()).localCoefficients();
@@ -93,11 +97,14 @@ public:
         for (int localDofIdx = 0; localDofIdx < localCoeff.size(); ++localDofIdx)
         {
             const auto& localKey = localCoeff.localKey(localDofIdx);
-            priVars_[localDofIdx] = sol[
-                gridGeometry.dofMapper().subIndex(
-                    element, localKey.subEntity(), localKey.codim()
-                ) + localKey.index()
-            ];
+            if constexpr (requires { gridGeometry.dofIndex(element, localKey); })
+                priVars_[localDofIdx] = sol[gridGeometry.dofIndex(element, localKey)];
+            else
+                priVars_[localDofIdx] = sol[
+                    gridGeometry.dofMapper().subIndex(
+                        element, localKey.subEntity(), localKey.codim()
+                    ) + localKey.index()
+                ];
         }
     }
 
