@@ -41,20 +41,20 @@ class DoneaTestProblemNewInterface : public BaseProblem
 {
     using ParentType = BaseProblem;
 
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using FVElementGeometry = typename GridDiscretization::LocalView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Sources = typename ParentType::Sources;
     using DirichletValues = typename ParentType::DirichletValues;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ConstraintInfo = Dumux::DirichletConstraintInfo<ModelTraits::numEq()>;
     using ConstraintValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
-    using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
+    using GridIndexType = typename IndexTraits<typename GridDiscretization::GridView>::GridIndex;
     using DirichletConstraintData = Dumux::DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using BoundaryFluxes = typename ParentType::BoundaryFluxes;
 
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    static constexpr auto dimWorld = GridDiscretization::GridView::dimensionworld;
     using Element = typename FVElementGeometry::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -63,8 +63,8 @@ class DoneaTestProblemNewInterface : public BaseProblem
 public:
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    DoneaTestProblemNewInterface(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(gridGeometry, couplingManager)
+    DoneaTestProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization, std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(gridDiscretization, couplingManager)
     {
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
@@ -75,8 +75,8 @@ public:
             appendInternalConstraints_();
     }
 
-    DoneaTestProblemNewInterface(std::shared_ptr<const GridGeometry> gridGeometry)
-    : ParentType(gridGeometry)
+    DoneaTestProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization)
+    : ParentType(gridDiscretization)
     {
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
@@ -325,7 +325,7 @@ private:
         if (useNeumann_)
         {
             static constexpr Scalar eps = 1e-8;
-            if ((globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps) || (globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps))
+            if ((globalPos[0] > this->gridDiscretization().bBoxMax()[0] - eps) || (globalPos[1] > this->gridDiscretization().bBoxMax()[1] - eps))
                 return true;
             else
                 return false;
@@ -336,8 +336,8 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        auto fvGeometry = localView(this->gridDiscretization());
+        for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
             fvGeometry.bind(element);
 
@@ -361,16 +361,16 @@ private:
 
     void appendInternalConstraints_()
     {
-        static_assert(GridGeometry::discMethod == DiscretizationMethods::box, "Internal Dirichlet constraints only implemented for Box mass discretization scheme.");
+        static_assert(GridDiscretization::discMethod == DiscretizationMethods::box, "Internal Dirichlet constraints only implemented for Box mass discretization scheme.");
 
         static constexpr Scalar eps = 1e-8;
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        auto fvGeometry = localView(this->gridDiscretization());
+        for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
             fvGeometry.bind(element);
             for (const auto& scv : scvs(fvGeometry))
             {
-                if  ((scv.dofPosition() - this->gridGeometry().bBoxMin()).two_norm() < eps)
+                if  ((scv.dofPosition() - this->gridDiscretization().bBoxMin()).two_norm() < eps)
                 {
                     ConstraintInfo info;
                     info.setAll();
