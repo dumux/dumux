@@ -32,6 +32,9 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/stokes_solver.hh>
+#if DUMUX_HAVE_TRILINOS
+#include <dumux/linear/trilinossolvers.hh>
+#endif
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/assembler.hh>
@@ -263,24 +266,53 @@ int main(int argc, char** argv)
                                                  std::make_tuple(momentumGridVariables, massGridVariables),
                                                  couplingManager);
 
-    // the linear solver
-#if USE_STOKES_SOLVER
-    using Matrix = typename Assembler::JacobianMatrix;
-    using Vector = typename Assembler::ResidualType;
-    using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
-    auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
-    auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+    // the linear solver and solve
+    if (getParam<bool>("LinearSolver.UseTrilinos", false))
+    {
+#if DUMUX_HAVE_TRILINOS
+        using LATraits = LinearAlgebraTraitsFromAssembler<Assembler>;
+        if (mpiHelper.size() > 1)
+        {
+            using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LATraits>;
+            auto linearSolver = std::make_shared<LinearSolver>(*momentumGridGeometry, *massGridGeometry);
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+            nonLinearSolver.solve(x);
+        }
+        else
+        {
+            using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LATraits>;
+            auto linearSolver = std::make_shared<LinearSolver>();
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+            nonLinearSolver.solve(x);
+        }
 #else
-    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+        DUNE_THROW(Dune::NotImplemented, "Trilinos not available");
 #endif
-
-    // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-
-    // linearize & solve
-    nonLinearSolver.solve(x);
+    }
+#if USE_STOKES_SOLVER
+    else
+    {
+        using Matrix = typename Assembler::JacobianMatrix;
+        using Vector = typename Assembler::ResidualType;
+        using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
+#else
+    else
+    {
+        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(x);
+    }
+#endif
 
     Dumux::printErrors(momentumProblem, massProblem, *momentumGridVariables, *massGridVariables, x, momentumIdx, massIdx);
 

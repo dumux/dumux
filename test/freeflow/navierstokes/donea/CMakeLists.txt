@@ -577,3 +577,104 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                            -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_cube -Problem.UseNeumann true
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -LinearSolver.Type gmres -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity true")
+
+# Trilinos Amesos2 parallel tests for inf-sup stable multidomain pairs
+
+# PQ1Bubble (Mini element) + Box on simplices — inf-sup stable, sequential
+dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_trilinos
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex_trilinos
+               CMD_ARGS    params.input
+                           -Problem.Name test_ff_stokes_donea_pq1bubble_simplex_trilinos
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.UseTrilinos true)
+
+# PQ1Bubble + Box on simplices — parallel (2 MPI ranks)
+dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_trilinos_parallel
+               TARGET test_ff_stokes_donea_pq1bubble_simplex_trilinos
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS    ${MPIEXEC_NUMPROC_FLAG} 2
+                           ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex_trilinos
+                           params.input
+                           -Problem.Name test_ff_stokes_donea_pq1bubble_simplex_trilinos_parallel
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.UseTrilinos true)
+
+# PQ1BubbleHybrid + Box on quads — inf-sup stable on quads, sequential
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=cube
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos
+               CMD_ARGS    params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos
+                           -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.UseTrilinos true)
+
+# PQ1BubbleHybrid + Box on quads — parallel (2 MPI ranks)
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos_parallel
+               TARGET test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS    ${MPIEXEC_NUMPROC_FLAG} 2
+                           ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos
+                           params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_cube_trilinos_parallel
+                           -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.UseTrilinos true)
+
+# PQ2Hybrid + Box on simplices — Taylor-Hood equivalent (CVFE), inf-sup stable, sequential
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
+               COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::DuneQuadrature<4>
+               COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos
+               CMD_ARGS    params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos
+                           -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.UseTrilinos true)
+
+# PQ2Hybrid + Box on simplices — parallel (2 MPI ranks)
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos_parallel
+               TARGET test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS    ${MPIEXEC_NUMPROC_FLAG} 2
+                           ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos
+                           params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_trilinos_parallel
+                           -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.UseTrilinos true)
