@@ -152,6 +152,7 @@ void updateVelocities(
         }
         else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble
                           || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq2
+                          || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq3
                           || GridGeometry::discMethod == Dumux::DiscretizationMethods::box)
         {
             const auto elemGeo = element.geometry();
