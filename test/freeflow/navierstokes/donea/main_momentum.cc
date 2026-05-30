@@ -52,6 +52,12 @@
 #include <test/freeflow/navierstokes/errors_cvfe.hh>
 #include "properties_momentum.hh"
 
+#if DUMUX_HAVE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#include <dumux/io/cvfegridfunction.hh>
+#include <dumux/io/cvfelagrangegrid.hh>
+#endif
+
 namespace Dumux {
 
 template<class Error>
@@ -243,6 +249,7 @@ int main(int argc, char** argv)
     // face quantities have no special significance for the PQ1Bubble scheme
     if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
                   && GridGeometry::discMethod != DiscretizationMethods::pq2
+                  && GridGeometry::discMethod != DiscretizationMethods::pq3
                   && GridGeometry::discMethod != DiscretizationMethods::box)
     {
         faceVtk.addField(dofIdx, "dofIdx");
@@ -278,8 +285,53 @@ int main(int argc, char** argv)
 
     if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
                   && GridGeometry::discMethod != DiscretizationMethods::pq2
+                  && GridGeometry::discMethod != DiscretizationMethods::pq3
                   && GridGeometry::discMethod != DiscretizationMethods::box)
         faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
+
+    // Higher-order VTK output using CVFEGridFunction (no Dune::Functions needed).
+    // The Lagrange VTK order matches the FE polynomial degree so ParaView shows
+    // the full high-order solution:
+    //   pq1bubble  → order 2  (P1 + cubic bubble; order 2 shows vertex+edge DOFs)
+    //   pq2        → order 2  (P2/Q2 elements)
+    //   pq3        → order 3  (P3/Q3 elements)
+    //   others     → order 1  (e.g. box/fcdiamond)
+#if DUMUX_HAVE_GRIDFORMAT
+    if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
+    {
+        const auto hoFile = baseName + "_ho" + discSuffix + "_1";
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq2)
+        {
+            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<2>};
+            hoWriter.setPointField("velocity", x);
+            hoWriter.write(hoFile);
+        }
+        else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq3)
+        {
+            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<3>};
+            hoWriter.setPointField("velocity", x);
+            hoWriter.write(hoFile);
+        }
+        else
+        {
+            // Other CVFE methods (box, pq1bubble, fcdiamond): use the generic
+            // GridWriter with CVFEGridFunction and matching Lagrange order.
+            const auto hoFunc = IO::cvfeGridFunction(*gridGeometry, x);
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+            {
+                IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<2>};
+                hoWriter.setPointField("velocity", hoFunc);
+                hoWriter.write(hoFile);
+            }
+            else
+            {
+                IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<1>};
+                hoWriter.setPointField("velocity", hoFunc);
+                hoWriter.write(hoFile);
+            }
+        }
+    }
+#endif
 
     Dumux::printErrors(problem, *gridVariables, x);
 
