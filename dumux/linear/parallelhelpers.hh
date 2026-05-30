@@ -63,23 +63,38 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         int index(const EntityType& e) const
         { return mapper_.index(e); }
 
+        template<class EntityType>
+        auto indices(const EntityType& e) const
+        { return mapper_.indices(e); }
+
         bool contains(int dim, int codim) const
         { return codim >= 0 && codim < numCodims_ && activeCodims_.test(codim); }
 
-        //! returns true if size per entity of given dim and codim is a constant
+        //! Returns true if all entities of the same codim have the same number of DOFs.
+        //! For mixed meshes with variable-DOF geometry types this may be false.
         bool fixedSize(int dim, int codim) const
-        { return true; }
+        {
+            if (codim < 0 || codim >= numCodims_ || !activeCodims_.test(codim)) return true;
+            const auto& gtypes = mapper_.types(codim);
+            if (gtypes.empty()) return true;
+            const auto nDofs = mapper_.size(gtypes[0]);
+            for (const auto& gt : gtypes)
+                if (mapper_.size(gt) != nDofs) return false;
+            return true;
+        }
 
+        //! Number of DOFs associated with this entity (may be >1 for multi-DOF schemes)
         template<class EntityType>
         std::size_t size(EntityType& e) const
-        { return 1; }
+        { return mapper_.indices(e).size(); }
 
         template<class EntityType>
         bool isNeitherInteriorNorBorderEntity(EntityType& e) const
         { return e.partitionType() != Dune::InteriorEntity && e.partitionType() != Dune::BorderEntity; }
 
-    private:
+    protected:
         const DofMapper& mapper_;
+    private:
         static constexpr auto activeCodims_ = getActiveCodims_();
     };
 
@@ -107,20 +122,23 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            auto& data = ranks_[this->index(e)];
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = ghostMarker_;
-            buff.write(data);
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                auto& data = ranks_[i];
+                if (isGhost) data = ghostMarker_;
+                buff.write(data);
+            }
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            std::size_t x;
-            buff.read(x);
-            auto& data = ranks_[this->index(e)];
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = ghostMarker_;
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                std::size_t x;
+                buff.read(x);
+                if (isGhost) ranks_[i] = ghostMarker_;
+            }
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -153,10 +171,12 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            auto& data = ranks_[this->index(e)];
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = ghostMarker_;
-            buff.write(data);
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                auto& data = ranks_[i];
+                if (isGhost) data = ghostMarker_;
+                buff.write(data);
+            }
         }
 
         /*!
@@ -165,15 +185,17 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            std::size_t x;
-            buff.read(x);
-            auto& data = ranks_[this->index(e)];
-
-            // we leave ghost unchanged
-            // for other dofs, the process with the lowest rank
-            // is assigned to be the (unique) owner
-            using std::min;
-            data = this->isNeitherInteriorNorBorderEntity(e) ? x : min(data, x);
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                std::size_t x;
+                buff.read(x);
+                auto& data = ranks_[i];
+                // we leave ghost unchanged
+                // for other dofs, the process with the lowest rank
+                // is assigned to be the (unique) owner
+                using std::min;
+                data = isGhost ? x : min(data, x);
+            }
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -197,6 +219,11 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         , rank_(rank)
         , neighbours_(neighbours)
         {}
+
+        // NeighbourGatherScatter sends exactly 1 rank value per entity (not per DOF).
+        template<class EntityType>
+        std::size_t size(EntityType& e) const { return 1; }
+        bool fixedSize(int dim, int codim) const { return true; }
 
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
@@ -238,17 +265,18 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, EntityType& e) const
         {
-            int data = true;
-            buff.write(data);
+            for (std::size_t k = 0; k < this->indices(e).size(); ++k)
+                buff.write(int(true));
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType &e, std::size_t n)
         {
-            int x;
-            buff.read(x);
-            auto& data = shared_[this->index(e)];
-            data = data || x;
+            for (auto i : this->indices(e)) {
+                int x;
+                buff.read(x);
+                shared_[i] = shared_[i] || x;
+            }
         }
     private:
         std::vector<int>& shared_;
@@ -276,17 +304,19 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            buff.write(globalIndices_[this->index(e)]);
+            for (auto i : this->indices(e))
+                buff.write(globalIndices_[i]);
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            DataType x;
-            buff.read(x);
-            using std::min;
-            DataType& data = globalIndices_[this->index(e)];
-            data = min(data, x);
+            for (auto i : this->indices(e)) {
+                DataType x;
+                buff.read(x);
+                using std::min;
+                globalIndices_[i] = min(globalIndices_[i], x);
+            }
         }
     private:
         std::vector<GlobalIndex>& globalIndices_;
