@@ -631,7 +631,8 @@ private:
                     {
                         const auto entity = element.template subEntity<codim>(i);
                         if (entity.partitionType() == Dune::OverlapEntity)
-                            v[mapper_.index(entity)] = 0;
+                            for (auto i : mapper_.indices(entity))
+                                v[i] = 0;
                     }
                 }
             }
@@ -1039,20 +1040,31 @@ class MultiCodimParallelMatrixHelper
     {
         int codim;
         IdType id;
+        int subIndex; //!< DOF index within the entity (0 for single-DOF, 0/1/... for multi-DOF)
 
         friend bool operator<(const DofIdKey& a, const DofIdKey& b)
         {
             if (a.codim != b.codim)
                 return a.codim < b.codim;
-            return a.id < b.id;
+            if (a.id != b.id)
+                return a.id < b.id;
+            return a.subIndex < b.subIndex;
         }
+    };
+
+    // Each sent item encodes which row DOF within the entity and which column DOF.
+    // This handles multi-DOF entities (e.g. PQ3 edges with 2 DOFs) correctly.
+    struct PatternEntry
+    {
+        int rowSubIndex; //!< row DOF index within entity (0 for single-DOF, 0/1/... for multi-DOF)
+        DofIdKey colKey; //!< column DOF identifier
     };
 
     template<class ColIsGhostFunc>
     struct MatrixPatternExchange
-    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, DofIdKey>
+    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, PatternEntry>
     {
-        using DataType = DofIdKey;
+        using DataType = PatternEntry;
 
         MatrixPatternExchange(const DofMapper& dofMapper,
                               const std::map<DofIdKey, int>& globalToLocal,
@@ -1082,40 +1094,43 @@ class MultiCodimParallelMatrixHelper
         bool fixedSize(int dim, int codim) const
         { return false; }
 
+        //! Returns total entries across ALL DOF rows of entity e.
         template<class EntityType>
         std::size_t size(EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
             std::size_t n = 0;
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-            {
-                if (indexToID_.count(colIt.index()))
-                    ++n;
-            }
-
+            for (auto rowIdx : dofMapper_.indices(e))
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (indexToID_.count(colIt.index()))
+                        ++n;
             return n;
         }
 
+        //! Gather: emit one PatternEntry per (row_dof, col_dof) pair.
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            int rowSub = 0;
+            for (auto rowIdx : dofMapper_.indices(e))
             {
-                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
-                    buff.write(it->second);
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                        buff.write(PatternEntry{rowSub, it->second});
+                ++rowSub;
             }
         }
 
+        //! Scatter: route each PatternEntry to the correct row using rowSubIndex.
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            const auto rowIdx = dofMapper_.index(e);
+            const auto baseIdx = dofMapper_.index(e);
             for (std::size_t k = 0; k < n; k++)
             {
-                DofIdKey key;
-                buff.read(key);
-                if (const auto it = idToIndex_.find(key); it != idToIndex_.end())
+                PatternEntry entry;
+                buff.read(entry);
+                const auto rowIdx = baseIdx + entry.rowSubIndex;
+                if (const auto it = idToIndex_.find(entry.colKey); it != idToIndex_.end())
                 {
                     const auto colIdx = it->second;
                     if (!isGhostColumDof_(colIdx))
@@ -1136,8 +1151,9 @@ class MultiCodimParallelMatrixHelper
 
     struct MatrixEntry
     {
-        DofIdKey first;
-        typename Matrix::block_type second;
+        int rowSubIndex;                 //!< row DOF index within entity
+        DofIdKey colKey;                 //!< column DOF identifier
+        typename Matrix::block_type block;
     };
 
     struct MatrixEntryExchange
@@ -1167,43 +1183,46 @@ class MultiCodimParallelMatrixHelper
         bool fixedSize(int dim, int codim) const
         { return false; }
 
+        //! Returns total entries across ALL DOF rows of entity e.
         template<class EntityType>
         std::size_t size(EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
             std::size_t n = 0;
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-            {
-                if (indexToID_.count(colIt.index()))
-                    ++n;
-            }
+            for (auto rowIdx : dofMapper_.indices(e))
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (indexToID_.count(colIt.index()))
+                        ++n;
             return n;
         }
 
+        //! Gather: emit one MatrixEntry per (row_dof, col_dof) pair.
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            int rowSub = 0;
+            for (auto rowIdx : dofMapper_.indices(e))
             {
-                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
-                    buff.write(MatrixEntry{it->second, *colIt});
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                        buff.write(MatrixEntry{rowSub, it->second, *colIt});
+                ++rowSub;
             }
         }
 
+        //! Scatter: route each MatrixEntry to the correct row using rowSubIndex.
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            const auto rowIdx = dofMapper_.index(e);
+            const auto baseIdx = dofMapper_.index(e);
             for (std::size_t k = 0; k < n; k++)
             {
                 MatrixEntry m;
                 buff.read(m);
-                const auto& [colDofID, matrixBlock] = m;
-                if (auto it = idToIndex_.find(colDofID); it != idToIndex_.end())
+                const auto rowIdx = baseIdx + m.rowSubIndex;
+                if (auto it = idToIndex_.find(m.colKey); it != idToIndex_.end())
                 {
                     if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
-                        A_[rowIdx][it->second] += matrixBlock;
+                        A_[rowIdx][it->second] += m.block;
                 }
             }
         }
@@ -1289,10 +1308,18 @@ private:
                         const auto entity = element.template subEntity<codim>(i);
                         if (entity.partitionType() == Dune::BorderEntity)
                         {
-                            const auto localIdx = mapper_.index(entity);
-                            const DofIdKey key{static_cast<int>(codim), gridView_.grid().globalIdSet().id(entity)};
-                            idToIndex_.emplace(key, localIdx);
-                            indexToID_.emplace(localIdx, key);
+                            // Use mapper_.indices(entity) to handle multi-DOF entities
+                            // (e.g. PQ3 with 2 DOFs per edge). Each DOF gets a unique
+                            // DofIdKey that encodes both the entity ID and the DOF sub-index.
+                            const auto globalId = gridView_.grid().globalIdSet().id(entity);
+                            int subIdx = 0;
+                            for (auto dofIdx : mapper_.indices(entity))
+                            {
+                                const DofIdKey key{static_cast<int>(codim), globalId, subIdx};
+                                idToIndex_.emplace(key, dofIdx);
+                                indexToID_.emplace(dofIdx, key);
+                                ++subIdx;
+                            }
                         }
                     }
                 }
