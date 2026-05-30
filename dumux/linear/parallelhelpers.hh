@@ -23,6 +23,7 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/common/gridcapabilities.hh>
+#include <dumux/common/multimapperview.hh>
 #include <dumux/common/parameters.hh>
 
 #include <string>
@@ -38,7 +39,6 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
 {
     using GridView = typename LinearSolverTraits::GridView;
     using DofMapper = typename LinearSolverTraits::DofMapper;
-    static constexpr int dofCodim = LinearSolverTraits::dofCodim;
 
     // TODO: this is some large number (replace by limits?)
     static constexpr std::size_t ghostMarker_ = 1<<24;
@@ -52,7 +52,7 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
             if constexpr (requires { LinearSolverTraits::dofCodims; })
                 return LinearSolverTraits::dofCodims;
             else
-                return std::bitset<numCodims_>{ 1UL << dofCodim };
+                return std::bitset<numCodims_>{ 1UL << LinearSolverTraits::dofCodim };
         }
 
     public:
@@ -63,23 +63,38 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         int index(const EntityType& e) const
         { return mapper_.index(e); }
 
+        template<class EntityType>
+        auto indices(const EntityType& e) const
+        { return asMultiMapper(mapper_).indices(e); }
+
         bool contains(int dim, int codim) const
         { return codim >= 0 && codim < numCodims_ && activeCodims_.test(codim); }
 
-        //! returns true if size per entity of given dim and codim is a constant
+        //! Returns true if all entities of the same codim have the same number of DOFs.
+        //! For mixed meshes with variable-DOF geometry types this may be false.
         bool fixedSize(int dim, int codim) const
-        { return true; }
+        {
+            if (codim < 0 || codim >= numCodims_ || !activeCodims_.test(codim)) return true;
+            const auto& gtypes = mapper_.types(codim);
+            if (gtypes.empty()) return true;
+            const auto nDofs = mapper_.size(gtypes[0]);
+            for (const auto& gt : gtypes)
+                if (mapper_.size(gt) != nDofs) return false;
+            return true;
+        }
 
+        //! Number of DOFs associated with this entity (may be >1 for multi-DOF schemes)
         template<class EntityType>
         std::size_t size(EntityType& e) const
-        { return 1; }
+        { return asMultiMapper(mapper_).indices(e).size(); }
 
         template<class EntityType>
         bool isNeitherInteriorNorBorderEntity(EntityType& e) const
         { return e.partitionType() != Dune::InteriorEntity && e.partitionType() != Dune::BorderEntity; }
 
-    private:
+    protected:
         const DofMapper& mapper_;
+    private:
         static constexpr auto activeCodims_ = getActiveCodims_();
     };
 
@@ -107,20 +122,23 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            auto& data = ranks_[this->index(e)];
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = ghostMarker_;
-            buff.write(data);
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                auto& data = ranks_[i];
+                if (isGhost) data = ghostMarker_;
+                buff.write(data);
+            }
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            std::size_t x;
-            buff.read(x);
-            auto& data = ranks_[this->index(e)];
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = ghostMarker_;
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                std::size_t x;
+                buff.read(x);
+                if (isGhost) ranks_[i] = ghostMarker_;
+            }
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -153,10 +171,12 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            auto& data = ranks_[this->index(e)];
-            if (this->isNeitherInteriorNorBorderEntity(e))
-                data = ghostMarker_;
-            buff.write(data);
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                auto& data = ranks_[i];
+                if (isGhost) data = ghostMarker_;
+                buff.write(data);
+            }
         }
 
         /*!
@@ -165,15 +185,17 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            std::size_t x;
-            buff.read(x);
-            auto& data = ranks_[this->index(e)];
-
-            // we leave ghost unchanged
-            // for other dofs, the process with the lowest rank
-            // is assigned to be the (unique) owner
-            using std::min;
-            data = this->isNeitherInteriorNorBorderEntity(e) ? x : min(data, x);
+            const bool isGhost = this->isNeitherInteriorNorBorderEntity(e);
+            for (auto i : this->indices(e)) {
+                std::size_t x;
+                buff.read(x);
+                auto& data = ranks_[i];
+                // we leave ghost unchanged
+                // for other dofs, the process with the lowest rank
+                // is assigned to be the (unique) owner
+                using std::min;
+                data = isGhost ? x : min(data, x);
+            }
         }
     private:
         std::vector<std::size_t>& ranks_;
@@ -197,6 +219,11 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         , rank_(rank)
         , neighbours_(neighbours)
         {}
+
+        // NeighbourGatherScatter sends exactly 1 rank value per entity (not per DOF).
+        template<class EntityType>
+        std::size_t size(EntityType& e) const { return 1; }
+        bool fixedSize(int dim, int codim) const { return true; }
 
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
@@ -238,17 +265,18 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, EntityType& e) const
         {
-            int data = true;
-            buff.write(data);
+            for (std::size_t k = 0; k < this->indices(e).size(); ++k)
+                buff.write(int(true));
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType &e, std::size_t n)
         {
-            int x;
-            buff.read(x);
-            auto& data = shared_[this->index(e)];
-            data = data || x;
+            for (auto i : this->indices(e)) {
+                int x;
+                buff.read(x);
+                shared_[i] = shared_[i] || x;
+            }
         }
     private:
         std::vector<int>& shared_;
@@ -276,17 +304,19 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            buff.write(globalIndices_[this->index(e)]);
+            for (auto i : this->indices(e))
+                buff.write(globalIndices_[i]);
         }
 
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            DataType x;
-            buff.read(x);
-            using std::min;
-            DataType& data = globalIndices_[this->index(e)];
-            data = min(data, x);
+            for (auto i : this->indices(e)) {
+                DataType x;
+                buff.read(x);
+                using std::min;
+                globalIndices_[i] = min(globalIndices_[i], x);
+            }
         }
     private:
         std::vector<GlobalIndex>& globalIndices_;
@@ -297,11 +327,11 @@ public:
     ParallelISTLHelperImpl(const GridView& gridView, const DofMapper& mapper)
     : gridView_(gridView), mapper_(mapper)
     {
-        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
+        if constexpr (LinearSolverTraits::canCommunicate)
             initGhostsAndOwners_();
         else
             DUNE_THROW(Dune::InvalidStateException,
-                "Cannot initialize parallel helper for a grid that cannot communicate codim-" << dofCodim << "-entities."
+                "Cannot initialize parallel helper for a grid that cannot communicate."
             );
     }
 
@@ -325,7 +355,7 @@ public:
     template<class Comm>
     void createParallelIndexSet(Comm& comm) const
     {
-        if constexpr (Dune::Capabilities::canCommunicate<typename GridView::Traits::Grid, dofCodim>::v)
+        if constexpr (LinearSolverTraits::canCommunicate)
         {
             if (gridView_.comm().size() <= 1)
             {
@@ -380,7 +410,7 @@ public:
         }
         else
             DUNE_THROW(Dune::InvalidStateException,
-                "Cannot build parallel index set for a grid that cannot communicate codim-" << dofCodim << "-entities."
+                "Cannot build parallel index set for a grid that cannot communicate."
             );
     }
 
@@ -510,29 +540,6 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
-    //! \brief Make a vector consistent for non-overlapping domain decomposition methods on multiple codims
-    template<class Block, class Alloc, std::size_t numCodims>
-    void makeNonOverlappingConsistent(
-        Dune::BlockVector<Block, Alloc>& v,
-        const std::bitset<numCodims>& activeCodims
-    ) const
-    {
-        static_assert(numCodims == GridView::dimension + 1,
-            "Number of codims must match GridView::dimension+1");
-
-        if (gridView_.comm().size() > 1)
-        {
-            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
-                mapper_, v, activeCodims
-            );
-            gridView_.communicate(
-                gs,
-                Dune::InteriorBorder_InteriorBorder_Interface,
-                Dune::ForwardCommunication
-            );
-        }
-    }
-
     //! \brief Make a vector consistent for overlapping domain decomposition methods
     template<class Block, class Alloc>
     void makeOverlappingConsistent(Dune::BlockVector<Block, Alloc>& v) const
@@ -556,7 +563,46 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Cannot call makeNonOverlappingConsistent for a grid that cannot communicate codim-" << dofCodim << "-entities.");
     }
 
-    //! \brief Make a vector consistent for overlapping domain decomposition methods on multiple codims
+    //! \brief Make a vector consistent for non-overlapping domain decomposition methods
+    template<class... Blocks>
+    void makeNonOverlappingConsistent(Dune::MultiTypeBlockVector<Blocks...>& v) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "makeNonOverlappingConsistent for Dune::MultiTypeBlockVector");
+    }
+
+private:
+    const GridView gridView_; //!< the grid view
+    const DofMapper& mapper_; //!< the dof mapper
+};
+
+template<class GridView, class DofMapper>
+class MultiCodimParallelVectorHelper
+{
+public:
+    MultiCodimParallelVectorHelper(const GridView& gridView, const DofMapper& mapper)
+    : gridView_(gridView), mapper_(mapper)
+    {}
+
+    //! \brief Make a vector consistent for non-overlapping domain decomposition methods
+    template<class Block, class Alloc, std::size_t numCodims>
+    void makeNonOverlappingConsistent(
+        Dune::BlockVector<Block, Alloc>& v,
+        const std::bitset<numCodims>& activeCodims
+    ) const
+    {
+        static_assert(numCodims == GridView::dimension + 1,
+            "Number of codims must match GridView::dimension+1");
+
+        if (gridView_.comm().size() > 1)
+        {
+            MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
+                mapper_, v, activeCodims
+            );
+            gridView_.communicate(gs, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+        }
+    }
+
+    //! \brief Make a vector consistent for overlapping domain decomposition methods
     template<class Block, class Alloc, std::size_t numCodims>
     void makeOverlappingConsistent(
         Dune::BlockVector<Block, Alloc>& v,
@@ -566,7 +612,6 @@ public:
         static_assert(numCodims == GridView::dimension + 1,
             "Number of codims must match GridView::dimension+1");
 
-        // Zero overlap entries on all active codims so the sum communication remains well-defined.
         zeroOverlapEntries_<0>(v, activeCodims);
 
         if (gridView_.comm().size() > 1)
@@ -574,16 +619,8 @@ public:
             MultiCodimVectorCommDataHandleSum<DofMapper, Dune::BlockVector<Block, Alloc>, GridView::dimension, Block> gs(
                 mapper_, v, activeCodims
             );
-            gridView_.communicate(gs, Dune::Overlap_All_Interface,
-                                Dune::ForwardCommunication);
+            gridView_.communicate(gs, Dune::Overlap_All_Interface, Dune::ForwardCommunication);
         }
-    }
-
-    //! \brief Make a vector consistent for non-overlapping domain decomposition methods
-    template<class... Blocks>
-    void makeNonOverlappingConsistent(Dune::MultiTypeBlockVector<Blocks...>& v) const
-    {
-        DUNE_THROW(Dune::NotImplemented, "makeNonOverlappingConsistent for Dune::MultiTypeBlockVector");
     }
 
 private:
@@ -601,7 +638,8 @@ private:
                     {
                         const auto entity = element.template subEntity<codim>(i);
                         if (entity.partitionType() == Dune::OverlapEntity)
-                            v[mapper_.index(entity)] = 0;
+                            for (auto i : asMultiMapper(mapper_).indices(entity))
+                                v[i] = 0;
                     }
                 }
             }
@@ -610,8 +648,8 @@ private:
         }
     }
 
-    const GridView gridView_; //!< the grid view
-    const DofMapper& mapper_; //!< the dof mapper
+    const GridView gridView_;
+    const DofMapper& mapper_;
 };
 
 /*!
@@ -1009,20 +1047,31 @@ class MultiCodimParallelMatrixHelper
     {
         int codim;
         IdType id;
+        int subIndex; //!< DOF index within the entity (0 for single-DOF, 0/1/... for multi-DOF)
 
         friend bool operator<(const DofIdKey& a, const DofIdKey& b)
         {
             if (a.codim != b.codim)
                 return a.codim < b.codim;
-            return a.id < b.id;
+            if (a.id != b.id)
+                return a.id < b.id;
+            return a.subIndex < b.subIndex;
         }
+    };
+
+    // Each sent item encodes which row DOF within the entity and which column DOF.
+    // This handles multi-DOF entities (e.g. PQ3 edges with 2 DOFs) correctly.
+    struct PatternEntry
+    {
+        int rowSubIndex; //!< row DOF index within entity (0 for single-DOF, 0/1/... for multi-DOF)
+        DofIdKey colKey; //!< column DOF identifier
     };
 
     template<class ColIsGhostFunc>
     struct MatrixPatternExchange
-    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, DofIdKey>
+    : public Dune::CommDataHandleIF<MatrixPatternExchange<ColIsGhostFunc>, PatternEntry>
     {
-        using DataType = DofIdKey;
+        using DataType = PatternEntry;
 
         MatrixPatternExchange(const DofMapper& dofMapper,
                               const std::map<DofIdKey, int>& globalToLocal,
@@ -1052,40 +1101,43 @@ class MultiCodimParallelMatrixHelper
         bool fixedSize(int dim, int codim) const
         { return false; }
 
+        //! Returns total entries across ALL DOF rows of entity e.
         template<class EntityType>
         std::size_t size(EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
             std::size_t n = 0;
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-            {
-                if (indexToID_.count(colIt.index()))
-                    ++n;
-            }
-
+            for (auto rowIdx : asMultiMapper(dofMapper_).indices(e))
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (indexToID_.count(colIt.index()))
+                        ++n;
             return n;
         }
 
+        //! Gather: emit one PatternEntry per (row_dof, col_dof) pair.
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            int rowSub = 0;
+            for (auto rowIdx : asMultiMapper(dofMapper_).indices(e))
             {
-                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
-                    buff.write(it->second);
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                        buff.write(PatternEntry{rowSub, it->second});
+                ++rowSub;
             }
         }
 
+        //! Scatter: route each PatternEntry to the correct row using rowSubIndex.
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            const auto rowIdx = dofMapper_.index(e);
+            const auto baseIdx = dofMapper_.index(e);
             for (std::size_t k = 0; k < n; k++)
             {
-                DofIdKey key;
-                buff.read(key);
-                if (const auto it = idToIndex_.find(key); it != idToIndex_.end())
+                PatternEntry entry;
+                buff.read(entry);
+                const auto rowIdx = baseIdx + entry.rowSubIndex;
+                if (const auto it = idToIndex_.find(entry.colKey); it != idToIndex_.end())
                 {
                     const auto colIdx = it->second;
                     if (!isGhostColumDof_(colIdx))
@@ -1106,8 +1158,9 @@ class MultiCodimParallelMatrixHelper
 
     struct MatrixEntry
     {
-        DofIdKey first;
-        typename Matrix::block_type second;
+        int rowSubIndex;                 //!< row DOF index within entity
+        DofIdKey colKey;                 //!< column DOF identifier
+        typename Matrix::block_type block;
     };
 
     struct MatrixEntryExchange
@@ -1137,43 +1190,46 @@ class MultiCodimParallelMatrixHelper
         bool fixedSize(int dim, int codim) const
         { return false; }
 
+        //! Returns total entries across ALL DOF rows of entity e.
         template<class EntityType>
         std::size_t size(EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
             std::size_t n = 0;
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
-            {
-                if (indexToID_.count(colIt.index()))
-                    ++n;
-            }
+            for (auto rowIdx : asMultiMapper(dofMapper_).indices(e))
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (indexToID_.count(colIt.index()))
+                        ++n;
             return n;
         }
 
+        //! Gather: emit one MatrixEntry per (row_dof, col_dof) pair.
         template<class MessageBuffer, class EntityType>
         void gather(MessageBuffer& buff, const EntityType& e) const
         {
-            const auto rowIdx = dofMapper_.index(e);
-            for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+            int rowSub = 0;
+            for (auto rowIdx : asMultiMapper(dofMapper_).indices(e))
             {
-                if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
-                    buff.write(MatrixEntry{it->second, *colIt});
+                for (auto colIt = A_[rowIdx].begin(); colIt != A_[rowIdx].end(); ++colIt)
+                    if (auto it = indexToID_.find(colIt.index()); it != indexToID_.end())
+                        buff.write(MatrixEntry{rowSub, it->second, *colIt});
+                ++rowSub;
             }
         }
 
+        //! Scatter: route each MatrixEntry to the correct row using rowSubIndex.
         template<class MessageBuffer, class EntityType>
         void scatter(MessageBuffer& buff, const EntityType& e, std::size_t n)
         {
-            const auto rowIdx = dofMapper_.index(e);
+            const auto baseIdx = dofMapper_.index(e);
             for (std::size_t k = 0; k < n; k++)
             {
                 MatrixEntry m;
                 buff.read(m);
-                const auto& [colDofID, matrixBlock] = m;
-                if (auto it = idToIndex_.find(colDofID); it != idToIndex_.end())
+                const auto rowIdx = baseIdx + m.rowSubIndex;
+                if (auto it = idToIndex_.find(m.colKey); it != idToIndex_.end())
                 {
                     if (A_[rowIdx].find(it->second) != A_[rowIdx].end())
-                        A_[rowIdx][it->second] += matrixBlock;
+                        A_[rowIdx][it->second] += m.block;
                 }
             }
         }
@@ -1187,12 +1243,41 @@ class MultiCodimParallelMatrixHelper
     };
 
 public:
+    // Standard constructor: only communicates border-entity DOF couplings.
+    // Suitable for iterative solvers (ISTL AMG) where ghost DOF equations
+    // are handled separately by the parallel operator mechanism.
     MultiCodimParallelMatrixHelper(const GridView& gridView,
                                    const DofMapper& mapper,
                                    const std::bitset<numCodims>& activeCodims)
     : gridView_(gridView)
     , mapper_(mapper)
     , activeCodims_(activeCodims)
+    , includeGhostAndAdjacent_(false)
+    , commInterface_(Dune::InteriorBorder_InteriorBorder_Interface)
+    {
+        initMapsForCodim_<0>();
+    }
+
+    // Extended constructor for direct solvers (e.g. Trilinos/MUMPS):
+    // also includes ghost entities and boundary-adjacent interior entities
+    // so that element-interior DOF column entries in border DOF matrix rows
+    // are correctly communicated across ranks.
+    // Uses All_All_Interface so that ghost entities (GhostEntity on non-owner
+    // rank) can participate in the scatter step and receive data from owners.
+    MultiCodimParallelMatrixHelper(const GridView& gridView,
+                                   const DofMapper& mapper,
+                                   const std::bitset<numCodims>& activeCodims,
+                                   bool includeGhostAndAdjacent)
+    : gridView_(gridView)
+    , mapper_(mapper)
+    , activeCodims_(activeCodims)
+    , includeGhostAndAdjacent_(includeGhostAndAdjacent)
+    // InteriorBorder_All_Interface: owner (Interior/Border) gathers and
+    // sends; ghost (All) scatters and receives.  This propagates the
+    // owner's physical stiffness to ghost DOFs without sending ghost-
+    // treatment (identity) entries from the non-owner back to the owner.
+    , commInterface_(includeGhostAndAdjacent ? Dune::InteriorBorder_All_Interface
+                                              : Dune::InteriorBorder_InteriorBorder_Interface)
     {
         initMapsForCodim_<0>();
     }
@@ -1207,7 +1292,7 @@ public:
         std::size_t numNonZeroEntries = 0;
         std::vector<std::set<int>> sparsityPattern;
         MatrixPatternExchange<IsGhostFunc> dataHandle(mapper_, idToIndex_, indexToID_, A, sparsityPattern, isGhost, activeCodims_);
-        gridView_.communicate(dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+        gridView_.communicate(dataHandle, commInterface_, Dune::ForwardCommunication);
 
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
@@ -1241,7 +1326,7 @@ public:
             return;
 
         MatrixEntryExchange dataHandle(mapper_, idToIndex_, indexToID_, A, activeCodims_);
-        gridView_.communicate(dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+        gridView_.communicate(dataHandle, commInterface_, Dune::ForwardCommunication);
     }
 
 private:
@@ -1257,12 +1342,40 @@ private:
                     for (int i = 0; i < element.subEntities(codim); ++i)
                     {
                         const auto entity = element.template subEntity<codim>(i);
-                        if (entity.partitionType() == Dune::BorderEntity)
+                        const auto pt = entity.partitionType();
+
+                        // Standard: always include BorderEntity DOFs.
+                        bool shouldProcess = (pt == Dune::BorderEntity);
+
+                        // Extended mode (for direct solvers): also include ghost entities
+                        // and interior entities adjacent to the partition boundary so that
+                        // element-interior DOF column entries in border rows are communicated.
+                        if (!shouldProcess && includeGhostAndAdjacent_) {
+                            if constexpr (codim == 0) {
+                                // Elements are never BorderEntity; include GhostEntity elements
+                                // AND InteriorEntity elements adjacent to a border sub-entity.
+                                shouldProcess = (pt == Dune::GhostEntity)
+                                             || (pt == Dune::InteriorEntity
+                                                 && elementHasBorderSubEntity_(entity));
+                            } else {
+                                shouldProcess = (pt == Dune::GhostEntity);
+                            }
+                        }
+
+                        if (shouldProcess)
                         {
-                            const auto localIdx = mapper_.index(entity);
-                            const DofIdKey key{static_cast<int>(codim), gridView_.grid().globalIdSet().id(entity)};
-                            idToIndex_.emplace(key, localIdx);
-                            indexToID_.emplace(localIdx, key);
+                            // Use asMultiMapper(mapper_).indices(entity) to handle multi-DOF entities
+                            // (e.g. PQ3 with 2 DOFs per edge). Each DOF gets a unique
+                            // DofIdKey that encodes both the entity ID and the DOF sub-index.
+                            const auto globalId = gridView_.grid().globalIdSet().id(entity);
+                            int subIdx = 0;
+                            for (auto dofIdx : asMultiMapper(mapper_).indices(entity))
+                            {
+                                const DofIdKey key{static_cast<int>(codim), globalId, subIdx};
+                                idToIndex_.emplace(key, dofIdx);
+                                indexToID_.emplace(dofIdx, key);
+                                ++subIdx;
+                            }
                         }
                     }
                 }
@@ -1272,9 +1385,29 @@ private:
         }
     }
 
+    // Helper: returns true if element has at least one BorderEntity sub-entity
+    template<class Element>
+    static bool elementHasBorderSubEntity_(const Element& element)
+    {
+        for (int i = 0; i < element.subEntities(1); ++i)
+            if (element.template subEntity<1>(i).partitionType() == Dune::BorderEntity)
+                return true;
+        if constexpr (Element::mydimension >= 2)
+            for (int i = 0; i < element.subEntities(2); ++i)
+                if (element.template subEntity<2>(i).partitionType() == Dune::BorderEntity)
+                    return true;
+        if constexpr (Element::mydimension >= 3)
+            for (int i = 0; i < element.subEntities(3); ++i)
+                if (element.template subEntity<3>(i).partitionType() == Dune::BorderEntity)
+                    return true;
+        return false;
+    }
+
     const GridView gridView_;
     const DofMapper& mapper_;
     std::bitset<numCodims> activeCodims_;
+    bool includeGhostAndAdjacent_;
+    Dune::InterfaceType commInterface_;
     std::map<DofIdKey, int> idToIndex_;
     std::map<int, DofIdKey> indexToID_;
 };
@@ -1319,19 +1452,18 @@ void prepareVectorParallel(Vector& b, ParallelHelper& pHelper)
 {
     if constexpr (ParallelTraits::isNonOverlapping)
     {
-        // extend the matrix pattern such that it is usable for a parallel solver
-        // and make right-hand side consistent
         using GridView = typename LinearSolverTraits::GridView;
         using DofMapper = typename LinearSolverTraits::DofMapper;
-        static constexpr int dofCodim = LinearSolverTraits::dofCodim;
-        ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
 
         if constexpr (requires { LinearSolverTraits::dofCodims; })
         {
+            MultiCodimParallelVectorHelper<GridView, DofMapper> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
             vectorHelper.makeNonOverlappingConsistent(b, LinearSolverTraits::dofCodims);
         }
         else
         {
+            static constexpr int dofCodim = LinearSolverTraits::dofCodim;
+            ParallelVectorHelper<GridView, DofMapper, dofCodim> vectorHelper(pHelper.gridView(), pHelper.dofMapper());
             vectorHelper.makeNonOverlappingConsistent(b);
         }
     }
