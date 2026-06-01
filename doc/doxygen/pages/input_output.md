@@ -1,6 +1,6 @@
 # Input and output formats
 
-This section explains summarizes
+This section summarizes
 the grid formats that can be used by DuMux
 and introduces grid management via Dumux::GridManager.
 We briefly discuss grid generation. Finally, we discuss the options for
