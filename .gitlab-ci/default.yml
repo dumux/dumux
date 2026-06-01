@@ -193,6 +193,8 @@ doxygen:
       else
           echo "No Doxygen warnings generated"
       fi;
+    # remove polyfill.io from docs
+    - find doc/doxygen/html/ -name '*.html' -type f -print0 | xargs -0 sed -i '/polyfill\.io/d'
   needs:
     - job: configure
       artifacts: true
