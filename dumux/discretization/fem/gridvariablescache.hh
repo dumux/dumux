@@ -29,7 +29,7 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include "elementvariables.hh"
 
-namespace Dumux::Experimental::FE {
+namespace Dumux::Experimental {
 
 template<class P, class V, class IPD>
 struct FEDefaultGridVariablesCacheTraits
@@ -294,6 +294,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace Dumux::Experimental::FE
+} // end namespace Dumux::Experimental
 
 #endif

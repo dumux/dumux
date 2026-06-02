@@ -172,7 +172,7 @@ struct OverlappingScvfCorners<Dune::GeometryTypes::hexahedron>
  * \tparam numCubeBubbleDofs number of bubble dofs for cube elements
  */
 template <class GridView, std::size_t numCubeBubbleDofs>
-class PQ1BubbleDofHelper : public FEDofHelper<GridView>
+class PQ1BubbleDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
 {
     using Scalar = typename GridView::ctype;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
@@ -216,7 +216,7 @@ public:
                 auto localDofIdx = localDofIndexIntersection(elemDisc.element().type(), boundaryFace.intersectionIndex(), i);
                 return CVFE::LocalDof(
                     static_cast<LocalIndexType>(localDofIdx),
-                    static_cast<GridIndexType>(FEDofHelper<GridView>::dofIndex(
+                    static_cast<GridIndexType>(Dumux::Experimental::FEDofHelper<GridView>::dofIndex(
                         elemDisc.gridGeometry().dofMapper(),
                         elemDisc.element(),
                         elemDisc.feLocalCoefficients().localKey(localDofIdx))),
