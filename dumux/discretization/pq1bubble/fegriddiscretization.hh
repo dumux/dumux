@@ -21,7 +21,7 @@
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/pq1bubble/pq1bubblefecache.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup PQ1BubbleDiscretization
@@ -46,7 +46,7 @@ struct PQ1BubbleFEQuadratureTraits
  */
 template<class GridView,
          class Scalar,
-         class MapperTraits = PQ1BubbleMapperTraits<GridView, 2>,
+         class MapperTraits = Dumux::PQ1BubbleMapperTraits<GridView, 2>,
          class QuadratureTraits = PQ1BubbleFEQuadratureTraits<GridView>>
 struct PQ1BubbleFEDefaultGridDiscretizationTraits
 : public MapperTraits, public QuadratureTraits
@@ -72,6 +72,6 @@ template<class Scalar,
          class Traits = PQ1BubbleFEDefaultGridDiscretizationTraits<GV, Scalar>>
 using PQ1BubbleFEGridDiscretization = FEGridDiscretization<GV, Traits>;
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif
