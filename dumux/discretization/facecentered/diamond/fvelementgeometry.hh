@@ -275,14 +275,7 @@ public:
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const FaceCenteredDiamondFVElementGeometry& fvGeometry,
                                  const BoundaryFace& boundaryFace)
-    {
-        const auto localDofIdx = boundaryFace.intersectionIndex();
-        return std::views::single(CVFE::LocalDof{
-            static_cast<LocalIndexType>(localDofIdx),
-            static_cast<GridIndexType>(fvGeometry.scv(localDofIdx).dofIndex()),
-            static_cast<GridIndexType>(fvGeometry.elementIndex())
-        });
-    }
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! Interpolation point data for an scv
     friend inline auto ipData(const FaceCenteredDiamondFVElementGeometry& fvGeometry, const SubControlVolume& scv)

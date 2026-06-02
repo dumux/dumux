@@ -150,21 +150,7 @@ public:
 
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(boundaryFace.intersectionIndex(), 1, dim)),
-            [&](const auto i)
-            {
-                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(boundaryFace.intersectionIndex(), 1, i, dim);
-                return CVFE::LocalDof
-                {
-                    static_cast<LocalIndexType>(localDofIdx),
-                    fvGeometry.gridGeometry().dofMapper().subIndex(fvGeometry.element(), localDofIdx, dim),
-                    static_cast<GridIndexType>(fvGeometry.elementIndex())
-                };
-                }
-        );
-    }
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
@@ -447,21 +433,7 @@ public:
 
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(boundaryFace.intersectionIndex(), 1, dim)),
-            [&](const auto i)
-            {
-                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(boundaryFace.intersectionIndex(), 1, i, dim);
-                return CVFE::LocalDof
-                {
-                    static_cast<LocalIndexType>(localDofIdx),
-                    fvGeometry.gridGeometry().dofMapper().subIndex(fvGeometry.element(), localDofIdx, dim),
-                    static_cast<GridIndexType>(fvGeometry.elementIndex())
-                };
-                }
-        );
-    }
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
