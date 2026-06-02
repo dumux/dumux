@@ -55,6 +55,7 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using DofHelper = typename GGCache::DofHelper;
 
     using BaseIpData = CVFE::InterpolationPointData<
                         typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
@@ -123,8 +124,8 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
+                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                               fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -139,8 +140,8 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
+                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                               fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -154,8 +155,8 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
+                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                                                               fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -228,7 +229,7 @@ public:
     //! The total number of element-local dofs
     std::size_t numLocalDofs() const
     {
-        return GeometryHelper::numElementDofs(element().type());
+        return DofHelper::numElementDofs(element().type());
     }
 
     //! The total number of sub control volumes
@@ -378,7 +379,7 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
+        return CVFE::LocalDofInterpolationPointData{ DofHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
@@ -387,7 +388,7 @@ public:
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
-        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+        const auto& localPos = DofHelper::localDofPosition(type, localKey);
 
         return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
