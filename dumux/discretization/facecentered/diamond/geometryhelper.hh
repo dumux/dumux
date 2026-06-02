@@ -253,7 +253,7 @@ struct InsideOutsideScv<IndexType, Dune::GeometryTypes::hexahedron>
  *        The diamond scheme uses face-centered dofs: exactly one dof per face/intersection.
  */
 template<class GridView>
-class DiamondDofHelper : public FEDofHelper<GridView>
+class DiamondDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
 {
     using LocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;

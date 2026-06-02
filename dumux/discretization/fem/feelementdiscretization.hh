@@ -26,7 +26,7 @@
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup FEDiscretization
@@ -229,6 +229,6 @@ private:
     std::optional<typename Element::Geometry> elementGeometry_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif

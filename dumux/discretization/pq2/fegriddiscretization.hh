@@ -22,7 +22,7 @@
 #include <dumux/discretization/fem/fegriddiscretization.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup PQ2Discretization
@@ -47,7 +47,7 @@ struct PQ2FEQuadratureTraits
  */
 template<class GridView,
          class Scalar,
-         class MapperTraits = PQ2MapperTraits<GridView>,
+         class MapperTraits = Dumux::PQ2MapperTraits<GridView>,
          class QuadratureTraits = PQ2FEQuadratureTraits<GridView>>
 struct PQ2FEDefaultGridDiscretizationTraits
 : public MapperTraits, public QuadratureTraits
@@ -81,6 +81,6 @@ template<class Scalar,
          class Traits = PQ2FEDefaultGridDiscretizationTraits<GV, Scalar>>
 using PQ2FEGridDiscretization = FEGridDiscretization<GV, Traits>;
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif
