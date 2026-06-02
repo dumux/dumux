@@ -28,7 +28,7 @@
 
 #include <dumux/io/grid/periodicgridtraits.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup FEDiscretization
@@ -281,6 +281,6 @@ private:
     PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif
