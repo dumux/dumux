@@ -158,6 +158,12 @@ public:
         return gridGeometry().feCache().get(element_->type()).localBasis();
     }
 
+    //! Get the local finite element coefficients
+    const auto& feLocalCoefficients() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localCoefficients();
+    }
+
     //! The total number of element-local dofs
     std::size_t numLocalDofs() const
     {
@@ -439,6 +445,12 @@ public:
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! Get the local finite element coefficients
+    const auto& feLocalCoefficients() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localCoefficients();
     }
 
     //! The total number of element-local dofs
