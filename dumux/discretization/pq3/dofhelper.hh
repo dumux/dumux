@@ -31,6 +31,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/discretization/fem/fedofhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -45,7 +47,7 @@ namespace Dumux {
  * \tparam GridView  The Dune grid view type.
  */
 template<class GridView>
-struct PQ3LagrangeDofHelper
+struct PQ3LagrangeDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
 {
     using Scalar = typename GridView::ctype;
     static constexpr int dim = GridView::dimension;
@@ -103,7 +105,7 @@ struct PQ3LagrangeDofHelper
     //! Reference-element position of a DOF for order-3 Lagrange basis.
     template<class LocalKey>
     static typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate
-    localDofPos(Dune::GeometryType gt, const LocalKey& lk)
+    localDofPosition(Dune::GeometryType gt, const LocalKey& lk)
     { return localDofPos_(gt, lk); }
 
 private:

@@ -275,6 +275,8 @@ private:
     public:
         //! export the geometry helper type
         using GeometryHelper = Detail::PQ1BubbleGeometryHelper_t<GV, Traits>;
+        //! export the dof helper type
+        using DofHelper = typename GeometryHelper::DofHelper;
 
         explicit PQ1BubbleGridGeometryCache(const PQ1BubbleFVGridGeometry& gg)
         : gridGeometry_(&gg)
@@ -339,6 +341,7 @@ public:
 
 private:
     using GeometryHelper = typename Cache::GeometryHelper;
+    using DofHelper = typename Cache::DofHelper;
 
     void update_()
     {
@@ -386,7 +389,7 @@ private:
                     Dumux::center(corners),
                     scvLocalIdx,
                     eIdx,
-                    GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(scvLocalIdx)),
+                    DofHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(scvLocalIdx)),
                     geometryHelper.isOverlappingScv(scvLocalIdx)
                 );
             }
@@ -474,13 +477,13 @@ private:
                         scvfLocalIdx++;
                     }
 
-                    const auto numDofsIntersection = GeometryHelper::numLocalDofsIntersection(elementGeometry.type(), localFacetIndex);
+                    const auto numDofsIntersection = DofHelper::numLocalDofsIntersection(elementGeometry.type(), localFacetIndex);
                     // TODO also move this to helper class
                     // add all dofs on the intersection to the set of boundary dofs
                     for (int ilocalDofIdx = 0; ilocalDofIdx < numDofsIntersection; ++ilocalDofIdx)
                     {
-                        auto localDofIdx = GeometryHelper::localDofIndexIntersection(elementGeometry.type(), localFacetIndex, ilocalDofIdx);
-                        const auto vIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx));
+                        auto localDofIdx = DofHelper::localDofIndexIntersection(elementGeometry.type(), localFacetIndex, ilocalDofIdx);
+                        const auto vIdxGlobal = DofHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx));
                         boundaryDofIndices_[vIdxGlobal] = true;
                     }
                 }

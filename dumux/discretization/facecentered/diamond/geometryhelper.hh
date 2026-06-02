@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_GEOMETRY_HELPER_HH
 
 #include <array>
+#include <ranges>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/fvector.hh>
@@ -20,7 +21,10 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/geometry/center.hh>
+#include <dumux/discretization/fem/fedofhelper.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
 
@@ -245,6 +249,33 @@ struct InsideOutsideScv<IndexType, Dune::GeometryTypes::hexahedron>
 
 /*!
  * \ingroup DiamondDiscretization
+ * \brief Helper class providing degree of freedom information for the diamond scheme.
+ *        The diamond scheme uses face-centered dofs: exactly one dof per face/intersection.
+ */
+template<class GridView>
+class DiamondDofHelper : public FEDofHelper<GridView>
+{
+    using LocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+public:
+    /*!
+     * \brief Iterator range over all local dofs on a given boundary face.
+     *       For the diamond scheme, each boundary face has exactly one dof.
+     */
+    template<class ElemDisc, class BoundaryFace>
+    static auto localDofsOnBoundaryFace(const ElemDisc& elemDisc, const BoundaryFace& boundaryFace)
+    {
+        const auto localDofIdx = boundaryFace.intersectionIndex();
+        return std::views::single(CVFE::LocalDof(
+            static_cast<LocalIndexType>(localDofIdx),
+            static_cast<GridIndexType>(elemDisc.scv(localDofIdx).dofIndex()),
+            static_cast<GridIndexType>(elemDisc.elementIndex())
+        ));
+    }
+};
+
+/*!
+ * \ingroup DiamondDiscretization
  * \brief Helper class to construct SCVs and SCVFs for the diamond scheme
  */
 template <class GridView, class ScvType, class ScvfType>
@@ -264,6 +295,8 @@ class DiamondGeometryHelper
     using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
 public:
+    using DofHelper = DiamondDofHelper<GridView>;
+
     explicit DiamondGeometryHelper(const typename Element::Geometry& geo)
     : geo_(geo)
     {}
@@ -427,13 +460,6 @@ public:
 
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
 
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)

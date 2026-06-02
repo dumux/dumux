@@ -72,13 +72,13 @@ auto minDistDofSol(const Element& element,
                    const typename Element::Geometry::LocalCoordinate& localPos,
                    const ElementSolution& elemSol)
 {
-    using GeometryHelper = GridGeometry::Cache::GeometryHelper;
+    using DofHelper = GridGeometry::Cache::DofHelper;
     const auto& localCoeffs = gridGeometry.feCache().get(element.type()).localCoefficients();
     // calculate the distances from the evaluation point to the local positions of dofs
     std::vector<typename Element::Geometry::ctype> distances(localCoeffs.size());
     for (int idx = 0; idx < localCoeffs.size(); ++idx)
     {
-        const auto& localDofPos = GeometryHelper::localDofPosition(element.type(), localCoeffs.localKey(idx));
+        const auto& localDofPos = DofHelper::localDofPosition(element.type(), localCoeffs.localKey(idx));
         distances[idx] = (localPos - localDofPos).two_norm2();
     }
 

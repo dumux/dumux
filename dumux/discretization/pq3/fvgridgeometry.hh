@@ -255,7 +255,7 @@ public:
     //! unflipped keys but the globally-consistent ordering requires a flip.
     template<class LocalKey>
     auto dofIndex(const Element& element, const LocalKey& localKey) const
-    { return GeometryHelper::dofIndex(dofMapper_, element, localKey, this->gridView().grid().globalIdSet()); }
+    { return Detail::PQ3GeometryHelper_t<GV, Traits>::DofHelper::dofIndex(dofMapper_, element, localKey, this->gridView().grid().globalIdSet()); }
 
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
@@ -279,6 +279,7 @@ private:
         friend class PQ3FVGridGeometry;
     public:
         using GeometryHelper = Detail::PQ3GeometryHelper_t<GV, Traits>;
+        using DofHelper = GeometryHelper::DofHelper;
 
         explicit PQ3GridGeometryCache(const PQ3FVGridGeometry& gg)
         : gridGeometry_(&gg)
@@ -335,6 +336,7 @@ public:
 
 private:
     using GeometryHelper = typename Cache::GeometryHelper;
+    using DofHelper = typename GeometryHelper::DofHelper;
 
     void update_()
     {
@@ -374,12 +376,12 @@ private:
                     auto corners = geometryHelper.getScvCorners(localIdx);
                     cache_.scvs_[eIdx][localIdx] = SubControlVolume(
                         geometryHelper.scvVolume(localIdx, corners),
-                        geometryHelper.dofPosition(localKey),
+                        DofHelper::dofPosition(elementGeometry, localKey),
                         Dumux::center(corners),
                         localIdx,
                         keyIdx,
                         eIdx,
-                        geometryHelper.dofIndex(this->dofMapper(), element, localKey, gidSet),
+                        DofHelper::dofIndex(this->dofMapper(), element, localKey, gidSet),
                         false
                     );
                 }
@@ -463,9 +465,9 @@ private:
 
                     for (LocalIndexType keyIdx = 0; keyIdx < localCoefficients.size(); ++keyIdx)
                     {
-                        if (GeometryHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(keyIdx)))
+                        if (DofHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(keyIdx)))
                         {
-                            const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(keyIdx), gidSet);
+                            const auto dofIdxGlobal = DofHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(keyIdx), gidSet);
                             boundaryDofIndices_[dofIdxGlobal] = true;
                         }
                     }
@@ -478,11 +480,11 @@ private:
                     const auto eps = 1e-7*(elementGeometry.corner(1) - elementGeometry.corner(0)).two_norm();
                     for (int localDofIdx = 0; localDofIdx < localCoefficients.size(); ++localDofIdx)
                     {
-                        if (!GeometryHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(localDofIdx)))
+                        if (!DofHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(localDofIdx)))
                             continue;
 
-                        const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx), gidSet);
-                        const auto dofPos = geometryHelper.dofPosition(localCoefficients.localKey(localDofIdx));
+                        const auto dofIdxGlobal = DofHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx), gidSet);
+                        const auto dofPos = DofHelper::dofPosition(elementGeometry, localCoefficients.localKey(localDofIdx));
 
                         const auto& outside = intersection.outside();
                         const auto outsideGeometry = outside.geometry();
@@ -494,11 +496,11 @@ private:
                                 for (int localDofIdxOut = 0; localDofIdxOut < localCoefficientsOut.size(); ++localDofIdxOut)
                                 {
                                     const auto& localKeyOut = localCoefficientsOut.localKey(localDofIdxOut);
-                                    if (!GeometryHelper::localDofOnIntersection(outsideGeometry.type(), isOutside.indexInInside(), localKeyOut))
+                                    if (!DofHelper::localDofOnIntersection(outsideGeometry.type(), isOutside.indexInInside(), localKeyOut))
                                         continue;
 
-                                    const auto dofIdxGlobalOut = GeometryHelper::dofIndex(this->dofMapper(), outside, localKeyOut, gidSet);
-                                    const auto dofPosOutside = GeometryHelper::dofPosition(outsideGeometry, localKeyOut);
+                                    const auto dofIdxGlobalOut = DofHelper::dofIndex(this->dofMapper(), outside, localKeyOut, gidSet);
+                                    const auto dofPosOutside = DofHelper::dofPosition(outsideGeometry, localKeyOut);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((dofPosOutside-dofPos).two_norm() - shift) < eps)
                                         periodicDofMap_[dofIdxGlobal] = dofIdxGlobalOut;

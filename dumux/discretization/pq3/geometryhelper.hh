@@ -65,6 +65,7 @@ class HybridPQ3GeometryHelper
 
     using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
+    using DofHelper = PQ3LagrangeDofHelper<GridView>;
 
     HybridPQ3GeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -198,37 +199,6 @@ public:
             [&](unsigned int i){ return p[i]; }
         );
     }
-
-    //! Local dof index related to a localDof, with index localDofIdx, on an intersection with index iIdx
-    template<class LocalKey>
-    static auto localDofOnIntersection(Dune::GeometryType type, unsigned int iIdx, const LocalKey& localKey)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-        const auto numEntitiesIntersection = refElement.size(iIdx, 1, localKey.codim());
-        for (std::size_t idx = 0; idx < numEntitiesIntersection; idx++)
-            if (localKey.subEntity() == refElement.subEntity(iIdx, 1, idx, localKey.codim()))
-                return true;
-        return false;
-    }
-
-    //! Orientation-consistent global DOF index — delegates to PQ3LagrangeDofHelper.
-    template<class DofMapper, class LocalKey, class GlobalIdSet>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element,
-                         const LocalKey& localKey, const GlobalIdSet& gidSet)
-    { return PQ3LagrangeDofHelper<GridView>::dofIndex(dofMapper, element, localKey, gidSet); }
-
-    template<class Geometry, class LocalKey>
-    static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& localKey)
-    { return PQ3LagrangeDofHelper<GridView>::dofPosition(geo, localKey); }
-
-    template<class LocalKey>
-    GlobalPosition dofPosition(const LocalKey& localKey) const
-    { return dofPosition(geo_, localKey); }
-
-    //! Local coordinate of a DOF for order-3 Lagrange basis.
-    template<class LocalKey>
-    static typename Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    { return PQ3LagrangeDofHelper<GridView>::localDofPos(type, localKey); }
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
     {
