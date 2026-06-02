@@ -26,7 +26,7 @@
 
 #include <dumux/discretization/cvfe/variablesdeflectionpolicy.hh>
 
-namespace Dumux::Experimental::FE {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup FEDiscretization
@@ -449,6 +449,6 @@ private:
     std::shared_ptr<InterpolationPointDataCache> ipDataCache_;
 };
 
-} // end namespace Dumux::Experimental::FE
+} // end namespace Dumux::Experimental
 
 #endif

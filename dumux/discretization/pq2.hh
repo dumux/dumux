@@ -136,7 +136,7 @@ private:
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = PQ2FEGridDiscretization<Scalar, GridView, enableCache>;
+    using type = Dumux::Experimental::PQ2FEGridDiscretization<Scalar, GridView, enableCache>;
 };
 
 template<class TypeTag>
@@ -148,8 +148,8 @@ private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
     using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::FE::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::FE::FEGridVariablesCache<Traits, enableCache>;
+    using Traits = Dumux::Experimental::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::FEGridVariablesCache<Traits, enableCache>;
 public:
     using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };

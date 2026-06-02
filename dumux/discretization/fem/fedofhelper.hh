@@ -21,7 +21,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup FEDiscretization
@@ -120,6 +120,6 @@ public:
     }
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif

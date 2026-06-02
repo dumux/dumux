@@ -21,7 +21,7 @@
 #include <dumux/discretization/fem/fegriddiscretization.hh>
 #include "boxgeometryhelper.hh"
 
-namespace Dumux {
+namespace Dumux::Experimental {
 
 /*!
  * \ingroup BoxDiscretization
@@ -43,7 +43,7 @@ struct PQ1FEQuadratureTraits
  * \brief Mapper traits for PQ1 FE discretization (vertex dofs only)
  */
 template<class GridView>
-struct PQ1FEMapperTraits : public DefaultMapperTraits<GridView>
+struct PQ1FEMapperTraits : public Dumux::DefaultMapperTraits<GridView>
 {
     using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 
@@ -72,7 +72,7 @@ struct PQ1FEDefaultGridDiscretizationTraits
     using DiscretizationMethod = DiscretizationMethods::Box;
     using FeCache = Dune::LagrangeLocalFiniteElementCache<typename GridView::ctype, Scalar, GridView::dimension, 1>;
     using DofHelper = Dumux::BoxDofHelper<GridView>;
-    
+
     template<class GridDiscretization, bool enableCache>
     using LocalView = FEElementDiscretization<GridDiscretization, enableCache>;
 
@@ -90,6 +90,6 @@ template<class Scalar,
          class Traits = PQ1FEDefaultGridDiscretizationTraits<GV, Scalar>>
 using PQ1FEGridDiscretization = FEGridDiscretization<GV, Traits>;
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif

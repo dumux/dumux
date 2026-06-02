@@ -263,7 +263,7 @@ S subEntityKeyToCornerStorage(const ReferenceElement& ref, Transformation&& tran
  *        The box method uses vertex-only dofs.
  */
 template<class GridView>
-class BoxDofHelper : public FEDofHelper<GridView>
+class BoxDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
 {
     using Scalar = typename GridView::ctype;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
@@ -296,7 +296,7 @@ public:
                 auto localDofIdx = localDofIndexIntersection(elemDisc.element().type(), boundaryFace.intersectionIndex(), i);
                 return CVFE::LocalDof(
                     static_cast<LocalIndexType>(localDofIdx),
-                    static_cast<GridIndexType>(FEDofHelper<GridView>::dofIndex(
+                    static_cast<GridIndexType>(Dumux::Experimental::FEDofHelper<GridView>::dofIndex(
                         elemDisc.gridGeometry().dofMapper(),
                         elemDisc.element(),
                         elemDisc.feLocalCoefficients().localKey(localDofIdx))),
