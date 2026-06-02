@@ -180,26 +180,7 @@ public:
 
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const PQ2FVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
-    {
-        return std::views::iota(std::size_t(0), fvGeometry.numLocalDofs())
-            | std::views::filter([&](size_t i) {
-                return GeometryHelper::localDofOnIntersection(fvGeometry.element().type(),
-                                                              boundaryFace.intersectionIndex(),
-                                                              fvGeometry.feLocalCoefficients().localKey(i)); })
-            | std::views::transform([&](size_t i) {
-                return CVFE::LocalDof{
-                    static_cast<LocalIndexType>(i),
-                    [&]() -> GridIndexType {
-                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
-                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
-                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
-                        else
-                            return static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
-                    }(),
-                    static_cast<GridIndexType>(fvGeometry.elementIndex())
-                };
-            });
-    }
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
