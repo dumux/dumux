@@ -45,6 +45,9 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
+#if DUMUX_HAVE_TRILINOS
+#include <dumux/linear/trilinossolvers.hh>
+#endif
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
@@ -268,14 +271,28 @@ int main(int argc, char** argv)
 #endif
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
-                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
-    const auto& dofMapper = LinearSolverTraits<GridGeometry>::dofMapper(*gridGeometry);
-    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
+    using LSTraits = LinearSolverTraits<GridGeometry>;
+    using LATraits = LinearAlgebraTraitsFromAssembler<Assembler>;
+    const auto& dofMapper = LSTraits::dofMapper(*gridGeometry);
 
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
-    nonLinearSolver.solve(x);
+#if DUMUX_HAVE_TRILINOS
+    if (getParam<bool>("LinearSolver.UseTrilinos", false))
+    {
+        using TrilinearSolver = DirectSolverAmesos2<LSTraits, LATraits>;
+        auto linearSolver = std::make_shared<TrilinearSolver>(
+            *gridGeometry, gridGeometry->gridView(), dofMapper);
+        Dumux::NewtonSolver<Assembler, TrilinearSolver> nonLinearSolver(assembler, linearSolver);
+        nonLinearSolver.solve(x);
+    }
+    else
+#endif
+    {
+        using LinearSolver = IstlSolverFactoryBackend<LSTraits, LATraits>;
+        auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
+        using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver);
+        nonLinearSolver.solve(x);
+    }
 
     ////////////////////////////////////////////////////////////
     // write VTK output
