@@ -31,6 +31,11 @@ struct GridView
         struct Entity { using Geometry = Dune::MultiLinearGeometry<double, dim, dimworld>; };
     };
 
+    struct IndexSet
+    {
+        using IndexType = int;
+    };
+
     // dummy
     struct Intersection { using Geometry = int; };
 
