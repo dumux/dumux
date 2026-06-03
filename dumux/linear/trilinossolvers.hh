@@ -289,7 +289,58 @@ public:
             using std::sqrt;
             return sqrt(globalSumSq);
         } else {
-            return x.two_norm();
+            if (!isParallel_ || localToGlobal_.empty())
+                return x.two_norm();
+
+            // Parallel non-MultiType: compute the true global residual norm.
+            // The Newton solver expects the linear solver to perform all communication.
+            // For non-overlapping decompositions: the assembled vector x contains only
+            // each rank's partial contributions to shared border DOFs. We must first
+            // accumulate those partial contributions from all ranks (making the vector
+            // globally consistent), then compute the owned-DOF global norm.
+            // For overlapping decompositions: owned DOFs already have complete values,
+            // so only the MPI reduction is needed (no intra-norm communication).
+            if constexpr (LSTraits::canCommunicate)
+            {
+                if (LSTraits::isNonOverlapping(gridView_))
+                {
+                    // Make a mutable copy and accumulate partial border-DOF contributions
+                    // from all non-owning ranks onto the owners.
+                    auto xcopy = x;
+                    ParallelVectorHelper<GridView, DofMapper, dofCodim> vecHelper(gridView_, *mapper_);
+                    if constexpr (requires { LSTraits::dofCodims; })
+                        vecHelper.makeNonOverlappingConsistent(xcopy, LSTraits::dofCodims);
+                    else
+                        vecHelper.makeNonOverlappingConsistent(xcopy);
+
+                    double localSumSq = 0.0;
+                    for (std::size_t i = 0; i < xcopy.size(); ++i)
+                        if (isOwned_[i])
+                            for (std::size_t k = 0; k < blockSize; ++k)
+                            {
+                                const auto v = xcopy[i][k];
+                                localSumSq += v * v;
+                            }
+                    double globalSumSq = 0.0;
+                    Teuchos::reduceAll(*comm_, Teuchos::REDUCE_SUM, 1, &localSumSq, &globalSumSq);
+                    using std::sqrt;
+                    return sqrt(globalSumSq);
+                }
+            }
+
+            // Overlapping or other parallel: owned-DOF global norm without extra communication
+            double localSumSq = 0.0;
+            for (std::size_t i = 0; i < x.size(); ++i)
+                if (isOwned_[i])
+                    for (std::size_t k = 0; k < blockSize; ++k)
+                    {
+                        const auto v = x[i][k];
+                        localSumSq += v * v;
+                    }
+            double globalSumSq = 0.0;
+            Teuchos::reduceAll(*comm_, Teuchos::REDUCE_SUM, 1, &localSumSq, &globalSumSq);
+            using std::sqrt;
+            return sqrt(globalSumSq);
         }
     }
 
@@ -342,13 +393,23 @@ private:
                 // Propagate global IDs from owners to ghost DOFs via min communication
                 // (ghosts start with max value, owner sends real ID, min picks it up)
                 if constexpr (requires { LSTraits::dofCodims; }) {
-                    MultiCodimVectorCommDataHandleMin<DofMapper, std::vector<GlobalIDType>, GridView::dimension, GlobalIDType>
+                        MultiCodimVectorCommDataHandleMin<DofMapper, std::vector<GlobalIDType>, GridView::dimension, GlobalIDType>
                         handle(mapper, localToGlobal_, LSTraits::dofCodims);
-                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    // InteriorBorder_All_Interface: owners (interior/border) send IDs to ALL
+                    // (including ghost). Using All_All_Interface causes owned DOF global IDs
+                    // to propagate back to ghost DOFs that are ALUGrid's duplicate representation
+                    // of the same physical border entity (appearing as both BorderEntity and
+                    // GhostEntity on the same rank due to ghost element sub-entity indexing).
+                    gridView.communicate(handle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
                 } else {
                     VectorCommDataHandleMin<DofMapper, std::vector<GlobalIDType>, dofCodim, GlobalIDType>
                         handle(mapper, localToGlobal_);
-                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    // InteriorBorder_All_Interface: owners (interior/border) send IDs to ALL
+                    // (including ghost). Using All_All_Interface causes owned DOF global IDs
+                    // to propagate back to ghost DOFs that are ALUGrid's duplicate representation
+                    // of the same physical border entity (appearing as both BorderEntity and
+                    // GhostEntity on the same rank due to ghost element sub-entity indexing).
+                    gridView.communicate(handle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
                 }
 
                 return;
@@ -424,12 +485,22 @@ private:
                 if constexpr (requires { SubLSTraits::dofCodims; }) {
                     MultiCodimVectorCommDataHandleMin<Mapper, std::vector<GlobalIDType>, GV::dimension, GlobalIDType>
                         handle(mapper, gids, SubLSTraits::dofCodims);
-                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    // InteriorBorder_All_Interface: owners (interior/border) send IDs to ALL
+                    // (including ghost). Using All_All_Interface causes owned DOF global IDs
+                    // to propagate back to ghost DOFs that are ALUGrid's duplicate representation
+                    // of the same physical border entity (appearing as both BorderEntity and
+                    // GhostEntity on the same rank due to ghost element sub-entity indexing).
+                    gridView.communicate(handle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
                 } else {
                     constexpr int codim = SubLSTraits::dofCodim;
                     VectorCommDataHandleMin<Mapper, std::vector<GlobalIDType>, codim, GlobalIDType>
                         handle(mapper, gids);
-                    gridView.communicate(handle, Dune::All_All_Interface, Dune::ForwardCommunication);
+                    // InteriorBorder_All_Interface: owners (interior/border) send IDs to ALL
+                    // (including ghost). Using All_All_Interface causes owned DOF global IDs
+                    // to propagate back to ghost DOFs that are ALUGrid's duplicate representation
+                    // of the same physical border entity (appearing as both BorderEntity and
+                    // GhostEntity on the same rank due to ghost element sub-entity indexing).
+                    gridView.communicate(handle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
                 }
                 return nGlobal;
             }
@@ -589,13 +660,130 @@ private:
      * extended by extendMatrix for parallel runs).
      * Templated on AMatrix to handle both plain BCRSMatrix and scalar-converted types.
      */
+    /*!
+     * Global assembly for non-overlapping parallel direct solves.
+     *
+     * Submits every non-ghost block row (owned rows + non-owned non-ghost border rows)
+     * using Tpetra insertGlobalValues.  Non-owned rows become non-local entries that
+     * fillComplete redistributes to the owning rank via global assembly (ADD).
+     *
+     * Correctness: DuMux ghost elements do NOT contribute physical stiffness to non-ghost
+     * DOF rows (cvfelocalassembler.hh skips `assembleJacobianAndResidualImpl` for ghost
+     * elements).  Therefore each element's stiffness is provided by exactly one rank
+     * (its owner), with no double-counting:
+     *   Rank A (owner of border DOFs): K_AA + K_AB   (own real elements only)
+     *   Rank B (non-local inserts):    K_BA + K_BB_v  (all rank-B real elements adjacent
+     *                                                    to the border DOFs, including
+     *                                                    vertex-only adjacent ones missing
+     *                                                    from the 1-layer ghost)
+     *   After fillComplete ADD:  K_AA+K_AB+K_BA+K_BB_v = K_total  ✓
+     */
+    template<class AMatrix>
+    Teuchos::RCP<SolverMatrix> convertMatrixGlobalNonOverlapping_(const AMatrix& A)
+    {
+        using BlockType = typename AMatrix::block_type;
+        static constexpr int BS_I = BlockType::rows;
+        static constexpr int BS_J = BlockType::cols;
+
+        // Pass 1: count owned-row entries and communicate non-owned row sizes to owners.
+        const std::size_t nTpetraRows = rowMap_->getLocalNumElements();
+        Teuchos::ArrayRCP<std::size_t> numEntPerRow(nTpetraRows, std::size_t{0});
+
+        // Extra entry counts that non-owned border rows will contribute to owners.
+        std::vector<std::size_t> extraCounts(localToGlobal_.size(), 0);
+
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const std::size_t r = rowIt.index();
+            if (isGhost_[r]) continue;           // skip ghost rows entirely
+            const std::size_t nBlockCols = rowIt->size();
+
+            if (isOwned_[r])
+            {
+                for (int ki = 0; ki < BS_I; ++ki)
+                {
+                    const LocalIDType tRow = rowMap_->getLocalElement(
+                        static_cast<GlobalIDType>(localToGlobal_[r] * BS_I + ki));
+                    numEntPerRow[tRow] = nBlockCols * BS_J;
+                }
+            }
+            else
+            {
+                // Non-owned non-ghost border row → will become a non-local insert.
+                // Tell the owner how many entries to expect.
+                extraCounts[r] = nBlockCols; // block-column count
+            }
+        }
+
+        // Communicate extra counts: non-owners → owners (border entities).
+        if constexpr (requires { LSTraits::dofCodims; })
+        {
+            constexpr auto dofCodims = LSTraits::dofCodims;
+            MultiCodimVectorCommDataHandleSum<DofMapper, std::vector<std::size_t>,
+                                              GridView::dimension, std::size_t>
+                handle(*mapper_, extraCounts, dofCodims);
+            gridView_.communicate(handle, Dune::InteriorBorder_InteriorBorder_Interface,
+                                  Dune::ForwardCommunication);
+        }
+        else
+        {
+            VectorCommDataHandleSum<DofMapper, std::vector<std::size_t>, dofCodim, std::size_t>
+                handle(*mapper_, extraCounts);
+            gridView_.communicate(handle, Dune::InteriorBorder_InteriorBorder_Interface,
+                                  Dune::ForwardCommunication);
+        }
+
+        for (std::size_t r = 0; r < localToGlobal_.size(); ++r)
+            if (extraCounts[r] > 0 && isOwned_[r])
+                for (int ki = 0; ki < BS_I; ++ki)
+                {
+                    const LocalIDType tRow = rowMap_->getLocalElement(
+                        static_cast<GlobalIDType>(localToGlobal_[r] * BS_I + ki));
+                    numEntPerRow[tRow] += extraCounts[r] * BS_J;
+                }
+
+        // Pass 2: insert values using global row and column indices.
+        auto AA = Teuchos::rcp(new SolverMatrix(rowMap_, numEntPerRow()));
+
+        Teuchos::Array<GlobalIDType> gCols;
+        Teuchos::Array<Scalar> vals;
+
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const std::size_t r = rowIt.index();
+            if (isGhost_[r]) continue;
+
+            const GlobalIDType gBlockRow = static_cast<GlobalIDType>(localToGlobal_[r]);
+
+            for (int ki = 0; ki < BS_I; ++ki)
+            {
+                const GlobalIDType globalRow = gBlockRow * BS_I + ki;
+                gCols.clear();
+                vals.clear();
+                for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
+                {
+                    const GlobalIDType gBlockCol =
+                        static_cast<GlobalIDType>(localToGlobal_[colIt.index()]);
+                    for (int kj = 0; kj < BS_J; ++kj)
+                    {
+                        gCols.push_back(gBlockCol * BS_J + kj);
+                        vals.push_back((*colIt)[ki][kj]);
+                    }
+                }
+                AA->insertGlobalValues(globalRow, gCols(), vals());
+            }
+        }
+
+        AA->fillComplete(rowMap_, rowMap_);
+        return AA;
+    }
+
     template<class AMatrix>
     Teuchos::RCP<const Graph> buildGraph_(const AMatrix& A)
     {
         const std::size_t nLocalTpetraRows = rowMap_->getLocalNumElements();
 
-        // Count scalar entries per Tpetra row (each block row has rowIt->size() block cols,
-        // each block col expands to blockSize scalar cols)
+        // Count scalar entries per Tpetra row
         Teuchos::ArrayRCP<std::size_t> numEntPerRow(nLocalTpetraRows, 0);
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
@@ -610,27 +798,30 @@ private:
             }
         }
 
-        auto graph = Teuchos::rcp(new Graph(rowMap_, colMap_, numEntPerRow()));
+        // Build graph using GLOBAL column indices so that ghost-column entries
+        // (border DOF rows with ghost interior DOF columns from ghost element assembly)
+        // are included. Use dynamic profile (no pre-allocation) to avoid any static
+        // capacity limits silently dropping ghost-column entries.
+        auto graph = Teuchos::rcp(new Graph(rowMap_, numEntPerRow()));
 
-        // Insert column indices (using colMap invariant: local col = blockCol*BS + subCol)
-        Teuchos::Array<LocalIDType> colIndices;
+        Teuchos::Array<GlobalIDType> globalColIndices;
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
             const std::size_t blockRow = rowIt.index();
             if (!isOwned_[blockRow]) continue;
 
-            colIndices.clear();
-            colIndices.reserve(rowIt->size() * blockSize);
+            globalColIndices.clear();
+            globalColIndices.reserve(rowIt->size() * blockSize);
             for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
                 for (std::size_t kj = 0; kj < blockSize; ++kj)
-                    colIndices.push_back(
-                        static_cast<LocalIDType>(colIt.index() * blockSize + kj));
+                    globalColIndices.push_back(
+                        static_cast<GlobalIDType>(localToGlobal_[colIt.index()] * blockSize + kj));
 
             for (std::size_t ki = 0; ki < blockSize; ++ki)
             {
-                const LocalIDType tRow = rowMap_->getLocalElement(
-                    static_cast<GlobalIDType>(localToGlobal_[blockRow] * blockSize + ki));
-                graph->insertLocalIndices(tRow, colIndices());
+                const GlobalIDType gRow =
+                    static_cast<GlobalIDType>(localToGlobal_[blockRow] * blockSize + ki);
+                graph->insertGlobalIndices(gRow, globalColIndices());
             }
         }
 
@@ -737,14 +928,29 @@ private:
                 {
                     if (LSTraits::isNonOverlapping(gridView_))
                     {
-                        // Non-overlapping decomposition (e.g. BOX):
-                        // extend matrix pattern at border DOFs and accumulate cross-process contributions
-                        using MatHelper = ParallelMatrixHelper<Matrix, GridView, DofMapper, dofCodim>;
-                        MatHelper matrixHelper(gridView_, *mapper_);
-                        matrixHelper.extendMatrix(Acopy, [this](std::size_t idx){ return isGhost_[idx]; });
-                        matrixHelper.sumEntries(Acopy);
+                        // For the non-overlapping case with MUMPS/Amesos2 direct solver,
+                        // use Tpetra global assembly: each rank submits its non-ghost rows
+                        // (owned rows + non-owned non-ghost border rows as non-local inserts).
+                        // fillComplete redistributes non-local rows to their owners.
+                        //
+                        // Why no double-counting: ghost element physical stiffness is NOT
+                        // assembled by the DuMux assembler (ghost elements only set identity
+                        // for ghost DOF rows, see cvfelocalassembler.hh). So:
+                        //   Rank A submits: K_AA + K_AB (own real elements only, no ghost)
+                        //   Rank B submits: K_BA + K_BB_vertex (non-local for border DOF rows)
+                        //   After fillComplete ADD: K_AA+K_AB+K_BA+K_BB_vertex = K_total ✓
+                        // This handles both face-adjacent AND vertex-only-adjacent elements
+                        // that would be missed by a 1-layer face-based ghost layer.
+                        //
+                        // RHS: the non-owned border rows have partial residuals from rank B
+                        // that must also be accumulated onto the owner.
                         ParallelVectorHelper<GridView, DofMapper, dofCodim> vecHelper(gridView_, *mapper_);
-                        vecHelper.makeNonOverlappingConsistent(bcopy);
+                        if constexpr (requires { LSTraits::dofCodims; }) {
+                            constexpr auto dofCodims = LSTraits::dofCodims;
+                            vecHelper.makeNonOverlappingConsistent(bcopy, dofCodims);
+                        } else {
+                            vecHelper.makeNonOverlappingConsistent(bcopy);
+                        }
                     }
                     // For overlapping decompositions (e.g. BOX with YaspGrid overlap=1):
                     // The overlap layer already provides each process with a complete local
@@ -753,8 +959,17 @@ private:
                 }
             }
 
-            auto graph = buildGraph_(Acopy);
-            auto AA = convertMatrix_(Acopy, graph);
+            // Use global assembly for parallel non-overlapping: non-ghost rows from rank B
+            // are submitted as non-local inserts and redistributed by fillComplete.
+            // For sequential or overlapping, use the graph-based path.
+            Teuchos::RCP<SolverMatrix> AA;
+            if (isParallel_ && LSTraits::canCommunicate && LSTraits::isNonOverlapping(gridView_))
+                AA = convertMatrixGlobalNonOverlapping_(Acopy);
+            else
+            {
+                auto graph = buildGraph_(Acopy);
+                AA = convertMatrix_(Acopy, graph);
+            }
             auto BB = convertBVector_(bcopy);
             auto XX = convertXVector_();
 
@@ -798,40 +1013,42 @@ private:
         static constexpr int BS_I = BlockType::rows;
         static constexpr int BS_J = BlockType::cols;
 
-        Teuchos::Array<LocalIDType> cols(0);
-        Teuchos::Array<Scalar> vals(0);
+        // Use global column indices (matching the graph which was built with insertGlobalIndices).
+        // replaceGlobalValues works on a fillComplete'd matrix built from a global-index graph.
+        Teuchos::Array<GlobalIDType> gCols;
+        Teuchos::Array<Scalar> vals;
 
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
             const std::size_t blockRow = rowIt.index();
             if (!isOwned_[blockRow]) continue;
 
-            const std::size_t nBlockCols = rowIt->size();
-            cols.resize(nBlockCols * BS_J);
-            vals.resize(nBlockCols * BS_J);
+            const GlobalIDType gBlockRow = static_cast<GlobalIDType>(localToGlobal_[blockRow]);
 
             for (int ki = 0; ki < BS_I; ++ki)
             {
-                const LocalIDType tRow = rowMap_->getLocalElement(
-                    static_cast<GlobalIDType>(localToGlobal_[blockRow] * BS_I + ki));
-
-                int idx = 0;
+                const GlobalIDType globalRow = gBlockRow * BS_I + ki;
+                gCols.clear();
+                vals.clear();
                 for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
                 {
-                    const std::size_t blockCol = colIt.index();
+                    const GlobalIDType gBlockCol = static_cast<GlobalIDType>(localToGlobal_[colIt.index()]);
                     for (int kj = 0; kj < BS_J; ++kj)
                     {
-                        // colMap invariant: local col index = blockCol*BS_J + kj
-                        cols[idx] = static_cast<LocalIDType>(blockCol * BS_J + kj);
-                        vals[idx] = (*colIt)[ki][kj];
-                        ++idx;
+                        gCols.push_back(gBlockCol * BS_J + kj);
+                        vals.push_back((*colIt)[ki][kj]);
                     }
                 }
-                AA->replaceLocalValues(tRow, cols(), vals());
+                // Use sumIntoGlobalValues: multiple local DOF columns may map to the
+                // same global column GID when ALUGrid represents the same physical
+                // border entity as both a BorderEntity and a GhostEntity sub-entity
+                // of a ghost element. sumInto correctly accumulates both contributions.
+                AA->sumIntoGlobalValues(globalRow, gCols(), vals());
             }
         }
 
         AA->fillComplete();
+
         return AA;
     }
 
