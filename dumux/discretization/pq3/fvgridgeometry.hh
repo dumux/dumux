@@ -255,7 +255,7 @@ public:
     //! unflipped keys but the globally-consistent ordering requires a flip.
     template<class LocalKey>
     auto dofIndex(const Element& element, const LocalKey& localKey) const
-    { return GeometryHelper::dofIndex(dofMapper_, element, localKey); }
+    { return GeometryHelper::dofIndex(dofMapper_, element, localKey, this->gridView().grid().globalIdSet()); }
 
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
@@ -341,6 +341,8 @@ private:
         cache_.clear_();
         dofMapper_.update(this->gridView());
 
+        const auto& gidSet = this->gridView().grid().globalIdSet();
+
         auto numElements = this->gridView().size(0);
         cache_.scvs_.resize(numElements);
         cache_.scvfs_.resize(numElements);
@@ -377,7 +379,7 @@ private:
                         localIdx,
                         keyIdx,
                         eIdx,
-                        geometryHelper.dofIndex(this->dofMapper(), element, localKey),
+                        geometryHelper.dofIndex(this->dofMapper(), element, localKey, gidSet),
                         false
                     );
                 }
@@ -463,7 +465,7 @@ private:
                     {
                         if (GeometryHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(keyIdx)))
                         {
-                            const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(keyIdx));
+                            const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(keyIdx), gidSet);
                             boundaryDofIndices_[dofIdxGlobal] = true;
                         }
                     }
@@ -479,7 +481,7 @@ private:
                         if (!GeometryHelper::localDofOnIntersection(elementGeometry.type(), intersection.indexInInside(), localCoefficients.localKey(localDofIdx)))
                             continue;
 
-                        const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx));
+                        const auto dofIdxGlobal = GeometryHelper::dofIndex(this->dofMapper(), element, localCoefficients.localKey(localDofIdx), gidSet);
                         const auto dofPos = geometryHelper.dofPosition(localCoefficients.localKey(localDofIdx));
 
                         const auto& outside = intersection.outside();
@@ -495,7 +497,7 @@ private:
                                     if (!GeometryHelper::localDofOnIntersection(outsideGeometry.type(), isOutside.indexInInside(), localKeyOut))
                                         continue;
 
-                                    const auto dofIdxGlobalOut = GeometryHelper::dofIndex(this->dofMapper(), outside, localKeyOut);
+                                    const auto dofIdxGlobalOut = GeometryHelper::dofIndex(this->dofMapper(), outside, localKeyOut, gidSet);
                                     const auto dofPosOutside = GeometryHelper::dofPosition(outsideGeometry, localKeyOut);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((dofPosOutside-dofPos).two_norm() - shift) < eps)

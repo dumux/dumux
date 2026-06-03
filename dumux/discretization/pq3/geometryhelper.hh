@@ -225,11 +225,17 @@ public:
     //! reflection permutations determined by the face's global vertex ordering.
     //! Triangle face DOFs (1 interior DOF for k=3): no permutation needed.
     //!
+    //! The GlobalIdSet (from gridView.grid().globalIdSet()) must be passed to
+    //! obtain globally unique, MPI-consistent vertex identifiers. Using rank-local
+    //! DOF mapper indices here would cause different flip decisions on different ranks
+    //! for shared border edges, leading to wrong parallel assembly.
+    //!
     //! Adapted from dune-functions Experimental::FaceOrientations and
     //! LagrangeFaceDOFPermutation (dune/functions/functionspacebases/lagrangebasis.hh).
     //! See license remarks and copyright notice at the top of this file.
-    template<class DofMapper, class LocalKey>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
+    template<class DofMapper, class LocalKey, class GlobalIdSet>
+    static auto dofIndex(const DofMapper& dofMapper, const Element& element,
+                         const LocalKey& localKey, const GlobalIdSet& gidSet)
     {
         const auto baseIndex = dofMapper.subIndex(element, localKey.subEntity(), localKey.codim());
         const auto& ref = Dune::referenceElement<Scalar, dim>(element.type());
@@ -240,12 +246,14 @@ public:
 
         // Edge DOFs (codim==dim-1 in both 2D and 3D):
         // flip intra-entity index when local edge direction disagrees with global orientation.
+        // Use gidSet (globally unique across MPI ranks) — NOT dofMapper.subIndex which
+        // gives rank-local indices that can differ on different processes for the same entity.
         if (localKey.codim() == dim - 1)
         {
             const int rv0 = ref.subEntity(localKey.subEntity(), dim-1, 0, dim);
             const int rv1 = ref.subEntity(localKey.subEntity(), dim-1, 1, dim);
-            const bool flip = dofMapper.subIndex(element, rv0, dim)
-                            > dofMapper.subIndex(element, rv1, dim);
+            const bool flip = gidSet.subId(element, rv0, dim)
+                            > gidSet.subId(element, rv1, dim);
             return baseIndex + (flip ? (1 - localKey.index()) : localKey.index());
         }
 
@@ -261,7 +269,7 @@ public:
                 // Q3 on cube: 4 interior DOFs per quad face — apply rotation/reflection.
                 if (ref.type(localKey.subEntity(), 1).isQuadrilateral())
                 {
-                    const auto j = quadFaceOrientIdx_(dofMapper, element, localKey.subEntity(), ref);
+                    const auto j = quadFaceOrientIdx_(element, localKey.subEntity(), ref, gidSet);
                     return baseIndex + quadFaceDofPermutation_[j][localKey.index()];
                 }
             }
@@ -290,23 +298,25 @@ private:
     // Compute orientation index j in 0..7 for a quad face (codim=1 in 3D).
     // j encodes: bits 0-1 = CCW rotations needed to align min-vertex to position 0,
     //            bit 2 = additional reflection.
+    // Uses gidSet for globally consistent vertex ordering (not rank-local mapper indices).
     // Adapted from dune-functions FaceOrientations::computeQuadrilateralOrientation.
     // See license remarks and copyright notice at the top of this file.
-    template<class DofMapper>
-    static unsigned int quadFaceOrientIdx_(const DofMapper& dofMapper, const Element& element,
-                                           unsigned int faceSubEntity, const auto& ref)
+    template<class GlobalIdSet>
+    static unsigned int quadFaceOrientIdx_(const Element& element,
+                                           unsigned int faceSubEntity, const auto& ref,
+                                           const GlobalIdSet& gidSet)
     {
         // Global vertex ids of the face's 4 corners in reference-element order.
         std::array<std::size_t, 4> vg;
         for (int k = 0; k < 4; ++k)
-            vg[k] = dofMapper.subIndex(element, ref.subEntity(faceSubEntity, 1, k, dim), dim);
+            vg[k] = gidSet.subId(element, ref.subEntity(faceSubEntity, 1, k, dim), dim);
 
         // Edge flip bits for the 4 edges of this face.
         // ref.subEntity(faceSubEntity, 1, e, dim-1) gives the element-level edge index.
         const auto edgeFlip = [&](int e) -> bool {
             const int edgeIdx = ref.subEntity(faceSubEntity, 1, e, dim-1);
-            return dofMapper.subIndex(element, ref.subEntity(edgeIdx, dim-1, 0, dim), dim)
-                 > dofMapper.subIndex(element, ref.subEntity(edgeIdx, dim-1, 1, dim), dim);
+            return gidSet.subId(element, ref.subEntity(edgeIdx, dim-1, 0, dim), dim)
+                 > gidSet.subId(element, ref.subEntity(edgeIdx, dim-1, 1, dim), dim);
         };
         const std::size_t eo = (std::size_t(edgeFlip(0)) << 0) | (std::size_t(edgeFlip(1)) << 1)
                              | (std::size_t(edgeFlip(2)) << 2) | (std::size_t(edgeFlip(3)) << 3);
