@@ -532,6 +532,39 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -Grid.Cells "8 8")
 
+# PQ3 Trilinos direct solver tests (sequential and parallel)
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos
+               CMD_ARGS    params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells "8 8"
+                           -LinearSolver.UseTrilinos true)
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos_parallel
+               TARGET test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos
+               LABELS freeflow navierstokes donea trilinos
+               CMAKE_GUARD "( Trilinos_FOUND AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS    ${MPIEXEC_NUMPROC_FLAG} 2
+                           ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos
+                           params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_simplex_trilinos_parallel
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells "8 8"
+                           -LinearSolver.UseTrilinos true)
+
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                SOURCES main.cc
                LABELS freeflow navierstokes donea
