@@ -173,7 +173,7 @@ def main() -> int:
         raise SystemExit("--samples must be at least 2")
 
     lineplot_file = args.lineplot or case_build_dir / f"{OUTPUT_NAME}_lineplot.png"
-    frame_file = args.frame or case_build_dir / f"{OUTPUT_NAME}_Sw.png"
+    frame_file = args.frame or case_build_dir / f"{OUTPUT_NAME}_sw.png"
 
     if not args.skip_run:
         build_target(build_dir)

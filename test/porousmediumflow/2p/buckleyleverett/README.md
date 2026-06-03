@@ -125,8 +125,8 @@ python3 compile_run_plot.py
 
 The script produces two figures in the `build-cmake` directory:
 - `test_2p_buckleyleverett_tpfa_lineplot.png`: 1D comparison of numerical and analytical solution along $y=y_\text{max}/2$.
-- `test_2p_buckleyleverett_tpfa_Sw.png`: solution field for wetting-phase saturation.
+- `test_2p_buckleyleverett_tpfa_sw.png`: solution field for wetting-phase saturation.
 
 ![Line plot](buckleyleverett_lineplot.png)
 
-![Saturation field](buckleyleverett_Sw.png)
+![Saturation field](buckleyleverett_sw.png)
