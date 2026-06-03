@@ -1236,12 +1236,41 @@ class MultiCodimParallelMatrixHelper
     };
 
 public:
+    // Standard constructor: only communicates border-entity DOF couplings.
+    // Suitable for iterative solvers (ISTL AMG) where ghost DOF equations
+    // are handled separately by the parallel operator mechanism.
     MultiCodimParallelMatrixHelper(const GridView& gridView,
                                    const DofMapper& mapper,
                                    const std::bitset<numCodims>& activeCodims)
     : gridView_(gridView)
     , mapper_(mapper)
     , activeCodims_(activeCodims)
+    , includeGhostAndAdjacent_(false)
+    , commInterface_(Dune::InteriorBorder_InteriorBorder_Interface)
+    {
+        initMapsForCodim_<0>();
+    }
+
+    // Extended constructor for direct solvers (e.g. Trilinos/MUMPS):
+    // also includes ghost entities and boundary-adjacent interior entities
+    // so that element-interior DOF column entries in border DOF matrix rows
+    // are correctly communicated across ranks.
+    // Uses All_All_Interface so that ghost entities (GhostEntity on non-owner
+    // rank) can participate in the scatter step and receive data from owners.
+    MultiCodimParallelMatrixHelper(const GridView& gridView,
+                                   const DofMapper& mapper,
+                                   const std::bitset<numCodims>& activeCodims,
+                                   bool includeGhostAndAdjacent)
+    : gridView_(gridView)
+    , mapper_(mapper)
+    , activeCodims_(activeCodims)
+    , includeGhostAndAdjacent_(includeGhostAndAdjacent)
+    // InteriorBorder_All_Interface: owner (Interior/Border) gathers and
+    // sends; ghost (All) scatters and receives.  This propagates the
+    // owner's physical stiffness to ghost DOFs without sending ghost-
+    // treatment (identity) entries from the non-owner back to the owner.
+    , commInterface_(includeGhostAndAdjacent ? Dune::InteriorBorder_All_Interface
+                                              : Dune::InteriorBorder_InteriorBorder_Interface)
     {
         initMapsForCodim_<0>();
     }
@@ -1256,7 +1285,7 @@ public:
         std::size_t numNonZeroEntries = 0;
         std::vector<std::set<int>> sparsityPattern;
         MatrixPatternExchange<IsGhostFunc> dataHandle(mapper_, idToIndex_, indexToID_, A, sparsityPattern, isGhost, activeCodims_);
-        gridView_.communicate(dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+        gridView_.communicate(dataHandle, commInterface_, Dune::ForwardCommunication);
 
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
@@ -1290,7 +1319,7 @@ public:
             return;
 
         MatrixEntryExchange dataHandle(mapper_, idToIndex_, indexToID_, A, activeCodims_);
-        gridView_.communicate(dataHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication);
+        gridView_.communicate(dataHandle, commInterface_, Dune::ForwardCommunication);
     }
 
 private:
@@ -1306,7 +1335,27 @@ private:
                     for (int i = 0; i < element.subEntities(codim); ++i)
                     {
                         const auto entity = element.template subEntity<codim>(i);
-                        if (entity.partitionType() == Dune::BorderEntity)
+                        const auto pt = entity.partitionType();
+
+                        // Standard: always include BorderEntity DOFs.
+                        bool shouldProcess = (pt == Dune::BorderEntity);
+
+                        // Extended mode (for direct solvers): also include ghost entities
+                        // and interior entities adjacent to the partition boundary so that
+                        // element-interior DOF column entries in border rows are communicated.
+                        if (!shouldProcess && includeGhostAndAdjacent_) {
+                            if constexpr (codim == 0) {
+                                // Elements are never BorderEntity; include GhostEntity elements
+                                // AND InteriorEntity elements adjacent to a border sub-entity.
+                                shouldProcess = (pt == Dune::GhostEntity)
+                                             || (pt == Dune::InteriorEntity
+                                                 && elementHasBorderSubEntity_(entity));
+                            } else {
+                                shouldProcess = (pt == Dune::GhostEntity);
+                            }
+                        }
+
+                        if (shouldProcess)
                         {
                             // Use mapper_.indices(entity) to handle multi-DOF entities
                             // (e.g. PQ3 with 2 DOFs per edge). Each DOF gets a unique
@@ -1329,9 +1378,29 @@ private:
         }
     }
 
+    // Helper: returns true if element has at least one BorderEntity sub-entity
+    template<class Element>
+    static bool elementHasBorderSubEntity_(const Element& element)
+    {
+        for (int i = 0; i < element.subEntities(1); ++i)
+            if (element.template subEntity<1>(i).partitionType() == Dune::BorderEntity)
+                return true;
+        if constexpr (Element::mydimension >= 2)
+            for (int i = 0; i < element.subEntities(2); ++i)
+                if (element.template subEntity<2>(i).partitionType() == Dune::BorderEntity)
+                    return true;
+        if constexpr (Element::mydimension >= 3)
+            for (int i = 0; i < element.subEntities(3); ++i)
+                if (element.template subEntity<3>(i).partitionType() == Dune::BorderEntity)
+                    return true;
+        return false;
+    }
+
     const GridView gridView_;
     const DofMapper& mapper_;
     std::bitset<numCodims> activeCodims_;
+    bool includeGhostAndAdjacent_;
+    Dune::InterfaceType commInterface_;
     std::map<DofIdKey, int> idToIndex_;
     std::map<int, DofIdKey> indexToID_;
 };
