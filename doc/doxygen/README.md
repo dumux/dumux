@@ -7,7 +7,7 @@ separate documentation pages which we write in Markdown
 (see [Doxygen Manual](https://www.doxygen.nl/manual/markdown.html) for supported Markdown flavor).
 For building the documentation, you need have
 
-* doxygen (version >= 1.9.1)
+* doxygen (version >= 1.16.1)
 
 installed on your system. To build the documentation go to the build folder of dumux.
 If you have following the [installation instructions](installation.md) and use the default build
@@ -29,7 +29,7 @@ open `dumux/build-cmake/doc/doxygen/html/index.html`.
 * TOCs in markdown files are created with the `[TOC]` command
 * Modules are documented in `groups/` in several files
 * The use of `@addtogroup` can be used to combine group documentation from several files (use this if the description is long)
-* The base style `doxygen awesome` is described in the [Doxygen Awesome Documentation](https://jothepro.github.io/doxygen-awesome-css/)
+* The base style `doxygen awesome` is vendored from [Doxygen Awesome](https://jothepro.github.io/doxygen-awesome-css/) v2.4.2
 
 ## Building the doxygen documentation partially
 

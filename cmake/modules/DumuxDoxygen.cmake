@@ -10,6 +10,9 @@ include(DuneDoxygen)
 
 macro (add_dumux_doxygen_target)
   if(DOXYGEN_FOUND)
+    if(DOXYGEN_VERSION VERSION_LESS 1.16.1)
+      message(FATAL_ERROR "DuMux doxygen documentation requires Doxygen >= 1.16.1, found ${DOXYGEN_VERSION}")
+    endif()
     add_doxygen_target()
     add_custom_target(doxygen_${ProjectName}_prebuild
                       COMMAND rm -rf ${CMAKE_BINARY_DIR}/doc/doxygen/html)

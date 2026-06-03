@@ -92,12 +92,14 @@ DOT_IMAGE_FORMAT       = svg
 
 SHORT_NAMES           = NO
 
-# Settings required for doxygen-awesome theme
+# Settings required for doxygen-awesome theme v2.4.2
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 320
+PAGE_OUTLINE_PANEL     = NO # required for interactive toc from Doxygen >= 1.14.0
+TREEVIEW_WIDTH         = 335
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
+HTML_COPY_CLIPBOARD    = NO # for doxygen-awesome-fragment-copy-button.js and Doxygen >= 1.10.0
 
 # Do no repeat in the description
 REPEAT_BRIEF = NO
