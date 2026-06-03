@@ -138,20 +138,17 @@ public:
                     if (entity.partitionType() == Dune::InteriorEntity || entity.partitionType() == Dune::BorderEntity)
                         continue;
 
-                    // WARNING: this only works if the mapping from codim+subEntity to
-                    // global dofIndex is unique (one dof per entity of this codim).
-                    // For more general mappings, we should use a proper local-global mapping here.
-                    // For example through dune-functions.
-                    const auto dofIndex = gridGeometry.dofMapper().index(entity);
-
-                    // this might be a vector-valued dof
+                    // Set identity rows for ALL DOFs of this ghost entity.
+                    // Entities with multiple DOFs (e.g. PQ3 edge interior DOFs with 2 per edge)
+                    // require iterating over all DOF indices via dofMapper().indices(entity).
                     using BlockType = typename JacobianMatrix::block_type;
-                    BlockType &J = jac[dofIndex][dofIndex];
-                    for (int j = 0; j < BlockType::rows; ++j)
-                        J[j][j] = 1.0;
-
-                    // set residual for the ghost dof
-                    res[dofIndex] = 0;
+                    for (const auto dofIndex : gridGeometry.dofMapper().indices(entity))
+                    {
+                        BlockType &J = jac[dofIndex][dofIndex];
+                        for (int j = 0; j < BlockType::rows; ++j)
+                            J[j][j] = 1.0;
+                        res[dofIndex] = 0;
+                    }
                 }
             });
         }
