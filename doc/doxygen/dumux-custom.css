@@ -62,24 +62,25 @@ html.dark-mode {
     overflow:hidden;
     width:100px;
     height:100px;
-    position:absolute;
+    position:fixed;
     top:0;
-    right:0
+    right:0;
+    z-index:9999
 }
-.gitlab-corner{
+a.gitlab-corner{
     position:absolute;
     top:-16px;
     right:-50px;
     transform:rotate(45deg);
-    background:#eee;
-    border:#eee solid 44px;
+    background:var(--primary-light-color);
+    border:var(--primary-light-color) solid 44px;
     border-bottom:none;
-    border-top:#eee solid 16px
+    border-top:var(--primary-light-color) solid 16px;
 }
-.gitlab-corner svg{
+a.gitlab-corner svg{
     width:60px;
     height:60px;
-    margin-bottom:-4px
+    margin-bottom:-4px;
 }
 .edit-button {
     display: inline-block;
