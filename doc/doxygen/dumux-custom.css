@@ -82,20 +82,17 @@ a.gitlab-corner svg{
     height:60px;
     margin-bottom:-4px;
 }
-.edit-button {
+a.edit-button {
     display: inline-block;
     padding: 5px 10px 5px 10px;
-    background: #ffaa16;
+    background: var(--warning-color-dark);
     border-radius: 10px;
-    color: black;
-    vertical-align: middle;
-}
-.edit-button:hover {
-    background: #ffcc1d;
-}
-a.edit-button{
-    text-decoration: none !important;
     color: black !important;
+    vertical-align: middle;
+    text-decoration: none;
+}
+a.edit-button:hover {
+    background: var(--warning-color);
 }
 .cls-r-1{
     fill:#dd1f26
