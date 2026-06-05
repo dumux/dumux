@@ -26,9 +26,9 @@ The following software is recommended but optional:
 * Python >= 3.7 with `numpy` (to execute a number of different scripts used for installation, testing, post-processing, etc.)
 
 
-## 1. Installing DuMux and DUNE via script
+## Install with script
 
-This installation method requires
+Installing DuMux and DUNE via the installation script requires
 
 * `wget` (for automatically downloading dependencies)
 * `git` (for cloning the code repositories)
@@ -63,9 +63,9 @@ you through the same process providing the necessary commands for executing each
 The installation is fully contained in the created folder "dumux".
 The script does not modify your system or local environment.
 
-## 2. Manually installing DUNE and Dumux from source
+## Install from source
 
-### 2.1 Obtaining the DUNE core modules
+### Clone source code
 
 DuMux depends on [Dune](https://dune-project.org/).
 Required are the libraries/modules `dune-common`, `dune-geometry`,
@@ -83,9 +83,7 @@ for module in common geometry grid localfunctions istl; do
 done
 ```
 
-### 2.2 Obtaining the Dumux source code
-
-To clone the latest 3.10 release version, run
+Next, we obtain the DuMux module. To clone the latest 3.10 release version, run
 
 ```bash
 git clone -b releases/3.10 https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
@@ -101,7 +99,7 @@ Alternatively, it is also possible to download release tarballs
 from [DaRUS](https://doi.org/10.18419/darus-3788) or
 from [GitLab](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/releases).
 
-### 2.3 Configure and build
+### Configure and build
 
 After obtaining all modules (at least `dune-common`,`dune-geometry`,`dune-grid`,`dune-istl`,`dune-localfunctions` and `dumux`),
 DuMux is built together with other Dune modules. Assuming that the Dune core modules and DuMux are folders in the same directory
@@ -150,7 +148,7 @@ You can replace this flag by a `mcpu=<cpu>` flag, where `<cpu>` is the best matc
 Often it makes sense to create and keep around a custom option file for `dunecontrol` tailored
 to your local setup. You can use `dumux/cmake.opts` as a starting point.
 
-## 3. Install external dependencies via script
+## External dependencies
 
 There are various external libraries and modules that provide additional functionality but are
 not generally required to run DuMux.
@@ -191,7 +189,7 @@ After you have installed an external library you should also clean the CMake cac
 reconfigure and build DuMux as mentioned above.
 
 
-## Compatible versions of Dune and DuMux
+## Compatible versions
 
 Only the following Dune and DuMux versions are compatible:
 
