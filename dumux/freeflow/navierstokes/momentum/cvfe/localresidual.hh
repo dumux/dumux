@@ -268,48 +268,6 @@ public:
      *
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
-     * \param elemFluxVarsCache the flux variable caches for the element's flux stencils
-     * \param scvf The sub control volume face
-     *
-     */
-    template<class ElementFluxVariablesCache>
-    [[deprecated("This function is deprecated and will be removed after release 3.11. "
-                 "Use fluxIntegral without elemFluxVarsCache instead.")]]
-    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
-                             const ElementVariables& elemVars,
-                             const ElementFluxVariablesCache& elemFluxVarsCache,
-                             const SubControlVolumeFace& scvf) const
-    {
-        using FluxVariablesCache = typename ElementFluxVariablesCache::FluxVariablesCache;
-        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, FluxVariablesCache>;
-
-        const auto& problem = this->asImp().problem();
-
-        NumEqVector flux(0.0);
-        GlobalPosition velIntegral(0.0);
-        FluxFunctionHelper fluxFunctionHelper;
-
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-        {
-            const auto& fluxVarsCache = elemFluxVarsCache[qpData.ipData()];
-            FluxFunctionContext context(this->problem(), fvGeometry, elemVars, fluxVarsCache);
-
-            velIntegral += context.velocity() * qpData.weight();
-            flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
-                                      + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
-        }
-        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, fvGeometry, elemVars, scvf, velIntegral);
-
-        flux *= elemVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
-
-        return flux;
-    }
-
-    /*!
-     * \brief Calculates the flux integral over a sub control volume face.
-     *
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face
      *
      */
@@ -349,22 +307,6 @@ public:
     {
         FeResidual::addStorageTerms(
             residual, problem, fvGeometry, prevElemVolVars, curElemVolVars, this->timeLoop().timeStepSize()
-        );
-    }
-
-    template<class ElementFluxVariablesCache>
-    [[deprecated("This function is deprecated and will be removed after release 3.11. "
-                 "Use addToElementFluxAndSourceResidual without elemFluxVarsCache instead.")]]
-    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
-                                           const Problem& problem,
-                                           const Element& element,
-                                           const FVElementGeometry& fvGeometry,
-                                           const ElementVariables& elemVars,
-                                           const ElementFluxVariablesCache& elemFluxVarsCache,
-                                           const ElementBoundaryTypes &elemBcTypes) const
-    {
-        FeResidual::addFluxAndSourceTerms(
-            residual, problem, fvGeometry, elemVars, elemFluxVarsCache, elemBcTypes
         );
     }
 

@@ -185,7 +185,6 @@ public:
 
     //! this problem is used for the mass balance model
     static constexpr bool isMomentumProblem() { return false; }
-    static constexpr bool providesIntegralInterface() { return true; }
 
     /*!
      * \brief The constructor
@@ -209,25 +208,6 @@ public:
                                 const std::string& paramGroup = "")
     : CVFENavierStokesMassProblem(gridGeometry, {}, paramGroup)
     {}
-
-    /*!
-     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param elemFluxVarsCache The element flux variables cache
-     * \param faceIpData Face interpolation point data
-     */
-    template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
-    [[deprecated("This function is deprecated and will be removed after release 3.11. "
-                 "Use boundaryFlux(fvGeometry, elemVars, scvf) instead.")]]
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
-                                const ElementVariables& elemVars,
-                                const ElementFluxVariablesCache& elemFluxVarsCache,
-                                const FaceIpData& faceIpData) const
-    {
-        return asImp_().boundaryFlux(fvGeometry, elemVars, faceIpData);
-    }
 
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
