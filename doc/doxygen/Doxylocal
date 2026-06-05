@@ -69,7 +69,7 @@ HTML_FILE_EXTENSION    = .html
 HTML_INDEX_NUM_ENTRIES = 1
 
 USE_MATHJAX            = YES
-MATHJAX_VERSION        = MathJax_3
+MATHJAX_VERSION        = MathJax_4
 
 EXCLUDE_PATTERNS       = *_.hh
 
