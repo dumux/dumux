@@ -279,3 +279,30 @@ a.edit-button:hover {
     text-align: center;
     background: #7cb5c6;
 }
+
+#sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10000;
+    transition: background 0.2s;
+}
+
+#sidebar-resize-handle:hover,
+body.sidebar-resizing #sidebar-resize-handle {
+    background: var(--primary-color);
+    opacity: 0.4;
+}
+
+body.sidebar-resizing {
+    cursor: col-resize;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#nav-sync {
+    display: none !important;
+}
