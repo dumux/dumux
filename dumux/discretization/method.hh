@@ -102,11 +102,21 @@ struct PQ1Bubble {
 using Box = CVFE<CVFEMethods::PQ1>;
 
 /*
- * \brief Face-centered finite volume scheme
- * or control-volume finite element scheme based on
+ * \brief Vertex-centered control-volume finite element scheme
+ * based on a P1 (simplices) or Q1 (quads) basis
+ */
+using PQ1 = CVFE<CVFEMethods::PQ1>;
+
+/*
+ * \brief Face-centered control-volume finite element scheme based on
  * Crouzeix-Raviart (simplices) or Rannacher-Turek (quads) basis
  */
-using FCDiamond = CVFE<CVFEMethods::CR_RT>;
+using PQ1Nonconforming = CVFE<CVFEMethods::CR_RT>;
+
+/*
+ * \brief Alias for PQ1Nonconforming.
+ */
+using FCDiamond = PQ1Nonconforming;
 
 /*
  * \brief Vertex- and cell-centered finite volume scheme
@@ -164,6 +174,7 @@ struct None : public Utility::Tag<None> {
 inline constexpr CCTpfa cctpfa{};
 inline constexpr CCMpfa ccmpfa{};
 inline constexpr Box box{};
+inline constexpr PQ1 pq1{};
 inline constexpr PQ2 pq2{};
 inline constexpr PQ3 pq3{};
 inline constexpr PQ1Bubble pq1bubble{};
@@ -171,6 +182,7 @@ inline constexpr Staggered staggered{};
 inline constexpr FEM fem{};
 inline constexpr FCStaggered fcstaggered{};
 inline constexpr FCDiamond fcdiamond{};
+inline constexpr PQ1Nonconforming pq1nonconforming{};
 inline constexpr None none{};
 
 } // end namespace Dumux::DiscretizationMethods
