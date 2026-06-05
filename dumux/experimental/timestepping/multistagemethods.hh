@@ -162,6 +162,86 @@ public:
 };
 
 /*!
+ * \brief Second order explicit Runge-Kutta scheme (Heun / explicit trapezoidal rule)
+ */
+template<class Scalar>
+class RungeKuttaExplicitSecondOrderHeun final : public MultiStageMethod<Scalar>
+{
+public:
+    RungeKuttaExplicitSecondOrderHeun()
+    : paramAlpha_{{{-1.0, 1.0, 0.0},
+                   {-1.0, 0.0, 1.0}}}
+    , paramBeta_{{{1.0, 0.0, 0.0},
+                  {0.5, 0.5, 0.0}}}
+    , paramD_{{0.0, 1.0, 1.0}}
+    {}
+
+    bool implicit () const final
+    { return false; }
+
+    std::size_t numStages () const final
+    { return 2; }
+
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final
+    { return paramAlpha_[i-1][k]; }
+
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final
+    { return paramBeta_[i-1][k]; }
+
+    Scalar timeStepWeight (std::size_t k) const final
+    { return paramD_[k]; }
+
+    std::string name () const final
+    { return "explicit Runge-Kutta 2nd order (Heun)"; }
+
+private:
+    std::array<std::array<Scalar, 3>, 2> paramAlpha_;
+    std::array<std::array<Scalar, 3>, 2> paramBeta_;
+    std::array<Scalar, 3> paramD_;
+};
+
+/*!
+ * \brief Classical explicit third order Runge-Kutta scheme
+ */
+template<class Scalar>
+class RungeKuttaExplicitThirdOrder final : public MultiStageMethod<Scalar>
+{
+public:
+    RungeKuttaExplicitThirdOrder()
+    : paramAlpha_{{{-1.0, 1.0, 0.0, 0.0},
+                   {-1.0, 0.0, 1.0, 0.0},
+                   {-1.0, 0.0, 0.0, 1.0}}}
+    , paramBeta_{{{0.5, 0.0, 0.0, 0.0},
+                  {-1.0, 2.0, 0.0, 0.0},
+                  {1.0/6.0, 2.0/3.0, 1.0/6.0, 0.0}}}
+    , paramD_{{0.0, 0.5, 1.0, 1.0}}
+    {}
+
+    bool implicit () const final
+    { return false; }
+
+    std::size_t numStages () const final
+    { return 3; }
+
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final
+    { return paramAlpha_[i-1][k]; }
+
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final
+    { return paramBeta_[i-1][k]; }
+
+    Scalar timeStepWeight (std::size_t k) const final
+    { return paramD_[k]; }
+
+    std::string name () const final
+    { return "explicit Runge-Kutta 3rd order"; }
+
+private:
+    std::array<std::array<Scalar, 4>, 3> paramAlpha_;
+    std::array<std::array<Scalar, 4>, 3> paramBeta_;
+    std::array<Scalar, 4> paramD_;
+};
+
+/*!
  * \brief Classical explicit fourth order Runge-Kutta scheme
  */
 template<class Scalar>
@@ -261,6 +341,54 @@ private:
     std::array<std::array<Scalar, 4>, 3> paramAlpha_;
     std::array<std::array<Scalar, 4>, 3> paramBeta_;
     std::array<Scalar, 4> paramD_;
+};
+
+/*!
+ * \brief Second order singly diagonally implicit Runge-Kutta scheme
+ * \note See Alexander (1977) https://doi.org/10.1137/0714068.
+ */
+template<class Scalar>
+class DIRKSecondOrderAlexander final : public MultiStageMethod<Scalar>
+{
+public:
+    DIRKSecondOrderAlexander()
+    {
+        using std::sqrt;
+        const Scalar gamma = 1.0 - 1.0/sqrt(2.0);
+
+        paramD_ = {{0.0, gamma, 1.0}};
+        paramAlpha_ = {{
+            {-1.0, 1.0, 0.0},
+            {-1.0, 0.0, 1.0}
+        }};
+        paramBeta_ = {{
+            {0.0, gamma, 0.0},
+            {0.0, 1.0-gamma, gamma}
+        }};
+    }
+
+    bool implicit () const final
+    { return true; }
+
+    std::size_t numStages () const final
+    { return 2; }
+
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final
+    { return paramAlpha_[i-1][k]; }
+
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final
+    { return paramBeta_[i-1][k]; }
+
+    Scalar timeStepWeight (std::size_t k) const final
+    { return paramD_[k]; }
+
+    std::string name () const final
+    { return "diagonally implicit Runge-Kutta 2nd order (Alexander)"; }
+
+private:
+    std::array<std::array<Scalar, 3>, 2> paramAlpha_;
+    std::array<std::array<Scalar, 3>, 2> paramBeta_;
+    std::array<Scalar, 3> paramD_;
 };
 
 } // end namespace MultiStage
