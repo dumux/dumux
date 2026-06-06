@@ -58,6 +58,7 @@
 #if DUMUX_HAVE_GRIDFORMAT
 #include <dumux/io/gridwriter.hh>
 #include <dumux/io/cvfegridfunction.hh>
+#include <dumux/io/cvfelagrangegrid.hh>
 #endif
 
 namespace Dumux {
@@ -316,25 +317,35 @@ int main(int argc, char** argv)
     if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
     {
         const auto hoFile = baseName + "_ho" + discSuffix + "_1";
-        const auto hoFunc = IO::cvfeGridFunction(*gridGeometry, x);
-        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq3)
-        {
-            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<3>};
-            hoWriter.setPointField("velocity", hoFunc);
-            hoWriter.write(hoFile);
-        }
-        else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq2
-                           || GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq2)
         {
             IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<2>};
-            hoWriter.setPointField("velocity", hoFunc);
+            hoWriter.setPointField("velocity", x);
+            hoWriter.write(hoFile);
+        }
+        else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq3)
+        {
+            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<3>};
+            hoWriter.setPointField("velocity", x);
             hoWriter.write(hoFile);
         }
         else
         {
-            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<1>};
-            hoWriter.setPointField("velocity", hoFunc);
-            hoWriter.write(hoFile);
+            // Other CVFE methods (box, pq1bubble, fcdiamond): use the generic
+            // GridWriter with CVFEGridFunction and matching Lagrange order.
+            const auto hoFunc = IO::cvfeGridFunction(*gridGeometry, x);
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+            {
+                IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<2>};
+                hoWriter.setPointField("velocity", hoFunc);
+                hoWriter.write(hoFile);
+            }
+            else
+            {
+                IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry->gridView(), IO::order<1>};
+                hoWriter.setPointField("velocity", hoFunc);
+                hoWriter.write(hoFile);
+            }
         }
     }
 #endif
