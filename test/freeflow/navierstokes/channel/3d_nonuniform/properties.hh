@@ -38,6 +38,7 @@
 #include <dumux/discretization/pq1bubble/subcontrolvolumeface.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/pq3.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
@@ -71,6 +72,7 @@ struct ThreeDChannelTest {};
 struct ThreeDChannelTestMomentumDiamond { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
 struct ThreeDChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct ThreeDChannelTestMomentumPQ2 { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
+struct ThreeDChannelTestMomentumPQ3 { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMomentumCVFE, PQ3HybridModel>; };
 struct ThreeDChannelTestMassTpfa { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
 struct ThreeDChannelTestMassBox { using InheritsFrom = std::tuple<ThreeDChannelTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
@@ -103,6 +105,22 @@ public:
 //! The grid variables for the PQ2 (hybrid) momentum TypeTag
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ2>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! The grid variables for the PQ3 (hybrid) momentum TypeTag
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ3>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -211,6 +229,24 @@ struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentumPQ2>
     { using SubControlVolumeFace = PQ2SubControlVolumeFace<GridView, MyScvfTraits>; };
 
     using type = PQ2FVGridGeometry<Scalar, GridView, enableCache, MyGGTraits>;
+};
+
+// Set the grid type (PQ3 reuses PQ2 scvf types)
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::ThreeDChannelTestMomentumPQ3>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    // use boundary segment index (works with gmsh files and not with dgf when using ALUGrid)
+    struct MyScvfTraits : public PQ2DefaultScvfGeometryTraits<GridView>
+    { using BoundaryFlag = BoundarySegmentIndexFlag; };
+
+    struct MyGGTraits : public PQ3DefaultGridGeometryTraits<GridView>
+    { using SubControlVolumeFace = PQ2SubControlVolumeFace<GridView, MyScvfTraits>; };
+
+    using type = PQ3FVGridGeometry<Scalar, GridView, enableCache, MyGGTraits>;
 };
 
 
