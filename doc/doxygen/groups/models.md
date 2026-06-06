@@ -171,6 +171,10 @@
 @copydoc dumux/solidmechanics/hyperelastic/model.hh
 @ingroup SolidMechanicsModels
 
+@defgroup HyperelasticVolIso Hyperelasticity with volumetric-isochoric split
+@brief Models nonlinear deformation of a (nearly-)incompressible elastic solid using a mixed displacement-pressure formulation with a volumetric-isochoric split.
+@ingroup Hyperelastic
+
 @defgroup Plate Plate mechanics
 @brief Models for thin-plate structural mechanics (Kirchhoff-Love and Mindlin-Reissner).
 @ingroup SolidMechanicsModels
@@ -201,6 +205,10 @@
 @defgroup PoroElastic Solid mechanics with fluid pressure
 @brief Models linear elastic deformation of a solid taking into account fluid pressure.
 @copydoc dumux/poromechanics/poroelastic/model.hh
+@ingroup PoroMechanicsModels
+
+@defgroup PoroElasticLargeDef Large-deformation poroelasticity
+@brief Finite-deformation poroelastic model with a three-field (displacement, solid pressure, fluid pressure) formulation for a saturated porous solid.
 @ingroup PoroMechanicsModels
 
 <!-- PoreNetworkModels -->
