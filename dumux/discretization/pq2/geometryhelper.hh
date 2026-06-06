@@ -25,6 +25,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/discretization/pq2/dofhelper.hh>
 
 namespace Dumux {
 
@@ -222,27 +223,15 @@ public:
 
     template<class DofMapper, class LocalKey>
     static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
-    {
-        // All dofs are directly related to grid entities, i.e localKey.index() is always zero
-        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim());
-    }
+    { return PQ2LagrangeDofHelper<GridView>::dofIndex(dofMapper, element, localKey); }
 
     template<class Geometry, class LocalKey>
     static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& localKey)
-    {
-        if(localKey.codim() == dim)
-            return geo.corner(localKey.subEntity());
-        else if(localKey.codim() == 0) // should only be called for cubes
-            return geo.center();
-        else
-            return geo.global(localDofPosition(geo.type(), localKey));
-    }
+    { return PQ2LagrangeDofHelper<GridView>::dofPosition(geo, localKey); }
 
     template<class LocalKey>
     GlobalPosition dofPosition(const LocalKey& localKey) const
-    {
-        return dofPosition(geo_, localKey);
-    }
+    { return dofPosition(geo_, localKey); }
 
     //! local dof position
     template<class LocalKey>
