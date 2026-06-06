@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for MMesh
+ * \anchor mmesh_grid_manager
  */
 #ifndef DUMUX_IO_GRID_MANAGER_MMESH_HH
 #define DUMUX_IO_GRID_MANAGER_MMESH_HH
@@ -25,19 +26,23 @@ namespace Dumux {
 #if HAVE_DUNE_MMESH
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for Dune MMesh
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
-
+ *
  * The following keys are recognized:
- * - File : A DGF or gmsh file to load from, type detection by file extension
+ * - File : A dgf/msh/vtp/vtu file to load from, type detection by file extension
  * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
- * - BoundarySegments : whether to insert boundary segments into the grid
+ * - Refinement : the number of global refines to perform
+ * - Verbosity : whether the grid construction should output to standard out
  *
+ * Additionally if reading from a msh file:
+ * - BoundarySegments : whether to insert boundary segments into the grid
+ * - DomainMarkers : weather domain marker information should be read from the grid file
  */
 template<int dim>
 class GridManager<Dune::MovingMesh<dim>>
@@ -52,7 +57,7 @@ public:
      */
     void init(const std::string& modelParamGroup = "")
     {
-        // try to create it from file
+        // First, try to create it from file
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);

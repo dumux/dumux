@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Class for sub grid data attached to dgf or gmsh grid files
  */
 #ifndef DUMUX_IO_GRID_PORENETWORK_SUBGRID_DATA_HH
@@ -19,7 +19,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief wrapper for subgrid data
  */
 template<class HostGrid, class SubGrid>

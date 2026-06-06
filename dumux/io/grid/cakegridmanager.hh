@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for a piece of cake grid
+ * \anchor cake_grid_manager
  */
 #ifndef DUMUX_CAKE_GRID_MANAGER_HH
 #define DUMUX_CAKE_GRID_MANAGER_HH
@@ -26,10 +27,28 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
- * \brief Provides a grid manager with a method for creating creating vectors
+ * \ingroup Grids
+ * \brief Provides a grid manager with a method for creating vectors
  *        with polar Coordinates and one for creating a Cartesian grid from
  *        these polar coordinates.
+ *
+ * All keys are expected to be in group GridParameterGroup.
+ *
+ * The following keys are recognized:
+ * - Radial : min/max value for radial coordinate
+ * - Angular : min/max value for angular coordinate
+ * - Axial : min/max value for axial coordinate
+ *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
+ *   the radial, angular and axial direction are oriented
+ * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 2 specifies x, y or z)
+ * - Grading : grading factor array for x-coordinate (Same here)
+ * - Verbosity : whether the grid construction should output to standard out
+ *
+ * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
+ * \f$ g = \frac{h_{i+1}}{h_i} \f$.
+ * Negative grading factors are converted to
+ * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
+ * to avoid issues with imprecise fraction numbers.
  */
 template <class Grid>
 class CakeGridManager
@@ -63,23 +82,6 @@ public:
 
     /*!
      * \brief Create vectors containing polar coordinates of all points.
-     *
-     * All keys are expected to be in group GridParameterGroup.
-     * The following keys are recognized:
-     * - Radial : min/max value for radial coordinate
-     * - Angular : min/max value for angular coordinate
-     * - Axial : min/max value for axial coordinate
-     *   Adding 0, 1 (or 2 in 3D) specifies in which direction (x, y and z, respectively)
-     *   the radial, angular and axial direction are oriented
-     * - Cells : number of cells array for x-coordinate (Again, an added 0, 1 or 2 specifies x, y or z)
-     * - Grading : grading factor array for x-coordinate (Same here)
-     * - Verbosity : whether the grid construction should output to standard out
-     *
-     * The grading factor \f$ g \f$ specifies the ratio between the next and the current cell size:
-     * \f$ g = \frac{h_{i+1}}{h_i} \f$.
-     * Negative grading factors are converted to
-     * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
-     * to avoid issues with imprecise fraction numbers.
      */
     static void createVectors(std::array<std::vector<Scalar>, dim> &polarCoordinates,
                               Dune::FieldVector<int, dim> &indices,
