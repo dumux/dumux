@@ -10,9 +10,13 @@ include(DuneDoxygen)
 
 macro (add_dumux_doxygen_target)
   if(DOXYGEN_FOUND)
-    add_doxygen_target()
-    add_custom_target(doxygen_${ProjectName}_prebuild
-                      COMMAND rm -rf ${CMAKE_BINARY_DIR}/doc/doxygen/html)
-    add_dependencies(doxygen_${ProjectName} doxygen_${ProjectName}_prebuild)
+    if(DOXYGEN_VERSION VERSION_LESS 1.16.1)
+      message(WARNING "DuMux doxygen documentation requires Doxygen >= 1.16.1, found ${DOXYGEN_VERSION}. Disabled doxygen target.")
+    else()
+        add_doxygen_target()
+        add_custom_target(doxygen_${ProjectName}_prebuild
+                          COMMAND rm -rf ${CMAKE_BINARY_DIR}/doc/doxygen/html)
+        add_dependencies(doxygen_${ProjectName} doxygen_${ProjectName}_prebuild)
+    endif()
   endif()
 endmacro ()

@@ -1,43 +1,98 @@
 /* SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder */
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+
+html {
+    /* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
+    --primary-color: #3A8FC5;
+    --primary-dark-color: #2B6E9A;
+    --primary-light-color: #79BDE0;
+    --primary-lighter-color: #C8E5F5;
+    --primary-lightest-color: #EAF5FC;
+
+    /* page base colors */
+    --page-background-color: white;
+    --page-foreground-color: #2c3e50;
+    --page-secondary-foreground-color: #67727e;
+
+
+    --border-radius-large: 22px;
+    --border-radius-small: 9px;
+    --border-radius-medium: 14px;
+    --spacing-small: 8px;
+    --spacing-medium: 14px;
+    --spacing-large: 19px;
+    --spacing-xlarge: 21px;
+
+    --top-height: 125px;
+
+    --side-nav-background: #1E3A52;
+    --side-nav-foreground: #F1FDFF;
+    --header-foreground: var(--side-nav-foreground);
+    --searchbar-background: var(--side-nav-foreground);
+    --searchbar-border-radius: var(--border-radius-medium);
+    --header-background: var(--side-nav-background);
+    --header-foreground: var(--side-nav-foreground);
+
+    --toc-background: #E8F4FC;
+    --toc-foreground: var(--page-foreground-color);
+}
+
+html.dark-mode {
+    color-scheme: dark;
+
+    --primary-color: #5AABDD;
+    --primary-dark-color: #2B6E9A;
+    --primary-light-color: #79BDE0;
+    --primary-lighter-color: #0E2535;
+    --primary-lightest-color: #0A1C28;
+
+    --page-background-color: #1C1D1F;
+    --page-foreground-color: #d2dbde;
+    --page-secondary-foreground-color: #859399;
+    --separator-color: #1A3A52;
+    --side-nav-background: #0D2035;
+    --side-nav-foreground: #F1FDFF;
+    --toc-background: #0D2535;
+    --searchbar-background: var(--page-background-color);
+
+}
+
 /*https://bryce.io/gitlab-corners/*/
 .gitlab-corner-wrapper{
     overflow:hidden;
     width:100px;
     height:100px;
-    position:absolute;
+    position:fixed;
     top:0;
-    right:0
+    right:0;
+    z-index:9999
 }
-.gitlab-corner{
+a.gitlab-corner{
     position:absolute;
     top:-16px;
     right:-50px;
     transform:rotate(45deg);
-    background:#eee;
-    border:#eee solid 44px;
+    background:var(--primary-light-color);
+    border:var(--primary-light-color) solid 44px;
     border-bottom:none;
-    border-top:#eee solid 16px
+    border-top:var(--primary-light-color) solid 16px;
 }
-.gitlab-corner svg{
+a.gitlab-corner svg{
     width:60px;
     height:60px;
-    margin-bottom:-4px
+    margin-bottom:-4px;
 }
-.edit-button {
+a.edit-button {
     display: inline-block;
     padding: 5px 10px 5px 10px;
-    background: #ffaa16;
+    background: var(--warning-color-dark);
     border-radius: 10px;
-    color: black;
-    vertical-align: middle;
-}
-.edit-button:hover {
-    background: #ffcc1d;
-}
-a.edit-button{
-    text-decoration: none !important;
     color: black !important;
+    vertical-align: middle;
+    text-decoration: none;
+}
+a.edit-button:hover {
+    background: var(--warning-color);
 }
 .cls-r-1{
     fill:#dd1f26
@@ -223,4 +278,31 @@ a.edit-button{
     color: #fff;
     text-align: center;
     background: #7cb5c6;
+}
+
+#sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10000;
+    transition: background 0.2s;
+}
+
+#sidebar-resize-handle:hover,
+body.sidebar-resizing #sidebar-resize-handle {
+    background: var(--primary-color);
+    opacity: 0.4;
+}
+
+body.sidebar-resizing {
+    cursor: col-resize;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#nav-sync {
+    display: none !important;
 }
