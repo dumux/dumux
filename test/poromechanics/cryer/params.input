@@ -1,0 +1,52 @@
+[Grid]
+File = sphere_eighth.msh
+
+[Problem]
+Name = cryer
+# Applied surface pressure load. Set via command line for parametric study:
+# PressureLoad = 100.0    # p0/K = 0.0001 (small deformation, matches analytical)
+# PressureLoad = 250000.0 # p0/K = 0.25
+# PressureLoad = 500000.0 # p0/K = 0.5
+PressureLoad = 100.0
+EnableGravity = false
+
+[SpatialParams]
+# Neo-Hookean material with volumetric-isochoric split (nu=0, K=1MPa, G=1.5MPa)
+# Poisson's ratio nu=0  <=>  K = 2G/3 = 1MPa.
+# In the Neo-Hookean VI model, W_vol uses K as the volumetric parameter (not the
+# standard Lamé lambda = K - 2G/3 = 0).  The linearised drained stress is
+#   sigma = 2G*E_dev + K*eps_v*I,
+# matching standard linear elasticity with the same K and G.
+ShearModulus = 1.5e6
+BulkModulus  = 1.0e6      # drained bulk modulus K; used in W_vol = K/4*(J^2-1) - K/2*lnJ
+# Biot and storage
+BiotCoefficient    = 1.0
+StorageCoefficient = 0.0  # Sp=0: incompressible solid and fluid
+# Initial porosity and permeability
+InitialPorosity      = 0.5
+InitialPermeability  = 1.0e-12
+FluidViscosity       = 1.0e-3
+# Particle diameter for Kozeny-Carman (auto-computed from k0 and phi0 by default)
+# ParticleDiameter = 1.897e-5
+PermeabilityModel = KozenyCarman   # or Constant
+
+[TimeLoop]
+TEnd        = 333.33      # = R0^2 / cv = 1/0.003 [s]
+# Note: the equation scaling (storage * muf/kappa) requires dt >= ~1 s for UMFPack.
+# Log-spaced time steps (DtGrowthFactor > 1): start fine to resolve the pressure rise,
+# grow towards MaxTimeStepSize for the slow decay. For smaller dt, use a preconditioned solver.
+Dt              = 1.0     # initial dt [s]
+DtGrowthFactor  = 1.3     # geometric growth per step (1.0 = fixed dt)
+MaxTimeStepSize = 20.0    # cap on the grown dt [s]
+Scheme          = DIRK3
+
+[Newton]
+MaxRelativeShift = 1e-5
+
+[Assembly]
+NumericDifferenceMethod = 1
+
+[Vtk]
+OutputName = cryer
+# Write analytical solution alongside numerical
+WriteAnalyticalSolution = true
