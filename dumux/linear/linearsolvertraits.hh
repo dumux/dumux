@@ -20,6 +20,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/gridcapabilities.hh>
@@ -190,25 +191,12 @@ template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
 : public LinearSolverTraitsBase<GridGeometry>
 {
-    class DofMapper
-    {
-    public:
-        DofMapper(const typename GridGeometry::GridView& gridView)
-        : gridView_(gridView) {}
-
-        template<class Entity>
-        auto index(const Entity& e) const
-        { return gridView_.indexSet().index(e); }
-
-        auto size() const
-        { return gridView_.size(1); }
-
-    private:
-        typename GridGeometry::GridView gridView_;
-    };
+    using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<typename GridGeometry::GridView>;
 
     static DofMapper dofMapper(const GridGeometry& gg)
-    { return { gg.gridView() }; }
+    {
+        return DofMapper(gg.gridView(), Dune::mcmgLayout(Dune::Codim<1>{}));
+    }
 
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 1;
