@@ -118,15 +118,16 @@ The implementation uses the current DuMux fully implicit finite-volume two-phase
 
 **Result**
 
-To run the test and produce the saturation line plot, execute:
+To run the test and produce plots below, execute:
 ```bash
 python3 compile_run_plot.py
 ```
+The script expects PyVista and Matplotlib to be available for post-processing.
 
 The script produces two figures in the `build-cmake` directory:
-- `test_2p_buckleyleverett_tpfa_lineplot.png`: 1D comparison of numerical and analytical solution along $y=y_\text{max}/2$.
-- `test_2p_buckleyleverett_tpfa_sw.png`: solution field for wetting-phase saturation.
+- `buckleyleverett_lineplot_comparison.png`: 1D comparison of the analytical solution with numerical solutions along $y=y_\text{max}/2$ for two different discretizations in x-direction: 200 and 400 cells
+- `buckleyleverett_sw.png`: numerical solution field for wetting-phase saturation
 
-![Line plot](buckleyleverett_lineplot.png)
+![Line plot](buckleyleverett_lineplot_comparison.png)
 
-![Saturation field](buckleyleverett_sw.png)
+![Saturation field](buckleyleverett_sw.png){html: width=80%}
