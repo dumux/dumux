@@ -1,0 +1,48 @@
+[TimeLoop]
+DtInitial = 1e5          # [s]
+TEnd = 157680000         # [s] = 5 years
+EpisodeLength = 15768000 # [s] = 0.5 years
+
+[Voids.Grid]
+File = ./grids/pipe.dgf
+Refinement = 5
+
+[Soil.Grid]
+LowerLeft = -30 -30 -30
+UpperRight = 60 30 30
+Cells = 40 40 40
+
+
+[Voids.Problem]
+Name = 1d
+InjectionRate = 0.0002 # [m³/s]
+InjectionTemperature = 293.15 # [K] = 5° C
+
+[Soil.Problem]
+Name = 3d
+
+[Problem]
+EnableGravity = true
+
+[SpatialParams]
+Permeability = 1e-20
+
+[Vtk]
+OutputName = test_wellbore_heat_transport
+AddVelocity = true
+AddProcessRank = false
+
+[MixedDimension]
+NumCircleSegments = 32
+
+[Component]
+SolidDensity = 2400
+SolidThermalConductivity = 2.6
+SolidHeatCapacity = 960
+
+[PointSource]
+EnableBoxLumping = false
+
+[Newton]
+MaxRelativeShift = 1e-6
+#UseLineSearch = true
