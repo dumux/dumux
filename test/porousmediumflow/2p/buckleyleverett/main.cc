@@ -16,10 +16,8 @@
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/assembly/fvassembler.hh>
-#include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
@@ -33,21 +31,12 @@
 #include "analyticsolution.hh"
 #include "properties.hh"
 
-#ifndef DIFFMETHOD
-#define DIFFMETHOD DiffMethod::numeric
-#endif
-
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-    using TypeTag = Properties::TTag::TYPETAG;
+    using TypeTag = Properties::TTag::TwoPBuckleyLeverettTpfa;
 
     Dumux::initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
-
     Parameters::init(argc, argv);
 
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -81,17 +70,17 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     IOFields::initOutputModule(vtkWriter);
 
-    BuckleyLeverettAnalyticSolution<TypeTag> analyticSolution(gridGeometry, problem->spatialParams());
+    BuckleyLeverettAnalyticSolution<TypeTag> analyticSolution(problem);
     vtkWriter.addField(analyticSolution.values(), "Sw_exact");
     vtkWriter.write(0.0);
 
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    using Assembler = FVAssembler<TypeTag, DIFFMETHOD>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    using LinearSolver = ILURestartedGMResIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
@@ -122,7 +111,7 @@ int main(int argc, char** argv)
     for (std::size_t dofIdx = 0; dofIdx < x.size(); ++dofIdx)
     {
         const auto wettingSaturation = 1.0 - x[dofIdx][saturationIdx];
-        maxSaturationError = std::max(maxSaturationError, std::abs(wettingSaturation - analyticSolution.values()[dofIdx][0]));
+        maxSaturationError = std::max(maxSaturationError, std::abs(wettingSaturation - analyticSolution.values()[dofIdx]));
     }
 
     const auto maxAllowedSaturationError = getParam<Scalar>("Problem.MaxSaturationError");
@@ -130,12 +119,11 @@ int main(int argc, char** argv)
         DUNE_THROW(Dune::InvalidStateException, "Maximum saturation error " << maxSaturationError
                    << " exceeds the threshold " << maxAllowedSaturationError);
 
-    if (mpiHelper.rank() == 0)
+    if (leafGridView.comm().rank() == 0)
     {
         std::cout << "Maximum saturation error against Buckley-Leverett solution: "
                   << maxSaturationError << std::endl;
         Parameters::print();
-        DumuxMessage::print(/*firstCall=*/false);
     }
 
     return 0;

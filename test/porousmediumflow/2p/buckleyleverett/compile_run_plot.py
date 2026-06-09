@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Build, run, and visualize the Buckley-Leverett benchmark."""
 
-from __future__ import annotations
-
 import glob
 import subprocess
 from dataclasses import dataclass

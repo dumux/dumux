@@ -37,13 +37,8 @@ class BuckleyLeverettProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    enum {
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
-        contiNonwettingEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx,
-        wettingPhaseIdx = FluidSystem::phase0Idx,
-        nonwettingPhaseIdx = FluidSystem::phase1Idx
-    };
+    static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
+    static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
 
 public:
     BuckleyLeverettProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -68,8 +63,8 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = injectionPressure_;
-        values[saturationIdx] = residualNonwettingSaturation_(globalPos);
+        values[Indices::pressureIdx] = injectionPressure_;
+        values[Indices::saturationIdx] = residualNonwettingSaturation_(globalPos);
         return values;
     }
 
@@ -78,7 +73,8 @@ public:
         NumEqVector values(0.0);
 
         if (onRightBoundary_(globalPos))
-            values[contiNonwettingEqIdx] = totalVelocity_*density_(globalPos, nonwettingPhaseIdx);
+            values[Indices::conti0EqIdx + FluidSystem::comp1Idx]
+                = totalVelocity_*density_(globalPos, nonwettingPhaseIdx);
 
         return values;
     }
@@ -86,8 +82,8 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = injectionPressure_;
-        values[saturationIdx] = 1.0 - residualWettingSaturation_(globalPos);
+        values[Indices::pressureIdx] = injectionPressure_;
+        values[Indices::saturationIdx] = 1.0 - residualWettingSaturation_(globalPos);
         return values;
     }
 

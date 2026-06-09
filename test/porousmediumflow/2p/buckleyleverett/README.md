@@ -1,12 +1,14 @@
-# Benchmark Buckley-Leverett {#benchmark-buckley-leverett}
+# Buckley-Leverett {#benchmark-buckley-leverett}
 
 ## Fluid displacement in quasi-one-dimensional reservoir
 
 **Problem Description**
 
-This benchmark simulates immiscible two-phase displacement in a quasi-one-dimensional homogeneous porous medium. It is the classical Buckley-Leverett setting @cite Buckley1942 where one phase displaces another phase by viscous forces, while capillary and gravity effects are neglected. The test is useful for checking the hyperbolic transport behavior of the two-phase model and for comparing the numerical saturation front with the analytical Buckley-Leverett solution.
+We simulate immiscible two-phase displacement in a quasi-one-dimensional homogeneous porous medium in the classical Buckley-Leverett setting @cite Buckley1942.
+One phase displaces another phase by viscous forces, while capillary and gravity effects are neglected. The test checks if the numerical scheme captures
+the hyperbolic transport behavior of the two-phase model at saturation front by comparing to an analytical solution.
 
-Assumptions for the Buckley-Leverett test setup:
+Assumptions:
 
 - no gravity
 - no capillary pressure
@@ -14,9 +16,6 @@ Assumptions for the Buckley-Leverett test setup:
 - incompressible phases
 - homogeneous and isotropic permeability
 - constant porosity
-
-Assumptions for simplicity:
-
 - isothermal flow
 - no source terms in the domain
 
@@ -47,7 +46,7 @@ By treating the phases as incompressible, the porosity as constant and neglectin
 $$\phi \frac{\partial S_\alpha}{\partial t}
 + \nabla\cdot\mathbf{v}_\alpha = 0, \qquad \alpha \in \{w, n\}.$$
 
-Since the saturation constraint 
+Since the saturation constraint
 
 $$S_w + S_n = 1$$
 
@@ -57,7 +56,7 @@ $$\phi \frac{\partial S_w}{\partial t}
 + \nabla\cdot\mathbf{v}_w = 0.$$
 
 
-In 1D, the water fractional flow is defined as 
+In 1D, the water fractional flow is defined as
 
 $$ f_w(S_w) = \frac{\mathrm{v}_w}{\mathrm{v}_t} $$
 
@@ -71,7 +70,7 @@ $$ f_w(S_w) = \frac{-K \lambda_w \frac{\partial p}{\partial x}}{-K\left(\lambda_
 
 With
 
-$$ \mathrm{v}_w = f_w(S_w) \mathrm{v}_t,$$ 
+$$ \mathrm{v}_w = f_w(S_w) \mathrm{v}_t,$$
 
 the wetting-phase mass balance in 1D can be reformulated to
 
@@ -112,7 +111,7 @@ The physically admissible shock is selected by the equal-area construction. The 
 
 **Setup**
 
-The implementation uses the current DuMux fully implicit finite-volume two-phase model with TPFA discretization. The computational domain is represented by a two-dimensional `YaspGrid` on $\Omega = [x_\text{min}, x_\text{max}] \times [y_\text{min}, y_\text{max}] = [0, 100\,\mathrm{m}] \times [0, 75\,\mathrm{m}]$, with 200x1 grid cells, so the problem is effectively one-dimensional. The wetting phase is initially at residual saturation. At the left boundary, all primary variables are prescribed via Dirichlet conditions, while a constant non-wetting mass outflow is imposed as a Neuman condition at the right boundary. Top and bottom boundaries are no-flow boundaries.
+The implementation uses the current DuMux fully implicit finite-volume two-phase model (@ref TwoP) with TPFA discretization. The computational domain is represented by a two-dimensional `Dune::YaspGrid` on $\Omega = [x_\text{min}, x_\text{max}] \times [y_\text{min}, y_\text{max}] = [0, 100\,\mathrm{m}] \times [0, 75\,\mathrm{m}]$, with $200 \times 1$ grid cells, so the problem is effectively one-dimensional. The wetting phase is initially at residual saturation. At the left boundary, all primary variables are prescribed via Dirichlet conditions, while a constant non-wetting mass outflow is imposed as a Neuman condition at the right boundary. Top and bottom boundaries are no-flow boundaries.
 
 ![](buckleyleverett_boundaries.svg){html: width=70%}
 
@@ -125,7 +124,7 @@ python3 compile_run_plot.py
 The script expects PyVista and Matplotlib to be available for post-processing.
 
 The script produces two figures in the `build-cmake` directory:
-- `buckleyleverett_lineplot_comparison.png`: 1D comparison of the analytical solution with numerical solutions along $y=y_\text{max}/2$ for two different discretizations in x-direction: 200 and 400 cells
+- `buckleyleverett_lineplot_comparison.png`: 1D comparison of the analytical solution with numerical solutions along $y=y_\text{max}/2$ for two different discretizations in x-direction: $200$ and $400$ cells
 - `buckleyleverett_sw.png`: numerical solution field for wetting-phase saturation
 
 ![Line plot](buckleyleverett_lineplot_comparison.png)

@@ -24,22 +24,20 @@ namespace Dumux {
 template<class TypeTag>
 class BuckleyLeverettAnalyticSolution
 {
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
-    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ScalarVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1>>;
+    using ScalarVector = Dune::BlockVector<Scalar>;
 
 public:
-    BuckleyLeverettAnalyticSolution(std::shared_ptr<const GridGeometry> gridGeometry,
-                                    const SpatialParams& spatialParams)
-    : gridGeometry_(gridGeometry)
-    , spatialParams_(spatialParams)
-    , values_(gridGeometry->gridView().size(0))
+    BuckleyLeverettAnalyticSolution(std::shared_ptr<const Problem> problem)
+    : problem_(problem)
+    , values_(problem->gridGeometry().gridView().size(0))
     , totalVelocity_(getParam<Scalar>("Problem.TotalVelocity"))
     {
         initialize_();
@@ -48,12 +46,12 @@ public:
 
     void update(Scalar time)
     {
-        const auto& gridView = gridGeometry_->gridView();
+        const auto& gridView = problem_->gridGeometry().gridView();
 
         // position of characteristics x = v_t/phi * df_w/dS_w * t.
         Dune::FieldVector<Scalar, pointNum_> frontPosition(0.0);
         for (int i = 0; i < pointNum_; ++i)
-            frontPosition[i] = totalVelocity_*time/spatialParams_.constantPorosity()*dfwdsw_[i];
+            frontPosition[i] = totalVelocity_*time/problem_->spatialParams().constantPorosity()*dfwdsw_[i];
 
         // initial guess for shock index, gets updated in the following while loop
         int shockIdx = pointNum_/3;
@@ -100,7 +98,7 @@ public:
         for (const auto& element : elements(gridView))
         {
             const auto globalPos = element.geometry().center();
-            const auto eIdx = gridGeometry_->elementMapper().index(element);
+            const auto eIdx = problem_->gridGeometry().elementMapper().index(element);
 
             if (globalPos[0] > frontPosition[frontEndIdx])
             {
@@ -132,7 +130,7 @@ private:
     void initialize_()
     {
         GlobalPosition pos(0.0);
-        const auto fluidMatrixInteraction = spatialParams_.fluidMatrixInteractionAtPos(pos);
+        const auto fluidMatrixInteraction = problem_->spatialParams().fluidMatrixInteractionAtPos(pos);
         swr_ = fluidMatrixInteraction.pcSwCurve().effToAbsParams().swr();
         snr_ = fluidMatrixInteraction.pcSwCurve().effToAbsParams().snr();
 
@@ -142,7 +140,7 @@ private:
 
         FluidState fluidState;
         Scalar referencePressure = getParam<Scalar>("Problem.ReferencePressure");
-        fluidState.setTemperature(spatialParams_.temperatureAtPos(pos));
+        fluidState.setTemperature(problem_->spatialParams().temperatureAtPos(pos));
         fluidState.setPressure(FluidSystem::phase0Idx, referencePressure);
         fluidState.setPressure(FluidSystem::phase1Idx, referencePressure);
 
@@ -173,8 +171,7 @@ private:
         return intervalNum_;
     }
 
-    std::shared_ptr<const GridGeometry> gridGeometry_;
-    const SpatialParams& spatialParams_;
+    std::shared_ptr<const Problem> problem_;
     ScalarVector values_;
     Scalar totalVelocity_;
     Scalar swr_;

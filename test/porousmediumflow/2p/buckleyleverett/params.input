@@ -1,12 +1,12 @@
 [TimeLoop]
 DtInitial = 1e3 # [s]
-TEnd = 2e7 # [s]
+TEnd = 1e7 # [s]
 MaxTimeStepSize = 5e5 # [s]
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 100 75 # [m]
-Cells = 200 1
+Cells = 100 1
 
 [Problem]
 Name = test_2p_buckleyleverett_tpfa
@@ -32,4 +32,4 @@ LiquidDensity = 1000 # [kg/m^3]
 LiquidDynamicViscosity = 1e-3 # [Pa*s]
 
 [Newton]
-EnablePartialReassembly = true
+EnablePartialReassembly = false
