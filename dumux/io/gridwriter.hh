@@ -29,6 +29,7 @@
 #include <dune/common/timer.hh>
 
 #include <dumux/io/format.hh>
+#include <dumux/io/cvfelagrangegrid.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
@@ -100,24 +101,28 @@ inline constexpr auto order = Order<o>{};
 /*!
  * \ingroup InputOutput
  * \brief Generic writer for a variety of grid file formats.
- *        Supports higher-order output of fields provided as Dune::Function objects.
- *        To create a writer for higher-order output, you may write
- *        \code
- *            GridWriter writer{gridView, order<2>};
- *        \endcode
+ *
+ * For `order == 1` (default) the writer maps directly to the grid vertices.
+ * For `order > 1` the writer uses a `CVFELagrangeGrid<GridView, order>`.
+ *
+ * \code
+ *   GridWriter writer{Format::vtu, gridView, order<2>};
+ *   writer.setPointField("u", x); // x must be indexed by the order-2 Lagrange DOFs
+ *   // or use a Dune::Function that is evaluated at each Lagrange node:
+ *   writer.setPointField("u", cvfeGridFunction(gridGeometry, x));
+ * \endcode
  */
 template<GridFormat::Concepts::Grid GridView, int order = 1>
 class GridWriter
 {
     using Grid = std::conditional_t<
         (order > 1),
-        GridFormat::Dune::LagrangePolynomialGrid<GridView>,
+        CVFELagrangeGrid<GridView, order>,
         GridView
     >;
     using Cell = GridFormat::Cell<Grid>;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Coordinate = typename Element::Geometry::GlobalCoordinate;
     using Writer = GridFormat::Writer<Grid>;
 
  public:
@@ -185,21 +190,34 @@ class GridWriter
     void setCellField(const std::string& name, F&& f, const GridFormat::Precision<T>& prec)
     { GridFormat::Dune::set_cell_function(std::forward<F>(f), writer_, name, prec); }
 
-    //! Set a point field via a lambda invoked with grid vertices
+    //! Set a point field via a lambda invoked with grid vertices (order == 1 only).
     template<GridFormat::Concepts::PointFunction<GridView> F,
              GridFormat::Concepts::Scalar T = GridFormat::FieldScalar<std::invoke_result_t<F, Vertex>>>
     void setPointField(const std::string& name, F&& f, const GridFormat::Precision<T>& prec = {})
+        requires (order == 1)
+    { writer_.set_point_field(name, std::move(f), prec); }
+
+    //! Set a DOF-indexed container as a point field (order > 1).
+    //! The container must be indexed by the Lagrange DOF indices of this writer's order.
+    template<Detail::Container C,
+             GridFormat::Concepts::Scalar T = GridFormat::MDRangeScalar<C>>
+    void setPointField(const std::string& name, const C& values,
+                       const GridFormat::Precision<T>& prec = {})
+        requires (order > 1)
     {
-        static_assert(order == 1, "Point lambdas can only be used for order == 1. Use Dune::Functions instead.");
-        writer_.set_point_field(name, std::move(f), prec);
+        using Point = typename Grid::Point;
+        writer_.set_point_field(name, [&values](const Point& p) -> std::ranges::range_value_t<C> {
+            return values[p.dofIndex];
+        }, prec);
     }
 
-    //! Set a Dune::Function as point field
+    //! Set a Dune::Function as point field (any order).
+    //! For order > 1, the function is evaluated at each Lagrange node.
     template<GridFormat::Dune::Concepts::Function<GridView> F>
     void setPointField(const std::string& name, F&& f)
     { GridFormat::Dune::set_point_function(std::forward<F>(f), writer_, name); }
 
-    //! Set a Dune::Function as point data with custom precision
+    //! Set a Dune::Function as point field with custom precision (any order).
     template<GridFormat::Dune::Concepts::Function<GridView> F, GridFormat::Concepts::Scalar T>
     void setPointField(const std::string& name, F&& f, const GridFormat::Precision<T>& prec)
     { GridFormat::Dune::set_point_function(std::forward<F>(f), writer_, name, prec); }
@@ -219,7 +237,7 @@ class GridWriter
     Grid makeGrid_(const GridView& gv) const
     {
         if constexpr (order > 1)
-            return Grid{gv, order};
+            return Grid{gv};
         else
             return gv;
     }
