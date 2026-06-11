@@ -127,8 +127,13 @@ public:
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
+                    [&]() -> GridIndexType {
+                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
+                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
+                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
+                        else
+                            return static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
+                    }(),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });
@@ -141,8 +146,13 @@ public:
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
+                    [&]() -> GridIndexType {
+                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
+                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
+                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
+                        else
+                            return static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
+                    }(),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });
@@ -154,8 +164,13 @@ public:
             Dune::range(std::size_t(0), fvGeometry.numLocalDofs()), [&](const auto i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
+                    [&]() -> GridIndexType {
+                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
+                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
+                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
+                        else
+                            return static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
+                    }(),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             }
@@ -173,8 +188,13 @@ public:
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                        fvGeometry.feLocalCoefficients().localKey(i))),
+                    [&]() -> GridIndexType {
+                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
+                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
+                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
+                        else
+                            return static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
+                    }(),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });

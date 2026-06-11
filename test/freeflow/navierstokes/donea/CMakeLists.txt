@@ -436,6 +436,68 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube_parallel
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq2_cube params.input
                              -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq2_cube_parallel -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
 
+# PQ3Hybrid momentum-only tests (cubic Lagrange)
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex
+               CMD_ARGS    params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_simplex
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells "8 8")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_cube
+               CMD_ARGS    params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_cube
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells "8 8")
+
+# PQ3 parallel momentum tests
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel
+               TARGET test_ff_stokes_donea_momentum_hybrid_pq3_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS    ${MPIEXEC_NUMPROC_FLAG} 2
+                           ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex
+                           params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells "8 8")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
+               TARGET test_ff_stokes_donea_momentum_hybrid_pq3_cube
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${MPIEXEC_EXECUTABLE}
+               CMD_ARGS    ${MPIEXEC_NUMPROC_FLAG} 2
+                           ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_cube
+                           params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells "8 8")
+
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                SOURCES main.cc
                LABELS freeflow navierstokes donea

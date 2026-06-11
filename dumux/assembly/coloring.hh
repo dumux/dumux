@@ -49,7 +49,8 @@ computeConnectedElements(const GridGeometry& gg)
 
     else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
                        || GridGeometry::discMethod == DiscretizationMethods::pq1bubble
-                       || GridGeometry::discMethod == DiscretizationMethods::pq2)
+                       || GridGeometry::discMethod == DiscretizationMethods::pq2
+                       || GridGeometry::discMethod == DiscretizationMethods::pq3)
     {
         static constexpr int dim = GridGeometry::GridView::dimension;
         connectedElements.resize(gg.gridView().size(dim));
@@ -157,7 +158,8 @@ void addNeighborColors(const GridGeometry& gg,
 
     else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
                        || GridGeometry::discMethod == DiscretizationMethods::pq1bubble
-                       || GridGeometry::discMethod == DiscretizationMethods::pq2)
+                       || GridGeometry::discMethod == DiscretizationMethods::pq2
+                       || GridGeometry::discMethod == DiscretizationMethods::pq3)
     {
         // we modify the vertex dofs of our element during the assembly
         // check who else modifies these vertex dofs
@@ -300,6 +302,7 @@ template<> struct SupportsColoring<DiscretizationMethods::FCStaggered> : public 
 template<> struct SupportsColoring<DiscretizationMethods::FCDiamond> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::PQ1Bubble> : public std::true_type {};
 template<> struct SupportsColoring<DiscretizationMethods::PQ2> : public std::true_type {};
+template<> struct SupportsColoring<DiscretizationMethods::PQ3> : public std::true_type {};
 
 } // end namespace Dumux
 

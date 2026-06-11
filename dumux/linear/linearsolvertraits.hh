@@ -20,6 +20,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/gridcapabilities.hh>
@@ -133,7 +134,6 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ1Bubble>
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     using DofMapper = typename GridGeometry::DofMapper;
 
-    static constexpr int dofCodim = Grid::dimension;
     static constexpr std::bitset<Grid::dimension+1> dofCodims{ (1UL << Grid::dimension) + 1UL };
 
     static const DofMapper& dofMapper(const GridGeometry& gg)
@@ -147,8 +147,6 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
     using DofMapper = typename GridGeometry::DofMapper;
     using Grid = typename GridGeometry::GridView::Traits::Grid;
 
-    static constexpr int dofCodim = Grid::dimension;
-
     // Q2 on cube elements also has an interior (codim-0) DOF at the element center
     static constexpr bool hasElementDofs =
         Dune::Capabilities::hasSingleGeometryType<Grid>::v &&
@@ -159,8 +157,9 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
         (1UL << Grid::dimension) + (1UL << (Grid::dimension-1)) + (hasElementDofs ? 1UL : 0UL)
     };
 
-    static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
-                                          && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;
+    static constexpr bool canCommunicate
+        = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
+        && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
@@ -168,6 +167,34 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
 
     static const DofMapper& dofMapper(const GridGeometry& gg)
     { return { gg.dofMapper() }; }
+};
+
+template<class GridGeometry>
+struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ3>
+: public LinearSolverTraitsBase<GridGeometry>
+{
+    using DofMapper = typename GridGeometry::DofMapper;
+    using Grid = typename GridGeometry::GridView::Traits::Grid;
+
+    // PQ3 has DOFs on all mesh entities: vertices, edges, faces (3D), and element interiors
+    // (P3 triangles: 1 interior DOF; Q3 quads: 4; P3 tets: 0; Q3 hexes: 8)
+    // We set bits for all codimensions to ensure correct parallel communication setup
+    static constexpr std::bitset<Grid::dimension+1> dofCodims{
+        (1UL << (Grid::dimension+1)) - 1UL  // bits 0..dim all set
+    };
+
+    static constexpr bool canCommunicate
+        = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
+        && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v
+        && (Grid::dimension < 3 || Dune::Capabilities::canCommunicate<Grid, 1>::v)
+        && Dune::Capabilities::canCommunicate<Grid, 0>::v;
+
+    template<class GridView>
+    static bool isNonOverlapping(const GridView& gridView)
+    { return gridView.overlapSize(0) == 0; }
+
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return gg.dofMapper(); }
 };
 
 //! Cell-centered tpfa: use overlapping model
@@ -190,25 +217,12 @@ template<class GridGeometry>
 struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::FCStaggered>
 : public LinearSolverTraitsBase<GridGeometry>
 {
-    class DofMapper
-    {
-    public:
-        DofMapper(const typename GridGeometry::GridView& gridView)
-        : gridView_(gridView) {}
-
-        template<class Entity>
-        auto index(const Entity& e) const
-        { return gridView_.indexSet().index(e); }
-
-        auto size() const
-        { return gridView_.size(1); }
-
-    private:
-        typename GridGeometry::GridView gridView_;
-    };
+    using DofMapper = Dune::MultipleCodimMultipleGeomTypeMapper<typename GridGeometry::GridView>;
 
     static DofMapper dofMapper(const GridGeometry& gg)
-    { return { gg.gridView() }; }
+    {
+        return DofMapper(gg.gridView(), Dune::mcmgLayout(Dune::Codim<1>{}));
+    }
 
     using Grid = typename GridGeometry::GridView::Traits::Grid;
     static constexpr int dofCodim = 1;
