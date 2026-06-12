@@ -27,7 +27,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/center.hh>
-#include <dumux/discretization/box/dofhelper.hh>
+#include <dumux/discretization/pq1/dofhelper.hh>
 
 namespace Dumux {
 
