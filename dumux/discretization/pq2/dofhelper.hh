@@ -18,7 +18,7 @@
 #define DUMUX_DISCRETIZATION_PQ2_DOF_HELPER_HH
 
 #include <dune/common/fvector.hh>
-#include <dune/geometry/referenceelements.hh>
+#include <dumux/discretization/fem/fedofhelper.hh>
 
 namespace Dumux {
 
@@ -32,33 +32,19 @@ namespace Dumux {
  * \tparam GridView  The Dune grid view type.
  */
 template<class GridView>
-struct PQ2LagrangeDofHelper
+struct PQ2LagrangeDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
 {
     using Scalar = typename GridView::ctype;
     static constexpr int dim = GridView::dimension;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
+    using Dumux::Experimental::FEDofHelper<GridView>::dofIndex;
     //! Global DOF index for the given local key.
     //! The id-set argument is accepted but ignored (no orientation needed for k=2).
     template<class DofMapper, class Element, class LocalKey, class IdSet>
     static std::size_t dofIndex(const DofMapper& m, const Element& e,
                                 const LocalKey& lk, const IdSet& /*idSet*/)
-    { return m.subIndex(e, lk.subEntity(), lk.codim()); }
-
-    //! Global DOF index for the given local key (3-argument overload, no id-set).
-    template<class DofMapper, class Element, class LocalKey>
-    static std::size_t dofIndex(const DofMapper& m, const Element& e, const LocalKey& lk)
-    { return m.subIndex(e, lk.subEntity(), lk.codim()); }
-
-    //! Physical position of the DOF in global coordinates.
-    template<class Geometry, class LocalKey>
-    static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& lk)
-    {
-        if (lk.codim() == dim) return geo.corner(lk.subEntity());
-        if (lk.codim() == 0)  return geo.center();
-        const auto& ref = Dune::referenceElement<Scalar, dim>(geo.type());
-        return geo.global(ref.position(lk.subEntity(), lk.codim()));
-    }
+    { return dofIndex(m, e, lk); }
 };
 
 } // namespace Dumux
