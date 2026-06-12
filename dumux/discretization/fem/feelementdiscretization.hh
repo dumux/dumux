@@ -70,21 +70,7 @@ public:
 
     //! iterate over all local dofs
     friend inline auto localDofs(const FEElementDiscretization& elemDisc)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(elemDisc.numLocalDofs()),
-            [&](const auto i) {
-                return CVFE::LocalDof{
-                    static_cast<LocalIndexType>(i),
-                    static_cast<GridIndexType>(DofHelper::dofIndex(
-                        elemDisc.gridDiscretization().dofMapper(),
-                        elemDisc.element(),
-                        elemDisc.feLocalCoefficients().localKey(i))),
-                    static_cast<GridIndexType>(elemDisc.elementIndex())
-                };
-            }
-        );
-    }
+    { return DofHelper::localDofs(elemDisc); }
 
     //! iterate over non-CV local dofs (for pure FE methods all dofs are non-CV)
     friend inline auto nonCVLocalDofs(const FEElementDiscretization& elemDisc)

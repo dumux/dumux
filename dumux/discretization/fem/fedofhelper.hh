@@ -56,6 +56,28 @@ public:
     }
 
     /*!
+     * \brief Iterator range over all local dofs on an element.
+     * \param elemDisc the element discretization (must be bound)
+     */
+    template<class ElemDisc>
+    static auto localDofs(const ElemDisc& elemDisc)
+    {
+        return Dune::transformedRangeView(
+            Dune::range(elemDisc.numLocalDofs()),
+            [&](const auto i) {
+                return CVFE::LocalDof{
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(dofIndex(
+                        elemDisc.gridDiscretization().dofMapper(),
+                        elemDisc.element(),
+                        elemDisc.feLocalCoefficients().localKey(i))),
+                    static_cast<GridIndexType>(elemDisc.elementIndex())
+                };
+            }
+        );
+    }
+
+    /*!
      * \brief Iterator range over all local dofs on a given boundary face.
      *         Uses a filter over all local dofs via localDofOnIntersection.
      * \param elemDisc the element discretization (must be bound)
