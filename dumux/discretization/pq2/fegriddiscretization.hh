@@ -22,6 +22,8 @@
 #include <dumux/discretization/fem/fegriddiscretization.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
 
+#include "dofhelper.hh"
+
 namespace Dumux::Experimental {
 
 /*!
@@ -54,7 +56,7 @@ struct PQ2FEDefaultGridDiscretizationTraits
 {
     using DiscretizationMethod = DiscretizationMethods::PQ2;
     using FeCache = Dune::LagrangeLocalFiniteElementCache<typename GridView::ctype, Scalar, GridView::dimension, 2>;
-    using DofHelper = FEDofHelper<GridView>;
+    using DofHelper = PQ2LagrangeDofHelper<GridView>;
 
     template<class GridDiscretization, bool enableCache>
     using LocalView = FEElementDiscretization<GridDiscretization, enableCache>;
