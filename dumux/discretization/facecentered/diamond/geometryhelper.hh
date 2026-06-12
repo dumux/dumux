@@ -23,8 +23,9 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/geometry/center.hh>
-#include <dumux/discretization/fem/fedofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
+
+#include "dofhelper.hh"
 
 namespace Dumux {
 
@@ -249,33 +250,6 @@ struct InsideOutsideScv<IndexType, Dune::GeometryTypes::hexahedron>
 
 /*!
  * \ingroup DiamondDiscretization
- * \brief Helper class providing degree of freedom information for the diamond scheme.
- *        The diamond scheme uses face-centered dofs: exactly one dof per face/intersection.
- */
-template<class GridView>
-class DiamondDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
-{
-    using LocalIndexType = typename IndexTraits<GridView>::SmallLocalIndex;
-    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
-public:
-    /*!
-     * \brief Iterator range over all local dofs on a given boundary face.
-     *       For the diamond scheme, each boundary face has exactly one dof.
-     */
-    template<class ElemDisc, class BoundaryFace>
-    static auto localDofsOnBoundaryFace(const ElemDisc& elemDisc, const BoundaryFace& boundaryFace)
-    {
-        const auto localDofIdx = boundaryFace.intersectionIndex();
-        return std::views::single(CVFE::LocalDof(
-            static_cast<LocalIndexType>(localDofIdx),
-            static_cast<GridIndexType>(elemDisc.scv(localDofIdx).dofIndex()),
-            static_cast<GridIndexType>(elemDisc.elementIndex())
-        ));
-    }
-};
-
-/*!
- * \ingroup DiamondDiscretization
  * \brief Helper class to construct SCVs and SCVFs for the diamond scheme
  */
 template <class GridView, class ScvType, class ScvfType>
@@ -295,7 +269,7 @@ class DiamondGeometryHelper
     using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
 public:
-    using DofHelper = DiamondDofHelper<GridView>;
+    using DofHelper = PQ1NonconformingDofHelper<GridView>;
 
     explicit DiamondGeometryHelper(const typename Element::Geometry& geo)
     : geo_(geo)

@@ -19,7 +19,8 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/fem/feelementdiscretization.hh>
 #include <dumux/discretization/fem/fegriddiscretization.hh>
-#include "boxgeometryhelper.hh"
+
+#include "dofhelper.hh"
 
 namespace Dumux::Experimental {
 
@@ -71,7 +72,7 @@ struct PQ1FEDefaultGridDiscretizationTraits
 {
     using DiscretizationMethod = DiscretizationMethods::Box;
     using FeCache = Dune::LagrangeLocalFiniteElementCache<typename GridView::ctype, Scalar, GridView::dimension, 1>;
-    using DofHelper = Dumux::BoxDofHelper<GridView>;
+    using DofHelper = Dumux::PQ1LagrangeDofHelper<GridView>;
 
     template<class GridDiscretization, bool enableCache>
     using LocalView = FEElementDiscretization<GridDiscretization, enableCache>;

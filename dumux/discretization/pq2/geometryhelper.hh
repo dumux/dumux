@@ -28,7 +28,6 @@
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/pq2/dofhelper.hh>
-#include <dumux/discretization/fem/fedofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
@@ -68,7 +67,7 @@ class HybridPQ2GeometryHelper
 
     using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
-    using DofHelper = Dumux::Experimental::FEDofHelper<GridView>;
+    using DofHelper = Dumux::PQ2LagrangeDofHelper<GridView>;
 
     HybridPQ2GeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
