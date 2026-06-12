@@ -6,8 +6,8 @@
 //
 /*!
  * \file
- * \ingroup BoxDiscretization
- * \brief Finite element grid discretization for the PQ1 (box) FE method.
+ * \ingroup PQ1Discretization
+ * \brief Finite element grid discretization for the PQ1 FE method.
  */
 #ifndef DUMUX_DISCRETIZATION_PQ1_FE_GRID_DISCRETIZATION_HH
 #define DUMUX_DISCRETIZATION_PQ1_FE_GRID_DISCRETIZATION_HH
@@ -25,7 +25,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup PQ1Discretization
  * \brief Quadrature rule traits for PQ1 FE discretization
  */
 template<class GridView,
@@ -40,7 +40,7 @@ struct PQ1FEQuadratureTraits
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup PQ1Discretization
  * \brief Mapper traits for PQ1 FE discretization (vertex dofs only)
  */
 template<class GridView>
@@ -58,7 +58,7 @@ struct PQ1FEMapperTraits : public Dumux::DefaultMapperTraits<GridView>
 };
 
 /*!
- * \ingroup BoxDiscretization
+ * \ingroup PQ1Discretization
  * \brief The default traits for the PQ1 finite element grid discretization
  * \tparam GridView the grid view type
  * \tparam Scalar the scalar type (used for the FE cache)
@@ -70,7 +70,7 @@ template<class GridView,
 struct PQ1FEDefaultGridDiscretizationTraits
 : public MapperTraits, public QuadratureTraits
 {
-    using DiscretizationMethod = DiscretizationMethods::Box;
+    using DiscretizationMethod = DiscretizationMethods::PQ1;
     using FeCache = Dune::LagrangeLocalFiniteElementCache<typename GridView::ctype, Scalar, GridView::dimension, 1>;
     using DofHelper = Dumux::PQ1LagrangeDofHelper<GridView>;
 
@@ -82,8 +82,8 @@ struct PQ1FEDefaultGridDiscretizationTraits
 };
 
 /*!
- * \ingroup BoxDiscretization
- * \brief Finite element grid discretization for the PQ1 (box) FE method.
+ * \ingroup PQ1Discretization
+ * \brief Finite element grid discretization for the PQ1 FE method.
  */
 template<class Scalar,
          class GV,

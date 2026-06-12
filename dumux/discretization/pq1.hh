@@ -43,7 +43,7 @@
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
-#include <dumux/discretization/box/fegriddiscretization.hh>
+#include <dumux/discretization/pq1/fegriddiscretization.hh>
 
 #include <dumux/discretization/fem/elementvariables.hh>
 #include <dumux/discretization/fem/gridvariablescache.hh>
