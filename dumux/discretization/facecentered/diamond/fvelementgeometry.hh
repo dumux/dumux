@@ -223,6 +223,10 @@ public:
     const GridGeometry& gridGeometry() const
     { return ggCache_->gridGeometry(); }
 
+    //! The grid discretization we are a restriction of
+    const GridGeometry& gridDiscretization() const
+    { return ggCache_->gridGeometry(); }
+
     //! The bound element index
     std::size_t elementIndex() const
     { return eIdx_; }

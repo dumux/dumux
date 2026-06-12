@@ -284,6 +284,10 @@ public:
     const GridGeometry& gridGeometry() const
     { return ggCache_->gridGeometry(); }
 
+    //! The grid discretization we are a restriction of
+    const GridGeometry& gridDiscretization() const
+    { return ggCache_->gridGeometry(); }
+
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return ggCache_->hasBoundaryScvf(eIdx_); }
