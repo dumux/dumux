@@ -17,8 +17,9 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/fem/feelementdiscretization.hh>
 #include <dumux/discretization/fem/fegriddiscretization.hh>
-#include <dumux/discretization/facecentered/diamond/geometryhelper.hh>
 #include <dumux/discretization/nonconformingfecache.hh>
+
+#include "dofhelper.hh"
 
 namespace Dumux::Experimental {
 
@@ -68,7 +69,7 @@ struct PQ1NonconformingFEDefaultGridDiscretizationTraits
 {
     using DiscretizationMethod = DiscretizationMethods::PQ1Nonconforming;
     using FeCache = Dumux::NonconformingFECache<typename GridView::ctype, Scalar, GridView::dimension>;
-    using DofHelper = Dumux::DiamondDofHelper<GridView>;
+    using DofHelper = Dumux::PQ1NonconformingDofHelper<GridView>;
 
     template<class GridDiscretization, bool enableCache>
     using LocalView = FEElementDiscretization<GridDiscretization, enableCache>;

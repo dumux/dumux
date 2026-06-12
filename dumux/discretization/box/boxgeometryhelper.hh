@@ -27,8 +27,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/center.hh>
-#include <dumux/discretization/fem/fedofhelper.hh>
-#include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/box/dofhelper.hh>
 
 namespace Dumux {
 
@@ -257,56 +256,6 @@ S subEntityKeyToCornerStorage(const ReferenceElement& ref, Transformation&& tran
 
 } // end namespace Detail::Box
 
-/*!
- * \ingroup BoxDiscretization
- * \brief Helper class providing degree of freedom information for the box method.
- *        The box method uses vertex-only dofs.
- */
-template<class GridView>
-class BoxDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
-{
-    using Scalar = typename GridView::ctype;
-    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
-    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
-
-    static constexpr auto dim = GridView::dimension;
-public:
-    //! Number of local dofs related to an intersection with index iIdx (vertex dofs only)
-    static auto numLocalDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).size(iIdx, 1, dim);
-    }
-
-    //! Local dof index of the localDofIdx-th dof on intersection with index iIdx
-    static auto localDofIndexIntersection(Dune::GeometryType type, unsigned int iIdx, unsigned int localDofIdx)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, localDofIdx, dim);
-    }
-
-    /*!
-     * \brief Iterator range over all local dofs on a given boundary face.
-     *        Overrides the less efficient default implementation.
-     */
-    template<class ElemDisc, class BoundaryFace>
-    static auto localDofsOnBoundaryFace(const ElemDisc& elemDisc, const BoundaryFace& boundaryFace)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(numLocalDofsIntersection(elemDisc.element().type(), boundaryFace.intersectionIndex())),
-            [&](const auto i) {
-                auto localDofIdx = localDofIndexIntersection(elemDisc.element().type(), boundaryFace.intersectionIndex(), i);
-                return CVFE::LocalDof(
-                    static_cast<LocalIndexType>(localDofIdx),
-                    static_cast<GridIndexType>(Dumux::Experimental::FEDofHelper<GridView>::dofIndex(
-                        elemDisc.gridGeometry().dofMapper(),
-                        elemDisc.element(),
-                        elemDisc.feLocalCoefficients().localKey(localDofIdx))),
-                    static_cast<GridIndexType>(elemDisc.elementIndex())
-                );
-            }
-        );
-    }
-};
-
 //! Create sub control volumes and sub control volume face geometries
 template<class GridView, int dim, class ScvType, class ScvfType>
 class BoxGeometryHelper;
@@ -329,7 +278,7 @@ private:
 
     static constexpr int dim = 1;
 public:
-    using DofHelper = BoxDofHelper<GridView>;
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -451,7 +400,7 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 public:
-    using DofHelper = BoxDofHelper<GridView>;
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -633,7 +582,7 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
     static constexpr auto dimWorld = GridView::dimensionworld;
 
 public:
-    using DofHelper = BoxDofHelper<GridView>;
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)

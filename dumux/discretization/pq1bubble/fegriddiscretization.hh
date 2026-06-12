@@ -17,9 +17,10 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/fem/feelementdiscretization.hh>
 #include <dumux/discretization/fem/fegriddiscretization.hh>
-#include <dumux/discretization/pq1bubble/geometryhelper.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/pq1bubble/pq1bubblefecache.hh>
+
+#include "dofhelper.hh"
 
 namespace Dumux::Experimental {
 
