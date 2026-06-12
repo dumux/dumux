@@ -32,9 +32,10 @@ class BuckleyLeverettAnalyticSolution
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using ScalarVector = Dune::BlockVector<Scalar>;
 
 public:
+    using ScalarVector = Dune::BlockVector<Scalar>;
+
     BuckleyLeverettAnalyticSolution(std::shared_ptr<const Problem> problem)
     : problem_(problem)
     , values_(problem->gridGeometry().gridView().size(0))

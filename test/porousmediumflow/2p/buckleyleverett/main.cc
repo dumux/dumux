@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/common/initialize.hh>
@@ -104,25 +105,91 @@ int main(int argc, char** argv)
     nonLinearSolver.report();
     timeLoop->finalize(leafGridView.comm());
 
+
+    using ScalarVector = typename BuckleyLeverettAnalyticSolution<TypeTag>::ScalarVector;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     constexpr auto saturationIdx = ModelTraits::Indices::saturationIdx;
+    using BarycenterVector = Dune::FieldVector<Scalar, 2>;
 
-    Scalar maxSaturationError = 0.0;
-    for (std::size_t dofIdx = 0; dofIdx < x.size(); ++dofIdx)
+    // compute relative error in wetting-phase mass barycenters
+    // assumptions: solutions are (pseudo)1D, densities and porosity are constant, TPFA discretization
+    auto computeBarycentersMassWX = [&problem, &gridGeometry](const SolutionVector& numericSolution,
+                                                              const ScalarVector& analyticSolution) -> BarycenterVector
     {
-        const auto wettingSaturation = 1.0 - x[dofIdx][saturationIdx];
-        maxSaturationError = std::max(maxSaturationError, std::abs(wettingSaturation - analyticSolution.values()[dofIdx]));
-    }
+        Scalar leftXBoundary = getParam<GlobalPosition>("Grid.LowerLeft")[0];
+        FluidState fluidState;
+        Scalar referencePressure = getParam<Scalar>("Problem.ReferencePressure");
+        fluidState.setTemperature(problem->spatialParams().temperatureAtPos(GlobalPosition{}));
+        fluidState.setPressure(FluidSystem::phase0Idx, referencePressure);
+        fluidState.setPressure(FluidSystem::phase1Idx, referencePressure);
 
-    const auto maxAllowedSaturationError = getParam<Scalar>("Problem.MaxSaturationError");
-    if (maxSaturationError > maxAllowedSaturationError)
-        DUNE_THROW(Dune::InvalidStateException, "Maximum saturation error " << maxSaturationError
-                   << " exceeds the threshold " << maxAllowedSaturationError);
+        const auto densityW = FluidSystem::density(fluidState, FluidSystem::phase0Idx);
+        const auto porosity = problem->spatialParams().porosityAtPos(GlobalPosition{});
+
+        Scalar barycenterMassWNumeric = 0.0;
+        Scalar barycenterMassWAnalytic = 0.0;
+        Scalar totalMassWNumeric = 0.0;
+        Scalar totalMassWAnalytic = 0.0;
+        BarycenterVector barycenters(0.0);
+
+        for (const auto& element : elements(gridGeometry->gridView()))
+        {
+            const auto globalPos = element.geometry().center();
+            const auto eIdx = gridGeometry->elementMapper().index(element);
+            const auto volume = element.geometry().volume();
+
+            Scalar satWNumeric = 1.0-numericSolution[eIdx][saturationIdx];
+            Scalar satWAnalytic = analyticSolution[eIdx];
+
+            Scalar localMassWNumeric = densityW * porosity * volume * satWNumeric;
+            Scalar localMassWAnalytic = densityW * porosity * volume * satWAnalytic;
+
+            totalMassWNumeric += localMassWNumeric;
+            totalMassWAnalytic += localMassWAnalytic;
+
+            barycenterMassWNumeric += globalPos[0] * localMassWNumeric;
+            barycenterMassWAnalytic += globalPos[0] * localMassWAnalytic;
+        }
+
+        // avoid dividing by zero
+        if(totalMassWNumeric < 1e-16)
+            barycenterMassWNumeric = leftXBoundary;
+        else
+            barycenterMassWNumeric /= totalMassWNumeric;
+
+        if(totalMassWAnalytic < 1e-16)
+            barycenterMassWAnalytic = leftXBoundary;
+        else
+            barycenterMassWAnalytic /= totalMassWAnalytic;
+
+        barycenters[0] = barycenterMassWNumeric;
+        barycenters[1] = barycenterMassWAnalytic;
+
+        return barycenters;
+    };
+
+    auto finalBarycentersX = computeBarycentersMassWX(x, analyticSolution.values());
+
+    const auto maxBarycenterMassWError = getParam<Scalar>("Problem.MaxBarycenterMassWError");
+    auto barycenterMassWError = 1.0;
+    // avoid dividing by zero
+    if(std::abs(finalBarycentersX[1])<1e-16)
+        barycenterMassWError = finalBarycentersX[1];
+    else
+        barycenterMassWError = std::abs(finalBarycentersX[1] - finalBarycentersX[0])/finalBarycentersX[1];
+    if (barycenterMassWError > maxBarycenterMassWError)
+        DUNE_THROW(Dune::InvalidStateException, "Relative wetting-phase mass barycenter error " << barycenterMassWError
+                   << " exceeds the threshold " << maxBarycenterMassWError);
 
     if (leafGridView.comm().rank() == 0)
     {
-        std::cout << "Maximum saturation error against Buckley-Leverett solution: "
-                  << maxSaturationError << std::endl;
+        std::cout << "Relative wetting-phase mass barycenter error against analytical Buckley-Leverett solution: "
+                  << barycenterMassWError << std::endl;
         Parameters::print();
     }
 

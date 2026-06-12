@@ -14,7 +14,7 @@ EnableGravity = false
 InjectionPressure = 2e5 # [Pa]
 ReferencePressure = 1e5 # [Pa]
 TotalVelocity = 3e-7 # [m/s]
-MaxSaturationError = 0.4 # [-]
+MaxBarycenterMassWError = 0.01 # [-]
 
 [SpatialParams]
 Permeability = 1.01936799e-14 # [m^2]

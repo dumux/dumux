@@ -14,8 +14,6 @@ BASE_NAME = "buckleyleverett"
 CELLS = (200, 400)
 SATURATION_FIELD = "S_aq"
 EXACT_FIELD = "Sw_exact"
-MAX_SATURATION_ERROR = "1.0"
-
 
 @dataclass(frozen=True)
 class Result:
@@ -63,7 +61,6 @@ def build_and_run() -> list[Result]:
             "params.input",
             "-Problem.Name", name,
             "-Grid.Cells", f"{cells} 1",
-            "-Problem.MaxSaturationError", MAX_SATURATION_ERROR,
         ], cwd=case_build_dir())
         results.append(Result(cells=cells, name=name, vtu=latest_vtu(name)))
 
