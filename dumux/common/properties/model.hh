@@ -19,11 +19,7 @@
 #include <dumux/io/defaultiofields.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 
-// Forward declaration
-namespace Dune { class ParameterTree; }
-
-namespace Dumux {
-namespace Properties {
+namespace Dumux:: Properties {
 
 //! Type tag for numeric models.
 namespace TTag {
@@ -36,8 +32,12 @@ struct Scalar<TypeTag, TTag::ModelProperties> { using type = double; };
 
 //! Set the default primary variable vector to a vector of size of number of equations
 template<class TypeTag>
-struct PrimaryVariables<TypeTag, TTag::ModelProperties> { using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>,
-                                                                                         GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
+struct PrimaryVariables<TypeTag, TTag::ModelProperties> {
+    using type = Dune::FieldVector<
+        GetPropType<TypeTag, Properties::Scalar>,
+        GetPropType<TypeTag, Properties::ModelTraits>::numEq()
+    >;
+};
 
 //! Set the default to an implementation throwing a NotImplemented error
 template<class TypeTag>
@@ -47,31 +47,6 @@ struct IOFields<TypeTag, TTag::ModelProperties> { using type = DefaultIOFields; 
 template<class TypeTag>
 struct BalanceEqOpts<TypeTag, TTag::ModelProperties> { using type = BalanceEquationOptions<TypeTag>; };
 
-template<class TypeTag>
-class DeprecatedBaseLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
-{
-    struct PropertyBaseLocalResidual {
-        [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10. Use DiscretizationDefaultLocalOperator.")]]
-        PropertyBaseLocalResidual() = default;
-        int dummy = 0;
-    };
-    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
-public:
-    using ParentType::ParentType;
-private:
-    PropertyBaseLocalResidual deprecated_;
-};
-
-//! Deprecation helper for BaseLocalResidual
-template<class TypeTag>
-struct [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10. Use DiscretizationDefaultLocalOperator.")]]
-BaseLocalResidual<TypeTag, TTag::ModelProperties>
-{
-    using type [[deprecated("BaseLocalResidual property is deprecated. Will be removed after release 3.10. Use DiscretizationDefaultLocalOperator.")]]
-        = DeprecatedBaseLocalResidual<TypeTag>;
-};
-
-} // namespace Properties
-} // namespace Dumux
+} // namespace Dumux::Properties
 
 #endif
