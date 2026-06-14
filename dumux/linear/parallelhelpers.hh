@@ -17,6 +17,7 @@
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/partitionset.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/bvector.hh>
@@ -25,6 +26,8 @@
 #include <dumux/common/gridcapabilities.hh>
 #include <dumux/common/parameters.hh>
 
+#include <cmath>
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -242,7 +245,6 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         int rank_;
         std::set<int>& neighbours_;
     };
-
 
     /*!
      * \brief GatherScatter handle for finding out about neighbouring processor ranks.
@@ -515,7 +517,6 @@ using ParallelISTLHelper =
     Detail::ParallelISTLHelperImpl<
         LinearSolverTraits, LinearSolverTraits::canCommunicate
     >;
-
 
 template<class GridView, class DofMapper, int dofCodim>
 class ParallelVectorHelper
@@ -1337,23 +1338,24 @@ private:
                         const auto entity = element.template subEntity<codim>(i);
                         const auto pt = entity.partitionType();
 
-                        // Standard: always include BorderEntity DOFs.
-                        bool shouldProcess = (pt == Dune::BorderEntity);
+                        // Standard: codim 0 (element-attached DOFs, e.g. PQ1Bubble
+                        // bubble DOFs) are always registered unconditionally:
+                        // codim-0 entities are never BorderEntity (only Interior
+                        // or Ghost), so without this, a Border row's column entry
+                        // referencing a bubble DOF owned solely by the neighboring
+                        // rank would never be exchanged/summed. For codim > 0,
+                        // include BorderEntity DOFs (shared at the interface) and
+                        // InteriorEntity DOFs of elements that touch the border
+                        // (so a Border row's column entry referencing a uniquely-
+                        // owned neighbor-rank vertex is exchanged too).
+                        bool shouldProcess = (codim == 0) || (pt == Dune::BorderEntity)
+                            || (pt == Dune::InteriorEntity && elementHasBorderSubEntity_(element));
 
                         // Extended mode (for direct solvers): also include ghost entities
-                        // and interior entities adjacent to the partition boundary so that
-                        // element-interior DOF column entries in border rows are communicated.
-                        if (!shouldProcess && includeGhostAndAdjacent_) {
-                            if constexpr (codim == 0) {
-                                // Elements are never BorderEntity; include GhostEntity elements
-                                // AND InteriorEntity elements adjacent to a border sub-entity.
-                                shouldProcess = (pt == Dune::GhostEntity)
-                                             || (pt == Dune::InteriorEntity
-                                                 && elementHasBorderSubEntity_(entity));
-                            } else {
-                                shouldProcess = (pt == Dune::GhostEntity);
-                            }
-                        }
+                        // so that ghost row/column DOFs participate (via
+                        // InteriorBorder_All_Interface).
+                        if (!shouldProcess && includeGhostAndAdjacent_)
+                            shouldProcess = (pt == Dune::GhostEntity);
 
                         if (shouldProcess)
                         {
