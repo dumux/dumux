@@ -194,3 +194,23 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_instationary_simple_paral
                              -LinearSolver.Preconditioner.SchurReduction 1e-2 -LinearSolver.Preconditioner.SchurIterations 30
                              -LinearSolver.Preconditioner.PressureRelaxation 1.0
                              -Newton.MaxSteps 15")
+
+# Cross-check: the SAME instationary NS setup (same discretization, Re~100, same dt) solved in
+# parallel with the Trilinos Amesos2 DIRECT solver. Compared against the same reference, so the
+# matrix-free SIMPLE solve and the parallel direct solve are verified to agree.
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_instationary_trilinos_parallel
+               TARGET test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos
+               LABELS freeflow navierstokes trilinos parallel
+               CMAKE_GUARD "( Trilinos_FOUND AND dune-alugrid_FOUND )"
+               TIMEOUT 1200
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_instationary_simple-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_navierstokes_dfg_benchmark_instationary_trilinos_parallel-00002.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilinos params.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_instationary_trilinos_parallel
+                             -Problem.EnableInertiaTerms true -Problem.Instationary true
+                             -Component.LiquidDynamicViscosity 2e-4
+                             -TimeLoop.DtInitial 0.002 -TimeLoop.TEnd 0.004 -TimeLoop.MaxTimeStepSize 0.002
+                             -LinearSolver.UseTrilinos true
+                             -Newton.MaxSteps 15")
