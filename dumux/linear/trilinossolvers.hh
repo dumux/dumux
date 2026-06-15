@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <functional>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
@@ -38,6 +39,8 @@
 #include <Tpetra_CrsGraph.hpp>
 #include <Tpetra_CrsMatrix.hpp>
 #include <Tpetra_MultiVector.hpp>
+#include <Tpetra_Export.hpp>
+#include <Tpetra_CombineMode.hpp>
 
 #include <Amesos2.hpp>
 #include <Amesos2_Version.hpp>
@@ -104,6 +107,7 @@ class DirectSolverAmesos2 : public LinearSolver
     using SolverVector = Tpetra::MultiVector<Scalar, LocalIDType, GlobalIDType, NodeType>;
     using AmeSolver = Amesos2::Solver<SolverMatrix, SolverVector>;
     using Graph = Tpetra::CrsGraph<LocalIDType, GlobalIDType, NodeType>;
+    using TpetraExport = Tpetra::Export<LocalIDType, GlobalIDType, NodeType>;
 
     using GridTypes_ = Detail::AmesosGridTypes<LSTraits>;
     using GridView = typename GridTypes_::GridView;
@@ -148,6 +152,8 @@ public:
         rank_ = comm_->getRank();
         if (rank_ == 0)
             *fos_ << "\n" << Amesos2::version() << std::endl;
+
+        readSolverParams_();
     }
 
     // Constructor for parallel/sequential solvers with a grid (canCommunicate=true).
@@ -167,6 +173,8 @@ public:
         rank_ = comm_->getRank();
         if (rank_ == 0)
             *fos_ << "\n" << Amesos2::version() << std::endl;
+
+        readSolverParams_();
 
         buildGlobalDofIndices_(gridView, dofMapper);
         rowMap_ = buildRowMap_();
@@ -188,6 +196,8 @@ public:
         rank_ = comm_->getRank();
         if (rank_ == 0)
             *fos_ << "\n" << Amesos2::version() << std::endl;
+
+        readSolverParams_();
 
         using MomTraits = LinearSolverTraits<MomGG>;
         using MassTraits = LinearSolverTraits<MassGG>;
@@ -347,6 +357,20 @@ public:
     std::string name() const { return "Trilinos Amesos2 Direct Solver"; }
 
 private:
+    /*!
+     * Read optional MUMPS tuning parameters from the DuMux parameter tree into params_.
+     * LinearSolver.MumpsOrdering sets MUMPS ICNTL(7), the fill-reducing ordering applied during
+     * the (reused) symbolic analysis; less fill makes every numeric factorization cheaper.
+     * Values: 0=AMD, 2=AMF, 4=PORD, 6=QAMD, 7=automatic (MUMPS default). 3=SCOTCH/5=METIS need
+     * MUMPS built with those libraries (this build has PORD only). Unset (-1) leaves the default.
+     */
+    void readSolverParams_()
+    {
+        const int ordering = getParamFromGroup<int>(this->paramGroup(), "LinearSolver.MumpsOrdering", -1);
+        if (ordering >= 0)
+            params_.set("ICNTL(7)", ordering);
+    }
+
     /*!
      * Compute localToGlobal_[i] = Tpetra global block index for Dune local block DOF i.
      * Scalar Tpetra GID for (block i, sub-index k) = localToGlobal_[i] * blockSize + k.
@@ -661,6 +685,10 @@ private:
      * Templated on AMatrix to handle both plain BCRSMatrix and scalar-converted types.
      */
     /*!
+     * DORMANT (kept as reference/fallback): superseded by the local-assembly + Export path
+     * (setupParallelExport_/assembleParallelExport_), which produces the same accumulated
+     * matrix but with a fixed graph so the symbolic factorization is reused across solves.
+     *
      * Global assembly for non-overlapping parallel direct solves.
      *
      * Submits every non-ghost block row (owned rows + non-owned non-ghost border rows)
@@ -829,6 +857,179 @@ private:
         return graph;
     }
 
+    /*!
+     * Mark the rows this rank contributes to (owned ∪ border). Used to build the full union
+     * target structure graph_ once; the per-solve value path then fills owned rows directly and
+     * exports only the border subset (isBorderRow_ = isSrcRow_ && !isOwned_).
+     * Mirrors the row-submission logic of the (dormant) global-assembly path:
+     *  - MultiType: momentum rows whenever !isGhost_; mass rows isOwned_ if the owner already
+     *    holds the complete row (face-based, e.g. FCDiamond), else !isGhost_ (vertex-based, Box).
+     *  - Single-domain: !isGhost_ for non-overlapping (owner border rows are incomplete),
+     *    isOwned_ for overlapping (owner rows already complete).
+     */
+    void buildIsSrcRow_()
+    {
+        const std::size_t n = isOwned_.size();
+        isSrcRow_.assign(n, false);
+        if constexpr (isMultiType)
+        {
+            for (std::size_t r = 0; r < n; ++r)
+                isSrcRow_[r] = (r < nMomLocal_)
+                    ? !isGhost_[r]
+                    : (massRowsAreComplete_ ? isOwned_[r] : !isGhost_[r]);
+        }
+        else if constexpr (LSTraits::canCommunicate)
+        {
+            const bool nonOverlapping = LSTraits::isNonOverlapping(gridView_);
+            for (std::size_t r = 0; r < n; ++r)
+                isSrcRow_[r] = nonOverlapping ? !isGhost_[r] : isOwned_[r];
+        }
+        else
+            isSrcRow_ = isOwned_; // sequential single-type: export path unused
+    }
+
+    /*!
+     * Overlapping source row map: scalar GIDs of the masked rows. Non-unique across ranks
+     * (border rows appear on multiple ranks); the Export resolves ownership. Same scalar-GID
+     * layout as buildColMap_/buildRowMap_.
+     */
+    Teuchos::RCP<const TpetraMap> buildSrcRowMap_(const std::vector<bool>& mask)
+    {
+        std::vector<GlobalIDType> gids;
+        for (std::size_t i = 0; i < mask.size(); ++i)
+            if (mask[i])
+                for (std::size_t k = 0; k < blockSize; ++k)
+                    gids.push_back(localToGlobal_[i] * blockSize + k);
+
+        Teuchos::ArrayView<const GlobalIDType> gidsView(gids.data(), gids.size());
+        return Teuchos::rcp(new TpetraMap(
+            Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid(),
+            gidsView, GlobalIDType{0}, comm_));
+    }
+
+    /*!
+     * Build a local source CrsGraph over the masked rows from the Dune matrix structure.
+     * Like buildGraph_ but iterates the masked rows with the overlapping srcRowMap as its row
+     * map; global column indices include ghost columns. fillComplete uses the owned rowMap_ as
+     * domain and range so the system is square for the direct solver.
+     */
+    template<class AMatrix>
+    Teuchos::RCP<const Graph> buildSrcGraph_(const AMatrix& A, const std::vector<bool>& mask,
+                                             const Teuchos::RCP<const TpetraMap>& srcRowMap)
+    {
+        const std::size_t nSrcRows = srcRowMap->getLocalNumElements();
+        Teuchos::ArrayRCP<std::size_t> numEntPerRow(nSrcRows, 0);
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const std::size_t blockRow = rowIt.index();
+            if (!mask[blockRow]) continue;
+            const std::size_t nBlockCols = rowIt->size();
+            for (std::size_t ki = 0; ki < blockSize; ++ki)
+            {
+                const LocalIDType tRow = srcRowMap->getLocalElement(
+                    static_cast<GlobalIDType>(localToGlobal_[blockRow] * blockSize + ki));
+                numEntPerRow[tRow] = nBlockCols * blockSize;
+            }
+        }
+
+        auto graph = Teuchos::rcp(new Graph(srcRowMap, numEntPerRow()));
+
+        Teuchos::Array<GlobalIDType> globalColIndices;
+        for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        {
+            const std::size_t blockRow = rowIt.index();
+            if (!mask[blockRow]) continue;
+
+            globalColIndices.clear();
+            globalColIndices.reserve(rowIt->size() * blockSize);
+            for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
+                for (std::size_t kj = 0; kj < blockSize; ++kj)
+                    globalColIndices.push_back(
+                        static_cast<GlobalIDType>(localToGlobal_[colIt.index()] * blockSize + kj));
+
+            for (std::size_t ki = 0; ki < blockSize; ++ki)
+            {
+                const GlobalIDType gRow =
+                    static_cast<GlobalIDType>(localToGlobal_[blockRow] * blockSize + ki);
+                graph->insertGlobalIndices(gRow, globalColIndices());
+            }
+        }
+
+        graph->fillComplete(rowMap_, rowMap_);
+        return graph;
+    }
+
+    /*!
+     * One-time setup of the parallel local-assembly structures (first solve only).
+     *
+     * The owned rows of the assembled matrix come from two contributions: the owner's own local
+     * matrix row, plus the partial rows that other ranks assembled for shared border DOFs. To
+     * avoid moving the (large) owned-row bulk through a Tpetra Export every solve -- which would
+     * re-sum every owned entry -- we split the work:
+     *   - owned rows are filled DIRECTLY into AA_ each solve (no communication);
+     *   - only BORDER rows (rows this rank contributes to but does not own) are accumulated onto
+     *     their owners via an Export of a small border-only source matrix.
+     *
+     * graph_ (the static target structure of AA_) must still be the full union of both
+     * contributions. We obtain it once by exporting the full (owned + border) source graph; the
+     * full source structures are temporaries used only here. The border source matrix/exporter
+     * and graph_/AA_ are then fixed, so AA_'s symbolic factorization is reused across solves.
+     */
+    template<class AMatrix>
+    void setupParallelExport_(const AMatrix& A)
+    {
+        buildIsSrcRow_();
+        isBorderRow_.assign(isOwned_.size(), false);
+        for (std::size_t i = 0; i < isOwned_.size(); ++i)
+            isBorderRow_[i] = isSrcRow_[i] && !isOwned_[i];
+
+        // One-time: assemble the full union structure for the target graph_.
+        auto srcRowMapFull = buildSrcRowMap_(isSrcRow_);
+        auto srcGraphFull = buildSrcGraph_(A, isSrcRow_, srcRowMapFull);
+        TpetraExport exporterFull(srcRowMapFull, rowMap_);
+        graph_ = Tpetra::exportAndFillCompleteCrsGraph<Graph>(
+            srcGraphFull, exporterFull, rowMap_, rowMap_, Teuchos::null);
+        AA_ = Teuchos::rcp(new SolverMatrix(graph_));
+
+        // Persistent border-only structures for the per-solve value accumulation.
+        auto borderRowMap = buildSrcRowMap_(isBorderRow_);
+        auto borderGraph = buildSrcGraph_(A, isBorderRow_, borderRowMap);
+        borderExporter_ = Teuchos::rcp(new TpetraExport(borderRowMap, rowMap_));
+        borderMatrix_ = Teuchos::rcp(new SolverMatrix(borderGraph));
+    }
+
+    /*!
+     * Assemble the matrix values for one solve. Owned rows are filled directly into AA_ (the
+     * bulk, no communication); the border rows are filled into borderMatrix_ and exported (ADD)
+     * onto their owners' rows of AA_. On the first call AA_/borderMatrix_ are freshly
+     * constructed (fill-active, zero-initialized); on later calls they are reset in place. The
+     * structure never changes, so AA_'s symbolic factorization stays valid.
+     */
+    template<class AMatrix>
+    void assembleParallelExport_(const AMatrix& A, bool firstCall)
+    {
+        if (!firstCall)
+        {
+            AA_->resumeFill();
+            AA_->setAllToScalar(0.0);
+            borderMatrix_->resumeFill();
+            borderMatrix_->setAllToScalar(0.0);
+        }
+
+        // Owned rows: direct local fill (no communication).
+        fillMatrixValues_(*AA_, A, isOwned_);
+
+        // Border rows: accumulate this rank's partials onto the owning rank via the Export.
+        fillMatrixValues_(*borderMatrix_, A, isBorderRow_);
+        borderMatrix_->fillComplete(rowMap_, rowMap_);
+        AA_->doExport(*borderMatrix_, *borderExporter_, Tpetra::ADD);
+
+        if (firstCall)
+            AA_->fillComplete(rowMap_, rowMap_);
+        else
+            AA_->fillComplete();
+    }
+
     SolverResult solve_(const Matrix& A, XVector& x, const BVector& b)
     {
         if constexpr (isMultiType)
@@ -867,39 +1068,38 @@ private:
             auto BB = convertBVector_(bscalar);
             auto XX = convertXVector_();
 
-            if (isParallel_)
+            // REUSE the symbolic factorization across solves. The sparsity pattern is constant,
+            // so build the graph + matrix + solver (and do the expensive symbolic factorization)
+            // only on the first call; later calls just refill the matrix values and redo the
+            // cheap numeric factorization. Parallel uses the local-assembly + Export path (each
+            // rank assembles its own rows; border rows are accumulated onto the owner by a fixed
+            // Export); sequential builds the matrix directly. Both keep a fixed graph and matrix
+            // object, so the solver's symbolic factorization stays valid.
+            if (solver_.is_null())
             {
-                // Parallel: global assembly (non-local border rows accumulated by fillComplete).
-                // This path rebuilds the solver every call: Tpetra's non-local assembly modifies
-                // the graph during fillComplete's redistribution, so the symbolic factorization
-                // cannot be reused in place. Factorization reuse here needs a local-assembly
-                // variant (fixed local graph + explicit border-row value exchange) -- WIP.
-                Teuchos::RCP<SolverMatrix> AA = convertMatrixGlobal_(Ascalar);
-                solver_ = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
+                if (isParallel_)
+                {
+                    setupParallelExport_(Ascalar);
+                    assembleParallelExport_(Ascalar, /*firstCall=*/true);
+                }
+                else
+                {
+                    graph_ = buildGraph_(Ascalar);
+                    AA_ = convertMatrix_(Ascalar, graph_);
+                }
+                solver_ = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA_, XX, BB);
                 solver_->setParameters(Teuchos::rcpFromRef(params_));
                 solver_->symbolicFactorization().numericFactorization().solve();
             }
             else
             {
-                // Sequential: REUSE the symbolic factorization across solves. The sparsity pattern
-                // is constant, so build the graph + matrix + solver (and do the expensive symbolic
-                // factorization) only on the first call; later calls just refill the matrix values
-                // in place and redo the cheap numeric factorization.
-                if (solver_.is_null())
-                {
-                    graph_ = buildGraph_(Ascalar);
-                    AA_ = convertMatrix_(Ascalar, graph_);
-                    solver_ = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA_, XX, BB);
-                    solver_->setParameters(Teuchos::rcpFromRef(params_));
-                    solver_->symbolicFactorization().numericFactorization().solve();
-                }
+                if (isParallel_)
+                    assembleParallelExport_(Ascalar, /*firstCall=*/false);
                 else
-                {
                     refillMatrix_(*AA_, Ascalar);
-                    solver_->setB(BB);
-                    solver_->setX(XX);
-                    solver_->numericFactorization().solve();
-                }
+                solver_->setB(BB);
+                solver_->setX(XX);
+                solver_->numericFactorization().solve();
             }
 
             auto xscalar = bscalar;
@@ -979,23 +1179,43 @@ private:
                 }
             }
 
-            // Use global assembly for parallel non-overlapping: non-ghost rows from rank B
-            // are submitted as non-local inserts and redistributed by fillComplete.
-            // For sequential or overlapping, use the graph-based path.
-            Teuchos::RCP<SolverMatrix> AA;
-            if (isParallel_ && LSTraits::canCommunicate && LSTraits::isNonOverlapping(gridView_))
-                AA = convertMatrixGlobalNonOverlapping_(Acopy);
-            else
-            {
-                auto graph = buildGraph_(Acopy);
-                AA = convertMatrix_(Acopy, graph);
-            }
             auto BB = convertBVector_(bcopy);
             auto XX = convertXVector_();
 
-            Teuchos::RCP<AmeSolver> solver = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
-            solver->setParameters(Teuchos::rcpFromRef(params_));
-            solver->symbolicFactorization().numericFactorization().solve();
+            // REUSE the symbolic factorization across solves (constant sparsity pattern).
+            // Parallel uses the local-assembly + Export path: each rank fills its OWNED rows
+            // directly into AA_ and accumulates (ADD) only the BORDER rows onto their owners via
+            // a fixed Export. There is no double-counting because the DuMux assembler does not
+            // assemble ghost-element stiffness (cvfelocalassembler.hh), so each element's
+            // stiffness is contributed by exactly one rank. The fixed border source structure
+            // and target graph keep the solver's symbolic factorization valid across solves.
+            // Sequential builds the matrix directly.
+            if (solver_.is_null())
+            {
+                if (isParallel_)
+                {
+                    setupParallelExport_(Acopy);
+                    assembleParallelExport_(Acopy, /*firstCall=*/true);
+                }
+                else
+                {
+                    graph_ = buildGraph_(Acopy);
+                    AA_ = convertMatrix_(Acopy, graph_);
+                }
+                solver_ = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA_, XX, BB);
+                solver_->setParameters(Teuchos::rcpFromRef(params_));
+                solver_->symbolicFactorization().numericFactorization().solve();
+            }
+            else
+            {
+                if (isParallel_)
+                    assembleParallelExport_(Acopy, /*firstCall=*/false);
+                else
+                    refillMatrix_(*AA_, Acopy);
+                solver_->setB(BB);
+                solver_->setX(XX);
+                solver_->numericFactorization().solve();
+            }
 
             retrieveXVector_(XX, x);
 
@@ -1029,7 +1249,7 @@ private:
     //! when ALUGrid represents the same physical border entity as both a BorderEntity and a
     //! GhostEntity sub-entity of a ghost element; sumInto correctly accumulates both contributions.
     template<class AMatrix>
-    void fillMatrixValues_(SolverMatrix& AA, const AMatrix& A)
+    void fillMatrixValues_(SolverMatrix& AA, const AMatrix& A, const std::vector<bool>& rowMask)
     {
         using BlockType = typename AMatrix::block_type;
         static constexpr int BS_I = BlockType::rows;
@@ -1041,7 +1261,7 @@ private:
         for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
         {
             const std::size_t blockRow = rowIt.index();
-            if (!isOwned_[blockRow]) continue;
+            if (!rowMask[blockRow]) continue;
 
             const GlobalIDType gBlockRow = static_cast<GlobalIDType>(localToGlobal_[blockRow]);
 
@@ -1068,7 +1288,7 @@ private:
     Teuchos::RCP<SolverMatrix> convertMatrix_(const AMatrix& A, const Teuchos::RCP<const Graph>& graph)
     {
         Teuchos::RCP<SolverMatrix> AA = Teuchos::rcp(new SolverMatrix(graph));
-        fillMatrixValues_(*AA, A);
+        fillMatrixValues_(*AA, A, isOwned_);
         AA->fillComplete();
         return AA;
     }
@@ -1080,11 +1300,15 @@ private:
     {
         AA.resumeFill();
         AA.setAllToScalar(0.0);
-        fillMatrixValues_(AA, A);
+        fillMatrixValues_(AA, A, isOwned_);
         AA.fillComplete();
     }
 
     /*!
+     * DORMANT (kept as reference/fallback): superseded by the local-assembly + Export path
+     * (setupParallelExport_/assembleParallelExport_), which produces the same accumulated
+     * matrix but with a fixed graph so the symbolic factorization is reused across solves.
+     *
      * Build and fill Tpetra matrix using two-pass global assembly for parallel MultiType.
      * Pass 1: compute per-row Tpetra capacity, communicating non-local border row sizes.
      * Pass 2: insert entries using insertGlobalValues; fillComplete handles communication.
@@ -1236,6 +1460,18 @@ private:
     Teuchos::RCP<const Graph> graph_;
     Teuchos::RCP<SolverMatrix> AA_;
     Teuchos::RCP<AmeSolver> solver_;
+
+    // PARALLEL local-assembly path: each rank fills its OWNED rows directly into AA_ (the bulk,
+    // no communication), and accumulates only the BORDER rows (rows it contributes to but does
+    // not own) onto their owners via a fixed Tpetra Export of the small borderMatrix_ (ADD).
+    // The target graph_, the border source structure and the exporter are all fixed, so AA_'s
+    // symbolic factorization is reused across solves (only values change). This replaces the
+    // Tpetra global-assembly path which rebuilt the solver every call (convertMatrixGlobal_,
+    // now dormant). graph_ is the full union structure (owned + border-contributed columns).
+    std::vector<bool> isSrcRow_;                      // per block DOF: contributing row (owned ∪ border)
+    std::vector<bool> isBorderRow_;                   // per block DOF: contributing but not owned
+    Teuchos::RCP<SolverMatrix> borderMatrix_;         // local source: border rows only (fixed graph)
+    Teuchos::RCP<const TpetraExport> borderExporter_; // borderRowMap -> rowMap_ (ADD accumulation)
 
     std::size_t rank_;
     std::size_t numBlocksGlobal_;
