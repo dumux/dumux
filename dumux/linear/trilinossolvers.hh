@@ -864,23 +864,43 @@ private:
                         bscalar[nMomLocal_ + massScalarBS_*j + k] = bMassBlock[j][k];
             }
 
-            // Build Tpetra matrix. Parallel: use global assembly so that non-local border-vertex
-            // row contributions are accumulated by fillComplete (replaces extendMatrix+sumEntries).
-            Teuchos::RCP<SolverMatrix> AA;
-            if (isParallel_)
-                AA = convertMatrixGlobal_(Ascalar);
-            else
-            {
-                auto graph = buildGraph_(Ascalar);
-                AA = convertMatrix_(Ascalar, graph);
-            }
-
             auto BB = convertBVector_(bscalar);
             auto XX = convertXVector_();
 
-            Teuchos::RCP<AmeSolver> solver = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
-            solver->setParameters(Teuchos::rcpFromRef(params_));
-            solver->symbolicFactorization().numericFactorization().solve();
+            if (isParallel_)
+            {
+                // Parallel: global assembly (non-local border rows accumulated by fillComplete).
+                // This path rebuilds the solver every call: Tpetra's non-local assembly modifies
+                // the graph during fillComplete's redistribution, so the symbolic factorization
+                // cannot be reused in place. Factorization reuse here needs a local-assembly
+                // variant (fixed local graph + explicit border-row value exchange) -- WIP.
+                Teuchos::RCP<SolverMatrix> AA = convertMatrixGlobal_(Ascalar);
+                solver_ = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA, XX, BB);
+                solver_->setParameters(Teuchos::rcpFromRef(params_));
+                solver_->symbolicFactorization().numericFactorization().solve();
+            }
+            else
+            {
+                // Sequential: REUSE the symbolic factorization across solves. The sparsity pattern
+                // is constant, so build the graph + matrix + solver (and do the expensive symbolic
+                // factorization) only on the first call; later calls just refill the matrix values
+                // in place and redo the cheap numeric factorization.
+                if (solver_.is_null())
+                {
+                    graph_ = buildGraph_(Ascalar);
+                    AA_ = convertMatrix_(Ascalar, graph_);
+                    solver_ = Amesos2::create<SolverMatrix, SolverVector>("MUMPS", AA_, XX, BB);
+                    solver_->setParameters(Teuchos::rcpFromRef(params_));
+                    solver_->symbolicFactorization().numericFactorization().solve();
+                }
+                else
+                {
+                    refillMatrix_(*AA_, Ascalar);
+                    solver_->setB(BB);
+                    solver_->setX(XX);
+                    solver_->numericFactorization().solve();
+                }
+            }
 
             auto xscalar = bscalar;
             retrieveXVector_(XX, xscalar);
@@ -1004,17 +1024,17 @@ private:
         return result;
     }
 
+    //! Fill the (fill-active) Tpetra matrix values from the local owned rows of the Dune matrix A.
+    //! Uses sumIntoGlobalValues: multiple local DOF columns may map to the same global column GID
+    //! when ALUGrid represents the same physical border entity as both a BorderEntity and a
+    //! GhostEntity sub-entity of a ghost element; sumInto correctly accumulates both contributions.
     template<class AMatrix>
-    Teuchos::RCP<SolverMatrix> convertMatrix_(const AMatrix& A, const Teuchos::RCP<const Graph>& graph)
+    void fillMatrixValues_(SolverMatrix& AA, const AMatrix& A)
     {
-        Teuchos::RCP<SolverMatrix> AA = Teuchos::rcp(new SolverMatrix(graph));
-
         using BlockType = typename AMatrix::block_type;
         static constexpr int BS_I = BlockType::rows;
         static constexpr int BS_J = BlockType::cols;
 
-        // Use global column indices (matching the graph which was built with insertGlobalIndices).
-        // replaceGlobalValues works on a fillComplete'd matrix built from a global-index graph.
         Teuchos::Array<GlobalIDType> gCols;
         Teuchos::Array<Scalar> vals;
 
@@ -1039,17 +1059,29 @@ private:
                         vals.push_back((*colIt)[ki][kj]);
                     }
                 }
-                // Use sumIntoGlobalValues: multiple local DOF columns may map to the
-                // same global column GID when ALUGrid represents the same physical
-                // border entity as both a BorderEntity and a GhostEntity sub-entity
-                // of a ghost element. sumInto correctly accumulates both contributions.
-                AA->sumIntoGlobalValues(globalRow, gCols(), vals());
+                AA.sumIntoGlobalValues(globalRow, gCols(), vals());
             }
         }
+    }
 
+    template<class AMatrix>
+    Teuchos::RCP<SolverMatrix> convertMatrix_(const AMatrix& A, const Teuchos::RCP<const Graph>& graph)
+    {
+        Teuchos::RCP<SolverMatrix> AA = Teuchos::rcp(new SolverMatrix(graph));
+        fillMatrixValues_(*AA, A);
         AA->fillComplete();
-
         return AA;
+    }
+
+    //! Refill the values of an existing (fillComplete'd, fixed-graph) Tpetra matrix in place,
+    //! reusing its graph (and hence the solver's symbolic factorization).
+    template<class AMatrix>
+    void refillMatrix_(SolverMatrix& AA, const AMatrix& A)
+    {
+        AA.resumeFill();
+        AA.setAllToScalar(0.0);
+        fillMatrixValues_(AA, A);
+        AA.fillComplete();
     }
 
     /*!
@@ -1196,6 +1228,14 @@ private:
     Teuchos::RCP<Teuchos::FancyOStream> fos_;
     Teuchos::RCP<const TpetraMap> rowMap_;
     Teuchos::RCP<const TpetraMap> colMap_;
+
+    // Cached Tpetra structures for FACTORIZATION REUSE. The Jacobian sparsity pattern is constant
+    // across Newton iterations and time steps (static grid + fixed stencil), so the graph, the
+    // matrix object and the Amesos2 solver (with its symbolic factorization) are built once and
+    // reused: subsequent solves only refill the values and redo the cheap numeric factorization.
+    Teuchos::RCP<const Graph> graph_;
+    Teuchos::RCP<SolverMatrix> AA_;
+    Teuchos::RCP<AmeSolver> solver_;
 
     std::size_t rank_;
     std::size_t numBlocksGlobal_;
