@@ -69,6 +69,10 @@ public:
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");
         viscosity_ = getParam<Scalar>("Component.LiquidDynamicViscosity");
+        // peak of the parabolic inflow profile (U_max). Default 0.3 (the original test scale,
+        // U_mean = 2/3 U_max = 0.2). The canonical DFG 2D-2 benchmark uses U_max = 1.5
+        // (U_mean = 1.0), which makes the dimensional pressure difference directly comparable.
+        inflowMaxVelocity_ = getParam<Scalar>("Problem.InflowMaxVelocity", 0.3);
 
         for (int i = 0; i < dimWorld; ++i)
             domainSize_[i] = gridGeometry->bBoxMax()[i] -  gridGeometry->bBoxMin()[i];
@@ -306,12 +310,12 @@ private:
 
     DirichletValues inflowVelocity_(Scalar y) const
     {
-        constexpr Scalar maxVelocity = 0.3;
+        const Scalar maxVelocity = inflowMaxVelocity_;
         return { 4*maxVelocity*y*(domainSize_[1]-y)/(domainSize_[1]*domainSize_[1]), 0.0 };
     }
 
     static constexpr Scalar eps_ = 1e-10;
-    Scalar density_, viscosity_;
+    Scalar density_, viscosity_, inflowMaxVelocity_;
     std::array<Scalar, dimWorld> domainSize_;
 };
 

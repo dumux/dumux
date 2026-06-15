@@ -35,9 +35,11 @@ REFERENCE = {
     "Strouhal":  (0.2950, 0.3050),
     "dP":        (2.4600, 2.5000),
 }
-# characteristic quantities of the benchmark
+# characteristic quantities of the canonical DFG 2D-2 benchmark
 D_CYL = 0.1     # cylinder diameter
-U_MEAN = 0.2    # mean inflow velocity (Re = U_MEAN * D_CYL / nu = 100 for nu = 2e-4)
+U_MEAN = 1.0    # mean inflow velocity (= 2/3 * U_max; U_max = 1.5).
+                # Re = U_MEAN * D_CYL / nu = 100 for nu = 1e-3. At this scale the dimensional
+                # pressure difference dP is directly comparable to the reference (it scales as U^2).
 
 
 def solver_args(solver):
@@ -70,6 +72,7 @@ def run_simulation(args):
         "-Problem.Name", name,
         "-Problem.EnableInertiaTerms", "true",
         "-Problem.Instationary", "true",
+        "-Problem.InflowMaxVelocity", str(args.inflow),
         "-Component.LiquidDynamicViscosity", str(args.viscosity),
         "-TimeLoop.DtInitial", str(args.dt),
         "-TimeLoop.MaxTimeStepSize", str(args.dt),
@@ -237,8 +240,10 @@ def main():
     p.add_argument("--mpiexec", default=os.environ.get("MPIEXEC", "mpirun"))
     p.add_argument("--dt", type=float, default=0.01, help="time step size (default: 0.01)")
     p.add_argument("--tend", type=float, default=8.0, help="end time (default: 8.0)")
-    p.add_argument("--viscosity", type=float, default=2e-4,
-                   help="dynamic viscosity (default 2e-4 -> Re=100)")
+    p.add_argument("--inflow", type=float, default=1.5,
+                   help="peak inflow velocity U_max (default 1.5 -> U_mean=1.0, canonical DFG 2D-2)")
+    p.add_argument("--viscosity", type=float, default=1e-3,
+                   help="dynamic viscosity (default 1e-3 -> Re=100 at U_mean=1.0)")
     p.add_argument("--skip-fraction", type=float, default=0.5,
                    help="fraction of the time series discarded as transient (default: 0.5)")
     p.add_argument("--tol", type=float, default=0.05,
