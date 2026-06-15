@@ -113,6 +113,24 @@ The following laws can be implemented by deriving from the abstract base class, 
 @brief Fluid systems express the thermodynamic relations (functions).
 @ingroup Material
 
+<!-- Sediment -->
+
+@defgroup Sediment Sediment
+@brief This section contains on the one hand the bedload transport formulas and on the other hand the layermodels, which are used to describe the composition of the subsurface for sediment transport simulations.
+@ingroup Material
+
+<!-- Sediment subgroups -->
+
+@defgroup BedloadTransport Bedload transport formulas
+@brief Bedload transport formulas are empirical formulas which provide the bedload transport rate based on a combination of flow and sediment properties.
+@details Modifications of the bedload transport rate e.g. by secondary currents are cover in this section as well as some specific input of the bedload
+         transport formulas like the critical Shields stress.
+@ingroup Sediment
+
+@defgroup LayerModels Layer Models
+@brief Models describing the composition of the subsurface for sediment transport simulations.
+@ingroup Sediment
+
 <!-- SolidStates -->
 
 @defgroup SolidStates Solid States

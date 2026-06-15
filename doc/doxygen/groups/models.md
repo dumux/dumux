@@ -153,6 +153,19 @@
 @copydoc dumux/freeflow/shallowwater/model.hh
 @ingroup Models
 
+<!-- SedimentTransportModels -->
+
+@defgroup SedimentTransportModels Sediment transport
+@brief Sediment transport models
+@ingroup Models
+
+<!-- SedimentTransportModels subgroups -->
+
+@defgroup BedloadTransportModel
+@brief Bulk bedload transport model
+@copydoc dumux/freeflow/bedload/model.hh
+@ingroup SedimentTransportModels
+
 <!-- SolidMechanicsModels -->
 
 @defgroup SolidMechanicsModels Solid mechanics

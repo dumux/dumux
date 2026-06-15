@@ -35,3 +35,7 @@
 @defgroup ShallowWaterFlux Flux related to the shallow water model
 @brief Flux related to the shallow water model
 @ingroup Flux
+
+@defgroup BedloadFlux Flux related to the bedload transport model
+@brief Flux related to the bedload transport model
+@ingroup Flux
