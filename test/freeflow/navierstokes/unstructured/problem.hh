@@ -9,10 +9,13 @@
 
 #include <cmath>
 #include <numeric>
+#include <utility>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/geometry/quadraturerules.hh>
+#include <dune/grid/common/gridenums.hh>
+#include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
@@ -173,20 +176,43 @@ public:
         GlobalPosition evalPoint2({0.25, 0.2});
         const Scalar stepSize = 0.001;
 
-        const auto evalPressure = [&](auto pos, bool backwards)
+        // Evaluate the pressure at a point. In parallel the point lives on a single rank; the
+        // bounding-box tree is per-rank, so on ranks that do not contain the point the search
+        // finds nothing (a point can truly be empty on a rank) -> return "not found". The
+        // stepping search is bounded so non-owning ranks do not walk indefinitely.
+        const auto evalPressureLocal = [&](auto pos, bool backwards) -> std::pair<Scalar, bool>
         {
             auto entities = intersectingEntities(pos, tree);
-            while (entities.empty())
+            int steps = 0;
+            while (entities.empty() && steps < 100)
             {
                 pos[0] += backwards ? -stepSize : stepSize;
                 entities = intersectingEntities(pos, tree);
+                ++steps;
             }
+            if (entities.empty())
+                return { 0.0, false };
 
             const auto element = gg.element(entities[0]);
+            if (element.partitionType() != Dune::InteriorEntity)
+                return { 0.0, false }; // only interior elements contribute (avoid double counting)
+
             const auto fvGeometry = localView(gg).bindElement(element);
             const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, p);
             const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-            return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos);
+            const Scalar value = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos);
+            return { value, true };
+        };
+
+        // Combine across ranks: the rank(s) that found the point agree on the value, so we
+        // average over the finders (sum of values divided by the number of finders).
+        const auto& comm = gg.gridView().comm();
+        const auto evalPressure = [&](const auto& pos, bool backwards)
+        {
+            const auto [value, found] = evalPressureLocal(pos, backwards);
+            Scalar valueSum = comm.sum(found ? value : Scalar(0.0));
+            int count = comm.sum(found ? 1 : 0);
+            return count > 0 ? valueSum / count : Scalar(0.0);
         };
 
         return evalPressure(evalPoint1, true) - evalPressure(evalPoint2, false);
@@ -200,9 +226,12 @@ public:
         auto fvGeometry = localView(this->gridGeometry());
         auto elemVolVars = localView(gridVariables.curGridVolVars());
 
+        // Iterate interior elements only; the cylinder-boundary integral is accumulated locally
+        // per rank and summed across ranks below (the boundary touches an interior element on
+        // exactly one rank, so this is double-counting free).
         BoundaryFluxes forces(0.0);
         Scalar cylinderSurface = 0.0;
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        for (const auto& element : elements(this->gridGeometry().gridView(), Dune::Partitions::interior))
         {
             fvGeometry.bind(element);
             if (fvGeometry.hasBoundaryScvf())
@@ -242,6 +271,12 @@ public:
                 }
             }
         }
+
+        // sum the boundary-integral contributions across all ranks
+        const auto& comm = this->gridGeometry().gridView().comm();
+        for (int i = 0; i < forces.size(); ++i)
+            forces[i] = comm.sum(forces[i]);
+        cylinderSurface = comm.sum(cylinderSurface);
 
         const Scalar dragForce = -forces[0];
         const Scalar liftForce = -forces[1];

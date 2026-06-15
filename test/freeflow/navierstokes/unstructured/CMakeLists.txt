@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input cylinder_channel.msh cylinder_channel_quad.msh)
+dune_symlink_to_source_files(FILES params.input cylinder_channel.msh cylinder_channel_quad.msh
+                                   dfg_benchmark2_driver.py)
 
 # Navier-Stokes version of the test (Re=20)
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
@@ -144,3 +145,52 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box_
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box_trilinos_parallel
                              -Problem.EnableInertiaTerms true
                              -LinearSolver.UseTrilinos true)
+
+# Instationary (time-dependent) Navier-Stokes (DFG cylinder, Re~100) solved with the
+# matrix-free SIMPLE block preconditioner (PQ1Bubble/Mini + Box on simplices, ALUGrid).
+# The time-derivative term makes the velocity operator diagonally dominant, so diag(A)^-1 is
+# an accurate Schur approximation and SIMPLE is effective. This is the sequential reference run.
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_instationary_simple
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassBox
+               COMPILE_DEFINITIONS GRID_TYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               TIMEOUT 1200
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_instationary_simple-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_instationary_simple-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_instationary_simple params.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_instationary_simple
+                             -Problem.EnableInertiaTerms true -Problem.Instationary true
+                             -Component.LiquidDynamicViscosity 2e-4
+                             -TimeLoop.DtInitial 0.002 -TimeLoop.TEnd 0.004 -TimeLoop.MaxTimeStepSize 0.002
+                             -LinearSolver.UseSimpleSolver true -LinearSolver.Type fgmres
+                             -LinearSolver.MaxIterations 500 -LinearSolver.ResidualReduction 1e-7
+                             -LinearSolver.Preconditioner.SchurReduction 1e-2 -LinearSolver.Preconditioner.SchurIterations 30
+                             -LinearSolver.Preconditioner.PressureRelaxation 1.0
+                             -Newton.MaxSteps 15")
+
+# Parallel (2 MPI ranks) instationary NS with the matrix-free SIMPLE preconditioner.
+# Compares against the same sequential reference (must reproduce the direct/sequential solve).
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_instationary_simple_parallel
+               TARGET test_ff_navierstokes_dfg_benchmark_instationary_simple
+               LABELS freeflow navierstokes parallel
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               TIMEOUT 1200
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_instationary_simple-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_navierstokes_dfg_benchmark_instationary_simple_parallel-00002.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_instationary_simple params.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_instationary_simple_parallel
+                             -Problem.EnableInertiaTerms true -Problem.Instationary true
+                             -Component.LiquidDynamicViscosity 2e-4
+                             -TimeLoop.DtInitial 0.002 -TimeLoop.TEnd 0.004 -TimeLoop.MaxTimeStepSize 0.002
+                             -LinearSolver.UseSimpleSolver true -LinearSolver.Type fgmres
+                             -LinearSolver.MaxIterations 500 -LinearSolver.ResidualReduction 1e-7
+                             -LinearSolver.Preconditioner.SchurReduction 1e-2 -LinearSolver.Preconditioner.SchurIterations 30
+                             -LinearSolver.Preconditioner.PressureRelaxation 1.0
+                             -Newton.MaxSteps 15")

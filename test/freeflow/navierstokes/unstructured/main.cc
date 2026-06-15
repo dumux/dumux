@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <random>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -17,12 +19,14 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/timeloop.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/stokes_solver.hh>
+#include <dumux/linear/navierstokes_simple_solver.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #if DUMUX_HAVE_TRILINOS
@@ -126,9 +130,24 @@ int main(int argc, char** argv)
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
+    x = 0.0;
+    auto xOld = x;
     std::cout << "Total number of dofs on rank " << mpiHelper.rank() << ": "
         << massGridGeometry->numDofs() + momentumGridGeometry->numDofs()*MomentumGridGeometry::GridView::dimension
         << std::endl;
+
+    // optional instationary (time-dependent) Navier-Stokes: build a time loop when requested
+    using Scalar = typename Traits::Scalar;
+    const bool instationary = getParam<bool>("Problem.Instationary", false);
+    std::shared_ptr<TimeLoop<Scalar>> timeLoop;
+    if (instationary)
+    {
+        const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+        const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+        const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize", tEnd);
+        timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+        timeLoop->setMaxTimeStepSize(maxDt);
+    }
 
     // the grid variables
     using MomentumGridVariables = GetPropType<MomentumTypeTag, Properties::GridVariables>;
@@ -137,15 +156,25 @@ int main(int argc, char** argv)
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
     // compute coupling stencil and afterwards initialize grid variables (need coupling information)
-    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    if (instationary)
+        couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
+    else
+        couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
 
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
-                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
-                                                 std::make_tuple(momentumGridVariables, massGridVariables),
-                                                 couplingManager);
+    std::shared_ptr<Assembler> assembler;
+    if (instationary)
+        assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                std::make_tuple(momentumGridVariables, massGridVariables),
+                                                couplingManager, timeLoop, xOld);
+    else
+        assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                std::make_tuple(momentumGridVariables, massGridVariables),
+                                                couplingManager);
 
     // initialize the vtk output module
     constexpr bool isDiamond = MassGridGeometry::discMethod == DiscretizationMethods::fcdiamond;
@@ -156,8 +185,78 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
+    // Benchmark-indicator time series. The DFG 2D-2 (Re=100) case develops an oscillatory
+    // steady state (Karman vortex street), so the drag/lift coefficients and the pressure
+    // difference become time-periodic -- see benchmarkreferences.md (dfg_benchmark2_re100).
+    // We log them at every time step (rank 0) so the onset of oscillation is observable.
+    const bool writeIndicators = instationary && momentumProblem->enableInertiaTerms();
+    std::ofstream benchmarkCsv;
+    if (writeIndicators && mpiHelper.rank() == 0)
+    {
+        benchmarkCsv.open(massProblem->name() + "_benchmark_indicators.csv");
+        benchmarkCsv << "time,cDrag,cLift,pDiff\n" << std::setprecision(10);
+    }
+
+    // run either a single stationary solve or a time loop (instationary)
+    auto runSimulation = [&](auto& nonLinearSolver)
+    {
+        if (instationary)
+        {
+            timeLoop->start(); do
+            {
+                // solve the non-linear system with time step control
+                nonLinearSolver.solve(x, *timeLoop);
+
+                // make the new solution the old solution
+                xOld = x;
+                momentumGridVariables->advanceTimeStep();
+                massGridVariables->advanceTimeStep();
+
+                // advance the time loop to the next step and write output
+                timeLoop->advanceTimeStep();
+                vtkWriter.write(timeLoop->time());
+                timeLoop->reportTimeStep();
+                timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+                // benchmark indicators for this time step (drag/lift/pressure difference).
+                // eval* do collective MPI reductions, so all ranks must call them.
+                if (writeIndicators)
+                {
+                    couplingManager->updateSolution(x);
+                    const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx]);
+                    const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, x[massIdx]);
+                    if (mpiHelper.rank() == 0)
+                    {
+                        std::cout << "Benchmark indicators @ t = " << timeLoop->time()
+                                  << ":  cDrag = " << cDrag << ",  cLift = " << cLift
+                                  << ",  pDiff = " << pDiff << std::endl;
+                        benchmarkCsv << timeLoop->time() << "," << cDrag << ","
+                                     << cLift << "," << pDiff << "\n";
+                        benchmarkCsv.flush();
+                    }
+                }
+
+            } while (!timeLoop->finished());
+
+            timeLoop->finalize(leafGridView.comm());
+        }
+        else
+            nonLinearSolver.solve(x);
+    };
+
     // the linearize and solve
-    if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
+    if (getParam<bool>("LinearSolver.UseSimpleSolver", false))
+    {
+        using Matrix = typename Assembler::JacobianMatrix;
+        using Vector = typename Assembler::ResidualType;
+        using LinearSolver = NavierStokesSimpleSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        runSimulation(nonLinearSolver);
+    }
+    else if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
     {
         using Matrix = typename Assembler::JacobianMatrix;
         using Vector = typename Assembler::ResidualType;
@@ -166,7 +265,7 @@ int main(int argc, char** argv)
         auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
         using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
+        runSimulation(nonLinearSolver);
     }
     else if (getParam<bool>("LinearSolver.UseTrilinos", false))
     {
@@ -179,7 +278,7 @@ int main(int argc, char** argv)
             auto linearSolver = std::make_shared<LinearSolver>(*momentumGridGeometry, *massGridGeometry);
             using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
             NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-            nonLinearSolver.solve(x);
+            runSimulation(nonLinearSolver);
         }
         else
         {
@@ -188,7 +287,7 @@ int main(int argc, char** argv)
             auto linearSolver = std::make_shared<LinearSolver>();
             using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
             NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-            nonLinearSolver.solve(x);
+            runSimulation(nonLinearSolver);
         }
 #else
         DUNE_THROW(Dune::NotImplemented, "Trilinos not available");
@@ -200,17 +299,19 @@ int main(int argc, char** argv)
         auto linearSolver = std::make_shared<LinearSolver>();
         using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
+        runSimulation(nonLinearSolver);
     }
 
-    // write vtk output
-    vtkWriter.write(1.0);
+    // write vtk output (instationary already writes inside the time loop)
+    if (!instationary)
+        vtkWriter.write(1.0);
 
     // update coupling manager for output
     couplingManager->updateSolution(x);
 
-    // evaluate benchmark indicators (only valid with inertia term at Re=20)
-    if (momentumProblem->enableInertiaTerms())
+    // evaluate benchmark indicators (drag/lift/pressure-difference; computed in parallel too).
+    // For the instationary case the indicators are logged per time step in the time loop above.
+    if (!instationary && momentumProblem->enableInertiaTerms())
     {
         static constexpr double cDrafReference = 5.57953523384;
         static constexpr double cLiftReference = 0.010618948146;
