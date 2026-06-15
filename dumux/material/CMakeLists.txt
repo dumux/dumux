@@ -9,6 +9,7 @@ add_subdirectory(eos)
 add_subdirectory(fluidmatrixinteractions)
 add_subdirectory(fluidstates)
 add_subdirectory(fluidsystems)
+add_subdirectory(sediment)
 add_subdirectory(solidstates)
 add_subdirectory(solidsystems)
 

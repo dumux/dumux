@@ -1,0 +1,55 @@
+[Problem]
+Name = channel_bend
+Gravity = 9.81 # [m/s^2]
+
+[Sediment]
+BedloadTransportFormula = MeyerPeterMueller
+MeyerPeterMuellerCoefficient = 8.0
+CriticalShieldsStressCalculation = Yalin
+NumberGrainClasses = 3
+NumberLayers = 2
+Porosity = 0.375 # [-]
+SecondaryCurrents = Engelund
+CurvatureFactor = 11.0 # [-]
+SlopeEffectDirectionCorrection = Talmon
+TalmonParameter = 1.7
+SlopeEffectMagnitudeCorrection = Koch
+
+[FluxLimiterLET]
+UpperSedimentThickness = 5e-2
+LowerSedimentThickness = 5e-4
+
+[TimeLoop]
+TEnd = 18000.0 # [s]
+MaxTimeStepSize = 100 # [s]
+DtInitial =  10 # [s]
+DtPlot =  3000.0 # [s]
+
+[Grid]
+File = grid/channel_bend.vtu
+
+[Newton]
+EnablePartialReassembly = false
+EnableDynamicOutput = false
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-6
+MaxTimeStepDivisions = 40
+RetryTimeStepReductionFactor = 0.8
+SatisfyResidualAndShiftCriterion = "false"
+UseLineSearch = false
+MinSteps = 1
+MaxSteps = 8
+TargetSteps = 4
+
+[LinearSolver]
+Type = bicgstabsolver
+MaxIterations = 800
+ResidualReduction = 1e-5
+Verbosity = 0
+
+[LinearSolver.Preconditioner]
+Type = ilu
+ILUOrder = 1
+Verbosity = 0
+ILUResort = true
+Relaxation = 1.0

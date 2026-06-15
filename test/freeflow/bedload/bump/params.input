@@ -1,0 +1,55 @@
+[Problem]
+Name = bump
+Gravity = 9.81 # [m/s^2]
+
+[ShallowWater]
+FlowRate = 10 # [m^2/s]
+FreeSurfaceOutflow = 10 # [m]
+
+[Sediment]
+BedloadTransportFormula = Grass
+GrassAlpha = 0.001 # [-]
+Porosity = 0.0 # [-]
+NumberGrainClasses = 1
+
+[FluxLimiterLET]
+UpperSedimentThickness = 5e-2
+LowerSedimentThickness = 5e-4
+
+[TimeLoop]
+TEnd = 10000.0 # [s]
+MaxTimeStepSize = 200 # [s]
+DtInitial =  200 # [s]
+DtPlot =  2000.0 # [s]
+
+[Grid]
+Positions0 = 0.0 1000.0
+Positions1 = 0.0 20.0
+Cells0 = 400
+Cells1 = 8
+
+[Newton]
+EnablePartialReassembly = false
+EnableDynamicOutput = false
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-6
+MaxTimeStepDivisions = 40
+RetryTimeStepReductionFactor = 0.8
+SatisfyResidualAndShiftCriterion = "false"
+UseLineSearch = false
+MinSteps = 1
+MaxSteps = 8
+TargetSteps = 4
+
+[LinearSolver]
+Type = bicgstabsolver
+MaxIterations = 800
+ResidualReduction = 1e-6
+Verbosity = 0
+
+[LinearSolver.Preconditioner]
+Type = ilu
+ILUOrder = 1
+Verbosity = 0
+ILUResort = true
+Relaxation = 1.0
