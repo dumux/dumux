@@ -74,6 +74,13 @@ public:
     { return gridView_.size(codim); }
 
     /*!
+     * \brief the communicator of the underlying grid view
+     * \note this enables building distributed bounding box trees on this set
+     */
+    decltype(auto) comm() const
+    { return gridView_.comm(); }
+
+    /*!
      * \brief begin iterator to enable range-based for iteration
      */
     decltype(auto) begin() const
