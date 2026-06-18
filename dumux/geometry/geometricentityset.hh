@@ -61,7 +61,7 @@ public:
     /*!
      * \brief The world dimension of the entity set
      */
-    enum { dimensionworld = GridView::dimensionworld };
+    static constexpr int dimensionworld = GridView::dimensionworld;
 
     /*!
      * \brief the coordinate type
@@ -235,7 +235,7 @@ public:
     /*!
      * \brief The world dimension of the entity set
      */
-    enum { dimensionworld = Entity::Geometry::coorddimension };
+    static constexpr int dimensionworld = Entity::Geometry::coorddimension;
 
     /*!
      * \brief the coordinate type
