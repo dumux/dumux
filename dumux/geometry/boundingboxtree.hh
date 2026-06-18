@@ -29,7 +29,6 @@
 #include <iostream>
 
 #include <dune/common/promotiontraits.hh>
-#include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 
 namespace Dumux {
@@ -100,9 +99,6 @@ public:
         boundingBoxNodes_.clear();
         boundingBoxCoordinates_.clear();
 
-        // start the timer
-        Dune::Timer timer;
-
         // Create bounding boxes for all elements
         const auto numLeaves = set->size();
 
@@ -123,11 +119,6 @@ public:
 
         // Recursively build the bounding box tree
         build_(leafBoxes, leafPartition.begin(), leafPartition.end());
-
-        // We are done, log output
-        std::cout << "Computed bounding box tree with " << numBoundingBoxes()
-                  << " nodes for " << numLeaves << " grid entities in "
-                  << timer.stop() << " seconds." << std::endl;
     }
 
     //! the entity set this tree was built with
