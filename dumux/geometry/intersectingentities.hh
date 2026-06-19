@@ -22,6 +22,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/geometrytraits.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/geometryintersection.hh>
 #include <dumux/geometry/triangulation.hh>
@@ -131,8 +132,10 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
     else if (tree.isLeaf(bBox, node))
     {
         const std::size_t entityIdx = bBox.child1;
-        // for structured cube grids skip the primitive test
-        if (isCartesianGrid)
+        using Geometry = typename EntitySet::Entity::Geometry;
+        // for structured cube grids or axis-aligned geometries the bounding box
+        // test is already exact, so we can skip the primitive test
+        if (isCartesianGrid || GeometryTraits<Geometry>::axisAligned)
             entities.push_back(entityIdx);
         else
         {
@@ -149,6 +152,122 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
         intersectingEntities(point, tree, bBox.child0, entities, isCartesianGrid);
         intersectingEntities(point, tree, bBox.child1, entities, isCartesianGrid);
     }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all entities whose bounding box overlaps the given box
+ * \param box pointer to the query box coordinates (min then max, length 2*dimworld)
+ * \param tree the bounding box tree
+ * \note This is a pure bounding-box overlap query without a primitive geometry test.
+ *       For entity sets whose geometries are axis-aligned (GeometryTraits::axisAligned)
+ *       the result is exact, otherwise it returns the bounding-box candidates.
+ */
+template<class EntitySet, class ctype>
+void intersectingBoxes(const ctype* box,
+                       const BoundingBoxTree<EntitySet>& tree,
+                       std::size_t node,
+                       std::vector<std::size_t>& entities)
+{
+    // if the query box doesn't overlap the node's box we can stop
+    static constexpr int dimworld = EntitySet::dimensionworld;
+    if (!intersectsBoundingBoxBoundingBox<dimworld>(box, tree.getBoundingBoxCoordinates(node)))
+        return;
+
+    // if the box is a leaf the bounding box overlap is the result
+    const auto& bBox = tree.getBoundingBoxNode(node);
+    if (tree.isLeaf(bBox, node))
+        entities.push_back(bBox.child1);
+
+    // no leaf, check both children nodes
+    else
+    {
+        intersectingBoxes(box, tree, bBox.child0, entities);
+        intersectingBoxes(box, tree, bBox.child1, entities);
+    }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all entities whose bounding box overlaps the given box
+ * \param box pointer to the query box coordinates (min then max, length 2*dimworld)
+ * \param tree the bounding box tree
+ */
+template<class EntitySet, class ctype>
+inline std::vector<std::size_t>
+intersectingBoxes(const ctype* box, const BoundingBoxTree<EntitySet>& tree)
+{
+    std::vector<std::size_t> entities;
+    intersectingBoxes(box, tree, tree.numBoundingBoxes() - 1, entities);
+    return entities;
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all leaf entity index pairs of two trees whose bounding boxes overlap
+ * \note This is a pure bounding-box overlap query without a primitive geometry test.
+ *       For entity sets whose geometries are axis-aligned the result is exact, otherwise
+ *       it returns the bounding-box candidates. The traversal prunes whole subtrees.
+ */
+template<class EntitySet0, class EntitySet1>
+void intersectingBoxes(const BoundingBoxTree<EntitySet0>& treeA,
+                       const BoundingBoxTree<EntitySet1>& treeB,
+                       std::size_t nodeA, std::size_t nodeB,
+                       std::vector<std::pair<std::size_t, std::size_t>>& pairs)
+{
+    // if the two bounding boxes of the current nodes don't overlap we can stop searching
+    static constexpr int dimworld = EntitySet0::dimensionworld;
+    if (!intersectsBoundingBoxBoundingBox<dimworld>(treeA.getBoundingBoxCoordinates(nodeA),
+                                                    treeB.getBoundingBoxCoordinates(nodeB)))
+        return;
+
+    const auto& bBoxA = treeA.getBoundingBoxNode(nodeA);
+    const auto& bBoxB = treeB.getBoundingBoxNode(nodeB);
+    const bool isLeafA = treeA.isLeaf(bBoxA, nodeA);
+    const bool isLeafB = treeB.isLeaf(bBoxB, nodeB);
+
+    // both leaves: their boxes overlap, record the entity index pair
+    if (isLeafA && isLeafB)
+        pairs.emplace_back(bBoxA.child1, bBoxB.child1);
+
+    // descend into the tree that hasn't reached a leaf yet, larger tree (bigger node number) first
+    else if (isLeafA)
+    {
+        intersectingBoxes(treeA, treeB, nodeA, bBoxB.child0, pairs);
+        intersectingBoxes(treeA, treeB, nodeA, bBoxB.child1, pairs);
+    }
+    else if (isLeafB)
+    {
+        intersectingBoxes(treeA, treeB, bBoxA.child0, nodeB, pairs);
+        intersectingBoxes(treeA, treeB, bBoxA.child1, nodeB, pairs);
+    }
+    else if (nodeA > nodeB)
+    {
+        intersectingBoxes(treeA, treeB, bBoxA.child0, nodeB, pairs);
+        intersectingBoxes(treeA, treeB, bBoxA.child1, nodeB, pairs);
+    }
+    else
+    {
+        intersectingBoxes(treeA, treeB, nodeA, bBoxB.child0, pairs);
+        intersectingBoxes(treeA, treeB, nodeA, bBoxB.child1, pairs);
+    }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute all leaf entity index pairs of two trees whose bounding boxes overlap
+ * \return pairs (indexA, indexB) of entities whose bounding boxes overlap
+ */
+template<class EntitySet0, class EntitySet1>
+inline std::vector<std::pair<std::size_t, std::size_t>>
+intersectingBoxes(const BoundingBoxTree<EntitySet0>& treeA, const BoundingBoxTree<EntitySet1>& treeB)
+{
+    static_assert(int(EntitySet0::dimensionworld) == int(EntitySet1::dimensionworld),
+        "Can only intersect bounding box trees of same world dimension");
+
+    std::vector<std::pair<std::size_t, std::size_t>> pairs;
+    intersectingBoxes(treeA, treeB, treeA.numBoundingBoxes() - 1, treeB.numBoundingBoxes() - 1, pairs);
+    return pairs;
 }
 
 /*!
