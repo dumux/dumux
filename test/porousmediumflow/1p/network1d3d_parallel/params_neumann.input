@@ -1,0 +1,8 @@
+[Problem]
+Name = test_1p_network1d3d_neumann
+EnableGravity = false
+NeumannXMax = 0.5   # Neumann on the x=0 end of the path, Dirichlet on the rest
+
+[Component]
+LiquidDensity = 1050
+LiquidKinematicViscosity = 4.0e-3
