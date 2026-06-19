@@ -27,7 +27,14 @@
 #include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/linear/istlsolverfactorybackend.hh>
+// The Amesos2 (trilinossolvers.hh) and direct MUMPS (mumpssolver.hh) backends are
+// mutually exclusive in a single translation unit: Amesos2 pulls dmumps_c.h into its
+// own namespace, which shadows the global MUMPS struct. Include only the one in use.
+#if defined(USE_MUMPS_SOLVER)
+#include <dumux/linear/mumpssolver.hh>
+#else
 #include <dumux/linear/trilinossolvers.hh>
+#endif
 #include <dumux/linear/linearsolvertraits.hh>
 
 #include <dumux/porousmediumflow/richards/newtonsolver.hh>
@@ -138,8 +145,13 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
+#if defined(USE_MUMPS_SOLVER)
+    using LinearSolver = DirectSolverMumps<LinearSolverTraits<GridGeometry>,
+                                           LinearAlgebraTraitsFromAssembler<Assembler>>;
+#else
     using LinearSolver = DirectSolverAmesos2<LinearSolverTraits<GridGeometry>,
                                              LinearAlgebraTraitsFromAssembler<Assembler>>;
+#endif
 
     auto linearSolver = std::make_shared<LinearSolver>(*gridGeometry, leafGridView, gridGeometry->dofMapper());
 
