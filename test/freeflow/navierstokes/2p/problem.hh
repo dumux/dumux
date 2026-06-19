@@ -7,20 +7,12 @@
 #ifndef DUMUX_TEST_FREEFLOW_TWOP_RISING_BUBBLE_PROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_TWOP_RISING_BUBBLE_PROBLEM_HH
 
-#include <dune/common/float_cmp.hh>
-
 #include <algorithm>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/vtk/function.hh>
-#include <dumux/io/grid/griddata.hh>
-
-#include <dumux/geometry/diameter.hh>
-#include <dumux/geometry/geometricentityset.hh>
-#include <dumux/geometry/boundingboxtree.hh>
 
 namespace Dumux {
 
@@ -38,15 +30,12 @@ class ThreeDChannelTestProblem : public BaseProblem
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using DirichletValues = typename ParentType::DirichletValues;
     using InitialValues = typename ParentType::InitialValues;
     using Sources = typename ParentType::Sources;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVariables>::GridVolumeVariables::LocalView;
 
     static constexpr int dim = GridGeometry::GridView::dimension;
@@ -58,13 +47,21 @@ class ThreeDChannelTestProblem : public BaseProblem
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
-    using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
     using Extrusion = Extrusion_t<GridGeometry>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     enum class InitialShape { circle, square };
+
+    // Surface-tension force discretization:
+    //  - stress:       deviatoric Korteweg face flux γε(∇φ⊗∇φ)·n (well conditioned but
+    //                  NOT balanced-force → steady spurious currents).
+    //  - potential:    volumetric μ∇φ (balanced in the continuum but μ~γ/ε is large).
+    //  - wellBalanced: volumetric -φ∇μ. Equivalent to μ∇φ up to a pure gradient that the
+    //                  (modified) pressure absorbs. At CH equilibrium ∇μ≡0 element-wise, so
+    //                  the discrete force is exactly zero → no spurious currents.
+    enum class SurfaceTensionForm { stress, potential, wellBalanced };
 
 public:
     ThreeDChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
@@ -96,6 +93,21 @@ public:
         dampingForceMagnitude_ = getParam<Scalar>("Problem.DampingForceMagnitude", 1e5);
         enableInterfaceFlux_ = getParam<bool>("Problem.EnableInterfaceFlux", true);
 
+        // Surface-tension force discretization. The balanced-force "wellBalanced" form
+        // (-φ∇μ) gives a static bubble with (near) zero spurious currents; the "stress"
+        // form is well conditioned but not balanced; "potential" is μ∇φ.
+        // Back-compat: if SurfaceTensionForm is unset, fall back to UseKortewegStressForm.
+        const auto stForm = getParam<std::string>("Problem.SurfaceTensionForm",
+            getParam<bool>("Problem.UseKortewegStressForm", true) ? "stress" : "potential");
+        if (stForm == "stress")
+            surfaceTensionForm_ = SurfaceTensionForm::stress;
+        else if (stForm == "potential")
+            surfaceTensionForm_ = SurfaceTensionForm::potential;
+        else if (stForm == "wellbalanced" || stForm == "wellBalanced")
+            surfaceTensionForm_ = SurfaceTensionForm::wellBalanced;
+        else
+            DUNE_THROW(Dumux::ParameterException, "Unknown SurfaceTensionForm: " << stForm);
+
         const auto shapeStr = getParam<std::string>("Problem.InitialShape", "circle");
         if (shapeStr == "circle")
             initialShape_ = InitialShape::circle;
@@ -119,13 +131,36 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isTop_(scv.dofPosition()))
-                values.setAllDirichlet();
+            // Hysing et al. (2009) FeatFlow rising-bubble benchmark boundary conditions:
+            //   - no-slip (u = v = 0) on the top and bottom walls
+            //   - free-slip on the left and right vertical walls
+            //     (no penetration u_x = 0 + zero tangential shear stress)
+            // This closes the box; with no through-flow the pressure is fixed only up to a
+            // constant, which the optional bottom anchor below removes.
+            const auto& pos = scv.dofPosition();
+            if (isTop_(pos) || isBottom_(pos))
+                values.setAllDirichlet(); // no-slip
             else
-                values.setAllNeumann();
+            {
+                values.setDirichlet(Indices::velocityXIdx);      // no penetration
+                values.setNeumann(Indices::momentumYBalanceIdx); // zero tangential shear
+            }
         }
         else
+        {
             values.setAllNeumann();
+            // Optionally anchor the pressure level (the mass block has an all-zero pressure
+            // column, so without a reference the saddle-point Jacobian can be singular).
+            // The closed box leaves the pressure undetermined up to a constant.
+            static const bool anchorPressure = getParam<bool>("Problem.AnchorPressureAtBottom", true);
+            if (anchorPressure)
+            {
+                const auto& pos = scv.dofPosition();
+                const bool isBottom = pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + 1e-6;
+                if (isBottom)
+                    values.setDirichlet(Indices::pressureIdx);
+            }
+        }
 
         return values;
     }
@@ -152,11 +187,26 @@ public:
         }
         else
         {
-            const auto ip = ipData(fvGeometry, scv);
-            const auto grads = this->couplingManager().gradients(element, fvGeometry, ip);
-            const auto mu = this->couplingManager().values(element, fvGeometry, ip)[CouplingManager::chemicalPotentialIdx];
-            // volumetric Korteweg force (chemical-potential / phase-field gradient form)
-            source = mu * grads[CouplingManager::phaseFieldIdx];
+            // volumetric capillary force (used unless the stress face-flux form is active).
+            if (surfaceTensionForm_ != SurfaceTensionForm::stress)
+            {
+                const auto ip = ipData(fvGeometry, scv);
+                const auto grads = this->couplingManager().gradients(element, fvGeometry, ip);
+                const auto values = this->couplingManager().values(element, fvGeometry, ip);
+                if (surfaceTensionForm_ == SurfaceTensionForm::wellBalanced)
+                {
+                    // balanced-force form -φ∇μ: at CH equilibrium ∇μ≡0 → exactly zero force.
+                    // The solver pressure is then the smooth modified pressure p* = p - μφ;
+                    // the Laplace jump lives in μφ, not in the discrete pressure gradient.
+                    const auto phi = values[CouplingManager::phaseFieldIdx];
+                    source = -phi * grads[CouplingManager::chemicalPotentialIdx];
+                }
+                else // potential form μ∇φ
+                {
+                    const auto mu = values[CouplingManager::chemicalPotentialIdx];
+                    source = mu * grads[CouplingManager::phaseFieldIdx];
+                }
+            }
         }
 
         if constexpr (ParentType::isMomentumProblem())
@@ -185,92 +235,6 @@ public:
     {
         // no-flow/no-slip
         return DirichletValues(0.0);
-    }
-
-    /*!
-     * \brief Evaluates the boundary conditions for a Neumann control volume.
-     *
-     * \param element The element for which the Neumann boundary condition is set
-     * \param fvGeometry The fvGeometry
-     * \param elemVolVars The element volume variables
-     * \param elemFaceVars The element face variables
-     * \param scvf The boundary sub control volume face
-     */
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    BoundaryFluxes neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolVars,
-                           const ElementFluxVariablesCache& elemFluxVarsCache,
-                           const SubControlVolumeFace& scvf) const
-    {
-        BoundaryFluxes values(0.0);
-        if constexpr (!ParentType::isMomentumProblem())
-        {
-            if (isSide_(scvf.ipGlobal()))
-            {
-                values[Indices::conti0EqIdx] = 0.0;
-                values[Indices::phaseFieldEqIdx] = 0.0;
-            }
-
-            else if (isBottom_(scvf.ipGlobal()))
-            {
-                values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf)*scvf.unitOuterNormal();
-                values[Indices::phaseFieldEqIdx] = 0.0;
-            }
-        }
-        else
-        {
-            if (isSide_(scvf.ipGlobal()))
-            {
-                const auto& fluxVarCache = elemFluxVarsCache[scvf];
-                if (this->enableInertiaTerms())
-                {
-                    // advective term: vv*n
-                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
-                    const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
-                    values.axpy(rho*(v*scvf.unitOuterNormal()), v);
-                }
-
-                // stress tensor
-                Tensor gradV(0.0);
-                for (const auto& localDof : localDofs(fvGeometry))
-                {
-                    const auto& volVars = elemVolVars[localDof];
-                    for (int dir = 0; dir < dim; ++dir)
-                        gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
-                }
-
-                // get viscosity from the problem
-                const auto mu = this->couplingManager().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
-                // compute -mu*gradV*n*dA
-                BoundaryFluxes momFlux = mv(gradV + getTransposed(gradV), scvf.unitOuterNormal());
-                momFlux *= -mu;
-
-                const auto pressure = this->couplingManager().pressure(element, fvGeometry, fluxVarCache.ipData());
-                momFlux += pressure * scvf.unitOuterNormal();
-
-                const auto normal = scvf.unitOuterNormal();
-                values += (momFlux * normal) * normal;
-            }
-
-            else if (isBottom_(scvf.ipGlobal()))
-            {
-                const auto& fluxVarCache = elemFluxVarsCache[scvf];
-                if (this->enableInertiaTerms())
-                {
-                    // advective term: vv*n
-                    const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
-                    const auto rho = this->couplingManager().density(element, fvGeometry, fluxVarCache.ipData());
-                    values.axpy(rho*(v*scvf.unitOuterNormal()), v);
-                }
-
-                // zero pressure at bottom
-            }
-        }
-
-        return values;
     }
 
     Scalar mobility() const
@@ -311,8 +275,20 @@ public:
 
         // The tanh provides a smooth
         // diffuse-interface transition of thickness ~interfaceThickness_.
-        initial[Indices::phaseFieldIdx] = std::tanh((radius - dist) / (std::sqrt(2.0)*interfaceThickness_));
-        initial[Indices::chemicalPotentialIdx] = 0.0;
+        const Scalar phiIC = std::tanh((radius - dist) / (std::sqrt(2.0)*interfaceThickness_));
+        initial[Indices::phaseFieldIdx] = phiIC;
+
+        // Initialize the chemical potential to its φ-consistent equilibrium value, so the
+        // coupled solve does NOT have to build μ from 0 in the first step (that transient
+        // creates a huge ∇μ / μ and a spurious ~10^3 m/s velocity kick that displaces the
+        // bubble and forces tiny time steps). For the tanh circle, inserting φ into
+        // μ = (γ/ε)f'(φ) - γε∇²φ (with ∇² in polar coords) the double-well and normal
+        // curvature terms cancel, leaving the geometric (Gibbs-Thomson) part:
+        //     μ_eq(r) = γ (1 - φ²) / (√2 r),   γ = scaledSurfaceTension_, r = dist to centre.
+        if (initialShape_ == InitialShape::circle && dist > 1e-8)
+            initial[Indices::chemicalPotentialIdx] = scaledSurfaceTension_ * (1.0 - phiIC*phiIC) / (std::sqrt(2.0) * dist);
+        else
+            initial[Indices::chemicalPotentialIdx] = 0.0;
 
         return initial;
     }
@@ -326,34 +302,40 @@ public:
     template<class Context>
     auto interfaceFlux(const Context& context) const
     {
+        const auto& element = context.element();
         const auto& fvGeometry = context.fvGeometry();
+        const auto& elemVolVars = context.elemVolVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
-        using ResultType = std::decay_t<decltype(this->couplingManager().gradients(
-            context.element(), fvGeometry, fluxVarCache.ipData())[CouplingManager::phaseFieldIdx])>;
-
-        // Korteweg / mass-flux interface contribution.
-        // Off by default for pure Stokes runs; the volumetric Korteweg source
-        // (mu * grad(phi)) already represents the capillary force.
-        // Only the inertial conservative-form correction
-        //   T_diff n = v (M grad(mu) . n) * (rho1 - rho2) / 2
-        // is implemented here. Requires inertia to be physically meaningful.
-        if (!enableInterfaceFlux_ || !this->enableInertiaTerms())
-            return ResultType(0.0);
-
-        const auto& element = context.element();
-        const auto& elemVolVars = context.elemVolVars();
-        const auto& shapeValues = fluxVarCache.shapeValues();
 
         const auto grads = this->couplingManager().gradients(element, fvGeometry, fluxVarCache.ipData());
-        const auto& gradChemicalPotential = grads[CouplingManager::chemicalPotentialIdx];
+        const auto& gradPhi = grads[CouplingManager::phaseFieldIdx];
         const auto normal = scvf.unitOuterNormal();
-        ResultType v(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
-            v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
+        using ResultType = std::decay_t<decltype(gradPhi)>;
+        ResultType flux(0.0);
 
-        return this->mobility() * v * (gradChemicalPotential * normal) * this->mixtureDensityDerivative()
-             * Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        // Korteweg capillary stress: T_cap n = γε (∇φ ⊗ ∇φ) n.
+        // This is the well-conditioned surface-tension force (coefficient γε ~ O(σε)),
+        // in contrast to the volumetric μ∇φ source (μ ~ γ/ε is large). Not balanced-force,
+        // so it produces steady spurious currents; prefer SurfaceTensionForm = wellbalanced.
+        if (surfaceTensionForm_ == SurfaceTensionForm::stress)
+            flux += (scaledSurfaceTension_ * interfaceThickness_) * gradPhi * (gradPhi * normal);
+
+        // Inertial conservative-form mass-flux correction:
+        //   T_diff n = v (M grad(mu) . n) * (rho1 - rho2) / 2
+        // Only meaningful with inertia enabled.
+        if (enableInterfaceFlux_ && this->enableInertiaTerms())
+        {
+            const auto& shapeValues = fluxVarCache.shapeValues();
+            const auto& gradChemicalPotential = grads[CouplingManager::chemicalPotentialIdx];
+            ResultType v(0.0);
+            for (const auto& localDof : localDofs(fvGeometry))
+                v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
+            flux += this->mobility() * v * (gradChemicalPotential * normal) * this->mixtureDensityDerivative();
+        }
+
+        flux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+        return flux;
     }
 
     Scalar mixtureViscosity(const Scalar phaseField) const
@@ -378,6 +360,8 @@ public:
     {
         Scalar totalMassLiquid = 0.0;
         Scalar totalMassGas = 0.0;
+        Scalar bubbleVol = 0.0;     // ∫ (1+φ)/2 dV  (phase-1 / bubble volume)
+        Scalar bubbleYmoment = 0.0; // ∫ (1+φ)/2 · y dV
         const auto& gg = this->gridGeometry();
         auto fvGeometry = localView(gg);
         for (const auto& element : elements(gg.gridView()))
@@ -389,6 +373,9 @@ public:
                 const auto volume = scv.volume();
                 totalMassLiquid += rho1_ * 0.5 * (1.0 + phi) * volume;
                 totalMassGas    += rho2_ * 0.5 * (1.0 - phi) * volume;
+                const auto bubbleFrac = 0.5 * (1.0 + phi) * volume;
+                bubbleVol += bubbleFrac;
+                bubbleYmoment += bubbleFrac * scv.dofPosition()[dimWorld-1];
             }
         }
 
@@ -396,20 +383,15 @@ public:
                   << " kg/m  |  liquid = " << totalMassLiquid
                   << " kg/m  |  gas = " << totalMassGas
                   << " kg/m\033[0m" << std::endl;
+        std::cout << "\033[1;35m[bubble] centroid_y = " << bubbleYmoment / bubbleVol
+                  << " m  |  volume = " << bubbleVol << " m^2/m\033[0m" << std::endl;
     }
 
 private:
-    bool isTop_(const GlobalPosition& pos, const Scalar eps = eps_) const
-    { return pos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - eps; }
-
-    bool isBottom_(const GlobalPosition& pos, const Scalar eps = eps_) const
-    { return pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + eps; }
-
-    bool isSide_(const GlobalPosition& pos) const
-    { return pos[0] < this->gridGeometry().bBoxMin()[0] + eps_ ||
-             pos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
-
-    static constexpr Scalar eps_ = 1e-6;
+    bool isTop_(const GlobalPosition& pos) const
+    { return pos[dimWorld-1] > this->gridGeometry().bBoxMax()[dimWorld-1] - 1e-6; }
+    bool isBottom_(const GlobalPosition& pos) const
+    { return pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + 1e-6; }
     Scalar energyScale_, mobility_, surfaceTension_, interfaceThickness_, scaledSurfaceTension_;
     Scalar rho1_, rho2_;
     Scalar eta1_, eta2_;
@@ -417,6 +399,7 @@ private:
     bool enableDampingForce_;
     Scalar dampingForceMagnitude_;
     bool enableInterfaceFlux_;
+    SurfaceTensionForm surfaceTensionForm_;
 
     InitialShape initialShape_;
 };
