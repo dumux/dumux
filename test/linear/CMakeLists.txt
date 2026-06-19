@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(trilinos)
+add_subdirectory(mumps)
 
 dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME test_linearsolver
