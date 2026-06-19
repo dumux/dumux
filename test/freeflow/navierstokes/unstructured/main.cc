@@ -29,8 +29,20 @@
 #include <dumux/linear/navierstokes_simple_solver.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+// The Amesos2 (trilinossolvers.hh) and direct MUMPS (mumpssolver.hh) backends are mutually
+// exclusive in one translation unit (Amesos2 drags dmumps_c.h into its own namespace, which
+// shadows the global MUMPS struct). Select one at compile time. Both expose the same direct
+// solver interface (two-grid-geometry constructor in parallel, no-arg constructor sequentially).
+#if defined(USE_MUMPS_SOLVER)
+#include <dumux/linear/mumpssolver.hh>
+#define DUMUX_TEST_DIRECT_SOLVER ::Dumux::DirectSolverMumps
+#define DUMUX_TEST_HAVE_DIRECT DUMUX_HAVE_MUMPS
+#else
 #if DUMUX_HAVE_TRILINOS
 #include <dumux/linear/trilinossolvers.hh>
+#endif
+#define DUMUX_TEST_DIRECT_SOLVER ::Dumux::DirectSolverAmesos2
+#define DUMUX_TEST_HAVE_DIRECT DUMUX_HAVE_TRILINOS
 #endif
 
 #include <dumux/multidomain/fvassembler.hh>
@@ -267,30 +279,29 @@ int main(int argc, char** argv)
         NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
         runSimulation(nonLinearSolver);
     }
-    else if (getParam<bool>("LinearSolver.UseTrilinos", false))
+    else if (getParam<bool>("LinearSolver.UseTrilinos", false) || getParam<bool>("LinearSolver.UseMumps", false))
     {
-#if DUMUX_HAVE_TRILINOS
+#if DUMUX_TEST_HAVE_DIRECT
         using LATraits = LinearAlgebraTraitsFromAssembler<Assembler>;
+        using DirectSolver = DUMUX_TEST_DIRECT_SOLVER<SeqLinearSolverTraits, LATraits>;
         if (mpiHelper.size() > 1)
         {
-            // Parallel: use the two-subdomain constructor to build combined DOF maps
-            using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LATraits>;
-            auto linearSolver = std::make_shared<LinearSolver>(*momentumGridGeometry, *massGridGeometry);
-            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            // Parallel: pass the subdomain grid geometries as a tuple to build combined DOF maps
+            auto linearSolver = std::make_shared<DirectSolver>(std::make_tuple(momentumGridGeometry, massGridGeometry));
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, DirectSolver, CouplingManager>;
             NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
             runSimulation(nonLinearSolver);
         }
         else
         {
             // Sequential: use the no-arg constructor with lazy DOF map init
-            using LinearSolver = DirectSolverAmesos2<SeqLinearSolverTraits, LATraits>;
-            auto linearSolver = std::make_shared<LinearSolver>();
-            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            auto linearSolver = std::make_shared<DirectSolver>();
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, DirectSolver, CouplingManager>;
             NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
             runSimulation(nonLinearSolver);
         }
 #else
-        DUNE_THROW(Dune::NotImplemented, "Trilinos not available");
+        DUNE_THROW(Dune::NotImplemented, "Direct solver backend not available");
 #endif
     }
     else

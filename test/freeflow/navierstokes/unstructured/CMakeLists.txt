@@ -132,6 +132,23 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_trilin
                              -Problem.EnableInertiaTerms false
                              -LinearSolver.UseTrilinos true)
 
+# Same Mini + Box stationary Stokes benchmark, solved with the direct MUMPS backend
+# (distributed assembled input in parallel). Separate executable: the MUMPS and Amesos2
+# backends cannot coexist in one translation unit (see main.cc).
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_mumps
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassBox
+               COMPILE_DEFINITIONS GRID_TYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS USE_MUMPS_SOLVER
+               LABELS freeflow navierstokes mumps
+               CMAKE_GUARD "( MUMPS_FOUND AND dune-alugrid_FOUND )"
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_mumps
+               CMD_ARGS      params.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_mumps
+                             -Problem.EnableInertiaTerms false
+                             -LinearSolver.UseMumps true)
+
 # Parallel NS using Trilinos Amesos2 (2 MPI ranks, Mini element + Box on simplices)
 # Mini element is inf-sup stable on triangles; tests nonlinear NS parallel direct solve.
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box_trilinos_parallel
@@ -213,4 +230,23 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_instationary_trilinos_par
                              -Component.LiquidDynamicViscosity 2e-4
                              -TimeLoop.DtInitial 0.002 -TimeLoop.TEnd 0.004 -TimeLoop.MaxTimeStepSize 0.002
                              -LinearSolver.UseTrilinos true
+                             -Newton.MaxSteps 15")
+
+# Same instationary NS setup (Re~100), solved in parallel with the direct MUMPS backend
+# (distributed assembled input). Compared against the same SIMPLE reference.
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_instationary_mumps_parallel
+               TARGET test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_mumps
+               LABELS freeflow navierstokes mumps parallel
+               CMAKE_GUARD "( MUMPS_FOUND AND dune-alugrid_FOUND )"
+               TIMEOUT 1200
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_instationary_simple-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_navierstokes_dfg_benchmark_instationary_mumps_parallel-00002.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box_mumps params.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_instationary_mumps_parallel
+                             -Problem.EnableInertiaTerms true -Problem.Instationary true
+                             -Component.LiquidDynamicViscosity 2e-4
+                             -TimeLoop.DtInitial 0.002 -TimeLoop.TEnd 0.004 -TimeLoop.MaxTimeStepSize 0.002
+                             -LinearSolver.UseMumps true
                              -Newton.MaxSteps 15")
