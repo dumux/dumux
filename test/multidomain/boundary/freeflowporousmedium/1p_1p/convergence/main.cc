@@ -25,6 +25,7 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/mumpssolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/io/format.hh>
@@ -269,13 +270,29 @@ int main(int argc, char** argv)
                                                                  darcyGridVariables),
                                                  couplingManager);
 
-    // the linear solver
-    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
-
-    // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    // the linear solver: a direct MUMPS solve (exercises the N-subdomain / multi-grid
+    // multidomain support: 3 subdomains living on 2 different grids) or the default UMFPack.
+#if DUMUX_HAVE_MUMPS
+    const bool useMumps = getParam<bool>("LinearSolver.UseMumps", false);
+    if (useMumps)
+    {
+        using LATraits = LinearAlgebraTraitsFromAssembler<Assembler>;
+        using LinearSolver = DirectSolverMumps<SeqLinearSolverTraits, LATraits>;
+        auto linearSolver = std::make_shared<LinearSolver>(
+            std::make_tuple(freeFlowMomentumGridGeometry, freeFlowMassGridGeometry, darcyGridGeometry));
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(sol);
+    }
+    else
+#endif
+    {
+        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        auto linearSolver = std::make_shared<LinearSolver>();
+        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+        nonLinearSolver.solve(sol);
+    }
 
     const auto dofsVS = freeFlowMomentumGridGeometry->numDofs();
     const auto dofsPS = freeFlowMassGridGeometry->numDofs();
@@ -284,9 +301,6 @@ int main(int argc, char** argv)
     std::cout << "Stokes pressure dofs: " << dofsPS << std::endl;
     std::cout << "Darcy pressure dofs: " << dofsPD << std::endl;
     std::cout << "Total number of dofs: " << dofsVS + dofsPS + dofsPD << std::endl;
-
-    // solve the non-linear system
-    nonLinearSolver.solve(sol);
 
     // write vtk output
     freeflowVtkWriter.write(1.0);

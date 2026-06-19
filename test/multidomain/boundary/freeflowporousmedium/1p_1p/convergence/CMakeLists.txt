@@ -51,3 +51,17 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
                         -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed)
+
+# Same Shiue example, solved with the direct MUMPS backend. Exercises the multidomain MUMPS
+# support with 3 subdomains (momentum/mass/Darcy) living on 2 different grids.
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1_mumps
+              TARGET test_md_boundary_ff1p_pm1p_convtest
+              LABELS multidomain multidomain_boundary stokesdarcy mumps
+              TIMEOUT 1000
+              CMAKE_GUARD MUMPS_FOUND
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
+                        -Problem.TestCase ShiueExampleOne
+                        -LinearSolver.UseMumps true
+                        -Darcy.Problem.BoundaryConditions Dirichlet
+                        -FreeFlow.Problem.BoundaryConditions Dirichlet)
