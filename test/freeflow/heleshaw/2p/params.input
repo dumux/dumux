@@ -1,0 +1,54 @@
+[Grid]
+LowerLeft  = 0.0 0.0
+UpperRight = 4.0 2.0   # L=4: U=0.33 m/s → k_c≈28 → n≈10 fingers (L=8 gave U=0.14, n≈7)
+Cells = 16 8            # 8 cells in y so the H=2 base mesh isn't just 4 tall rows
+Refinement = 10
+
+[TimeLoop]
+TEnd = 6.0    # ≈ L/(2U) = 4/(2×0.33): fingers develop but coarsening hasn't dominated yet
+DtInitial = 1e-5
+MaxTimeStepSize = 0.01
+
+[Adaptive]
+InitMaxLevel  = 10
+MinLevel      = 3
+MaxLevel      = 10
+MinElementSize = 0.002   # need to resolve ε=0.01: at least 5 cells per interface half-width
+RefineTolerance  = 0.05
+CoarsenTolerance = 0.005
+
+[Problem]
+Name = test_heleshaw_2p_saffman_taylor
+
+PressureInlet  = 100.0
+PressureOutlet = 0.0
+
+DensityInvading   = 1.0
+ViscosityInvading = 1.0
+DensityReceding   = 1.0
+ViscosityReceding = 100.0
+
+Permeability = 1.0
+
+# σ=1e-4, L=4 → U=0.33 → k_c≈57 → k_max≈33 → mode k=10 (10 fingers) is fastest growing
+# mode k=10: cos(10·2πy/H) has 9 interior maxima + 2 half-boundary = 10 effective fingers
+# ε=0.01: interface width≈0.057m, finger width H/10=0.2m → 28% ratio
+SurfaceTension     = 1e-4
+InterfaceThickness = 0.01
+CHMobility         = 1e-4   # = ε²
+
+InterfacePosition     = 1.0
+InterfacePerturbation = 0.02
+PerturbationBaseMode  = 10  # seed only the 10-finger mode: cos(10·2πy/H)
+PerturbationModes     = 1   # single mode — no boundary pile-up from mode superposition
+
+Gravity = 0.0
+
+[Newton]
+MaxSteps = 25
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+UseLineSearch = true
+RetryTimeStepReductionFactor = 0.25
+MaxTimeStepDivisions = 10
