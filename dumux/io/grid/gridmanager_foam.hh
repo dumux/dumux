@@ -15,8 +15,13 @@
 
 // FoamGrid specific includes
 #if HAVE_DUNE_FOAMGRID
+#include <array>
+#include <bitset>
+#include <limits>
+#include <dune/grid/yaspgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/foamgrid/dgffoam.hh>
+#include <dune/foamgrid/parallel/distribute.hh>
 #endif
 
 #ifndef DUMUX_IO_GRID_MANAGER_BASE_HH
@@ -28,6 +33,60 @@
 namespace Dumux {
 
 #if HAVE_DUNE_FOAMGRID
+
+namespace Detail {
+
+/*!
+ * \brief Stage a spatial redistribution of a (replicated) FoamGrid over the available ranks, using
+ *        the decomposition of a coarse Dune::YaspGrid, when running in parallel.
+ *
+ * Opt-in via the parameter "<group>.Grid.ParallelPartitioning" (any value enables it). The coarse
+ * grid resolution and overlap are controlled by "Grid.ParallelPartitionCells" (default 10) and
+ * "Grid.ParallelOverlap" (default 1); the network overlap matches the coarse grid's overlap.
+ *
+ * This only installs the communicator and *stages* the distribution; the actual rebuild happens in
+ * the subsequent GridManager loadBalance() (FoamGrid::loadBalance[(dataHandle)]). Running it there
+ * lets the standard DGF/gmsh/vtk parameter migration (Dune::GridPtr / DuMux GridData, keyed by the
+ * persistent localIdSet id which the rebuild preserves) remap per-element/-vertex data such as a
+ * network radius onto the distributed local elements automatically.
+ */
+template<class Grid>
+void prepareFoamGridDistribution(Grid& grid, const std::string& paramGroup)
+{
+    if (Dune::MPIHelper::instance().size() <= 1)
+        return;
+    if (!hasParamInGroup(paramGroup, "Grid.ParallelPartitioning"))
+        return; // distribution is opt-in
+
+    static constexpr int dimworld = Grid::dimensionworld;
+    using ct = typename Grid::ctype;
+
+    // install the parallel communicator (the grid was read replicated with a self communicator)
+    grid.setCommunicator(Dune::MPIHelper::getCommunicator());
+
+    // padded bounding box of the network
+    Dune::FieldVector<ct, dimworld> lo(std::numeric_limits<ct>::max());
+    Dune::FieldVector<ct, dimworld> hi(std::numeric_limits<ct>::lowest());
+    for (const auto& v : vertices(grid.leafGridView()))
+    {
+        const auto x = v.geometry().center();
+        for (int d = 0; d < dimworld; ++d) { lo[d] = std::min(lo[d], x[d]); hi[d] = std::max(hi[d], x[d]); }
+    }
+    for (int d = 0; d < dimworld; ++d) { const ct m = 0.05*(hi[d]-lo[d]) + 1e-12; lo[d] -= m; hi[d] += m; }
+
+    // coarse host grid that defines the spatial domain decomposition
+    const int cells = getParamFromGroup<int>(paramGroup, "Grid.ParallelPartitionCells", 10);
+    const int overlap = getParamFromGroup<int>(paramGroup, "Grid.ParallelOverlap", 1);
+    using Coarse = Dune::YaspGrid<dimworld, Dune::EquidistantOffsetCoordinates<ct, dimworld>>;
+    std::array<int, dimworld> cellsArray; cellsArray.fill(cells);
+    Dune::Communication<typename Dune::MPIHelper::MPICommunicator> comm(Dune::MPIHelper::getCommunicator());
+    Coarse coarse(lo, hi, cellsArray, std::bitset<dimworld>(0), overlap, comm);
+
+    // compute the partition now (grid still full) and stage the rebuild for loadBalance()
+    Dune::FoamGridParallel::prepareSpatialRedistribution(grid, coarse.leafGridView());
+}
+
+} // end namespace Detail
 
 /*!
  * \ingroup Grids
@@ -66,6 +125,7 @@ public:
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            Detail::prepareFoamGridDistribution(this->grid(), modelParamGroup);
             ParentType::loadBalance();
             return;
         }
@@ -75,6 +135,7 @@ public:
         {
             ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            Detail::prepareFoamGridDistribution(this->grid(), modelParamGroup);
             ParentType::loadBalance();
         }
 
@@ -127,6 +188,7 @@ public:
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            Detail::prepareFoamGridDistribution(this->grid(), modelParamGroup);
             ParentType::loadBalance();
             return;
         }
@@ -158,6 +220,7 @@ public:
 
         ParentType::gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
         ParentType::maybeRefineGrid(modelParamGroup);
+        Detail::prepareFoamGridDistribution(this->grid(), modelParamGroup);
         ParentType::loadBalance();
     }
 };
