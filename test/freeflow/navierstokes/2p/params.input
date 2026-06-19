@@ -6,18 +6,18 @@ File = rect.msh
 Refinement = 4
 
 [TimeLoop]
-TEnd = 0.3
-DtInitial = 1e-7
+TEnd = 2.0
+DtInitial = 1e-3
 MaxTimeStepSize = 0.01
 
 [Adaptive]
 RefineAtDirichletBC = false
 RefineAtFluxBC = false
 RefineAtSource = false
-InitMaxLevel = 4
+InitMaxLevel = 3
 MinLevel = 1
-MaxLevel = 6
-MinElementSize = 0.01
+MaxLevel = 5
+MinElementSize = 0.02
 CoarsenTolerance = 1e-2
 RefineTolerance = 1e-2
 
@@ -28,30 +28,50 @@ EnableInertiaTerms = false
 EnableInterfaceFlux = false
 EnableDampingForce = false
 DampingForceMagnitude = 1e8
+# The diffuse interface must be resolved by the mesh (eps >~ a few cell widths),
+# otherwise the Cahn-Hilliard subsystem becomes too stiff to converge.
 SurfaceTension = 24.5
-InterfaceThickness = 0.01
-Mobility = 1.0
+InterfaceThickness = 0.04
+# Cahn-Hilliard mobility M in flux = -M*grad(mu). The interface-controlled regime needs
+# M ~ eps^2 (= 1.6e-3 here). Much larger values (e.g. the old M=10) make CH diffusion
+# dominate advection, so the interface relaxes/drifts diffusively instead of being carried
+# by the buoyant flow (the bubble appears to "stall" while a steady velocity persists).
+Mobility = 1e-3
+
+# Surface-tension force discretization: stress | potential | wellbalanced
+# wellbalanced (-phi*grad(mu)): balanced-force, ~zero spurious currents on a static bubble
+# (1.6e-13 m/s vs 1.64 m/s for the deviatoric stress form).
+SurfaceTensionForm = wellbalanced
 Density1 = 100.0
 Density2 = 1000.0
 Viscosity1 = 1.0
 Viscosity2 = 10.0
 # without gravity (Gravity=0.0 or EnableGravity=false) we expect a static bubble
 # with Laplace pressure SurfaceTension/R (R=0.25)
-Gravity = 9.81 #0.98
+Gravity = 0.98
 EnableGravity = true
 
 [Component]
 LiquidDensity = 1000.0
 LiquidDynamicViscosity = 10.0
 
+[FreeFlow]
+# Incompressible (Boussinesq) continuity div(v)=0. The compressible form
+# d(rho)/dt + div(rho v)=0 introduces a rho'(phi)/dt stiffness that is hard to solve.
+IncompressibleContinuity = true
+
 [Flux]
 UpwindWeight = 1.0
 
 [Newton]
 MinSteps = 1
-MaxSteps = 20
+MaxSteps = 30
 MaxRelativeShift = 1e-6
 EnableResidualCriterion = true
 ResidualReduction = 1e-5
 EnableAbsoluteResidualCriterion = true
 MaxAbsoluteResidual = 1e-10
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.2
+MaxTimeStepDivisions = 16
