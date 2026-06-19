@@ -16,6 +16,7 @@
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/common/typetraits/problem.hh>
@@ -67,7 +68,13 @@ public:
                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
-        storage[Indices::conti0EqIdx] = volVars.density();
+        // Incompressible (Boussinesq) continuity ∇·v = 0 has no density storage and is
+        // well-conditioned; the density contrast then only enters momentum (buoyancy).
+        // The compressible/quasi-incompressible form ∂ρ/∂t + ∇·(ρv) = 0 keeps the density
+        // but introduces a ρ'(φ)/dt stiffness in the φ-coupling that is hard on the solver.
+        static const bool incompressible = getParamFromGroup<bool>(
+            problem.paramGroup(), "FreeFlow.IncompressibleContinuity", true);
+        storage[Indices::conti0EqIdx] = incompressible ? 0.0 : volVars.density();
         storage[Indices::phaseFieldEqIdx] = volVars.phaseField();
         storage[Indices::chemicalPotentialEqIdx] = 0.0;
         return storage;
@@ -95,10 +102,14 @@ public:
         // TODO variable extrusion factor?
         const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
         const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*scvf.area();
-        flux[Indices::conti0EqIdx] = upwindSchemeMultiplier_(
-            elemVolVars, scvf, volumeFlux,
-            [](const auto& volVars) { return volVars.density(); }
-        )*volumeFlux;
+        static const bool incompressible = getParamFromGroup<bool>(
+            problem.paramGroup(), "FreeFlow.IncompressibleContinuity", true);
+        flux[Indices::conti0EqIdx] = incompressible
+            ? volumeFlux
+            : upwindSchemeMultiplier_(
+                  elemVolVars, scvf, volumeFlux,
+                  [](const auto& volVars) { return volVars.density(); }
+              )*volumeFlux;
 
         const auto& fluxVarCache = elemFluxVarsCache[scvf];
         Dune::FieldVector<Scalar, dimWorld> gradPhaseField(0.0);
