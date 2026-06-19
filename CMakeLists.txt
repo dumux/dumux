@@ -92,6 +92,41 @@ find_package(TBB QUIET)
 find_package(Kokkos QUIET)
 find_package(OpenMP QUIET)
 
+# MUMPS is a Fortran library: its CMake package config pulls in MPI (C+Fortran),
+# SCALAPACK and LAPACK. Enable the Fortran language (if a compiler is available) so
+# find_package(MUMPS) can resolve those dependencies. Without Fortran the package is
+# simply not found and the MUMPS backend is disabled.
+include(CheckLanguage)
+check_language(Fortran)
+if(CMAKE_Fortran_COMPILER)
+  enable_language(Fortran)
+  find_package(MUMPS QUIET COMPONENTS d)
+  if(MUMPS_FOUND)
+    # The MUMPS package config may bake absolute paths to the open-mpi build it was
+    # compiled against. If that open-mpi has since been upgraded, those paths no longer
+    # exist and break linking. Re-point any non-existent absolute library dependency of
+    # the MUMPS targets to this build's MPI::MPI_Fortran (which tracks the current MPI).
+    find_package(MPI QUIET COMPONENTS C Fortran)
+    foreach(_mumps_target MUMPS::COMMON MUMPS::DMUMPS)
+      if(TARGET ${_mumps_target})
+        get_target_property(_mumps_deps ${_mumps_target} INTERFACE_LINK_LIBRARIES)
+        if(_mumps_deps)
+          set(_mumps_fixed "")
+          foreach(_dep IN LISTS _mumps_deps)
+            if(IS_ABSOLUTE "${_dep}" AND NOT EXISTS "${_dep}")
+              list(APPEND _mumps_fixed MPI::MPI_Fortran)
+            else()
+              list(APPEND _mumps_fixed "${_dep}")
+            endif()
+          endforeach()
+          list(REMOVE_DUPLICATES _mumps_fixed)
+          set_target_properties(${_mumps_target} PROPERTIES INTERFACE_LINK_LIBRARIES "${_mumps_fixed}")
+        endif()
+      endif()
+    endforeach()
+  endif()
+endif()
+
 find_package(Trilinos COMPONENTS Teuchos Tpetra Amesos2)
 MESSAGE("\nFound Trilinos!  Here are the details: ")
 MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
@@ -147,6 +182,11 @@ endif()
 if (Trilinos_FOUND)
   target_compile_definitions(dumux PUBLIC DUMUX_HAVE_TRILINOS=1)
   target_link_libraries(dumux INTERFACE Trilinos::all_selected_libs)
+endif()
+
+if (MUMPS_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_MUMPS=1)
+  target_link_libraries(dumux INTERFACE MUMPS::DMUMPS)
 endif()
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
