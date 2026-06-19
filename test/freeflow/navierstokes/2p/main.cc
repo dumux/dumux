@@ -207,8 +207,36 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
         massProblem->printMassBalanceSummary(x[massIdx], *massGridVariables);
 
+        // diagnostic: max velocity magnitude — at equilibrium (static bubble) this is
+        // the spurious/parasitic current; for a rising bubble it tracks the rise speed.
+        {
+            Scalar maxV = 0.0;
+            for (const auto& vDof : x[momentumIdx])
+                maxV = std::max(maxV, vDof.two_norm());
+            std::cout << "\033[1;33m[vel] max|v| = " << maxV << " m/s\033[0m" << std::endl;
+        }
+
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        // adaptive mesh refinement: keep the fine mesh on the moving interface
+        if (getParam<bool>("Adaptive.EnableInTimeStep", true))
+        {
+            indicator.calculate(x[massIdx], refineTol, coarsenTol);
+            if (markElements(gridManager.grid(), indicator)
+                && adapt(gridManager.grid(), dataTransfer))
+            {
+                // transfer interpolated the solution onto the new grid
+                xOld = x;
+                couplingManager->updateSolution(x);
+                massGridVariables->updateAfterGridAdaption(x[massIdx]);
+                momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+                // rebuild coupling stencils and the Jacobian/residual structure
+                couplingManager->init(momentumProblem, massProblem,
+                                      std::make_tuple(momentumGridVariables, massGridVariables), x);
+                assembler->updateAfterGridAdaption();
+            }
+        }
 
     } while (!timeLoop->finished());
 
