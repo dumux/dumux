@@ -20,6 +20,7 @@ for more information.
 | ![membrane plate](plate_membrane_deformation_3d.png) | @ref benchmark-membrane-plate "↗️ Clamped Circular Membrane" | plate mechanics, @ref MembranePlate, @ref BoxDiscretization | Clamped circular membrane under uniform load; convergence against analytical solution |
 | ![kirchhoff-love plate](plate_kirchhoff_love_deformation_3d.png) | @ref benchmark-kirchhoff-love-plate "↗️ Clamped Circular Plate (Kirchhoff-Love)" | plate mechanics, @ref KirchhoffLovePlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load; convergence against analytical solution |
 | ![mindlin-reissner plate](plate_mindlin_reissner_deformation_3d.png) | @ref benchmark-mindlin-reissner-plate "↗️ Clamped Circular Plate (Mindlin-Reissner)" | plate mechanics, @ref MindlinReissnerPlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load with shear correction; convergence against analytical solution |
+| ![cryer sphere](cryer_pressure_vs_analytical.png) | @ref benchmark-cryer "↗️ Cryer Sphere Consolidation" | poromechanics, large deformation, @ref PoroElasticLargeDef, @ref PQ2Discretization, @ref BoxDiscretization, @ref MultiDomain | Mandel–Cryer effect: centre pore pressure of a drained poroelastic sphere overshoots the surface load; comparison against the Cryer (1963) analytical solution |
 
 ## Benchmarks in documented examples
 
