@@ -146,8 +146,24 @@ public:
             phiUpwindWeight
         )*volumeFlux;
 
+        // Cahn-Hilliard diffusion flux -M grad(mu). Optionally use a DEGENERATE mobility
+        // M(c) = M0 (c^2-1)^2 which vanishes in the bulk (c=+-1) and concentrates the diffusion at
+        // the interface (c=0). This gives the correct interface-controlled sharp-interface limit
+        // and is well-behaved even at relatively large eps (cf. Aland & Voigt 2011, who use
+        // M0 = gamma ~ 1e-3*eps); a CONSTANT mobility (default) adds spurious bulk diffusion that
+        // contaminates the dynamics and converges more slowly.
+        Scalar mobility = problem.mobility();
+        static const bool degenerateMobility = getParamFromGroup<bool>(
+            problem.paramGroup(), "FreeFlow.DegenerateMobility", false);
+        if (degenerateMobility)
+        {
+            const Scalar cFace = 0.5*(elemVolVars[scvf.insideScvIdx()].phaseField()
+                                    + elemVolVars[scvf.outsideScvIdx()].phaseField());
+            const Scalar g = cFace*cFace - 1.0;
+            mobility *= g*g;
+        }
         flux[Indices::phaseFieldEqIdx] += -1.0*vtmv(
-            scvf.unitOuterNormal(), problem.mobility(), gradChemicalPotential
+            scvf.unitOuterNormal(), mobility, gradChemicalPotential
         )*scvf.area();
 
         flux[Indices::chemicalPotentialEqIdx] = -1.0*vtmv(
