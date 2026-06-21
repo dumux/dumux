@@ -10,6 +10,8 @@
 #include <algorithm>
 
 #include <dumux/common/math.hh>
+#include <cmath>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/vtkoutputmodule.hh>
@@ -362,11 +364,24 @@ public:
         Scalar totalMassGas = 0.0;
         Scalar bubbleVol = 0.0;     // ∫ (1+φ)/2 dV  (phase-1 / bubble volume)
         Scalar bubbleYmoment = 0.0; // ∫ (1+φ)/2 · y dV
+        // Circularity (Hysing benchmark): c = perimeter of the area-equivalent circle / bubble
+        // perimeter = 2*sqrt(pi*A)/P. Both A and P are taken from the SAME φ=0 isocontour (via
+        // marching triangles) so the isoperimetric bound c<=1 holds (mixing the diffuse area
+        // ∫(1+φ)/2 with the sharp φ=0 contour breaks it and gives spurious c>1). This is also
+        // robust to the φ profile not fully saturating at ±1. On this LEFT-half domain the
+        // contour is the left half of the interface, so the full-bubble perimeter and area are
+        // each 2× the half-domain values.
+        Scalar contourLenHalf = 0.0; // length of the φ=0 contour in the half domain
+        Scalar areaHalfPos = 0.0;    // area where φ>0 (bubble) in the half domain, clipped at φ=0
+        Scalar tvHalf = 0.0;         // ∫|∇φ| (total variation) - independent perimeter cross-check
         const auto& gg = this->gridGeometry();
         auto fvGeometry = localView(gg);
         for (const auto& element : elements(gg.gridView()))
         {
             fvGeometry.bind(element);
+            const auto numCorners = element.geometry().corners();
+            std::vector<Scalar> phiC(numCorners);
+            std::vector<GlobalPosition> posC(numCorners);
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto phi = sol[scv.dofIndex()][Indices::phaseFieldIdx];
@@ -376,8 +391,62 @@ public:
                 const auto bubbleFrac = 0.5 * (1.0 + phi) * volume;
                 bubbleVol += bubbleFrac;
                 bubbleYmoment += bubbleFrac * scv.dofPosition()[dimWorld-1];
+                phiC[scv.localDofIndex()] = phi;
+                posC[scv.localDofIndex()] = scv.dofPosition();
+            }
+
+            // Marching triangles: the φ=0 contour gives BOTH the interface length and the
+            // enclosed (φ>0) area, clipped consistently at φ=0.
+            if (numCorners == 3)
+            {
+                auto triArea = [](const GlobalPosition& a, const GlobalPosition& b, const GlobalPosition& c)
+                { return 0.5*std::abs((b[0]-a[0])*(c[1]-a[1]) - (c[0]-a[0])*(b[1]-a[1])); };
+                auto edgeCross = [&](int a, int b)
+                { const Scalar t = phiC[a]/(phiC[a]-phiC[b]); auto p = posC[a]; p.axpy(t, posC[b]-posC[a]); return p; };
+
+                const int npos = int(phiC[0] > 0.0) + int(phiC[1] > 0.0) + int(phiC[2] > 0.0);
+                const Scalar fullA = triArea(posC[0], posC[1], posC[2]);
+                if (npos == 3)
+                    areaHalfPos += fullA;
+                else if (npos == 1) // one positive corner i: φ>0 region is the small corner triangle
+                {
+                    const int i = phiC[0] > 0.0 ? 0 : (phiC[1] > 0.0 ? 1 : 2);
+                    const auto Xij = edgeCross(i, (i+1)%3);
+                    const auto Xik = edgeCross(i, (i+2)%3);
+                    areaHalfPos += triArea(posC[i], Xij, Xik);
+                    contourLenHalf += (Xik - Xij).two_norm();
+                }
+                else if (npos == 2) // one negative corner k: φ>0 region is the complementary quad
+                {
+                    const int k = phiC[0] < 0.0 ? 0 : (phiC[1] < 0.0 ? 1 : 2);
+                    const auto Xki = edgeCross(k, (k+1)%3);
+                    const auto Xkj = edgeCross(k, (k+2)%3);
+                    areaHalfPos += fullA - triArea(posC[k], Xki, Xkj);
+                    contourLenHalf += (Xkj - Xki).two_norm();
+                }
+
+                // Independent perimeter cross-check: total variation ∫|∇φ| (also exact for the P1
+                // field, but from the gradient magnitude, not the contour location). On the half
+                // domain ∫|∇φ| equals the FULL-bubble perimeter IF φ is monotone across the
+                // interface and saturates at ±1. A gap vs the contour perimeter therefore flags an
+                // unsaturated/asymmetric diffuse interface, not a contour-extraction error.
+                const Scalar twoA = (posC[1][0]-posC[0][0])*(posC[2][1]-posC[0][1])
+                                  - (posC[2][0]-posC[0][0])*(posC[1][1]-posC[0][1]);
+                if (std::abs(twoA) > 1e-30)
+                {
+                    const Scalar dphidx = ((phiC[1]-phiC[0])*(posC[2][1]-posC[0][1])
+                                         - (phiC[2]-phiC[0])*(posC[1][1]-posC[0][1])) / twoA;
+                    const Scalar dphidy = ((phiC[2]-phiC[0])*(posC[1][0]-posC[0][0])
+                                         - (phiC[1]-phiC[0])*(posC[2][0]-posC[0][0])) / twoA;
+                    tvHalf += std::hypot(dphidx, dphidy) * fullA;
+                }
             }
         }
+        const Scalar areaFull = 2.0 * areaHalfPos;
+        const Scalar perimeterFull = 2.0 * contourLenHalf;
+        const Scalar perimeterTV = tvHalf; // independent (total-variation) perimeter estimate
+        const Scalar circularity = perimeterFull > 0.0 ? 2.0 * std::sqrt(M_PI * areaFull) / perimeterFull : 0.0;
+        const Scalar circularityTV = perimeterTV > 0.0 ? 2.0 * std::sqrt(M_PI * areaFull) / perimeterTV : 0.0;
 
         std::cout << "\033[1;36m[mass] total = " << totalMassLiquid + totalMassGas
                   << " kg/m  |  liquid = " << totalMassLiquid
@@ -385,6 +454,10 @@ public:
                   << " kg/m\033[0m" << std::endl;
         std::cout << "\033[1;35m[bubble] centroid_y = " << bubbleYmoment / bubbleVol
                   << " m  |  volume = " << bubbleVol << " m^2/m\033[0m" << std::endl;
+        std::cout << "\033[1;32m[bubble] circularity = " << circularity
+                  << "  |  perimeter = " << perimeterFull << " m  |  area = " << areaFull << " m^2\033[0m" << std::endl;
+        std::cout << "\033[1;32m[bubble] circularity_TV = " << circularityTV
+                  << "  |  perimeter_TV = " << perimeterTV << " m  (independent cross-check)\033[0m" << std::endl;
     }
 
 private:

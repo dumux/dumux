@@ -39,6 +39,9 @@
 #include <dumux/adaptive/markelements.hh>
 #include <dumux/adaptive/initializationindicator.hh>
 
+#include <dumux/discretization/elementsolution.hh>
+#include <dune/geometry/quadraturerules.hh>
+
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
 #include "properties.hh"
@@ -164,6 +167,10 @@ int main(int argc, char** argv)
             momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
         }
     }
+    std::cout << "\033[1;34m[adapt] after init adaptation: leafCells=" << gridManager.grid().leafGridView().size(0)
+              << "  maxLevel=" << gridManager.grid().maxLevel()
+              << "  massDofs=" << massGridGeometry->numDofs()
+              << "  momentumDofs=" << momentumGridGeometry->numDofs() << "\033[0m" << std::endl;
 
     vtkWriter.write(0.0);
 
@@ -216,11 +223,65 @@ int main(int argc, char** argv)
             std::cout << "\033[1;33m[vel] max|v| = " << maxV << " m/s\033[0m" << std::endl;
         }
 
+        // diagnostic: mass-weighted bubble rise velocity  V_c = ∫_bubble u_y / ∫_bubble 1
+        // with bubble indicator (1+φ)/2. This is the Hysing benchmark "rise velocity"
+        // (Case 1 peak ≈ 0.2417 at t≈0.92); being a bubble *mean* it is < max|v|.
+        // φ (Box) and u (PQ1Bubble) share the same element-corner vertices, so we read
+        // u_y at the matching local vertex dof index of each box sub-control volume.
+        {
+            constexpr int dim = MomentumGridGeometry::GridView::dimension;
+            const auto geoType = Dune::GeometryTypes::simplex(dim);
+            // Proper element quadrature for V_c = ∫(1+φ)/2 u_y / ∫(1+φ)/2: interpolate φ (Box P1)
+            // and u (PQ1Bubble, INCLUDING the centroid bubble dof) at each quadrature point. The
+            // bubble-enriched velocity makes (1+φ)/2·u_y up to degree 4, so use an order-4 rule.
+            // (The previous lumped vertex sum ignored the bubble enrichment entirely.)
+            const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(geoType, 4);
+            // Shape values at the reference quadrature points are identical for every (simplex)
+            // element, so evaluate the bases ONCE here rather than per element/per point.
+            const auto& massLB = massGridGeometry->feCache().get(geoType).localBasis();
+            const auto& momLB  = momentumGridGeometry->feCache().get(geoType).localBasis();
+            std::vector<std::vector<Dune::FieldVector<Scalar, 1>>> massN(quad.size()), momN(quad.size());
+            for (std::size_t q = 0; q < quad.size(); ++q)
+            {
+                massLB.evaluateFunction(quad[q].position(), massN[q]);
+                momLB.evaluateFunction(quad[q].position(), momN[q]);
+            }
+
+            Scalar riseNum = 0.0, riseDen = 0.0;
+            for (const auto& element : elements(leafGridView))
+            {
+                const auto massElemSol = elementSolution(element, x[massIdx], *massGridGeometry);
+                const auto momElemSol  = elementSolution(element, x[momentumIdx], *momentumGridGeometry);
+                const auto geometry = element.geometry();
+                const Scalar ie = geometry.integrationElement(quad[0].position()); // affine: constant
+                for (std::size_t q = 0; q < quad.size(); ++q)
+                {
+                    Scalar phi = 0.0;
+                    for (std::size_t i = 0; i < massN[q].size(); ++i)
+                        phi += massN[q][i][0] * massElemSol[i][CouplingManager::phaseFieldIdx];
+                    Scalar uy = 0.0;
+                    for (std::size_t i = 0; i < momN[q].size(); ++i)
+                        uy += momN[q][i][0] * momElemSol[i][dim-1];
+                    const Scalar w = 0.5*(1.0 + phi) * quad[q].weight() * ie;
+                    riseNum += w*uy;
+                    riseDen += w;
+                }
+            }
+            std::cout << "\033[1;32m[bubble] rise_velocity = "
+                      << (riseDen > 0.0 ? riseNum/riseDen : 0.0) << " m/s\033[0m" << std::endl;
+        }
+
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
-        // adaptive mesh refinement: keep the fine mesh on the moving interface
-        if (getParam<bool>("Adaptive.EnableInTimeStep", true))
+        // adaptive mesh refinement: keep the fine mesh on the moving interface.
+        // The lumped-projection data transfer smooths phi by ~h^2/4 per remesh; doing it
+        // every step accumulates into a spurious phi=0 volume drift. Remeshing every N>1
+        // steps cuts that drift; the interface stays inside the (several-cells-wide) refined
+        // band as long as it moves less than the band width between remeshes.
+        static const int adaptEvery = getParam<int>("Adaptive.AdaptEveryNSteps", 1);
+        if (getParam<bool>("Adaptive.EnableInTimeStep", true)
+            && (timeLoop->timeStepIndex() % adaptEvery == 0))
         {
             indicator.calculate(x[massIdx], refineTol, coarsenTol);
             if (markElements(gridManager.grid(), indicator)

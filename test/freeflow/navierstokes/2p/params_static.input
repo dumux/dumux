@@ -1,0 +1,63 @@
+[Grid]
+File = rect.msh
+Refinement = 4
+
+[TimeLoop]
+TEnd = 0.5
+DtInitial = 1e-3
+MaxTimeStepSize = 0.01
+
+[Adaptive]
+# fixed mesh for a clean well-balancedness measurement
+EnableInTimeStep = false
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+InitMaxLevel = 3
+MinLevel = 1
+MaxLevel = 5
+MinElementSize = 0.02
+CoarsenTolerance = 1e-2
+RefineTolerance = 1e-2
+
+[Problem]
+InitialShape = circle
+Name = static_bubble
+EnableInertiaTerms = false
+EnableInterfaceFlux = false
+EnableDampingForce = false
+SurfaceTension = 24.5
+InterfaceThickness = 0.04
+Mobility = 10.0
+# stress | potential | wellbalanced
+SurfaceTensionForm = wellbalanced
+Density1 = 100.0
+Density2 = 1000.0
+Viscosity1 = 1.0
+Viscosity2 = 10.0
+# static bubble: gravity off -> equilibrium velocity must be zero; any max|v| is spurious
+Gravity = 0.0
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1000.0
+LiquidDynamicViscosity = 10.0
+
+[FreeFlow]
+IncompressibleContinuity = true
+
+[Flux]
+UpwindWeight = 1.0
+
+[Newton]
+MinSteps = 1
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.2
+MaxTimeStepDivisions = 16
