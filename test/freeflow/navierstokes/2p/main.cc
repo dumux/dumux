@@ -172,6 +172,21 @@ int main(int argc, char** argv)
               << "  massDofs=" << massGridGeometry->numDofs()
               << "  momentumDofs=" << momentumGridGeometry->numDofs() << "\033[0m" << std::endl;
 
+    // Re-sample the analytic initial solution on the FINAL adapted grid. The loop above carried
+    // the coarse base-grid IC up through the (lumped-L²) projection transfer at every refinement
+    // step, which smears the interface (measured ε_eff: 0.02 → 0.023). Re-evaluating the exact
+    // equilibrium tanh on the fine interface mesh removes that construction artifact, so the run
+    // starts at the resolved equilibrium width instead of relaxing toward it over the first steps.
+    if (getParam<bool>("Adaptive.ResampleInitialSolution", true))
+    {
+        momentumProblem->applyInitialSolution(x[momentumIdx]);
+        massProblem->applyInitialSolution(x[massIdx]);
+        xOld = x;
+        couplingManager->updateSolution(x);
+        massGridVariables->updateAfterGridAdaption(x[massIdx]);
+        momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+    }
+
     vtkWriter.write(0.0);
 
     /////////////////////////////////////////////////////////

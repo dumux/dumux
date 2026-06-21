@@ -374,6 +374,7 @@ public:
         Scalar contourLenHalf = 0.0; // length of the φ=0 contour in the half domain
         Scalar areaHalfPos = 0.0;    // area where φ>0 (bubble) in the half domain, clipped at φ=0
         Scalar tvHalf = 0.0;         // ∫|∇φ| (total variation) - independent perimeter cross-check
+        Scalar gradEnergyHalf = 0.0; // ∫|∇φ|^2 - to measure the EFFECTIVE interface thickness
         const auto& gg = this->gridGeometry();
         auto fvGeometry = localView(gg);
         for (const auto& element : elements(gg.gridView()))
@@ -439,12 +440,17 @@ public:
                     const Scalar dphidy = ((phiC[2]-phiC[0])*(posC[1][0]-posC[0][0])
                                          - (phiC[1]-phiC[0])*(posC[2][0]-posC[0][0])) / twoA;
                     tvHalf += std::hypot(dphidx, dphidy) * fullA;
+                    gradEnergyHalf += (dphidx*dphidx + dphidy*dphidy) * fullA;
                 }
             }
         }
         const Scalar areaFull = 2.0 * areaHalfPos;
         const Scalar perimeterFull = 2.0 * contourLenHalf;
         const Scalar perimeterTV = tvHalf; // independent (total-variation) perimeter estimate
+        // Effective interface thickness from the ratio of the two gradient integrals: for an
+        // equilibrium tanh of width parameter ε, ∫|∇φ|^2 / ∫|∇φ| = √2/(3ε) (the per-length
+        // perimeter factor cancels), so ε_eff = √2·∫|∇φ| / (3·∫|∇φ|^2). Compare to the IC ε.
+        const Scalar epsEff = gradEnergyHalf > 0.0 ? std::sqrt(2.0) * tvHalf / (3.0 * gradEnergyHalf) : 0.0;
         const Scalar circularity = perimeterFull > 0.0 ? 2.0 * std::sqrt(M_PI * areaFull) / perimeterFull : 0.0;
         const Scalar circularityTV = perimeterTV > 0.0 ? 2.0 * std::sqrt(M_PI * areaFull) / perimeterTV : 0.0;
 
@@ -458,6 +464,9 @@ public:
                   << "  |  perimeter = " << perimeterFull << " m  |  area = " << areaFull << " m^2\033[0m" << std::endl;
         std::cout << "\033[1;32m[bubble] circularity_TV = " << circularityTV
                   << "  |  perimeter_TV = " << perimeterTV << " m  (independent cross-check)\033[0m" << std::endl;
+        std::cout << "\033[1;33m[bubble] eps_eff = " << epsEff
+                  << " m  (IC eps = " << interfaceThickness_ << " m)  gradEnergy = " << gradEnergyHalf
+                  << "\033[0m" << std::endl;
     }
 
 private:
