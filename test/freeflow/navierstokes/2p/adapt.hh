@@ -359,14 +359,15 @@ private:
         }
 
         // The lumped L2 projection conserves the per-component integral but applies an
-        // ~h^2/4 Laplacian smoothing each remesh. Done frequently this accumulates into a
-        // phi=0 volume drift and damps/perturbs the dynamics (visible as a sawtooth in the
-        // rise velocity at the remesh cadence). For nested refinement the plain interpolation
-        // above is the EXACT (non-smoothing, integral-preserving) consistent projection, so we
-        // allow skipping the lumped overwrite. Coarsening (injection) is only mass-inexact in
-        // the flat far field, so global mass stays essentially conserved either way.
+        // ~h^2/4 Laplacian smoothing each remesh, AND it maps phi/mu DIFFERENTLY from the pressure
+        // (which gets plain interpolation above). That inconsistency leaves the modified pressure
+        // p* = p - mu*phi out of sync with the smoothed mu*phi right after a remesh and feeds
+        // single-node interfacial pressure spikes. Default OFF: map all mass variables the same way
+        // (plain interpolation = the EXACT, non-smoothing, integral-preserving consistent projection
+        // for nested refinement). Verified: mass drift stays ~0.0008% over t=3 (lumping not needed
+        // for conservation), the remesh flicker halves, and the QoI are unchanged.
         static const bool useLumped = getParamFromGroup<bool>(
-            problem_->paramGroup(), "Adaptive.LumpedMassProjection", true);
+            problem_->paramGroup(), "Adaptive.LumpedMassProjection", false);
         if (useLumped)
             for (std::size_t i = 0; i < gridGeometry_->numDofs(); ++i)
                 for (int j = massProjBegin; j < massProjEnd; ++j)
