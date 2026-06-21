@@ -151,41 +151,37 @@ int main(int argc, char** argv)
         std::make_shared<TwoPhaseCahnHilliardVelocityGridDataTransfer<MomentumTypeTag>>(momentumProblem, momentumGridGeometry, momentumGridVariables, x[momentumIdx])
     );
 
-    const Scalar initMaxLevel = getParam<std::size_t>("Adaptive.InitMaxLevel", 10);
+    // Initial adaptation. We GROW the mesh incrementally from the (coarse) base grid: each pass the
+    // φ-gradient indicator marks the interface band for refinement (and enforces the MinLevel bulk
+    // floor), then we RE-EVALUATE the analytic initial solution on the new grid instead of trusting
+    // the projection transfer. Re-sampling each pass means (a) the indicator always refines against
+    // the EXACT sharp interface, (b) no projection smoothing ever accumulates, and (c) we never have
+    // to start from a uniformly fine grid and coarsen it back -- which is what makes a high MaxLevel
+    // affordable (only the interface ever reaches it). Stops as soon as the mesh matches the target.
+    const std::size_t initMaxLevel = getParam<std::size_t>("Adaptive.InitMaxLevel", 10);
+    const bool resampleIC = getParam<bool>("Adaptive.ResampleInitialSolution", true);
     for (std::size_t i = 0; i < initMaxLevel; ++i)
     {
         indicator.calculate(x[massIdx], refineTol, coarsenTol);
-        bool wasAdapted = false;
-        if (markElements(gridManager.grid(), indicator))
-            wasAdapted = adapt(gridManager.grid(), dataTransfer);
+        if (!markElements(gridManager.grid(), indicator))
+            break; // converged: nothing left to refine/coarsen at the indicator + MinLevel/MinElementSize target
+        if (!adapt(gridManager.grid(), dataTransfer))
+            break;
 
-        if (wasAdapted)
+        if (resampleIC)
         {
-            xOld = x; //!< Overwrite the old solution with the new (resized & interpolated) one
-            couplingManager->updateSolution(x); //!< Update coupling stencils after grid adaption
-            massGridVariables->updateAfterGridAdaption(x[massIdx]);
-            momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+            momentumProblem->applyInitialSolution(x[momentumIdx]);
+            massProblem->applyInitialSolution(x[massIdx]);
         }
+        xOld = x; //!< Overwrite the old solution with the new (resized) one
+        couplingManager->updateSolution(x); //!< Update coupling stencils after grid adaption
+        massGridVariables->updateAfterGridAdaption(x[massIdx]);
+        momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
     }
     std::cout << "\033[1;34m[adapt] after init adaptation: leafCells=" << gridManager.grid().leafGridView().size(0)
               << "  maxLevel=" << gridManager.grid().maxLevel()
               << "  massDofs=" << massGridGeometry->numDofs()
               << "  momentumDofs=" << momentumGridGeometry->numDofs() << "\033[0m" << std::endl;
-
-    // Re-sample the analytic initial solution on the FINAL adapted grid. The loop above carried
-    // the coarse base-grid IC up through the (lumped-L²) projection transfer at every refinement
-    // step, which smears the interface (measured ε_eff: 0.02 → 0.023). Re-evaluating the exact
-    // equilibrium tanh on the fine interface mesh removes that construction artifact, so the run
-    // starts at the resolved equilibrium width instead of relaxing toward it over the first steps.
-    if (getParam<bool>("Adaptive.ResampleInitialSolution", true))
-    {
-        momentumProblem->applyInitialSolution(x[momentumIdx]);
-        massProblem->applyInitialSolution(x[massIdx]);
-        xOld = x;
-        couplingManager->updateSolution(x);
-        massGridVariables->updateAfterGridAdaption(x[massIdx]);
-        momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
-    }
 
     vtkWriter.write(0.0);
 
