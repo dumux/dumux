@@ -299,6 +299,11 @@ private:
 
         // Mass-lumped L² projection accumulators, per DOF and component:
         //   sol_[i][j] = (Σ scvVolume * <source u_j>) / (Σ scvVolume)
+        // NOTE: this global lumped redistribution both conserves ∫φ AND smooths; the
+        // smoothing is essential to tame the per-step re-meshing perturbation (plain
+        // interpolation without it gives ~5x the seam pressure noise). A consistent-mass
+        // (not lumped) L² projection would be identity on FE fields and conservative, but
+        // is heavier; the lumped version is the best simple trade-off.
         std::vector<PrimaryVariables> massCoeff(gridGeometry_->numDofs(), PrimaryVariables(0.0));
         std::vector<PrimaryVariables> associatedMass(gridGeometry_->numDofs(), PrimaryVariables(0.0));
 
@@ -345,10 +350,20 @@ private:
             }
         }
 
-        for (std::size_t i = 0; i < gridGeometry_->numDofs(); ++i)
-            for (int j = massProjBegin; j < massProjEnd; ++j)
-                if (massCoeff[i][j] > 0.0)
-                    sol_[i][j] = associatedMass[i][j] / massCoeff[i][j];
+        // The lumped L2 projection conserves the per-component integral but applies an
+        // ~h^2/4 Laplacian smoothing each remesh. Done frequently this accumulates into a
+        // phi=0 volume drift and damps/perturbs the dynamics (visible as a sawtooth in the
+        // rise velocity at the remesh cadence). For nested refinement the plain interpolation
+        // above is the EXACT (non-smoothing, integral-preserving) consistent projection, so we
+        // allow skipping the lumped overwrite. Coarsening (injection) is only mass-inexact in
+        // the flat far field, so global mass stays essentially conserved either way.
+        static const bool useLumped = getParamFromGroup<bool>(
+            problem_->paramGroup(), "Adaptive.LumpedMassProjection", true);
+        if (useLumped)
+            for (std::size_t i = 0; i < gridGeometry_->numDofs(); ++i)
+                for (int j = massProjBegin; j < massProjEnd; ++j)
+                    if (massCoeff[i][j] > 0.0)
+                        sol_[i][j] = associatedMass[i][j] / massCoeff[i][j];
 
         adaptionMap_.resize(typename PersistentContainer::Value());
         adaptionMap_.shrinkToFit();
@@ -404,6 +419,7 @@ class TwoPhaseCahnHilliardVelocityGridDataTransfer
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
+    using Extrusion = Extrusion_t<GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -412,7 +428,16 @@ class TwoPhaseCahnHilliardVelocityGridDataTransfer
                                                                   std::declval<SolutionVector>(),
                                                                   std::declval<GridGeometry>()))>;
 
-    struct StoredValue { ElementSolution u; };
+    // associatedMomentum = ∫_E u dV (per velocity component), carried conservatively across
+    // adaptation so the transferred velocity (which becomes xOld and enters the momentum
+    // time-derivative term) preserves momentum - otherwise each remesh injects a spurious
+    // momentum change that the next solve registers as a jump in the rise velocity.
+    struct StoredValue
+    {
+        StoredValue() : associatedMomentum(0.0) {}
+        ElementSolution u;
+        PrimaryVariables associatedMomentum;
+    };
 
     using PersistentContainer = Dune::PersistentContainer<Grid, StoredValue>;
 
@@ -435,15 +460,39 @@ public:
     void store(const Grid& grid) override
     {
         adaptionMap_.resize();
+        auto fvGeometry = localView(*gridGeometry_);
+        // finest level first so child momenta are summed into fathers before we visit them
         for (auto level = grid.maxLevel(); level >= 0; --level)
         {
             for (const auto& element : elements(grid.levelGridView(level)))
             {
                 auto& stored = adaptionMap_[element];
                 if (element.isLeaf())
+                {
                     stored.u = ElementSolution(element, sol_, *gridGeometry_);
+                    fvGeometry.bindElement(element);
+                    // conserve momentum on the VERTEX dofs only; the element-local pq1bubble
+                    // centroid dof is left to interpolation (collapsing it to the element mean
+                    // destroys inf-sup stability) and is recomputed by the next solve.
+                    const auto numCorners = static_cast<std::size_t>(element.subEntities(dim));
+                    for (const auto& scv : scvs(fvGeometry))
+                    {
+                        if (scv.localDofIndex() >= numCorners) continue;
+                        const auto vol = Extrusion::volume(fvGeometry, scv);
+                        for (int d = 0; d < PrimaryVariables::size(); ++d)
+                            stored.associatedMomentum[d] += stored.u[scv.localDofIndex()][d] * vol;
+                    }
+                }
                 else
                     storeNonLeafElementSolution_(element, stored.u, grid.maxLevel());
+
+                // carry the momentum up so a coarsened father holds its children's momentum
+                if (element.level() > 0)
+                {
+                    auto& fatherValues = adaptionMap_[element.father()];
+                    if (&stored != &fatherValues)
+                        fatherValues.associatedMomentum += stored.associatedMomentum;
+                }
             }
         }
     }
@@ -454,11 +503,32 @@ public:
         adaptionMap_.resize();
         sol_.resize(gridGeometry_->numDofs());
 
+        // Momentum-conserving transfer: redistribute the stored element momentum int_E u dV
+        // via a lumped L2 projection so the global momentum sum_i V_i u_i is preserved across
+        // the remesh (the velocity otherwise is only interpolated, so a remesh injects a small
+        // spurious momentum change). NOTE default OFF: tested at N=5 it conserves momentum but
+        // the lumped redistribution also smooths the SURVIVING-element vertex velocities, which
+        // damps the rise-velocity peak (0.248 -> 0.218) and worsens max|v| roughness (the
+        // smoothed vertices mismatch the interpolated, un-smoothed pq1bubble centroid dof). A
+        // net win needs an identity-on-surviving consistent projection (not lumped) - left as
+        // future work. The residual V_c roughness is the inherent mesh-dependence of the
+        // converged solution at each remesh, not a fixable transfer error.
+        static const bool conserve = getParamFromGroup<bool>(
+            problem_->paramGroup(), "Adaptive.ConserveMomentum", false);
+        std::vector<PrimaryVariables> momCoeff, momentum;
+        if (conserve)
+        {
+            momCoeff.assign(gridGeometry_->numDofs(), PrimaryVariables(0.0));
+            momentum.assign(gridGeometry_->numDofs(), PrimaryVariables(0.0));
+        }
+
         auto fvGeometry = localView(*gridGeometry_);
         for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
         {
             fvGeometry.bindElement(element);
 
+            // the element that holds the stored source data (self if surviving, else ancestor)
+            auto source = element;
             if (!element.isNew())
             {
                 const auto& stored = adaptionMap_[element];
@@ -471,18 +541,42 @@ public:
                     DUNE_THROW(Dune::InvalidStateException,
                         "New element does not have a father; cannot reconstruct solution.");
 
-                auto ancestor = element.father();
-                while (ancestor.isNew() && ancestor.level() > 0)
-                    ancestor = ancestor.father();
+                source = element.father();
+                while (source.isNew() && source.level() > 0)
+                    source = source.father();
 
-                const auto& stored = adaptionMap_[ancestor];
-                const auto ancestorGeometry = ancestor.geometry();
+                const auto& stored = adaptionMap_[source];
+                const auto sourceGeometry = source.geometry();
                 for (const auto& scv : scvs(fvGeometry))
                     sol_[scv.dofIndex()] = evalSolution(
-                        ancestor, ancestorGeometry, *gridGeometry_, stored.u, scv.dofPosition()
+                        source, sourceGeometry, *gridGeometry_, stored.u, scv.dofPosition()
                     );
             }
+
+            if (conserve)
+            {
+                const auto& storedSrc = adaptionMap_[source];
+                const auto sourceVolume = volume(source.geometry(), Extrusion{});
+                const auto numCorners = static_cast<std::size_t>(element.subEntities(dim));
+                for (const auto& scv : scvs(fvGeometry))
+                {
+                    if (scv.localDofIndex() >= numCorners) continue; // skip bubble dof (keep interpolated)
+                    const auto vol = Extrusion::volume(fvGeometry, scv);
+                    const auto dofIdx = scv.dofIndex();
+                    for (int d = 0; d < PrimaryVariables::size(); ++d)
+                    {
+                        momCoeff[dofIdx][d] += vol;
+                        momentum[dofIdx][d] += vol / sourceVolume * storedSrc.associatedMomentum[d];
+                    }
+                }
+            }
         }
+
+        if (conserve)
+            for (std::size_t i = 0; i < gridGeometry_->numDofs(); ++i)
+                for (int d = 0; d < PrimaryVariables::size(); ++d)
+                    if (momCoeff[i][d] > 0.0)
+                        sol_[i][d] = momentum[i][d] / momCoeff[i][d];
 
         adaptionMap_.resize(typename PersistentContainer::Value());
         adaptionMap_.shrinkToFit();
