@@ -30,6 +30,8 @@
 
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
+#include <dune/geometry/quadraturerules.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -130,7 +132,13 @@ public:
     int operator() (const Element& element) const
     {
         const auto eIdx = gridGeometry_->elementMapper().index(element);
-        if (element.hasFather() && maxLocalConcentrationDelta_[eIdx] < coarsenBound_)
+        // Enforce a uniform minimum refinement level everywhere, not just the interface band:
+        // the φ-gradient indicator otherwise coarsens the bulk down to the macro mesh, leaving
+        // the (PQ1Bubble) velocity field in the bubble wake / return flow badly under-resolved.
+        if (element.level() < int(minLevel_))
+            return 1;
+        if (element.hasFather() && element.level() > int(minLevel_)
+            && maxLocalConcentrationDelta_[eIdx] < coarsenBound_)
             return -1;
         if (element.level() < maxLevel_
             && size_(element) > minElementSize_
@@ -599,24 +607,63 @@ private:
             }
         }
 
-        // Overwrite each entry with the value belonging to the father's local DOFs.
-        const auto& localCoeff = gridGeometry_->feCache().get(element.type()).localCoefficients();
+        const auto& lfe = gridGeometry_->feCache().get(element.type());
+        const auto& localCoeff = lfe.localCoefficients();
+        const auto& localBasis = lfe.localBasis();
+
+        // (1) Vertex DOFs: persistent nodal values.
         for (int i = 0; i < localCoeff.size(); ++i)
-        {
-            const auto& localKey = localCoeff.localKey(i);
-            if (localKey.codim() == dim)
+            if (localCoeff.localKey(i).codim() == dim)
             {
-                // Vertex DOF: vertices are persistent, dof mapper gives a valid global index.
                 const auto vIdx = gridGeometry_->dofMapper().subIndex(
-                    element, localKey.subEntity(), dim);
+                    element, localCoeff.localKey(i).subEntity(), dim);
                 u[i] = sol_[vIdx];
             }
-            else
+
+        // (2) Element-local (pq1bubble centroid) DOFs: pick the value that MINIMISES the local L2
+        // error on the element given the (fixed) vertex DOFs:
+        //     u_b = ∫_E B (u_src - u_vert) dV / ∫_E B^2 dV
+        // where B is the bubble shape, u_vert = Σ_v u_v Ñ_v the vertex part, and u_src the source
+        // (children) solution. Integrated over the leaf children, which tile E and still hold the
+        // fine solution at store time. (Zeroing it instead would collapse the cell-centre velocity
+        // on coarsening -> jumpy cell-to-cell field + spurious momentum-storage kick next solve.)
+        static const bool nodalSeed = getParamFromGroup<bool>(
+            problem_->paramGroup(), "Adaptive.BubbleNodalSeed", true);
+        using ctype = typename Element::Geometry::ctype;
+        using ShapeVal = typename std::decay_t<decltype(localBasis)>::Traits::RangeType;
+        const auto fgeo = element.geometry();
+        std::vector<ShapeVal> shp;
+        for (int i = 0; i < localCoeff.size(); ++i)
+        {
+            if (localCoeff.localKey(i).codim() == dim) continue;
+            if (!nodalSeed) { u[i] = PrimaryVariables(0.0); continue; } // old behaviour for A/B
+
+            PrimaryVariables num(0.0);
+            ctype den = 0.0;
+            const auto& quad = Dune::QuadratureRules<ctype, dim>::rule(element.type(), 4);
+            for (auto it = element.hbegin(maxLevel); it != element.hend(maxLevel); ++it)
             {
-                // Element-local DOF (e.g. pq1bubble centroid): no global index on the leaf grid.
-                // Seed with zero — the bubble gets recomputed in the next Newton solve.
-                u[i] = PrimaryVariables(0.0);
+                if (!it->isLeaf()) continue;
+                const auto cgeo = it->geometry();
+                const auto csol = ElementSolution(*it, sol_, *gridGeometry_);
+                for (const auto& qp : quad)
+                {
+                    const auto global = cgeo.global(qp.position());
+                    localBasis.evaluateFunction(fgeo.local(global), shp);
+                    const auto B = shp[i][0];
+                    PrimaryVariables uVert(0.0); // father vertex part Σ_v u_v Ñ_v at this point
+                    for (int k = 0; k < localCoeff.size(); ++k)
+                        if (localCoeff.localKey(k).codim() == dim)
+                            uVert.axpy(shp[k][0], u[k]);
+                    const auto uSrc = evalSolution(*it, cgeo, *gridGeometry_, csol, global);
+                    const auto w = qp.weight() * cgeo.integrationElement(qp.position());
+                    num.axpy(w * B, uSrc);
+                    num.axpy(-w * B, uVert);
+                    den += w * B * B;
+                }
             }
+            if (den > 0.0) { num /= den; u[i] = num; }
+            else u[i] = PrimaryVariables(0.0);
         }
     }
 
