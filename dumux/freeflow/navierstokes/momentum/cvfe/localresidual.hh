@@ -316,9 +316,70 @@ public:
                                            const FVElementGeometry& fvGeometry,
                                            const ElementVariables& elemVars) const
     {
-        FeResidual::addFluxAndSourceTerms(
-            residual, problem, fvGeometry, elemVars
-        );
+        FeResidual::addFluxAndSourceTerms(residual, problem, fvGeometry, elemVars);
+        addSkewSymmetricAdvectionCorrection_(residual, problem, element, fvGeometry, elemVars, elemFluxVarsCache);
+    }
+
+private:
+    /*!
+     * \brief Skew-symmetric (Temam) correction restoring discrete kinetic-energy stability
+     *        of the conservative momentum advection.
+     *
+     * The advective momentum flux is assembled in divergence form, sum_f m_f * u_up
+     * (m_f = rho_f (v.n) dA the mass flux through the sub-control-volume face). This is
+     * energy-stable only if the advecting field is discretely mass conservative, i.e.
+     * sum_f m_f = 0 per control volume. For incompressible continuity (div v = 0) with a
+     * variable, Cahn-Hilliard-transported density that is NOT mass conservative on the
+     * momentum control volumes, sum_f m_f != 0 at the density interface and the divergence
+     * form injects kinetic energy there (a growing parasitic interfacial jet).
+     *
+     * Subtracting u_cv * m_f from each adjacent control volume converts the divergence form
+     * into the convective form sum_f m_f (u_up - u_cv), which is energy-neutral under
+     * div v = 0 regardless of how the density moves. When sum_f m_f = 0 the correction
+     * vanishes, so it is consistent. Gated by FreeFlow.SkewSymmetricMomentumAdvection
+     * (default off) so other tests are unaffected.
+     */
+    template<class ElementFluxVariablesCache>
+    void addSkewSymmetricAdvectionCorrection_(ElementResidualVector& residual,
+                                              const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const ElementVariables& elemVars,
+                                              const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        if (!problem.enableInertiaTerms())
+            return;
+
+        static const bool enable
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.SkewSymmetricMomentumAdvection", false);
+        if (!enable)
+            return;
+
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.boundary())
+                continue;
+
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& fluxVarCache = elemFluxVarsCache[scvf];
+            const auto& shapeValues = fluxVarCache.shapeValues();
+
+            // interpolate the advecting velocity at the face and form the mass flux
+            // m_f = rho_f (v.n) dA (same density/velocity as the advective flux uses)
+            NumEqVector v(0.0);
+            for (const auto& localDof : localDofs(fvGeometry))
+                v.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
+
+            const auto vn = v*scvf.unitOuterNormal();
+            const auto density = problem.density(element, fvGeometry, ipData(fvGeometry, scvf));
+            const auto massFlux = density * vn
+                * Extrusion::area(fvGeometry, scvf) * elemVars[insideScv].extrusionFactor();
+
+            // divergence form -> convective form: residual_cv += -u_cv * m_f (with the
+            // outward-normal sign flip on the outside control volume)
+            residual[scvf.insideScvIdx()].axpy(-massFlux, elemVars[scvf.insideScvIdx()].velocity());
+            residual[scvf.outsideScvIdx()].axpy(massFlux, elemVars[scvf.outsideScvIdx()].velocity());
+        }
     }
 
 };
