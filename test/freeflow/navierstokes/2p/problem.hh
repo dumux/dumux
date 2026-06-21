@@ -375,6 +375,9 @@ public:
         Scalar areaHalfPos = 0.0;    // area where φ>0 (bubble) in the half domain, clipped at φ=0
         Scalar tvHalf = 0.0;         // ∫|∇φ| (total variation) - independent perimeter cross-check
         Scalar gradEnergyHalf = 0.0; // ∫|∇φ|^2 - to measure the EFFECTIVE interface thickness
+        Scalar maxGradP = 0.0;       // max element |∇p| - flags local pressure spikes
+        GlobalPosition spikePos(0.0);// location of that max (to see WHERE the spike sits)
+        Scalar pMin = 1e100, pMax = -1e100;
         const auto& gg = this->gridGeometry();
         auto fvGeometry = localView(gg);
         for (const auto& element : elements(gg.gridView()))
@@ -382,10 +385,12 @@ public:
             fvGeometry.bind(element);
             const auto numCorners = element.geometry().corners();
             std::vector<Scalar> phiC(numCorners);
+            std::vector<Scalar> pC(numCorners);
             std::vector<GlobalPosition> posC(numCorners);
             for (const auto& scv : scvs(fvGeometry))
             {
                 const auto phi = sol[scv.dofIndex()][Indices::phaseFieldIdx];
+                const auto p   = sol[scv.dofIndex()][Indices::pressureIdx];
                 const auto volume = scv.volume();
                 totalMassLiquid += rho1_ * 0.5 * (1.0 + phi) * volume;
                 totalMassGas    += rho2_ * 0.5 * (1.0 - phi) * volume;
@@ -393,7 +398,9 @@ public:
                 bubbleVol += bubbleFrac;
                 bubbleYmoment += bubbleFrac * scv.dofPosition()[dimWorld-1];
                 phiC[scv.localDofIndex()] = phi;
+                pC[scv.localDofIndex()] = p;
                 posC[scv.localDofIndex()] = scv.dofPosition();
+                pMin = std::min(pMin, p); pMax = std::max(pMax, p);
             }
 
             // Marching triangles: the φ=0 contour gives BOTH the interface length and the
@@ -441,6 +448,16 @@ public:
                                          - (phiC[1]-phiC[0])*(posC[2][0]-posC[0][0])) / twoA;
                     tvHalf += std::hypot(dphidx, dphidy) * fullA;
                     gradEnergyHalf += (dphidx*dphidx + dphidy*dphidy) * fullA;
+                    const Scalar dpdx = ((pC[1]-pC[0])*(posC[2][1]-posC[0][1])
+                                       - (pC[2]-pC[0])*(posC[1][1]-posC[0][1])) / twoA;
+                    const Scalar dpdy = ((pC[2]-pC[0])*(posC[1][0]-posC[0][0])
+                                       - (pC[1]-pC[0])*(posC[2][0]-posC[0][0])) / twoA;
+                    const Scalar gp = std::hypot(dpdx, dpdy);
+                    if (gp > maxGradP)
+                    {
+                        maxGradP = gp;
+                        spikePos = posC[0]; spikePos += posC[1]; spikePos += posC[2]; spikePos /= 3.0;
+                    }
                 }
             }
         }
@@ -467,6 +484,8 @@ public:
         std::cout << "\033[1;33m[bubble] eps_eff = " << epsEff
                   << " m  (IC eps = " << interfaceThickness_ << " m)  gradEnergy = " << gradEnergyHalf
                   << "\033[0m" << std::endl;
+        std::cout << "\033[1;31m[diag] maxGradP = " << maxGradP << " at (" << spikePos[0] << "," << spikePos[1]
+                  << ")  pRange = " << (pMax - pMin) << "  (local pressure-spike monitor)\033[0m" << std::endl;
     }
 
 private:
