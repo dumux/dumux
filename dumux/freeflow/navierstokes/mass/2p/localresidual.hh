@@ -51,6 +51,9 @@ class NavierStokesMassTwoPLocalResidual
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
+    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
+    // NB: ElementResidualVector is inherited (public) from the base local residual - do not
+    // re-alias it here, that would shadow it as a private member and break the assemblers.
 
     using Extrusion = Extrusion_t<GridGeometry>;
 
@@ -128,10 +131,19 @@ public:
             );
         }
 
-        // advection of the phase field
+        // advection of the phase field. Default FULL UPWIND (weight 1): upwind's dissipation
+        // keeps phi monotone (no overshoot), which is what suppresses the single-node interfacial
+        // pressure spikes here; the diffusion does not smear the interface because the
+        // Cahn-Hilliard dynamics restore its width. The energy-stable alternative is CENTRAL
+        // (weight 0.5) together with FreeFlow.SkewSymmetricPhaseFieldAdvection=true (the skew form
+        // 1/2[u.grad phi + div(phi u)] that is robust to discrete div u); it works but showed no
+        // benefit over upwind in these benchmarks (Case-1 spike slightly worse, Case-2 identical).
+        static const Scalar phiUpwindWeight = getParamFromGroup<Scalar>(
+            problem.paramGroup(), "FreeFlow.PhaseFieldUpwindWeight", 1.0);
         flux[Indices::phaseFieldEqIdx] = upwindSchemeMultiplier_(
             elemVolVars, scvf, volumeFlux,
-            [](const auto& volVars) { return volVars.phaseField(); }
+            [](const auto& volVars) { return volVars.phaseField(); },
+            phiUpwindWeight
         )*volumeFlux;
 
         flux[Indices::phaseFieldEqIdx] += -1.0*vtmv(
@@ -167,18 +179,72 @@ public:
         return source;
     }
 
+    /*!
+     * \brief Element-level hook: optional skew-symmetric correction of the phase-field advection.
+     */
+    void addToElementFluxAndSourceResidual(typename ParentType::ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars,
+                                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                                           const ElementBoundaryTypes& elemBcTypes) const
+    {
+        addSkewSymmetricPhaseFieldAdvectionCorrection_(residual, problem, element, fvGeometry, elemVolVars);
+    }
+
 private:
+    /*!
+     * \brief Skew-symmetric (Temam) form of the Cahn-Hilliard phase-field convection.
+     *
+     * computeFlux assembles phi-advection in CONSERVATIVE (divergence) form sum_f phi_up m_f
+     * (m_f = (v.n) dA the volume flux through the sub-control-volume face). That equals the
+     * advective form u.grad(phi) only if sum_f m_f = 0 per control volume; with incompressible
+     * continuity div v = 0 enforced only discretely, sum_f m_f != 0 at the density interface, and
+     * the spurious phi*(div u) term makes phi OVERSHOOT (>1) there -> mu = (gamma/eps)phi(phi^2-1)
+     * - gamma*eps*Laplacian(phi) spikes -> single-node interfacial pressure spikes. The skew form
+     *   1/2[u.grad phi + div(phi u)] = div(phi u) - 1/2 phi (div u)
+     * cancels half that term (subtract 1/2 phi_cv m_f from each adjacent CV); it vanishes when
+     * sum_f m_f = 0 (consistent) and is robust to the small discrete divergence at the interface.
+     * Gated by FreeFlow.SkewSymmetricPhaseFieldAdvection (default off).
+     */
+    void addSkewSymmetricPhaseFieldAdvectionCorrection_(typename ParentType::ElementResidualVector& residual,
+                                                        const Problem& problem,
+                                                        const Element& element,
+                                                        const FVElementGeometry& fvGeometry,
+                                                        const ElementVolumeVariables& elemVolVars) const
+    {
+        static const bool enable = getParamFromGroup<bool>(
+            problem.paramGroup(), "FreeFlow.SkewSymmetricPhaseFieldAdvection", false);
+        if (!enable)
+            return;
+
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (scvf.boundary())
+                continue;
+
+            const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
+            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*scvf.area();
+
+            residual[scvf.insideScvIdx()][Indices::phaseFieldEqIdx]
+                += -0.5*volumeFlux*elemVolVars[scvf.insideScvIdx()].phaseField();
+            residual[scvf.outsideScvIdx()][Indices::phaseFieldEqIdx]
+                += 0.5*volumeFlux*elemVolVars[scvf.outsideScvIdx()].phaseField();
+        }
+    }
+
+
 
     template<class ElemVolVars, class SubControlVolumeFace, class UpwindTermFunction, class Scalar>
     Scalar upwindSchemeMultiplier_(const ElemVolVars& elemVolVars,
                                    const SubControlVolumeFace& scvf,
                                    const Scalar flux,
-                                   const UpwindTermFunction& upwindTerm) const
+                                   const UpwindTermFunction& upwindTerm,
+                                   const Scalar upwindWeight = 1.0) const
     {
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-        constexpr Scalar upwindWeight = 1.0; // TODO: pass this from outside?
 
         using std::signbit;
         if (signbit(flux)) // if sign of flux is negative
