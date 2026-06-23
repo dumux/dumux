@@ -23,7 +23,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/geometry/center.hh>
-#include <dumux/discretization/facecentered/pq1nonconforming/dofhelper.hh>
+#include <dumux/discretization/pq1nonconforming/dofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
