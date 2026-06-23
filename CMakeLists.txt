@@ -59,7 +59,7 @@ dune_project()
 # external dependencies
 include(FetchContent)
 
-option(DUMUX_ENABLE_GRIDFORMAT "Enable gridformat I/O integration" OFF)
+option(DUMUX_ENABLE_GRIDFORMAT "Enable gridformat I/O integration" ON)
 if (DUMUX_ENABLE_GRIDFORMAT)
   find_package(gridformat QUIET)
   if (gridformat_FOUND)
