@@ -35,7 +35,7 @@
 #include <dumux/common/typetraits/boundary_.hh>
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
-#include <dumux/discretization/facecentered/pq1nonconforming/fegriddiscretization.hh>
+#include <dumux/discretization/pq1nonconforming/fegriddiscretization.hh>
 #include <dumux/discretization/cvfe/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
