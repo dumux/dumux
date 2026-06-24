@@ -131,9 +131,24 @@ int main(int argc, char** argv)
         return totalFlux / domainWidth;
     };
 
+    // --- Mass-balance flux: integrate C over domain, use dM/dt as dissolution rate ---
+    auto computeTotalMass = [&]() -> Scalar {
+        Scalar mass = 0.0;
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        {
+            auto fvGeometry = localView(*gridGeometry);
+            fvGeometry.bindElement(element);
+            for (const auto& scv : scvs(fvGeometry))
+                mass += x[scv.dofIndex()][FluidSystem::soluteIdx] * scv.volume();
+        }
+        return leafGridView.comm().sum(mass);
+    };
+
     std::ofstream shFile(problem->name() + "_sherwood.csv");
     shFile << std::scientific << std::setprecision(6);
-    shFile << "time,Sh,F\n"; // F = Sh/Ra is the actual dimensionless dissolution flux
+    // Sh_grad / F_grad: gradient at top interface (diffusive flux proxy)
+    // Sh_mass / F_mass: dM/dt mass balance (total flux, diffusion + advection)
+    shFile << "time,Sh_grad,F_grad,Sh_mass,F_mass\n";
     // -------------------------------------------------------------------------
 
     const auto tEnd       = getParam<Scalar>("TimeLoop.TEnd");
@@ -149,12 +164,15 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
     const Scalar Ra = FluidSystem::rayleighNumber();
 
-    const auto writeSherwood = [&](Scalar t) {
-        const Scalar Sh = computeSherwood();
-        shFile << t << "," << Sh << "," << Sh/Ra << "\n";
+    const auto writeSherwood = [&](Scalar t, Scalar massFluxPerWidth = 0.0) {
+        const Scalar Sh_grad = computeSherwood();
+        const Scalar Sh_mass = massFluxPerWidth * Ra;
+        shFile << t << "," << Sh_grad << "," << Sh_grad/Ra
+                    << "," << Sh_mass << "," << massFluxPerWidth << "\n";
         shFile.flush();
     };
 
+    Scalar massOld = computeTotalMass();
     writeSherwood(tStart);
 
     Scalar nextVtkTime = tStart + vtkInterval;
@@ -175,6 +193,11 @@ int main(int argc, char** argv)
     {
         nonLinearSolver.solve(x, *timeLoop);
 
+        const Scalar dt = timeLoop->timeStepSize();
+        const Scalar massNew = computeTotalMass();
+        const Scalar massFluxPerWidth = (massNew - massOld) / (dt * domainWidth);
+        massOld = massNew;
+
         xOld = x;
         gridVariables->advanceTimeStep();
         timeLoop->advanceTimeStep();
@@ -185,7 +208,7 @@ int main(int argc, char** argv)
             nextVtkTime += vtkInterval;
         }
 
-        writeSherwood(timeLoop->time());
+        writeSherwood(timeLoop->time(), massFluxPerWidth);
 
         timeLoop->reportTimeStep();
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
