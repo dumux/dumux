@@ -114,15 +114,18 @@ public:
                                              int /*compJIdx*/)
     { return 1.0 / rayleighNumber_; }
 
+    //! Volumetric expansion coefficient β_i for component compIdx.
+    //! In the dimensionless formulation β_solute = 1 so that the buoyancy
+    //! density (1 + Σ β_i·x_i) equals (1 + C) when C ∈ [0,1].
+    static Scalar volumetricExpansionCoeff(int compIdx)
+    { return (compIdx == soluteIdx) ? 1.0 : 0.0; }
+
     //! The current Rayleigh number (for diagnostic output)
     static Scalar rayleighNumber() { return rayleighNumber_; }
 
 private:
-    static Scalar rayleighNumber_;
+    inline static Scalar rayleighNumber_ = 100.0;
 };
-
-template<class Scalar>
-Scalar BoussinesqFluid<Scalar>::rayleighNumber_ = 100.0;
 
 } // namespace Dumux::FluidSystems
 
