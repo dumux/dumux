@@ -22,7 +22,7 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
-#include <dumux/material/fluidsystems/boussinesq.hh>
+#include "1p_boussinesq_fluidsystem.hh"
 
 #include "boussinesqdarcyslaw.hh"
 #include "problem.hh"
@@ -72,8 +72,7 @@ struct AdvectionType<TypeTag, TTag::BoussinesqOneSidedRBBox>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    // soluteCompIdx = 1, matching FluidSystems::BoussinesqFluid::soluteIdx
-    using type = BoussinesqCVFEDarcyLaw<Scalar, GridGeometry, 1>;
+    using type = BoussinesqCVFEDarcyLaw<Scalar, GridGeometry>;
 };
 
 } // end namespace Dumux::Properties
