@@ -6,16 +6,17 @@
 //
 /*!
  * \file
- * \brief One-sided Rayleigh-Bénard dissolution problem (dimensionless Boussinesq).
+ * \brief One-sided Rayleigh-Bénard dissolution problem (streamfunction-Boussinesq).
  *
- * A 2D porous layer of dimensionless height H = 1 and aspect ratio Γ = L/H.
- * The top boundary is held at saturation concentration (c = 1) and a reference
- * pressure.  All other boundaries are no-flow / no-flux.
+ * Primary variables: ψ (streamfunction, slot 0) and C (solute concentration, slot 1).
  *
- * The dissolved solute makes the fluid denser:
- *   ρ = 1 + Ra · c
- * with dimensionless gravity g = 1 and Ra = DimensionlessNumbers.Ra from the input file.
- * Convection sets in above the critical Rayleigh number Ra_c ≈ 4π².
+ * Boundary conditions:
+ *   - ψ = 0 on ALL walls  (no-flow, exact — no penalty needed)
+ *   - C = 1 at top        (saturated dissolving interface)
+ *   - ∂C/∂n = 0 elsewhere (no solute flux through solid walls)
+ *
+ * The velocity field is u = (∂ψ/∂y, −∂ψ/∂x), so ψ = 0 at a wall means
+ * zero normal AND tangential velocity there by construction.
  */
 #ifndef DUMUX_BOUSSINESQ_ONESIDED_RB_PROBLEM_HH
 #define DUMUX_BOUSSINESQ_ONESIDED_RB_PROBLEM_HH
@@ -40,13 +41,13 @@ class BoussinesqOneSidedRBProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView    = typename GridGeometry::GridView;
     using Indices     = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
-    using BoundaryTypes  = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes   = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using NumEqVector    = Dumux::NumEqVector<PrimaryVariables>;
+    using NumEqVector     = Dumux::NumEqVector<PrimaryVariables>;
 
     static constexpr int dimWorld   = GridView::dimensionworld;
-    static constexpr int pressureIdx = Indices::pressureIdx;
-    static constexpr int soluteIdx   = FluidSystem::soluteIdx;
+    static constexpr int psiIdx     = Indices::pressureIdx; // streamfunction slot
+    static constexpr int soluteIdx  = FluidSystem::soluteIdx;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -55,7 +56,7 @@ public:
     : ParentType(gridGeometry)
     {
         FluidSystem::init();
-        std::cout << "Boussinesq one-sided RB problem: Ra = "
+        std::cout << "Boussinesq streamfunction problem: Ra = "
                   << FluidSystem::rayleighNumber() << std::endl;
     }
 
@@ -63,67 +64,52 @@ public:
     { return getParam<std::string>("Problem.Name", "boussinesq_onesided_rb"); }
 
     /*!
-     * \brief Top boundary: Dirichlet (saturated solute, reference pressure).
-     *        All other boundaries: Neumann (zero flux / no-flow).
+     * \brief All walls: ψ = 0 Dirichlet (no-flow).
+     *        Top:       also C = 1 Dirichlet (dissolving interface).
+     *        Other walls: ∂C/∂n = 0 (natural Neumann for transport eq).
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
+        // ψ = 0 on every wall
+        values.setDirichlet(psiIdx);
+        // C = 1 only at the top; natural (zero-flux) elsewhere
         const Scalar yMax = this->gridGeometry().bBoxMax()[dimWorld-1];
         if (globalPos[dimWorld-1] > yMax - eps_)
-            values.setAllDirichlet();
+            values.setDirichlet(soluteIdx);
         else
-            values.setAllNeumann();
+            values.setNeumann(soluteIdx);
         return values;
     }
 
-    //! Saturated solute concentration and reference pressure at the top
-    PrimaryVariables dirichletAtPos(const GlobalPosition&) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = pRef_;
-        values[soluteIdx]   = 1.0; // dimensionless saturation concentration
+        values[psiIdx] = 0.0; // ψ = 0
+        const Scalar yMax = this->gridGeometry().bBoxMax()[dimWorld-1];
+        values[soluteIdx] = (globalPos[dimWorld-1] > yMax - eps_) ? 1.0 : 0.0;
         return values;
     }
 
-    //! Zero flux everywhere except the top (which is Dirichlet)
     NumEqVector neumannAtPos(const GlobalPosition&) const
     { return NumEqVector(0.0); }
 
     /*!
-     * \brief Dimensionless buoyancy expansion Σ_i β_i·x_i used in the Darcy law.
+     * \brief Initial condition: no flow (ψ = 0), pure solvent (C = 0).
      *
-     * The buoyancy density becomes ρ_ref·(1 + boussinesq_term), so for the
-     * dimensionless problem this returns simply the solute mass fraction C.
+     * The diffusive erfc-profile starting condition is applied in main.cc
+     * by overwriting the C DOFs after applyInitialSolution().
      */
-    template<class VolumeVariables>
-    Scalar boussinesq_term(const VolumeVariables& volVars) const
+    PrimaryVariables initialAtPos(const GlobalPosition&) const
     {
-        Scalar expansion = 0.0;
-        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
-            expansion += FluidSystem::volumetricExpansionCoeff(compIdx)
-                       * volVars.massFraction(FluidSystem::phase0Idx, compIdx);
-        return expansion;
-    }
-
-    /*!
-     * \brief Initial condition: pure solvent with hydrostatic pressure.
-     *
-     * Hydrostatic pressure for ρ = 1, g = 1:
-     *   p(y) = p_ref + (y_max - y)
-     */
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
-    {
-        const Scalar yMax = this->gridGeometry().bBoxMax()[dimWorld-1];
         PrimaryVariables values(0.0);
-        values[pressureIdx] = pRef_ + (yMax - globalPos[dimWorld-1]);
-        values[soluteIdx]   = 0.0; // pure solvent
+        values[psiIdx]   = 0.0;
+        values[soluteIdx] = 0.0;
         return values;
     }
 
 private:
-    static constexpr Scalar eps_  = 1e-7;
-    static constexpr Scalar pRef_ = 1.0; // dimensionless reference pressure at top
+    static constexpr Scalar eps_ = 1e-7;
 };
 
 } // namespace Dumux

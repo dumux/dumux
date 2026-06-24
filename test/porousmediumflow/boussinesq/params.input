@@ -1,24 +1,27 @@
 [Problem]
 Name = boussinesq_onesided_rb
-EnableGravity = true
+EnableGravity = false
 
 [DimensionlessNumbers]
-Ra = 5000
+Ra = 8000
 
 [Grid]
-# dimensionless domain: width x height = 2 x 1
+# dimensionless domain: width x height = 1 x 1
 LowerLeft = 0 0
-UpperRight = 2 1
-Cells = 100 50
+UpperRight = 1 1
+Cells =  200 200
 
 [TimeLoop]
-TEnd = 50
-DtInitial = 1e-4
-MaxTimeStepSize = 1
+TEnd = 10
+DtInitial = 1e-3
+MaxTimeStepSize = 0.05
 
 [Output]
-VtkOutputInterval = 1ca
+VtkOutputInterval = 0.5
 
 [Newton]
 MaxSteps = 20
-MaxRelativeShift = 1e-7
+MaxRelativeShift = 1e-5
+
+[Vtk]
+ AddVelocity = true

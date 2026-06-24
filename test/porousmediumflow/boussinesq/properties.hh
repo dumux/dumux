@@ -8,11 +8,13 @@
  * \file
  * \brief Property definitions for the dimensionless Boussinesq dissolution test.
  *
- * Model: OnePNC (one phase, two components) with Boussinesq approximation:
- *  - ρ = 1 everywhere in storage and continuity (BoussinesqFluid system)
- *  - D = 1/Ra (Ra appears as inverse diffusion in transport equation)
- *  - Buoyancy density = 1 + C used only in Darcy's law (BoussinesqCVFEDarcyLaw)
- *  - g = (0, -1) dimensionless unit gravity (BoussinesqSpatialParams)
+ * Model: OnePNC (one phase, two components) with streamfunction-Boussinesq formulation:
+ *  - Primary variable 0: ψ (streamfunction, in the pressure slot)
+ *  - Primary variable 1: C (solute mass fraction)
+ *  - Eq 0: ∇·(∇ψ − C·êₓ) = 0  (streamfunction Poisson, no time derivative)
+ *  - Eq 1: φ ∂C/∂t + ∇·(u C − D∇C) = 0  with u = (∂ψ/∂y, −∂ψ/∂x)
+ *  - D = 1/Ra (from BoussinesqFluid system)
+ *  - BCs: ψ=0 Dirichlet on all walls; C=1 Dirichlet at top; ∂C/∂n=0 elsewhere
  */
 #ifndef DUMUX_BOUSSINESQ_PROPERTIES_HH
 #define DUMUX_BOUSSINESQ_PROPERTIES_HH
@@ -23,17 +25,15 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
 #include "1p_boussinesq_fluidsystem.hh"
-
-#include "boussinesqdarcyslaw.hh"
+#include "localresidual.hh"
+#include "streamfunctionadvection.hh"
 #include "problem.hh"
 #include "spatialparams.hh"
 
 namespace Dumux::Properties {
 
 namespace TTag {
-//! Base type tag (discretisation-independent)
 struct BoussinesqOneSidedRB { using InheritsFrom = std::tuple<OnePNC>; };
-//! Box (CVFE) variant — the only one supported with the Boussinesq Darcy law
 struct BoussinesqOneSidedRBBox
 { using InheritsFrom = std::tuple<BoussinesqOneSidedRB, BoxModel>; };
 } // end namespace TTag
@@ -66,13 +66,25 @@ template<class TypeTag>
 struct UseMoles<TypeTag, TTag::BoussinesqOneSidedRB>
 { static constexpr bool value = false; };
 
-// Override the Darcy law for Box to use Boussinesq buoyancy (1 + C instead of rho)
+// Equation 0 is the streamfunction Poisson equation (repurposed from total mass balance).
+// Setting replaceCompEqIdx = 0 gives the right model-traits structure (2 eqs, eq 0 without
+// a component-storage term in the parent, which we then zero out in our local residual).
+template<class TypeTag>
+struct ReplaceCompEqIdx<TypeTag, TTag::BoussinesqOneSidedRB>
+{ static constexpr int value = 0; };
+
+// Streamfunction-Boussinesq local residual: overrides eq 0 storage (zero) and flux.
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::BoussinesqOneSidedRB>
+{ using type = BoussinesqStreamfunctionLocalResidual<TypeTag>; };
+
+// Advection from curl(ψ) instead of Darcy's law.
 template<class TypeTag>
 struct AdvectionType<TypeTag, TTag::BoussinesqOneSidedRBBox>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using type = BoussinesqCVFEDarcyLaw<Scalar, GridGeometry>;
+    using type = StreamfunctionAdvection<Scalar, GridGeometry>;
 };
 
 } // end namespace Dumux::Properties

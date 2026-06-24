@@ -182,10 +182,10 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
-                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(),
-                                                       gridGeometry->dofMapper());
+    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits,
+                         LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
+
 
     NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver);
 
