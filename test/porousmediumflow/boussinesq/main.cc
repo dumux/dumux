@@ -11,6 +11,7 @@
 
 #include <config.h>
 
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -60,21 +61,39 @@ int main(int argc, char** argv)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
+
+    // Optionally start from the analytical diffusive profile at t = tStart.
+    // Default: tStart = 146/Ra^2 (dimensionless critical time from linear stability).
+    // Set TimeLoop.TStart = 0 in params.input to use the standard zero-concentration IC.
+    const Scalar tcrit = 146.0 / FluidSystem::rayleighNumber();
+    const Scalar tStart = getParam<Scalar>("TimeLoop.TStart", tcrit);
+    if (tStart > 0.0)
+    {
+        const Scalar yMax = gridGeometry->bBoxMax()[1];
+        const Scalar Ra = FluidSystem::rayleighNumber();
+        for (const auto& vertex : vertices(leafGridView))
+        {
+            const auto idx = gridGeometry->dofMapper().index(vertex);
+            const Scalar y   = vertex.geometry().center()[1];
+            const Scalar eta = (yMax - y) / (2.0 * std::sqrt(tStart / Ra));
+            x[idx][FluidSystem::soluteIdx] = std::erfc(eta);
+        }
+    }
+
     auto xOld = x;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     // --- Sherwood number: dimensionless dissolution flux at the top boundary ---
     // Sh(t) = (1/L) * integral_top (dC/dy) dx  [dC/dy > 0 at top since C=1 there]
@@ -84,7 +103,7 @@ int main(int argc, char** argv)
 
     auto computeSherwood = [&]() -> Scalar {
         Scalar totalFlux = 0.0;
-        for (const auto& element : elements(leafGridView))
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
         {
             auto fvGeometry = localView(*gridGeometry);
             fvGeometry.bindElement(element);
@@ -107,6 +126,8 @@ int main(int argc, char** argv)
                 totalFlux += (grads[FluidSystem::soluteIdx] * scvf.unitOuterNormal()) * scvf.area();
             }
         }
+        // sum over all MPI ranks
+        totalFlux = leafGridView.comm().sum(totalFlux);
         return totalFlux / domainWidth;
     };
 
@@ -134,17 +155,17 @@ int main(int argc, char** argv)
         shFile.flush();
     };
 
-    writeSherwood(0.0);
+    writeSherwood(tStart);
 
-    Scalar nextVtkTime = vtkInterval;
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dtInit, tEnd);
+    Scalar nextVtkTime = tStart + vtkInterval;
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(tStart, dtInit, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
-                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
+                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(),
                                                        gridGeometry->dofMapper());
 
