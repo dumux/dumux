@@ -37,6 +37,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref benchmark-mindlin-reissner-plate" visible="yes" title="Mindlin-Reissner Plate" intro=""/>
       <tab type="user" url="@ref benchmark-timestepping-methods" visible="yes" title="Multistep timestepping" intro=""/>
       <tab type="user" url="@ref benchmark-buckley-leverett" visible="yes" title="Buckley-Leverett" intro=""/>
+      <tab type="user" url="@ref benchmark-heatpipe" visible="yes" title="Heatpipe" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
     </tab>

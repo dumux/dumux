@@ -22,6 +22,7 @@ for more information.
 | ![mindlin-reissner plate](plate_mindlin_reissner_deformation_3d.png) | @ref benchmark-mindlin-reissner-plate "↗️ Clamped Circular Plate (Mindlin-Reissner)" | plate mechanics, @ref MindlinReissnerPlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load with shear correction; convergence against analytical solution |
 | ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
+| ![heatpipe](heatpipe-schematic-description.png) | @ref benchmark-heatpipe "↗️ Heatpipe" | @ref TwoPTwoCModel, @ref BoxDiscretization | One-dimensional non-isothermal two-phase two-component flow |
 
 ## Benchmarks in documented examples
 

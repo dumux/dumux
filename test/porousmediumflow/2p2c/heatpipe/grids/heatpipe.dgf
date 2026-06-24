@@ -1,0 +1,17 @@
+DGF
+% SPDX-FileCopyrightText: Copyright © DuMux-Lecture contributors, see AUTHORS.md in root folder
+% SPDX-License-Identifier: CC-BY-4.0
+Interval
+0 0   % first corner
+2.4 1.0   % second corner
+120 1   % 24 cells in x and 1 in y direction
+#
+GridParameter
+overlap 0
+periodic
+closure green
+#GridParameter
+BOUNDARYDOMAIN
+default 1    % all boundaries have id 1
+#BOUNDARYDOMAIN
+# unitcube.dgf
