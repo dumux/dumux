@@ -24,6 +24,7 @@ for more information.
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
 | ![mcwhorter-sunada](mcwhortersunada_lineplot_comparison.png) | @ref benchmark-mcwhorter-sunada "↗️ McWhorter-Sunada" | @ref TwoPModel, @ref CCTpfaDiscretization | Counter-current imbibition compared with Fučík's semi-analytical reference |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
+| ![heatpipe](heatpipe-schematic-description.png) | @ref benchmark-heatpipe "↗️ Heatpipe" | @ref TwoPTwoCModel, @ref BoxDiscretization | One-dimensional non-isothermal two-phase two-component flow |
 
 ## Benchmarks in documented examples
 

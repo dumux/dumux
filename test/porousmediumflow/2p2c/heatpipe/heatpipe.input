@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2.2e12 # [s]
+EpisodeLength = 1.e10
+
+[Grid]
+File = ./grids/heatpipe.dgf
+
+[Assembly]
+NumericDifferenceMethod = 0
+
+[Problem]
+Permeability = 1.e-12   # m^2
+HeatFlux = -100.0       # W/m^2
+MultiplierPC = 1.0      # Scaling factor for the capillary pressure' order of magnitude
+                        # used here only for quick manipulation of capillary pressures
+Name = heatpipe
+EnableGravity = false
+
+[Component]
+SolidHeatCapacity = 700
+SolidDensity = 2600
+SolidThermalConductivity = 2.8
+
+[Newton]
+MaxRelativeShift = 1e-6
