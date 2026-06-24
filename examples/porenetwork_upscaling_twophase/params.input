@@ -1,0 +1,39 @@
+[Grid]
+File = ./grids/network.dgf
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+AddThroatVolumeToPoreVolume = false
+
+[Problem]
+Name = pnm_2p_upscaling
+InitialPc = 1.2e3 # [Pa]
+FinalPc = 4.7e3 # [Pa]
+IsDraingeProcess = false
+NumSteps = 30 # the number of episodes to run
+PlotPcS = true
+SurfaceTension = 0.0725
+ContactAngle = 0.0
+InletPoreLabel = 2
+OutletPoreLabel = 1
+Directions = 0 # the directions to be plotted 0 1 2
+AllowDraingeOfOutlet = true
+EnableGravity = 0 # disable gravity
+MaximumPressureGradient = 1e10 #Pa/m
+NumberOfPressureGradients = 10 # the number of sample points for regression process
+Epsilon = 1e-13
+AssumeCreepingFlow = true
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1e3
+
+GasKinematicViscosity = 1.561e-5
+GasDensity = 1.184
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+
+
