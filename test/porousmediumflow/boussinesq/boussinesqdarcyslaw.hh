@@ -38,11 +38,13 @@ namespace Dumux {
 /*!
  * \brief CVFE Darcy law with Boussinesq buoyancy.
  *
+ * The buoyancy density is assembled as ρ_ref·(1 + Σ_i β_i·x_i) where β_i
+ * is queried from FluidSystem::volumetricExpansionCoeff(compIdx).
+ *
  * \tparam Scalar      scalar type
  * \tparam GridGeometry grid geometry type
- * \tparam soluteCompIdx component index of the dissolved solute (default: 1)
  */
-template<class Scalar, class GridGeometry, int soluteCompIdx = 1>
+template<class Scalar, class GridGeometry>
 class BoussinesqCVFEDarcyLaw
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -93,8 +95,7 @@ public:
             const Scalar N = shapeValues[scv.indexInElement()][0];
 
             if (enableGravity)
-                // Boussinesq buoyancy density: 1 + C  (fluid-system density = 1)
-                rho += (1.0 + volVars.massFraction(phaseIdx, soluteCompIdx)) * N;
+                rho += N * volVars.density(phaseIdx) * (1.0 + problem.boussinesq_term(volVars));
 
             gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
         }

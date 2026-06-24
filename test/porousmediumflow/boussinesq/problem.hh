@@ -91,6 +91,22 @@ public:
     { return NumEqVector(0.0); }
 
     /*!
+     * \brief Dimensionless buoyancy expansion Σ_i β_i·x_i used in the Darcy law.
+     *
+     * The buoyancy density becomes ρ_ref·(1 + boussinesq_term), so for the
+     * dimensionless problem this returns simply the solute mass fraction C.
+     */
+    template<class VolumeVariables>
+    Scalar boussinesq_term(const VolumeVariables& volVars) const
+    {
+        Scalar expansion = 0.0;
+        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
+            expansion += FluidSystem::volumetricExpansionCoeff(compIdx)
+                       * volVars.massFraction(FluidSystem::phase0Idx, compIdx);
+        return expansion;
+    }
+
+    /*!
      * \brief Initial condition: pure solvent with hydrostatic pressure.
      *
      * Hydrostatic pressure for ρ = 1, g = 1:
