@@ -10,8 +10,8 @@
  * \ingroup PNMTwoPModel
  * \brief A (quasi-) static two-phase pore-network model for drainage processes.
  */
-#ifndef DUMUX_PNM_TWOP_STATIC_DRAINAGE_HH
-#define DUMUX_PNM_TWOP_STATIC_DRAINAGE_HH
+#ifndef DUMUX_PNM_TWOP_STATIC_HH
+#define DUMUX_PNM_TWOP_STATIC_HH
 
 #include <stack>
 #include <vector>
@@ -21,29 +21,34 @@ namespace Dumux::PoreNetwork {
 /*!
  * \ingroup PNMTwoPModel
  *
- * \brief A (quasi-) static two-phase pore-network model for drainage processes.
+ * \brief A (quasi-) static two-phase pore-network model.
  *        This assumes that there are no pressure gradients within the phases and thus, no flow.
  */
 template<class GridGeometry, class Scalar>
-class TwoPStaticDrainage
+class TwoPStatic
 {
     using GridView = typename GridGeometry::GridView;
 
 public:
 
-    TwoPStaticDrainage(const GridGeometry& gridGeometry,
-                       const std::vector<Scalar>& pcEntry,
-                       const std::vector<int>& throatLabel,
-                       const int inletPoreLabel,
-                       const int outletPoreLabel,
-                       const bool allowDraingeOfOutlet = false)
+    TwoPStatic(const GridGeometry& gridGeometry,
+               const std::vector<Scalar>& pcEntry,
+               const std::vector<Scalar>& pcSnapOff,
+               const std::vector<int>& throatLabel,
+               const int inletPoreLabel,
+               const int outletPoreLabel,
+               const std::size_t numThroatsInvaded = 0.0,
+               const bool allowDraingeOfOutlet = false)
     : gridView_(gridGeometry.gridView())
     , pcEntry_(pcEntry)
+    , pcSnapOff_(pcSnapOff)
     , throatLabel_(throatLabel)
     , inletThroatLabel_(inletPoreLabel)
     , outletThroatLabel_(outletPoreLabel)
     , allowDraingeOfOutlet_(allowDraingeOfOutlet)
+    , numThroatsInvaded_(numThroatsInvaded)
     {}
+
 
     /*!
      * \brief Updates the invasion state of the network for the given global capillary pressure.
@@ -58,9 +63,17 @@ public:
         {
             const auto eIdx = gridView_.indexSet().index(element);
 
-            // if the throat is already invaded, do nothing and continue
+            // if the throat is already invaded, just check the snap-off and continue
             if (elementIsInvaded[eIdx])
+            {
+                if (pcGlobal <= pcSnapOff_[eIdx])
+                {
+                    --numThroatsInvaded_;
+                    elementIsInvaded[eIdx] = false;
+                }
+
                 continue;
+            }
 
             // try to find a seed from which to start the search process
             bool isSeed = false;
@@ -134,11 +147,12 @@ public:
 private:
     const GridView& gridView_;
     const std::vector<Scalar>& pcEntry_;
+    const std::vector<Scalar>& pcSnapOff_;
     const std::vector<int>& throatLabel_;
     const int inletThroatLabel_;
     const int outletThroatLabel_;
     const int allowDraingeOfOutlet_;
-    std::size_t numThroatsInvaded_ = 0;
+    std::size_t numThroatsInvaded_;
 };
 
 } // namespace Dumux::PoreNetwork
