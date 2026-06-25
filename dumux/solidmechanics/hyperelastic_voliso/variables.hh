@@ -71,6 +71,12 @@ public:
     const PrimaryVariables& priVars() const
     { return priVars_; }
 
+    /*!
+     * \brief Returns the factor by which a lower-dimensional entity needs to be extruded.
+     */
+    Scalar extrusionFactor() const
+    { return 1.0; }
+
 private:
     PrimaryVariables priVars_;
 };
@@ -127,6 +133,12 @@ public:
      */
     const PrimaryVariables& priVars() const
     { return priVars_; }
+
+    /*!
+     * \brief Returns the factor by which a lower-dimensional entity needs to be extruded.
+     */
+    Scalar extrusionFactor() const
+    { return 1.0; }
 
 private:
     PrimaryVariables priVars_;
