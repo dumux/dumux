@@ -173,8 +173,8 @@ private:
             fvPres.bindElement(element);
             const std::size_t eIdx = presGG.elementMapper().index(element);
 
-            for (const auto& scv : scvs(fvPres))
-                stencilsMomToPres_[eIdx].push_back(scv.dofIndex());
+            for (const auto& localDof : localDofs(fvPres))
+                stencilsMomToPres_[eIdx].push_back(localDof.dofIndex());
             // Use localDofs (not scvs) to include non-SCV DOFs (e.g. PQ2 edge midpoints)
             for (const auto& localDof : localDofs(fvMom))
                 stencilsPresTOMom_[eIdx].push_back(localDof.dofIndex());
