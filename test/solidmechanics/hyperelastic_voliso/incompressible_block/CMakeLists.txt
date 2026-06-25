@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input)
+dune_symlink_to_source_files(FILES params.input block_delaunay.geo block_delaunay.msh)
 
 dumux_add_test(
-        NAME test_hyperelastic_incompressible_block_p1b_p1
+    NAME test_hyperelastic_incompressible_block_p1b_p1
     LABELS geomechanics elastic
     SOURCES main.cc
     COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION=IncompressibleBlockMomentumP1B
@@ -13,8 +13,10 @@ dumux_add_test(
     COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS  --script fuzzy
               --files ${CMAKE_SOURCE_DIR}/test/references/test_hyperelastic_incompressible_block_p1b_p1-reference.vtu
-                      ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p1b_p1-00001.vtu
-              --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p1b_p1 params.input -Problem.Name test_hyperelastic_incompressible_block_p1b_p1"
+                      ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p1b_p1-00005.vtu
+              --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p1b_p1 params.input
+                        -Problem.Name test_hyperelastic_incompressible_block_p1b_p1
+                        -Grid.File block_delaunay.msh"
 )
 
 dumux_add_test(
@@ -27,8 +29,10 @@ dumux_add_test(
     COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS  --script fuzzy
               --files ${CMAKE_SOURCE_DIR}/test/references/test_hyperelastic_incompressible_block_p2_p1-reference.vtu
-                      ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p2_p1-00001.vtu
-              --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p2_p1 params.input -Problem.Name test_hyperelastic_incompressible_block_p2_p1"
+                      ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p2_p1-00005.vtu
+              --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_incompressible_block_p2_p1 params.input
+                        -Problem.Name test_hyperelastic_incompressible_block_p2_p1
+                        -Grid.File block_delaunay.msh"
 )
 
 dumux_add_test(
