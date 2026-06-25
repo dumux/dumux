@@ -153,7 +153,7 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         const auto eIdx = this->gridGeometry().elementMapper().index(element);
-        const auto area = M_PI * pow(this->spatialParams().radius(eIdx), 2);
+        const auto area = M_PI * pow(this->spatialParams().innerRadius(eIdx), 2);
 
         // initialize values to zero, i.e. no-flow Neumann boundary conditions
         NumEqVector values(0.0);
@@ -264,7 +264,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[temperatureIdx] = 273.15 + 14.0 - globalPos[2] * 0.03214;
+        values[temperatureIdx] = 273.15 + 20.0;
         values[pressureIdx] = 1.0e5 ;
         return values;
     }
@@ -346,7 +346,8 @@ public:
     template<class VtkOutputModule>
     void addVtkOutputFields(VtkOutputModule& vtk) const
     {
-        vtk.addField(this->spatialParams().getRadii(), "radius", Vtk::FieldType::element);
+        vtk.addField(this->spatialParams().getRadii(), "outer radius", Vtk::FieldType::element);
+        vtk.addField(this->spatialParams().getInnerRadii(), "inner radius", Vtk::FieldType::element);
         vtk.addField(nusseltNumbers_, "Nu", Vtk::FieldType::element);
         vtk.addField(energySources_, "energy sources", Vtk::FieldType::vertex);
     }

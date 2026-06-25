@@ -78,19 +78,35 @@ class ExchangeFluxCalculator
 private:
 
     /*!
-     * \brief Calculate the convection coefficient based on the formula h = lambda_w * Nu / D
+     * \brief Calculate the effective heat transfer coefficient including fluid convection and pipe wall conduction.
+     *
+     * Combines fluid-side convection (at inner surface) and cylindrical wall conduction in series,
+     * referred to the outer surface (radius r_o), consistent with surface = 2*pi*r_o:
+     *   1/h_eff = r_o/(r_i * h_fluid) + r_o * ln(r_o/r_i) / lambda_wall
+     *
      * \param id The id of the point source.
-     * \return The convection coefficient.
+     * \return The effective heat transfer coefficient [W/(m²·K)] referred to the outer surface.
      */
     Scalar convectionCoeff_(const std::size_t id) const
     {
         const Scalar T = this->couplingManager().lowDimPriVars(id)[temperatureIdx];
         const Scalar p = this->couplingManager().lowDimPriVars(id)[pressureIdx];
-        const Scalar lambda_w = FluidSystem::thermalConductivity(T, p);
+        const Scalar lambdaFluid = FluidSystem::thermalConductivity(T, p);
 
-        const Scalar D = 2*this->couplingManager().radius(id);
+        const Scalar rOuter = this->couplingManager().radius(id);
+        const Scalar rInner = this->couplingManager().innerRadius(id);
 
-        return lambda_w * getNusseltNumber(id) / D;
+        // h_fluid uses inner diameter (hydraulic diameter for Nusselt correlation)
+        const Scalar hFluid = lambdaFluid * getNusseltNumber(id) / (2*rInner);
+
+        // Pipe wall conduction resistance, referred to outer surface
+        static const Scalar lambdaWall = getParam<Scalar>("MixedDimension.PipeWallThermalConductivity");
+        const Scalar wallResistance = rOuter * std::log(rOuter / rInner) / lambdaWall;
+
+        // Fluid resistance mapped to outer surface: r_o/(r_i * h_fluid)
+        const Scalar fluidResistance = rOuter / (rInner * hFluid);
+
+        return 1.0 / (fluidResistance + wallResistance);
     }
 
     /*!
