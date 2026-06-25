@@ -6,11 +6,10 @@
 //
 /*!
  * \file
- * \brief Spatial parameters for the dimensionless Boussinesq dissolution test.
+ * \brief Spatial parameters for the Boussinesq vorticity test.
  *
- * Permeability and porosity are both 1 (dimensionless).
- * Gravity is set to unit magnitude pointing downward, overriding the base
- * class default of 9.81 m/s².
+ * Provides medium properties (permeability, porosity) and the gravity vector.
+ * Fluid properties (μ, ρ₀, β, D) live in the FluidSystem, not here.
  */
 #ifndef DUMUX_BOUSSINESQ_SPATIAL_PARAMS_HH
 #define DUMUX_BOUSSINESQ_SPATIAL_PARAMS_HH
@@ -40,18 +39,21 @@ public:
     BoussinesqSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
-        gravity_ = Scalar(0);
-        gravity_[dimWorld-1] = -1.0; // dimensionless unit gravity pointing down
+        // Dimensionless unit gravity pointing downward (last spatial coordinate)
+        gravity_           = Scalar(0);
+        gravity_[dimWorld-1] = -1.0;
     }
 
+    // ---- permeability (base-class interface) ----
     PermeabilityType permeabilityAtPos(const GlobalPosition&) const
     { return 1.0; }
 
+    // ---- porosity ----
     Scalar porosityAtPos(const GlobalPosition&) const
     { return 1.0; }
 
-    //! Override base-class gravity with the dimensionless unit vector
-    const GravityVector& gravity(const GlobalPosition&) const
+    //! Gravity vector [m/s²] — override base-class default (9.81) with unit vector
+    const GravityVector& gravity(const GlobalPosition& /*pos*/) const
     { return gravity_; }
 
 private:

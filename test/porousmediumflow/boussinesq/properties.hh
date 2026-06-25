@@ -6,36 +6,37 @@
 //
 /*!
  * \file
- * \brief Property definitions for the dimensionless Boussinesq dissolution test.
+ * \brief Property definitions for the dimensionless Boussinesq dissolution test (2D and 3D).
  *
- * Model: OnePNC (one phase, two components) with streamfunction-Boussinesq formulation:
- *  - Primary variable 0: ψ (streamfunction, in the pressure slot)
- *  - Primary variable 1: C (solute mass fraction)
- *  - Eq 0: ∇·(∇ψ − C·êₓ) = 0  (streamfunction Poisson, no time derivative)
- *  - Eq 1: φ ∂C/∂t + ∇·(u C − D∇C) = 0  with u = (∂ψ/∂y, −∂ψ/∂x)
- *  - D = 1/Ra (from BoussinesqFluid system)
- *  - BCs: ψ=0 Dirichlet on all walls; C=1 Dirichlet at top; ∂C/∂n=0 elsewhere
+ * 2D (BoussinesqOneSidedRB):
+ *   - Grid: YaspGrid<2>, gravity in -y
+ *   - Primary variables: ψ (streamfunction), C
+ *   - numEq = 1 + 1 = 2
+ *
+ * 3D (BoussinesqOneSidedRB3D):
+ *   - Grid: YaspGrid<3>, gravity in -z
+ *   - Primary variables: A_x, A_y, A_z (vector potential), C
+ *   - numEq = 3 + 1 = 4
  */
 #ifndef DUMUX_BOUSSINESQ_PROPERTIES_HH
 #define DUMUX_BOUSSINESQ_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/box.hh>
-#include <dumux/porousmediumflow/1pnc/model.hh>
-
-#include "1p_boussinesq_fluidsystem.hh"
-#include "localresidual.hh"
-#include "streamfunctionadvection.hh"
+#include "model/model.hh"
+#include "model/modeltraits.hh"
 #include "problem.hh"
 #include "spatialparams.hh"
+#include "1p_boussinesq_fluidsystem.hh"
 
 namespace Dumux::Properties {
 
+// -------------------------------------------------------------------------
+// 2D test (existing)
+// -------------------------------------------------------------------------
 namespace TTag {
-struct BoussinesqOneSidedRB { using InheritsFrom = std::tuple<OnePNC>; };
-struct BoussinesqOneSidedRBBox
-{ using InheritsFrom = std::tuple<BoussinesqOneSidedRB, BoxModel>; };
+struct BoussinesqOneSidedRB
+{ using InheritsFrom = std::tuple<BoussinesqVorticityModelBox>; };
 } // end namespace TTag
 
 template<class TypeTag>
@@ -43,49 +44,57 @@ struct Grid<TypeTag, TTag::BoussinesqOneSidedRB>
 { using type = Dune::YaspGrid<2>; };
 
 template<class TypeTag>
-struct Problem<TypeTag, TTag::BoussinesqOneSidedRB>
-{ using type = BoussinesqOneSidedRBProblem<TypeTag>; };
+struct ModelTraits<TypeTag, TTag::BoussinesqOneSidedRB>
+{ using type = BoussinesqVorticityModelTraits<1, 2>; };
 
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::BoussinesqOneSidedRB>
-{
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::BoussinesqFluid<Scalar>;
-};
+struct Problem<TypeTag, TTag::BoussinesqOneSidedRB>
+{ using type = BoussinesqOneSidedRBProblem<TypeTag>; };
 
 template<class TypeTag>
 struct SpatialParams<TypeTag, TTag::BoussinesqOneSidedRB>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Scalar       = GetPropType<TypeTag, Properties::Scalar>;
     using type = BoussinesqSpatialParams<GridGeometry, Scalar>;
 };
 
-// Use mass fractions. With M_solvent = M_solute = 1 this is equivalent to mole fractions.
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::BoussinesqOneSidedRB>
-{ static constexpr bool value = false; };
+struct FluidSystem<TypeTag, TTag::BoussinesqOneSidedRB>
+{ using type = FluidSystems::BoussinesqFluid<GetPropType<TypeTag, Properties::Scalar>>; };
 
-// Equation 0 is the streamfunction Poisson equation (repurposed from total mass balance).
-// Setting replaceCompEqIdx = 0 gives the right model-traits structure (2 eqs, eq 0 without
-// a component-storage term in the parent, which we then zero out in our local residual).
-template<class TypeTag>
-struct ReplaceCompEqIdx<TypeTag, TTag::BoussinesqOneSidedRB>
-{ static constexpr int value = 0; };
+// -------------------------------------------------------------------------
+// 3D test — same dimensionless physics, gravity in -z, vector potential A
+// numEq = 3 (A_x, A_y, A_z) + 1 (C) = 4
+// -------------------------------------------------------------------------
+namespace TTag {
+struct BoussinesqOneSidedRB3D
+{ using InheritsFrom = std::tuple<BoussinesqVorticityModelBox>; };
+} // end namespace TTag
 
-// Streamfunction-Boussinesq local residual: overrides eq 0 storage (zero) and flux.
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::BoussinesqOneSidedRB>
-{ using type = BoussinesqStreamfunctionLocalResidual<TypeTag>; };
+struct Grid<TypeTag, TTag::BoussinesqOneSidedRB3D>
+{ using type = Dune::YaspGrid<3>; };
 
-// Advection from curl(ψ) instead of Darcy's law.
 template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::BoussinesqOneSidedRBBox>
+struct ModelTraits<TypeTag, TTag::BoussinesqOneSidedRB3D>
+{ using type = BoussinesqVorticityModelTraits<1, 3>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::BoussinesqOneSidedRB3D>
+{ using type = BoussinesqOneSidedRBProblem<TypeTag>; };
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::BoussinesqOneSidedRB3D>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using type = StreamfunctionAdvection<Scalar, GridGeometry>;
+    using Scalar       = GetPropType<TypeTag, Properties::Scalar>;
+    using type = BoussinesqSpatialParams<GridGeometry, Scalar>;
 };
+
+template<class TypeTag>
+struct FluidSystem<TypeTag, TTag::BoussinesqOneSidedRB3D>
+{ using type = FluidSystems::BoussinesqFluid<GetPropType<TypeTag, Properties::Scalar>>; };
 
 } // end namespace Dumux::Properties
 

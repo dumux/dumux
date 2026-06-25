@@ -51,7 +51,10 @@ int main(int argc, char** argv)
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    Parameters::init(argc, argv);
+    constexpr int dimW = GetPropType<TypeTag, Properties::Grid>::dimensionworld;
+    const std::string defaultParamFile = (dimW == 3) ? "params3d.input" : "params.input";
+    Parameters::init(argc, argv, [](auto&){}, defaultParamFile);
+    GetPropType<TypeTag, Properties::FluidSystem>::init();
 
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
@@ -62,7 +65,8 @@ int main(int argc, char** argv)
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
 
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
@@ -71,21 +75,22 @@ int main(int argc, char** argv)
     SolutionVector x(gridGeometry->numDofs());
     problem->applyInitialSolution(x);
 
+    const Scalar Ra = getParam<Scalar>("DimensionlessNumbers.Ra");
+
     // Optionally start from the analytical diffusive profile at t = tStart.
     // Default: tStart = 146/Ra^2 (dimensionless critical time from linear stability).
     // Set TimeLoop.TStart = 0 in params.input to use the standard zero-concentration IC.
-    const Scalar tcrit = 146.0 / FluidSystem::rayleighNumber();
+    const Scalar tcrit  = 146.0 / Ra;
     const Scalar tStart = getParam<Scalar>("TimeLoop.TStart", tcrit);
     if (tStart > 0.0)
     {
-        const Scalar yMax = gridGeometry->bBoxMax()[1];
-        const Scalar Ra = FluidSystem::rayleighNumber();
+        const Scalar zMax = gridGeometry->bBoxMax()[dimWorld-1];
         for (const auto& vertex : vertices(leafGridView))
         {
             const auto idx = gridGeometry->dofMapper().index(vertex);
-            const Scalar y   = vertex.geometry().center()[1];
-            const Scalar eta = (yMax - y) / (2.0 * std::sqrt(tStart / Ra));
-            x[idx][FluidSystem::soluteIdx] = std::erfc(eta);
+            const Scalar z   = vertex.geometry().center()[dimWorld-1];
+            const Scalar eta = (zMax - z) / (2.0 * std::sqrt(tStart / Ra));
+            x[idx][Indices::concentrationIdx] = std::erfc(eta);
         }
     }
 
@@ -96,10 +101,14 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // --- Sherwood number: dimensionless dissolution flux at the top boundary ---
-    // Sh(t) = (1/L) * integral_top (dC/dy) dx  [dC/dy > 0 at top since C=1 there]
+    // Sh(t) = (1/A_top) * integral_top (dC/dn) dA  where n points into the domain
     // For pure diffusion: Sh = sqrt(Ra/(pi*t)); convection enhances this.
-    const Scalar yMax = gridGeometry->bBoxMax()[1];
-    const Scalar domainWidth = gridGeometry->bBoxMax()[0] - gridGeometry->bBoxMin()[0];
+    const Scalar zMax = gridGeometry->bBoxMax()[dimWorld-1];
+
+    // horizontal area of the top face (all dimensions except the vertical one)
+    Scalar domainTopArea = 1.0;
+    for (int d = 0; d < dimWorld-1; ++d)
+        domainTopArea *= gridGeometry->bBoxMax()[d] - gridGeometry->bBoxMin()[d];
 
     auto computeSherwood = [&]() -> Scalar {
         Scalar totalFlux = 0.0;
@@ -110,7 +119,7 @@ int main(int argc, char** argv)
 
             bool hasTopFace = false;
             for (const auto& scvf : scvfs(fvGeometry))
-                if (scvf.boundary() && scvf.center()[1] > yMax - 1e-8)
+                if (scvf.boundary() && scvf.center()[dimWorld-1] > zMax - 1e-8)
                     { hasTopFace = true; break; }
             if (!hasTopFace) continue;
 
@@ -119,16 +128,16 @@ int main(int argc, char** argv)
 
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                if (!scvf.boundary() || scvf.center()[1] < yMax - 1e-8)
+                if (!scvf.boundary() || scvf.center()[dimWorld-1] < zMax - 1e-8)
                     continue;
 
                 const auto grads = evalGradients(element, geo, *gridGeometry, elemSol, scvf.center());
-                totalFlux += (grads[FluidSystem::soluteIdx] * scvf.unitOuterNormal()) * scvf.area();
+                totalFlux += (grads[Indices::concentrationIdx] * scvf.unitOuterNormal()) * scvf.area();
             }
         }
         // sum over all MPI ranks
         totalFlux = leafGridView.comm().sum(totalFlux);
-        return totalFlux / domainWidth;
+        return totalFlux / domainTopArea;
     };
 
     // --- Mass-balance flux: integrate C over domain, use dM/dt as dissolution rate ---
@@ -139,7 +148,7 @@ int main(int argc, char** argv)
             auto fvGeometry = localView(*gridGeometry);
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
-                mass += x[scv.dofIndex()][FluidSystem::soluteIdx] * scv.volume();
+                mass += x[scv.dofIndex()][Indices::concentrationIdx] * scv.volume();
         }
         return leafGridView.comm().sum(mass);
     };
@@ -162,7 +171,6 @@ int main(int argc, char** argv)
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
     IOFields::initOutputModule(vtkWriter);
     vtkWriter.write(0.0);
-    const Scalar Ra = FluidSystem::rayleighNumber();
 
     const auto writeSherwood = [&](Scalar t, Scalar massFluxPerWidth = 0.0) {
         const Scalar Sh_grad = computeSherwood();
@@ -195,7 +203,7 @@ int main(int argc, char** argv)
 
         const Scalar dt = timeLoop->timeStepSize();
         const Scalar massNew = computeTotalMass();
-        const Scalar massFluxPerWidth = (massNew - massOld) / (dt * domainWidth);
+        const Scalar massFluxPerWidth = (massNew - massOld) / (dt * domainTopArea);
         massOld = massNew;
 
         xOld = x;

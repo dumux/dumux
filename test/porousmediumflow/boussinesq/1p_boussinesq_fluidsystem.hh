@@ -123,6 +123,44 @@ public:
     //! The current Rayleigh number (for diagnostic output)
     static Scalar rayleighNumber() { return rayleighNumber_; }
 
+    // ----- Boussinesq-specific interface used by BoussinesqVorticityLocalResidual ----
+    //
+    // The local residual needs fluid properties evaluated at face-averaged
+    // concentrations.  The primary interface therefore takes the concentration
+    // array; derived fluid systems can override these to implement
+    // concentration-dependent viscosity or diffusion.
+
+    //! Reference density ρ₀ (constant under Boussinesq approximation)
+    static Scalar referenceDensity() { return 1.0; }
+
+    //! Solutal expansion coefficient for the i-th transported solute (0-based index)
+    static Scalar solutalExpansionCoefficient(int /*i*/ = 0) { return 1.0; }
+
+    /*!
+     * \brief Dynamic viscosity evaluated at the given concentration vector.
+     *
+     * The default implementation returns the constant dimensionless value 1.
+     * Override in a derived class to implement concentration-dependent viscosity,
+     * e.g. μ(C) from an experimental correlation.
+     *
+     * \param C  array of face-averaged solute concentrations (0-based index)
+     */
+    template<class ConcentrationArray>
+    static Scalar viscosity(const ConcentrationArray& /*C*/) { return 1.0; }
+
+    /*!
+     * \brief Molecular diffusion coefficient for solute i at the given concentrations.
+     *
+     * The default returns 1/Ra (constant).  Override for concentration-dependent D,
+     * e.g. D(C) from a Stokes-Einstein or fitted correlation.
+     *
+     * \param i  0-based solute index
+     * \param C  array of face-averaged solute concentrations
+     */
+    template<class ConcentrationArray>
+    static Scalar solutalDiffusionCoefficient(int /*i*/, const ConcentrationArray& /*C*/)
+    { return 1.0 / rayleighNumber_; }
+
 private:
     inline static Scalar rayleighNumber_ = 100.0;
 };
