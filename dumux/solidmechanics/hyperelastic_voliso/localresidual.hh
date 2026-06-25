@@ -225,6 +225,47 @@ public:
 
         return source;
     }
+
+    /*!
+     * \brief FE contributions for non-CV DOFs.
+     */
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const auto& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVariables& elemVars) const
+    {
+        if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        {
+            if (nonCVLocalDofs(fvGeometry).empty())
+                return;
+
+            const auto& problem = this->asImp().problem();
+            const auto& localBasis = fvGeometry.gridGeometry().feCache().get(fvGeometry.element().type()).localBasis();
+            std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
+
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element, QuadratureRules::DuneQuadrature<3>{}))
+            {
+                const Tensor F = problem.couplingManager().deformationGradientAtPoint(
+                    fvGeometry, qpData.ipData().global());
+                const Scalar J = F.determinant();
+                const Scalar psEq = problem.volumetricPressure(J);
+
+                localBasis.evaluateFunction(qpData.ipData().local(), shapeValues);
+                Scalar ps = 0.0;
+                for (const auto& localDof : localDofs(fvGeometry))
+                    ps += elemVars[localDof].pressure() * shapeValues[localDof.index()][0];
+
+                for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
+                {
+                    const auto idx = nonCVdof.index();
+                    residual[idx][0] -= (psEq - ps) * shapeValues[idx][0] * qpData.weight();
+                }
+            }
+
+        }
+    }
+
 };
 
 } // end namespace Dumux
