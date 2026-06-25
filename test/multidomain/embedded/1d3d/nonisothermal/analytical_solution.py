@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""
+Analytical solution for pipe-flow BHE heat transport — two formulations compared.
+
+Formulation A (OGS original): U referred to r_po, characteristic length X uses r_pi (inconsistent)
+Formulation B (consistent):   U and X both referred to r_pi — Ramey (1962)
+"""
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# ── Physical parameters (OGS benchmark) ───────────────────────────────────────
+T_d = 55            # undisturbed formation temperature, °C
+T_i = 20            # inlet fluid temperature, °C
+Z = np.insert(np.linspace(0.3, 30, 100), 0, 1e-10)  # depth, m
+q = 0.0002          # flow rate, m³/s
+rho_f = 1000        # fluid density, kg/m³
+c_p_f = 4190        # fluid specific heat, J/kg/K
+mu_f = 1.14e-3      # dynamic viscosity, Pa·s
+lambda_f = 0.59     # fluid thermal conductivity, W/m/K
+rho_re = 1800       # formation density, kg/m³
+c_p_re = 1778       # formation specific heat, J/kg/K
+lambda_re = 2.78018 # formation thermal conductivity, W/m/K
+lambda_g = 0.73     # grout thermal conductivity, W/m/K
+lambda_pi = 1.3     # pipe wall thermal conductivity, W/m/K
+r_pi = 0.12913      # pipe inner radius, m
+r_b = 0.14          # borehole radius, m
+t_pi = 0.00587      # pipe wall thickness, m
+t = 86400 * 5       # simulation time, s
+
+# ── Helper functions ───────────────────────────────────────────────────────────
+
+def outlet_temp(T_d, T_i, z, X):
+    return T_d + (T_i - T_d) * np.exp(-z / X)
+
+def coefficient_x(q, rho_f, c_p_f, lambda_re, r_ref, U, f_t):
+    return (q * rho_f * c_p_f) * (lambda_re + r_ref * U * f_t) / (2 * np.pi * r_ref * U * lambda_re)
+
+def dimensionless_time(lambda_re, delta_t, rho_re, c_p_re, r_b):
+    return lambda_re * delta_t / (rho_re * c_p_re * r_b**2)
+
+def time_function(t_D):
+    if t_D > 1.5:
+        return (0.4063 + 0.5 * np.log(t_D)) * (1 + 0.6 / t_D)
+    return 1.1281 * np.sqrt(t_D) * (1 - 0.3 * np.sqrt(t_D))
+
+# ── Nusselt number and convective heat transfer coefficient ────────────────────
+v = q / (np.pi * r_pi**2)
+Pr = mu_f * c_p_f / lambda_f
+Re = rho_f * v * (2 * r_pi) / mu_f
+
+if Re < 2300:
+    Nu_p = 4.364
+elif Re > 10000:
+    xi = (1.8 * np.log(Re) - 1.5) ** -2
+    Nu_p = (xi / 8 * Re * Pr) / (1 + 12.7 * np.sqrt(xi / 8) * (Pr**(2/3) - 1)) * (1 + (r_pi / Z)**(2/3))
+else:
+    gamma = (Re - 2300) / (10000 - 2300)
+    xi_t = 0.0308  # (1.8*log10(1e4) - 1.5)^-2
+    Nu_t = (xi_t / 8 * 1e4 * Pr) / (1 + 12.7 * np.sqrt(xi_t / 8) * (Pr**(2/3) - 1)) * (1 + (r_pi / Z)**(2/3))
+    Nu_p = (1 - gamma) * 4.364 + gamma * Nu_t
+
+h = lambda_f * Nu_p / (2 * r_pi)
+
+# ── Overall heat transfer coefficients ────────────────────────────────────────
+r_po = r_pi + t_pi
+
+# Formulation A: U referred to r_po, X uses r_pi (inconsistent)
+U_A = 1 / (r_po / (r_pi * h) + r_po * (np.log(r_po / r_pi) / lambda_pi + np.log(r_b / r_po) / lambda_g))
+
+# Formulation B: U and X both referred to r_pi (consistent)
+U_B = 1 / (1 / h + r_pi * (np.log(r_po / r_pi) / lambda_pi + np.log(r_b / r_po) / lambda_g))
+
+print(f"Re={Re:.1f}, Pr={Pr:.3f}, Nu={Nu_p:.4f}, h={h:.4f} W/m²K")
+print(f"  U_A (ref r_po={r_po:.5f} m) = {U_A:.4f} W/m²K")
+print(f"  U_B (ref r_pi={r_pi:.5f} m) = {U_B:.4f} W/m²K")
+
+# ── Compute analytical solutions ───────────────────────────────────────────────
+time_range = range(7200, t + 1, 7200)
+
+data_A = pd.DataFrame(index=Z, columns=list(time_range))
+data_B = pd.DataFrame(index=Z, columns=list(time_range))
+
+for delta_z in Z:
+    T_A, T_B = [], []
+    for delta_t in time_range:
+        t_D = dimensionless_time(lambda_re, delta_t, rho_re, c_p_re, r_b)
+        f_t = time_function(t_D)
+        T_A.append(outlet_temp(T_d, T_i, delta_z, coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_A, f_t)))
+        T_B.append(outlet_temp(T_d, T_i, delta_z, coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B, f_t)))
+    data_A.loc[delta_z] = T_A
+    data_B.loc[delta_z] = T_B
+
+# ── Load DuMux output ──────────────────────────────────────────────────────────
+script_dir = os.path.dirname(os.path.abspath(__file__))
+csv_name = "test_wellbore_heat_transport_1d.csv"
+
+dumux_time_d = dumux_T = None
+for path in [csv_name, os.path.join(script_dir, csv_name)]:
+    if os.path.exists(path):
+        raw = np.genfromtxt(path, delimiter=",", skip_header=1)
+        if raw.ndim == 1:
+            raw = raw[np.newaxis, :]
+        dumux_time_d = raw[:, 0]
+        dumux_T = raw[:, 1]
+        print(f"Loaded DuMux output: {path}  ({len(dumux_time_d)} points)")
+        break
+else:
+    print(f"'{csv_name}' not found — run the simulation first.")
+
+# ── OGS reference data ─────────────────────────────────────────────────────────
+ogs_time_s = np.linspace(0, 5 * 86400, 31)
+ogs_T = np.array([
+    20.        , 25.67074983, 26.67948325, 26.54800871, 26.27755879, 26.03968084,
+    25.84599915, 25.68828698, 25.55846907, 25.45030474, 25.35907264, 25.28119084,
+    25.21392656, 25.15518214, 25.10333715, 25.05713156, 25.01557889, 24.97790140,
+    24.94348150, 24.91182514, 24.88253415, 24.85528518, 24.82981365, 24.80590137,
+    24.78336707, 24.76205898, 24.74184908, 24.72262861, 24.70430449, 24.68679654,
+    24.67003519,
+])
+ogs_error_A = np.array([
+    -7.74064046, -0.56492394,  0.71049789,  0.76404746,  0.67145754,  0.56154154,
+     0.46794475,  0.39242137,  0.33228395,  0.28454449,  0.24660294,  0.21634100,
+     0.19208005,  0.17250760,  0.15660424,  0.14358037,  0.13282477,  0.12386385,
+     0.11632997,  0.10993699,  0.10446154,  0.09972859,  0.09560050,  0.09196854,
+     0.08874648,  0.08586559,  0.08327079,  0.08091778,  0.07877067,  0.07680025,
+     0.07498260,
+])
+
+analytical_B_at_ogs = np.array([
+    outlet_temp(T_d, T_i, Z[-1],
+                coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B,
+                              time_function(dimensionless_time(lambda_re, dt, rho_re, c_p_re, r_b))))
+    for dt in ogs_time_s
+])
+ogs_error_B = ogs_T - analytical_B_at_ogs
+
+# ── DuMux error vs Formulation B ──────────────────────────────────────────────
+dumux_time_s = dumux_error = None
+if dumux_time_d is not None:
+    dumux_time_s = dumux_time_d * 86400
+    analytical_at_dumux = np.array([
+        outlet_temp(T_d, T_i, Z[-1],
+                    coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B,
+                                  time_function(dimensionless_time(lambda_re, dt, rho_re, c_p_re, r_b))))
+        for dt in dumux_time_s
+    ])
+    dumux_error = dumux_T - analytical_at_dumux
+
+# ── Plot ───────────────────────────────────────────────────────────────────────
+fig, ax1 = plt.subplots(figsize=(10, 8))
+
+ax1.plot(list(time_range), data_A.iloc[-1, :], "k.", markersize=10, markerfacecolor="none",
+         label=f"Ramey A — OGS, different r in U and X")
+ax1.plot(list(time_range), data_B.iloc[-1, :], "b.", markersize=10, markerfacecolor="none",
+         label=f"Ramey B — same r in U and X")
+
+# skip t=0
+mask_ogs = ogs_time_s > 0
+ax1.plot(ogs_time_s[mask_ogs], ogs_T[mask_ogs], "red", label="OGS")
+
+if dumux_time_d is not None:
+    mask_d = dumux_time_s > 0
+    ax1.plot(dumux_time_s[mask_d], dumux_T[mask_d], "green", label="DuMux")
+
+ax1.set_ylabel("Outlet temperature (°C)", fontsize=20)
+ax1.set_xlabel("Time (d)", fontsize=20)
+ax1.set_xticks(np.arange(0, 432000, 86400), np.arange(0, 5))
+ax1.spines["left"].set_linewidth(2)
+ax1.spines["bottom"].set_linewidth(2)
+ax1.tick_params(axis="both", labelsize=16)
+
+ax2 = ax1.twinx()
+ax2.plot(ogs_time_s[mask_ogs], ogs_error_A[mask_ogs], color="red", linestyle="--",
+         label="OGS error vs Ramey A")
+ax2.plot(ogs_time_s[mask_ogs], ogs_error_B[mask_ogs], color="red", linestyle="-.",
+         label="OGS error vs Ramey B")
+if dumux_error is not None:
+    ax2.plot(dumux_time_s[mask_d], dumux_error[mask_d], color="green", linestyle="--",
+             label="DuMux error vs Ramey B")
+ax2.set_ylabel("Absolute error (°C)", fontsize=20)
+ax2.spines["right"].set_linewidth(2)
+ax2.tick_params(axis="y", labelsize=16)
+ax2.grid(axis="y", color="gray", linewidth=0.5)
+
+print("Outlet temperature at t=5 days:")
+print(f"Analytical B: {data_B.iloc[-1, -1]:.4f}")
+if dumux_T is not None:
+    print(f"DuMux:        {dumux_T[-1]:.4f}")
+    print(f"Relative error: {(dumux_T[-1] - data_B.iloc[-1, -1]) / (data_B.iloc[-1, -1] - 20.0) * 100:.2f} %")
+
+plt.figlegend(fontsize=14, loc="center right", bbox_to_anchor=(0.88, 0.5), frameon=False)
+fig.tight_layout()
+fig.savefig("wellbore_outlet_temperature_v2.png", dpi=150)
+plt.show()
+print("Saved: wellbore_outlet_temperature_v2.png")
