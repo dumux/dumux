@@ -1,0 +1,28 @@
+[Problem]
+Name = boussinesq_pressure
+EnableGravity = true
+PRef = 0.0
+PenaltyFactor = 1e6
+
+[DimensionlessNumbers]
+Ra = 8000
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 200 200
+
+[TimeLoop]
+TEnd = 10
+DtInitial = 1e-3
+MaxTimeStepSize = 0.05
+
+[Output]
+VtkOutputInterval = 0.5
+
+[Newton]
+MaxSteps = 20
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true

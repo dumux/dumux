@@ -1,0 +1,27 @@
+[Problem]
+Name = boussinesq_3d
+EnableGravity = false
+
+[DimensionlessNumbers]
+Ra = 500
+
+[Grid]
+# dimensionless cube: 1 x 1 x 1
+LowerLeft = 0 0 0
+UpperRight = 1 1 1
+Cells = 64 64 64
+
+[TimeLoop]
+TEnd = 5
+DtInitial = 1e-3
+MaxTimeStepSize = 0.1
+
+[Output]
+VtkOutputInterval = 0.5
+
+[Newton]
+MaxSteps = 20
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true

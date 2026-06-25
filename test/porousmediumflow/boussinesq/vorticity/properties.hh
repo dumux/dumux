@@ -26,8 +26,8 @@
 #include "model/model.hh"
 #include "model/modeltraits.hh"
 #include "problem.hh"
-#include "spatialparams.hh"
-#include "1p_boussinesq_fluidsystem.hh"
+#include "../spatialparams.hh"
+#include "../1p_boussinesq_fluidsystem.hh"
 
 namespace Dumux::Properties {
 
