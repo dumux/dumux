@@ -15,12 +15,14 @@
 #include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
-#include <dumux/material/components/simpleh2o.hh>
+//#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 #include <dumux/multidomain/traits.hh>
+
+#include "wellborecouplingmanager.hh"
+#include "simpleh2o.hh"
 
 #include "problem_soil.hh"
 #include "problem_voids.hh"
@@ -37,7 +39,7 @@ struct Soil { using InheritsFrom = std::tuple<OnePNI, CCTpfaModel>; };
 // Set the grid type
 template<class TypeTag>
 
-struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<double, 3>>; };
+struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::TensorProductCoordinates<double, 3>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = false; };
@@ -130,7 +132,7 @@ struct SpatialParams<TypeTag, TTag::Voids>
 };
 
 template<class Traits>
-using TheCouplingManager = Embedded1d3dCouplingManager<Traits, COUPLINGMODE>;
+using TheCouplingManager = WellboreCouplingManager<Traits, COUPLINGMODE>;
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Soil> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::Voids>>; };

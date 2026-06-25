@@ -34,7 +34,8 @@ public:
 
     {
         const auto& gv = gridGeometry->gridView();
-        radii_.resize(gv.size(0));
+        innerRadii_.resize(gv.size(0));
+        outerRadii_.resize(gv.size(0));
         for (const auto& element : elements(gv))
         {
             const auto eIdx = gv.indexSet().index(element);
@@ -43,7 +44,8 @@ public:
                 level0element = level0element.father();
 
             const auto& params = gridData_->parameters(level0element);
-            radii_[eIdx] = params[0];
+            innerRadii_[eIdx] = params[0];
+            outerRadii_[eIdx] = params[1];
         }
     }
 
@@ -59,28 +61,46 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
-        const Scalar r = radius(this->gridGeometry().elementMapper().index(element));
+        const Scalar r = innerRadius(this->gridGeometry().elementMapper().index(element));
         const auto priVars = elemSol[scv.localDofIndex()];
         const Scalar density = Components::SimpleH2O<Scalar>::liquidDensity(priVars[1]/*temperature*/, priVars[0]/*pressure*/);
         return r * r * density;
     }
 
     /*!
-     * \brief Returns the radius of the circular pipe for the current sub-control volume in [m].
+     * \brief Returns the innerradius of the circular pipe for the current sub-control volume in [m].
+     *
+     * \param eIdxGlobal the index of the element
+     */
+    Scalar innerRadius(unsigned int eIdxGlobal) const
+    {
+        return innerRadii_[eIdxGlobal];
+    }
+
+        /*!
+     * \brief Returns the innter radius of the circular pipe for the current sub-control volume in [m].
      *
      * \param eIdxGlobal the index of the element
      */
     Scalar radius(unsigned int eIdxGlobal) const
     {
-        return radii_[eIdxGlobal];
+        return outerRadii_[eIdxGlobal];
     }
 
     /*!
-     * \brief Returns all radii of the circular pipe in [m].
+     * \brief Returns all outer radii of the circular pipe in [m].
+     */
+    const std::vector<Scalar>& getInnerRadii() const
+    {
+        return innerRadii_;
+    }
+
+    /*!
+     * \brief Returns all outer radii of the circular pipe in [m].
      */
     const std::vector<Scalar>& getRadii() const
     {
-        return radii_;
+        return outerRadii_;
     }
 
     /*!
@@ -105,13 +125,14 @@ public:
                            const ElementSolution& elemSol) const
     {
         const auto eIdx = this->gridGeometry().elementMapper().index(element);
-        const auto r = radius(eIdx);
+        const auto r = innerRadius(eIdx);
         return M_PI*r*r;
     }
 
 private:
     std::shared_ptr<const GridData<Grid>> gridData_;
-    std::vector<Scalar> radii_;
+    std::vector<Scalar> innerRadii_;
+    std::vector<Scalar> outerRadii_;
 };
 
 } // end namespace Dumux
