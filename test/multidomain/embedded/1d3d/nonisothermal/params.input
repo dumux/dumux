@@ -1,28 +1,32 @@
 [TimeLoop]
-DtInitial = 1e5          # [s]
-TEnd = 157680000         # [s] = 5 years
-EpisodeLength = 15768000 # [s] = 0.5 years
+DtInitial = 43200     # [s]
+TEnd = 432000         # [s] = 5 years
+EpisodeLength = 7200 #43200 # [s] = 0.5 years
 
 [Voids.Grid]
 File = ./grids/pipe.dgf
-Refinement = 5
+Refinement = 2
 
 [Soil.Grid]
-LowerLeft = -30 -30 -30
-UpperRight = 60 30 30
-Cells = 40 40 40
-
+Positions0 = -5 35
+Positions1 = -5 0 5
+Positions2 = -5 0 5
+Cells0 = 50
+Cells1 = 60 60
+Cells2 = 60 60
+Grading1 = -1.2 1.2
+Grading2 = -1.2 1.2
 
 [Voids.Problem]
 Name = 1d
 InjectionRate = 0.0002 # [m³/s]
-InjectionTemperature = 293.15 # [K] = 5° C
+InjectionTemperature = 293.15 # [K] = 20° C
 
 [Soil.Problem]
 Name = 3d
 
 [Problem]
-EnableGravity = true
+EnableGravity = false
 
 [SpatialParams]
 Permeability = 1e-20
@@ -33,16 +37,20 @@ AddVelocity = true
 AddProcessRank = false
 
 [MixedDimension]
-NumCircleSegments = 32
+NumCircleSegments = 200
+PipeWallThermalConductivity = 0.962 # [W/(m·K)], combined conductivity of pipe wall and grout
 
 [Component]
-SolidDensity = 2400
-SolidThermalConductivity = 2.6
-SolidHeatCapacity = 960
+SolidDensity = 1800
+SolidThermalConductivity = 2.78018
+SolidHeatCapacity = 1778
 
 [PointSource]
 EnableBoxLumping = false
 
+[Flux]
+UpwindWeight = 0.5
+
 [Newton]
-MaxRelativeShift = 1e-6
+#MaxRelativeShift = 1e-6
 #UseLineSearch = true

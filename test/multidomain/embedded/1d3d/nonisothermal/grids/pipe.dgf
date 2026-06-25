@@ -5,7 +5,7 @@ Vertex
 #
 SIMPLEX
 parameters 2
-0 1 0.14 0.12913
+0 1 0.12913 0.14
 #
 BOUNDARYDOMAIN
 default 1

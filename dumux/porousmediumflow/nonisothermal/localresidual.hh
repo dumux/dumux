@@ -201,6 +201,29 @@ public:
 
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }
+    // {
+    //     // this implementation of the potential energy contribution is only correct
+    //     // if gravity vector is constant in space and time
+    //     const auto& scvf = fluxVars.scvFace();
+    //     const auto& fvGeometry = fluxVars.fvGeometry();
+    //     const auto& elemVolVars = fluxVars.elemVolVars();
+    //     const auto& g = fluxVars.problem().spatialParams().gravity(scvf.ipGlobal());
+
+    //     const auto insideGravPot  = fvGeometry.scv(scvf.insideScvIdx()).dofPosition()  * g;
+    //     const auto outsideGravPot = fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() * g;
+
+    //     // determine flow direction via mass flux
+    //     auto massUpwindTerm = [phaseIdx](const auto& v)
+    //         { return v.density(phaseIdx)*v.mobility(phaseIdx); };
+    //     const auto massFlux = fluxVars.advectiveFlux(phaseIdx, massUpwindTerm);
+
+    //     using std::signbit;
+    //     const auto& upstreamVolVars = signbit(massFlux) ? elemVolVars[scvf.outsideScvIdx()]
+    //                                                     : elemVolVars[scvf.insideScvIdx()];
+    //     const auto  upstreamGravPot = signbit(massFlux) ? outsideGravPot : insideGravPot;
+
+    //     flux[energyEqIdx] += massFlux * (upstreamVolVars.enthalpy(phaseIdx) - upstreamGravPot);
+    // }
 
     /*!
      * \brief The diffusive energy fluxes

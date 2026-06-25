@@ -32,10 +32,7 @@ public:
 
     SoilSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {
-        porosity_ = 0.0;
-        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
-    }
+    {}
 
     /*!
     * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
@@ -49,12 +46,7 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
-        return permeability_;
-    }
-
-    Scalar averagedPermeability(const std::size_t elementIdx) const
-    {
-        return permeability_;
+        return 1.0e-20;
     }
 
     /*!
@@ -69,13 +61,8 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
-        return porosity_;
+        return 0.0;
     }
-
-private:
-
-    Scalar permeability_;
-    Scalar porosity_;
 };
 
 } // end namespace Dumux
