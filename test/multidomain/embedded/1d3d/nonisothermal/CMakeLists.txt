@@ -30,4 +30,4 @@ dumux_add_test(NAME test_wellbore_heat_transport_surface
 
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES "grids")
+dune_symlink_to_source_files(FILES "grids" "analytical_solution.py")
