@@ -2,12 +2,6 @@
 """
 Compare vorticity (ψ-C) and pressure (p-C) Boussinesq results.
 
-Produces two figures:
-  comparison_concentration.pdf  – side-by-side concentration fields at t≈T_PLOT
-                                   (log scale 1e-3..1, grey colourmap)
-  comparison_sherwood.pdf       – F_mass and F_grad vs time for both methods
-                                   with a reference line at F = 0.017
-
 Usage
 -----
   python3 eval_comparison.py <boussinesq_build_dir> [--time T]
@@ -86,7 +80,8 @@ def interp_to_grid(pts, values, nx=400, ny=400,
 
 def plot_concentration(vort_pts, vort_conc, pres_pts, pres_conc,
                        t_vort, t_pres, outfile):
-    cmap = "Greys"          # white = low C, black = high C
+    sns.set_theme(style="white", context="paper", font_scale=1.2)
+    cmap = "mako_r"
     norm = mcolors.LogNorm(vmin=1e-3, vmax=1.0)
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 4.5),
@@ -94,9 +89,9 @@ def plot_concentration(vort_pts, vort_conc, pres_pts, pres_conc,
 
     panels = [
         (axes[0], vort_pts, vort_conc, t_vort,
-         r"Vorticity ($\psi$-C)"),
+         r"Vorticity ($\psi$-$C$)"),
         (axes[1], pres_pts, pres_conc, t_pres,
-         r"Pressure ($p$-C)"),
+         r"Pressure ($p$-$C$)"),
     ]
 
     im = None
@@ -106,24 +101,21 @@ def plot_concentration(vort_pts, vort_conc, pres_pts, pres_conc,
         im = ax.pcolormesh(Xi, Yi, Ci, norm=norm, cmap=cmap,
                            shading="auto", rasterized=True)
         ax.set_aspect("equal")
-        ax.set_xlabel("$x$", fontsize=11)
-        ax.set_ylabel("$z$", fontsize=11)
-        ax.set_title(f"{title}\n$t = {t:.3f}$", fontsize=11)
-        ax.tick_params(labelsize=9)
+        ax.set_xlabel("$x$")
+        ax.set_ylabel("$z$")
+        ax.set_title(f"{title}\n$t = {t:.2f}$")
+        sns.despine(ax=ax, left=False, bottom=False)
 
     cbar = fig.colorbar(im, ax=axes, orientation="vertical",
                         fraction=0.03, pad=0.02, aspect=30)
-    cbar.set_label("Concentration $C$", fontsize=11)
-    cbar.ax.yaxis.set_major_formatter(
-        mticker.LogFormatterSciNotation(base=10, labelOnlyBase=False))
+    cbar.set_label("Concentration $C$")
     cbar.set_ticks([1e-3, 1e-2, 1e-1, 1e0])
+    cbar.ax.yaxis.set_major_formatter(mticker.LogFormatterMathtext())
 
-    fig.suptitle(
-        r"CO$_2$ concentration — Ra = 8000, 200×200, log scale",
-        fontsize=12, y=1.01
-    )
+    fig.suptitle(r"CO$_2$ concentration — Ra = 8000, $200\times200$, log scale",
+                 fontsize=12)
+
     fig.savefig(outfile, dpi=200, bbox_inches="tight")
-    print(f"Saved: {outfile}")
     plt.close(fig)
 
 
@@ -133,7 +125,7 @@ def plot_concentration(vort_pts, vort_conc, pres_pts, pres_conc,
 
 def plot_sherwood(vort_csv, pres_csv, outfile, f_ref=0.017):
     sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
-    palette = sns.color_palette("colorblind", 4)
+    c_vort, c_pres = sns.color_palette("deep", 2)
 
     vort = pd.read_csv(vort_csv)
     pres = pd.read_csv(pres_csv)
@@ -141,38 +133,86 @@ def plot_sherwood(vort_csv, pres_csv, outfile, f_ref=0.017):
     fig, ax = plt.subplots(figsize=(7, 4.5))
 
     # --- vorticity lines ---
-    ax.plot(vort["time"], vort["F_grad"], color=palette[0], lw=1.5,
-            ls="-", label=r"Vorticity $F_\mathrm{grad}$")
-    ax.plot(vort["time"], vort["F_mass"], color=palette[0], lw=1.5,
+    ax.plot(vort["time"], vort["F_grad"], color=c_vort, lw=1.8,
+            ls="-",  label=r"Vorticity $F_\mathrm{grad}$")
+    ax.plot(vort["time"], vort["F_mass"], color=c_vort, lw=1.8,
             ls="--", label=r"Vorticity $F_\mathrm{mass}$")
 
     # --- pressure lines ---
-    ax.plot(pres["time"], pres["F_grad"], color=palette[1], lw=1.5,
-            ls="-", label=r"Pressure $F_\mathrm{grad}$")
-    ax.plot(pres["time"], pres["F_mass"], color=palette[1], lw=1.5,
+    ax.plot(pres["time"], pres["F_grad"], color=c_pres, lw=1.8,
+            ls="-",  label=r"Pressure $F_\mathrm{grad}$")
+    ax.plot(pres["time"], pres["F_mass"], color=c_pres, lw=1.8,
             ls="--", label=r"Pressure $F_\mathrm{mass}$")
 
     # --- reference line ---
-    ax.axhline(f_ref, color="0.3", lw=1.2, ls=":",
-               label=f"$F = {f_ref}$")
+    ax.axhline(f_ref, color="0.45", lw=1.2, ls=":",
+               label=f"$F_{{\\mathrm{{ref}}}} = {f_ref}$")
 
-    ax.set_xlabel("Dimensionless time $t$", fontsize=12)
-    ax.set_ylabel(r"Dissolution flux $F$", fontsize=12)
-    ax.set_title(
-        r"Dissolution flux — Ra = 8000, 200×200", fontsize=12
-    )
-
-    # legend outside plot area to avoid clutter
-    ax.legend(loc="upper right", framealpha=0.9, fontsize=9,
-              ncol=2)
+    ax.set_yscale("log")
+    ax.set_xscale("log")
+    ax.set_xlabel("Dimensionless time $t$")
+    ax.set_ylabel(r"Dissolution flux $F$")
+    ax.set_title(r"Dissolution flux — Ra = 8000, $200\times200$")
     ax.set_xlim(left=0)
-    ax.set_ylim(bottom=0)
+    ax.legend(ncol=2, framealpha=0.9, fontsize=9)
 
     sns.despine()
     fig.tight_layout()
+
     fig.savefig(outfile, dpi=200, bbox_inches="tight")
-    print(f"Saved: {outfile}")
     plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# Figure 3 – y-velocity field comparison (pyvista off-screen)
+# ---------------------------------------------------------------------------
+
+def plot_velocity_pyvista(vtu_vort, vtu_pres, t_vort, t_pres, outfile):
+    mesh_vort = pv.read(vtu_vort)
+    mesh_pres = pv.read(vtu_pres)
+
+    def extract_vy(mesh, label):
+        for name, arr in mesh.point_data.items():
+            arr = np.asarray(arr)
+            if arr.ndim == 2 and arr.shape[1] >= 2:
+                return arr[:, 1]
+        sys.exit(f"No vector field found in {label}. "
+                 f"Available: {list(mesh.point_data.keys())}")
+
+    vy_vort = extract_vy(mesh_vort, "vorticity VTU")
+    vy_pres = extract_vy(mesh_pres, "pressure VTU")
+
+    v_max = max(np.abs(vy_vort).max(), np.abs(vy_pres).max())
+    clim  = [-v_max, v_max]
+
+    mesh_vort["v_y"] = vy_vort
+    mesh_pres["v_y"] = vy_pres
+
+    sargs = dict(title="$v_y$", title_font_size=18, label_font_size=14,
+                 vertical=True, width=0.05, height=0.55,
+                 position_x=0.92, position_y=0.22,
+                 color="black", fmt="%.3f")
+
+    pl = pv.Plotter(shape=(1, 2), off_screen=True,
+                    window_size=[1500, 650], border=False)
+
+    for i, (mesh, t, title) in enumerate([
+        (mesh_vort, t_vort, f"Vorticity  (ψ-C),  t = {t_vort:.2f}"),
+        (mesh_pres, t_pres, f"Pressure   (p-C),  t = {t_pres:.2f}"),
+    ]):
+        pl.subplot(0, i)
+        pl.background_color = "white"
+        pl.add_mesh(mesh, scalars="v_y", cmap="RdBu_r", clim=clim,
+                    show_scalar_bar=(i == 1),
+                    scalar_bar_args=sargs if i == 1 else {})
+        pl.add_title(title, font_size=11, color="black")
+        pl.view_xy()
+        pl.enable_parallel_projection()
+        pl.reset_camera()
+
+    pl.screenshot(outfile, transparent_background=False)
+    pl.close()
+    print(f"Saved: {outfile}")
 
 
 # ---------------------------------------------------------------------------
@@ -219,15 +259,19 @@ def main():
     pres_pts, pres_conc = read_concentration(vtu_pres, "X^Solute_liquid")
 
     # ---- Figure 1: concentration fields ------------------------------------
-    conc_out = os.path.join(args.out, "comparison_concentration.pdf")
+    conc_out = os.path.join(args.out, "comparison_concentration.png")
     plot_concentration(vort_pts, vort_conc,
                        pres_pts, pres_conc,
                        t_vort, t_pres,
                        conc_out)
 
     # ---- Figure 2: Sherwood comparison (seaborn) ---------------------------
-    sh_out = os.path.join(args.out, "comparison_sherwood.pdf")
+    sh_out = os.path.join(args.out, "comparison_sherwood.png")
     plot_sherwood(vort_csv, pres_csv, sh_out)
+
+    # ---- Figure 3: y-velocity field (pyvista) ------------------------------
+    vy_out = os.path.join(args.out, "comparison_velocity_y.png")
+    plot_velocity_pyvista(vtu_vort, vtu_pres, t_vort, t_pres, vy_out)
 
 
 if __name__ == "__main__":
