@@ -186,8 +186,9 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits,
-                         LinearAlgebraTraitsFromAssembler<Assembler>>;
+    using LinearSolver = Dumux::AMGBiCGSTABIstlSolver<SeqLinearSolverTraits,
+                       LinearAlgebraTraitsFromAssembler<Assembler>>;
+
     auto linearSolver = std::make_shared<LinearSolver>();
 
     NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver);
