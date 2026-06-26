@@ -99,7 +99,7 @@ public:
     // Robin penalty BC for the pressure equation at the top face.
     // Full-context override to access the local pressure value.
     NumEqVector neumann(const Element&,
-                        const FVElementGeometry&,
+                        const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
                         const ElementFluxVariablesCache&,
                         const SubControlVolumeFace& scvf) const
@@ -108,8 +108,11 @@ public:
         const Scalar zMax = this->gridGeometry().bBoxMax()[dimWorld-1];
         if (scvf.center()[dimWorld-1] > zMax - eps_)
         {
-            const Scalar p = elemVolVars[scvf.insideScvIdx()].pressure(0);
-            values[conti0EqIdx] = (p - pRef_) * penalty_;
+            if (fvGeometry.scv(scvf.insideScvIdx()).dofPosition()[0] < eps_)
+            {
+                const Scalar p = elemVolVars[scvf.insideScvIdx()].pressure(0);
+                values[conti0EqIdx] = (p - pRef_) * penalty_;
+            }
         }
         return values;
     }
