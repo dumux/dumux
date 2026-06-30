@@ -52,7 +52,7 @@ struct IncompressibleBlockMomentumP1B
         IncompressibleBlockCommon>;
 
     using EnableGridGeometryCache = std::true_type;
-    using EnableGridVolumeVariablesCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::false_type;
 };
 
 struct IncompressibleBlockMomentumPQ2
@@ -68,7 +68,7 @@ struct IncompressibleBlockMomentumPQ2
         IncompressibleBlockCommon>;
 
     using EnableGridGeometryCache = std::true_type;
-    using EnableGridVolumeVariablesCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::false_type;
 };
 
 struct IncompressibleBlockMomentumPQ2Fe
@@ -84,7 +84,7 @@ struct IncompressibleBlockMomentumPQ2Fe
         IncompressibleBlockCommon>;
 
     using EnableGridGeometryCache = std::true_type;
-    using EnableGridVolumeVariablesCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::false_type;
 };
 
 struct IncompressibleBlockPressure
@@ -100,7 +100,7 @@ struct IncompressibleBlockPressure
         IncompressibleBlockCommon>;
 
     using EnableGridGeometryCache = std::true_type;
-    using EnableGridVolumeVariablesCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::false_type;
 };
 
 struct IncompressibleBlockPressureFe
@@ -116,7 +116,7 @@ struct IncompressibleBlockPressureFe
         IncompressibleBlockCommon>;
 
     using EnableGridGeometryCache = std::true_type;
-    using EnableGridVolumeVariablesCache = std::true_type;
+    using EnableGridVolumeVariablesCache = std::false_type;
 };
 
 } // end namespace TTag
