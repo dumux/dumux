@@ -203,7 +203,7 @@ template<class GVC>
 class FEElementVariables<GVC, /*cachingEnabled*/false>
 {
     using ThisType = FEElementVariables<GVC, /*cachingEnabled*/false>;
-    using GridDiscretization = std::decay_t<decltype(std::declval<GVC>().problem().gridDiscretization())>;
+    using GridDiscretization = std::decay_t<decltype(std::declval<typename GVC::Problem>().gridDiscretization())>;
     using GridView = typename GridDiscretization::GridView;
 
     //!< maximum number of boundary faces per element, here assumed to be the number of faces of a dim-dimensional hypercube

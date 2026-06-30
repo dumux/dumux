@@ -209,7 +209,7 @@ template<class GVC>
 class HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>
 {
     using ThisType = HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>;
-    using GridGeometry = std::decay_t<decltype(std::declval<GVC>().problem().gridGeometry())>;
+    using GridGeometry = std::decay_t<decltype(std::declval<typename GVC::Problem>().gridGeometry())>;
     using GridView = typename GridGeometry::GridView;
 
     //!< maximum number of boundary intersections per element, here assumed to be the number of faces of a dim-dimensional hypercube

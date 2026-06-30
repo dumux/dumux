@@ -280,16 +280,19 @@ public:
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;
 
+    //! export interpolation point data type
+    using InterpolationPointData = typename Traits::InterpolationPointData;
+
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
     //! export the type of the mutable local view
     using MutableLocalView = typename LocalView::MutableView;
 
-    //! export interpolation point data type
-    using InterpolationPointData = typename Traits::InterpolationPointData;
-
     CVFEGridVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+
+    template<class GridGeometry, class SolutionVector>
+    void init(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
 
     template<class GridGeometry, class SolutionVector>
     void update(const GridGeometry& gridGeometry, const SolutionVector& sol) {}
