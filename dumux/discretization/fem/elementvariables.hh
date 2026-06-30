@@ -205,12 +205,6 @@ template<class GVC>
 class FEElementVariables<GVC, /*cachingEnabled*/false>
 {
     using ThisType = FEElementVariables<GVC, /*cachingEnabled*/false>;
-    using GridDiscretization = std::decay_t<decltype(std::declval<GVC>().problem().gridDiscretization())>;
-    using GridView = typename GridDiscretization::GridView;
-
-    //!< maximum number of boundary faces per element, here assumed to be the number of faces of a dim-dimensional hypercube
-    static constexpr std::size_t maxNumBoundaryFaces = GridView::dimension << 1;
-
     class MutableVariablesView
     {
     public:
@@ -428,6 +422,7 @@ private:
             for (const auto& qpData : elemQuadRule)
                 elementCache_[qpData.ipData().qpIndex()].update(problem, element, elemDisc, elemVars, qpData.ipData());
 
+            boundaryFaceCache_.resize(std::ranges::size(boundaryFaces(elemDisc)));
             for (const auto& boundaryFace : boundaryFaces(elemDisc))
             {
                 auto& bfCache = boundaryFaceCache_[boundaryFace.index()];
@@ -443,7 +438,7 @@ private:
         }
 
         std::vector<InterpolationPointData> elementCache_;
-        std::array<std::vector<InterpolationPointData>, maxNumBoundaryFaces> boundaryFaceCache_;
+        std::vector<std::vector<InterpolationPointData>> boundaryFaceCache_;
     };
 
     const GridVariablesCache* gridVariablesCachePtr_;
