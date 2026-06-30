@@ -1,0 +1,22 @@
+[Grid]
+File = cooksmembrane.msh
+
+[Problem]
+Name = test_cooksmembrane_box
+EnableGravity = false
+ShearTraction = 6.25
+
+[SpatialParams]
+YoungsModulus = 70
+PoissonRatio = 0.4999
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Component]
+SolidDensity = 1.0
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
