@@ -20,6 +20,15 @@
 
 namespace Dumux {
 
+namespace Detail {
+// Detects whether T is an FVElementGeometry (has numScv()) vs a plain grid element.
+template<class T, class = void>
+struct IsFVElementGeometry : std::false_type {};
+template<class T>
+struct IsFVElementGeometry<T, std::void_t<decltype(std::declval<T>().numScv())>>
+    : std::true_type {};
+} // namespace Detail
+
 /*!
  * \ingroup Elastic
  * \brief Contains the quantities which are constant within a
@@ -48,29 +57,56 @@ public:
     using SolidSystem = typename Traits::SolidSystem;
 
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Update all quantities for a given control volume.
      *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
+     * Handles two call conventions via compile-time dispatch:
+     *  - Old interface: (elemSol, problem, element, scv) — used by FVAssembler
+     *  - New interface: (elemSol, problem, fvGeometry, ipData) — used by Experimental::Assembler
+     *    The two templates have identical structure so C++ treats them as one; the if constexpr
+     *    branch on IsFVElementGeometry selects the right logic at compile time.
      */
-    template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const ElemSol& elemSol,
-                const Problem& problem,
-                const Element& element,
-                const Scv& scv)
+    template<class ElemSol, class Problem, class ElementOrFVG, class ScvOrIpD>
+    void update(const ElemSol& elemSol, const Problem& problem,
+                const ElementOrFVG& elementOrFVG, const ScvOrIpD& scvOrIpD)
     {
-        priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
-
-        //! set the volume fractions of the solid components
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, /*numFluidComps=*/0);
-        // set the temperature of the solid phase
-        setSolidTemperature_(problem, element, scv, elemSol);
-        // update the density of the solid phase
-        solidState_.setDensity(SolidSystem::density(solidState_));
+        if constexpr (Detail::IsFVElementGeometry<ElementOrFVG>::value)
+        {
+            // New interface: called with (fvGeometry, ipData)
+            const auto idx = scvOrIpD.localDofIndex();
+            const auto& element = elementOrFVG.element();
+            if (idx < elementOrFVG.numScv())
+            {
+                const auto& scv = elementOrFVG.scv(idx);
+                priVars_ = elemSol[scv.localDofIndex()];
+                extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
+                updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, 0);
+                setSolidTemperature_(problem, element, scv, elemSol);
+                solidState_.setDensity(SolidSystem::density(solidState_));
+            }
+            else
+            {
+                // Non-SCV DOF (e.g. PQ2 edge midpoint): proxy remaps index to scv(0)
+                const auto& scv0 = elementOrFVG.scv(0);
+                struct Proxy {
+                    const ElemSol& s; std::size_t from, to;
+                    auto operator[](std::size_t i) const { return (i == from) ? s[to] : s[i]; }
+                } proxy{elemSol, scv0.localDofIndex(), idx};
+                priVars_ = proxy[scv0.localDofIndex()];
+                extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv0, proxy);
+                updateSolidVolumeFractions(proxy, problem, element, scv0, solidState_, 0);
+                setSolidTemperature_(problem, element, scv0, proxy);
+                solidState_.setDensity(SolidSystem::density(solidState_));
+            }
+        }
+        else
+        {
+            // Old interface: called with (element, scv)
+            priVars_ = elemSol[scvOrIpD.localDofIndex()];
+            extrusionFactor_ = problem.spatialParams().extrusionFactor(elementOrFVG, scvOrIpD, elemSol);
+            updateSolidVolumeFractions(elemSol, problem, elementOrFVG, scvOrIpD, solidState_, 0);
+            setSolidTemperature_(problem, elementOrFVG, scvOrIpD, elemSol);
+            solidState_.setDensity(SolidSystem::density(solidState_));
+        }
     }
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
