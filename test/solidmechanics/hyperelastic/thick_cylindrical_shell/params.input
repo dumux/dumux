@@ -1,0 +1,35 @@
+[Grid]
+File = grid.msh
+
+[Problem]
+Name = test_hyperelastic_thick_cylindrical_shell
+EnableGravity = false
+# Downward (-y) traction on the full top cut face (x = 0, y > 0) [Pa].
+# Reese et al. (2000), thick shell (t = 2 mm): line load p = nu*p0 with the load
+# factor nu = p/p0 = 7500 and p0 = 1/15 N/mm, hence p = 500 N/mm.
+# Total downward force on the modelled quarter = 500 N/mm * 15 mm = 7500 N.
+# Applied as a traction over the top cut face (area (ro-ri)*L = 2 mm * 15 mm = 30 mm^2):
+#   T = 7500 N / 30 mm^2 = 250 N/mm^2 = 2.5e8 Pa.
+Load = 2.5e8
+# Number of incremental load steps (load stepping for the large-deformation regime)
+LoadSteps = 40
+
+[SpatialParams]
+# Reese et al. (2000) / Elguedj et al. (2008): mu = 6000 N/mm^2, Lambda = 240000 N/mm^2
+# (=> nu ~ 0.488, E ~ 17.85 GPa). In SI units [Pa]:
+ShearModulus = 6e9
+FirstLameParameter = 2.4e11
+
+[Component]
+SolidDensity = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+AddProcessRank = false
+
+[Newton]
+EnableDynamicOutput = true
+MaxRelativeShift = 1e-6
+MaxSteps = 30
+UseLineSearch = true

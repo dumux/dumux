@@ -4,6 +4,7 @@
 add_subdirectory(cooks_membrane_2d)
 add_subdirectory(cooks_membrane_3d)
 add_subdirectory(incompressible_block)
+add_subdirectory(thick_cylindrical_shell)
 add_subdirectory(turek_hron)
 
 dune_symlink_to_source_files(FILES "params.input")
