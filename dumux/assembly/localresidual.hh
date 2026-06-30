@@ -69,8 +69,7 @@ public:
     // \{
 
     /*!
-     * \brief Compute the storage local residual, i.e. the deviation of the
-     *        storage term from zero for instationary problems.
+     * \brief Evaluate the raw (undivided) storage at the current time level.
      *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
@@ -78,6 +77,22 @@ public:
      * \param prevElemVars The variables for all local dofs of the element at the previous time level
      * \param curElemVars The variables for all local dofs of the element at the current  time level
      */
+    ElementResidualVector evalStorageCurrentLevel(const Element& element,
+                                                   const ElementDiscretization& fvGeometry,
+                                                   const ElementVariables& elemVars) const
+    {
+        ElementResidualVector storage(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+
+        for (const auto& scv : scvs(fvGeometry))
+            storage[scv.localDofIndex()] =
+                this->asImp().storageIntegral(fvGeometry, elemVars, scv, /*isPreviousTimeLevel=*/false);
+
+        // allow models to contribute additional storage terms (e.g. hybrid CVFE/FE)
+        this->asImp().addToElementStorageResidual(storage, this->problem(), element, fvGeometry, elemVars, elemVars);
+
+        return storage;
+    }
+
     ElementResidualVector evalStorage(const Element& element,
                                       const ElementDiscretization& elemDisc,
                                       const ElementVariables& prevElemVars,

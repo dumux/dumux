@@ -181,6 +181,21 @@ public:
         gridFluxVarsCache_.update(this->gridGeometry(), gridVolVars_, this->dofs(), true);
     }
 
+    /*!
+     * \brief Advance one time step: make the current state the new "previous" state.
+     * \note For this class the time history is managed by the multi-stage assembler;
+     *       this method exists for compatibility with time-stepper interfaces.
+     */
+    void advanceTimeStep() {}
+
+    /*!
+     * \brief Reset to a given solution (e.g. on Newton failure).
+     * \note Equivalent to a full update so that the stored variables match the
+     *       provided solution.
+     */
+    void resetTimeStep(const SolutionVector& sol)
+    { update(sol); }
+
     //! Update all variables that may be affected by a change in solution
     void update(const SolutionVector& curSol)
     {
