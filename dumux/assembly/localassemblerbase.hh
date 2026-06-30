@@ -122,6 +122,32 @@ public:
     }
 
     /*!
+     * \brief Evaluate the stage-weighted residual for multi-stage (e.g. Runge-Kutta) assembly.
+     *
+     * Returns `temporalWeight * raw_storage(elemVars) + spatialWeight * (flux + source)(elemVars)`.
+     * The time derivative is NOT formed here; the assembler is responsible for combining stage
+     * contributions according to the Butcher tableau.
+     *
+     * \param elemVars Element variables bound to the current stage's solution
+     * \param temporalWeight Butcher tableau weight for the storage term at this stage
+     * \param spatialWeight  Butcher tableau weight for the spatial term at this stage
+     */
+    template<class Scalar>
+    ElementResidualVector evalLocalResidualForStage(const ElementVariables& elemVars,
+                                                     Scalar temporalWeight,
+                                                     Scalar spatialWeight) const
+    {
+        auto spatial = evalLocalFluxAndSourceResidual(elemVars);
+        for (auto& r : spatial) r *= spatialWeight;
+
+        auto temporal = localResidual_.evalStorageCurrentLevel(element_, fvGeometry_, elemVars);
+        for (auto& r : temporal) r *= temporalWeight;
+
+        spatial += temporal;
+        return spatial;
+    }
+
+    /*!
      * \brief Convenience function to evaluate the flux and source terms (i.e., the terms without a time derivative)
      *        of the local residual for the current element. Automatically chooses the appropriate
      *        element variables.

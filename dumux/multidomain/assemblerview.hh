@@ -64,6 +64,16 @@ public:
     const auto& prevSol() const { return assembler_.prevSol(); }
     bool isStationaryProblem() const { return assembler_.isStationaryProblem(); }
 
+    //! Returns current stage {tWeight, sWeight} if the assembler supports multi-stage.
+    //! Returns {1, 1} for assemblers without multi-stage support (quasi-static default).
+    auto currentStageWeights() const
+    {
+        if constexpr (requires { assembler_.currentStageWeights(); })
+            return assembler_.currentStageWeights();
+        else
+            return std::make_pair(typename MDAssembler::Scalar(1), typename MDAssembler::Scalar(1));
+    }
+
     template<class A = MDAssembler, typename std::enable_if_t<hasStaticIsImplicit<A>, int> = 0>
     static constexpr bool isImplicit() { return MDAssembler::isImplicit(); }
 

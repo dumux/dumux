@@ -73,8 +73,10 @@ public:
     static constexpr auto domainId = typename Dune::index_constant<id>();
     //! pull up constructor of parent class
     using ParentType::ParentType;
+    //! re-export LocalResidual so derived classes and code using ParentType:: can find it
+    using LocalResidual = typename ParentType::LocalResidual;
     //! export element residual vector type
-    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     // the constructor
     explicit SubDomainCVFELocalAssemblerBase(
@@ -115,6 +117,47 @@ public:
         // the coupled model does not support partial reassembly yet
         const DefaultPartialReassembler* noReassembler = nullptr;
         ParentType::assembleJacobianAndResidual(jacRow[domainId], res, *std::get<domainId>(gridVariables), noReassembler, assembleCouplingBlocks);
+    }
+
+    /*!
+     * \brief Multi-stage assembly: assembles the Jacobian and stage-weighted residual while
+     *        separately accumulating temporal and spatial operator evaluations for this domain.
+     *
+     * Called by the multi-stage multi-domain assembler for each element during stage assembly.
+     */
+    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple, class StageParams>
+    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidualVector& res, GridVariablesTuple& gridVariables,
+                                     const StageParams& stageParams,
+                                     SubResidualVector& temporal, SubResidualVector& spatial,
+                                     SubResidualVector& constrainedDofs)
+    {
+        auto assembleCouplingBlocks = [&](const auto& residual)
+        {
+            using namespace Dune::Hybrid;
+            forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+            {
+                if constexpr (std::decay_t<decltype(i)>{} != id)
+                    this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
+            });
+        };
+
+        const DefaultPartialReassembler* noReassembler = nullptr;
+        ParentType::assembleJacobianAndResidual(
+            jacRow[domainId], res, *std::get<domainId>(gridVariables),
+            stageParams, temporal, spatial, constrainedDofs,
+            assembleCouplingBlocks
+        );
+    }
+
+    /*!
+     * \brief Assemble only the current-stage residual contributions (no Jacobian).
+     *        Used during stage 0 preparation where only the previous-time-level
+     *        temporal and spatial operators need to be stored.
+     */
+    template<class SubResidualVector>
+    void assembleCurrentResidual(SubResidualVector& temporal, SubResidualVector& spatial)
+    {
+        ParentType::assembleCurrentResidual(temporal, spatial);
     }
 
     /*!

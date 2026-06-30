@@ -77,6 +77,8 @@ class CVFELocalAssemblerBase : public LocalAssemblerBase<TypeTag, Assembler, Imp
 public:
 
     using ParentType::ParentType;
+    using LocalResidual = typename ParentType::LocalResidual;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     void bindLocalViews()
     {
@@ -152,6 +154,81 @@ public:
                     }
                 }
             });
+        }
+    }
+
+    /*!
+     * \brief Multi-stage assembly: assembles Jacobian and residual while separately
+     *        accumulating the current stage's temporal and spatial operator evaluations.
+     *
+     * \param jac            The Jacobian matrix to add to
+     * \param res            The residual to add the stage-weighted contribution to
+     * \param gridVariables  The grid variables for this subdomain
+     * \param stageParams    Multi-stage parameters (Butcher tableau weights for this stage)
+     * \param temporal       Accumulator for the temporal (storage) operator at this stage
+     * \param spatial        Accumulator for the spatial (flux+source) operator at this stage
+     * \param constrainedDofs Vector tracking which dofs have Dirichlet constraints
+     * \param maybeAssembleCouplingBlocks Optional functor for coupling Jacobian blocks
+     */
+    template<class ResidualVector, class StageParams, class CouplingFunction = Detail::CVFE::NoOperator>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
+                                     const StageParams& stageParams,
+                                     ResidualVector& temporal, ResidualVector& spatial,
+                                     ResidualVector& constrainedDofs,
+                                     const CouplingFunction& maybeAssembleCouplingBlocks = {})
+    {
+        this->asImp_().bindLocalViews();
+
+        const auto sWeight = stageParams.spatialWeight(stageParams.size()-1);
+        const auto tWeight = stageParams.temporalWeight(stageParams.size()-1);
+
+        if (!this->elementIsGhost())
+        {
+            // evaluate current stage spatial and temporal contributions separately
+            const auto spatialResidual = this->evalLocalFluxAndSourceResidual(this->curElemVars());
+            const auto storageResidual = this->localResidual().evalStorageCurrentLevel(
+                this->element(), this->fvGeometry(), this->curElemVars());
+
+            // accumulate into stage vectors and form weighted stage residual
+            ElementResidualVector origResidual(spatialResidual.size());
+            origResidual = 0.0;
+            for (const auto& localDof : localDofs(this->fvGeometry()))
+            {
+                const auto li = localDof.index();
+                const auto di = localDof.dofIndex();
+                spatial[di] += spatialResidual[li];
+                temporal[di] += storageResidual[li];
+                origResidual[li] += spatialResidual[li]*sWeight + storageResidual[li]*tWeight;
+                res[di] += origResidual[li];
+            }
+
+            // assemble the Jacobian differentiated w.r.t. the stage-weighted residual
+            this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, tWeight, sWeight);
+
+            maybeAssembleCouplingBlocks(origResidual);
+        }
+    }
+
+    /*!
+     * \brief Convenience method for assembling only the current residual (no Jacobian)
+     *        used during stage 0 preparation in multi-stage assembly.
+     */
+    template<class ResidualVector>
+    void assembleCurrentResidual(ResidualVector& temporal, ResidualVector& spatial)
+    {
+        this->asImp_().bindLocalViews();
+
+        if (!this->elementIsGhost())
+        {
+            const auto spatialResidual = this->evalLocalFluxAndSourceResidual(this->curElemVars());
+            const auto storageResidual = this->localResidual().evalStorageCurrentLevel(
+                this->element(), this->fvGeometry(), this->curElemVars());
+
+            for (const auto& localDof : localDofs(this->fvGeometry()))
+            {
+                spatial[localDof.dofIndex()] += spatialResidual[localDof.index()];
+                temporal[localDof.dofIndex()] += storageResidual[localDof.index()];
+            }
         }
     }
 
@@ -338,6 +415,76 @@ public:
             assembleDerivative(localDof);
 
         // evaluate additional derivatives that might arise from the coupling (no-op if not coupled)
+        this->asImp_().maybeEvalAdditionalDomainDerivatives(origResiduals, A, gridVariables);
+
+        return origResiduals;
+    }
+
+    /*!
+     * \brief Multi-stage variant: computes the Jacobian of the stage-weighted residual.
+     *
+     * Differentiates `tWeight * storage(u) + sWeight * (flux+source)(u)` w.r.t. dof values.
+     * Used by the multi-stage overload of `assembleJacobianAndResidual`.
+     */
+    template<class Scalar>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                           Scalar tWeight, Scalar sWeight)
+    {
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& curSol = this->asImp_().curSol();
+
+        auto&& curElemVars = this->curElemVars();
+
+        const auto origResiduals = this->evalLocalResidualForStage(curElemVars, tWeight, sWeight);
+
+        static const bool updateAllVars = getParamFromGroup<bool>(
+            this->asImp_().problem().paramGroup(), "Assembly.VarsDependOnAllElementDofs", false
+        );
+
+        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+
+        auto deflectionPolicy = Dumux::Detail::CVFE::makeVariablesDeflectionPolicy(
+            gridVariables.curGridVars(), curElemVars, fvGeometry, updateAllVars
+        );
+
+        auto assembleDerivative = [&, this](const auto& localDof)
+        {
+            const auto dofIdx = localDof.dofIndex();
+            const auto localIdx = localDof.index();
+            deflectionPolicy.store(localDof);
+
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                partialDerivs = 0.0;
+
+                auto evalResiduals = [&](PrimaryVariable priVar)
+                {
+                    elemSol[localIdx][pvIdx] = priVar;
+                    deflectionPolicy.update(elemSol, localDof, this->asImp_().problem());
+                    this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
+                    return this->evalLocalResidualForStage(curElemVars, tWeight, sWeight);
+                };
+
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[localIdx][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);
+
+                for (const auto& localDofJ : localDofs(fvGeometry))
+                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        A[localDofJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[localDofJ.index()][eqIdx];
+
+                deflectionPolicy.restore(localDof);
+                elemSol[localIdx][pvIdx] = curSol[localDof.dofIndex()][pvIdx];
+                this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
+            }
+        };
+
+        for (const auto& localDof : localDofs(fvGeometry))
+            assembleDerivative(localDof);
+
         this->asImp_().maybeEvalAdditionalDomainDerivatives(origResiduals, A, gridVariables);
 
         return origResiduals;
