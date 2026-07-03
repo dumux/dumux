@@ -392,6 +392,69 @@ private:
     std::array<Scalar, 4> paramD_;
 };
 
+/*!
+ * \brief Second order symplectic diagonally implicit Runge-Kutta scheme (Qin-Zhang)
+ * \note See Qin & Zhang (1992) \cite QinZhang1992, the two-stage second-order
+ *       symplectic DIRK. Being symplectic it satisfies the Cooper condition
+ *       \f$ b_i a_{ij} + b_j a_{ji} - b_i b_j = 0 \f$ and therefore conserves all
+ *       quadratic invariants exactly (e.g. angular momentum and the energy of a
+ *       linear Hamiltonian system). It is A-stable but not L-stable
+ *       (\f$ |R(z)| \to 1 \f$ as \f$ \mathrm{Re}(z) \to -\infty \f$), so it does
+ *       not damp under-resolved high-frequency modes.
+ *
+ * Butcher tableau (c | A ; b):
+ * \verbatim
+ *   1/4 | 1/4   0
+ *   3/4 | 1/2  1/4
+ *   ----+----------
+ *       | 1/2  1/2
+ * \endverbatim
+ * The method is not stiffly accurate (\f$ a_{sj} \neq b_j \f$), so the final
+ * update \f$ x^{n+1} = x^n + \Delta t\,(b_1 R_1 + b_2 R_2) \f$ is appended as an
+ * explicit third stage (\f$ \beta_{33} = 0 \f$).
+ */
+template<class Scalar>
+class QinZhangSymplecticDIRK final : public MultiStageMethod<Scalar>
+{
+public:
+    QinZhangSymplecticDIRK()
+    : paramAlpha_{{
+        {-1.0, 1.0, 0.0, 0.0},
+        {-1.0, 0.0, 1.0, 0.0},
+        {-1.0, 0.0, 0.0, 1.0}
+    }}
+    , paramBeta_{{
+        {0.0, 0.25, 0.0,  0.0},   // stage 1: a_11 = 1/4
+        {0.0, 0.5,  0.25, 0.0},   // stage 2: a_21 = 1/2, a_22 = 1/4
+        {0.0, 0.5,  0.5,  0.0}    // update:  b_1  = 1/2, b_2  = 1/2
+    }}
+    , paramD_{{0.0, 0.25, 0.75, 1.0}}
+    {}
+
+    bool implicit () const final
+    { return true; }
+
+    std::size_t numStages () const final
+    { return 3; }
+
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final
+    { return paramAlpha_[i-1][k]; }
+
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final
+    { return paramBeta_[i-1][k]; }
+
+    Scalar timeStepWeight (std::size_t k) const final
+    { return paramD_[k]; }
+
+    std::string name () const final
+    { return "symplectic diagonally implicit Runge-Kutta 2nd order (Qin-Zhang)"; }
+
+private:
+    std::array<std::array<Scalar, 4>, 3> paramAlpha_;
+    std::array<std::array<Scalar, 4>, 3> paramBeta_;
+    std::array<Scalar, 4> paramD_;
+};
+
 } // end namespace MultiStage
 } // end namespace Dumux::Experimental
 
