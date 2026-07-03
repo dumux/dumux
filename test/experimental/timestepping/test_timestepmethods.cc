@@ -342,6 +342,8 @@ int main(int argc, char* argv[])
     for (const auto& [method, expectedImplicit] : methodsToCheck)
         testMethodProperties(method, expectedImplicit);
 
+    // when adding a new method here, run first to verify approximate error
+    // and then add here as tolerance for the single-step accuracy regression test
     testSingleStepAccuracy(explicitEuler, 6e-3);
     testSingleStepAccuracy(implicitEuler, 6e-3);
     testSingleStepAccuracy(crankNicolson, 1e-5);
