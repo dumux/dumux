@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Run the time-stepping benchmark and reproduce its figures.
 
-Runs the test_timestepmethods and test_timestepmethods_stabilityregions
-executables and generates the four figures shown in README.md via the
-corresponding plot_*.py scripts. With --copy-to-doc, the figures are
-additionally copied into doc/doxygen/images/ for the Doxygen documentation.
+Runs the test_timestepmethods, test_timestepmethods_stabilityregions and
+test_timestepmethods_symplectic executables and generates the five figures
+shown in README.md via the corresponding plot_*.py scripts. With
+--copy-to-doc, the figures are additionally copied into doc/doxygen/images/
+for the Doxygen documentation.
 
 Usage:
   python3 run_benchmarks.py [build_dir] [--copy-to-doc]
@@ -61,11 +62,22 @@ def main() -> int:
         "--output", os.path.join(bin_dir, "test_timestepmethods_stability.png"),
     ])
 
+    print(f"\n{'='*60}")
+    print("Running test_timestepmethods_symplectic")
+    print(f"{'='*60}")
+    subprocess.check_call([os.path.join(bin_dir, "test_timestepmethods_symplectic")], cwd=bin_dir)
+    subprocess.check_call([
+        sys.executable, os.path.join(src_dir, "plot_timestepmethods_symplectic.py"),
+        "--input", os.path.join(bin_dir, "test_timestepmethods_symplectic_data.json"),
+        "--output", os.path.join(bin_dir, "test_timestepmethods_symplectic.png"),
+    ])
+
     images = [
         ("test_timestepmethods_convergence.png", "timestepping_convergence.png"),
         ("test_timestepmethods_stability_explicit.png", "timestepping_stability_explicit.png"),
         ("test_timestepmethods_stability_implicit.png", "timestepping_stability_implicit.png"),
         ("test_timestepmethods_stability_comparison.png", "timestepping_stability_comparison.png"),
+        ("test_timestepmethods_symplectic.png", "timestepping_symplectic.png"),
     ]
 
     print(f"\n{'='*60}")
