@@ -11,7 +11,7 @@ import sys
 # otherwise put explicit and implicit Euler next to each other in the tab10 cycle and give
 # them similar reddish/brownish colors that are hard to tell apart)
 METHOD_ORDER = ["explicit_euler", "implicit_euler", "crank_nicolson", "heun",
-                "dirk2", "rk3", "dirk3", "rk4"]
+                "dirk2", "qin_zhang", "rk3", "dirk3", "rk4"]
 
 
 def split_attribution(name: str):

@@ -253,6 +253,7 @@ int main(int argc, char* argv[])
         expectNear(method->timeStepWeight(method->numStages()), 1.0, eps,
                    "The final stage has to advance to t^{n+1} for " + method->name());
 
+        Scalar maxDiagonalWeight = 0.0;
         for (std::size_t i = 1; i <= method->numStages(); ++i)
         {
             Scalar alphaSum = 0.0;
@@ -263,16 +264,25 @@ int main(int argc, char* argv[])
                        "Temporal weights do not preserve constant states for " + method->name());
 
             const auto diagonalWeight = method->spatialWeight(i, i);
+            maxDiagonalWeight = std::max(maxDiagonalWeight, diagonalWeight);
             if (expectedImplicit)
             {
-                if (diagonalWeight <= 0.0)
+                // DIRK stages have a non-negative diagonal weight; a zero diagonal marks an
+                // explicit stage, e.g. the appended (non stiffly-accurate) update stage of the
+                // Qin-Zhang scheme
+                if (diagonalWeight < 0.0)
                     DUNE_THROW(Dune::InvalidStateException,
-                               "DIRK methods need a positive diagonal stage weight for " + method->name());
+                               "DIRK stage weights must be non-negative for " + method->name());
             }
             else
                 expectNear(diagonalWeight, 0.0, eps,
                            "Explicit methods must have zero diagonal stage weights for " + method->name());
         }
+
+        // an implicit method has to have at least one genuinely implicit (positive diagonal) stage
+        if (expectedImplicit && !(maxDiagonalWeight > 0.0))
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Implicit methods need at least one positive diagonal stage weight for " + method->name());
     };
 
     const auto testSingleStepAccuracy = [&] (const auto& method, const Scalar maxRelError)
@@ -318,6 +328,7 @@ int main(int argc, char* argv[])
     const Method rk4 = std::make_shared<RungeKuttaExplicitFourthOrder<Scalar>>();
     const Method dirk2 = std::make_shared<DIRKSecondOrderAlexander<Scalar>>();
     const Method dirk3 = std::make_shared<DIRKThirdOrderAlexander<Scalar>>();
+    const Method qinZhang = std::make_shared<QinZhangSymplecticDIRK<Scalar>>();
 
     // shorter display names for plot legends
     const auto displayName = [](const std::string& id, const Method& method)
@@ -325,6 +336,7 @@ int main(int argc, char* argv[])
         if (id == "crank_nicolson") return std::string{"Crank-Nicolson"};
         if (id == "dirk2") return std::string{"DIRK2 (Alexander)"};
         if (id == "dirk3") return std::string{"DIRK3 (Alexander)"};
+        if (id == "qin_zhang") return std::string{"Qin-Zhang (symplectic)"};
         return method->name();
     };
 
@@ -336,7 +348,8 @@ int main(int argc, char* argv[])
         {rk3, false},
         {rk4, false},
         {dirk2, true},
-        {dirk3, true}
+        {dirk3, true},
+        {qinZhang, true}
     };
 
     for (const auto& [method, expectedImplicit] : methodsToCheck)
@@ -352,6 +365,7 @@ int main(int argc, char* argv[])
     testSingleStepAccuracy(rk4, 1e-11);
     testSingleStepAccuracy(dirk2, 1e-5);
     testSingleStepAccuracy(dirk3, 1e-8);
+    testSingleStepAccuracy(qinZhang, 2e-6);
 
     testObservedOrder(explicitEuler, 1);
     testObservedOrder(implicitEuler, 1);
@@ -361,6 +375,7 @@ int main(int argc, char* argv[])
     testObservedOrder(rk4, 4);
     testObservedOrder(dirk2, 2);
     testObservedOrder(dirk3, 3);
+    testObservedOrder(qinZhang, 2);
 
     // --- convergence sweep: error vs. step size for all methods, written to JSON for plotting ---
     // Use a second test equation, du/dt = -u + exp(t), u(0) = 0, with exact solution u(t) = sinh(t).
@@ -409,6 +424,7 @@ int main(int argc, char* argv[])
         {"crank_nicolson", crankNicolson, 2},
         {"heun",           heun,          2},
         {"dirk2",          dirk2,         2},
+        {"qin_zhang",      qinZhang,      2},
         {"rk3",            rk3,           3},
         {"dirk3",          dirk3,         3},
         {"rk4",            rk4,           4}
