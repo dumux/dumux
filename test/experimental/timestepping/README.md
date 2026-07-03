@@ -32,12 +32,17 @@ verified here:
 | Crank-Nicolson | `crank_nicolson` | 1 | 2 | implicit, A-stable |
 | Heun (explicit RK2) | `heun` | 2 | 2 | explicit |
 | DIRK2 (Alexander) | `dirk2` | 2 | 2 | implicit, L-stable |
+| Qin-Zhang | `qin_zhang` | 2 | 2 | implicit, A-stable, symplectic |
 | Explicit RK3 | `rk3` | 3 | 3 | explicit |
 | DIRK3 (Alexander) | `dirk3` | 3 | 3 | implicit, L-stable |
 | Explicit RK4 | `rk4` | 4 | 4 | explicit |
 
-Crank-Nicolson is the theta scheme with $\theta=0.5$, and the two DIRK
-schemes are taken from Alexander (1977) @cite Alexander1977.
+Crank-Nicolson is the theta scheme with $\theta=0.5$, the two DIRK schemes
+are taken from Alexander (1977) @cite Alexander1977, and the Qin-Zhang scheme
+is the two-stage second-order *symplectic* DIRK of Qin and Zhang (1992)
+@cite QinZhang1992. Being symplectic, it conserves quadratic invariants
+exactly; this property is verified separately (see *Benchmark: symplecticity*
+below).
 
 Two complementary, purely time-discrete verification tests are used (the
 spatial operator is trivial in both, so only the temporal error is
@@ -84,15 +89,15 @@ $\mathrm{Re}(z)\le 0$ (unconditional stability for decaying modes), and
 
 **Setup**
 
-Both tests advance a single scalar degree of freedom with the
-`MultiStageTimeStepper` and require neither a mesh nor a linear solver
-beyond a $1\times1$ system:
+The tests require neither a mesh nor a linear solver beyond a small dense
+system:
 
-- `test_timestepmethods.cc` solves $\dot u = e^t$ with all 8 schemes,
+- `test_timestepmethods.cc` advances a single scalar degree of freedom with
+  the `MultiStageTimeStepper` and solves $\dot u = e^t$ with all 9 schemes,
   checks the Shu-Osher coefficients for consistency and the single-step
   error at $\Delta t=0.01$ against per-scheme tolerances. For the
   convergence-sweep figure, it additionally solves $\dot u = -u + e^t$,
-  $u(0)=0$ with all 8 schemes for
+  $u(0)=0$ with all 9 schemes for
   $\Delta t \in \{0.2, 0.1, 0.05, 0.025, 0.0125, 0.00625\}$ and writes the
   errors at $t=1$ to `test_timestepmethods_data.json`.
 - `test_timestepmethods_stabilityregions.cc` evaluates the stability
@@ -102,6 +107,11 @@ beyond a $1\times1$ system:
   Newton's method as $\theta$ increases), checks A-/L-stability of the
   implicit schemes on a grid in the left half-plane, and writes
   `test_timestepmethods_stabilityregions_data.json`.
+- `test_timestepmethods_symplectic.cc` verifies the symplecticity of the
+  Qin-Zhang scheme, both algebraically (the Cooper condition on its Butcher
+  tableau) and numerically on the $2\times2$ harmonic-oscillator system
+  (phase-space area preservation and energy conservation), and writes
+  `test_timestepmethods_symplectic_data.json`.
 
 
 **Benchmark: observed order of convergence**
@@ -144,21 +154,65 @@ with the analytical truncated-exponential boundary $R(z)=\sum_{k=0}^p z^k/k!$
 
 For the implicit schemes, implicit Euler, DIRK2, and DIRK3 are L-stable (the
 stable region extends unboundedly into the left half-plane, with
-$R(z)\to0$), while Crank-Nicolson is A-stable but not L-stable
-($|R(z)|\to1$ as $\mathrm{Re}(z)\to-\infty$).
+$R(z)\to0$), while Crank-Nicolson and the symplectic Qin-Zhang scheme are
+A-stable but not L-stable ($|R(z)|\to1$ as $\mathrm{Re}(z)\to-\infty$). For
+Qin-Zhang the stability function is $R(z)=\big((4+z)/(4-z)\big)^2$, so
+$|R(iy)|=1$ on the imaginary axis: it introduces no artificial damping, which
+is the flip side of its symplecticity.
+
+**Benchmark: symplecticity**
+
+A Runge-Kutta method with weights $b_i$ and coefficients $a_{ij}$ is
+*symplectic* if and only if it satisfies the condition
+
+$$
+b_i a_{ij} + b_j a_{ji} - b_i b_j = 0 \qquad \forall\, i,j,
+$$
+
+which is exactly the condition under which the method conserves every
+quadratic first integral exactly. `test_timestepmethods_symplectic.cc`
+verifies this condition algebraically for the Qin-Zhang tableau (extracted
+directly from its Shu-Osher coefficients) and then demonstrates its two
+consequences on the harmonic oscillator $\dot q = p,\ \dot p = -q$ (a linear
+Hamiltonian system with quadratic energy $H=(q^2+p^2)/2$):
+
+1. **Phase-space area preservation**: the determinant of the one-step
+   propagation matrix is $1$ to machine precision for Qin-Zhang, whereas it
+   is $<1$ for implicit Euler and DIRK2 (they contract phase space).
+2. **Energy conservation**: integrated over 200 periods, Qin-Zhang conserves
+   $H$ to a relative drift below $10^{-10}$, while implicit Euler (1st order)
+   damps it away almost entirely and the *same second-order* DIRK2 also
+   dissipates it — showing that it is symplecticity, not the order of
+   accuracy, that conserves energy.
+
+![Symplecticity of the Qin-Zhang scheme](timestepping_symplectic.png)
+
+The left panel shows the phase-space trajectory of the symplectic Qin-Zhang
+scheme (a closed circle) against dissipative implicit Euler (spiralling
+inward); DIRK2 is omitted from this panel because it is so weakly dissipative
+that it is visually indistinguishable from the symplectic orbit at this
+resolution. The right panel shows the energy drift $|E(t)/E_0-1|$ over time
+on a logarithmic axis, where that small dissipation becomes visible:
+Qin-Zhang stays at the machine-precision floor ($\sim 10^{-15}$), whereas
+implicit Euler loses essentially all the energy and the *same second-order*
+DIRK2 drifts by $\sim 10^{-4}$ — roughly eleven orders of magnitude more than
+the symplectic scheme, confirming that it is the symplecticity, not the order
+of accuracy, that conserves the energy.
 
 **Reproducing the figures**
 
-After building the `test_timestepmethods` and
-`test_timestepmethods_stabilityregions` executables, run:
+After building the `test_timestepmethods`,
+`test_timestepmethods_stabilityregions` and `test_timestepmethods_symplectic`
+executables, run:
 
 ```bash
 python3 run_benchmarks.py <path-to-build-dir>
 ```
 
-This runs both executables to (re-)generate the JSON data and produces all
-four figures above via `plot_timestepmethods_convergence.py` and
-`plot_timestepmethods_stabilityregions.py`. If run from within
+This runs all three executables to (re-)generate the JSON data and produces
+the five figures above via `plot_timestepmethods_convergence.py`,
+`plot_timestepmethods_stabilityregions.py` and
+`plot_timestepmethods_symplectic.py`. If run from within
 `<build-dir>/test/experimental/timestepping`, the build directory argument
 can be omitted. Pass `--copy-to-doc` to additionally copy the figures into
 `doc/doxygen/images/` (used to update the images shown on this page).
