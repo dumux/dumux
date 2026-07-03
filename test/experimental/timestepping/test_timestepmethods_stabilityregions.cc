@@ -234,6 +234,7 @@ int main(int argc, char* argv[])
     const Method rk4 = std::make_shared<RungeKuttaExplicitFourthOrder<Scalar>>();
     const Method dirk2 = std::make_shared<DIRKSecondOrderAlexander<Scalar>>();
     const Method dirk3 = std::make_shared<DIRKThirdOrderAlexander<Scalar>>();
+    const Method qinZhang = std::make_shared<QinZhangSymplecticDIRK<Scalar>>();
 
     // shorter display names for plot legends/titles
     const auto displayName = [](const std::string& id, const Method& method)
@@ -241,6 +242,7 @@ int main(int argc, char* argv[])
         if (id == "crank_nicolson") return std::string{"Crank-Nicolson"};
         if (id == "dirk2") return std::string{"DIRK2 (Alexander)"};
         if (id == "dirk3") return std::string{"DIRK3 (Alexander)"};
+        if (id == "qin_zhang") return std::string{"Qin-Zhang (symplectic)"};
         return method->name();
     };
 
@@ -256,6 +258,14 @@ int main(int argc, char* argv[])
                         - ((1.0 + (1.0 - 2.0 * gamma) * z) / ((1.0 - gamma * z) * (1.0 - gamma * z)))),
                0.0, 1e-14,
                "Unexpected stability function for Alexander DIRK2");
+
+    // Qin-Zhang is symplectic: its stability function is R(z) = ((4+z)/(4-z))^2, the square
+    // of a Cayley-like factor, so |R(iy)| = 1 (no dissipation) and |R(z)| -> 1 as Re(z) -> -inf
+    // (A-stable but not L-stable).
+    const Complex qinZhangFactor = (4.0 + z) / (4.0 - z);
+    expectNear(std::abs(stabilityFunction(qinZhang, z) - qinZhangFactor * qinZhangFactor),
+               0.0, 1e-14,
+               "Unexpected stability function for Qin-Zhang");
 
     // --- explicit methods: trace the stability boundary by continuation and compare
     //     against the analytical truncated-exponential stability polynomial ---
@@ -326,7 +336,8 @@ int main(int argc, char* argv[])
         {"implicit_euler", implicitEuler, 1},
         {"crank_nicolson", crankNicolson, 2},
         {"dirk2",          dirk2,         2},
-        {"dirk3",          dirk3,         3}
+        {"dirk3",          dirk3,         3},
+        {"qin_zhang",      qinZhang,      2}
     };
 
     for (const auto& entry : implicitMethods)
@@ -339,8 +350,9 @@ int main(int argc, char* argv[])
     const Complex stiffZ(-1.0e6, 0.0);
     for (const auto& entry : implicitMethods)
     {
-        if (entry.id == "crank_nicolson")
-            continue; // Crank-Nicolson is not L-stable, so it does not damp stiff modes
+        // Crank-Nicolson and Qin-Zhang are A-stable but not L-stable, so they do not damp stiff modes
+        if (entry.id == "crank_nicolson" || entry.id == "qin_zhang")
+            continue;
 
         const auto modulus = std::abs(stabilityFunction(entry.method, stiffZ));
         expect(modulus < 1.0e-5,
@@ -349,6 +361,10 @@ int main(int argc, char* argv[])
 
     expect(std::abs(std::abs(stabilityFunction(crankNicolson, stiffZ)) - 1.0) < 1.0e-5,
            "Crank-Nicolson should not be L-stable");
+
+    // the symplectic Qin-Zhang scheme has |R(z)| -> 1 as Re(z) -> -inf (not L-stable)
+    expect(std::abs(std::abs(stabilityFunction(qinZhang, stiffZ)) - 1.0) < 1.0e-4,
+           "Qin-Zhang is symplectic and should not be L-stable");
 
     // --- write data for plotting ---
     const Scalar plotLimit = 4.0;
