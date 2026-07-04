@@ -157,9 +157,14 @@ public:
             static const bool anchorPressure = getParam<bool>("Problem.AnchorPressureAtBottom", true);
             if (anchorPressure)
             {
+                // anchor at a SINGLE dof (bottom-left corner): a Dirichlet row replaces that
+                // CV's continuity equation, so anchoring the whole bottom row would drop
+                // div(v)=0 in every bottom-wall CV and force p uniform along the wall
                 const auto& pos = scv.dofPosition();
-                const bool isBottom = pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + 1e-6;
-                if (isBottom)
+                const bool isBottomLeftCorner =
+                    pos[dimWorld-1] < this->gridGeometry().bBoxMin()[dimWorld-1] + 1e-6
+                    && pos[0] < this->gridGeometry().bBoxMin()[0] + 1e-6;
+                if (isBottomLeftCorner)
                     values.setDirichlet(Indices::pressureIdx);
             }
         }
@@ -323,9 +328,11 @@ public:
         if (surfaceTensionForm_ == SurfaceTensionForm::stress)
             flux += (scaledSurfaceTension_ * interfaceThickness_) * gradPhi * (gradPhi * normal);
 
-        // Inertial conservative-form mass-flux correction:
-        //   T_diff n = v (M grad(mu) . n) * (rho1 - rho2) / 2
-        // Only meaningful with inertia enabled.
+        // Abels-Garcke-Grün (AGG) diffusive momentum flux: the Cahn-Hilliard flux -M∇μ moves
+        // mass J = (dρ/dφ)(-M∇μ) across the interface, and thermodynamic consistency requires
+        // momentum to be advected with it: T_diff n = v (J . n) = -v (M ∇μ . n) (dρ/dφ),
+        // dρ/dφ = (ρ1 - ρ2)/2. (Sign check: the term enters like the advective face flux
+        // v (ρv . n) with ρv -> J.) Only meaningful with inertia enabled.
         if (enableInterfaceFlux_ && this->enableInertiaTerms())
         {
             const auto& shapeValues = fluxVarCache.shapeValues();
@@ -333,7 +340,7 @@ public:
             ResultType v(0.0);
             for (const auto& localDof : localDofs(fvGeometry))
                 v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
-            flux += this->mobility() * v * (gradChemicalPotential * normal) * this->mixtureDensityDerivative();
+            flux -= this->mobility() * v * (gradChemicalPotential * normal) * this->mixtureDensityDerivative();
         }
 
         flux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[scvf.insideScvIdx()].extrusionFactor();
@@ -373,6 +380,7 @@ public:
         // each 2× the half-domain values.
         Scalar contourLenHalf = 0.0; // length of the φ=0 contour in the half domain
         Scalar areaHalfPos = 0.0;    // area where φ>0 (bubble) in the half domain, clipped at φ=0
+        Scalar yMomentHalfPos = 0.0; // ∫_{φ>0} y dA (SHARP centroid; benchmark definition)
         Scalar tvHalf = 0.0;         // ∫|∇φ| (total variation) - independent perimeter cross-check
         Scalar gradEnergyHalf = 0.0; // ∫|∇φ|^2 - to measure the EFFECTIVE interface thickness
         Scalar maxGradP = 0.0;       // max element |∇p| - flags local pressure spikes
@@ -414,22 +422,33 @@ public:
 
                 const int npos = int(phiC[0] > 0.0) + int(phiC[1] > 0.0) + int(phiC[2] > 0.0);
                 const Scalar fullA = triArea(posC[0], posC[1], posC[2]);
+                const Scalar ycFull = (posC[0][1] + posC[1][1] + posC[2][1])/3.0;
                 if (npos == 3)
+                {
                     areaHalfPos += fullA;
+                    yMomentHalfPos += fullA * ycFull;
+                }
                 else if (npos == 1) // one positive corner i: φ>0 region is the small corner triangle
                 {
                     const int i = phiC[0] > 0.0 ? 0 : (phiC[1] > 0.0 ? 1 : 2);
                     const auto Xij = edgeCross(i, (i+1)%3);
                     const auto Xik = edgeCross(i, (i+2)%3);
-                    areaHalfPos += triArea(posC[i], Xij, Xik);
+                    const Scalar aT = triArea(posC[i], Xij, Xik);
+                    areaHalfPos += aT;
+                    yMomentHalfPos += aT * (posC[i][1] + Xij[1] + Xik[1])/3.0;
                     contourLenHalf += (Xik - Xij).two_norm();
                 }
-                else if (npos == 2) // one negative corner k: φ>0 region is the complementary quad
+                else if (npos == 2) // one non-positive corner k: φ>0 region is the complementary quad
                 {
-                    const int k = phiC[0] < 0.0 ? 0 : (phiC[1] < 0.0 ? 1 : 2);
+                    // select by !(phi>0) to mirror the npos count (phi == 0 exactly must
+                    // pick this corner, otherwise a positive corner is chosen and a
+                    // spurious contour segment/area correction is generated)
+                    const int k = !(phiC[0] > 0.0) ? 0 : (!(phiC[1] > 0.0) ? 1 : 2);
                     const auto Xki = edgeCross(k, (k+1)%3);
                     const auto Xkj = edgeCross(k, (k+2)%3);
-                    areaHalfPos += fullA - triArea(posC[k], Xki, Xkj);
+                    const Scalar aS = triArea(posC[k], Xki, Xkj);
+                    areaHalfPos += fullA - aS;
+                    yMomentHalfPos += fullA * ycFull - aS * (posC[k][1] + Xki[1] + Xkj[1])/3.0;
                     contourLenHalf += (Xkj - Xki).two_norm();
                 }
 
@@ -476,7 +495,8 @@ public:
                   << " kg/m  |  gas = " << totalMassGas
                   << " kg/m\033[0m" << std::endl;
         std::cout << "\033[1;35m[bubble] centroid_y = " << bubbleYmoment / bubbleVol
-                  << " m  |  volume = " << bubbleVol << " m^2/m\033[0m" << std::endl;
+                  << " m  |  centroid_y_sharp = " << (areaHalfPos > 0.0 ? yMomentHalfPos / areaHalfPos : 0.0)
+                  << " m (benchmark def., φ>0)  |  volume = " << bubbleVol << " m^2/m\033[0m" << std::endl;
         std::cout << "\033[1;32m[bubble] circularity = " << circularity
                   << "  |  perimeter = " << perimeterFull << " m  |  area = " << areaFull << " m^2\033[0m" << std::endl;
         std::cout << "\033[1;32m[bubble] circularity_TV = " << circularityTV

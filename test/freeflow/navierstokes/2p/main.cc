@@ -259,6 +259,10 @@ int main(int argc, char** argv)
             }
 
             Scalar riseNum = 0.0, riseDen = 0.0;
+            // The benchmark references (TP2D/MooNMD) define V_c over the SHARP bubble region
+            // Ω2 = {φ>0}; the diffuse weighting (1+φ)/2 half-weights the interfacial band and
+            // biases V_c by O(band area/bubble area). Report both; compare the sharp one.
+            Scalar riseNumSharp = 0.0, riseDenSharp = 0.0;
             for (const auto& element : elements(leafGridView))
             {
                 const auto massElemSol = elementSolution(element, x[massIdx], *massGridGeometry);
@@ -276,10 +280,19 @@ int main(int argc, char** argv)
                     const Scalar w = 0.5*(1.0 + phi) * quad[q].weight() * ie;
                     riseNum += w*uy;
                     riseDen += w;
+                    if (phi > 0.0)
+                    {
+                        const Scalar ws = quad[q].weight() * ie;
+                        riseNumSharp += ws*uy;
+                        riseDenSharp += ws;
+                    }
                 }
             }
             std::cout << "\033[1;32m[bubble] rise_velocity = "
-                      << (riseDen > 0.0 ? riseNum/riseDen : 0.0) << " m/s\033[0m" << std::endl;
+                      << (riseDen > 0.0 ? riseNum/riseDen : 0.0) << " m/s"
+                      << "  |  rise_velocity_sharp = "
+                      << (riseDenSharp > 0.0 ? riseNumSharp/riseDenSharp : 0.0)
+                      << " m/s (benchmark def., φ>0)\033[0m" << std::endl;
         }
 
         // set new dt as suggested by newton solver
