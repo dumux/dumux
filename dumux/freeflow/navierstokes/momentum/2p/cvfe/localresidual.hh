@@ -77,7 +77,8 @@ public:
     {
         NumEqVector storage(0.0);
         if (problem.enableInertiaTerms())
-            storage = problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousStorage) * volVars.velocity();
+            storage = problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv),
+                                      this->storageDensityIsPrevious_(problem, isPreviousStorage)) * volVars.velocity();
         return storage;
     }
 

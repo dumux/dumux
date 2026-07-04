@@ -111,7 +111,8 @@ public:
                                const Variables& vars,
                                const bool isPreviousStorage) const
     {
-        return problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousStorage) * vars.velocity();
+        return problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv),
+                               storageDensityIsPrevious_(problem, isPreviousStorage)) * vars.velocity();
     }
 
     /*!
@@ -130,7 +131,8 @@ public:
     {
         const auto& vars = elemVars[scv];
         // We apply mass lumping
-        NumEqVector storage = this->asImp().problem().density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv), isPreviousTimeLevel)
+        NumEqVector storage = this->asImp().problem().density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scv),
+                                                              storageDensityIsPrevious_(this->asImp().problem(), isPreviousTimeLevel))
                             * vars.velocity();
 
         storage *= Extrusion::volume(fvGeometry, scv) * vars.extrusionFactor();
@@ -320,7 +322,36 @@ public:
         addSkewSymmetricAdvectionCorrection_(residual, problem, element, fvGeometry, elemVars, elemFluxVarsCache);
     }
 
-private:
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVariables& elemVars,
+                                           const ElementBoundaryTypes &elemBcTypes) const
+    {
+        FeResidual::addFluxAndSourceTerms(residual, problem, fvGeometry, elemVars);
+    }
+
+protected:
+    /*!
+     * \brief Time level at which the storage density is evaluated.
+     *
+     * The conservative storage ∂t(ρu) pairs consistently with the conservative advective
+     * flux div(ρ u⊗u). If the advection is converted to convective form (see
+     * FreeFlow.SkewSymmetricMomentumAdvection below), conservative storage leaves a
+     * spurious u ∂t(ρ) force at moving density interfaces:
+     *     ∂t(ρu) + ρ u·∇u = ρ Du/Dt + u ∂t(ρ).
+     * With FreeFlow.ConvectiveFormMomentumStorage = true the density is frozen at the
+     * current time level, so the storage becomes ρ^{n+1}(u^{n+1}-u^n)/Δt (discrete ρ ∂u/∂t),
+     * which is the energy-consistent pairing with the convective-form advection.
+     */
+    bool storageDensityIsPrevious_(const Problem& problem, const bool isPreviousStorage) const
+    {
+        static const bool convectiveFormStorage = getParamFromGroup<bool>(
+            problem.paramGroup(), "FreeFlow.ConvectiveFormMomentumStorage", false);
+        return convectiveFormStorage ? false : isPreviousStorage;
+    }
+
     /*!
      * \brief Skew-symmetric (Temam) correction restoring discrete kinetic-energy stability
      *        of the conservative momentum advection.
@@ -371,14 +402,34 @@ private:
                 v.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
 
             const auto vn = v*scvf.unitOuterNormal();
-            const auto density = problem.density(element, fvGeometry, ipData(fvGeometry, scvf));
+
+            // Use the SAME density weighting as the advective flux (upwind-blended dof
+            // densities, see NavierStokesMomentumFluxCVFE::advectiveMomentumFlux); a face-
+            // interpolated density would break the divergence-to-convective telescoping
+            // sum_f m_f (u_up - u_cv) exactly where the density varies (fluid interfaces).
+            const auto insideDensity = problem.density(element, fvGeometry, ipData(fvGeometry, insideScv));
+            const auto outsideDensity = problem.density(element, fvGeometry, ipData(fvGeometry, fvGeometry.scv(scvf.outsideScvIdx())));
+            static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+            const auto density = vn > 0 ? upwindWeight*insideDensity + (1.0-upwindWeight)*outsideDensity
+                                        : upwindWeight*outsideDensity + (1.0-upwindWeight)*insideDensity;
             const auto massFlux = density * vn
                 * Extrusion::area(fvGeometry, scvf) * elemVars[insideScv].extrusionFactor();
 
             // divergence form -> convective form: residual_cv += -u_cv * m_f (with the
-            // outward-normal sign flip on the outside control volume)
+            // outward-normal sign flip on the outside control volume). For overlapping
+            // scvfs (hybrid CVFE schemes like PQ1Bubble) the assembler adds the
+            // divergence-form flux only to the INSIDE control volume (see
+            // CVFELocalResidual::evalFlux), so the correction must also skip the outside
+            // contribution there — otherwise the outside dof receives an uncompensated
+            // momentum source.
             residual[scvf.insideScvIdx()].axpy(-massFlux, elemVars[scvf.insideScvIdx()].velocity());
-            residual[scvf.outsideScvIdx()].axpy(massFlux, elemVars[scvf.outsideScvIdx()].velocity());
+            if constexpr (requires { scvf.isOverlapping(); })
+            {
+                if (!scvf.isOverlapping())
+                    residual[scvf.outsideScvIdx()].axpy(massFlux, elemVars[scvf.outsideScvIdx()].velocity());
+            }
+            else
+                residual[scvf.outsideScvIdx()].axpy(massFlux, elemVars[scvf.outsideScvIdx()].velocity());
         }
     }
 

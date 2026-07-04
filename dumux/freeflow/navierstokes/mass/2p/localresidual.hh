@@ -12,6 +12,7 @@
 #ifndef DUMUX_FREEFLOW_NAVIERSTOKES_MASS_2P_LOCAL_RESIDUAL_HH
 #define DUMUX_FREEFLOW_NAVIERSTOKES_MASS_2P_LOCAL_RESIDUAL_HH
 
+#include <algorithm>
 #include <type_traits>
 
 #include <dumux/common/numeqvector.hh>
@@ -159,7 +160,10 @@ public:
         {
             const Scalar cFace = 0.5*(elemVolVars[scvf.insideScvIdx()].phaseField()
                                     + elemVolVars[scvf.outsideScvIdx()].phaseField());
-            const Scalar g = cFace*cFace - 1.0;
+            // clamp: for |c| > 1 (overshoot nodes) the mobility must stay 0; the raw
+            // (c^2-1)^2 grows again there and would feed diffusion exactly where the
+            // degenerate law is supposed to switch it off
+            const Scalar g = std::max(0.0, 1.0 - cFace*cFace);
             mobility *= g*g;
         }
         flux[Indices::phaseFieldEqIdx] += -1.0*vtmv(
