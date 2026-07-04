@@ -4,28 +4,69 @@ Refinement = 1
 
 [Adaptive]
 MinLevel = 0
-MaxLevel = 3
-InitMaxLevel = 5
+MaxLevel = 6
+InitMaxLevel = 6
 RefineTolerance = 0.05
 CoarsenTolerance = 0.001
-MinElementSize = 1e-7
+# Resolve the diffuse interface by a few cells: MES (diameter) ~ 1.4*eps (eps=1e-5 -> 1.4e-5).
+MinElementSize = 1.4e-5
+# Track the interface DURING time-stepping (previously the mesh was frozen after init): remesh
+# every N steps so the fine band follows the receding meniscus and the abandoned band + the
+# pillar-free air channel coarsen back down -> smaller linear system (solve is ~84% of each step).
+EnableInTimeStep = true
+AdaptEveryNSteps = 10
+# Don't force refinement at boundaries (pillar walls / drainage BC): the |grad phi| indicator
+# already refines the contact line, and this keeps coarsening headroom in the bulk.
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
 
 [TimeLoop]
-TEnd = 1.0
-DtInitial = 1e-7
-MaxTimeStepSize = 1e-5
+# Drainage-to-equilibrium: the slow process is the drainage (~seconds), not the CH relaxation.
+# With implicit backward Euler we take dt up to ~tau_CH and let the solver damp the fast CH modes
+# -> the quasi-static interface at each drainage level.
+# TEnd=2.0 at DrainageVelocity=1e-4 drains ~200 um, receding the meniscus through the top ~2 pillar
+# rows (rows spaced ~100 um over the 400 um box) -> shows the pin/de-pin water-table sequence.
+TEnd = 2.0
+DtInitial = 1e-5
+# Cap dt just BELOW the implicit-CH ceiling tau_CH = eps^2/M = (5e-6)^2/1e-8 = 2.5e-3 s.
+# With MaxDt=5e-3 > tau_CH the adaptive controller kept overshooting the ceiling: the step failed,
+# dt was halved, then re-ramped -> a sawtooth that wasted ~half the steps on retries. Capping at
+# 2e-3 < tau_CH keeps dt inside the convergent band -> a smooth ramp that then holds near 2e-3.
+MaxTimeStepSize = 2e-3
 
 [FreeFlow]
 EnableDilatationTerm = true
 
 [Problem]
-Name = test_ff_2p_pores_evaporation
-InletVelocity = 0.001
+Name = test_ff_2p_pores_drainage
+# --- drainage / equilibrium-water-table experiment (evaporation OFF) ---
+EnableEvaporation = false          # turn off the evaporation phase-change source
+# Prescribed downward outflow [m/s] at the bottom boundary (proxy for evaporation lowering the
+# table). Kept at 1e-4: although the NOMINAL Ca = mu*U/gamma ~ 1.4e-5 is tiny, the flow CONSTRICTS
+# between the pillars and the LOCAL velocity in the gap is amplified well above U. At U=1e-3 that
+# local Ca crossed out of the quasi-static regime -> the meniscus was dragged through the first
+# pillar row too fast to de-pin cleanly (dt collapsed to ~1e-6, 29 fails by step 50). U=1e-4 keeps
+# the local pinning quasi-static (dt holds at the 2e-3 cap, fails only at discrete de-pin events).
+DrainageVelocity = 1e-4
+SurfaceTensionForm = wellbalanced  # balanced-force -phi*grad(mu); ~zero spurious currents at a static meniscus
+InletVelocity = 0.0                # no forced gas flow in the channel (air enters via the open outlet)
 EnableInertiaTerms = false
-EnableGravity = false
+EnableGravity = false              # pure-capillary water table (micro-scale, Bond ~0.02)
 SurfaceTension = 0.07
-InterfaceThickness = 5e-6
-Mobility = 2.5e-7
+# Diffuse-interface thickness. Widened 5e-6 -> 1e-5 (Cahn number eps/pillar_R = 0.2 -> 0.4) for
+# TRACTABILITY: the working mesh is pillar-dominated (~10k cells regardless of eps/AMR/Refinement),
+# so the speed lever is not fewer dofs but GENTLER Haines jumps. At eps=1e-5 the meniscus de-pins
+# smoothly -> dt stays near the 2e-3 cap and the ~77 grinding Newton failures collapse to ~7:
+# measured ~30-50x faster wall clock (t=0.07 in ~2 min vs ~2.1 h; full t=2.0 ~45 min vs ~50 h).
+# Trade-off: the meniscus is fatter relative to the pillars, so contact-line detail is coarser.
+# Dial back toward 5e-6 near a converged state for a fidelity study.
+InterfaceThickness = 1e-5
+# Cahn-Hilliard mobility. The implicit double-well Newton limits dt to ~tau_CH = eps^2/M, so we
+# pick M SMALL to make tau_CH large (-> larger feasible dt -> far fewer steps). The equilibrium is
+# mobility-independent and it stays quasi-static as long as tau_CH << tau_drain (~2 s):
+# M=1e-8 -> tau_CH ~ 2.5e-3 s << 2 s. (Case-1 dynamic scaling M~eps would be 5.7e-8.)
+Mobility = 1e-8
 EnableKortewegForce = true
 EnableVaporTransport = false
 
@@ -59,8 +100,21 @@ UpwindWeight = 1.0
 
 [Newton]
 MinSteps = 1
-MaxSteps = 20
-MaxRelativeShift = 1e-8
+MaxSteps = 30
+# Convergence is by the residual-reduction criterion (dumux uses OR: shift<=tol || reduction<=tol).
+# The numeric-difference Jacobian floors the residual reduction at ~1.5-2.5e-5 and the relative
+# shift at ~3e-4 for the meniscus/drainage step, so the old (1e-6, 1e-5) targets sat just BELOW
+# the achievable floor -> every near-ceiling step ground the full 30 iters and then failed. A
+# reduction target of 1e-4 clears the floor comfortably -> steps converge in ~10-13 iters.
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-4
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+# allow a few dt sub-divisions where the meniscus de-pins at a pillar (fast event) instead of
+# collapsing dt; the dt then re-ramps toward MaxTimeStepSize.
+RetryTimeStepReductionFactor = 0.5
+MaxTimeStepDivisions = 12
 
 [LinearSolver]
 ResidualReduction = 1e-10

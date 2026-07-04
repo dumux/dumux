@@ -217,6 +217,34 @@ int main(int argc, char** argv)
         // set new dt as suggested by newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
+        // Interface-tracking AMR: keep the fine band on the moving meniscus and coarsen behind it
+        // (the abandoned band + the pillar-free air channel). The mesh is otherwise frozen after
+        // init (~66k dofs) and the linear solve dominates each Newton iteration (~84%), so shrinking
+        // the system directly cuts wall time. Remesh every N>1 steps: the meniscus moves << the
+        // (several-cell) band width between remeshes, and it avoids per-step transfer dissipation.
+        static const int adaptEvery = getParam<int>("Adaptive.AdaptEveryNSteps", 1);
+        if (getParam<bool>("Adaptive.EnableInTimeStep", true)
+            && (timeLoop->timeStepIndex() % adaptEvery == 0))
+        {
+            indicator.calculate(x[massIdx], refineTol, coarsenTol);
+            if (markElements(gridManager.grid(), indicator)
+                && adapt(gridManager.grid(), dataTransfer))
+            {
+                // transfer interpolated the solution onto the new grid
+                xOld = x;
+                couplingManager->updateSolution(x);
+                massGridVariables->updateAfterGridAdaption(x[massIdx]);
+                momentumGridVariables->updateAfterGridAdaption(x[momentumIdx]);
+                // rebuild coupling stencils and the Jacobian/residual structure
+                couplingManager->init(momentumProblem, massProblem,
+                                      std::make_tuple(momentumGridVariables, massGridVariables), x);
+                assembler->updateAfterGridAdaption();
+                std::cout << "\033[1;34m[adapt] step " << timeLoop->timeStepIndex()
+                          << ": leafCells=" << gridManager.grid().leafGridView().size(0)
+                          << "\033[0m" << std::endl;
+            }
+        }
+
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());

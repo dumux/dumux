@@ -87,6 +87,16 @@ public:
         inletVelocity_   = getParam<Scalar>("Problem.InletVelocity", 0.0);
         enableKortewegForce_ = getParam<bool>("Problem.EnableKortewegForce", true);
 
+        // Master switch for the evaporation phase-change source (off = pure flow/drainage).
+        enableEvaporation_ = getParam<bool>("Problem.EnableEvaporation", true);
+        // Prescribed downward drainage velocity at the bottom boundary [m/s]: removes water from
+        // the pore space so the water table recedes to a capillary equilibrium between the pillars.
+        drainageVelocity_ = getParam<Scalar>("Problem.DrainageVelocity", 0.0);
+        // Surface-tension force form: "potential" (mu*grad phi) or "wellbalanced" (-phi*grad mu).
+        // wellbalanced is the balanced-force form (~zero spurious currents at a static meniscus).
+        const auto stForm = getParam<std::string>("Problem.SurfaceTensionForm", "potential");
+        useWellBalancedForce_ = (stForm == "wellbalanced" || stForm == "wellBalanced");
+
         // Contact angle on pillar surfaces (in radians). 90° gives the natural BC (∂φ/∂n = 0).
         contactAngle_ = getParam<Scalar>("Problem.ContactAngleDegrees", 90.0) * M_PI / 180.0;
 
@@ -154,6 +164,8 @@ public:
         {
             if (isInlet_(globalPos))
                 values[0] = parabolicProfile_(globalPos[dimWorld-1]);
+            else if (isBottom_(globalPos))
+                values[dimWorld-1] = -drainageVelocity_; // prescribed downward drainage outflow
         }
         else
         {
@@ -219,22 +231,25 @@ public:
             // f(φ) = (γ/ε)·(1/4)(φ²-1)² → f'(φ) = (γ/ε)·(1/2)·2φ(φ²-1)
             source[Indices::chemicalPotentialEqIdx] = volVars.chemicalPotential() - energyScale_*phi*(phi*phi - 1.0);
 
-            const auto deltaEps = 3.0/2.0 * (1.0 - phi*phi) / interfaceThickness_;
-            if (enableVaporTransport_)
+            if (enableEvaporation_)
             {
-                // Full evaporation: ṁ = k_evap · max(0, c_sat − c_v) · δ_ε  [kg/(m³·s)]
-                // Rate is feedback-controlled by the local vapor concentration.
-                const auto cv = volVars.vaporConcentration();
-                const auto mDot = evaporationRateCoeff_ * std::max(Scalar(0), vaporSatConc_ - cv) * deltaEps;
-                source[Indices::phaseFieldEqIdx] -= mDot / rho1_;
-                source[Indices::vaporEqIdx]      += mDot;
-            }
-            else
-            {
-                // Simplified evaporation: ṁ = k_evap · c_sat · δ_ε  [kg/(m³·s)]
-                // Assumes maximum driving force (c_v = 0 everywhere); no vapor equation coupling.
-                const auto mDot = evaporationRateCoeff_ * vaporSatConc_ * deltaEps;
-                source[Indices::phaseFieldEqIdx] -= mDot / rho1_;
+                const auto deltaEps = 3.0/2.0 * (1.0 - phi*phi) / interfaceThickness_;
+                if (enableVaporTransport_)
+                {
+                    // Full evaporation: ṁ = k_evap · max(0, c_sat − c_v) · δ_ε  [kg/(m³·s)]
+                    // Rate is feedback-controlled by the local vapor concentration.
+                    const auto cv = volVars.vaporConcentration();
+                    const auto mDot = evaporationRateCoeff_ * std::max(Scalar(0), vaporSatConc_ - cv) * deltaEps;
+                    source[Indices::phaseFieldEqIdx] -= mDot / rho1_;
+                    source[Indices::vaporEqIdx]      += mDot;
+                }
+                else
+                {
+                    // Simplified evaporation: ṁ = k_evap · c_sat · δ_ε  [kg/(m³·s)]
+                    // Assumes maximum driving force (c_v = 0 everywhere); no vapor equation coupling.
+                    const auto mDot = evaporationRateCoeff_ * vaporSatConc_ * deltaEps;
+                    source[Indices::phaseFieldEqIdx] -= mDot / rho1_;
+                }
             }
         }
         else
@@ -243,8 +258,13 @@ public:
             {
                 const auto ip = ipData(fvGeometry, scv);
                 const auto grads = this->couplingManager().gradients(element, fvGeometry, ip);
-                const auto mu = this->couplingManager().values(element, fvGeometry, ip)[CouplingManager::chemicalPotentialIdx];
-                source = mu * grads[CouplingManager::phaseFieldIdx];
+                const auto values = this->couplingManager().values(element, fvGeometry, ip);
+                if (useWellBalancedForce_)
+                    // balanced-force form -phi*grad(mu): at CH equilibrium grad(mu)=0 -> exactly
+                    // zero force, so a static meniscus has ~no spurious currents.
+                    source = -values[CouplingManager::phaseFieldIdx] * grads[CouplingManager::chemicalPotentialIdx];
+                else
+                    source = values[CouplingManager::chemicalPotentialIdx] * grads[CouplingManager::phaseFieldIdx];
             }
         }
 
@@ -485,6 +505,9 @@ private:
     Scalar vaporDiffusivity_;     // D_gas  [m²/s]
     Scalar inletVelocity_;
     bool enableKortewegForce_;
+    bool enableEvaporation_;
+    Scalar drainageVelocity_;
+    bool useWellBalancedForce_;
     Scalar contactAngle_;
     Scalar pillarRadius_;
     std::vector<GlobalPosition> pillarCenters_;

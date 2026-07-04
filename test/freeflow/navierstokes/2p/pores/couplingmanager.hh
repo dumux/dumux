@@ -81,10 +81,14 @@ namespace Detail {
 template<class Traits, class DiscretizationMethod = typename Detail::MomentumDiscretizationMethod<Traits>::type>
 struct CouplingManagerSupportsMultithreadedAssemblySelectorTwoP;
 
-// multi-threading is not supported because we have only one coupling context instance and a mutable cache
+// Multi-threaded assembly is safe: the base CVFEFreeFlowCouplingManager builds the momentum
+// coupling context locally per call (empty struct when caching is on), so there is no shared
+// mutable context; assembly coloring guarantees same-color elements share no vertices, hence
+// deflection writes to disjoint curSol/volVars-cache indices. (The stale false_type comment was
+// inherited from the base manager's old state.)
 template<class Traits, class D>
 struct CouplingManagerSupportsMultithreadedAssemblySelectorTwoP<Traits, DiscretizationMethods::CVFE<D>>
-{ using type = std::false_type; };
+{ using type = std::true_type; };
 
 } // end namespace Detail
 
