@@ -78,4 +78,6 @@ The script produces two figures:
 
 ![Convergence plot](plate_mindlin_reissner_convergence.png)
 
-![Deformation](plate_mindlin_reissner_deformation_3d.png)
+<!--DOXYGEN_ONLY <b>Deformation</b> — interactive 3D view; drag to rotate, scroll to zoom, right-drag to pan.-->
+
+<!--DOXYGEN_ONLY @interactivescene{scene_plate_mindlin_reissner}-->

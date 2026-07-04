@@ -72,4 +72,6 @@ The script produces two figures:
 
 ![Convergence plot](plate_kirchhoff_love_convergence.png)
 
-![Deformation](plate_kirchhoff_love_deformation_3d.png)
+<!--DOXYGEN_ONLY <b>Deformation</b> — interactive 3D view; drag to rotate, scroll to zoom, right-drag to pan.-->
+
+<!--DOXYGEN_ONLY @interactivescene{scene_plate_kirchhoff_love}-->
