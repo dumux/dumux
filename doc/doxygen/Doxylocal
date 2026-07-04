@@ -30,6 +30,9 @@ TOC_INCLUDE_HEADINGS   = 4
 # custom doxygen commands
 ALIASES                += mermaid{1}="@htmlonly <div class=\"mermaid\"> @endhtmlonly @htmlinclude \"\1.mmd\" @htmlonly </div> @endhtmlonly"
 ALIASES                += refdir{1}="@ref @top_srcdir@/\1"
+# embed an interactive 3D scene rendered by dumux-scene.js; the geometry is
+# loaded from a <script> (works from file:// too), see bin/postprocessing/vtk_to_scene.py
+ALIASES                += interactivescene{1}="@htmlonly <script src=\"\1.js\"></script> <div class=\"dumux-scene\" data-scene=\"\1\"></div> @endhtmlonly"
 
 # Input filters run over content before it is parsed by Doxygen.
 # - Format markdown math for Doxygen. See the documentation in
@@ -59,6 +62,10 @@ HTML_EXTRA_FILES       = @srcdir@/doxygen-awesome-darkmode-toggle.js \
                          @srcdir@/doxygen-awesome-paragraph-link.js \
                          @srcdir@/doxygen-awesome-interactive-toc.js \
                          @srcdir@/dumux-custom.js \
+                         @srcdir@/dumux-scene.js \
+                         @srcdir@/scenes/scene_plate_kirchhoff_love.js \
+                         @srcdir@/scenes/scene_plate_mindlin_reissner.js \
+                         @srcdir@/scenes/scene_plate_membrane.js \
                          @srcdir@/sidebar-slider.js
 
 HTML_EXTRA_STYLESHEET  = @srcdir@/doxygen-awesome.css \

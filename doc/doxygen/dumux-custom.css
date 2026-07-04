@@ -306,3 +306,13 @@ body.sidebar-resizing {
 #nav-sync {
     display: none !important;
 }
+
+/* Interactive 3D scenes (rendered by dumux-scene.js using vtk.js) */
+.dumux-scene {
+    width: 100%;
+    height: 560px;
+    position: relative;
+    margin: 1em 0;
+    overflow: hidden;
+    background: var(--page-background-color, #ffffff);
+}
