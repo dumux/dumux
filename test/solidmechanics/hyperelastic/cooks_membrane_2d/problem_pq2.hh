@@ -7,14 +7,19 @@
 #ifndef DUMUX_HYPERELASTIC_COOKS_MEMBRANE_PQ2_PROBLEM_HH
 #define DUMUX_HYPERELASTIC_COOKS_MEMBRANE_PQ2_PROBLEM_HH
 
+#include <vector>
+
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/constraintinfo.hh>
 #include <dumux/common/indextraits.hh>
-#include <dumux/common/fvproblemwithspatialparams.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/problemwithspatialparams.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
 
@@ -22,36 +27,34 @@ namespace Dumux {
 
 /*!
  * \brief 2D Cook's membrane — SPP-1748 benchmark with hyperelastic material ψ₁.
- *        Uses the new Experimental assembler interface.
+ *        Uses the current Experimental::Assembler CVFE interface.
  *
  * Geometry: tapered panel (0,0)–(48,44)–(48,60)–(0,44) mm.
  * BCs:
- *   x=0:  clamped (u=0)
+ *   x=0:  clamped (u=0), applied via per-dof Dirichlet constraints
  *   x=48: shear traction T=(0, shearTraction)
- *   rest:  traction-free
+ *   rest: traction-free
  *
  * Material ψ₁ (SPP-1748 Eq. 2.1):
  *   P = µ(F − F⁻ᵀ) + λ/2·(J²−1)·F⁻ᵀ
  */
 template<class TypeTag>
-class HyperelasticCooksMembraneP2Problem : public FVProblemWithSpatialParams<TypeTag>
+class HyperelasticCooksMembraneP2Problem : public Dumux::Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Dumux::Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     static constexpr int dim = GridView::dimension;
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     using Tensor = Dune::FieldMatrix<Scalar, dim, dim>;
+    using BoundaryTypes = Dumux::Experimental::BoundaryTypes<numEq>;
     using ConstraintInfo = Dumux::DirichletConstraintInfo<numEq>;
     using ConstraintValues = Dune::FieldVector<Scalar, numEq>;
     using DirichletConstraintData = Dumux::DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
@@ -61,50 +64,26 @@ public:
     : ParentType(gridGeometry)
     , shearTraction_(getParam<Scalar>("Problem.ShearTraction"))
     {
-        CVFE::appendDirichletConstraints(*this,
-            [&](const auto& fvGeometry, const auto&, const auto& localDof) {
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            },
-            constraints_);
+        appendDirichletConstraints_();
     }
 
-    BoundaryTypes boundaryTypes(const FVElementGeometry&, const Intersection& is) const
-    { return boundaryTypesAtPos(is.geometry().center()); }
-
+    //! Flux (traction) boundaries: all faces except the clamped x=0 face.
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
-        BoundaryTypes values;
-        if (globalPos[0] < eps_)
-            values.setAllDirichlet();
-        else
-            values.setAllNeumann();
+        BoundaryTypes values{};
+        if (globalPos[0] >= eps_)
+            values.setAllFluxBoundary();
         return values;
     }
 
-    PrimaryVariables dirichletAtPos(const GlobalPosition&) const
-    { return PrimaryVariables(0.0); }
-
-    //! Per-QP traction (sign: -T_applied for new interface convention).
+    //! Per-QP traction: shear T=(0,-shearTraction) on the x=48 face (box flux sign).
     template<class EV, class IpData>
-    NumEqVector boundaryFlux(const FVElementGeometry&, const EV&,
-                             const IpData& ipData) const
+    NumEqVector boundaryFlux(const FVElementGeometry&, const EV&, const IpData& ipData) const
     {
         NumEqVector traction(0.0);
         if (ipData.global()[0] > 48.0 - eps_)
             traction[1] = -shearTraction_;
         return traction;
-    }
-
-    //! Integrated Neumann traction over boundary scvf (CV path).
-    template<class EV>
-    NumEqVector boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
-                                     const EV& elemVars,
-                                     const SubControlVolumeFace& scvf) const
-    {
-        NumEqVector flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-            flux += qpData.weight() * this->boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-        return flux;
     }
 
     const auto& constraints() const { return constraints_; }
@@ -126,6 +105,27 @@ public:
     }
 
 private:
+    void appendDirichletConstraints_()
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+            {
+                if (boundaryFace.center()[0] >= eps_) // only the clamped x=0 face
+                    continue;
+                for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                {
+                    ConstraintInfo info;
+                    info.setAll(); // clamp all components
+                    ConstraintValues values(0.0);
+                    constraints_.push_back(DirichletConstraintData{std::move(info), std::move(values), localDof.dofIndex()});
+                }
+            }
+        }
+    }
+
     static constexpr Scalar eps_ = 1e-6;
     Scalar shearTraction_;
     std::vector<DirichletConstraintData> constraints_;

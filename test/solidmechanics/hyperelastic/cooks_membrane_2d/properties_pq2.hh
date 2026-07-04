@@ -91,59 +91,37 @@ public:
     }
 
     //! FE contribution for non-CV (edge midpoint) DOFs via element QPs.
+    //! Signature matches the current Experimental::LocalResidual base (5 args);
+    //! boundary tractions for all dofs are added by the assembler base via the
+    //! problem's boundaryFlux(), so only the FE volume term is added here.
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const Element& element,
                                            const FVElementGeometry& fvGeometry,
-                                           const ElementVariables& elemVars,
-                                           const auto& elemBcTypes) const
+                                           const ElementVariables& elemVars) const
     {
         if constexpr (!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
             return;
-
-        if (nonCVLocalDofs(fvGeometry).empty())
-            return;
-
-        // Volume: ∫ P : ∇φ_i dX  for non-CV DOFs
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
+        else
         {
-            const auto& ipCache = cache(elemVars, qpData.ipData());
-            Tensor F(0.0);
-            for (const auto& localDof : localDofs(fvGeometry))
-                for (int d = 0; d < dim; ++d)
-                    F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
-            for (int d = 0; d < dim; ++d) F[d][d] += 1.0;
-            const auto P = problem.firstPiolaKirchhoffStressTensor(F);
-            for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
-            {
-                const auto idx = nonCVdof.index();
-                for (int i = 0; i < dim; ++i)
-                    for (int j = 0; j < dim; ++j)
-                        residual[idx][i] += P[i][j] * ipCache.gradN(idx)[j] * qpData.weight();
-            }
-        }
+            if (nonCVLocalDofs(fvGeometry).empty())
+                return;
 
-        // Boundary: T · φ_i for Neumann intersections
-        if (!elemBcTypes.hasNeumann())
-            return;
-        for (const auto& is : intersections(fvGeometry.gridGeometry().gridView(), element))
-        {
-            if (!is.boundary()) continue;
-            const auto isecBcTypes = problem.boundaryTypesAtPos(is.geometry().center());
-            if (!isecBcTypes.hasNeumann()) continue;
-
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, is))
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
                 const auto& ipCache = cache(elemVars, qpData.ipData());
-                const auto flux = problem.boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-                const auto& shapeValues = ipCache.shapeValues();
+                Tensor F(0.0);
+                for (const auto& localDof : localDofs(fvGeometry))
+                    for (int d = 0; d < dim; ++d)
+                        F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
+                for (int d = 0; d < dim; ++d) F[d][d] += 1.0;
+                const auto P = problem.firstPiolaKirchhoffStressTensor(F);
                 for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
                 {
                     const auto idx = nonCVdof.index();
-                    for (int eqIdx = 0; eqIdx < dim; ++eqIdx)
-                        if (isecBcTypes.isNeumann(eqIdx))
-                            residual[idx][eqIdx] +=
-                                double(shapeValues[idx]) * flux[eqIdx] * qpData.weight();
+                    for (int i = 0; i < dim; ++i)
+                        for (int j = 0; j < dim; ++j)
+                            residual[idx][i] += P[i][j] * ipCache.gradN(idx)[j] * qpData.weight();
                 }
             }
         }
