@@ -23,7 +23,7 @@
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include "spatialparams.hh"
-#include "problem3d.hh"
+#include "problem3d_pq2.hh"
 
 namespace Dumux {
 
@@ -171,7 +171,7 @@ struct CooksMembrane3D_PQ2
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::CooksMembrane3D_PQ2>
-{ using type = CooksMembrane3DProblem<TypeTag>; };
+{ using type = CooksMembrane3DProblemPQ2<TypeTag>; };
 
 template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::CooksMembrane3D_PQ2>
