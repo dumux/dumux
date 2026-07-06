@@ -2,5 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(cahnhilliard)
+add_subdirectory(common)
 add_subdirectory(freeenergy)
 add_subdirectory(mobility)
