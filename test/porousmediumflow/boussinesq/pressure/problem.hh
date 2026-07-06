@@ -105,8 +105,8 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
-        const Scalar zMax = this->gridGeometry().bBoxMax()[dimWorld-1];
-        if (scvf.center()[dimWorld-1] > zMax - eps_)
+        const Scalar zMin = this->gridGeometry().bBoxMin()[dimWorld-1];
+        if (scvf.center()[dimWorld-1] < zMin + eps_)
         {
             if (fvGeometry.scv(scvf.insideScvIdx()).dofPosition()[0] < eps_)
             {
