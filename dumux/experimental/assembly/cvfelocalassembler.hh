@@ -559,6 +559,109 @@ private:
     }
 };
 
+
+/*!
+ * \ingroup Experimental
+ * \ingroup Assembly
+ * \ingroup CVFEDiscretization
+ * \brief Control volume finite element local assembler using a hand-coded analytic
+ *        Jacobian within the multistage (e.g. DIRK) time-integration framework.
+ *
+ * Mirrors the standard Dumux::FVAssembler<DiffMethod::analytic> local assembler, but
+ * routes the per-scv/scvf derivative calls through the MultiStageFVLocalOperator, which
+ * applies this stage's temporal/spatial weights (storage derivatives are RAW, i.e. without
+ * the 1/dt of implicit Euler; the temporal weight carries the time scaling).
+ */
+template<class TypeTag, class Assembler, class Implementation>
+class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, Implementation>
+: public CVFELocalAssemblerBase<TypeTag, Assembler,
+                                NonVoidOr<CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, Implementation>, Implementation>>
+{
+    using ThisType = CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, Implementation>;
+    using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, NonVoidOr<ThisType, Implementation>>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+
+public:
+
+    using LocalResidual = typename ParentType::LocalResidual;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Computes the derivatives (analytically) with respect to the given element
+     *        and adds them to the global matrix. The element residual is computed by the
+     *        base class and passed in as origResiduals (unused here).
+     */
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobian(JacobianMatrix& A, GridVariables& gridVariables,
+                          const ElementResidualVector& origResiduals,
+                          const PartialReassembler* partialReassembler = nullptr)
+    {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for analytic differentiation");
+
+        // get some aliases for convenience
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& problem = this->asImp_().problem();
+        const auto& curElemVolVars = this->curElemVolVars();
+        const auto& elemFluxVarsCache = this->elemFluxVarsCache();
+
+        // calculation of the source and storage derivatives (diagonal blocks, mass lumping)
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto dofIdx = scv.dofIndex();
+            const auto& volVars = curElemVolVars[scv];
+
+            // storage derivatives (weighted by this stage's temporal weight, RAW * volume)
+            this->localResidual().addStorageDerivatives(A[dofIdx][dofIdx],
+                                                        problem,
+                                                        element,
+                                                        fvGeometry,
+                                                        volVars,
+                                                        scv);
+
+            // source derivatives (weighted by this stage's spatial weight)
+            this->localResidual().addSourceDerivatives(A[dofIdx][dofIdx],
+                                                       problem,
+                                                       element,
+                                                       fvGeometry,
+                                                       volVars,
+                                                       scv);
+        }
+
+        // flux derivatives over the element's interior/Neumann faces (weighted spatially)
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary())
+            {
+                this->localResidual().addFluxDerivatives(A,
+                                                         problem,
+                                                         element,
+                                                         fvGeometry,
+                                                         curElemVolVars,
+                                                         elemFluxVarsCache,
+                                                         scvf);
+            }
+            else
+            {
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                if (this->elemBcTypes().get(fvGeometry, insideScv).hasNeumann())
+                {
+                    this->localResidual().addRobinFluxDerivatives(A[insideScv.dofIndex()],
+                                                                  problem,
+                                                                  element,
+                                                                  fvGeometry,
+                                                                  curElemVolVars,
+                                                                  elemFluxVarsCache,
+                                                                  scvf);
+                }
+            }
+        }
+    }
+};
+
 } // end namespace Dumux
 
 #endif

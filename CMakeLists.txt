@@ -102,29 +102,16 @@ if(CMAKE_Fortran_COMPILER)
   enable_language(Fortran)
   find_package(MUMPS QUIET COMPONENTS d)
   if(MUMPS_FOUND)
-    # The MUMPS package config may bake absolute paths to the open-mpi build it was
-    # compiled against. If that open-mpi has since been upgraded, those paths no longer
-    # exist and break linking. Re-point any non-existent absolute library dependency of
-    # the MUMPS targets to this build's MPI::MPI_Fortran (which tracks the current MPI).
-    find_package(MPI QUIET COMPONENTS C Fortran)
-    foreach(_mumps_target MUMPS::COMMON MUMPS::DMUMPS)
-      if(TARGET ${_mumps_target})
-        get_target_property(_mumps_deps ${_mumps_target} INTERFACE_LINK_LIBRARIES)
-        if(_mumps_deps)
-          set(_mumps_fixed "")
-          foreach(_dep IN LISTS _mumps_deps)
-            if(IS_ABSOLUTE "${_dep}" AND NOT EXISTS "${_dep}")
-              list(APPEND _mumps_fixed MPI::MPI_Fortran)
-            else()
-              list(APPEND _mumps_fixed "${_dep}")
-            endif()
-          endforeach()
-          list(REMOVE_DUPLICATES _mumps_fixed)
-          set_target_properties(${_mumps_target} PROPERTIES INTERFACE_LINK_LIBRARIES "${_mumps_fixed}")
-        endif()
-      endif()
-    endforeach()
+    # remember where MUMPS was found so downstream modules can find it too
+    set(DUMUX_MUMPS_HINT_DIR "${MUMPS_DIR}")
+    # repair absolute paths to a possibly upgraded MPI baked into the MUMPS targets
+    include(DumuxMumpsTargetFixup)
+    dumux_fix_mumps_targets()
+  else()
+    message(STATUS "MUMPS not found, MUMPS backend will be disabled")
   endif()
+else()
+  message(STATUS "No Fortran compiler found, MUMPS backend will be disabled")
 endif()
 
 find_package(Trilinos COMPONENTS Teuchos Tpetra Amesos2)
@@ -265,6 +252,24 @@ if (OpenMP_FOUND)
   string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
     "# Make sure OpenMP is found"
     "find_dependency(OpenMP)"
+  )
+endif()
+# make sure downstream projects can find MUMPS too. Since MUMPS is linked into the
+# Dumux interface target above it is a hard dependency for downstream modules. Its
+# package config pulls in MPI (C+Fortran), LAPACK and SCALAPACK, so we (re-)enable the
+# Fortran language if a compiler is available before resolving the dependency.
+if (MUMPS_FOUND)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure MUMPS is found"
+    "include(CheckLanguage)"
+    "check_language(Fortran)"
+    "if(CMAKE_Fortran_COMPILER AND NOT CMAKE_Fortran_COMPILER_LOADED)"
+    "  enable_language(Fortran)"
+    "endif()"
+    "find_dependency(MUMPS COMPONENTS d HINTS ${DUMUX_MUMPS_HINT_DIR})"
+    "# repair absolute paths to a possibly upgraded MPI baked into the MUMPS targets"
+    "include(\${dumux_MODULE_PATH}/DumuxMumpsTargetFixup.cmake)"
+    "dumux_fix_mumps_targets()"
   )
 endif()
 string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}

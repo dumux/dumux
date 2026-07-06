@@ -32,6 +32,10 @@
 // own namespace, which shadows the global MUMPS struct. Include only the one in use.
 #if defined(USE_MUMPS_SOLVER)
 #include <dumux/linear/mumpssolver.hh>
+#elif defined(USE_MUMPS_RAS)
+// Block-diagonal (Restricted Additive Schwarz) preconditioner doing an exact local
+// solve with MUMPS on each rank, used through the runtime solver factory backend.
+#include <dumux/linear/mumpspreconditioner.hh>
 #else
 #include <dumux/linear/trilinossolvers.hh>
 #endif
@@ -148,12 +152,19 @@ int main(int argc, char** argv)
 #if defined(USE_MUMPS_SOLVER)
     using LinearSolver = DirectSolverMumps<LinearSolverTraits<GridGeometry>,
                                            LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(*gridGeometry, leafGridView, gridGeometry->dofMapper());
+#elif defined(USE_MUMPS_RAS)
+    // Iterative solver with a block-diagonal parallel preconditioner: in an overlapping
+    // parallel run the factory wraps the sequential exact MUMPS block solve (seqmumps) into
+    // a Dune::BlockPreconditioner, i.e. Restricted Additive Schwarz with exact subdomain solves.
+    using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
+                                                  LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
 #else
     using LinearSolver = DirectSolverAmesos2<LinearSolverTraits<GridGeometry>,
                                              LinearAlgebraTraitsFromAssembler<Assembler>>;
-#endif
-
     auto linearSolver = std::make_shared<LinearSolver>(*gridGeometry, leafGridView, gridGeometry->dofMapper());
+#endif
 
     // the non-linear solver
     using NewtonSolver = Dumux::RichardsNewtonSolver<Assembler, LinearSolver>;

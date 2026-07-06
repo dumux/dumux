@@ -1,0 +1,55 @@
+[MixedDimension]
+NumCircleSegments = 10
+
+# real time span: 3 days with daily VTK episodes and adaptive time stepping
+[TimeLoop]
+DtInitial = 8640 # [s]
+MaxTimeStepSize = 86400 # [s]
+TEnd = 259200 # [s] (3 days)
+EpisodeLength = 86400 # [s] (1 day)
+
+[Root.Grid]
+File = ../grids/lupine.dgf
+SurfaceParamIndex = 2
+Refinement = 0
+
+[Soil.Grid]
+LowerLeft = -0.05 -0.05 -0.1
+UpperRight = 0.05 0.05 0
+Cells = 20 20 20
+Overlap = 1
+
+[Problem]
+ContaminantMoleFraction = 3e-7
+EnableVtkOutput = true
+EnableGravity = true
+InitTopSaturation = 0.3
+
+[Soil]
+SpatialParams.Permeability = 2.57e-12 # [m^2]
+SpatialParams.Porosity = 0.4 # [-]
+SpatialParams.Swr = 0.05
+SpatialParams.VanGenuchtenAlpha = 2.956e-4
+SpatialParams.VanGenuchtenN = 1.5
+Problem.Name = 3d
+
+[Root]
+SpatialParams.Kx = 5.0968e-17
+SpatialParams.Kr = 2.04e-13
+SpatialParams.Porosity = 0.4
+Problem.Name = 1d
+
+[Component]
+LiquidDiffusionCoefficient = 2.3e-9
+Name = D2O
+MolarMass = 20e-3 # in kg/mol
+
+[BoundaryConditions]
+InitialRootPressure = -1.2e6 # [Pa]
+TranspirationRate = 2.15e-8 # [kg / s]
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e6 1
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p2c_richards2c_production

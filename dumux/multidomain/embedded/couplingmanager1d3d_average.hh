@@ -16,7 +16,9 @@
 #include <vector>
 
 #include <dune/common/timer.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/geometry/quadraturerules.hh>
+#include <dune/grid/common/gridenums.hh>
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
@@ -137,7 +139,8 @@ public:
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
-        std::cout << "Initializing the point sources..." << std::endl;
+        if (this->gridView(bulkIdx).comm().rank() == 0)
+            std::cout << "Initializing the point sources..." << std::endl;
 
         // clear all internal members like pointsource vectors and stencils
         // initializes the point source id counter
@@ -150,6 +153,24 @@ public:
 
         // intersect the bounding box trees
         this->glueGrids();
+
+        // Optional overlap-sufficiency check for parallel (overlapping) decompositions with a
+        // box-shaped bulk domain (e.g. YaspGrid): a circle-average integration point of an
+        // *owned* bulk cell that lies inside the *global* bulk domain but is not found in the
+        // *local* bounding box tree signals that the bulk overlap is too thin to resolve the
+        // circle average near a subdomain boundary (silent wrong result otherwise).
+        static const bool checkOverlap = getParam<bool>("MixedDimension.CheckCircleOverlap", false);
+        const auto& globalBBoxMin = bulkGridGeometry.bBoxMin(); // globally reduced
+        const auto& globalBBoxMax = bulkGridGeometry.bBoxMax();
+        const Scalar overlapCheckEps = 1e-7*(globalBBoxMax - globalBBoxMin).two_norm();
+        std::size_t overlapViolations = 0;
+        const auto insideGlobalBulk = [&](const GlobalPosition& p)
+        {
+            for (int d = 0; d < dimWorld; ++d)
+                if (p[d] < globalBBoxMin[d] + overlapCheckEps || p[d] > globalBBoxMax[d] - overlapCheckEps)
+                    return false;
+            return true;
+        };
 
         // iterate over all intersection and add point sources
         const auto& lowDimProblem = this->problem(lowDimIdx);
@@ -183,6 +204,13 @@ public:
                 if (bulkElementIndices.empty())
                     continue;
 
+                // for the overlap check: does this quadrature point couple to a locally-owned bulk cell?
+                bool qpCouplesInterior = false;
+                if (checkOverlap)
+                    for (const auto bulkEIdx : bulkElementIndices)
+                        if (bulkGridGeometry.element(bulkEIdx).partitionType() == Dune::InteriorEntity)
+                        { qpCouplesInterior = true; break; }
+
                 //////////////////////////////////////////////////////////
                 // get circle average connectivity and interpolation data
                 //////////////////////////////////////////////////////////
@@ -209,7 +237,11 @@ public:
                 {
                     const auto circleBulkElementIndices = intersectingEntities(circlePoints[k], bulkTree);
                     if (circleBulkElementIndices.empty())
+                    {
+                        if (checkOverlap && qpCouplesInterior && insideGlobalBulk(circlePoints[k]))
+                            ++overlapViolations;
                         continue;
+                    }
 
                     ++insideCirclePoints;
                     const auto localCircleAvgWeight = circleAvgWeight / circleBulkElementIndices.size();
@@ -373,7 +405,20 @@ public:
             }
         });
 
-        std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
+        // collectively verify the overlap was sufficient (all ranks throw together, no deadlock)
+        if (checkOverlap)
+        {
+            overlapViolations = this->gridView(bulkIdx).comm().sum(overlapViolations);
+            if (overlapViolations > 0)
+                DUNE_THROW(Dune::InvalidStateException,
+                    "Embedded 1d3d average coupling: " << overlapViolations << " circle-average "
+                    "integration point(s) of owned bulk cells lie inside the global bulk domain but "
+                    "outside the local (overlap) region. Increase the bulk grid overlap to at least "
+                    "ceil(maxRadius / bulkCellSize).");
+        }
+
+        if (this->gridView(bulkIdx).comm().rank() == 0)
+            std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
     }
 
     /*!

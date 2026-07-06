@@ -18,6 +18,73 @@
 
 namespace Dumux::Experimental {
 
+namespace Detail {
+
+//! Lightweight proxies that scale every scalar `+=` written through
+//! `proxy[i][j][r][c] += d` by a fixed weight `w` (so the underlying matrix
+//! receives `+= w*d`). Used to apply a multistage spatial/temporal weight to
+//! hand-coded analytic Jacobian contributions without modifying the (validated)
+//! derivative math, which writes directly into the global matrix.
+template<class Scalar>
+class ScaledScalarRef
+{
+public:
+    ScaledScalarRef(Scalar& ref, double w) : ref_(ref), w_(w) {}
+    template<class T>
+    ScaledScalarRef& operator+=(const T& d) { ref_ += w_*d; return *this; }
+    template<class T>
+    ScaledScalarRef& operator-=(const T& d) { ref_ -= w_*d; return *this; }
+private:
+    Scalar& ref_;
+    double w_;
+};
+
+template<class BlockRow>
+class ScaledBlockRowProxy
+{
+public:
+    ScaledBlockRowProxy(BlockRow& row, double w) : row_(row), w_(w) {}
+    auto operator[](std::size_t c) { return ScaledScalarRef<std::decay_t<decltype(row_[c])>>(row_[c], w_); }
+private:
+    BlockRow& row_;
+    double w_;
+};
+
+template<class Block>
+class ScaledBlockProxy
+{
+public:
+    ScaledBlockProxy(Block& block, double w) : block_(block), w_(w) {}
+    auto operator[](std::size_t r) { return ScaledBlockRowProxy<std::decay_t<decltype(block_[r])>>(block_[r], w_); }
+private:
+    Block& block_;
+    double w_;
+};
+
+template<class Row>
+class ScaledRowProxy
+{
+public:
+    ScaledRowProxy(Row& row, double w) : row_(row), w_(w) {}
+    auto operator[](std::size_t j) { return ScaledBlockProxy<std::decay_t<decltype(row_[j])>>(row_[j], w_); }
+private:
+    Row& row_;
+    double w_;
+};
+
+template<class Matrix>
+class ScaledMatrixProxy
+{
+public:
+    ScaledMatrixProxy(Matrix& A, double w) : A_(A), w_(w) {}
+    auto operator[](std::size_t i) { return ScaledRowProxy<std::decay_t<decltype(A_[i])>>(A_[i], w_); }
+private:
+    Matrix& A_;
+    double w_;
+};
+
+} // end namespace Detail
+
 template<class LocalOperator>
 class MultiStageFVLocalOperator
 {
@@ -101,6 +168,83 @@ public:
 
     const auto& problem() const
     { return op_.problem(); }
+
+    /*!
+     * \name Analytic-Jacobian forwarders applying the multistage stage weights.
+     *
+     * The per-stage weighted residual is  tWeight*storage + sWeight*(flux+source),
+     * so the assembled Jacobian block is
+     *   A = tWeight * d(volume*computeStorage)/du  +  sWeight * [ d(flux)/du + d(source)/du ].
+     * The wrapped operator provides RAW (un-time-scaled) storage derivatives and the
+     * (un-scaled) flux/source derivatives; here we attach the temporal/spatial weights.
+     */
+    // \{
+
+    //! storage block (diagonal): += temporalWeight * volume * d(computeStorage)/du
+    template<class PartialDerivativeMatrix, class Problem, class Element, class FVGeometry, class VolVars, class SubControlVolume>
+    void addStorageDerivatives(PartialDerivativeMatrix& A_ii,
+                               const Problem& problem,
+                               const Element& element,
+                               const FVGeometry& fvGeometry,
+                               const VolVars& curVolVars,
+                               const SubControlVolume& scv) const
+    {
+        if (std::abs(temporalWeight_) < 1e-6)
+            return;
+        std::decay_t<PartialDerivativeMatrix> raw(0.0);
+        op_.addStorageDerivativesRaw(raw, problem, element, fvGeometry, curVolVars, scv);
+        A_ii.axpy(temporalWeight_, raw);
+    }
+
+    //! source block (diagonal): += spatialWeight * d(source)/du
+    template<class PartialDerivativeMatrix, class Problem, class Element, class FVGeometry, class VolVars, class SubControlVolume>
+    void addSourceDerivatives(PartialDerivativeMatrix& A_ii,
+                              const Problem& problem,
+                              const Element& element,
+                              const FVGeometry& fvGeometry,
+                              const VolVars& curVolVars,
+                              const SubControlVolume& scv) const
+    {
+        if (std::abs(spatialWeight_) < 1e-6)
+            return;
+        std::decay_t<PartialDerivativeMatrix> raw(0.0);
+        op_.addSourceDerivatives(raw, problem, element, fvGeometry, curVolVars, scv);
+        A_ii.axpy(spatialWeight_, raw);
+    }
+
+    //! flux block (whole element stencil): += spatialWeight * d(flux)/du
+    template<class JacobianMatrix, class Problem, class Element, class FVGeometry, class ElemVolVars, class ElemFluxVarsCache, class SubControlVolumeFace>
+    void addFluxDerivatives(JacobianMatrix& A,
+                            const Problem& problem,
+                            const Element& element,
+                            const FVGeometry& fvGeometry,
+                            const ElemVolVars& curElemVolVars,
+                            const ElemFluxVarsCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
+    {
+        if (std::abs(spatialWeight_) < 1e-6)
+            return;
+        Detail::ScaledMatrixProxy<JacobianMatrix> scaledA(A, spatialWeight_);
+        op_.addFluxDerivatives(scaledA, problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+    }
+
+    //! Robin/Neumann flux block (diagonal of inside dof): += spatialWeight * d(flux)/du
+    template<class PartialDerivativeMatrices, class Problem, class Element, class FVGeometry, class ElemVolVars, class ElemFluxVarsCache, class SubControlVolumeFace>
+    void addRobinFluxDerivatives(PartialDerivativeMatrices& A_i,
+                                 const Problem& problem,
+                                 const Element& element,
+                                 const FVGeometry& fvGeometry,
+                                 const ElemVolVars& curElemVolVars,
+                                 const ElemFluxVarsCache& elemFluxVarsCache,
+                                 const SubControlVolumeFace& scvf) const
+    {
+        if (std::abs(spatialWeight_) < 1e-6)
+            return;
+        Detail::ScaledRowProxy<PartialDerivativeMatrices> scaledA_i(A_i, spatialWeight_);
+        op_.addRobinFluxDerivatives(scaledA_i, problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+    }
+
+    // \}
 
     // some old interface (TODO: get rid of this)
     // (stationary is also the wrong word by the way, systems with zero

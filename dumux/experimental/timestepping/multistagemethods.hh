@@ -263,6 +263,89 @@ private:
     std::array<Scalar, 4> paramD_;
 };
 
+/*!
+ * \brief A fourth order, five-stage, L-stable, stiffly-accurate SDIRK scheme
+ * \note Hairer & Wanner SDIRK4 (gamma=1/4); coefficients verified with nodepy
+ *       (order 4, R(inf)=0 => L-stable, b = last row of A => stiffly accurate).
+ *       All five stages are implicit (no explicit first stage), so it is well-posed
+ *       for the algebraic (zero-storage) momentum equation, unlike an ESDIRK.
+ */
+template<class Scalar>
+class SDIRKFourthOrder final : public MultiStageMethod<Scalar>
+{
+public:
+    SDIRKFourthOrder()
+    {
+        paramD_ = {{0.0, 0.25, 0.75, 0.55, 0.5, 1.0}};
+        paramAlpha_ = {{
+            {-1.0, 1.0, 0.0, 0.0, 0.0, 0.0},
+            {-1.0, 0.0, 1.0, 0.0, 0.0, 0.0},
+            {-1.0, 0.0, 0.0, 1.0, 0.0, 0.0},
+            {-1.0, 0.0, 0.0, 0.0, 1.0, 0.0},
+            {-1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
+        }};
+        paramBeta_ = {{
+            {0.0, 0.25, 0.0, 0.0, 0.0, 0.0},
+            {0.0, 0.5, 0.25, 0.0, 0.0, 0.0},
+            {0.0, 0.34, -0.04, 0.25, 0.0, 0.0},
+            {0.0, 0.2727941176470588, -0.05036764705882353, 0.02757352941176471, 0.25, 0.0},
+            {0.0, 1.041666666666667, -1.020833333333333, 7.8125, -7.083333333333333, 0.25}
+        }};
+    }
+
+    bool implicit () const final { return true; }
+    std::size_t numStages () const final { return 5; }
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final { return paramAlpha_[i-1][k]; }
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final { return paramBeta_[i-1][k]; }
+    Scalar timeStepWeight (std::size_t k) const final { return paramD_[k]; }
+    std::string name () const final { return "SDIRK 4th order (Hairer-Wanner, L-stable)"; }
+
+private:
+    std::array<std::array<Scalar, 6>, 5> paramAlpha_;
+    std::array<std::array<Scalar, 6>, 5> paramBeta_;
+    std::array<Scalar, 6> paramD_;
+};
+
+/*!
+ * \brief TR-BDF2: a second order, three-stage, L-stable, stiffly-accurate ESDIRK
+ * \note Explicit first stage (a11=0); coefficients verified with nodepy (order 2,
+ *       stiffly accurate). WARNING: the explicit first stage only constrains the
+ *       differential (storage) variables, so for a system with an algebraic equation
+ *       (here the zero-storage momentum balance m = -B H_xx) the stage-1 solve can be
+ *       singular. Provided to probe ESDIRK/stage-order behaviour; use with care.
+ */
+template<class Scalar>
+class TRBDF2 final : public MultiStageMethod<Scalar>
+{
+public:
+    TRBDF2()
+    {
+        paramD_ = {{0.0, 0.0, 0.5, 1.0}};
+        paramAlpha_ = {{
+            {-1.0, 1.0, 0.0, 0.0},
+            {-1.0, 0.0, 1.0, 0.0},
+            {-1.0, 0.0, 0.0, 1.0}
+        }};
+        paramBeta_ = {{
+            {0.0, 0.0, 0.0, 0.0},
+            {0.0, 0.25, 0.25, 0.0},
+            {0.0, 0.3333333333333333, 0.3333333333333333, 0.3333333333333333}
+        }};
+    }
+
+    bool implicit () const final { return true; }
+    std::size_t numStages () const final { return 3; }
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final { return paramAlpha_[i-1][k]; }
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final { return paramBeta_[i-1][k]; }
+    Scalar timeStepWeight (std::size_t k) const final { return paramD_[k]; }
+    std::string name () const final { return "TR-BDF2 (ESDIRK, 2nd order, L-stable)"; }
+
+private:
+    std::array<std::array<Scalar, 4>, 3> paramAlpha_;
+    std::array<std::array<Scalar, 4>, 3> paramBeta_;
+    std::array<Scalar, 4> paramD_;
+};
+
 } // end namespace MultiStage
 } // end namespace Dumux::Experimental
 

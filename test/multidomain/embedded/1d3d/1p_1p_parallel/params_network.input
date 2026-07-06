@@ -1,0 +1,40 @@
+[MixedDimension]
+NumCircleSegments = 25
+IntegrationOrder = 2
+CheckCircleOverlap = true
+
+# realistic root network; radius is taken from the DGF surface parameter (index 2)
+[Vessel.Grid]
+File = ../grids/lupine.dgf
+SurfaceParamIndex = 2
+
+[Tissue.Grid]
+LowerLeft = -0.05 -0.05 -0.1
+UpperRight = 0.05 0.05 0
+Cells = 10 10 10
+Overlap = 1
+
+[Vessel.Problem]
+Name = root
+
+[Tissue.Problem]
+Name = soil
+
+[Problem]
+EnableGravity = false
+
+[Vtk]
+OutputName = test_md_embedded1d3d_1p1p_network
+EnableVtkOutput = false
+
+[Component]
+LiquidKinematicViscosity = 1 # [m^2/s]
+LiquidDensity = 1 # [kg/m^3]
+
+[SpatialParams]
+PermeabilityTissue = 1 # [m^2]
+Radius = 0.0006 # [m] nominal radius for the tissue exact-solution parameter (unused by average mode)
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+BaseEpsilon = 1e5

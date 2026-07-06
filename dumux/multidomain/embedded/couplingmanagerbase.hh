@@ -230,7 +230,8 @@ public:
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
-        std::cout << "Initializing the point sources..." << std::endl;
+        if (this->gridView(bulkIdx).comm().rank() == 0)
+            std::cout << "Initializing the point sources..." << std::endl;
 
         // clear all internal members like pointsource vectors and stencils
         // initializes the point source id counter
@@ -356,7 +357,8 @@ public:
             }
         });
 
-        std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
+        if (this->gridView(bulkIdx).comm().rank() == 0)
+            std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
     }
 
     /*!

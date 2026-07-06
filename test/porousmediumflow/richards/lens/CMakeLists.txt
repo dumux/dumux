@@ -17,6 +17,13 @@ target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox
 if(MUMPS_FOUND)
   add_executable(test_richards_lens_box_mumps EXCLUDE_FROM_ALL main.cc)
   target_compile_definitions(test_richards_lens_box_mumps PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric PUBLIC USE_MUMPS_SOLVER)
+
+  # Cell-centered (TPFA) variant using a block-diagonal parallel preconditioner:
+  # BiCGSTAB preconditioned by an exact MUMPS solve of each rank's local block. In an
+  # overlapping parallel run the solver factory wraps this sequential exact block solve
+  # into a Dune::BlockPreconditioner, i.e. Restricted Additive Schwarz (RAS).
+  add_executable(test_richards_lens_tpfa_mumps_ras EXCLUDE_FROM_ALL main.cc)
+  target_compile_definitions(test_richards_lens_tpfa_mumps_ras PUBLIC TYPETAG=RichardsLensCC PUBLIC DIFFMETHOD=DiffMethod::numeric PUBLIC USE_MUMPS_RAS)
 endif()
 
 # address sanitizer
@@ -123,6 +130,32 @@ dumux_add_test(NAME test_richards_lens_box_mumps_parallel_yasp_ovlp_2
                                ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_mumps_parallel_yasp_ovlp_2-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_mumps params.input -Problem.Name test_richards_lens_box_mumps_parallel_yasp_ovlp_2 -Grid.Overlap 2")
+
+# Block-diagonal (Restricted Additive Schwarz) preconditioner with an exact local MUMPS
+# solve per rank, used through the runtime solver factory (overlapping decomposition).
+dumux_add_test(NAME test_richards_lens_tpfa_mumps_ras_parallel_yasp
+              TARGET test_richards_lens_tpfa_mumps_ras
+              LABELS porousmediumflow richards parallel
+              CMAKE_GUARD "( MPI_FOUND AND MUMPS_FOUND )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy --ignore "process rank"
+                      --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_mumps_ras_parallel_yasp-00007.vtu
+                              ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_mumps_ras_parallel_yasp-00007.pvtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_mumps_ras params.input -Problem.Name test_richards_lens_tpfa_mumps_ras_parallel_yasp -Grid.Overlap 1 -LinearSolver.Preconditioner.Type seqmumps")
+
+dumux_add_test(NAME test_richards_lens_tpfa_mumps_ras_parallel_yasp_ovlp_2
+              TARGET test_richards_lens_tpfa_mumps_ras
+              LABELS porousmediumflow richards parallel
+              CMAKE_GUARD "( MPI_FOUND AND MUMPS_FOUND )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy --ignore "process rank"
+                      --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_mumps_ras_parallel_yasp_ovlp_2-00007.vtu
+                              ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_mumps_ras_parallel_yasp_ovlp_2-00007.pvtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_mumps_ras params.input -Problem.Name test_richards_lens_tpfa_mumps_ras_parallel_yasp_ovlp_2 -Grid.Overlap 2 -LinearSolver.Preconditioner.Type seqmumps")
 
 dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp
               TARGET test_richards_lens_tpfa
