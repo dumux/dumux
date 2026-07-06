@@ -93,7 +93,7 @@ public:
                                      const CouplingFunction& maybeAssembleCouplingBlocks = {})
     {
         this->asImp_().bindLocalViews();
-        const auto eIdxGlobal = this->asImp_().problem().gridGeometry().elementMapper().index(this->element());
+        const auto eIdxGlobal = this->asImp_().problem().gridDiscretization().elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
@@ -121,11 +121,11 @@ public:
             assert(this->elementIsGhost());
 
             // handle dofs per codimension
-            const auto& gridGeometry = this->asImp_().problem().gridGeometry();
+            const auto& gridDiscretization = this->asImp_().problem().gridDiscretization();
             Dune::Hybrid::forEach(std::make_integer_sequence<int, dim+1>{}, [&](auto d)
             {
                 constexpr int codim = dim - d;
-                const auto& localCoeffs = gridGeometry.feCache().get(this->element().type()).localCoefficients();
+                const auto& localCoeffs = gridDiscretization.feCache().get(this->element().type()).localCoefficients();
                 for (int idx = 0; idx < localCoeffs.size(); ++idx)
                 {
                     const auto& localKey = localCoeffs.localKey(idx);
@@ -143,7 +143,7 @@ public:
                     // Entities with multiple DOFs (e.g. PQ3 edge interior DOFs with 2 per edge)
                     // require iterating over all DOF indices via asMultiMapper(dofMapper()).indices(entity).
                     using BlockType = typename JacobianMatrix::block_type;
-                    for (const auto dofIndex : asMultiMapper(gridGeometry.dofMapper()).indices(entity))
+                    for (const auto dofIndex : asMultiMapper(gridDiscretization.dofMapper()).indices(entity))
                     {
                         BlockType &J = jac[dofIndex][dofIndex];
                         for (int j = 0; j < BlockType::rows; ++j)
