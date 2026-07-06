@@ -319,7 +319,7 @@ public:
                                            const ElementVariables& elemVars) const
     {
         FeResidual::addFluxAndSourceTerms(residual, problem, fvGeometry, elemVars);
-        addSkewSymmetricAdvectionCorrection_(residual, problem, element, fvGeometry, elemVars, elemFluxVarsCache);
+        addSkewSymmetricAdvectionCorrection_(residual, problem, element, fvGeometry, elemVars);
     }
 
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
@@ -330,6 +330,7 @@ public:
                                            const ElementBoundaryTypes &elemBcTypes) const
     {
         FeResidual::addFluxAndSourceTerms(residual, problem, fvGeometry, elemVars);
+        addSkewSymmetricAdvectionCorrection_(residual, problem, element, fvGeometry, elemVars);
     }
 
 protected:
@@ -369,14 +370,17 @@ protected:
      * div v = 0 regardless of how the density moves. When sum_f m_f = 0 the correction
      * vanishes, so it is consistent. Gated by FreeFlow.SkewSymmetricMomentumAdvection
      * (default off) so other tests are unaffected.
+     *
+     * Computed via the CVFE quadrature rule + cache() (as fluxIntegral() above does), not via
+     * an elemFluxVarsCache: the hybrid CVFE assembler calls addToElementFluxAndSourceResidual
+     * without one, so a previous version of this correction referencing elemFluxVarsCache here
+     * did not compile (undeclared identifier) and was consequently dead code.
      */
-    template<class ElementFluxVariablesCache>
     void addSkewSymmetricAdvectionCorrection_(ElementResidualVector& residual,
                                               const Problem& problem,
                                               const Element& element,
                                               const FVElementGeometry& fvGeometry,
-                                              const ElementVariables& elemVars,
-                                              const ElementFluxVariablesCache& elemFluxVarsCache) const
+                                              const ElementVariables& elemVars) const
     {
         if (!problem.enableInertiaTerms())
             return;
@@ -392,16 +396,20 @@ protected:
                 continue;
 
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& fluxVarCache = elemFluxVarsCache[scvf];
-            const auto& shapeValues = fluxVarCache.shapeValues();
 
-            // interpolate the advecting velocity at the face and form the mass flux
-            // m_f = rho_f (v.n) dA (same density/velocity as the advective flux uses)
-            NumEqVector v(0.0);
-            for (const auto& localDof : localDofs(fvGeometry))
-                v.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
+            // face-integrated velocity int_face v dA, matching velIntegral in fluxIntegral() above.
+            NumEqVector velIntegral(0.0);
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+            {
+                const auto& ipCache = cache(elemVars, qpData.ipData());
+                const auto& shapeValues = ipCache.shapeValues();
+                NumEqVector v(0.0);
+                for (const auto& localDof : localDofs(fvGeometry))
+                    v.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
+                velIntegral += v*qpData.weight();
+            }
 
-            const auto vn = v*scvf.unitOuterNormal();
+            const auto vn = velIntegral*scvf.unitOuterNormal();
 
             // Use the SAME density weighting as the advective flux (upwind-blended dof
             // densities, see NavierStokesMomentumFluxCVFE::advectiveMomentumFlux); a face-
