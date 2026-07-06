@@ -1,0 +1,86 @@
+# P2-P1-P2-P2 Taylor-Hood Cahn-Hilliard / Navier-Stokes rising bubble (Hysing Case 1).
+# AMR run: the base grid is coarse (Refinement=0); the initial adaptation grows the mesh
+# incrementally (re-sampling the analytic IC each pass, see main.cc) up to Adaptive.MaxLevel,
+# and the phi-jump indicator (../adapt.hh) keeps the fine band on the moving interface
+# thereafter. Reuses the P1 baseline's AMR classes unmodified (see main.cc comment).
+[Grid]
+File = rect.msh
+Refinement = 0
+
+[TimeLoop]
+TEnd = 3.0
+DtInitial = 1e-3
+MaxTimeStepSize = 2e-3
+OutputInterval = 0.02   # write visualization output every 0.02s (~150 frames over t=3)
+
+[Adaptive]
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+# Mesh-control strategy (mirrors the P1 baseline): MaxLevel is a high safety cap; the
+# INTERFACE resolution is set by MinElementSize, MinLevel is a uniform bulk floor so the
+# velocity field away from the interface isn't coarsened to the macro mesh.
+InitMaxLevel = 15
+MaxLevel = 15
+MinLevel = 3
+# Finest interface cell diameter. Now that eps matches the calibrated baseline (0.005), reuse
+# its exact MinElementSize (~1.4*eps).
+MinElementSize = 0.007
+# Re-mesh every N steps (not every step) so the interface stays inside the refined band
+# between remeshes and per-step transfer smoothing doesn't accumulate.
+AdaptEveryNSteps = 5
+CoarsenTolerance = 1e-4
+RefineTolerance = 1e-3
+
+[Problem]
+Name = chns_p2
+EnableInertiaTerms = true
+SurfaceTension = 24.5
+# Matches the validated pq1bubble baseline (../params.input): converged Case-1 match at
+# eps=0.005 (Cahn number eps/R=0.02).
+InterfaceThickness = 0.005
+# Aland & Voigt mobility scaling M=1e-3*eps, calibrated in ../doc/formulation.md sec.8.
+Mobility = 5e-6
+BubbleRadius = 0.25
+Density1 = 100.0
+Density2 = 1000.0
+Viscosity1 = 1.0
+Viscosity2 = 10.0
+Gravity = 0.98
+AnchorPressureAtBottom = true
+# Surface-tension force discretization: stress | potential | wellbalanced. wellbalanced
+# (-c*gradMu) is balanced-force (~zero spurious currents); matches ../params.input.
+SurfaceTensionForm = wellbalanced
+
+[FreeFlow]
+IncompressibleContinuity = true
+# Aland & Voigt (2011) Model 1 (convective form): pairs with SkewSymmetricMomentumAdvection.
+ConvectiveFormMomentumStorage = true
+DegenerateMobility = false
+# Central phase-field advection paired with its skew correction (see below); matches baseline.
+PhaseFieldUpwindWeight = 0.5
+# Both required for stability with EnableInertiaTerms=true: without them the divergence-form
+# advection injects kinetic energy at the density/phase-field interface (max|v| runs away).
+SkewSymmetricMomentumAdvection = true
+SkewSymmetricPhaseFieldAdvection = true
+
+[Flux]
+# 0.5 = central (energy-neutral with the skew-symmetric convective form); matches baseline.
+UpwindWeight = 0.5
+
+[Assembly]
+NumericDifferenceMethod = 1
+
+[Newton]
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+UseLineSearch = true
+MaxTimeStepDivisions = 12
+
+[Component]
+# for the OnePLiquid<Constant> fluid system of the pressure/mass subdomain (values are not used
+# by the momentum buoyancy, which uses the mixture rho(c) locally; only needed to satisfy the FS)
+LiquidDensity = 1000.0
+LiquidKinematicViscosity = 0.01
