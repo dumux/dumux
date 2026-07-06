@@ -1,0 +1,12 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 100 100
+Overlap = 0
+
+[Problem]
+Name = test_complex_helmholtz
+
+[LinearSolver]
+Verbosity = 1
+MaxIterations = 5000
