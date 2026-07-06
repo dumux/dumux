@@ -1,0 +1,23 @@
+[TimeLoop]
+TEnd = 0.01s
+InitialTimeStepSize = 1e-4s
+MaxTimeStepSize = 5e-4s
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 100 100
+
+[Problem]
+Name = test_phasefield_conservativelevelset_pq2
+InterfaceThickness = 0.02
+InitialRadius = 0.25
+InitialInterfaceWidth = 0.005
+
+[Newton]
+# Partial reassembly is not implemented for the PQ2 hybrid CVFE scheme
+EnablePartialReassembly = false
+
+[Output]
+# write a vtu file every N timesteps (the final timestep is always written)
+Every = 1
