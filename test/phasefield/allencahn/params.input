@@ -1,0 +1,25 @@
+[TimeLoop]
+TEnd = 0.1s
+InitialTimeStepSize = 1e-3s
+MaxTimeStepSize = 5e-3s
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 100 100
+
+[Problem]
+Name = test_phasefield_allencahn_pq2
+Mobility = 1.0
+SurfaceTension = 0.0004
+EnergyScale = 100
+InitialRadius = 0.25
+InitialInterfaceWidth = 0.02
+
+[Newton]
+# Partial reassembly is not implemented for the PQ2 hybrid CVFE scheme
+EnablePartialReassembly = false
+
+[Output]
+# write a vtu file every N timesteps (the final timestep is always written)
+Every = 1
