@@ -1,0 +1,20 @@
+[Grid]
+Cells = 50 50
+UpperRight = 1 1
+
+[Problem]
+Name = test_kirchhoff_love_plate_eigenmodes
+E = 1.0
+Thickness = 0.01
+PoissonRatio = 0.5
+LinearMassDensity = 0.01
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1
+
+[EigenSolver]
+NumberOfEigenmodes = 12
