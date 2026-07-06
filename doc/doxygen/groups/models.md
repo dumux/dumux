@@ -203,6 +203,29 @@
 @copydoc dumux/poromechanics/poroelastic/model.hh
 @ingroup PoroMechanicsModels
 
+<!-- PhaseFieldModels -->
+
+@defgroup PhaseFieldModels Phase field
+@brief Phase-field models for interface evolution.
+@ingroup Models
+
+<!-- PhaseFieldModels subgroups -->
+
+@defgroup CahnHilliardModel Cahn-Hilliard
+@brief Phase separation described by the Cahn-Hilliard equation.
+@copydoc dumux/phasefield/cahnhilliard/model.hh
+@ingroup PhaseFieldModels
+
+@defgroup AllenCahnModel Allen-Cahn
+@brief Motion of a non-conserved phase-field order parameter described by the Allen-Cahn equation.
+@copydoc dumux/phasefield/allencahn/model.hh
+@ingroup PhaseFieldModels
+
+@defgroup ConservativeLevelSetModel Conservative level set
+@brief Interface representation and reinitialization via the conservative (Olsson-Kreiss) level-set method.
+@copydoc dumux/phasefield/conservativelevelset/model.hh
+@ingroup PhaseFieldModels
+
 <!-- PoreNetworkModels -->
 
 @defgroup PoreNetworkModels Pore network
