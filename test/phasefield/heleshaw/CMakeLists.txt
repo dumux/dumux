@@ -1,8 +1,4 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_subdirectory(allencahn)
-add_subdirectory(cahnhilliard)
-add_subdirectory(freeenergy)
-add_subdirectory(heleshaw)
-add_subdirectory(mobility)
+add_subdirectory(2p)

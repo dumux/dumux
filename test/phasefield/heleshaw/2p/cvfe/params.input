@@ -1,0 +1,42 @@
+[Grid]
+LowerLeft  = 0.0 0.0
+UpperRight = 2.0 1.0
+Cells = 40 20
+
+[TimeLoop]
+TEnd = 0.02
+InitialTimeStepSize = 1e-4
+MaxTimeStepSize = 0.005
+
+[Problem]
+Name = test_heleshaw_2p_cvfe_saffman_taylor
+
+PressureInlet  = 100.0
+PressureOutlet = 0.0
+
+DensityInvading   = 1.0
+ViscosityInvading = 1.0
+DensityReceding   = 1.0
+ViscosityReceding = 10.0
+
+Permeability = 1.0
+
+SurfaceTension     = 1e-3
+InterfaceThickness = 0.05
+CHMobility         = 2.5e-3
+
+InterfacePosition     = 0.5
+InterfacePerturbation = 0.02
+PerturbationBaseMode  = 4
+PerturbationModes     = 1
+
+Gravity = 0.0
+
+[Newton]
+MaxSteps = 25
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+UseLineSearch = true
+RetryTimeStepReductionFactor = 0.25
+MaxTimeStepDivisions = 10
