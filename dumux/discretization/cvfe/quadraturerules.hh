@@ -288,10 +288,10 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     using Extrusion = Extrusion_t<GridGeometry>;
 
     const auto& elementGeo = fvGeometry.elementGeometry();
-    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(elementGeo.type(), order);
+    const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(elementGeo.type(), order);
 
     return std::views::iota(0u, quad.size())
-         | std::views::transform([quad = std::move(quad), &elementGeo](const auto idx) {
+         | std::views::transform([&quad, &elementGeo](const auto idx) {
             const auto& qp = quad[idx];
             const auto ipGlobal = elementGeo.global(qp.position());
             const auto ipLocal = qp.position();
