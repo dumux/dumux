@@ -1,0 +1,148 @@
+[Grid]
+# Hysing et al. (2009) FeatFlow rising-bubble benchmark. LEFT HALF [0,0.5]x[0,2]
+# with a symmetry plane at x=0.5 (the benchmark free-slip side-wall BC IS the symmetry
+# condition); bubble centred at (0.5,0.5), r=0.25. rect.msh from rect.geo.
+# Refinement=0: the initial adaptation grows the mesh incrementally from the coarse base
+# grid (re-sampling the analytic IC each pass), so we never materialise a uniform fine grid.
+File = rect.msh
+Refinement = 0
+
+[TimeLoop]
+TEnd = 3.0
+DtInitial = 1e-3
+# Case 2 (high density/visc ratio, low sigma) grows a thin trailing skirt that is more
+# delicate than Case 1's near-circular bubble; cap dt tighter for the skirt dynamics.
+MaxTimeStepSize = 0.005
+
+[Adaptive]
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+# Mesh-control strategy: MaxLevel is just a high safety cap; the INTERFACE resolution is set
+# by MinElementSize (the binding control), and MinLevel is a uniform bulk floor so the velocity
+# field in the bubble wake/return flow is resolved (not coarsened to the macro mesh).
+InitMaxLevel = 15
+MaxLevel = 15
+MinLevel = 3
+# Finest interface cell DIAMETER. Resolves the diffuse interface to eps_eff ~ eps when
+# MinElementSize ~ 1.4*eps (calibrated). Case 2 needs the thin trailing skirt/filament
+# resolved, so refine harder than Case 1 (0.005 ~ 1*eps rather than 0.007 ~ 1.4*eps).
+MinElementSize = 0.005
+# Re-mesh every N steps (not every step): the interface stays inside the multi-cell refined
+# band between remeshes, which removes the per-step transfer dissipation that damped the peak.
+AdaptEveryNSteps = 5
+# Hysteresis (CoarsenTolerance << RefineTolerance): with equal tolerances a ~1-cell-wide
+# annulus in the tanh tail is coarsened and immediately re-refined on alternating remesh
+# events (coarsening doubles the jump, re-crossing the refine bound), repeatedly smoothing
+# the velocity right where the interfacial shear lives.
+CoarsenTolerance = 1e-4
+RefineTolerance = 1e-3
+
+[Problem]
+InitialShape = circle # circle or square
+Name = test_ff_2p_rising_bubble_c2
+# Full Navier-Stokes (Hysing benchmark Case 1, Re=35). With inertia OFF the bubble
+# jumps straight to its Stokes terminal velocity (~1.2, no acceleration phase);
+# inertia is required to reproduce the benchmark peak rise velocity ~0.2417.
+EnableInertiaTerms = true
+# FORMULATION = Aland & Voigt (2011) MODEL 1 (convective form: ConvectiveFormMomentumStorage
+#   + SkewSymmetricMomentumAdvection + wellbalanced force + div u = 0). The AGG interface flux
+#   -div(u (x) J) belongs only to the CONSERVATIVE Model 3 and would be inconsistent with our
+#   convective storage/skew advection, so it is OFF. See params.input for the full explanation
+#   and doc/formulation.md. (Especially important at Case 2's density ratio 1000, where a
+#   double-counted interface flux would be a large spurious force.)
+EnableInterfaceFlux = false
+EnableDampingForce = false
+DampingForceMagnitude = 1e8
+# The diffuse interface must be resolved by the mesh (eps >~ a few cell widths),
+# otherwise the Cahn-Hilliard subsystem becomes too stiff to converge.
+# HYSING CASE 2: low surface tension 1.96 (vs Case 1's 24.5) -> much weaker restoring
+# force -> the bubble deforms into a skirt/filament instead of staying near-circular.
+SurfaceTension = 1.96
+# Diffuse-interface thickness (the sharp-interface limit parameter). Converged Case-1 match
+# at eps=0.005 (Cahn number eps/R=0.02); scale h with eps (MinElementSize ~ 1.4*eps) and
+# refine to take the limit.
+InterfaceThickness = 0.005
+# Cahn-Hilliard mobility. CASE 2 uses the DEGENERATE mobility M(c)=M0(c^2-1)^2 (M0=Mobility,
+# enabled via FreeFlow.DegenerateMobility below), which vanishes in the bulk and concentrates
+# diffusion at the interface. This is ESSENTIAL for Case 2: a constant M has bulk diffusion
+# that REABSORBS the thin trailing skirt (circ spuriously recovers to ~0.89 vs ref ~0.51),
+# whereas the degenerate law lets the skirt keep thinning like the reference.
+# M0 = 1e-3*eps = 5e-6 (Aland & Voigt 2011 scaling).
+Mobility = 5e-6
+
+# Surface-tension force discretization: stress | potential | wellbalanced
+# wellbalanced (-phi*grad(mu)): balanced-force, ~zero spurious currents on a static bubble
+# (1.6e-13 m/s vs 1.64 m/s for the deviatoric stress form).
+SurfaceTensionForm = wellbalanced
+# HYSING CASE 2: density ratio 1000 (bubble rho=1), viscosity ratio 100 (bubble mu=0.1).
+# Much more extreme than Case 1 (ratios 10) -> the AGG interface flux (now sign-fixed) is
+# the key thermodynamically-consistent momentum-transport term at this ratio.
+Density1 = 1.0
+Density2 = 1000.0
+Viscosity1 = 0.1
+Viscosity2 = 10.0
+# without gravity (Gravity=0.0 or EnableGravity=false) we expect a static bubble
+# with Laplace pressure SurfaceTension/R (R=0.25)
+Gravity = 0.98
+EnableGravity = true
+
+[Component]
+LiquidDensity = 1000.0
+LiquidDynamicViscosity = 10.0
+
+[FreeFlow]
+# Incompressible (Boussinesq) continuity div(v)=0. The compressible form
+# d(rho)/dt + div(rho v)=0 introduces a rho'(phi)/dt stiffness that is hard to solve.
+IncompressibleContinuity = true
+
+# CASE 2: degenerate (interface-localized) Cahn-Hilliard mobility M(c)=M0(c^2-1)^2.
+# See the Mobility comment above - required so the thin skirt thins rather than re-rounds.
+DegenerateMobility = true
+
+# Skew-symmetric (Temam) correction of the conservative momentum advection. With inertia
+# on, the conservative flux div(rho u x u) is energy-stable only if the advecting field is
+# discretely mass conservative. It is NOT here (div v=0 with a Cahn-Hilliard-transported
+# density), so the divergence form injects kinetic energy at the density interface -> a
+# growing parasitic interfacial jet (max|v| runs 1.4 -> 9). The correction converts the
+# flux to convective form sum_f m_f (u_up - u_cv), energy-neutral under div v=0:
+# with it ON max|v| plateaus ~0.5 instead of diverging. Required whenever EnableInertiaTerms.
+SkewSymmetricMomentumAdvection = true
+
+# The convective advection form must be paired with the convective storage ρ ∂u/∂t
+# (density frozen at the current time level): keeping the conservative storage ∂t(ρu)
+# leaves a spurious u ∂t(ρ) force at the moving interface
+# (∂t(ρu) + ρu·∇u = ρ Du/Dt + u ∂t(ρ)).
+ConvectiveFormMomentumStorage = true
+
+# Central (energy-neutral) phase-field convection paired with its skew correction:
+# full upwind (the previous default, weight 1) adds first-order numerical diffusion
+# D_num ~ |v|h/2 at the interface, which acts as an artificial curvature flow
+# (~1.4-3.5% of the benchmark peak velocity) that rounds the bubble and retards rise.
+PhaseFieldUpwindWeight = 0.5
+SkewSymmetricPhaseFieldAdvection = true
+
+[Flux]
+# Momentum advection face value: 0.5 = CENTRAL (energy-neutral with the skew-symmetric
+# convective form). NOTE: 0.0 is full DOWNWIND in this scheme (anti-dissipative), not
+# central as a previous comment claimed; 1.0 is full upwind.
+UpwindWeight = 0.5
+
+[Assembly]
+# Forward differences for the numeric Jacobian: 1 residual eval per deflected dof.
+# This is already the DuMux global default (parameters.cc), set here explicitly for clarity.
+# (0 = central differences would cost 2 evals/dof; we deliberately avoid that.)
+NumericDifferenceMethod = 1
+
+[Newton]
+MinSteps = 1
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.2
+MaxTimeStepDivisions = 16

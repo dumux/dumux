@@ -1,0 +1,86 @@
+[Grid]
+# Hysing et al. (2009) rising-bubble benchmark, LEFT HALF [0,0.5]x[0,2] with symmetry
+# plane at x=0.5 (see params.input for details).
+File = rect.msh
+Refinement = 0
+
+[TimeLoop]
+TEnd = 3.0
+DtInitial = 1e-3
+# Aland & Voigt (IJNMF 2012) use tau = 0.2*eps = 1e-3 at eps=0.005 (first-order implicit
+# Euler, like us). 2e-3 is the cheaper A/B point; drop to 1e-3 to fully match the paper.
+MaxTimeStepSize = 0.002
+
+[Adaptive]
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+InitMaxLevel = 15
+MaxLevel = 15
+MinLevel = 3
+# Paper resolution at eps=0.005: h_int = 1/128 ~ 1.56*eps with P2 elements => dof spacing
+# ~0.78*eps. With P1 velocity/phi we need the cell DIAMETER at ~eps to get comparable dof
+# density across the interface (~5-6 intervals over the 4.2*eps tanh width).
+MinElementSize = 0.005
+AdaptEveryNSteps = 5
+# Hysteresis: see params.input.
+CoarsenTolerance = 1e-4
+RefineTolerance = 1e-3
+
+[Problem]
+InitialShape = circle
+Name = test_ff_2p_rising_bubble_aland
+EnableInertiaTerms = true
+# AGG diffusive momentum flux v(J.n), J = -(drho/dphi) M grad(mu) (sign-fixed).
+EnableInterfaceFlux = true
+EnableDampingForce = false
+DampingForceMagnitude = 1e8
+SurfaceTension = 24.5
+InterfaceThickness = 0.005
+# Aland & Voigt mobility: DEGENERATE M(c) = M0 (c^2-1)^2 with M0 = gamma = 1e-3*eps = 5e-6
+# at eps=0.005 (Models 1/3, the family this implementation belongs to). Their Case-1
+# results with this setting: V_max = 0.2402 @ t=0.921, c_min = 0.9041, y_c(3) = 1.0786 --
+# the pass criteria at this eps (NOT the sharp-interface references 0.2417/0.9013/1.0813).
+# NOTE: this is ~11x less mobility than params.input's constant M = 5.7e-5; if the CH
+# subsystem struggles to maintain the profile (eps_eff drifting from eps in the log),
+# increase M0 toward 1e-5-2e-5 before giving up on the scaling.
+Mobility = 5e-6
+SurfaceTensionForm = wellbalanced
+Density1 = 100.0
+Density2 = 1000.0
+Viscosity1 = 1.0
+Viscosity2 = 10.0
+Gravity = 0.98
+EnableGravity = true
+
+[Component]
+LiquidDensity = 1000.0
+LiquidDynamicViscosity = 10.0
+
+[FreeFlow]
+IncompressibleContinuity = true
+SkewSymmetricMomentumAdvection = true
+ConvectiveFormMomentumStorage = true
+DegenerateMobility = true
+PhaseFieldUpwindWeight = 0.5
+SkewSymmetricPhaseFieldAdvection = true
+
+[Flux]
+# 0.5 = central (energy-neutral with the skew-symmetric convective form).
+UpwindWeight = 0.5
+
+[Assembly]
+NumericDifferenceMethod = 1
+
+[Newton]
+MinSteps = 1
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.2
+MaxTimeStepDivisions = 16

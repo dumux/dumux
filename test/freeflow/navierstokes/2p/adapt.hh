@@ -27,6 +27,8 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/dynmatrix.hh>
+#include <dune/common/dynvector.hh>
 
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
@@ -536,13 +538,17 @@ public:
         {
             fvGeometry.bindElement(element);
 
-            // the element that holds the stored source data (self if surviving, else ancestor)
+            // the element that holds the stored source data (self if surviving, else ancestor).
+            // NOTE: iterate localDofs(), not scvs() -- for a plain box/pq1bubble scheme these are
+            // the same index set (scvs() already includes the element-local bubble dof there), but
+            // for a hybrid PQ2 scheme scvs() is vertex-only and would silently skip the P2 edge
+            // dofs, leaving them at their (zero) resize default on every remesh.
             auto source = element;
             if (!element.isNew())
             {
                 const auto& stored = adaptionMap_[element];
-                for (const auto& scv : scvs(fvGeometry))
-                    sol_[scv.dofIndex()] = stored.u[scv.localDofIndex()];
+                for (const auto& localDof : localDofs(fvGeometry))
+                    sol_[localDof.dofIndex()] = stored.u[localDof.index()];
             }
             else
             {
@@ -556,9 +562,9 @@ public:
 
                 const auto& stored = adaptionMap_[source];
                 const auto sourceGeometry = source.geometry();
-                for (const auto& scv : scvs(fvGeometry))
-                    sol_[scv.dofIndex()] = evalSolution(
-                        source, sourceGeometry, *gridGeometry_, stored.u, scv.dofPosition()
+                for (const auto& localDof : localDofs(fvGeometry))
+                    sol_[localDof.dofIndex()] = evalSolution(
+                        source, sourceGeometry, *gridGeometry_, stored.u, ipData(fvGeometry, localDof).global()
                     );
             }
 
@@ -621,50 +627,101 @@ private:
                 u[i] = sol_[vIdx];
             }
 
-        // (2) Element-local (pq1bubble centroid) DOFs: pick the value that MINIMISES the local L2
-        // error on the element given the (fixed) vertex DOFs:
-        //     u_b = ∫_E B (u_src - u_vert) dV / ∫_E B^2 dV
-        // where B is the bubble shape, u_vert = Σ_v u_v Ñ_v the vertex part, and u_src the source
-        // (children) solution. Integrated over the leaf children, which tile E and still hold the
-        // fine solution at store time. (Zeroing it instead would collapse the cell-centre velocity
-        // on coarsening -> jumpy cell-to-cell field + spurious momentum-storage kick next solve.)
+        // (2) Non-vertex DOFs (the pq1bubble centroid, or P2's edge-midpoint DOFs): solve the
+        // LOCAL L2 projection problem for this whole dof block JOINTLY, given the (fixed)
+        // vertex DOFs. We seek the coefficients u_a minimising the L2 error
+        //     || u_src - (u_vert + Σ_a u_a B_a) ||^2_{L2(E)}
+        // i.e. the small dense system  M u = r  with
+        //     M_ab = ∫_E B_a B_b dV                  (assembled directly over E; independent
+        //                                              of the leaf children below)
+        //     r_a  = ∫_E B_a (u_src - u_vert) dV      (u_src lives on the leaf children, so
+        //                                              integrated piecewise over them, which
+        //                                              tile E and still hold the fine solution
+        //                                              at store time)
+        // For exactly one non-vertex dof (pq1bubble) M is 1x1 and this reduces to the previous
+        // per-dof divide. For P2's THREE coupled edge dofs the off-diagonal M_ab (a != b) terms
+        // are NOT negligible -- solving each dof independently (as if the others were absent,
+        // i.e. using only the diagonal) is a real cross-coupling error. (Zeroing the coefficients
+        // instead would collapse the field on coarsening -> jumpy cell-to-cell values + spurious
+        // storage-term kick next solve.)
         static const bool nodalSeed = getParamFromGroup<bool>(
             problem_->paramGroup(), "Adaptive.BubbleNodalSeed", true);
         using ctype = typename Element::Geometry::ctype;
         using ShapeVal = typename std::decay_t<decltype(localBasis)>::Traits::RangeType;
         const auto fgeo = element.geometry();
-        std::vector<ShapeVal> shp;
-        for (int i = 0; i < localCoeff.size(); ++i)
-        {
-            if (localCoeff.localKey(i).codim() == dim) continue;
-            if (!nodalSeed) { u[i] = PrimaryVariables(0.0); continue; } // old behaviour for A/B
 
-            PrimaryVariables num(0.0);
-            ctype den = 0.0;
-            const auto& quad = Dune::QuadratureRules<ctype, dim>::rule(element.type(), 4);
-            for (auto it = element.hbegin(maxLevel); it != element.hend(maxLevel); ++it)
+        std::vector<int> nonVertexIdx;
+        for (int i = 0; i < localCoeff.size(); ++i)
+            if (localCoeff.localKey(i).codim() != dim)
+                nonVertexIdx.push_back(i);
+
+        if (nonVertexIdx.empty())
+            return;
+
+        if (!nodalSeed) // old behaviour for A/B
+        {
+            for (const auto i : nonVertexIdx)
+                u[i] = PrimaryVariables(0.0);
+            return;
+        }
+
+        const auto numNV = nonVertexIdx.size();
+        Dune::DynamicMatrix<ctype> M(numNV, numNV, 0.0);
+        std::vector<PrimaryVariables> r(numNV, PrimaryVariables(0.0));
+
+        // Mass matrix restricted to the non-vertex-dof block, assembled directly over the
+        // father element E (does not depend on the leaf children).
+        std::vector<ShapeVal> shpF;
+        const auto& massQuad = Dune::QuadratureRules<ctype, dim>::rule(element.type(), 2*localBasis.order());
+        for (const auto& qp : massQuad)
+        {
+            localBasis.evaluateFunction(qp.position(), shpF);
+            const auto w = qp.weight() * fgeo.integrationElement(qp.position());
+            for (std::size_t a = 0; a < numNV; ++a)
+                for (std::size_t c = 0; c < numNV; ++c)
+                    M[a][c] += w * shpF[nonVertexIdx[a]][0] * shpF[nonVertexIdx[c]][0];
+        }
+
+        // RHS: u_src (fine children field) minus the (fixed) vertex part, projected onto each
+        // non-vertex basis function B_a.
+        std::vector<ShapeVal> shp;
+        const auto& rhsQuad = Dune::QuadratureRules<ctype, dim>::rule(element.type(), 4);
+        for (auto it = element.hbegin(maxLevel); it != element.hend(maxLevel); ++it)
+        {
+            if (!it->isLeaf()) continue;
+            const auto cgeo = it->geometry();
+            const auto csol = ElementSolution(*it, sol_, *gridGeometry_);
+            for (const auto& qp : rhsQuad)
             {
-                if (!it->isLeaf()) continue;
-                const auto cgeo = it->geometry();
-                const auto csol = ElementSolution(*it, sol_, *gridGeometry_);
-                for (const auto& qp : quad)
-                {
-                    const auto global = cgeo.global(qp.position());
-                    localBasis.evaluateFunction(fgeo.local(global), shp);
-                    const auto B = shp[i][0];
-                    PrimaryVariables uVert(0.0); // father vertex part Σ_v u_v Ñ_v at this point
-                    for (int k = 0; k < localCoeff.size(); ++k)
-                        if (localCoeff.localKey(k).codim() == dim)
-                            uVert.axpy(shp[k][0], u[k]);
-                    const auto uSrc = evalSolution(*it, cgeo, *gridGeometry_, csol, global);
-                    const auto w = qp.weight() * cgeo.integrationElement(qp.position());
-                    num.axpy(w * B, uSrc);
-                    num.axpy(-w * B, uVert);
-                    den += w * B * B;
-                }
+                const auto global = cgeo.global(qp.position());
+                localBasis.evaluateFunction(fgeo.local(global), shp);
+
+                PrimaryVariables uVert(0.0); // father vertex part Σ_v u_v Ñ_v at this point
+                for (int k = 0; k < localCoeff.size(); ++k)
+                    if (localCoeff.localKey(k).codim() == dim)
+                        uVert.axpy(shp[k][0], u[k]);
+
+                const auto uSrc = evalSolution(*it, cgeo, *gridGeometry_, csol, global);
+                const auto w = qp.weight() * cgeo.integrationElement(qp.position());
+                auto diff = uSrc; diff -= uVert;
+
+                for (std::size_t a = 0; a < numNV; ++a)
+                    r[a].axpy(w * shp[nonVertexIdx[a]][0], diff);
             }
-            if (den > 0.0) { num /= den; u[i] = num; }
-            else u[i] = PrimaryVariables(0.0);
+        }
+
+        // Solve the small dense system M u = r, once per PrimaryVariables component.
+        Dune::DynamicVector<ctype> rhsComp(numNV), solComp(numNV);
+        for (int d = 0; d < PrimaryVariables::size(); ++d)
+        {
+            for (std::size_t a = 0; a < numNV; ++a)
+                rhsComp[a] = r[a][d];
+
+            auto Mcopy = M; // solve() factorizes in place
+            Mcopy.solve(solComp, rhsComp);
+
+            for (std::size_t a = 0; a < numNV; ++a)
+                u[nonVertexIdx[a]][d] = solComp[a];
         }
     }
 
