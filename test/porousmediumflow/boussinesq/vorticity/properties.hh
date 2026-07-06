@@ -41,7 +41,7 @@ struct BoussinesqOneSidedRB
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::BoussinesqOneSidedRB>
-{ using type = Dune::YaspGrid<2>; };
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2>>; };
 
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::BoussinesqOneSidedRB>
@@ -74,7 +74,7 @@ struct BoussinesqOneSidedRB3D
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::BoussinesqOneSidedRB3D>
-{ using type = Dune::YaspGrid<3>; };
+{ using type = Dune::YaspGrid<3, Dune::TensorProductCoordinates<double, 3>>; };
 
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::BoussinesqOneSidedRB3D>

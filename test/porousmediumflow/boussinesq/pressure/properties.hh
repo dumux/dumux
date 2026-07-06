@@ -42,7 +42,7 @@ struct BoussinesqPressureTest
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::BoussinesqPressureTest>
-{ using type = Dune::YaspGrid<2>; };
+{ using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2>>; };
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::BoussinesqPressureTest>

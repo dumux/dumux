@@ -7,9 +7,20 @@ Ra = 500
 
 [Grid]
 # dimensionless cube: 1 x 1 x 1
-LowerLeft = 0 0 0
-UpperRight = 1 1 1
-Cells = 64 64 64
+# Graded tensor-product grid: uniform in x,y, refined toward the top wall
+# (z=1) where the C=1 Dirichlet BC drives a thin diffusive boundary layer.
+# Total cell count (64 x 64 x 64) matches the old uniform grid.
+Positions0 = 0 1
+Cells0     = 64
+Grading0   = 1.0
+
+Positions1 = 0 1
+Cells1     = 64
+Grading1   = 1.0
+
+Positions2 = 0 0.9 1.0
+Cells2     = 50 14
+Grading2   = 1.0 -1.25
 
 [TimeLoop]
 TEnd = 5
