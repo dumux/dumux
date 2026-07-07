@@ -31,6 +31,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/discretization/fem/fedofhelper.hh>
+
 namespace Dumux {
 
 /*!
@@ -45,12 +47,17 @@ namespace Dumux {
  * \tparam GridView  The Dune grid view type.
  */
 template<class GridView>
-struct PQ3LagrangeDofHelper
+class PQ3LagrangeDofHelper : public Dumux::Experimental::FEDofHelper<GridView>
 {
+private:
+    using ParentType = Dumux::Experimental::FEDofHelper<GridView>;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
+    using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using Scalar = typename GridView::ctype;
     static constexpr int dim = GridView::dimension;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
+public:
     /*!
      * \brief Orientation-consistent global DOF index.
      *
@@ -95,6 +102,62 @@ struct PQ3LagrangeDofHelper
         return base + lk.index();
     }
 
+    /*!
+     * \brief Iterator range over all local dofs on an element.
+     * \param elemDisc the element discretization (must be bound)
+     */
+    template<class ElemDisc>
+    static auto localDofs(const ElemDisc& elemDisc)
+    {
+        const auto& gridDisc = elemDisc.gridDiscretization();
+
+        return Dune::transformedRangeView(
+            Dune::range(elemDisc.numLocalDofs()),
+            [&](const auto i) {
+                return CVFE::LocalDof{
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(dofIndex(
+                        gridDisc.dofMapper(),
+                        elemDisc.element(),
+                        elemDisc.feLocalCoefficients().localKey(i),
+                        gridDisc.gridView().grid().globalIdSet())),
+                    static_cast<GridIndexType>(elemDisc.elementIndex())
+                };
+            }
+        );
+    }
+
+    /*!
+     * \brief Iterator range over all local dofs on a given boundary face.
+     *         Uses a filter over all local dofs via localDofOnIntersection.
+     * \param elemDisc the element discretization (must be bound)
+     * \param boundaryFace the boundary face
+     */
+    template<class ElemDisc, class BoundaryFace>
+    static auto localDofsOnBoundaryFace(const ElemDisc& elemDisc, const BoundaryFace& boundaryFace)
+    {
+        const auto& gridDisc = elemDisc.gridDiscretization();
+
+        return std::views::iota(std::size_t(0), elemDisc.numLocalDofs())
+            | std::views::filter([&](std::size_t i) {
+                return ParentType::localDofOnIntersection(
+                    elemDisc.element().type(),
+                    boundaryFace.intersectionIndex(),
+                    elemDisc.feLocalCoefficients().localKey(i));
+            })
+            | std::views::transform([&](std::size_t i) {
+                return CVFE::LocalDof(
+                    static_cast<LocalIndexType>(i),
+                    static_cast<GridIndexType>(dofIndex(
+                        gridDisc.dofMapper(),
+                        elemDisc.element(),
+                        elemDisc.feLocalCoefficients().localKey(i),
+                        gridDisc.gridView().grid().globalIdSet())),
+                    static_cast<GridIndexType>(elemDisc.elementIndex())
+                );
+            });
+    }
+
     //! Physical position of a DOF in global coordinates.
     template<class Geometry, class LocalKey>
     static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& lk)
@@ -103,7 +166,7 @@ struct PQ3LagrangeDofHelper
     //! Reference-element position of a DOF for order-3 Lagrange basis.
     template<class LocalKey>
     static typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate
-    localDofPos(Dune::GeometryType gt, const LocalKey& lk)
+    localDofPosition(Dune::GeometryType gt, const LocalKey& lk)
     { return localDofPos_(gt, lk); }
 
 private:

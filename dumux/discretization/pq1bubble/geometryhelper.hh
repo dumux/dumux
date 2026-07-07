@@ -14,18 +14,24 @@
 #define DUMUX_DISCRETIZATION_PQ1BUBBLE_GEOMETRY_HELPER_HH
 
 #include <array>
+#include <ranges>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/rangeutilities.hh>
+#include <dune/common/reservedvector.hh>
 
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
-#include <dune/common/reservedvector.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/geometry/center.hh>
+
+#include "dofhelper.hh"
 
 namespace Dumux {
 
@@ -181,6 +187,7 @@ class PQ1BubbleGeometryHelper
 
     using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
+    using DofHelper = PQ1BubbleDofHelper<GridView, 1>;
 
     PQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -383,49 +390,19 @@ public:
         );
     }
 
-    //! number of element dofs
-    static std::size_t numElementDofs(Dune::GeometryType type)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).size(dim) + 1;
-    }
-
-    //! number of hybrid dofs
+    //! number of hybrid dofs (overrides base: PQ1Bubble uses no non-CV dofs in the FV context)
     static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
     {
         return 0;
     }
 
-    //! Number of local dofs related to an intersection with index iIdx
-    static auto numLocalDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).size(iIdx, 1, dim);
-    }
-
-    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
-    static auto localDofIndexIntersection(Dune::GeometryType type, unsigned int iIdx, unsigned int ilocalDofIdx)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
-    }
-
-    template<class DofMapper, class LocalKey>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
-    {
-        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim()) + localKey.index();
-    }
-
     GlobalPosition dofPosition(unsigned int localDofIdx) const
     {
-        if (localDofIdx < numElementDofs(geo_.type())-1)
+        const auto numVertexDofs = Dune::referenceElement<Scalar, dim>(geo_.type()).size(dim);
+        if (localDofIdx < numVertexDofs)
             return geo_.corner(localDofIdx);
         else
             return geo_.center();
-    }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
@@ -438,7 +415,7 @@ public:
             };
         else
             return {
-                static_cast<LocalIndexType>(numElementDofs(geo_.type())-1),
+                static_cast<LocalIndexType>(DofHelper::numElementDofs(geo_.type())-1),
                 static_cast<LocalIndexType>(localScvfIndex-numEdges)
             };
     }
@@ -493,7 +470,7 @@ private:
         );
     }
 
-    const typename Element::Geometry& geo_; //!< Reference to the element geometry
+    typename Element::Geometry geo_;
     BoxHelper boxHelper_;
 };
 
@@ -514,6 +491,7 @@ class HybridPQ1BubbleGeometryHelper
 
     using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
+    using DofHelper = PQ1BubbleDofHelper<GridView, numCubeBubbleDofs>;
 
     HybridPQ1BubbleGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -657,36 +635,10 @@ public:
         );
     }
 
-    //! number of element dofs
-    static std::size_t numElementDofs(Dune::GeometryType type)
-    {
-        const auto numVertexDofs = Dune::referenceElement<Scalar, dim>(type).size(dim);
-        return numVertexDofs + (type.isCube() ? numCubeBubbleDofs : 1);
-    }
-
-    //! number of hybrid dofs
+    //! number of hybrid dofs (overrides base: for cube elements there are numCubeBubbleDofs extra dofs)
     static std::size_t numNonCVLocalDofs(Dune::GeometryType type)
     {
         return type.isCube() ? numCubeBubbleDofs : 1;
-    }
-
-    //! Number of local dofs related to an intersection with index iIdx
-    static auto numLocalDofsIntersection(Dune::GeometryType type, unsigned int iIdx)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).size(iIdx, 1, dim);
-    }
-
-    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
-    static auto localDofIndexIntersection(Dune::GeometryType type, unsigned int iIdx, unsigned int ilocalDofIdx)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).subEntity(iIdx, 1, ilocalDofIdx, dim);
-    }
-
-    template<class DofMapper, class LocalKey>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
-    {
-        // For cube elements we have to add the additional index for the bubble dof
-        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim()) + localKey.index();
     }
 
     GlobalPosition dofPosition(unsigned int localDofIdx) const
@@ -696,13 +648,6 @@ public:
             return geo_.corner(localDofIdx);
         else
             return geo_.center();
-    }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const
@@ -746,8 +691,9 @@ public:
     }
 
 private:
-    const typename Element::Geometry& geo_; //!< Reference to the element geometry
     Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
+
+    typename Element::Geometry geo_;
 };
 
 } // end namespace Dumux

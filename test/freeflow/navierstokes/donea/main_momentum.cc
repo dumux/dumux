@@ -153,8 +153,8 @@ void updateVelocities(
             const auto elemGeo = element.geometry();
             const auto elemSol = elementSolution(element, x, gridGeometry);
             velocity[eIdx] = evalSolution(element, elemGeo, gridGeometry, elemSol, elemGeo.center());
-            for (const auto& scv : scvs(fvGeometry))
-                faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
+            for (const auto& localDof : localDofs(fvGeometry))
+                faceVelocity[localDof.dofIndex()] = elemVolVars[localDof].velocity();
         }
         else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble
                           || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq2

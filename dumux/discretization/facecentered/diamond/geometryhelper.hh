@@ -13,6 +13,7 @@
 #define DUMUX_DISCRETIZATION_FACECENTERED_DIAMOND_GEOMETRY_HELPER_HH
 
 #include <array>
+#include <ranges>
 
 #include <dune/common/reservedvector.hh>
 #include <dune/common/fvector.hh>
@@ -20,7 +21,10 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/geometry/center.hh>
+#include <dumux/discretization/pq1nonconforming/dofhelper.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
 
@@ -264,6 +268,8 @@ class DiamondGeometryHelper
     using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
 public:
+    using DofHelper = PQ1NonconformingDofHelper<GridView>;
+
     explicit DiamondGeometryHelper(const typename Element::Geometry& geo)
     : geo_(geo)
     {}
@@ -427,13 +433,6 @@ public:
 
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
 
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)

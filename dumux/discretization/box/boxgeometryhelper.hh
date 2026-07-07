@@ -22,8 +22,12 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
+#include <dune/common/rangeutilities.hh>
+
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/center.hh>
+#include <dumux/discretization/pq1/dofhelper.hh>
 
 namespace Dumux {
 
@@ -274,6 +278,7 @@ private:
 
     static constexpr int dim = 1;
 public:
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -363,13 +368,6 @@ public:
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
 
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
-
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
     {
@@ -402,6 +400,7 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 public:
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -550,13 +549,6 @@ public:
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
 
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
-
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
     {
@@ -590,6 +582,8 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
     static constexpr auto dimWorld = GridView::dimensionworld;
 
 public:
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
+
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
     {}
@@ -732,13 +726,6 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
 
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)

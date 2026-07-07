@@ -7,14 +7,19 @@
 /*!
  * \file
  * \ingroup Discretization
- * \brief Defines a type tag and some properties for models using the pq3 scheme.
+ * \brief Defines a type tag and some properties for models using pq1 discretization scheme.
  */
 
-#ifndef DUMUX_DISCRETIZATION_PQ3_HH
-#define DUMUX_DISCRETIZATION_PQ3_HH
+#ifndef DUMUX_DISCRETIZATION_PQ1_HH
+#define DUMUX_DISCRETIZATION_PQ1_HH
 
 #include <concepts>
 #include <type_traits>
+
+#include <dune/common/fvector.hh>
+#include <dune/geometry/multilineargeometry.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/bcrsmatrix.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
@@ -24,6 +29,7 @@
 
 #include <dumux/assembly/cvfelocalresidual.hh>
 #include <dumux/assembly/cvfelocalresidual_.hh>
+#include <dumux/assembly/localresidual.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/fvproperties.hh>
@@ -31,15 +37,14 @@
 #include <dumux/discretization/elementboundarytypes.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
-#include <dumux/discretization/cvfe/hybrid/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/variablesadapter.hh>
-#include <dumux/discretization/pq3/fvgridgeometry.hh>
-#include <dumux/discretization/pq3/fegriddiscretization.hh>
+#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
+#include <dumux/discretization/cvfe/gridvolumevariables.hh>
+#include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
-#include <dumux/discretization/cvfe/hybrid/fluxvariablescache.hh>
+#include <dumux/discretization/cvfe/variablesadapter.hh>
+#include <dumux/discretization/box/fvgridgeometry.hh>
+#include <dumux/discretization/pq1/fegriddiscretization.hh>
 
-#include <dumux/assembly/localresidual.hh>
 #include <dumux/discretization/fem/elementvariables.hh>
 #include <dumux/discretization/fem/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
@@ -49,67 +54,76 @@
 
 namespace Dumux::Properties {
 
+//! Type tag for the pq1 scheme.
+// Create new type tags
 namespace TTag {
-struct PQ3Base { using InheritsFrom = std::tuple<GridProperties>; };
-struct PQ3HybridModel { using InheritsFrom = std::tuple<FiniteVolumeModel, PQ3Base>; };
-struct PQ3FEModel { using InheritsFrom = std::tuple<PQ3Base>; };
+struct PQ1FVModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
+struct PQ1FEModel { using InheritsFrom = std::tuple<GridProperties>; };
 } // end namespace TTag
 
+//! Set the default for the grid geometry
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PQ3HybridModel>
+struct GridGeometry<TypeTag, TTag::PQ1FVModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = PQ3FVGridGeometry<Scalar, GridView, enableCache>;
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
 };
 
+//! The grid volume variables vector class
 template<class TypeTag>
-struct GridVolumeVariables<TypeTag, TTag::PQ3HybridModel>
+struct GridVolumeVariables<TypeTag, TTag::PQ1FVModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using Traits = Dumux::Detail::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
-    using type = Dumux::Detail::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
+    using type = CVFEGridVolumeVariables<Traits, enableCache>;
 };
 
+//! The grid flux variables cache vector class
 template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::PQ3HybridModel>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = HybridCVFEFluxVariablesCache<Scalar, GridGeometry>;
-};
-
-template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::PQ3HybridModel>
+struct GridFluxVariablesCache<TypeTag, TTag::PQ1FVModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluxVariablesCache = GetPropTypeOr<TypeTag,
         Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
     >;
 public:
-    using type = HybridCVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+    using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
+//! The flux variables cache type
 template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::PQ3Base>
+struct FluxVariablesCache<TypeTag, TTag::PQ1FVModel>
+{
+private:
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+public:
+    using type = CVFEFluxVariablesCache<Scalar, GridGeometry>;
+};
+
+//! Set the default for the ElementBoundaryTypes
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::PQ1FVModel>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridDiscretization())>;
+    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
+    // Check if problem has new boundaryTypes interface
+    // then use ElementIntersectionBoundaryTypes
     using type = std::conditional_t<
         Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<Problem, typename GG::LocalView>(),
         Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
@@ -117,20 +131,21 @@ public:
     >;
 };
 
-//! Set the default FE grid discretization
+
+//! Set the default FE grid discretization for PQ1FEModel
 template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PQ3FEModel>
+struct GridGeometry<TypeTag, TTag::PQ1FEModel>
 {
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
     using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = Dumux::Experimental::PQ3FEGridDiscretization<Scalar, GridView, enableCache>;
+    using type = Dumux::Experimental::PQ1FEGridDiscretization<Scalar, GridView, enableCache>;
 };
 
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::PQ3FEModel>
+struct GridVariables<TypeTag, TTag::PQ1FEModel>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -144,17 +159,33 @@ public:
     using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 
+//! Set the default for the ElementBoundaryTypes for PQ1FEModel
+template<class TypeTag>
+struct ElementBoundaryTypes<TypeTag, TTag::PQ1FEModel>
+{
+private:
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
+    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
+public:
+    using type = std::conditional_t<
+        Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<Problem, typename GG::LocalView>(),
+        Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
+        Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
+    >;
+};
+
 //! TODO: Replace property
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::PQ3FEModel> { static constexpr bool value = false; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::PQ1FEModel> { static constexpr bool value = false; };
 
 //! TODO: Replace and move to LinearAlgebra traits
 template<class TypeTag>
-struct SolutionVector<TypeTag, TTag::PQ3FEModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
+struct SolutionVector<TypeTag, TTag::PQ1FEModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
 
 //! TODO: Replace and move to LinearAlgebra traits
 template<class TypeTag>
-struct JacobianMatrix<TypeTag, TTag::PQ3FEModel>
+struct JacobianMatrix<TypeTag, TTag::PQ1FEModel>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -169,25 +200,26 @@ public:
 namespace Dumux::Detail {
 
 template<class Problem>
-struct ProblemTraits<Problem, DiscretizationMethods::PQ3>
+struct ProblemTraits<Problem, DiscretizationMethods::Box>
 {
 private:
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridDiscretization())>;
+    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
 public:
     using GridGeometry = GG;
+    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, boundaryFace)
     using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView>::type;
 };
 
 template<class TypeTag>
-concept PQ3Model = std::is_same_v<
+concept PQ1Model = std::is_same_v<
     typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
-    DiscretizationMethods::PQ3
+    DiscretizationMethods::PQ1
 >;
 
 template<class T>
-concept PQ3HybridModel = PQ3Model<T> && Dumux::Properties::inheritsFrom<Properties::TTag::PQ3HybridModel, T>();
+concept PQ1FVModel = PQ1Model<T> && Dumux::Properties::inheritsFrom<Properties::TTag::PQ1FVModel, T>();
 
-template<PQ3HybridModel TypeTag>
+template<PQ1Model TypeTag>
 struct DiscretizationDefaultLocalOperator<TypeTag>
 {
 private:
@@ -200,10 +232,10 @@ public:
                                     Dumux::CVFELocalResidual<TypeTag>>;
 };
 
-template<class T>
-concept PQ3FEModel = PQ3Model<T> && Dumux::Properties::inheritsFrom<Properties::TTag::PQ3FEModel, T>();
+template<class TypeTag>
+concept PQ1FEModel = PQ1Model<TypeTag> && Dumux::Properties::inheritsFrom<Properties::TTag::PQ1FEModel, TypeTag>();
 
-template<PQ3FEModel TypeTag>
+template<PQ1FEModel TypeTag>
 struct DiscretizationDefaultLocalOperator<TypeTag>
 { using type = Dumux::Experimental::LocalResidual<TypeTag>; };
 

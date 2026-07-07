@@ -183,6 +183,24 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex_parallel
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_diamond_simplex params.input
                              -Problem.Name test_ff_stokes_donea_momentum_diamond_simplex_parallel -Problem.UseNeumann true -FreeFlow.EnableUnsymmetrizedVelocityGradient true")
 
+# tests with pq1 nonconforming fe
+dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq1nonconforming_cube
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1NonconformingFEModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_fe_pq1nonconforming_cube-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_fe_pq1nonconforming_cube_fcdiamond_1.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_fe_pq1nonconforming_cube params.input
+                           -Problem.Name donea_momentum_fe_pq1nonconforming_cube -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
 # tests with pq1bubble
 dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
                SOURCES main_momentum.cc
@@ -286,6 +304,40 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex_paral
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex_parallel_pq1bubble_1.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex params.input
                              -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex_parallel -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq1bubble_simplex
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleFEModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_fe_pq1bubble_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_fe_pq1bubble_simplex_pq1bubble_1.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_fe_pq1bubble_simplex params.input
+                           -Problem.Name donea_momentum_fe_pq1bubble_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq2_cube
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ2FEModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_fe_pq2_cube-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/donea_momentum_fe_pq2_cube_pq2_1.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_fe_pq2_cube params.input
+                           -Problem.Name donea_momentum_fe_pq2_cube -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_simplex
                SOURCES main_momentum.cc
@@ -497,6 +549,28 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
                            -Problem.UseNeumann false
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -Grid.Cells "8 8")
+
+# PQ3 fe momentum tests
+dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq3_cube
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ3FEModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_fe_pq3_cube_ho-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_fe_pq3_cube_ho_pq3.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_fe_pq3_cube params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_fe_pq3_cube
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells \"8 8\"")
+
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                SOURCES main.cc

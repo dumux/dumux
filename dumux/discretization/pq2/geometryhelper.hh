@@ -14,6 +14,7 @@
 #define DUMUX_DISCRETIZATION_PQ2_GEOMETRY_HELPER_HH
 
 #include <array>
+#include <ranges>
 
 #include <dune/common/exceptions.hh>
 
@@ -23,9 +24,11 @@
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/pq2/dofhelper.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux {
 
@@ -64,6 +67,7 @@ class HybridPQ2GeometryHelper
 
     using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
+    using DofHelper = Dumux::PQ2LagrangeDofHelper<GridView>;
 
     HybridPQ2GeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -205,39 +209,6 @@ public:
             scvType,
             [&](unsigned int i){ return p[i]; }
         );
-    }
-
-    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
-    template<class LocalKey>
-    static auto localDofOnIntersection(Dune::GeometryType type, unsigned int iIdx, const LocalKey& localKey)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-
-        const auto numEntitiesIntersection = refElement.size(iIdx, 1, localKey.codim());
-        for(std::size_t idx=0; idx < numEntitiesIntersection; idx++)
-            if(localKey.subEntity() == refElement.subEntity(iIdx, 1, idx, localKey.codim()))
-                return true;
-
-        return false;
-    }
-
-    template<class DofMapper, class LocalKey>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
-    { return PQ2LagrangeDofHelper<GridView>::dofIndex(dofMapper, element, localKey); }
-
-    template<class Geometry, class LocalKey>
-    static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& localKey)
-    { return PQ2LagrangeDofHelper<GridView>::dofPosition(geo, localKey); }
-
-    template<class LocalKey>
-    GlobalPosition dofPosition(const LocalKey& localKey) const
-    { return dofPosition(geo_, localKey); }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const

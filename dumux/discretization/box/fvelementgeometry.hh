@@ -58,6 +58,7 @@ class BoxFVElementGeometry<GG, true>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using DofHelper = typename GGCache::DofHelper;
 
     using BaseIpData = CVFE::InterpolationPointData<
                         typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
@@ -149,26 +150,18 @@ public:
 
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(boundaryFace.intersectionIndex(), 1, dim)),
-            [&](const auto i)
-            {
-                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(boundaryFace.intersectionIndex(), 1, i, dim);
-                return CVFE::LocalDof
-                {
-                    static_cast<LocalIndexType>(localDofIdx),
-                    fvGeometry.gridGeometry().dofMapper().subIndex(fvGeometry.element(), localDofIdx, dim),
-                    static_cast<GridIndexType>(fvGeometry.elementIndex())
-                };
-                }
-        );
-    }
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! Get the local finite element coefficients
+    const auto& feLocalCoefficients() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localCoefficients();
     }
 
     //! The total number of element-local dofs
@@ -307,7 +300,7 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
+        return CVFE::LocalDofInterpolationPointData{ DofHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
@@ -316,7 +309,7 @@ public:
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
-        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+        const auto& localPos = DofHelper::localDofPosition(type, localKey);
 
         return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
@@ -360,6 +353,7 @@ class BoxFVElementGeometry<GG, false>
     using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using DofHelper = typename GGCache::DofHelper;
 
     using BaseIpData = CVFE::InterpolationPointData<
                         typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
@@ -445,27 +439,18 @@ public:
 
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const BoxFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).size(boundaryFace.intersectionIndex(), 1, dim)),
-            [&](const auto i)
-            {
-                auto localDofIdx = Dune::referenceElement<CoordScalar, dim>(fvGeometry.element().type()).subEntity(boundaryFace.intersectionIndex(), 1, i, dim);
-                return CVFE::LocalDof
-                {
-                    static_cast<LocalIndexType>(localDofIdx),
-                    fvGeometry.gridGeometry().dofMapper().subIndex(fvGeometry.element(), localDofIdx, dim),
-                    static_cast<GridIndexType>(fvGeometry.elementIndex())
-                };
-                }
-        );
-    }
-
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
         return gridGeometry().feCache().get(element_->type()).localBasis();
+    }
+
+    //! Get the local finite element coefficients
+    const auto& feLocalCoefficients() const
+    {
+        return gridGeometry().feCache().get(element_->type()).localCoefficients();
     }
 
     //! The total number of element-local dofs
@@ -552,6 +537,10 @@ public:
     const GridGeometry& gridGeometry() const
     { return ggCache_->gridGeometry(); }
 
+    //! The grid discretization we are a restriction of
+    const GridGeometry& gridDiscretization() const
+    { return ggCache_->gridGeometry(); }
+
     //! Returns whether one of the geometry's scvfs lies on a boundary
     bool hasBoundaryScvf() const
     { return hasBoundaryScvf_; }
@@ -604,7 +593,7 @@ public:
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
-        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
+        return CVFE::LocalDofInterpolationPointData{ DofHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
@@ -613,7 +602,7 @@ public:
     {
         const auto type = fvGeometry.element().type();
         const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
-        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+        const auto& localPos = DofHelper::localDofPosition(type, localKey);
 
         return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
