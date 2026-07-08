@@ -11,6 +11,7 @@ PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/examples/README.md \
+                         @top_srcdir@/test/porousmediumflow/2p/buckleyleverett/README.md \
                          @top_srcdir@/test/porousmediumflow/richards/benchmarks/README.md \
                          @top_srcdir@/test/solidmechanics/plate/membrane/README.md \
                          @top_srcdir@/test/solidmechanics/plate/kirchhoff_love/README.md \
