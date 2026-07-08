@@ -5,11 +5,16 @@ Analytical solution for pipe-flow BHE heat transport — two formulations compar
 Formulation A (OGS original): U referred to r_po, characteristic length X uses r_pi (inconsistent)
 Formulation B (consistent):   U and X both referred to r_pi — Ramey (1962)
 """
+import glob
 import os
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+# ── Input ──────────────────────────────────────────────────────────────────────
+dumux_output_name = "test_wellbore_heat_transport_1d"  # DuMux output base name (csv/vtp prefix)
 
 # ── Physical parameters (OGS benchmark) ───────────────────────────────────────
 T_d = 55            # undisturbed formation temperature, °C
@@ -95,7 +100,7 @@ for delta_z in Z:
 
 # ── Load DuMux output ──────────────────────────────────────────────────────────
 script_dir = os.path.dirname(os.path.abspath(__file__))
-csv_name = "test_wellbore_heat_transport_1d.csv"
+csv_name = dumux_output_name + ".csv"
 
 dumux_time_d = dumux_T = None
 for path in [csv_name, os.path.join(script_dir, csv_name)]:
@@ -109,6 +114,38 @@ for path in [csv_name, os.path.join(script_dir, csv_name)]:
         break
 else:
     print(f"'{csv_name}' not found — run the simulation first.")
+
+# ── Load DuMux temperature profile along depth (final-timestep 1d VTP) ─────────
+def load_dumux_profile(prefix, search_dirs):
+    """Return (x, T[°C]) along the pipe at the final timestep, from the 1d VTP output."""
+    try:
+        import vtk
+        from vtk.util.numpy_support import vtk_to_numpy
+    except ImportError:
+        print("python3-vtk not available — skipping temperature-distribution plot.")
+        return None, None
+
+    vtp = None
+    for d in search_dirs:
+        files = glob.glob(os.path.join(d, prefix + "-*.vtp"))
+        if files:
+            vtp = max(files, key=lambda f: int(re.search(r"-(\d+)\.vtp$", f).group(1)))
+            break
+    if vtp is None:
+        print(f"'{prefix}-*.vtp' not found — skipping temperature-distribution plot.")
+        return None, None
+
+    reader = vtk.vtkXMLPolyDataReader()
+    reader.SetFileName(vtp)
+    reader.Update()
+    poly = reader.GetOutput()
+    x = vtk_to_numpy(poly.GetPoints().GetData())[:, 0]
+    T = vtk_to_numpy(poly.GetPointData().GetArray("T")) - 273.15  # K -> °C
+    order = np.argsort(x)
+    print(f"Loaded DuMux profile: {vtp}  ({len(x)} points)")
+    return x[order], T[order]
+
+dumux_x, dumux_T_profile = load_dumux_profile(dumux_output_name, [script_dir, "."])
 
 # ── OGS reference data ─────────────────────────────────────────────────────────
 ogs_time_s = np.linspace(0, 5 * 86400, 31)
@@ -136,6 +173,29 @@ analytical_B_at_ogs = np.array([
     for dt in ogs_time_s
 ])
 ogs_error_B = ogs_T - analytical_B_at_ogs
+
+# OGS distributed fluid temperature along depth at the final time (t = 5 d),
+# sampled at 101 points from the inlet (0 m) to the bottom (30 m)
+ogs_x_profile = np.linspace(0, 30, 101)
+ogs_T_profile = np.array([
+    20.        , 20.0499748 , 20.0999496 , 20.1499244 , 20.19959088, 20.24910318,
+    20.29861549, 20.34812923, 20.39764582, 20.44716241, 20.49667901, 20.5457412 ,
+    20.59480339, 20.64386559, 20.69293331, 20.74200381, 20.7910743 , 20.83999301,
+    20.88860817, 20.93722332, 20.98583847, 21.03446673, 21.08309499, 21.13172325,
+    21.18004725, 21.22821912, 21.276391  , 21.32456885, 21.37275866, 21.42094847,
+    21.46913828, 21.5168706 , 21.56460292, 21.61233525, 21.66008277, 21.70783788,
+    21.755593  , 21.80319523, 21.85049171, 21.89778819, 21.94508467, 21.99240882,
+    22.03973297, 22.08705711, 22.1340747 , 22.18093901, 22.22780331, 22.27467848,
+    22.32157535, 22.36847222, 22.4153691 , 22.46180488, 22.50824065, 22.55467643,
+    22.6011372 , 22.64761047, 22.69408374, 22.74040287, 22.78641374, 22.8324246 ,
+    22.87843546, 22.92448876, 22.97054207, 23.01659537, 23.06233949, 23.10792902,
+    23.15351855, 23.19912389, 23.24476083, 23.29039778, 23.33603473, 23.38120648,
+    23.42637824, 23.47154999, 23.51675669, 23.56198086, 23.60720503, 23.65227365,
+    23.69703115, 23.74178866, 23.78654617, 23.83136112, 23.87617606, 23.92099101,
+    23.96549383, 24.00984059, 24.05418734, 24.09855493, 24.14296419, 24.18737345,
+    24.2317827 , 24.27572213, 24.31966155, 24.36360098, 24.40758592, 24.45159361,
+    24.4956013 , 24.5394493 , 24.58297793, 24.62650656, 24.67003519,
+])
 
 # ── DuMux error vs Formulation B ──────────────────────────────────────────────
 dumux_time_s = dumux_error = None
@@ -193,6 +253,59 @@ if dumux_T is not None:
 
 plt.figlegend(fontsize=14, loc="center right", bbox_to_anchor=(0.88, 0.5), frameon=False)
 fig.tight_layout()
-fig.savefig("wellbore_outlet_temperature_v2.png", dpi=150)
+fig.savefig("wellbore_outlet_temperature.png", dpi=150)
+print("Saved: wellbore_outlet_temperature.png")
+
+# ── Second plot: temperature distribution along the borehole at final time ─────
+# (mirrors OGS benchmark Fig. 3: distributed fluid temperature + absolute error
+#  at the final timestep, t = 5 days)
+f_t_final = time_function(dimensionless_time(lambda_re, t, rho_re, c_p_re, r_b))
+X_final_A = coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_A, f_t_final)
+X_final_B = coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B, f_t_final)
+
+ogs_error_A_profile = ogs_T_profile - outlet_temp(T_d, T_i, ogs_x_profile, X_final_A)
+ogs_error_B_profile = ogs_T_profile - outlet_temp(T_d, T_i, ogs_x_profile, X_final_B)
+
+fig2, bx1 = plt.subplots(figsize=(10, 8))
+bx1.plot(Z, data_A.iloc[:, -1], "k.", markersize=10, markerfacecolor="none",
+         label="Ramey A — OGS, different r in U and X")
+bx1.plot(Z, data_B.iloc[:, -1], "b.", markersize=10, markerfacecolor="none",
+         label="Ramey B — same r in U and X")
+bx1.plot(ogs_x_profile, ogs_T_profile, "red", label="OGS")
+if dumux_x is not None:
+    bx1.plot(dumux_x, dumux_T_profile, "green", label="DuMux")
+bx1.set_xlabel("Distance along borehole (m)", fontsize=20)
+bx1.set_ylabel("Fluid temperature (°C)", fontsize=20)
+bx1.set_xlim(0, 30)
+bx1.spines["left"].set_linewidth(2)
+bx1.spines["bottom"].set_linewidth(2)
+bx1.tick_params(axis="both", labelsize=16)
+
+bx2 = bx1.twinx()
+bx2.plot(ogs_x_profile, ogs_error_A_profile, color="red", linestyle="--",
+         label="OGS error vs Ramey A")
+bx2.plot(ogs_x_profile, ogs_error_B_profile, color="red", linestyle="-.",
+         label="OGS error vs Ramey B")
+if dumux_x is not None:
+    dumux_error_profile = dumux_T_profile - outlet_temp(T_d, T_i, dumux_x, X_final_B)
+    bx2.plot(dumux_x, dumux_error_profile, color="green", linestyle="--",
+             label="DuMux error vs Ramey B")
+bx2.set_ylabel("Absolute error (°C)", fontsize=20)
+bx2.spines["right"].set_linewidth(2)
+bx2.tick_params(axis="y", labelsize=16)
+bx2.grid(axis="y", color="gray", linewidth=0.5)
+
+fig2.legend(fontsize=14, loc="center right", bbox_to_anchor=(0.88, 0.5), frameon=False)
+fig2.tight_layout()
+fig2.savefig("wellbore_temperature_distribution.png", dpi=150)
+print("Saved: wellbore_temperature_distribution.png")
+
+print("Temperature distribution at t=5 days:")
+print(f"  Outlet (z=30 m) Ramey B:      {outlet_temp(T_d, T_i, 30.0, X_final_B):.4f}")
+print(f"  Outlet (z=30 m) OGS:          {ogs_T_profile[-1]:.4f}")
+print(f"  OGS max |error| vs Ramey B:   {np.abs(ogs_error_B_profile).max():.4f}")
+if dumux_x is not None:
+    print(f"  Outlet (z=30 m) DuMux:        {dumux_T_profile[-1]:.4f}")
+    print(f"  DuMux max |error| vs Ramey B: {np.abs(dumux_error_profile).max():.4f}")
+
 plt.show()
-print("Saved: wellbore_outlet_temperature_v2.png")
