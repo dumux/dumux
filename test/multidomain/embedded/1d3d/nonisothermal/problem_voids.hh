@@ -175,8 +175,9 @@ public:
 
             auto K = insideVolVars.permeability();
 
-            // evaluate gradP - rho*g at integration point
+            // evaluate gradP - rho*g and gradT at integration point
             DimWorldVector gradP(0.0);
+            DimWorldVector gradT(0.0);
             const Scalar rho = insideVolVars.density();
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -184,6 +185,7 @@ public:
 
                 // the global shape function gradient
                 gradP.axpy(volVars.pressure(), fluxVarsCache.gradN(scv.indexInElement()));
+                gradT.axpy(volVars.temperature(), fluxVarsCache.gradN(scv.indexInElement()));
             }
 
             if (enableGravity)
@@ -192,7 +194,11 @@ public:
             // apply the permeability and return the velocity
             const Scalar velocity = -1.0*vtmv(scvf.unitOuterNormal(), K, gradP) / insideVolVars.viscosity();
 
+            // advective energy flux
             values[energyEqIdx] = velocity * rho * insideVolVars.enthalpy(/*phaseIndex*/0);
+
+            // conductive energy flux following Fourier's law q = -lambda_eff * gradT . n
+            values[energyEqIdx] += -insideVolVars.effectiveThermalConductivity() * (gradT * scvf.unitOuterNormal());
         }
 
         return values;
