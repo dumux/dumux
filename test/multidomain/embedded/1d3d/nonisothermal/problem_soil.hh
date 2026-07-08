@@ -95,6 +95,9 @@ public:
     {
         BoundaryTypes values;
         values.setAllDirichlet();
+        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_
+           || globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
+            values.setAllNeumann();
         return values;
     }
 
@@ -109,6 +112,22 @@ public:
     {
         PrimaryVariables values(initialAtPos(globalPos));
         return values;
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param globalPos The position of the boundary face's integration point in global coordinates
+     *
+     * Negative values mean influx.
+     * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
+    {
+        //! As a default, i.e. if the user's problem does not overload any neumann method
+        //! return no-flow Neumann boundary conditions at all Neumann boundaries
+        return NumEqVector(0.0);
     }
 
     /*!

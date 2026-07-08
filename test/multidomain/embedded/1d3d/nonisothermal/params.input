@@ -5,15 +5,14 @@ EpisodeLength = 7200 #43200 # [s] = 0.5 years
 
 [Voids.Grid]
 File = ./grids/pipe.dgf
-Refinement = 2
 
 [Soil.Grid]
-Positions0 = -5 35
+Positions0 = 0 30
 Positions1 = -5 0 5
 Positions2 = -5 0 5
-Cells0 = 50
-Cells1 = 60 60
-Cells2 = 60 60
+Cells0 = 25
+Cells1 = 50 50
+Cells2 = 50 50
 Grading1 = -1.2 1.2
 Grading2 = -1.2 1.2
 
@@ -50,7 +49,3 @@ EnableBoxLumping = false
 
 [Flux]
 UpwindWeight = 0.5
-
-[Newton]
-#MaxRelativeShift = 1e-6
-#UseLineSearch = true
