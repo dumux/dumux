@@ -1,0 +1,52 @@
+[Problem]
+# Name is expected to be overridden per test invocation via
+# -Problem.Name (both main_vorticity and main_pressure read this same file).
+Name = boussinesq_white_noise
+# EnableGravity: read by the pressure formulation's BoussinesqCVFEDarcyLaw to
+# gate the buoyancy term (must be true there); the vorticity formulation's
+# gravity vector is hardcoded in BoussinesqSpatialParams and ignores this flag.
+EnableGravity = true
+# PRef/PenaltyFactor: pressure formulation only (weak Robin pressure reference
+# at the top wall), ignored by the vorticity formulation.
+PRef = 0.0
+PenaltyFactor = 1e6
+# PerturbAmplitude=0 (default) reproduces the unperturbed erfc baseline used by
+# the dissolution-flux comparison test. Override on the command line for the
+# Riaz et al. (2006) finger-count/tip-scaling experiments, e.g.:
+#   -DimensionlessNumbers.Ra 4000 -Problem.PerturbAmplitude 1e-3 -TimeLoop.TStart 0.2 -TimeLoop.TEnd 10
+PerturbAmplitude = 0.0
+PerturbSeed = 1
+# Threshold defining the finger tip (C >= TipThreshold); not reported by the
+# paper, chosen and documented here.
+TipThreshold = 0.01
+
+[DimensionlessNumbers]
+Ra = 8000
+
+[Grid]
+# dimensionless domain: width x height = 1 x 1
+# Graded tensor-product grid: uniform in x, refined toward the top wall (y=1)
+# in y, where the C=1 Dirichlet BC drives a thin diffusive boundary layer.
+# Total cell count (200 x 200) matches the old uniform grid.
+Positions0 = 0 1
+Cells0     = 200
+Grading0   = 1.0
+
+Positions1 = 0 0.9 1.0
+Cells1     = 160 40
+Grading1   = 1.0 -1.06
+
+[TimeLoop]
+TEnd = 20
+DtInitial = 1e-3
+MaxTimeStepSize = 0.05
+
+[Output]
+VtkOutputInterval = 0.5
+
+[Newton]
+MaxSteps = 20
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true

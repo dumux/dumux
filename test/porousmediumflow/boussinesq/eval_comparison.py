@@ -112,7 +112,7 @@ def plot_concentration(vort_pts, vort_conc, pres_pts, pres_conc,
     cbar.set_ticks([1e-3, 1e-2, 1e-1, 1e0])
     cbar.ax.yaxis.set_major_formatter(mticker.LogFormatterMathtext())
 
-    fig.suptitle(r"CO$_2$ concentration — Ra = 8000, $200\times200$, log scale",
+    fig.suptitle(r"CO$_2$ concentration — Ra = 8000",
                  fontsize=12)
 
     fig.savefig(outfile, dpi=200, bbox_inches="tight")
@@ -152,7 +152,7 @@ def plot_sherwood(vort_csv, pres_csv, outfile, f_ref=0.017):
     ax.set_xscale("log")
     ax.set_xlabel("Dimensionless time $t$")
     ax.set_ylabel(r"Dissolution flux $F$")
-    ax.set_title(r"Dissolution flux — Ra = 8000, $200\times200$")
+    ax.set_title(r"Dissolution flux — Ra = 8000")
     ax.set_xlim(left=0)
     ax.legend(ncol=2, framealpha=0.9, fontsize=9)
 
@@ -231,8 +231,10 @@ def main():
                         help="Output directory for figures (default: .)")
     args = parser.parse_args()
 
-    vort_dir = os.path.join(args.build_dir, "vorticity")
-    pres_dir = os.path.join(args.build_dir, "pressure")
+    # both formulations now build in the same application dir, distinguished
+    # by filename prefix (-Problem.Name comparison_vorticity/comparison_pressure)
+    vort_dir = os.path.join(args.build_dir, "white-noise-perturbations")
+    pres_dir = os.path.join(args.build_dir, "white-noise-perturbations")
 
     os.makedirs(args.out, exist_ok=True)
 

@@ -28,10 +28,10 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
-#include "problem.hh"
-#include "../spatialparams.hh"
-#include "../1p_boussinesq_fluidsystem.hh"
-#include "../boussinesqdarcyslaw.hh"
+#include "../pressure/problem.hh"
+#include "../pressure/boussinesqdarcyslaw.hh"
+#include "../common/spatialparams.hh"
+#include "../common/1p_boussinesq_fluidsystem.hh"
 
 namespace Dumux::Properties {
 
