@@ -1,0 +1,44 @@
+[Problem]
+Name = boussinesq_linear_solver_comparison
+EnableGravity = true
+PRef = 0.0
+PenaltyFactor = 1e6
+# Nonzero so the assembled Jacobians have real x-dependence (upwind-coupled,
+# non-symmetric transport block) instead of the trivial z-only erfc profile.
+PerturbAmplitude = 1e-3
+PerturbSeed = 1
+
+[DimensionlessNumbers]
+Ra = 4000
+
+[Grid]
+# Small version of the white-noise-perturbations grid: enough to produce a
+# non-trivial sparsity pattern/coupling while keeping the transient run to
+# TimeLoop.TEnd (main_generate_{pressure,vorticity}.cc) fast.
+Positions0 = 0 1
+Cells0     = 40
+Grading0   = 1.0
+
+Positions1 = 0 0.9 1.0
+Cells1     = 32 8
+Grading1   = 1.0 -1.06
+
+[TimeLoop]
+TEnd            = 10
+DtInitial       = 1e-3
+MaxTimeStepSize = 0.05
+
+[MatrixExport]
+# Times (matrix-generation stage only) at which the assembled Jacobian/
+# residual is written to a MatrixMarket file; read back in by the
+# matrix-solving stage. Must lie strictly between TStart and TEnd.
+Times = 1 2 3 4
+
+[Newton]
+MaxSteps = 20
+MaxRelativeShift = 1e-5
+
+[LinearSolver]
+Verbosity = 0
+MaxIterations = 1000
+ResidualReduction = 1e-10
