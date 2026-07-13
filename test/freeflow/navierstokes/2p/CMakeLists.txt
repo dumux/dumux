@@ -3,6 +3,8 @@
 
 add_subdirectory(pores)
 add_subdirectory(p2)
+add_subdirectory(stefan)
+add_subdirectory(stefantube)
 
 dune_symlink_to_source_files(FILES params.input)
 
