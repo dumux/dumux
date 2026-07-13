@@ -165,7 +165,7 @@ public:
         {
             values[Indices::velocityXIdx] = parabolicProfile(globalPos[1], inletVelocity_);
             if (!useVelocityProfile_ && isInlet_(globalPos))
-            values[Indices::velocityXIdx] = inletVelocity_;
+                values[Indices::velocityXIdx] = inletVelocity_;
         }
         else
         {
