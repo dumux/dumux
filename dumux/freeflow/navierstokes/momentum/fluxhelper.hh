@@ -60,7 +60,7 @@ struct NavierStokesMomentumBoundaryFlux<DiscretizationMethods::FCStaggered, Slip
      *                                   flow tends to diverge at the boundary. If set to true (default), this
      *                                   yields a "do-nothing" outflow condition where \f$\mathbf{v} \cdot \mathbf{n} = 0\f$
      *                                   is satisfied and the general flow field is preserved in many cases.
-     *                                   See, e.g., https://www.math.uni-magdeburg.de/~richter/WS17/numns/fem.pdf for details.
+     *                                   See, e.g., https://numerics.ovgu.de/teaching/cfd/lecturenotes.pdf for details.
      */
     template<class Problem, class FVElementGeometry, class ElementVolumeVariables, class ElementFluxVariablesCache, class Scalar>
     static auto fixedPressureMomentumFlux(const Problem& problem,
