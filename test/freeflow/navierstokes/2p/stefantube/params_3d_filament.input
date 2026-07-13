@@ -1,0 +1,123 @@
+[Grid]
+# Shorter tube than the main 3D benchmark (exploratory: watch the corner
+# filament, not a slow long-time bulk recession). Same quarter-domain
+# symmetry convention as params_3d.input.
+LowerLeft = 0.0 0.0 0.0
+UpperRight = 0.10 0.025 0.025
+Cells = 16 4 4
+Refinement = 0
+
+[Adaptive]
+MinLevel = 0
+# Raised from 8 to 9. MinElementSize (below) turns out NOT to be the binding
+# constraint near the corner filament -- verified: tightening it alone left
+# the output mesh byte-identical at every timestep. MaxLevel is what actually
+# caps refinement there (the CH-gradient indicator keeps marking the sharp
+# interface regardless of RefineTolerance until it hits either MaxLevel or
+# MinElementSize, and MinElementSize=0.000375 is already finer than what
+# MaxLevel=8 could reach). Raising MaxLevel alone to 9 reproduces the full
+# element-count increase (52k -> 95k elements). Measured cost: ~1.8x slower
+# per Newton step (41s vs 23s for the first step) -- keeping the base grid
+# (Cells above) unchanged is what keeps this roughly linear in element count;
+# widening the base grid too costs ~10x per step instead (tested: 20x6x6 base
+# + MaxLevel 9 -> 222s/step, 9.9 GB peak RSS).
+MaxLevel = 9
+MinElementSize = 0.000375
+RefineTolerance = 0.03
+CoarsenTolerance = 0.003
+EnableInTimeStep = true
+AdaptEveryNSteps = 5
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+RefineAtVelocityGradient = true
+VelocityGradientRefineTolerance = 0.10
+VelocityGradientCoarsenTolerance = 0.01
+
+[TimeLoop]
+TEnd = 0.02
+DtInitial = 2e-5
+MaxTimeStepSize = 5e-4
+OutputInterval = 0.002
+
+[FreeFlow]
+IncompressibleContinuity = true
+EnableDilatationTerm = false
+DegenerateMobility = true
+PhaseFieldUpwindWeight = 1.0
+PhaseFieldAdvectionVelocityScale = 0.0
+VaporAdvectionVelocityScale = 0.0
+
+[Problem]
+Name = test_ff_stokes_2p_stefantube_3d_filament
+EnableInertiaTerms = false
+EnableGravity = false
+EnableEvaporation = true
+PinMomentum = false
+EnableCapillaryMomentumSource = true
+
+SurfaceTension = 1e-3
+# Finer than the main 3D benchmark's InterfaceThickness so a genuinely small
+# InitialGasLength stays well-resolved (InitialGasLength is clamped to at
+# least 10*InterfaceThickness in problem.hh).
+InterfaceThickness = 0.0015
+Mobility = 1.5e-6
+InterfacePosition = 0.08
+InitialGasLength = 0.02
+FlatInitialInterface = false
+# Below the Concus-Finn threshold (45 deg) ON PURPOSE: this scenario exists
+# to watch a corner filament (already wicked to near the opening, see
+# CornerFilamentInitialCondition below) recede once evaporation starts,
+# rather than to verify against a reduced quasi-steady reference -- see
+# corner-meniscus-notes.md. Contrast with params_3d.input (ContactAngle=50,
+# the well-posed quantitative benchmark).
+ContactAngle = 30.0
+MeniscusConcavity = -1.0
+KelvinFactor = 1.0
+# Corner already wicked to near the opening at t=0 (bulk meniscus stays at
+# the normal InitialGasLength position; only the near-corner region, beyond
+# the spherical cap's reach, starts pre-filled). No two-way phase-field/
+# velocity coupling is active here (PhaseFieldAdvectionVelocityScale=0), so
+# the filament can only recede via Cahn-Hilliard diffusion + the evaporation
+# sink -- it cannot break up into droplets (that needs advective transport).
+CornerFilamentInitialCondition = true
+
+# See params.input for the Sc (evaporation number) and EvaporationRateCoeff rationale.
+Density1 = 100.0
+Density2 = 0.01
+Viscosity1 = 1.0
+Viscosity2 = 0.01
+VaporDiffusivity = 5.0
+VaporSatConc = 0.20
+VaporFarFieldConc = 0.05
+EvaporationRateCoeff = 5000.0
+PhaseChangeFactor = 2.0
+
+[Component]
+LiquidDensity = 1.0
+LiquidDynamicViscosity = 1.0
+
+[Flux]
+UpwindWeight = 1.0
+
+[Assembly]
+NumericDifferenceMethod = 1
+
+[Newton]
+MinSteps = 1
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.5
+MaxTimeStepDivisions = 12
+
+[LinearSolver]
+ResidualReduction = 1e-10
+MaxIterations = 1000
+
+[VTK]
+AddVelocity = true
+AddProcessRank = false

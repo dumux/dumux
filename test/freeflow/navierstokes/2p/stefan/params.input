@@ -1,0 +1,85 @@
+[Grid]
+LowerLeft = 0.0 0.0
+UpperRight = 1.0 0.05
+Cells = 64 4
+Refinement = 0
+
+[Adaptive]
+MinLevel = 0
+MaxLevel = 5
+InitMaxLevel = 5
+MinElementSize = 0.00125
+RefineTolerance = 0.02
+CoarsenTolerance = 0.001
+EnableInTimeStep = true
+AdaptEveryNSteps = 5
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+
+[TimeLoop]
+TEnd = 0.25
+DtInitial = 1e-4
+MaxTimeStepSize = 2e-3
+OutputInterval = 0.025
+
+[FreeFlow]
+IncompressibleContinuity = true
+EnableDilatationTerm = false
+DegenerateMobility = true
+PhaseFieldUpwindWeight = 1.0
+
+[Problem]
+Name = test_ff_stokes_2p_stefan
+EnableInertiaTerms = false
+EnableGravity = false
+EnableEvaporation = true
+
+# Diffuse interface and Cahn-Hilliard relaxation.
+SurfaceTension = 1e-3
+InterfaceThickness = 0.01
+# For convergence studies scale this as M = 1e-3*InterfaceThickness.
+Mobility = 1e-5
+InterfacePosition = 0.45
+
+# Non-dimensional Stefan data. The density is intentionally O(1) so the
+# recession is visible in a short test run; set physical values for a realism run.
+Density1 = 1.0
+Density2 = 0.01
+Viscosity1 = 1.0
+Viscosity2 = 0.01
+VaporDiffusivity = 1e-2
+VaporSatConc = 0.20
+VaporFarFieldConc = 0.05
+EvaporationRateCoeff = 500.0
+PhaseChangeFactor = 2.0
+AnalyticTimeOffset = 0.01
+
+[Component]
+LiquidDensity = 1.0
+LiquidDynamicViscosity = 1.0
+
+[Flux]
+UpwindWeight = 1.0
+
+[Assembly]
+NumericDifferenceMethod = 1
+
+[Newton]
+MinSteps = 1
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.5
+MaxTimeStepDivisions = 12
+
+[LinearSolver]
+ResidualReduction = 1e-10
+MaxIterations = 1000
+
+[VTK]
+AddVelocity = true
+AddProcessRank = false

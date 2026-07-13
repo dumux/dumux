@@ -1,0 +1,120 @@
+[Grid]
+LowerLeft = 0.0 0.0
+UpperRight = 0.30 0.05
+Cells = 48 8
+Refinement = 0
+
+[Adaptive]
+MinLevel = 0
+# ALUGrid's level hierarchy can be non-intuitive on this anisotropic slit.
+# Keep the level cap high and use MinElementSize as the actual resolution knob.
+# The initial AMR loop (main.cc) runs until nothing more is marked, bounded only
+# by MaxLevel/MinElementSize -- there is no separate InitMaxLevel pass count.
+MaxLevel = 15
+MinElementSize = 0.000625
+RefineTolerance = 0.01
+CoarsenTolerance = 0.001
+EnableInTimeStep = true
+AdaptEveryNSteps = 5
+RefineAtDirichletBC = false
+RefineAtFluxBC = false
+RefineAtSource = false
+RefineAtVelocityGradient = true
+VelocityGradientRefineTolerance = 0.10
+VelocityGradientCoarsenTolerance = 0.01
+
+[TimeLoop]
+TEnd = 0.10
+DtInitial = 1e-4
+MaxTimeStepSize = 2e-3
+OutputInterval = 0.025
+
+[FreeFlow]
+IncompressibleContinuity = true
+EnableDilatationTerm = false
+DegenerateMobility = true
+PhaseFieldUpwindWeight = 1.0
+PhaseFieldAdvectionVelocityScale = 0.0
+# The reduced tube-law reference is a pure-diffusion (Fickian) balance with no bulk advection
+# term. Advecting vapor with the induced one-way capillary Stokes velocity adds transport the
+# reference doesn't account for; off is the apples-to-apples setting (ablation: 0.829->0.851
+# rate ratio at the old Sc=0.75 defaults).
+VaporAdvectionVelocityScale = 0.0
+
+[Problem]
+Name = test_ff_stokes_2p_stefantube
+EnableInertiaTerms = false
+EnableGravity = false
+EnableEvaporation = true
+PinMomentum = false
+EnableCapillaryMomentumSource = true
+
+# Diffuse interface and Cahn-Hilliard relaxation.
+SurfaceTension = 1e-3
+InterfaceThickness = 0.0025
+# For convergence studies scale this as M = 1e-3*InterfaceThickness.
+Mobility = 2.5e-6
+InterfacePosition = 0.05
+InitialGasLength = 0.25
+ContactAngle = 30.0
+# With liquid on the left, theta < 90 deg has contact lines ahead of the
+# centerline, i.e. the mean meniscus is concave toward the liquid.
+MeniscusConcavity = -1.0
+KelvinFactor = 1.0
+
+# Non-dimensional Stefan data. Density1 and VaporDiffusivity are scaled up together (from an
+# earlier, more concentrated choice) so that K = VaporDiffusivity*(VaporSatConc-VaporFarFieldConc)
+# /Density1 -- and hence the ell(t) recession trajectory -- is UNCHANGED, while the
+# evaporation/Stefan number Sc = (VaporSatConc-VaporFarFieldConc)/Density1 drops comfortably
+# below 1. The reduced tube law ell*ell_dot=K assumes the vapor field is quasi-steady, which
+# only holds for Sc << 1 (the diffusive relaxation time ell^2/D and the recession time
+# ell/ell_dot coincide exactly when Sc = ell*ell_dot/D = K/D = Sc). The old defaults had Sc=0.75
+# (order 1, i.e. NOT quasi-steady) and reproduced only ~83% of the tube-law rate even in the
+# eps,h->0 limit.
+#
+# EvaporationRateCoeff is scaled up by the SAME factor as VaporDiffusivity for the same reason:
+# the interfacial reaction resistance ~1/EvaporationRateCoeff only stays negligible relative to
+# the diffusive resistance ~ell/VaporDiffusivity if EvaporationRateCoeff*ell/VaporDiffusivity >> 1
+# is preserved. Pushing Sc down via VaporDiffusivity alone (keeping EvaporationRateCoeff fixed)
+# eventually makes the finite reaction rate the new bottleneck instead (verified: Sc=0.075 with
+# EvaporationRateCoeff=500 -> 96%; Sc=0.015 -> 99%; pushing to Sc=0.0015 WITHOUT also scaling
+# EvaporationRateCoeff regresses to 96% again; scaling both to Sc=0.0015, EvaporationRateCoeff=
+# 5000 recovers >99.5%, the best found so far).
+Density1 = 100.0
+Density2 = 0.01
+Viscosity1 = 1.0
+Viscosity2 = 0.01
+VaporDiffusivity = 5.0
+VaporSatConc = 0.20
+VaporFarFieldConc = 0.05
+EvaporationRateCoeff = 5000.0
+PhaseChangeFactor = 2.0
+
+[Component]
+LiquidDensity = 1.0
+LiquidDynamicViscosity = 1.0
+
+[Flux]
+UpwindWeight = 1.0
+
+[Assembly]
+NumericDifferenceMethod = 1
+
+[Newton]
+MinSteps = 1
+MaxSteps = 30
+MaxRelativeShift = 1e-6
+EnableResidualCriterion = true
+ResidualReduction = 1e-5
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 1e-3
+RetryTimeStepReductionFactor = 0.5
+MaxTimeStepDivisions = 12
+
+[LinearSolver]
+ResidualReduction = 1e-10
+MaxIterations = 1000
+
+[VTK]
+AddVelocity = true
+AddProcessRank = false
