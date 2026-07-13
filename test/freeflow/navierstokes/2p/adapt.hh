@@ -74,7 +74,10 @@ public:
     : gridGeometry_(gridGeometry)
     , refineBound_(std::numeric_limits<Scalar>::max())
     , coarsenBound_(std::numeric_limits<Scalar>::lowest())
+    , velocityRefineBound_(std::numeric_limits<Scalar>::max())
+    , velocityCoarsenBound_(std::numeric_limits<Scalar>::lowest())
     , maxLocalConcentrationDelta_(gridGeometry_->gridView().size(0), 0.0)
+    , maxLocalVelocityDelta_(gridGeometry_->gridView().size(0), 0.0)
     , minLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MinLevel", 0))
     , maxLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MaxLevel", 0))
     , minElementSize_(getParamFromGroup<Scalar>(paramGroup, "Adaptive.MinElementSize", std::numeric_limits<Scalar>::max()))
@@ -84,7 +87,10 @@ public:
     {
         refineBound_ = std::numeric_limits<Scalar>::max();
         coarsenBound_ = std::numeric_limits<Scalar>::lowest();
+        velocityRefineBound_ = std::numeric_limits<Scalar>::max();
+        velocityCoarsenBound_ = std::numeric_limits<Scalar>::lowest();
         maxLocalConcentrationDelta_.assign(gridGeometry_->gridView().size(0), 0.0);
+        maxLocalVelocityDelta_.assign(gridGeometry_->gridView().size(0), 0.0);
 
         if (minLevel_ >= maxLevel_)
             return;
@@ -131,6 +137,62 @@ public:
                 checkNeighborsRefine_(element);
     }
 
+    template<class MomentumSolutionVector, class MomentumGridGeometry>
+    void includeVelocityJumps(const MomentumSolutionVector& sol,
+                              const MomentumGridGeometry& momentumGridGeometry,
+                              Scalar refineTol = 0.05,
+                              Scalar coarsenTol = 0.001)
+    {
+        if (minLevel_ >= maxLevel_)
+            return;
+
+        if (coarsenTol > refineTol)
+            DUNE_THROW(Dune::InvalidStateException, "Velocity refine tolerance must be higher than coarsen tolerance");
+
+        for (const auto& element : elements(gridGeometry_->gridView()))
+        {
+            const auto eIdxI = gridGeometry_->elementMapper().index(element);
+            const auto geometry = element.geometry();
+            const auto elemSol = elementSolution(element, sol, momentumGridGeometry);
+            const auto vI = evalSolution(element, geometry, momentumGridGeometry, elemSol, geometry.center());
+
+            using std::max;
+            for (const auto& intersection : intersections(gridGeometry_->gridView(), element))
+            {
+                if (!intersection.neighbor())
+                    continue;
+
+                const auto& outside = intersection.outside();
+                const auto eIdxJ = gridGeometry_->elementMapper().index(outside);
+
+                if (element.level() > outside.level()
+                    || (element.level() == outside.level() && eIdxI < eIdxJ))
+                {
+                    const auto outsideGeometry = outside.geometry();
+                    const auto elemSolJ = elementSolution(outside, sol, momentumGridGeometry);
+                    const auto vJ = evalSolution(outside, outsideGeometry, momentumGridGeometry, elemSolJ, outsideGeometry.center());
+                    const Scalar localdelta = (vI - vJ).two_norm();
+                    maxLocalVelocityDelta_[eIdxI] = max(maxLocalVelocityDelta_[eIdxI], localdelta);
+                    maxLocalVelocityDelta_[eIdxJ] = max(maxLocalVelocityDelta_[eIdxJ], localdelta);
+                }
+            }
+        }
+
+        Scalar globalDelta = 0.0;
+        for (const auto delta : maxLocalVelocityDelta_)
+            globalDelta = std::max(globalDelta, delta);
+
+        if (globalDelta <= std::numeric_limits<Scalar>::epsilon())
+            return;
+
+        velocityRefineBound_ = refineTol*globalDelta;
+        velocityCoarsenBound_ = coarsenTol*globalDelta;
+
+        for (const auto& element : elements(gridGeometry_->gridView(), Dune::Partitions::interior))
+            if (this->operator()(element) > 0)
+                checkNeighborsRefine_(element);
+    }
+
     int operator() (const Element& element) const
     {
         const auto eIdx = gridGeometry_->elementMapper().index(element);
@@ -140,11 +202,13 @@ public:
         if (element.level() < int(minLevel_))
             return 1;
         if (element.hasFather() && element.level() > int(minLevel_)
-            && maxLocalConcentrationDelta_[eIdx] < coarsenBound_)
+            && maxLocalConcentrationDelta_[eIdx] < coarsenBound_
+            && maxLocalVelocityDelta_[eIdx] < velocityCoarsenBound_)
             return -1;
         if (element.level() < maxLevel_
             && size_(element) > minElementSize_
-            && maxLocalConcentrationDelta_[eIdx] > refineBound_)
+            && (maxLocalConcentrationDelta_[eIdx] > refineBound_
+                || maxLocalVelocityDelta_[eIdx] > velocityRefineBound_))
             return 1;
         return 0;
     }
@@ -183,7 +247,10 @@ private:
 
     Scalar refineBound_;
     Scalar coarsenBound_;
+    Scalar velocityRefineBound_;
+    Scalar velocityCoarsenBound_;
     std::vector<Scalar> maxLocalConcentrationDelta_;
+    std::vector<Scalar> maxLocalVelocityDelta_;
     std::size_t minLevel_;
     std::size_t maxLevel_;
     Scalar minElementSize_;
