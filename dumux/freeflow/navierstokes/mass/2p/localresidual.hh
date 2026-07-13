@@ -141,11 +141,14 @@ public:
         // benefit over upwind in these benchmarks (Case-1 spike slightly worse, Case-2 identical).
         static const Scalar phiUpwindWeight = getParamFromGroup<Scalar>(
             problem.paramGroup(), "FreeFlow.PhaseFieldUpwindWeight", 1.0);
+        static const Scalar phaseFieldAdvectionVelocityScale = getParamFromGroup<Scalar>(
+            problem.paramGroup(), "FreeFlow.PhaseFieldAdvectionVelocityScale", 1.0);
+        const Scalar phaseFieldVolumeFlux = phaseFieldAdvectionVelocityScale*volumeFlux;
         flux[Indices::phaseFieldEqIdx] = upwindSchemeMultiplier_(
-            elemVolVars, scvf, volumeFlux,
+            elemVolVars, scvf, phaseFieldVolumeFlux,
             [](const auto& volVars) { return volVars.phaseField(); },
             phiUpwindWeight
-        )*volumeFlux;
+        )*phaseFieldVolumeFlux;
 
         // Cahn-Hilliard diffusion flux -M grad(mu). Optionally use a DEGENERATE mobility
         // M(c) = M0 (c^2-1)^2 which vanishes in the bulk (c=+-1) and concentrates the diffusion at
@@ -196,63 +199,24 @@ public:
         // add contributions from problem (e.g. double well potential)
         source += problem.source(element, fvGeometry, elemVolVars, scv);
 
+        // NOTE: no skew-symmetric (Temam) correction of the phase-field advection is applied, and
+        // it would be INERT here anyway. The conservative advection div(phi u) differs from the skew
+        // form only by 1/2 phi (div u); the incompressible continuity equation is co-located on these
+        // same box CVs using the same faceVelocity, so sum_f m_f (= the discrete div u over the CV)
+        // IS the continuity residual -> driven to ~1e-10 by the pressure/Newton solve. The advecting
+        // velocity is therefore discretely divergence-free on the mass grid, so div(phi u) already
+        // equals the skew form (verified empirically: a properly-wired -1/2 phi (div u) source shifts
+        // the Case-1 QoIs by < Newton tol, i.e. byte-identically; a 1e8x-amplified version does
+        // perturb them, confirming the term is real but ~1e-10). A skew/limiter term would only
+        // matter for the compressible continuity path (FreeFlow.IncompressibleContinuity=false),
+        // where sum_f m_f != 0. The previous element-level addToElementFluxAndSourceResidual() hook
+        // for this was moreover DEAD: it is called only by the Experimental CVFE assembler
+        // (Dumux::Experimental::LocalResidual), never by this Box model's classic CVFELocalResidual.
+
         return source;
     }
 
-    /*!
-     * \brief Element-level hook: optional skew-symmetric correction of the phase-field advection.
-     */
-    void addToElementFluxAndSourceResidual(typename ParentType::ElementResidualVector& residual,
-                                           const Problem& problem,
-                                           const Element& element,
-                                           const FVElementGeometry& fvGeometry,
-                                           const ElementVolumeVariables& elemVolVars,
-                                           const ElementFluxVariablesCache& elemFluxVarsCache,
-                                           const ElementBoundaryTypes& elemBcTypes) const
-    {
-        addSkewSymmetricPhaseFieldAdvectionCorrection_(residual, problem, element, fvGeometry, elemVolVars);
-    }
-
 private:
-    /*!
-     * \brief Skew-symmetric (Temam) form of the Cahn-Hilliard phase-field convection.
-     *
-     * computeFlux assembles phi-advection in CONSERVATIVE (divergence) form sum_f phi_up m_f
-     * (m_f = (v.n) dA the volume flux through the sub-control-volume face). That equals the
-     * advective form u.grad(phi) only if sum_f m_f = 0 per control volume; with incompressible
-     * continuity div v = 0 enforced only discretely, sum_f m_f != 0 at the density interface, and
-     * the spurious phi*(div u) term makes phi OVERSHOOT (>1) there -> mu = (gamma/eps)phi(phi^2-1)
-     * - gamma*eps*Laplacian(phi) spikes -> single-node interfacial pressure spikes. The skew form
-     *   1/2[u.grad phi + div(phi u)] = div(phi u) - 1/2 phi (div u)
-     * cancels half that term (subtract 1/2 phi_cv m_f from each adjacent CV); it vanishes when
-     * sum_f m_f = 0 (consistent) and is robust to the small discrete divergence at the interface.
-     * Gated by FreeFlow.SkewSymmetricPhaseFieldAdvection (default off).
-     */
-    void addSkewSymmetricPhaseFieldAdvectionCorrection_(typename ParentType::ElementResidualVector& residual,
-                                                        const Problem& problem,
-                                                        const Element& element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars) const
-    {
-        static const bool enable = getParamFromGroup<bool>(
-            problem.paramGroup(), "FreeFlow.SkewSymmetricPhaseFieldAdvection", false);
-        if (!enable)
-            return;
-
-        for (const auto& scvf : scvfs(fvGeometry))
-        {
-            if (scvf.boundary())
-                continue;
-
-            const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-            const Scalar volumeFlux = velocity*scvf.unitOuterNormal()*scvf.area();
-
-            residual[scvf.insideScvIdx()][Indices::phaseFieldEqIdx]
-                += -0.5*volumeFlux*elemVolVars[scvf.insideScvIdx()].phaseField();
-            residual[scvf.outsideScvIdx()][Indices::phaseFieldEqIdx]
-                += 0.5*volumeFlux*elemVolVars[scvf.outsideScvIdx()].phaseField();
-        }
-    }
 
 
 

@@ -420,8 +420,13 @@ protected:
             static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
             const auto density = vn > 0 ? upwindWeight*insideDensity + (1.0-upwindWeight)*outsideDensity
                                         : upwindWeight*outsideDensity + (1.0-upwindWeight)*insideDensity;
-            const auto massFlux = density * vn
-                * Extrusion::area(fvGeometry, scvf) * elemVars[insideScv].extrusionFactor();
+            // vn = velIntegral.n already carries the face area (the CVFE quadrature weight is the
+            // integration element, matching velIntegral in fluxIntegral() above), so the mass flux is
+            // m_f = rho (int_face v.n dA) * extrusion. Do NOT multiply by Extrusion::area again — the
+            // previous version did, squaring the face area (~x300 too small at these scv-face sizes),
+            // which effectively disabled the skew correction and let the divergence-form advection
+            // inject interfacial kinetic energy -> the Case-1 over-deformation/QoI regression.
+            const auto massFlux = density * vn * elemVars[insideScv].extrusionFactor();
 
             // divergence form -> convective form: residual_cv += -u_cv * m_f (with the
             // outward-normal sign flip on the outside control volume). For overlapping

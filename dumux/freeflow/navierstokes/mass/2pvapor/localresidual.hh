@@ -18,6 +18,8 @@ namespace Dumux {
  *   ∂c_v/∂t + ∇·(u c_v) − ∇·(D_eff ∇c_v) = ṁ
  *
  * where D_eff = D_gas · max(0, (1−φ)/2) confines diffusion to the gas phase.
+ * The optional FreeFlow.VaporDiffusionInterfacialFloor parameter can raise
+ * D_eff in the diffuse interfacial band for sharp-interface-limit tests.
  */
 template<class TypeTag>
 class NavierStokesMassTwoPVaporLocalResidual
@@ -67,7 +69,10 @@ public:
         auto flux = ParentType::computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-        const Scalar volumeFlux = velocity * scvf.unitOuterNormal() * scvf.area();
+        const Scalar rawVolumeFlux = velocity * scvf.unitOuterNormal() * scvf.area();
+        static const Scalar vaporAdvectionVelocityScale = getParamFromGroup<Scalar>(
+            problem.paramGroup(), "FreeFlow.VaporAdvectionVelocityScale", 1.0);
+        const Scalar volumeFlux = vaporAdvectionVelocityScale*rawVolumeFlux;
 
         // advective flux: upwind vapor concentration
         flux[Indices::vaporEqIdx] = upwindVapor_(elemVolVars, scvf, volumeFlux) * volumeFlux;
@@ -84,7 +89,15 @@ public:
             ? phiIn
             : elemVolVars[scvf.outsideScvIdx()].phaseField();
         // gas volume fraction: (1−φ)/2, clamped to [0,1]
-        const auto gasFraction = std::max(Scalar(0), 0.5*(1.0 - 0.5*(phiIn + phiOut)));
+        const auto phiFace = 0.5*(phiIn + phiOut);
+        auto gasFraction = std::max(Scalar(0), 0.5*(1.0 - phiFace));
+        static const Scalar interfacialFloor = getParamFromGroup<Scalar>(
+            problem.paramGroup(), "FreeFlow.VaporDiffusionInterfacialFloor", 0.0);
+        if (interfacialFloor > 0.0)
+        {
+            const auto interfaceIndicator = std::max(Scalar(0), 1.0 - phiFace*phiFace);
+            gasFraction = std::max(gasFraction, interfacialFloor*interfaceIndicator);
+        }
         const Scalar dEff = problem.vaporDiffusivity() * gasFraction;
 
         flux[Indices::vaporEqIdx] -= dEff * (gradCv * scvf.unitOuterNormal()) * scvf.area();

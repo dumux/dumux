@@ -157,11 +157,21 @@ public:
             static const bool eyre = getParamFromGroup<bool>(
                 problem.paramGroup(), "FreeFlow.EyreConvexSplitting", false);
             const Scalar energyScale = eyre ? problem.energyScale() : Scalar(0.0);
+            // Semi-implicit FULL Taylor linearization of the double-well (Aland & Voigt 2011):
+            // linearize f'(c^{n+1})=c^3-c about c^n so the CH sub-problem is LINEAR (unconditionally
+            // solvable). The correction on the mu-row E*(-2(c^n)^3 + 3(c^n)^2 c^{n+1} - (c^{n+1})^3)
+            // exactly cancels the source term's implicit E*(c^{n+1})^3 (SAME consistent-mass Galerkin
+            // interpolation at the quadrature point), leaving the linear part. Use INSTEAD of Eyre
+            // (which only linearizes the concave -Ec part, leaving c^3 nonlinear). Gated (default off).
+            static const bool semiImplicitDW = getParamFromGroup<bool>(
+                problem.paramGroup(), "FreeFlow.SemiImplicitDoubleWell", false);
+            const Scalar dwScale = semiImplicitDW ? problem.energyScale() : Scalar(0.0);
 
             // per-dof storage time rates d/dt(rho u) and d/dt(c)
             const auto numLocalDofs = localBasis.size();
             std::vector<MomVec> momRate(numLocalDofs, MomVec(0.0));
             std::vector<Scalar> cRate(numLocalDofs, Scalar(0.0));
+            std::vector<Scalar> cOldArr(numLocalDofs, Scalar(0.0)), cNewArr(numLocalDofs, Scalar(0.0));
             for (const auto& localDof : localDofs(fvGeometry))
             {
                 const auto j = localDof.index();
@@ -169,7 +179,9 @@ public:
                 const auto prevDensity = convectiveFormStorage ? curDensity : prevElemVars[j].density();
                 momRate[j] = (curDensity*curElemVars[j].velocity() - prevDensity*prevElemVars[j].velocity());
                 momRate[j] /= timeStepSize;
-                cRate[j] = (curElemVars[j].phaseField() - prevElemVars[j].phaseField())/timeStepSize;
+                cOldArr[j] = prevElemVars[j].phaseField();
+                cNewArr[j] = curElemVars[j].phaseField();
+                cRate[j] = (cNewArr[j] - cOldArr[j])/timeStepSize;
             }
 
             for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
@@ -189,6 +201,21 @@ public:
                         cRateIp += Nj*cRate[j];
                     }
 
+                // consistent-mass interpolation of c^n, c^{n+1} for the semi-implicit double-well
+                // correction (must match the source term's interpolation for exact cubic cancellation)
+                Scalar cOldIp(0.0), cNewIp(0.0);
+                if (semiImplicitDW)
+                    for (const auto& localDof : localDofs(fvGeometry))
+                    {
+                        const auto j = localDof.index();
+                        const Scalar Nj = feIpData.shapeValue(j)[0];
+                        cOldIp += Nj*cOldArr[j];
+                        cNewIp += Nj*cNewArr[j];
+                    }
+                const Scalar dwCorr = semiImplicitDW
+                    ? dwScale*(-2.0*cOldIp*cOldIp*cOldIp + 3.0*cOldIp*cOldIp*cNewIp - cNewIp*cNewIp*cNewIp)
+                    : Scalar(0.0);
+
                 for (const auto& localDof : nonCVLocalDofs(fvGeometry))
                 {
                     const auto i = localDof.index();
@@ -201,6 +228,9 @@ public:
                     // Eyre: +E (c^{n+1}-c^n) = E*cr*dt (same consistent/lumped mass as the storage)
                     if (eyre)
                         residual[i][chemicalPotentialEqIdx] += w*Ni*energyScale*cr*timeStepSize;
+                    // Semi-implicit full linearization of the double-well (alternative to Eyre)
+                    if (semiImplicitDW)
+                        residual[i][chemicalPotentialEqIdx] += w*Ni*dwCorr;
                 }
             }
         }
@@ -277,6 +307,22 @@ public:
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.CapillaryNormalProjection", false);
             static const Scalar npRegEps
                 = getParamFromGroup<Scalar>(problem.paramGroup(), "FreeFlow.CapillaryNormalProjectionRegEps", 1e-8);
+            // pressure-robust capillary force is assembled separately (localresidual.hh
+            // addPressureRobustCapillary_) via an H(div) test-function reconstruction; skip the raw
+            // wellbalanced/potential volumetric force here when it is on.
+            static const bool pressureRobustCap
+                = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.PressureRobustCapillary", false);
+            // Boussinesq buoyancy (rho(c)-rho_ref) g is likewise gradient-dominated at the density jump;
+            // when on it is reconstructed into H(div) (addPressureRobustCapillary_) instead of tested
+            // against the raw N_i below -> removes the density-contrast+gravity parasitic current.
+            static const bool pressureRobustGrav
+                = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.PressureRobustGravity", false);
+            // grad-div stabilization gamma*(div u, div v): penalises the discretely non-solenoidal
+            // velocity modes the P1 pressure cannot control, damping the pressure-robustness parasitic
+            // current at the density/CH interface. A convergent, symmetric-positive-definite alternative
+            // to the (non-converging) RT1 reconstruction; gamma ~ O(viscosity..1). Default off.
+            static const Scalar gradDivGamma
+                = getParamFromGroup<Scalar>(problem.paramGroup(), "FreeFlow.GradDivStabilization", 0.0);
             // Optional Peclet-limited artificial diffusion c_stab*h*|v| for the phase-field advection
             // (stabilizes the unupwinded central-Galerkin edge dofs). Simple conservative baseline;
             // see the P2->P1 limiter note. Default off.
@@ -335,6 +381,24 @@ public:
                 // double-well derivative f'(c) = c(c^2-1); dropped here when integrated manually below
                 const Scalar dwSource = manualDW ? mu : (mu - energyScale*c*(c*c - 1.0));
 
+                // velocity divergence at this qp (for grad-div stabilization)
+                Scalar divU = 0.0;
+                for (int d = 0; d < dim; ++d) divU += gradV[d][d];
+
+                // grad-div stabilization on ALL velocity dofs (vertex CV + edge FE): gamma (div u) *
+                // div(N_k e_d) = gamma (div u) dN_k/dx_d. Assembled FE-style over the element for every
+                // velocity dof; the vertex dofs' momentum is otherwise finite-volume, but this added
+                // stabilization must penalise their divergence too or the parasitic current re-grows in
+                // the vertex modes (observed with edge-only: mu bounded ~6 steps then climbs again).
+                if (gradDivGamma > 0.0)
+                    for (const auto& ld : localDofs(fvGeometry))
+                    {
+                        const auto k = ld.index();
+                        const auto gNk = ipCache.gradN(k);
+                        for (int d = 0; d < dim; ++d)
+                            residual[k][d] += qpData.weight()*gradDivGamma*divU*gNk[d];
+                    }
+
                 for (const auto& localDof : nonCVLocalDofs(fvGeometry))
                 {
                     const auto i = localDof.index();
@@ -342,6 +406,7 @@ public:
                     const auto Ni = shapeValues[i][0];
 
                     // ---- momentum block [0..dim-1] ----
+                    // (grad-div stabilization for these edge dofs is added in the all-dofs loop above)
                     MomVec mom(0.0);
                     if (problem.enableInertiaTerms())
                     {
@@ -376,6 +441,8 @@ public:
                         for (int d = 0; d < dim; ++d)
                             mom[d] -= sigmaEps*gcgn*gradC[d];
                     }
+                    else if (pressureRobustCap)
+                        ; // wellbalanced/potential volumetric force assembled separately (H(div) recon.)
                     else if (stForm == SurfaceTensionForm::wellBalanced)
                     {
                         // grad(mu), optionally projected onto the interface normal (balanced force)
@@ -391,9 +458,11 @@ public:
                     else // potential
                         for (int d = 0; d < dim; ++d)
                             mom[d] -= Ni*mu*gradC[d]; // body force +mu*gradC => residual -mu*gradC
-                    // Boussinesq body force (rho(c) - rho_ref) g
+                    // Boussinesq body force (rho(c) - rho_ref) g. Dropped here when pressure-robust
+                    // gravity is on (then assembled via the H(div) reconstruction, no double-count).
+                    const Scalar buoyRho = pressureRobustGrav ? 0.0 : (density - refDensity);
                     for (int d = 0; d < dim; ++d)
-                        residual[i][d] += qpData.weight()*(mom[d] - Ni*(density - refDensity)*gravity[d]);
+                        residual[i][d] += qpData.weight()*(mom[d] - Ni*buoyRho*gravity[d]);
 
                     // ---- phase-field transport [dim] ----
                     // advection uses the limited reconstruction cHat/gradCHat (== c/gradC if the
