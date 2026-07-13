@@ -1,0 +1,35 @@
+[TimeLoop]
+DtInitial = 1e3 # [s]
+TEnd = 1e7 # [s]
+MaxTimeStepSize = 5e5 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 100 75 # [m]
+Cells = 100 1
+
+[Problem]
+Name = test_2p_buckleyleverett_tpfa
+EnableGravity = false
+InjectionPressure = 2e5 # [Pa]
+ReferencePressure = 1e5 # [Pa]
+TotalVelocity = 3e-7 # [m/s]
+MaxRelError = 0.01 # [-]
+
+[SpatialParams]
+Permeability = 1.01936799e-14 # [m^2]
+Porosity = 0.2 # [-]
+BrooksCoreyLambda = 4.0 # [-]
+BrooksCoreyPcEntry = 0 # [Pa]
+Swr = 0.2 # [-]
+Snr = 0.2 # [-]
+Temperature = 283.15 # [K]
+
+[2.Component]
+Name = nonwetting
+MolarMass = 0.018 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa*s]
+
+[Newton]
+EnablePartialReassembly = false
