@@ -384,6 +384,19 @@ public:
             );
     }
 
+    //! Extract the velocity (leading dim components) from a momentum solution/priVars vector.
+    //! Generic w.r.t. the momentum model's numEq: for the standard momentum model numEq == dim so
+    //! this is the identity; for the co-located Cahn-Hilliard momentum model (numEq = dim+2, layout
+    //! [velocity, c, mu]) it selects the leading velocity block.
+    template<class PriVars>
+    static VelocityVector velocityBlock_(const PriVars& priVars)
+    {
+        VelocityVector v(0.0);
+        for (int i = 0; i < int(VelocityVector::dimension); ++i)
+            v[i] = priVars[i];
+        return v;
+    }
+
      /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
@@ -403,7 +416,7 @@ public:
         // interpolate velocity at scvf
         VelocityVector velocity(0.0);
         for (const auto& localDof : localDofs(fvGeometry))
-            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
+            velocity.axpy(shapeValues[localDof.index()][0], velocityBlock_(this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]));
 
         return velocity;
     }
@@ -424,7 +437,7 @@ public:
         localBasis.evaluateFunction(referenceElement(fvGeometry.element()).position(0,0), shapeValues);
 
         for (const auto& localDof : localDofs(momentumFvGeometry))
-            velocity.axpy(shapeValues[localDof.index()][0], this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]);
+            velocity.axpy(shapeValues[localDof.index()][0], velocityBlock_(this->curSol(freeFlowMomentumIndex)[localDof.dofIndex()]));
 
         return velocity;
     }
@@ -448,7 +461,7 @@ public:
                                                    :  this->curSol(freeFlowMomentumIndex);
 
         const auto elemSol = elementSolution(element, sol, gg);
-        return evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local());
+        return velocityBlock_(evalSolutionAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local()));
     }
 
     /*!
