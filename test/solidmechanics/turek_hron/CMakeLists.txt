@@ -3,3 +3,4 @@
 
 add_subdirectory(csm3)
 add_subdirectory(csm12)
+add_subdirectory(reference_data)
