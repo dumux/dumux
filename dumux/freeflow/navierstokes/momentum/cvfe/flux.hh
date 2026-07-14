@@ -209,16 +209,15 @@ public:
         for (const auto& localDof : localDofs(fvGeometry))
             v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
-        // get density from the problem
-        const Scalar density = context.problem().density(context.element(), context.fvGeometry(), fluxVarCache.ipData());
-
         const auto vn = v*scvf.unitOuterNormal();
         const auto& insideVolVars = elemVolVars[fvGeometry.scv(scvf.insideScvIdx())];
         const auto& outsideVolVars = elemVolVars[fvGeometry.scv(scvf.outsideScvIdx())];
-        const auto upwindVelocity = vn > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
-        const auto downwindVelocity = vn > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
+        const auto insideDensity = context.problem().density(context.element(), context.fvGeometry(), ipData(fvGeometry, fvGeometry.scv(scvf.insideScvIdx())));
+        const auto outsideDensity = context.problem().density(context.element(), context.fvGeometry(), ipData(fvGeometry, fvGeometry.scv(scvf.outsideScvIdx())));
+        const auto upwindMom = vn > 0 ? insideDensity*insideVolVars.velocity() : outsideDensity*outsideVolVars.velocity();
+        const auto downwindMom = vn > 0 ? outsideDensity*outsideVolVars.velocity() : insideDensity*insideVolVars.velocity();
         static const auto upwindWeight = getParamFromGroup<Scalar>(context.problem().paramGroup(), "Flux.UpwindWeight");
-        const auto advectiveTermIntegrand = density*vn * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
+        const auto advectiveTermIntegrand = vn * (upwindWeight * upwindMom + (1.0-upwindWeight)*downwindMom);
 
         return advectiveTermIntegrand * Extrusion::area(fvGeometry, scvf) * insideVolVars.extrusionFactor();
     }
