@@ -76,12 +76,22 @@ public:
                     integralShapeFunctions[localDof.index()] += qpData.weight() * feIpData.shapeValue(localDof.index());
             }
 
+            // With FreeFlow.ConvectiveFormMomentumStorage the density is frozen at the current
+            // time level, i.e. the storage is ρ^{n+1}(u^{n+1}-u^n)/Δt (discrete ρ ∂u/∂t). This is
+            // the energy-consistent pairing with the convective-form advection (see
+            // FreeFlow.SkewSymmetricMomentumAdvection): conservative storage ∂t(ρu) together with
+            // convective advection ρu·∇u leaves a spurious u ∂t(ρ) force at moving density
+            // interfaces (∂t(ρu) + ρu·∇u = ρ Du/Dt + u ∂t(ρ)).
+            static const bool convectiveFormStorage = getParamFromGroup<bool>(
+                problem.paramGroup(), "FreeFlow.ConvectiveFormMomentumStorage", false);
+
             for (const auto& localDof : nonCVLocalDofs(fvGeometry))
             {
                 const auto localDofIdx = localDof.index();
                 const auto& data = ipData(fvGeometry, localDof);
                 const auto curDensity = problem.density(element, fvGeometry, data, false);
-                const auto prevDensity = problem.density(element, fvGeometry, data, true);
+                const auto prevDensity = convectiveFormStorage
+                    ? curDensity : problem.density(element, fvGeometry, data, true);
                 const auto curVelocity = curElemVars[localDofIdx].velocity();
                 const auto prevVelocity = prevElemVars[localDofIdx].velocity();
                 auto timeDeriv = (curDensity*curVelocity - prevDensity*prevVelocity);
