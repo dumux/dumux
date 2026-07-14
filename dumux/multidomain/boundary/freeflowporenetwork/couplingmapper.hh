@@ -113,10 +113,13 @@ public:
                 }();
 
                 using Scalar = typename FreeFlowMomentumGridGeometry::GridView::ctype;
+
                 const Scalar couplingPoreRadius = pnmGridGeometry.poreInscribedRadius(pnmDofIdx);
-                GlobalPosition lowerLeft = pnmPos - GlobalPosition(couplingPoreRadius);
+                const Scalar eps = couplingPoreRadius*relEps_;
+
+                GlobalPosition lowerLeft = pnmPos - GlobalPosition(couplingPoreRadius - eps);
                 lowerLeft[couplingNormalDirectionIndex] = pnmPos[couplingNormalDirectionIndex];
-                GlobalPosition upperRight = pnmPos + GlobalPosition(couplingPoreRadius);
+                GlobalPosition upperRight = pnmPos + GlobalPosition(couplingPoreRadius - eps);
                 upperRight[couplingNormalDirectionIndex] = pnmPos[couplingNormalDirectionIndex];
 
                 auto axes = std::move(std::bitset<FreeFlowMomentumGridGeometry::Grid::dimensionworld>{}.set());
@@ -313,8 +316,7 @@ private:
         using std::abs;
         for (const auto& scv : scvs(fvGeometry))
         {
-            const Scalar eps = diameter(fvGeometry.geometry(scv))*1e-6; // TODO
-            assert(eps < couplingPoreRadius);
+            const Scalar eps = couplingPoreRadius*relEps_;
 
             if (scv.dofAxis() == couplingInterfaceDirectionIdx) // the free flow dofs that lie within the coupling interface
             {
@@ -393,6 +395,8 @@ private:
     MapType pnmToFreeFlowMomentumStencils_;
     MapType freeFlowMassToPNMStencils_;
     MapType freeFlowMomentumToPNMStencils_;
+
+    static constexpr double relEps_ = 1e-6;
 };
 
 } // end namespace Dumux
