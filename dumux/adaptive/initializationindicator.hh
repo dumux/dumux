@@ -40,7 +40,8 @@ class GridAdaptInitializationIndicator
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
-    static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box;
+    static constexpr bool isCVFE = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box
+                                    || GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::pq1bubble;
 
 public:
 
@@ -183,7 +184,7 @@ public:
                 && (refineAtDirichletBC_ || refineAtFluxBC_)) // proceed if boundary refinement is active
             {
                 // cell-centered schemes
-                if (!isBox)
+                if constexpr (!isCVFE)
                 {
                     for (const auto& scvf : scvfs(fvGeometry))
                     {

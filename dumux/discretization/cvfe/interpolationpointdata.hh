@@ -219,7 +219,9 @@ private:
         localBasis.evaluateFunction(localPos, shapeValues_); // shape values for rho
 
         // compute the gradN for every local dof
-        gradN_.resize(Detail::LocalDofs::numLocalDofs(fvGeometry));
+        // (fully qualify: inside namespace Dumux::CVFE the unqualified Detail:: would resolve to
+        //  Dumux::CVFE::Detail when that namespace is visible, which lacks LocalDofs)
+        gradN_.resize(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
         for (const auto& localDof: localDofs(fvGeometry))
             jacInvT.mv(shapeJacobian_[localDof.index()][0], gradN_[localDof.index()]);
     }
