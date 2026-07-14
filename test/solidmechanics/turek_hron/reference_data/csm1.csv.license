@@ -1,0 +1,5 @@
+SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+SPDX-License-Identifier: CC-BY-4.0
+Based on data from Turek and Hron (2006). Proposal for numerical benchmarking of fluid-structure interaction between an elastic object and laminar incompressible flow.
+Lecture Notes in Computational Science and Engineering. https://doi.org/10.1007/3-540-34596-5_15.
+Processed data. All changes are licensed under DuMux Project contributors CC-BY-4.0
