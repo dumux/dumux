@@ -183,7 +183,7 @@ private:
     static unsigned int quadFaceOrientIdx_(const Element& e, unsigned int face,
                                            const auto& ref, const IdSet& idSet)
     {
-        std::array<std::size_t, 4> vg;
+        std::array<typename IdSet::IdType, 4> vg;
         for (int i = 0; i < 4; ++i)
             vg[i] = idSet.subId(e, ref.subEntity(face, 1, i, dim), dim);
 
