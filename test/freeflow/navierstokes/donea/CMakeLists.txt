@@ -3,6 +3,20 @@
 
 add_input_file_links()
 dune_symlink_to_source_files(FILES grids)
+dune_symlink_to_source_files(FILES convergencetest.py)
+
+dumux_add_test(NAME test_ff_stokes_donea_taylorhood
+               LABELS freeflow navierstokes donea
+               SOURCES main.cc
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
+               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumFE
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ2FEModel
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ1FEModel
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS TAYLORHOOD_FE=1
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_ff_stokes_donea_taylorhood params_taylorhood.input)
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                LABELS freeflow navierstokes donea
