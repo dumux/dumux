@@ -529,36 +529,34 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -Grid.Cells \"8 8\"")
 
-# # PQ3 parallel momentum tests
-# # Currently, these tests are disabled because it seems that fieldcompare has some issue with comparing parallel higher-order output fields.
-# # Once this is fixed, the tests can be re-enabled.
-# dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel
-#                TARGET test_ff_stokes_donea_momentum_hybrid_pq3_simplex
-#                LABELS freeflow navierstokes donea
-#                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
-#                COMMAND ${DUMUX_RUNTEST}
-#                CMD_ARGS    --script fuzzy
-#                            --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq3_simplex_ho-reference.vtu
-#                                    ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel_ho_pq3.pvtu
-#                            --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex params.input
-#                            -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel
-#                            -Problem.UseNeumann false
-#                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
-#                            -Grid.Cells \"8 8\"")
+# PQ3 parallel momentum tests
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel
+               TARGET test_ff_stokes_donea_momentum_hybrid_pq3_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy --ignore "process rank"
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq3_simplex_ho-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel_ho_pq3.pvtu
+                           --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_simplex params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_simplex_parallel
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells \"8 8\"")
 
-# dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
-#                TARGET test_ff_stokes_donea_momentum_hybrid_pq3_cube
-#                LABELS freeflow navierstokes donea
-#                CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
-#                COMMAND ${DUMUX_RUNTEST}
-#                CMD_ARGS    --script fuzzy
-#                            --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq3_cube_ho-reference.vtu
-#                                    ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel_ho_pq3.pvtu
-#                            --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_cube params.input
-#                            -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
-#                            -Problem.UseNeumann false
-#                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
-#                            -Grid.Cells \"8 8\"")
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
+               TARGET test_ff_stokes_donea_momentum_hybrid_pq3_cube
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy --ignore "process rank"
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq3_cube_ho-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel_ho_pq3.pvtu
+                           --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq3_cube params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq3_cube_parallel
+                           -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Grid.Cells \"8 8\"")
 
 # PQ3 fe momentum tests
 dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq3_cube
