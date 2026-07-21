@@ -179,9 +179,15 @@ public:
         }
         else
         {
-            const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
-            const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->velocity(fvGeometry, faceIpData) * insideDensity * scvf.unitOuterNormal();
+            // Control-volume finite element continuity: mass flux rho*(u.n) across the boundary face.
+            // The pure-FE (Taylor-Hood) continuity uses the non-integrated-by-parts volume form
+            // int q (div u), which carries no boundary term, so its boundary flux is zero.
+            if constexpr (requires { fvGeometry.scvf(faceIpData.scvfIndex()); })
+            {
+                const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
+                const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
+                values[Indices::conti0EqIdx] = this->velocity(fvGeometry, faceIpData) * insideDensity * scvf.unitOuterNormal();
+            }
         }
 
         return values;
@@ -359,24 +365,26 @@ private:
         }
     }
 
+    // Pin the pressure nullspace by fixing the local dof at the lower-left domain corner to the
+    // analytical pressure. Uses the generic local-dof interface so it works for both nodal-dof CVFE
+    // (box) and pure-FE (Taylor-Hood P1 pressure) mass discretizations.
     void appendInternalConstraints_()
     {
-        static_assert(GridDiscretization::discMethod == DiscretizationMethods::box, "Internal Dirichlet constraints only implemented for Box mass discretization scheme.");
-
         static constexpr Scalar eps = 1e-8;
         auto fvGeometry = localView(this->gridDiscretization());
         for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
             fvGeometry.bind(element);
-            for (const auto& scv : scvs(fvGeometry))
+            for (const auto& localDof : localDofs(fvGeometry))
             {
-                if  ((scv.dofPosition() - this->gridDiscretization().bBoxMin()).two_norm() < eps)
+                const auto& dofPos = ipData(fvGeometry, localDof).global();
+                if ((dofPos - this->gridDiscretization().bBoxMin()).two_norm() < eps)
                 {
                     ConstraintInfo info;
                     info.setAll();
 
-                    DirichletValues dirichletValues(analyticalSolution(scv.dofPosition())[Indices::pressureIdx]);
-                    constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), scv.dofIndex()});
+                    DirichletValues dirichletValues(analyticalSolution(dofPos)[Indices::pressureIdx]);
+                    constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
                 }
             }
         }
