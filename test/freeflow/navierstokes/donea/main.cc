@@ -13,9 +13,12 @@
 #include <config.h>
 
 #include <cmath>
-#include <ctime>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <type_traits>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -26,6 +29,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
+#include <dumux/io/cvfegridfunction.hh>
+#include <dumux/io/gridwriter.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/linear/istlsolvers.hh>
@@ -91,6 +96,26 @@ void writeError_(std::ofstream& logFile, const Error& error)
         logFile << ", " << e;
 }
 
+template<class MomentumGridGeometry, class MassGridGeometry,
+         class SolutionVector, class MomentumIdx, class MassIdx>
+void writeHigherOrderVTK(const MomentumGridGeometry& momentumGridGeometry,
+                         const MassGridGeometry& massGridGeometry,
+                         const SolutionVector& x,
+                         MomentumIdx momentumIdx,
+                         MassIdx massIdx,
+                         const std::string& fileName)
+{
+#if DUMUX_HAVE_GRIDFORMAT
+    if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::pq2)
+    {
+        IO::GridWriter writer{IO::Format::vtu, momentumGridGeometry.gridView(), IO::order<2>};
+        writer.setPointField("velocity", IO::cvfeGridFunction(momentumGridGeometry, x[momentumIdx]));
+        writer.setPointField("pressure", IO::cvfeGridFunction(massGridGeometry, x[massIdx]));
+        writer.write(fileName + "_ho");
+    }
+#endif
+}
+
 template<class MomentumProblem, class MassProblem,
          class MomentumGridVariables, class MassGridVariables,
          class SolutionVector, class MomentumIdx, class MassIdx>
@@ -113,8 +138,10 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
     if (!printErrors && !printConvergenceTestFile)
         return;
 
-    if constexpr (DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
-                  && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>)
+    constexpr bool quadratureErrors
+        = DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
+          && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>;
+    if constexpr (quadratureErrors)
     {
         // first print momentum
         {
@@ -240,6 +267,7 @@ int main(int argc, char** argv)
     momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
 
+#if !TAYLORHOOD_FE
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
@@ -251,6 +279,7 @@ int main(int argc, char** argv)
     vtkWriter.addField(analyticalSolVectors.analyticalVelocitySolution(), "velocityExact");
     //vtkWriter.addFaceField(analyticalSolVectors.analyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
+#endif
 
     // use the multidomain FV assembler
 #if NEW_PROBLEM_INTERFACE
@@ -285,7 +314,12 @@ int main(int argc, char** argv)
     Dumux::printErrors(momentumProblem, massProblem, *momentumGridVariables, *massGridVariables, x, momentumIdx, massIdx);
 
     // write vtk output
+#if TAYLORHOOD_FE
+    Dumux::writeHigherOrderVTK(*momentumGridGeometry, *massGridGeometry, x,
+                               momentumIdx, massIdx, massProblem->name());
+#else
     vtkWriter.write(1.0);
+#endif
 
     timer.stop();
 

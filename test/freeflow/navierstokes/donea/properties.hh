@@ -52,6 +52,11 @@
 #define NEW_VARIABLES_INTERFACE 0
 #endif
 
+// pure-FE Taylor-Hood (P2 velocity / P1 pressure) coupled Stokes variant of the Donea test
+#ifndef TAYLORHOOD_FE
+#define TAYLORHOOD_FE 0
+#endif
+
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #else
@@ -78,6 +83,14 @@
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
+
+#if TAYLORHOOD_FE
+#include <dumux/common/spatialparams.hh>
+#include <dumux/discretization/pq1.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/felocalresidual.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/variables.hh>
+#include <dumux/multidomain/freeflow/couplingmanager_fe.hh>
+#endif
 
 #include "problem.hh"
 #include "problem_newinterface.hh"
@@ -193,6 +206,42 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
+#if TAYLORHOOD_FE
+// pure-FE mass (P1 pressure) subdomain: continuity residual, per-local-dof variables and the
+// Experimental (local-dof / ipData) spatial params -- mirrors the FE momentum model.
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::TYPETAG_MASS>
+{ using type = NavierStokesMassOnePFELocalResidual<TypeTag>; };
+
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TYPETAG_MASS>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Traits = NavierStokesMassOnePVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMassOnePFEVariables<Traits>;
+};
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::TYPETAG_MASS>
+{
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    template<class GG, class S>
+    struct DefaultSpatialParams
+    : public Dumux::Experimental::SpatialParams<GG, S, DefaultSpatialParams<GG, S>>
+    {
+        using ParentType = Dumux::Experimental::SpatialParams<GG, S, DefaultSpatialParams<GG, S>>;
+        using ParentType::ParentType;
+    };
+    using type = Dumux::Experimental::SpatialParams<GridGeometry, Scalar, DefaultSpatialParams<GridGeometry, Scalar>>;
+};
+#endif
+
 #if NEW_VARIABLES_INTERFACE
 // the variables
 template<class TypeTag>
@@ -283,14 +332,24 @@ struct EnableGridGeometryCache<TypeTag, TTag::DoneaTest> { static constexpr bool
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::DoneaTest>
+#if TAYLORHOOD_FE
+// the caching-enabled FE grid-variables cache avoids the incomplete-type access the disabled path trips
+{ static constexpr bool value = true; };
+#else
+{ static constexpr bool value = ENABLECACHING; };
+#endif
 
 // Set the problem property
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DoneaTest>
 {
     using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::TYPETAG_MASS>;
+#if TAYLORHOOD_FE
+    using type = FEFreeFlowCouplingManager<Traits>;
+#else
     using type = FreeFlowCouplingManager<Traits>;
+#endif
 };
 
 } // end namespace Dumux::Properties
