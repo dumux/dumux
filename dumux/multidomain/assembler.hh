@@ -29,6 +29,7 @@
 #include <dumux/common/typetraits/periodic.hh>
 #include <dumux/common/gridcapabilities.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/concepts.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/linear/parallelhelpers.hh>
@@ -37,6 +38,7 @@
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
 #include "subdomaincvfelocalassembler_.hh"
+#include "subdomaincvfelocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
 #include "assemblerview.hh"
 
@@ -45,7 +47,7 @@
 #include <dumux/multidomain/subdomainstaggeredlocalassembler.hh>
 #endif
 
-#include "assembler.hh"
+#include "fvassembler.hh"
 
 namespace Dumux::Experimental {
 
@@ -111,31 +113,32 @@ private:
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::CCTpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = Dumux::SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::CCMpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = Dumux::SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id, class DM>
     struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
     {
-        using type = Dumux::Experimental::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
-    };
-
-    template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
-    {
-        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        private:
+            using GV = GridVariables<id>;
+            static constexpr bool usesGeneralGridVariables =
+                Dumux::Concept::GridVariables<GV> && !Dumux::Concept::FVGridVariables<GV>;
+        public:
+            using type = std::conditional_t<usesGeneralGridVariables,
+                                            Dumux::Experimental::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>,
+                                            Dumux::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>
     {
-        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = Dumux::SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
