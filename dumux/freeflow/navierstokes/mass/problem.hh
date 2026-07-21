@@ -87,6 +87,7 @@ public:
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
      */
+    template<class SubControlVolumeFace>
     VelocityVector faceVelocity(const Element& element,
                                 const FVElementGeometry& fvGeometry,
                                 const SubControlVolumeFace& scvf) const
@@ -159,9 +160,8 @@ class CVFENavierStokesMassProblem : public Experimental::ProblemWithSpatialParam
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = GlobalPosition;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
@@ -212,6 +212,7 @@ public:
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
      */
+    template<class SubControlVolumeFace>
     VelocityVector faceVelocity(const Element& element,
                                 const FVElementGeometry& fvGeometry,
                                 const SubControlVolumeFace& scvf) const
