@@ -36,6 +36,10 @@
 #define TYPETAG_MASS DoneaTestMass
 #endif
 
+#ifndef NAVIER_STOKES_MASS_MODEL
+#define NAVIER_STOKES_MASS_MODEL NavierStokesMassOneP
+#endif
+
 #ifndef MASS_DISCRETIZATION_MODEL
 #define MASS_DISCRETIZATION_MODEL CCTpfaModel
 #endif
@@ -79,6 +83,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/discretization/pq1.hh>
 #include "problem.hh"
 #include "problem_newinterface.hh"
 
@@ -92,7 +97,7 @@ struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, N
 struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
 struct DoneaTestMomentumBox { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, BoxModel>; };
-struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
+struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STOKES_MASS_MODEL, MASS_DISCRETIZATION_MODEL>; };
 struct DoneaTestMassBox { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
