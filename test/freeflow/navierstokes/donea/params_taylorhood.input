@@ -1,0 +1,31 @@
+# Pure-FE Taylor-Hood (P2 velocity / P1 pressure) coupled Stokes on the Donea (2003) manufactured
+# solution. Correctness gate for the FE Navier-Stokes coupling: optimal Taylor-Hood convergence
+# (velocity L2/H1 -> 3/2, pressure L2/H1 -> 2/1).
+[Grid]
+UpperRight = 1 1
+Cells = 16 16
+Refinement = 0
+
+[Problem]
+Name = test_ff_stokes_donea_taylorhood
+EnableGravity = false
+EnableInertiaTerms = false
+UseNeumann = false
+PrintErrors = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[Newton]
+MinSteps = 1
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-1
+
+[SpatialParams]
+Temperature = 298.0
