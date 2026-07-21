@@ -111,6 +111,18 @@ public:
     }
 
     /*!
+     * \brief Returns the velocity divergence at a given interpolation point.
+     */
+    template<class IpData>
+    Scalar velocityDivergence(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocityDivergence(fvGeometry, ipData);
+        else
+            return 0.0;
+    }
+
+    /*!
      * \brief Returns the velocity at the element center.
      */
     VelocityVector elementVelocity(const FVElementGeometry& fvGeometry) const
@@ -233,6 +245,18 @@ public:
             return couplingManager_->velocity(fvGeometry, ipData);
         else
             return asImp_().velocityAtPos(ipData.global());
+    }
+
+    /*!
+     * \brief Returns the velocity divergence at a given interpolation point.
+     */
+    template<class IpData>
+    Scalar velocityDivergence(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocityDivergence(fvGeometry, ipData);
+        else
+            return 0.0;
     }
 
     /*!
