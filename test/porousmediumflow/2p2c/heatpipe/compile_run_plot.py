@@ -21,7 +21,6 @@ from pathlib import Path
 
 import numpy as np
 from scipy.integrate import solve_ivp
-from scipy.optimize import brentq
 
 TARGET = "test_heatpipe_box"
 BASE_NAME = "heatpipe"
@@ -73,30 +72,30 @@ def build_and_run() -> Path:
 
 # physical parameters, matching heatpipespatialparams.hh, krpcheatpipe.hh,
 # heatpipeproblem.hh and heatpipe.input
-K = 1.0e-12          # m^2,  Problem.Permeability in heatpipe.input
-PHI = 0.4            # -,    HeatPipeSpatialParams::porosity_
-SWR = 0.15           # -,    swr passed to KrPcHeatPipe::Params in heatpipespatialparams.hh
-LAMBDA_DRY = 0.582   # W/(m*K)
-LAMBDA_WET = 1.13    # W/(m*K)
-RHO_W = 958.4        # kg/m^3, water density near the phase-change reference state
-MU_W = 2.938e-4      # Pa*s
-MU_G_A = 2.08e-5     # Pa*s, dynamic viscosity of air
-MU_G_W = 1.2e-5      # Pa*s, dynamic viscosity of steam
-D_BINARY = 2.6e-6    # m^2/s, binary diffusion coefficient air-water vapor
-TAU = 0.5            # -, tortuosity
-GAMMA = 0.05878      # N/m, surface tension of water at ~100.5°C
-MW = 0.018016        # kg/mol, molar mass of water
-MA = 0.02897         # kg/mol, molar mass of air
-R_GAS = 8.3144621    # J/(mol*K)
-H_WG = 2.258e6       # J/kg, latent heat of vaporization of water
-P0_REF = 101325.0    # Pa, reference pressure for the Clausius-Clapeyron relation
-T0_REF = 373.15      # K, reference (boiling) temperature for the Clausius-Clapeyron relation
+K = 1.0e-12  # m^2,  Problem.Permeability in heatpipe.input
+PHI = 0.4  # -,    HeatPipeSpatialParams::porosity_
+SWR = 0.15  # -,    swr passed to KrPcHeatPipe::Params in heatpipespatialparams.hh
+LAMBDA_DRY = 0.582  # W/(m*K)
+LAMBDA_WET = 1.13  # W/(m*K)
+RHO_W = 958.4  # kg/m^3, water density near the phase-change reference state
+MU_W = 2.938e-4  # Pa*s
+MU_G_A = 2.08e-5  # Pa*s, dynamic viscosity of air
+MU_G_W = 1.2e-5  # Pa*s, dynamic viscosity of steam
+D_BINARY = 2.6e-6  # m^2/s, binary diffusion coefficient air-water vapor
+TAU = 0.5  # -, tortuosity
+GAMMA = 0.05878  # N/m, surface tension of water at ~100.5°C
+MW = 0.018016  # kg/mol, molar mass of water
+MA = 0.02897  # kg/mol, molar mass of air
+R_GAS = 8.3144621  # J/(mol*K)
+H_WG = 2.258e6  # J/kg, latent heat of vaporization of water
+P0_REF = 101325.0  # Pa, reference pressure for the Clausius-Clapeyron relation
+T0_REF = 373.15  # K, reference (boiling) temperature for the Clausius-Clapeyron relation
 
 # boundary state at x=0, matching HeatPipeProblem::dirichletAtPos
-PG_BC = 1.013e5      # Pa
-SW_BC = 0.99         # -
-T_BC = 341.75        # K
-HEAT_FLUX = -100.0   # W/m^2, matching Problem.HeatFlux (sign as used in the ODE below)
+PG_BC = 1.013e5  # Pa
+SW_BC = 0.99  # -
+T_BC = 341.75  # K
+HEAT_FLUX = -100.0  # W/m^2, matching Problem.HeatFlux (sign as used in the ODE below)
 DOMAIN_LENGTH = 2.4  # m
 
 
@@ -114,7 +113,7 @@ def _dpc_dse(se: float, eps: float = 1e-8) -> float:
 
 
 def _krl(se: float) -> float:
-    return se ** 3
+    return se**3
 
 
 def _krg(se: float) -> float:
@@ -151,7 +150,11 @@ def _rhs(x, z):
     alpha = 1 + pc / RHO_W / H_WG
     xi = (1 / krg) * (1 + (RHO_W * R_GAS * T) / pg / MW * (1 / (1 - xa))) + beta / krl
     delta = RHO_W * H_WG * H_WG * K * alpha / (lam * nu_g * T)
-    zeta = ((K * RHO_W * R_GAS * T) / (MW * rho_g * nu_g * d_pm)) * (xa / (1 - xa)) * (pg * MW / RHO_W / R_GAS / T + 1 / (1 - xa))
+    zeta = (
+        ((K * RHO_W * R_GAS * T) / (MW * rho_g * nu_g * d_pm))
+        * (xa / (1 - xa))
+        * (pg * MW / RHO_W / R_GAS / T + 1 / (1 - xa))
+    )
     eta = delta / (delta + xi + zeta)
 
     q = HEAT_FLUX
@@ -164,6 +167,8 @@ def _rhs(x, z):
 
 def _dryout_event(x, z):
     return z[0] - 1e-6
+
+
 _dryout_event.terminal = True
 _dryout_event.direction = -1
 
@@ -184,9 +189,15 @@ def semianalytical_solution(x: np.ndarray) -> dict:
     )
 
     sol = solve_ivp(
-        _rhs, [0, DOMAIN_LENGTH], [se_bc, PG_BC, xa_bc, T_BC],
-        method="RK45", max_step=5e-3, events=_dryout_event,
-        dense_output=True, rtol=1e-8, atol=1e-10,
+        _rhs,
+        [0, DOMAIN_LENGTH],
+        [se_bc, PG_BC, xa_bc, T_BC],
+        method="RK45",
+        max_step=5e-3,
+        events=_dryout_event,
+        dense_output=True,
+        rtol=1e-8,
+        atol=1e-10,
     )
     x_dry = sol.t[-1]
 
@@ -213,6 +224,7 @@ def semianalytical_solution(x: np.ndarray) -> dict:
 # ---------------------------------------------------------------------------
 # Post-processing / plotting
 # ---------------------------------------------------------------------------
+
 
 def require_plot_modules():
     try:
@@ -285,7 +297,9 @@ def create_saturation_image(vtu: Path, image_file: Path) -> None:
     if SATURATION_FIELD not in mesh.array_names:
         raise KeyError(f"Missing field '{SATURATION_FIELD}' in {vtu}")
 
-    plotter = pv.Plotter(off_screen=True, window_size=(1000, 260), border=False, border_color="white")
+    plotter = pv.Plotter(
+        off_screen=True, window_size=(1000, 260), border=False, border_color="white"
+    )
     plotter.set_background("white")
     plotter.add_mesh(
         mesh,
