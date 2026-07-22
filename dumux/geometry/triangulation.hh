@@ -218,7 +218,8 @@ triangulate(const RandomAccessContainer& points)
     for (int i = 0; i < dimWorld; ++i)
         magnitude = max(upperRight[i] - lowerLeft[i], magnitude);
     const auto eps = 1e-7*magnitude;
-    const auto eps2 = eps*magnitude;
+    const auto eps2 = eps*eps;
+    const auto epsDist = 1e-8*magnitude;
 
     // reserve memory conservatively to avoid reallocation
     std::vector<Tetrahedron> triangulation;
@@ -229,9 +230,9 @@ triangulate(const RandomAccessContainer& points)
     coplanarPointBuffer.reserve(std::min<std::size_t>(12, numPoints-1));
 
     // remember coplanar cluster planes
-    // coplanar clusters are uniquely identified by a point and a normal (plane)
+    // coplanar clusters are uniquely identified by their plane (outward unit normal and offset)
     // we only want to add each cluster once (when handling the first triangle in the cluster)
-    std::vector<std::pair<int, Point>> coplanarClusters;
+    std::vector<std::pair<Point, ctype>> coplanarClusters;
     coplanarClusters.reserve(numPoints/3);
 
     // brute force algorithm: Try all possible triangles and check
@@ -271,8 +272,9 @@ triangulate(const RandomAccessContainer& points)
                             const auto sp = normal*ad;
 
                             // if the sign changes wrt the previous sign, the triangle is not part of the convex hull
+                            // sp is a triple product, so divide by the normal to obtain a distance
                             using std::abs; using std::signbit;
-                            const bool coplanar = abs(sp) < eps2*magnitude;
+                            const bool coplanar = abs(sp) < epsDist*normal.two_norm();
                             int newMarker = coplanar ? 0 : signbit(sp) ? -1 : 1;
 
                             // make decision for a side as soon as the next marker is != 0
@@ -287,20 +289,7 @@ triangulate(const RandomAccessContainer& points)
 
                             // handle possible coplanar points
                             if (coplanar)
-                            {
-                                using std::abs;
-                                if (m < k && std::find_if(
-                                                 coplanarClusters.begin(), coplanarClusters.end(),
-                                                 [=](const auto& c){ return c.first == std::min(m, i) && abs(ab*c.second) < eps2*magnitude; }
-                                             ) != coplanarClusters.end())
-                                {
-                                    // this cluster has already been handled
-                                    coplanarPointBuffer.clear();
-                                    return false;
-                                }
-                                else
-                                    coplanarPointBuffer.push_back(points[m]);
-                            }
+                                coplanarPointBuffer.push_back(points[m]);
                         }
                     }
 
@@ -308,8 +297,25 @@ triangulate(const RandomAccessContainer& points)
                     // and store the cluster information for future lookup
                     if (!coplanarPointBuffer.empty())
                     {
+                        auto unitNormal = normal;
+                        unitNormal /= unitNormal.two_norm();
+                        if (unitNormal*(pointI - midPoint) < 0.0)
+                            unitNormal *= -1.0;
+                        const auto offset = unitNormal*pointI;
+
+                        using std::abs;
+                        if (std::find_if(
+                                coplanarClusters.begin(), coplanarClusters.end(),
+                                [&](const auto& c){ return unitNormal*c.first > 1.0 - 1e-6 && abs(offset - c.second) < epsDist; }
+                            ) != coplanarClusters.end())
+                        {
+                            // this cluster has already been handled
+                            coplanarPointBuffer.clear();
+                            return false;
+                        }
+
                         coplanarPointBuffer.insert(coplanarPointBuffer.end(), { points[i], points[j], points[k] });
-                        coplanarClusters.emplace_back(std::make_pair(i, normal));
+                        coplanarClusters.emplace_back(std::make_pair(unitNormal, offset));
                     }
 
                     // we require that not all points are coplanar, so
