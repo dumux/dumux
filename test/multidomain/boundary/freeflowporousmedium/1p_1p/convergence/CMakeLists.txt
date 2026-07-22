@@ -36,7 +36,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase ShiueExampleOne
                         -Darcy.Problem.BoundaryConditions Dirichlet
-                        -FreeFlow.Problem.BoundaryConditions Dirichlet)
+                        -FreeFlow.Problem.BoundaryConditions Dirichlet
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue1
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
@@ -48,7 +50,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue1
                         -Problem.TestCase ShiueExampleOne
                         -Darcy.Problem.BoundaryConditions Dirichlet
                         -FreeFlow.Problem.BoundaryConditions Dirichlet
-                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05)
+                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shiue1
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
@@ -60,7 +64,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shi
                         -Problem.TestCase ShiueExampleOne
                         -Darcy.Problem.BoundaryConditions Dirichlet
                         -FreeFlow.Problem.BoundaryConditions Dirichlet
-                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05)
+                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_hybrid_box
+                        -Darcy.Problem.Name darcy_pq1bubble_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue2
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -71,7 +77,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue2
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase ShiueExampleTwo
                         -Darcy.Problem.BoundaryConditions Mixed
-                        -FreeFlow.Problem.BoundaryConditions Mixed)
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue2
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
@@ -83,7 +91,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue2
                         -Problem.TestCase ShiueExampleTwo
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed
-                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05)
+                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shiue2
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
@@ -95,7 +105,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shi
                         -Problem.TestCase ShiueExampleTwo
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed
-                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05)
+                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_hybrid_box
+                        -Darcy.Problem.Name darcy_pq1bubble_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_shiue2
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
@@ -109,7 +121,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_shiue2
                         -FreeFlow.Problem.BoundaryConditions Mixed
                         -Darcy.Grid.Cells "20 20"
                         -FreeFlow.Grid.Cells "20 20"
-                        -Rates 1.9,2.05,1.9,2.0,1.9,2.05,1.9,2.05)
+                        -Rates 1.9,2.05,1.9,2.0,1.9,2.05,1.9,2.05
+                        -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
+                        -Darcy.Problem.Name darcy_pq2_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_rybak
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -120,7 +134,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_rybak
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase Rybak
                         -Darcy.Problem.BoundaryConditions Neumann
-                        -FreeFlow.Problem.BoundaryConditions Stress)
+                        -FreeFlow.Problem.BoundaryConditions Stress
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_rybak
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
@@ -132,7 +148,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_rybak
                         -Problem.TestCase Rybak
                         -Darcy.Problem.BoundaryConditions Neumann
                         -FreeFlow.Problem.BoundaryConditions Stress
-                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05)
+                        -Rates 1.4,1.55,1.95,2.05,1.95,2.05,1.95,2.05
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_rybak
               TARGET test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
@@ -146,7 +164,9 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_rybak
                         -FreeFlow.Problem.BoundaryConditions Stress
                         -Darcy.Grid.Cells "20 20"
                         -FreeFlow.Grid.Cells "20 20"
-                        -Rates 1.95,2.05,1.95,2.05,1.95,2.05,1.95,2.05)
+                        -Rates 1.95,2.05,1.95,2.05,1.95,2.05,1.95,2.05
+                        -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
+                        -Darcy.Problem.Name darcy_pq2_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -159,4 +179,6 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
                         -FreeFlow.Problem.EnableInertiaTerms true
                         -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
                         -Darcy.Problem.BoundaryConditions Mixed
-                        -FreeFlow.Problem.BoundaryConditions Mixed)
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
