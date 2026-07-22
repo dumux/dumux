@@ -107,8 +107,7 @@ void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
     // write the norm into a log file
     std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
     logFile << "[ConvergenceTest] L2(p) = " << absL2[0]
-            << " L2(vx) = " << absL2[1]
-            << " L2(vy) = " << absL2[2]
+            << " L2(v) = " << std::sqrt(absL2[1]*absL2[1] + absL2[2]*absL2[2])
             << std::endl;
 }
 
@@ -153,8 +152,7 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
 
             std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
             logFile << "[ConvergenceTest] L2(p) = " << massErrors[0]
-                    << " L2(vx) = " << momentumErrors[0]
-                    << " L2(vy) = " << momentumErrors[0]
+                    << " L2(v) = " << momentumErrors[0]
                     << std::endl;
         }
         else
@@ -168,8 +166,7 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
 
             std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
             logFile << "[ConvergenceTest] L2(p) = " << massL2Error
-                    << " L2(vx) = " << momentumL2Error
-                    << " L2(vy) = " << momentumL2Error
+                    << " L2(v) = " << momentumL2Error
                     << std::endl;
         }
     }
