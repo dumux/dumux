@@ -366,6 +366,21 @@ public:
         });
     }
 
+    template<std::size_t i, class LocalAssemblerI, class UpdatableElementVars>
+    void updateCoupledVariables(Dune::index_constant<i> domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                UpdatableElementVars& elemVars)
+    {
+        // for the coupling blocks
+        using namespace Dune::Hybrid;
+        forEach(CouplingMap::coupledDomains(domainI), [&](const auto domainJ){
+            subApply(domainI, domainJ, [&](auto& cm, auto&& ii, auto&& jj){
+                cm.updateCoupledVariables(ii, localAssemblerI, elemVars);
+            });
+        });
+    }
+
+
 protected:
     SolutionVectors& curSol()
     { return solutionVectors_; }
