@@ -268,6 +268,42 @@ public:
 #endif
 
     /*!
+     * \brief Update the solver after the grid and its dof distribution changed,
+     *        e.g. after grid adaption or dynamic load balancing
+     * \note Rebuilds the parallel index sets and communication in place, so holders of a
+     *       pointer to this solver (e.g. a NewtonSolver, which keeps its own shared_ptr copy)
+     *       automatically use the updated structures
+     * \note A matrix set via setMatrix has to be set again after this call
+     */
+    template <class GridView, class DofMapper>
+    void updateAfterGridAdaption(const GridView& gridView, const DofMapper& dofMapper)
+    {
+#if HAVE_MPI
+        solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
+        if constexpr (LinearSolverTraits::canCommunicate)
+        {
+            if (solverCategory_ != Dune::SolverCategory::sequential)
+            {
+                parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
+                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
+                parallelHelper_->createParallelIndexSet(*communication_);
+            }
+            else
+                scalarProduct_ = std::make_shared<ScalarProduct>();
+        }
+        else
+            scalarProduct_ = std::make_shared<ScalarProduct>();
+#else
+        solverCategory_ = Dune::SolverCategory::sequential;
+        scalarProduct_ = std::make_shared<ScalarProduct>();
+#endif
+        // a stored operator/solver refers to the previous communication and dof layout
+        linearOperator_ = MatrixOperatorHolder{};
+        solver_ = nullptr;
+    }
+
+    /*!
      * \brief Solve the linear system Ax = b
      */
     IstlSolverResult solve(Matrix& A, XVector& x, BVector& b)
