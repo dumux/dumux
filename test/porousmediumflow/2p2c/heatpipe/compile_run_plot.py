@@ -75,14 +75,10 @@ def build_and_run() -> Path:
 K = 1.0e-12  # m^2,  Problem.Permeability in heatpipe.input
 PHI = 0.4  # -,    HeatPipeSpatialParams::porosity_
 SWR = 0.15  # -,    swr passed to KrPcHeatPipe::Params in heatpipespatialparams.hh
-LAMBDA_DRY = 0.582  # W/(m*K)
-LAMBDA_WET = 1.13  # W/(m*K)
 RHO_W = 958.4  # kg/m^3, water density near the phase-change reference state
 MU_W = 2.938e-4  # Pa*s
 MU_G_A = 2.08e-5  # Pa*s, dynamic viscosity of air
 MU_G_W = 1.2e-5  # Pa*s, dynamic viscosity of steam
-D_BINARY = 2.6e-6  # m^2/s, binary diffusion coefficient air-water vapor
-TAU = 0.5  # -, tortuosity
 GAMMA = 0.05878  # N/m, surface tension of water at ~100.5°C
 MW = 0.018016  # kg/mol, molar mass of water
 MA = 0.02897  # kg/mol, molar mass of air
@@ -90,6 +86,32 @@ R_GAS = 8.3144621  # J/(mol*K)
 H_WG = 2.258e6  # J/kg, latent heat of vaporization of water
 P0_REF = 101325.0  # Pa, reference pressure for the Clausius-Clapeyron relation
 T0_REF = 373.15  # K, reference (boiling) temperature for the Clausius-Clapeyron relation
+
+# Effective thermal conductivity: DuMux's TwoPTwoCNI model uses
+# ThermalConductivitySomertonTwoP by default (dumux/porousmediumflow/2p2c/model.hh),
+# NOT a fixed pair of wet/dry constants. It computes
+#   lambda_wet = lambda_solid^(1-phi) * lambda_liquid_fluid^phi
+#   lambda_dry = lambda_solid^(1-phi) * lambda_gas_fluid^phi
+# (geometric mean, see dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh)
+# with lambda_solid = 2.8 W/(m*K) (heatpipe.input, Component.SolidThermalConductivity),
+# lambda_gas_fluid = 0.0255535 W/(m*K) (Dumux::Components::Air::gasThermalConductivity,
+# a constant), and lambda_liquid_fluid the real IAPWS water thermal conductivity
+# (Dumux::Components::H2O::liquidThermalConductivity), here evaluated at a
+# representative T=370 K, p=1.1e5 Pa (~0.676 W/(m*K)). These values differ
+# substantially from the historical Emmert/Udell table values (1.13/0.582 W/(m*K)),
+# which do not apply to this particular solid conductivity choice.
+LAMBDA_WET = 1.586  # W/(m*K), Somerton wet endpoint (see above)
+LAMBDA_DRY = 0.4278  # W/(m*K), Somerton dry endpoint (see above)
+
+# Binary diffusion coefficient: the default (unoverridden) H2OAir fluid system uses
+# Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(T, p) (dumux/material/binarycoefficients/h2o_air.hh),
+# not a fixed constant, and the default TwoPNC/TwoPTwoC effective diffusivity model is
+# DiffusivityMillingtonQuirk (dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh),
+# not a simple porosity*saturation*tortuosity scaling.
+_D_AW_THETA = 1.8
+_D_AW_REF = 2.13e-5  # m^2/s, reference value at p0/T0 below
+_D_AW_P0 = 1.0e5  # Pa
+_D_AW_T0 = 273.15  # K
 
 # boundary state at x=0, matching HeatPipeProblem::dirichletAtPos
 PG_BC = 1.013e5  # Pa
@@ -120,6 +142,17 @@ def _krg(se: float) -> float:
     return (1 - se) ** 3
 
 
+def _binary_diffusion_coefficient(T: float, p: float) -> float:
+    """Dumux::BinaryCoeff::H2O_Air::gasDiffCoeff(T, p)."""
+    return _D_AW_REF * (_D_AW_P0 / p) * (T / _D_AW_T0) ** _D_AW_THETA
+
+
+def _millington_quirk(sg: float, d_binary: float) -> float:
+    """Dumux::DiffusivityMillingtonQuirk::effectiveDiffusionCoefficient."""
+    sg = max(sg, 0.0)
+    return PHI * sg**3 * (PHI * sg) ** (1.0 / 3.0) * d_binary
+
+
 def _rhs(x, z):
     """Right-hand side of the four coupled ODEs (Huang et al. 2015, eq. F1-F4).
 
@@ -133,7 +166,7 @@ def _rhs(x, z):
     sw = SWR + se * (1 - SWR)
     sg = 1 - sw
 
-    d_pm = PHI * sg * TAU * D_BINARY
+    d_pm = _millington_quirk(sg, _binary_diffusion_coefficient(T, pg))
     lam = LAMBDA_DRY + np.sqrt(sw) * (LAMBDA_WET - LAMBDA_DRY)
     pc = _capillary_pressure(se)
     dpc_dse = _dpc_dse(se)
@@ -201,23 +234,26 @@ def semianalytical_solution(x: np.ndarray) -> dict:
     )
     x_dry = sol.t[-1]
 
-    se = np.empty_like(x)
+    sw = np.empty_like(x)
     pg = np.empty_like(x)
     xa = np.empty_like(x)
     T = np.empty_like(x)
 
     wet = x <= x_dry
-    wet_vals = sol.sol(x[wet])
-    se[wet], pg[wet], xa[wet], T[wet] = wet_vals
+    se_wet, pg[wet], xa[wet], T[wet] = sol.sol(x[wet])
+    sw[wet] = SWR + se_wet * (1 - SWR)
 
+    # Beyond the two-phase zone the wetting phase has fully evaporated
+    # (Se -> 0 is where kr_w -> 0, i.e. the wetting phase becomes immobile;
+    # the numerical model then switches to a single, gas-only phase state
+    # with Sw = 0 exactly, not Sw = Swr).
     dry = ~wet
-    se_dry, pg_dry, xa_dry, T_dry = sol.sol(x_dry)
-    se[dry] = 0.0
+    _, pg_dry, _, T_dry = sol.sol(x_dry)
+    sw[dry] = 0.0
     xa[dry] = 0.0
     pg[dry] = pg_dry
     T[dry] = T_dry + (-HEAT_FLUX / LAMBDA_DRY) * (x[dry] - x_dry)
 
-    sw = SWR + se * (1 - SWR)
     return {"Sw": sw, "p_gas": pg, "x_a_gas": xa, "T": T, "heatpipe_length": x_dry}
 
 
