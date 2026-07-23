@@ -19,11 +19,21 @@
  *
  * Pressure reference fixed by Robin BC at top:
  *   neumann[0] = (p - p_ref) * penalty
+ *
+ * Grid: ALUGrid<2,2,simplex,conforming> (parallel, h-adaptive, dynamically load-balanced --
+ * see ../common/adaptive/ and ../NOTES.md), same backend as the vorticity formulation's
+ * properties_vorticity.hh: box/CVFE discretization doesn't care about element type, so the
+ * box adaptive/rebalance machinery attaches here unchanged. The former static YaspGrid
+ * boundary-layer grading is replaced by adaptive refinement.
  */
 #ifndef DUMUX_BOUSSINESQ_PRESSURE_PROPERTIES_HH
 #define DUMUX_BOUSSINESQ_PRESSURE_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
+
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
@@ -40,9 +50,19 @@ struct BoussinesqPressureTest
 { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
 } // end namespace TTag
 
+// ALUGrid simplex/conforming: the parallel h-adaptive + dynamic-load-balancing backend
+// (development/debugging history in ../NOTES.md). YaspGrid fallback only to keep this
+// header compilable without dune-alugrid; the CMake target is guarded by
+// dune-alugrid_FOUND.
+#if HAVE_DUNE_ALUGRID
+template<class TypeTag>
+struct Grid<TypeTag, TTag::BoussinesqPressureTest>
+{ using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
+#else
 template<class TypeTag>
 struct Grid<TypeTag, TTag::BoussinesqPressureTest>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<double, 2>>; };
+#endif
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::BoussinesqPressureTest>

@@ -25,16 +25,42 @@ Ra = 8000
 
 [Grid]
 # dimensionless domain: width x height = 1 x 1
-# Graded tensor-product grid: uniform in x, refined toward the top wall (y=1)
-# in y, where the C=1 Dirichlet BC drives a thin diffusive boundary layer.
-# Total cell count (200 x 200) matches the old uniform grid.
-Positions0 = 0 1
-Cells0     = 200
-Grading0   = 1.0
+# ALUGrid simplex, parallel h-adaptive, shared by both 2D formulations (box/CVFE
+# discretization doesn't care about element type; the 3D vorticity target is the only
+# survivor still on YaspGrid, via the separate params3d.input): uniform base mesh,
+# boundary-layer resolution comes from adaptive refinement ([Adaptive] below) instead
+# of static grading. 100x100 base + MaxLevel 2 gives effective 400x400 resolution at
+# the front. Cells[0] doubles as the x-column binning resolution of the finger
+# diagnostics in both mains (see hasParam("Grid.Cells0") fallback there).
+LowerLeft  = 0 0
+UpperRight = 1 1
+Cells      = 100 100
+CellType   = Simplex
 
-Positions1 = 0 0.9 1.0
-Cells1     = 160 40
-Grading1   = 1.0 -1.06
+[Adaptive]
+# both 2D formulations
+MinLevel = 0
+MaxLevel = 4
+# Absolute-gradient refine/coarsen criterion (BoussinesqGradientMagnitudeIndicator, see
+# common/adaptive/gridadaptindicator.hh): refine where the true |grad C| at an element's
+# center exceeds RefineGradientThreshold, coarsen where it falls below
+# CoarsenGradientThreshold -- physical thresholds, not fractions of the field's current
+# range (unlike the max-neighbor-jump indicator's relative RefineTolerance/CoarsenTolerance --
+# a different indicator class entirely). Both default to Ra-scaled values (1/(5*Ra) and
+# 1/Ra) if left unset, so overriding [DimensionlessNumbers] Ra alone still gives a sane
+# mesh; only uncomment below to override the thresholds themselves directly.
+# RefineGradientThreshold = ...
+# CoarsenGradientThreshold = ...
+# opt-in; the _rebalance test variant switches it on
+EnableDynamicLoadBalancing = false
+RebalanceEvery = 5
+ImbalanceTolerance = 0.15
+# Partition into vertical strips (one x-interval per rank, full column top to bottom)
+# instead of ALUGrid's default space-filling-curve patches -- fingers grow vertically,
+# so each rank keeps its fingers for their whole descent and gets an equal share of the
+# refined top boundary layer. Applies to the initial partition and (weighted) to every
+# rebalance. See common/adaptive/loadbalancer.hh, VerticalStripDestinations.
+VerticalStripPartitioning = false
 
 [TimeLoop]
 TEnd = 20
@@ -47,6 +73,22 @@ VtkOutputInterval = 0.5
 [Newton]
 MaxSteps = 20
 MaxRelativeShift = 1e-5
+
+[LinearSolver]
+# Both 2D formulations (parallel ILU+GMRES); ignored by the 3D test's direct solver.
+# With the dune defaults (restart 10, ILU(0)) GMRES stops converging right after the
+# first parallel adapt cycle -- parallel ILU acts blockwise per rank and needs the
+# higher fill-in plus a longer restart cycle.
+GMResRestart = 30
+MaxIterations = 1000
+
+[LinearSolver.Preconditioner]
+ILUOrder = 1
+# For test_boussinesq_white_noise_pressure_box_amg only, ignored by ILU: the default
+# SymmetricCriterion builds a singular AMG hierarchy on this nonsymmetric operator
+# (defect=NaN on the first application) -- see cosine-perturbations/params.input for
+# where this was first found. UnSymmetricCriterion is mandatory here too.
+AmgCriterionSymmetric = false
 
 [Vtk]
 AddVelocity = true

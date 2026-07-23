@@ -96,8 +96,10 @@ public:
         return values;
     }
 
-    // Robin penalty BC for the pressure equation at the top face.
-    // Full-context override to access the local pressure value.
+    // Robin penalty BC for the pressure equation at the bottom face, used to weakly fix the
+    // pressure level (the pure-Neumann elliptic pressure equation is otherwise singular up
+    // to a constant). Pinned at a single vertex (x=0 corner) -- a real vertex sits exactly
+    // there, so the `dofPosition()[0] < eps_` check selects exactly one DOF.
     NumEqVector neumann(const Element&,
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& elemVolVars,
@@ -108,7 +110,8 @@ public:
         const Scalar zMin = this->gridGeometry().bBoxMin()[dimWorld-1];
         if (scvf.center()[dimWorld-1] < zMin + eps_)
         {
-            if (fvGeometry.scv(scvf.insideScvIdx()).dofPosition()[0] < eps_)
+            const bool pinHere = fvGeometry.scv(scvf.insideScvIdx()).dofPosition()[0] < eps_;
+            if (pinHere)
             {
                 const Scalar p = elemVolVars[scvf.insideScvIdx()].pressure(0);
                 values[conti0EqIdx] = (p - pRef_) * penalty_;
