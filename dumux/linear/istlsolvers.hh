@@ -758,6 +758,30 @@ using AMGCGIstlSolver =
 
 /*!
  * \ingroup Linear
+ * \brief An AMG preconditioned GMRes solver using dune-istl
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations. Unlike BiCGSTAB it cannot break down (no near-zero inner
+ * products in its recurrence), at the cost of storing a Krylov basis of
+ * size LinearSolver.GMResRestart between restarts.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems". SIAM J. Sci. and Stat.
+ * Comput. 7 (3): 856–869. doi:10.1137/0907058.
+ *
+ * Preconditioner: AMG (algebraic multigrid)
+ */
+template<class LSTraits, class LATraits>
+using AMGRestartedGMResIstlSolver =
+    Detail::IstlIterativeLinearSolver<LSTraits, LATraits,
+        Dune::RestartedGMResSolver<typename LATraits::SingleTypeVector>,
+        Detail::IstlSolvers::IstlAmgPreconditionerFactory,
+        // the AMG preconditioner doesn't accept multi-type matrices
+        /*convert multi-type istl types?*/ true
+    >;
+
+/*!
+ * \ingroup Linear
  * \brief An Uzawa preconditioned BiCGSTAB solver using dune-istl
  *
  * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
