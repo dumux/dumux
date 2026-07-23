@@ -4,7 +4,7 @@
 
 **Problem Description**
 
-The Heatpipe Effect is described by a nonisothermal water-gas system in a porous medium, in which the heat transfer processes convection, conduction, and diffusion as well as capillary forces play an essential role. Udell and Fitch (1985) \cite Udell:1985 provide a semi-analytical solution for this system, which is practical for comparing with numerical results (e.g., see  Emmert, 1997 \cite emmertpromo).
+The Heatpipe Effect can be observed in a nonisothermal water-gas system in a porous medium, in which the heat transfer processes convection, conduction, and diffusion, as well as capillary forces, play an essential role. Udell and Fitch (1985) \cite Udell:1985 provide a semi-analytical solution for this system, which is practical for comparing with numerical results (e.g., see  Emmert, 1997 \cite emmertpromo).
 
 A one-dimensional horizontal porous column is considered. A constant heat flux is applied at the right boundary. Due to the heat flux, the system is heated until boiling temperature is reached and steam is produced at the right-hand boundary. This causes a pressure gradient in the gas phase and the steam flows away from the heat source. After reaching cooler regions of the column, the steam condenses and sets free its latent heat of vaporization. After a while, a non-uniform saturation profile is obtained with a gradient from the cooler to the hot end of the heatpipe.
 
@@ -17,7 +17,7 @@ According to the capillary pressure–saturation relationship a gradient of the 
 
 Udell and Fitch (1985) \cite Udell:1985 derive four coupled first-order differential equations for pressure, saturation, temperature and gas-phase mole fraction. These equations are solved by numerical integration by means of a fourth-order Runge–Kutta method. The numerical simulation of the heatpipe system was carried out with the BOX discretization method. Note that the choice of BOX or CVFE makes no difference in the present one-dimensional case.
 
-The four coupled ODEs are implemented directly in `compile_run_plot.py`, following the formulation given by Huang, Kolditz and Shao (2015) \cite Huang:2015, whose reference implementation \cite ogs:heatpipe was used to validate this Python re-implementation. The system is integrated with `scipy.integrate.solve_ivp` from the left (Dirichlet) boundary towards the heat source, using the effective wetting-phase saturation $S_e = (S_w - S_{wr})/(1-S_{wr})$ (see the $p_c$, $k_{rw}$, $k_{rg}$ relations given below in **Setup**) as the integrated state variable, together with the gas-phase pressure $p_g$, the gas-phase air mole fraction $x_g^a$ and the temperature $T$. With the gas-phase density $\rho_g = \rho_g^a + \rho_g^w$, the gas-phase viscosity $\mu_g = x_g^a \mu_g^a + (1-x_g^a)\mu_g^w$ (mole-fraction-weighted mixture of $\mu_g^a$ and $\mu_g^w$), the kinematic viscosities $\nu_g = \mu_g/\rho_g$ and $\nu_w = \mu_w/\rho_w$, the mobility ratio $\beta = \nu_w/\nu_g$, the saturation-dependent heat conductivity $\lambda(S_w) = \lambda_{pm}^{S_w=0} + \sqrt{S_w}(\lambda_{pm}^{S_w=1}-\lambda_{pm}^{S_w=0})$ and the diffusive pore conductance $D_{pm} = \phi (1-S_w) \tau D_g^{aw}$, the following auxiliary quantities are introduced:
+The four coupled ODEs are implemented directly in `compile_run_plot.py`, following the formulation given by Huang, Kolditz and Shao (2015) \cite Huang:2015, whose reference implementation \cite ogs:heatpipe was used to validate this Python re-implementation. The system is integrated with `scipy.integrate.solve_ivp` from the left (Dirichlet) boundary towards the heat source, using the effective wetting-phase saturation $S_e = (S_w - S_{wr})/(1-S_{wr})$ (see the $p_c$, $k_{rw}$, $k_{rg}$ relations given below in **Setup**) as the integrated state variable, together with the gas-phase pressure $p_g$, the gas-phase air mole fraction $x_g^a$ and the temperature $T$. With the gas-phase density $\rho_g = \rho_g^a + \rho_g^w$, the gas-phase viscosity $\mu_g = x_g^a \mu_g^a + (1-x_g^a)\mu_g^w$ (mole-fraction-weighted mixture of $\mu_g^a$ and $\mu_g^w$), the kinematic viscosities $\nu_g = \mu_g/\rho_g$ and $\nu_w = \mu_w/\rho_w$, the mobility ratio $\beta = \nu_w/\nu_g$, the saturation-dependent heat conductivity $\lambda(S_w) = \lambda_{pm}^{S_w=0} + \sqrt{S_w}(\lambda_{pm}^{S_w=1}-\lambda_{pm}^{S_w=0})$ and the diffusive pore conductance $D_{pm}$ (both matched to the numerical model's actual effective-property laws, see **Setup**), the following auxiliary quantities are introduced:
 ```math
 \alpha = 1 + \frac{p_c}{\rho_w h_v^w}, \qquad
 \xi = \frac{1}{k_{rg}}\left(1 + \frac{\rho_w R T}{p_g M^w}\frac{1}{1-x_g^a}\right) + \frac{\beta}{k_{rw}},
@@ -40,7 +40,7 @@ where $\eta \in [0,1]$ partitions the imposed heat flux $q$ between the phase-ch
 \qquad
 \frac{\mathrm{d}T}{\mathrm{d}x} = -\frac{q\,(1-\eta)}{\lambda} \, .
 ```
-Integration stops once the wetting phase dries out ($S_e \to 0$), after which the temperature is continued analytically assuming pure conduction through the dry medium ($\mathrm{d}T/\mathrm{d}x = q/\lambda_{pm}^{S_w=0}$) to cover the remainder of the domain. Fluid properties are otherwise held constant, as is standard for this classical semi-analytical construction (the numerical model instead uses temperature- and composition-dependent property correlations, so close but not exact agreement between the two curves is expected).
+Integration stops once the wetting phase dries out ($S_e \to 0$), after which the temperature is continued analytically assuming pure conduction through the dry medium ($\mathrm{d}T/\mathrm{d}x = q/\lambda_{pm}^{S_w=0}$) to cover the remainder of the domain. The viscosities $\mu_w$, $\mu_g^a$, $\mu_g^w$, the density $\rho_w$ and the latent heat $h_v^w$ are held constant (evaluated near the boiling point), as is standard for this classical semi-analytical construction; however, $\lambda(S_w)$ and $D_{pm}$ are evaluated with the same effective-property laws the numerical model uses (`ThermalConductivitySomertonTwoP` and `DiffusivityMillingtonQuirk`, respectively, see **Setup**) rather than historical literature constants, since these differed enough from the model's actual defaults to noticeably degrade the comparison.
 
 
 **Setup**
@@ -76,14 +76,20 @@ The following model parameters were used for the simulation run:
 | Permeability                                 | $K$       | $1.0\text{e-}12$        | m²    |
 | Porosity                                     | $\phi$    | $0.4$                   | -     |
 | Residual wetting-phase saturation            | $S_{wr}$  | $0.15$                   | -     |
-| Heat conductivity of the fully saturated porous medium | $\lambda_{pm}^{S_w=1}$ | $1.13$ | W/(m*K) |
-| Heat conductivity of the dry porous medium | $\lambda_{pm}^{S_w=0}$ | $0.582$     | W/(m*K) |
+| Solid (grain) thermal conductivity           | $\lambda_s$ | $2.8$                 | W/(m*K) |
 | Soil grain density                           | $\varrho_s$   | $2600$              | kg/m³  |
 | Specific heat capacity of the soil grains    | $c_s$     | $700$                   | J/(kg*K) |
 | Density of water                             | $\varrho_w$  | $958.4$              | kg/m³ |
 | Dynamic viscosity of water                   | $\mu_w$  | $2.938\text{e-}4$        | Pa*s |
 | Dynamic viscosity of air                     | $\mu_g^a$  | $2.08\text{e-}5$       | Pa*s |
 | Dynamic viscosity of steam                   | $\mu_g^w$  | $1.2\text{e-}5$        | Pa*s |
+
+The effective heat conductivity $\lambda(S_w)$ is not an independent input but computed by DuMux's `ThermalConductivitySomertonTwoP` (the default for `TwoPTwoCNI`) as a porosity-weighted geometric mean of $\lambda_s$ and the phase heat conductivities, interpolated between the dry and fully saturated endpoints with $\sqrt{S_w}$:
+```math
+\lambda_{pm}^{S_w=1} = \lambda_s^{1-\phi}\left(\lambda_w^\text{fluid}\right)^\phi \approx 1.586\ \text{W/(m$\cdot$K)}, \qquad
+\lambda_{pm}^{S_w=0} = \lambda_s^{1-\phi}\left(\lambda_g^\text{fluid}\right)^\phi \approx 0.428\ \text{W/(m$\cdot$K)},
+```
+using the real water liquid heat conductivity $\lambda_w^\text{fluid}\approx 0.676\ \text{W/(m$\cdot$K)}$ (evaluated at a representative $T=370\ \text{K}$) and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m$\cdot$K)}$ used internally by DuMux's `Components::Air`. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13/0.582 W/(m$\cdot$K), for a different solid conductivity), and using the correct ones visibly improves the agreement between the numerical and semi-analytical solutions.
 
 A function according to  Fatt and Klikoff (1959) \cite Fatt:1959 is chosen for the relative permeability-saturation relationship:
 ```math
@@ -101,7 +107,16 @@ For the capillary pressure-saturation relationship, the following function of Le
 p_c = p_0 \cdot \gamma \cdot 1.417(1-S_e) - 2.120(1-S_e)^2 + 1.263(1-S_e)^3 \, .
 ```
 
-The surface tension $\gamma$ at $T = 100.5$$^\circ$C is 0.05878 Nm$^{-1}$ and $p_0 = \sqrt{\phi/K}$ applies for the scaling pressure. A constant value of 0.5 is assigned to the tortuosity $\tau$ and the binary diffusion constant $D_g^{aw}$ takes the value $2.6 \cdot 10^{-6}$ m$^2$/s.
+The surface tension $\gamma$ at $T = 100.5$$^\circ$C is 0.05878 Nm$^{-1}$ and $p_0 = \sqrt{\phi/K}$ applies for the scaling pressure.
+
+The diffusive pore conductance $D_{pm}$ is likewise not a constant but computed with DuMux's default effective diffusivity model for `TwoPTwoC`, `DiffusivityMillingtonQuirk` \cite millington1961:
+```math
+D_{pm} = \phi\, S_g^3 \sqrt[3]{\phi\, S_g}\; D_g^{aw}(T, p_g),
+```
+using the binary diffusion coefficient of the (unoverridden) `H2OAir` fluid system, `BinaryCoeff::H2O_Air::gasDiffCoeff`:
+```math
+D_g^{aw}(T, p_g) = 2.13\cdot 10^{-5}\ \text{m$^2$/s} \cdot \frac{10^5\ \text{Pa}}{p_g} \left(\frac{T}{273.15\ \text{K}}\right)^{1.8} .
+```
 
 The dimension of the model domain in x--direction is chosen at 2.4 m. However, this is not important for the length of the heatpipe after the stationary state has been reached as long as the domain is sufficicently large for the heatpipe to be built. We used a discretization length of $\Delta x = 0.04$ m.
 
@@ -120,7 +135,7 @@ The script builds and runs the simulation, evaluates the semi-analytical solutio
 
 The script expects PyVista, Matplotlib, NumPy and SciPy to be available for post-processing.
 
-The results of the numerical simulation and the semi-analytical solution are compared below. The curves match well; a heat-pipe length of $\approx$ 2.0m is obtained, matching the semi-analytical prediction.
+The results of the numerical simulation and the semi-analytical solution are compared below. Gas-phase pressure and gas-phase air mole fraction agree almost exactly. Wetting-phase saturation and temperature agree closely everywhere except right at the very end of the two-phase zone: the wetting phase becomes immobile ($k_{rw}\to 0$) and fully evaporates over a sharp front, whose location the semi-analytical solution places at $x\approx 2.18\ \text{m}$ versus $\approx 2.24\ \text{m}$ numerically (a genuine residual difference, since the semi-analytical solution holds the water density, viscosities and latent heat constant, whereas the numerical model's fluid properties vary with the local temperature). The dry-zone conductive temperature slope beyond that front matches to within 0.01\%, confirming the small offset is purely positional (in $x$), not a difference in the underlying physics.
 
 ![Line plot](heatpipe_lineplot_comparison.png)
 
