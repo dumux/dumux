@@ -153,6 +153,7 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
             std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
             logFile << "[ConvergenceTest] L2(p) = " << massErrors[0]
                     << " L2(v) = " << momentumErrors[0]
+                    << " H1(v) = " << momentumErrors[1]
                     << std::endl;
         }
         else
