@@ -37,9 +37,9 @@
 
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
+#include <dumux/flux/cvfe/boussinesqdarcyslaw.hh>
 
 #include "../pressure/problem.hh"
-#include "../pressure/boussinesqdarcyslaw.hh"
 #include "../common/spatialparams.hh"
 #include "../common/1p_boussinesq_fluidsystem.hh"
 
