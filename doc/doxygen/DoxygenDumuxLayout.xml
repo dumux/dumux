@@ -39,6 +39,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref benchmark-buckley-leverett" visible="yes" title="Buckley-Leverett" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
+      <tab type="user" url="https://git.iws.uni-stuttgart.de/benchmarks/rotating-cylinders" visible="yes" title="Taylor-Couette" intro=""/>
     </tab>
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
     <tab type="user" url="@ref contribution-guidelines" visible="yes" title="Contribute to DuMux" intro=""/>
