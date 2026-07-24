@@ -136,7 +136,7 @@ def write_rates_table(filename, errors_dict):
 
     # Fixed column widths so all rows align regardless of value length
     W_IDX  = 4   # width of level index column
-    W_VAL  = 14  # width of error/rate value columns
+    W_VAL  = 16  # width of error/rate value columns (must exceed len("error_L2dof(p)") = 14)
 
     def fmt_val(v):
         return f"{v:0.4e}".ljust(W_VAL)
@@ -220,7 +220,7 @@ all_logs = [(freeflowLogName, ffErrors), (darcyLogName, darcyErrors)]
 
 if rate_specs is None:
     # Built-in defaults
-    defaults = {'L2(p)': 1.9, 'L2(v)': 1.9}
+    defaults = {'L2dof(p)': 1.9, 'L2dof(v)': 1.9}
     for et, lo in defaults.items():
         for log_name, errors_dict in all_logs:
             check_rate_in_log(et, lo, log_name, errors_dict)

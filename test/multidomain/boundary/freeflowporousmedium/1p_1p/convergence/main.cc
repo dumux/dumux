@@ -97,17 +97,17 @@ void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
     const auto absL2 = errors.l2Absolute();
     const auto relL2 = errors.l2Relative();
 
-    std::cout << Fmt::format("** L2 error (abs/rel) for {} cc dofs and {} face dofs (total: {}): ",
+    std::cout << Fmt::format("** L2 dof error (abs/rel) for {} cc dofs and {} face dofs (total: {}): ",
                              numCellCenterDofs, numFaceDofs, numCellCenterDofs + numFaceDofs)
-              << Fmt::format("L2(p) = {:.8e} / {:.8e}", absL2[0], relL2[0])
-              << Fmt::format(", L2(vx) = {:.8e} / {:.8e}", absL2[1], relL2[1])
-              << Fmt::format(", L2(vy) = {:.8e} / {:.8e}", absL2[2], relL2[2])
+              << Fmt::format("L2dof(p) = {:.8e} / {:.8e}", absL2[0], relL2[0])
+              << Fmt::format(", L2dof(vx) = {:.8e} / {:.8e}", absL2[1], relL2[1])
+              << Fmt::format(", L2dof(vy) = {:.8e} / {:.8e}", absL2[2], relL2[2])
               << std::endl;
 
     // write the norm into a log file
     std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << absL2[0]
-            << " L2(v) = " << std::sqrt(absL2[1]*absL2[1] + absL2[2]*absL2[2])
+    logFile << "[ConvergenceTest] L2dof(p) = " << absL2[0]
+            << " L2dof(v) = " << std::sqrt(absL2[1]*absL2[1] + absL2[2]*absL2[2])
             << std::endl;
 }
 
@@ -146,14 +146,26 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
             const auto [totalVolumeMomentum, momentumErrors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
             const auto [totalVolumeMass, massErrors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
 
-            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, H1(p) = {:.8e}, L2(v) = {:.8e}, H1(v) = {:.8e}",
-                                            massErrors[0], massErrors[1], momentumErrors[0], momentumErrors[1])
+            const double massL2DofError = computeL2DofError(
+                massProblem->gridGeometry(), x[massIdx],
+                [&](const auto& pos) { return massProblem->analyticalSolution(pos); }
+            );
+            const double momentumL2DofError = computeL2DofError(
+                momentumProblem->gridGeometry(), x[momentumIdx],
+                [&](const auto& pos) { return momentumProblem->analyticalSolution(pos); }
+            );
+
+            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, H1(p) = {:.8e}, L2(v) = {:.8e}, H1(v) = {:.8e}, L2dof(p) = {:.8e}, L2dof(v) = {:.8e}",
+                                            massErrors[0], massErrors[1], momentumErrors[0], momentumErrors[1],
+                                            massL2DofError, momentumL2DofError)
                       << std::endl;
 
             std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
             logFile << "[ConvergenceTest] L2(p) = " << massErrors[0]
                     << " L2(v) = " << momentumErrors[0]
                     << " H1(v) = " << momentumErrors[1]
+                    << " L2dof(p) = " << massL2DofError
+                    << " L2dof(v) = " << momentumL2DofError
                     << std::endl;
         }
         else
@@ -161,18 +173,56 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
             const auto [totalVolumeMomentum, momentumL2Error] = calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
             const auto [totalVolumeMass, massL2Error] = calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
 
-            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, L2(v) = {:.8e}",
-                                            massL2Error, momentumL2Error)
+            const double massL2DofError = computeL2DofError(
+                massProblem->gridGeometry(), x[massIdx],
+                [&](const auto& pos) { return massProblem->analyticalSolution(pos); }
+            );
+            const double momentumL2DofError = computeL2DofError(
+                momentumProblem->gridGeometry(), x[momentumIdx],
+                [&](const auto& pos) { return momentumProblem->analyticalSolution(pos); }
+            );
+
+            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, L2(v) = {:.8e}, L2dof(p) = {:.8e}, L2dof(v) = {:.8e}",
+                                            massL2Error, momentumL2Error, massL2DofError, momentumL2DofError)
                       << std::endl;
 
             std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
             logFile << "[ConvergenceTest] L2(p) = " << massL2Error
                     << " L2(v) = " << momentumL2Error
+                    << " L2dof(p) = " << massL2DofError
+                    << " L2dof(v) = " << momentumL2DofError
                     << std::endl;
         }
     }
     else
         printFreeFlowL2Error(momentumProblem, massProblem, Dumux::partial(x, momentumIdx, massIdx));
+}
+
+template<class GridGeometry, class SolutionVector, class ExactSolution>
+double computeL2DofError(const GridGeometry& gridGeometry, const SolutionVector& x, ExactSolution&& exactSolution)
+{
+    double l2error = 0.0;
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bindElement(element);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            if constexpr (requires { scv.isOverlapping(); })
+            {
+                // We skip the overlapping SCVs, and only consider scvs that form a domain partition
+                if (scv.isOverlapping())
+                    continue;
+            }
+
+            const auto dofIdx = scv.dofIndex();
+            const auto delta = x[dofIdx] - exactSolution(scv.dofPosition());
+            l2error += scv.volume() * (delta * delta);
+        }
+    }
+    using std::sqrt;
+    return sqrt(l2error);
 }
 
 template<class Problem, class GridVariables, class SolutionVector>
@@ -183,38 +233,41 @@ void printDarcyL2Error(std::shared_ptr<Problem> problem,
     using namespace Dumux;
     using GridGeometry = typename GridVariables::GridGeometry;
 
-    double l2error = 0.0;
     if constexpr (Dumux::DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
     {
         const auto [totalVolume, cvfeL2Error] = calculateL2Error(*problem, gridVariables, x);
-        l2error = cvfeL2Error;
+        const double l2dofError = computeL2DofError(
+            problem->gridGeometry(), x,
+            [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }
+        );
+
+        const auto numDofs = problem->gridGeometry().numDofs();
+        std::cout << Fmt::format("** L2 error (abs) for {} dofs ", numDofs)
+                    << Fmt::format("L2 error = {:.8e}", cvfeL2Error)
+                    << Fmt::format(", L2dof error = {:.8e}", l2dofError)
+                    << std::endl;
+
+        // write the norm into a log file
+        std::ofstream logFile(problem->name() + ".log", std::ios::app);
+        logFile << "[ConvergenceTest] L2(p) = " << cvfeL2Error
+                << " L2dof(p) = " << l2dofError << std::endl;
     }
     else
     {
-        for (const auto& element : elements(problem->gridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(problem->gridGeometry());
-            fvGeometry.bindElement(element);
+        const double l2error = computeL2DofError(
+            problem->gridGeometry(), x,
+            [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }
+        );
 
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto dofIdx = scv.dofIndex();
-                const double delta = x[dofIdx] - problem->fullAnalyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
-                l2error += scv.volume()*(delta*delta);
-            }
-        }
-        using std::sqrt;
-        l2error = sqrt(l2error);
+        const auto numDofs = problem->gridGeometry().numDofs();
+        std::cout << Fmt::format("** L2 dof error (abs) for {} dofs ", numDofs)
+                    << Fmt::format("L2dof error = {:.8e}", l2error)
+                    << std::endl;
+
+        // write the norm into a log file
+        std::ofstream logFile(problem->name() + ".log", std::ios::app);
+        logFile << "[ConvergenceTest] L2dof(p) = " << l2error << std::endl;
     }
-
-    const auto numDofs = problem->gridGeometry().numDofs();
-    std::cout << Fmt::format("** L2 error (abs) for {} dofs ", numDofs)
-              << Fmt::format("L2 error = {:.8e}", l2error)
-              << std::endl;
-
-    // write the norm into a log file
-    std::ofstream logFile(problem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << l2error << std::endl;
 }
 
 int main(int argc, char** argv)
