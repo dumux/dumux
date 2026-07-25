@@ -154,7 +154,11 @@ def listTypeTags():
 def propertiesHeaderPath():
     """Find the path to the properties.hh C++ header"""
 
-    path, _ = os.path.split(dumux.__file__)
+    # dumux.__file__ is None for a namespace package, so search the package paths
+    path = next(
+        (p for p in dumux.__path__ if os.path.exists(os.path.join(p, "data/dumux.cmake"))),
+        dumux.__path__[0],
+    )
     metaDataFile = os.path.join(path, "data/dumux.cmake")
     if os.path.exists(metaDataFile):
         data = {}

@@ -6,6 +6,20 @@
 import functools
 from typing import Callable, Type
 
+# dumux is a namespace package and so has no __init__.py in which to make itself known to
+# dune-py. Every subpackage that generates C++ imports this module, so registering here covers
+# each of them whichever one an application enters through.
+try:
+    from dune.packagemetadata import registerExternalModule
+    import pathlib
+
+    registerExternalModule(
+        moduleName="dumux",
+        modulePath=str(pathlib.Path(__file__).parent.parent.resolve()),
+    )
+except ImportError:
+    pass
+
 
 def cppWrapperCreator(creator: Callable) -> Callable:
     """
