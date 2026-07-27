@@ -297,7 +297,7 @@ public:
         // We explicitly do extrude the area here because that might yield different results in both elements.
         // The multiplication by scvf.area() aims at having a reference value of the same order of magnitude as the actual pressure contribution.
         const auto referencePressure = this->problem().referencePressure(this->element(), this->fvGeometry(), scvf);
-        result -= referencePressure*scvf.area();
+        result -= referencePressure*scvf.area()*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
 
         // Account for the orientation of the face.
         result *= scvf.directionSign();
