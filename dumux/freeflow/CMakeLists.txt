@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(navierstokes)
+add_subdirectory(rans)
 add_subdirectory(shallowwater)
 
 file(GLOB DUMUX_FREEFLOW_HEADERS *.hh *.inc)
