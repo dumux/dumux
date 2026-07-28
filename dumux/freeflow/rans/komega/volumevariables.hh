@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
+#include <dumux/freeflow/rans/common/thermalconductivitymodel.hh>
 
 namespace Dumux {
 
@@ -55,6 +56,15 @@ public:
 
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct(scv.elementIndex());
         crossDiffusionGradientProduct_ = problem.storedCrossDiffusionGradientProduct(scv.elementIndex());
+
+        // Nonisothermal only: overwrite the molecular-only lambdaEff_ that
+        // ParentType::update() already set (via a call site that cannot see
+        // dynamicEddyViscosity(), see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
+        // class docs) with the correct eddy-augmented value, now that dynamicEddyViscosity() -
+        // a pure function of the primary variables ParentType::update() just set up - is
+        // reachable through *this.
+        if constexpr (Traits::ModelTraits::enableEnergyBalance())
+            this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
 
     //! The turbulent kinetic energy primary variable.

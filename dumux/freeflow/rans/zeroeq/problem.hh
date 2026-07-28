@@ -205,6 +205,14 @@ public:
     bool isOnWallAtPos(const GlobalPosition&) const
     { DUNE_THROW(Dune::NotImplemented, "isOnWallAtPos or isOnWall not implemented for this problem."); }
 
+    //! The (spatially constant per element, precomputed) eddy viscosity - public so a
+    //! nonisothermal mass-side problem (Dumux::ZeroEqMassProblem) can forward it into the
+    //! energy equation's eddy thermal conductivity; zero-eq is the only RANS model with no
+    //! mass-domain representation of its own, since its eddy viscosity is computed and added
+    //! purely on the momentum side (see effectiveViscosity() above).
+    Scalar dynamicEddyViscosity(std::size_t eIdx) const
+    { return eddyViscosity_[eIdx]; }
+
 private:
     Scalar dynamicEddyViscosity_(std::size_t eIdx) const
     { return eddyViscosity_[eIdx]; }

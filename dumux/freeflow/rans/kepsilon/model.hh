@@ -20,6 +20,8 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
+#include <dumux/freeflow/navierstokes/energy/model.hh>
+#include <dumux/freeflow/rans/common/thermalconductivitymodel.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -78,6 +80,98 @@ public:
 
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneKEpsilon> { using type = KEpsilonMassIOFields; };
+
+//////////////////////////////////////////////////////////////////////////////////////
+// Nonisothermal variant - see whatisimplemented.md's Phase 8 section. As with every other
+// RANS model, the wall temperature is enforced via the same simple weak-Neumann treatment
+// already used for k (not a Jayatilleke wall-function energy flux) - a deliberate
+// simplification, not an oversight.
+//////////////////////////////////////////////////////////////////////////////////////
+
+namespace TTag {
+//! The type tag for the single-phase, non-isothermal Navier-Stokes mass model fused with the
+//! two-equation, wall-function k-epsilon turbulence closure.
+struct NavierStokesMassOneKEpsilonNI { using InheritsFrom = std::tuple<NavierStokesMassOneKEpsilon>; };
+} // end namespace TTag
+
+template<class TypeTag>
+struct IOFields<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{ using type = NavierStokesEnergyIOFields<KEpsilonMassIOFields>; };
+
+template<class TypeTag>
+struct ModelTraits<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{ using type = NavierStokesEnergyModelTraits<KEpsilonMassModelTraits>; };
+
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BaseTraits = NavierStokesMassOnePVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using ETCM = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    using HCT = GetPropType<TypeTag, Properties::HeatConductionType>;
+    struct NITraits : public BaseTraits
+    {
+        using EffectiveThermalConductivityModel = ETCM;
+        using HeatConductionType = HCT;
+    };
+public:
+    using type = KEpsilonMassVolumeVariables<NITraits>;
+};
+
+template<class TypeTag>
+struct ThermalConductivityModel<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{ using type = RANSThermalConductivityModel; };
+
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{ using type = FouriersLaw<TypeTag>; };
+
+template<class TypeTag>
+struct FluxVariables<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{
+private:
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    struct DiffusiveFluxTypes
+    { using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>; };
+
+    using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
+    using ElementFluxVariablesCache = typename GetPropType<TypeTag, Properties::GridFluxVariablesCache>::LocalView;
+public:
+    using type = NavierStokesMassOnePFluxVariables<
+        Problem, ModelTraits, DiffusiveFluxTypes, ElementVolumeVariables, ElementFluxVariablesCache
+    >;
+};
+
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{
+    struct type : public GetPropType<TypeTag, Properties::HeatConductionType>::Cache
+    {};
+};
+
+template<class TypeTag>
+struct FluxVariablesCacheFiller<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
+    static constexpr bool diffusionIsSolDependent = false;
+    static constexpr bool heatConductionIsSolDependent
+        = getPropValue<TypeTag, Properties::SolutionDependentHeatConduction>();
+
+    using type = FreeFlowScalarFluxVariablesCacheFiller<
+        Problem, ModelTraits, diffusionIsSolDependent, heatConductionIsSolDependent
+    >;
+};
+
+template<class TypeTag>
+struct SolutionDependentHeatConduction<TypeTag, TTag::NavierStokesMassOneKEpsilonNI>
+{ static constexpr bool value = true; };
 
 } // end namespace Properties
 } // end namespace Dumux

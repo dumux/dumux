@@ -19,6 +19,7 @@
 // header does not need to (and must not, see below) redeclare it itself: repeating a default
 // template argument for an already-visible declaration is a hard error in C++.
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
+#include <dumux/freeflow/navierstokes/energy/model.hh>
 
 namespace Dumux {
 
@@ -47,6 +48,15 @@ struct AdvectiveFlux<OneEqMassModelTraits, T>
             += upwind([](const auto& volVars) { return volVars.density()*volVars.viscosityTilde(); });
     }
 };
+
+//! Use the same advective flux for the non-isothermal model (heat fluxes are added separately).
+//! Note: OneEqMassLocalResidual overwrites (not adds to) the viscosityTildeEqIdx entry itself
+//! (see that file), so this specialization only needs to exist for the code to compile - it is
+//! conti0EqIdx (unmodified downstream) that actually matters here.
+template<>
+struct AdvectiveFlux<NavierStokesEnergyModelTraits<OneEqMassModelTraits>>
+: public AdvectiveFlux<OneEqMassModelTraits>
+{};
 
 } // end namespace Dumux
 
