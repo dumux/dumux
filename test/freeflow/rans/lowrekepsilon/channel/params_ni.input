@@ -1,0 +1,34 @@
+[TimeLoop]
+DtInitial = 1e-3
+TEnd = 100
+MaxTimeStepSize = 5
+
+[Grid]
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.12345 0.2469
+Cells0 = 16
+Cells1 = 8 8
+Grading1 = 1.4 -1.4
+
+[Problem]
+Name = test_rans_lowrekepsilon_channelni
+InletVelocity = 2.5
+InletTemperature = 283.15
+WallTemperature = 303.15
+EnableInertiaTerms = true
+EnableGravity = false
+
+[RANS]
+TurbulentPrandtlNumber = 0.85
+
+[Newton]
+MaxSteps = 15
+TargetSteps = 5
+MaxRelativeShift = 1e-6
+
+[SpatialParams]
+Temperature = 283.15
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8

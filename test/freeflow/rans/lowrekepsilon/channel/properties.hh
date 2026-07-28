@@ -37,7 +37,11 @@ namespace Dumux::Properties {
 namespace TTag {
 struct RANSLowReKEpsilonChannelTest {};
 struct RANSLowReKEpsilonChannelTestMomentum { using InheritsFrom = std::tuple<RANSLowReKEpsilonChannelTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+#if NONISOTHERMAL
+struct RANSLowReKEpsilonChannelTestMass { using InheritsFrom = std::tuple<RANSLowReKEpsilonChannelTest, NavierStokesMassOneLowReKEpsilonNI, CCTpfaModel>; };
+#else
 struct RANSLowReKEpsilonChannelTestMass { using InheritsFrom = std::tuple<RANSLowReKEpsilonChannelTest, NavierStokesMassOneLowReKEpsilon, CCTpfaModel>; };
+#endif
 } // end namespace TTag
 
 // Set the problem property: the momentum problem is layered on top of
