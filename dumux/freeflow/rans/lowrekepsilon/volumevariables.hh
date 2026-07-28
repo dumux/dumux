@@ -15,6 +15,7 @@
 #include <cmath>
 
 #include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
+#include <dumux/freeflow/rans/common/thermalconductivitymodel.hh>
 
 namespace Dumux {
 
@@ -58,6 +59,11 @@ public:
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct(scv.elementIndex());
         yPlus_ = problem.yPlus(scv.elementIndex());
         wallDistance_ = problem.wallDistance(scv.elementIndex());
+
+        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
+        // class docs for why this must be done explicitly here rather than automatically.
+        if constexpr (Traits::ModelTraits::enableEnergyBalance())
+            this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
 
     //! The turbulent kinetic energy primary variable.

@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/freeflow/turbulencemodel.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
 
@@ -66,6 +67,18 @@ public:
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(eIdx);
         storedDissipation_ = problem.storedDissipation(eIdx);
         crossDiffusionGradientProduct_ = problem.storedCrossDiffusionGradientProduct(eIdx);
+
+        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
+        // class docs for why this must be done explicitly here rather than automatically. SST's
+        // dynamicEddyViscosity() needs the problem (for sstModelVersion()), so the formula is
+        // inlined here rather than reusing that header's no-argument helper.
+        if constexpr (Traits::ModelTraits::enableEnergyBalance())
+        {
+            using FluidSystem = typename Traits::FluidSystem;
+            static const Scalar turbulentPrandtlNumber = getParam<Scalar>("RANS.TurbulentPrandtlNumber", 1.0);
+            this->lambdaEff_ = this->fluidThermalConductivity()
+                + this->dynamicEddyViscosity(problem)*FluidSystem::heatCapacity(this->fluidState(), 0)/turbulentPrandtlNumber;
+        }
     }
 
     //! The turbulent kinetic energy primary variable.

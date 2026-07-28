@@ -18,6 +18,7 @@
 // Pulls in the primary template (with its default second argument) exactly once - see
 // dumux/freeflow/rans/oneeq/advectiveflux.hh for why this must not be redeclared here.
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
+#include <dumux/freeflow/navierstokes/energy/model.hh>
 
 namespace Dumux {
 
@@ -48,6 +49,12 @@ struct AdvectiveFlux<SSTMassModelTraits, T>
             += upwind([](const auto& volVars) { return volVars.density()*volVars.dissipation(); });
     }
 };
+
+//! Use the same advective flux for the non-isothermal model (heat fluxes are added separately).
+template<>
+struct AdvectiveFlux<NavierStokesEnergyModelTraits<SSTMassModelTraits>>
+: public AdvectiveFlux<SSTMassModelTraits>
+{};
 
 } // end namespace Dumux
 

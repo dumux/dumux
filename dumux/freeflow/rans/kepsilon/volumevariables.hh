@@ -13,6 +13,7 @@
 #define DUMUX_RANS_KEPSILON_MASS_VOLUME_VARIABLES_HH
 
 #include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
+#include <dumux/freeflow/rans/common/thermalconductivitymodel.hh>
 
 namespace Dumux {
 
@@ -62,6 +63,11 @@ public:
             dynamicEddyViscosity_ = problem.zeroEqDynamicEddyViscosity(eIdx);
         else
             dynamicEddyViscosity_ = cMu()*turbulentKineticEnergy()*turbulentKineticEnergy()/dissipation()*this->density();
+
+        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
+        // class docs for why this must be done explicitly here rather than automatically.
+        if constexpr (Traits::ModelTraits::enableEnergyBalance())
+            this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
 
     //! The turbulent kinetic energy primary variable.

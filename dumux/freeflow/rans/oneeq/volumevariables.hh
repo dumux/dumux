@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
+#include <dumux/freeflow/rans/common/thermalconductivitymodel.hh>
 
 namespace Dumux {
 
@@ -55,6 +56,11 @@ public:
         wallDistance_ = problem.wallDistance(scv.elementIndex());
         vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct(scv.elementIndex());
         viscosityTildeGradientSquared_ = problem.storedViscosityTildeGradient(scv.elementIndex()).two_norm2();
+
+        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
+        // class docs for why this must be done explicitly here rather than automatically.
+        if constexpr (Traits::ModelTraits::enableEnergyBalance())
+            this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
 
     //! The working (Spalart-Allmaras) viscosity primary variable.
