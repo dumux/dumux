@@ -78,7 +78,7 @@ public:
         if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
             DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
 
-        refPressure_ = getParam<Scalar>("Problem.RefPressure", 0.0);
+        refPressure_ = getParam<Scalar>("Problem.RefPressure", 1e5);
     }
 
     /*!
