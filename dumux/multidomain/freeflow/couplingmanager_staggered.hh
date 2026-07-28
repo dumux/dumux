@@ -97,6 +97,12 @@ private:
     template<class VolVars>
     using DynamicEddyViscosityDetector = decltype(std::declval<VolVars>().dynamicEddyViscosity());
 
+    //! Detects whether a mass-domain VolumeVariables type exposes turbulentKineticEnergy()
+    //! (used by turbulentKineticEnergy() below, for two-equation RANS models that solve k as a
+    //! transported variable on the mass domain - a no-op/zero for every other model).
+    template<class VolVars>
+    using TurbulentKineticEnergyDetector = decltype(std::declval<VolVars>().turbulentKineticEnergy());
+
     struct MomentumCouplingContext
     {
         FVElementGeometry<freeFlowMassIndex> fvGeometry;
@@ -415,6 +421,31 @@ public:
             bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
             const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(scv.elementIndex());
             return momentumCouplingContext_()[0].curElemVolVars[insideMassScv].dynamicEddyViscosity();
+        }
+        else
+            return 0.0;
+    }
+
+    /*!
+     * \brief Returns the turbulent kinetic energy k at a given (frontal, interior) sub control
+     *        volume face, read from the mass domain's volume variables if (and only if) they
+     *        expose a turbulentKineticEnergy() method - duck-typed, analogous to
+     *        turbulentViscosity() above, for two-equation RANS models (k-omega, k-epsilon, ...)
+     *        that solve k as a transported variable fused onto the mass balance. Used by
+     *        NavierStokesMomentumFCStaggeredFluxVariables::turbulentKineticEnergyContribution()
+     *        for the isotropic 2/dim*rho*k normal-stress correction. Only ever queried at
+     *        frontal, non-boundary scvfs (see that method), so - unlike turbulentViscosity() -
+     *        no boundary/scv overload is needed here.
+     */
+    Scalar turbulentKineticEnergy(const Element<freeFlowMomentumIndex>& element,
+                                  const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                                  const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+    {
+        if constexpr (Dune::Std::is_detected<TurbulentKineticEnergyDetector, VolumeVariables<freeFlowMassIndex>>::value)
+        {
+            bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
+            const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(fvGeometry.scv(scvf.insideScvIdx()).elementIndex());
+            return momentumCouplingContext_()[0].curElemVolVars[insideMassScv].turbulentKineticEnergy();
         }
         else
             return 0.0;
