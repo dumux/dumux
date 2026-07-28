@@ -20,6 +20,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/float_cmp.hh>
+#include <dune/common/std/type_traits.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/typetraits.hh>
@@ -90,6 +91,11 @@ private:
 
     using VelocityVector = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
     static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
+
+    //! Detects whether a mass-domain VolumeVariables type exposes dynamicEddyViscosity()
+    //! (used by turbulentViscosity() below, duck-typed so this is a no-op for non-RANS models).
+    template<class VolVars>
+    using DynamicEddyViscosityDetector = decltype(std::declval<VolVars>().dynamicEddyViscosity());
 
     struct MomentumCouplingContext
     {
@@ -361,6 +367,57 @@ public:
         bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
         const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(scv.elementIndex());
         return momentumCouplingContext_()[0].curElemVolVars[insideMassScv].viscosity();
+    }
+
+    /*!
+     * \brief Returns the turbulent (eddy) viscosity at a given sub control volume face,
+     *        read from the mass domain's volume variables if (and only if) they expose a
+     *        dynamicEddyViscosity() method - duck-typed, since only RANS turbulence
+     *        sub-models that fuse an extra transport equation into the mass balance
+     *        (e.g. the one-equation Spalart-Allmaras model, see
+     *        dumux/freeflow/rans/oneeq/volumevariables.hh) define one; every other
+     *        (non-RANS) mass model is unaffected and this returns 0 for it. Averaged the
+     *        same way as effectiveViscosity() above. See whatisimplemented.md/
+     *        proposedimplementation.md for why this additive hook exists instead of a
+     *        dedicated turbulence coupling manager.
+     */
+    Scalar turbulentViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const SubControlVolumeFace<freeFlowMomentumIndex>& scvf) const
+    {
+        if constexpr (Dune::Std::is_detected<DynamicEddyViscosityDetector, VolumeVariables<freeFlowMassIndex>>::value)
+        {
+            bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
+
+            const auto& insideMomentumScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(insideMomentumScv.elementIndex());
+
+            if (scvf.boundary())
+                return momentumCouplingContext_()[0].curElemVolVars[insideMassScv].dynamicEddyViscosity();
+
+            const auto& outsideMomentumScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const auto& outsideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(outsideMomentumScv.elementIndex());
+
+            return 0.5*(momentumCouplingContext_()[0].curElemVolVars[insideMassScv].dynamicEddyViscosity()
+                       + momentumCouplingContext_()[0].curElemVolVars[outsideMassScv].dynamicEddyViscosity());
+        }
+        else
+            return 0.0;
+    }
+
+    //! \copydoc turbulentViscosity(const Element<freeFlowMomentumIndex>&,const FVElementGeometry<freeFlowMomentumIndex>&,const SubControlVolumeFace<freeFlowMomentumIndex>&) const
+    Scalar turbulentViscosity(const Element<freeFlowMomentumIndex>& element,
+                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
+                              const SubControlVolume<freeFlowMomentumIndex>& scv) const
+    {
+        if constexpr (Dune::Std::is_detected<DynamicEddyViscosityDetector, VolumeVariables<freeFlowMassIndex>>::value)
+        {
+            bindCouplingContext_(Dune::index_constant<freeFlowMomentumIndex>(), element, fvGeometry.elementIndex());
+            const auto& insideMassScv = momentumCouplingContext_()[0].fvGeometry.scv(scv.elementIndex());
+            return momentumCouplingContext_()[0].curElemVolVars[insideMassScv].dynamicEddyViscosity();
+        }
+        else
+            return 0.0;
     }
 
     /*!
