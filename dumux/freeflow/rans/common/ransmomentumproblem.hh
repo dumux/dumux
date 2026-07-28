@@ -13,6 +13,8 @@
 #define DUMUX_RANS_COMMON_MOMENTUM_PROBLEM_HH
 
 #include <vector>
+#include <array>
+#include <cmath>
 
 #include <dune/common/fmatrix.hh>
 
@@ -97,12 +99,18 @@ public:
         );
 
         wallDistance_ = wallDistance.wallDistance();
+        wallElementIdx_.resize(wallDistance_.size());
+        const auto& wallData = wallDistance.wallData();
+        for (std::size_t eIdx = 0; eIdx < wallDistance_.size(); ++eIdx)
+            wallElementIdx_[eIdx] = wallData[eIdx].eIdx;
 
         velocityGradientTensor_.assign(wallDistance_.size(), DimMatrix(0.0));
         vorticityTensorScalarProduct_.assign(wallDistance_.size(), 0.0);
         stressTensorScalarProduct_.assign(wallDistance_.size(), 0.0);
         storedDensity_.assign(wallDistance_.size(), 0.0);
         storedViscosity_.assign(wallDistance_.size(), 0.0);
+
+        findNeighborIndices_();
     }
 
     /*!
@@ -153,6 +161,43 @@ public:
     Scalar wallDistance(std::size_t eIdx) const
     { return wallDistance_[eIdx]; }
 
+    //! The element index of the wall-adjacent cell in eIdx's wall-normal column - needed by
+    //! two-equation wall-function models (k-epsilon); unused by zero-/one-equation/k-omega.
+    std::size_t wallElementIndex(std::size_t eIdx) const
+    { return wallElementIdx_[eIdx]; }
+
+    //! The neighboring element index along the given axis/side (0 = "lower", 1 = "upper"),
+    //! ported from releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase - needed for
+    //! k-epsilon's per-column near-wall-region/matching-point search on structured,
+    //! axis-aligned (flat-wall-bounded) meshes.
+    std::size_t neighborIndex(std::size_t eIdx, int axisIdx, int sideIdx) const
+    { return neighborIdx_[eIdx][axisIdx][sideIdx]; }
+
+    GlobalPosition cellCenter(std::size_t eIdx) const
+    { return this->gridGeometry().element(eIdx).geometry().center(); }
+
+    //! One component of the full local velocity gradient tensor already reconstructed in
+    //! updateDynamicWallProperties() - needed by k-epsilon's zero-equation (Van Driest)
+    //! blended eddy viscosity, mirroring ZeroEqProblem's own gradient usage.
+    Scalar velocityGradient(std::size_t eIdx, int i, int j) const
+    { return velocityGradientTensor_[eIdx][i][j]; }
+
+    //! The wall-normal axis used by wall-function/mixing-length formulas (RANS.WallNormalAxis,
+    //! defaulting to the last coordinate direction) - same fixed-axis convention already
+    //! established by Dumux::ZeroEqProblem for straight, axis-aligned channels.
+    int wallNormalAxis() const
+    {
+        static const int axis = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", GridView::dimension - 1);
+        return axis;
+    }
+
+    //! The flow-direction axis: the complementary axis to wallNormalAxis() in 2D.
+    int flowDirectionAxis() const
+    {
+        static_assert(GridView::dimension == 2, "flowDirectionAxis() as the complementary axis is only well-defined in 2D");
+        return 1 - wallNormalAxis();
+    }
+
     Scalar vorticityTensorScalarProduct(std::size_t eIdx) const
     { return vorticityTensorScalarProduct_[eIdx]; }
 
@@ -197,6 +242,45 @@ private:
         return DimMatrix(0.0);
     }
 
+    //! Axis-aligned nearest-neighbor search via cell-center comparison, ported from
+    //! releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase::findNeighborIndices_() -
+    //! only meaningful/used for structured, axis-aligned (flat-wall-bounded) meshes, exactly as
+    //! in the old code.
+    void findNeighborIndices_()
+    {
+        using std::abs;
+        const auto& gridGeometry = this->gridGeometry();
+        neighborIdx_.resize(gridGeometry.elementMapper().size());
+
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto eIdx = gridGeometry.elementMapper().index(element);
+            for (int axisIdx = 0; axisIdx < dim; ++axisIdx)
+            {
+                neighborIdx_[eIdx][axisIdx][0] = eIdx;
+                neighborIdx_[eIdx][axisIdx][1] = eIdx;
+            }
+
+            for (const auto& intersection : intersections(gridGeometry.gridView(), element))
+            {
+                if (intersection.boundary())
+                    continue;
+
+                const auto neighborIdx = gridGeometry.elementMapper().index(intersection.outside());
+                for (int axisIdx = 0; axisIdx < dim; ++axisIdx)
+                {
+                    if (abs(cellCenter(eIdx)[axisIdx] - cellCenter(neighborIdx)[axisIdx]) > 1e-8)
+                    {
+                        if (cellCenter(eIdx)[axisIdx] > cellCenter(neighborIdx)[axisIdx])
+                            neighborIdx_[eIdx][axisIdx][0] = neighborIdx;
+                        if (cellCenter(eIdx)[axisIdx] < cellCenter(neighborIdx)[axisIdx])
+                            neighborIdx_[eIdx][axisIdx][1] = neighborIdx;
+                    }
+                }
+            }
+        }
+    }
+
     Implementation& asImp_()
     { return *static_cast<Implementation*>(this); }
 
@@ -204,6 +288,8 @@ private:
     { return *static_cast<const Implementation*>(this); }
 
     std::vector<Scalar> wallDistance_;
+    std::vector<std::size_t> wallElementIdx_;
+    std::vector<std::array<std::array<std::size_t, 2>, dim>> neighborIdx_;
     std::vector<DimMatrix> velocityGradientTensor_;
     std::vector<Scalar> vorticityTensorScalarProduct_;
     std::vector<Scalar> stressTensorScalarProduct_;
