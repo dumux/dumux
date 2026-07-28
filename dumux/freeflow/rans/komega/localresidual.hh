@@ -107,10 +107,16 @@ public:
     }
 
 private:
-    //! Upwinded advective (rho*k, rho*omega) plus two-point-TPFA diffusive
-    //! ((mu+sigma_k*mu_t), (mu+sigma_omega*mu_t)) terms - ported from
+    //! Two-point-TPFA diffusive ((mu+sigma_k*mu_t), (mu+sigma_omega*mu_t)) terms - ported from
     //! releases/3.10:dumux/freeflow/rans/twoeq/komega/staggered/fluxvariables.hh::computeMassFlux().
     //! See class docs above re: boundary ghost-volVars handling.
+    //!
+    //! \note The advective (upwind) part of the k/omega flux is *not* added here - it is already
+    //! included in ParentType::computeFlux()'s result via the KOmegaMassModelTraits-specific
+    //! Dumux::AdvectiveFlux specialization (dumux/freeflow/rans/komega/advectiveflux.hh), which
+    //! NavierStokesMassOnePFluxVariables::advectiveFlux() dispatches to automatically for every
+    //! equation index, not just conti0EqIdx. Adding it again here would double-count k/omega
+    //! advection (a bug found and fixed while implementing Phases 6/7).
     void addTurbulenceFlux_(NumEqVector& flux,
                             const Problem& problem,
                             const Element& element,
@@ -122,17 +128,7 @@ private:
         const auto& insideVars = elemVars[insideScv];
         const auto& outsideVars = elemVars[scvf.outsideScvIdx()];
 
-        const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-        const auto vn = velocity*scvf.unitOuterNormal();
         const auto area = Extrusion::area(fvGeometry, scvf)*insideVars.extrusionFactor();
-
-        const auto rhoKUpwind = vn > 0.0 ? insideVars.density()*insideVars.turbulentKineticEnergy()
-                                         : outsideVars.density()*outsideVars.turbulentKineticEnergy();
-        const auto rhoOmegaUpwind = vn > 0.0 ? insideVars.density()*insideVars.dissipation()
-                                             : outsideVars.density()*outsideVars.dissipation();
-
-        flux[Indices::turbulentKineticEnergyEqIdx] += vn*rhoKUpwind*area;
-        flux[Indices::dissipationEqIdx] += vn*rhoOmegaUpwind*area;
 
         const auto distance = scvf.boundary()
             ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
