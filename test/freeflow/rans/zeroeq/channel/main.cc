@@ -80,6 +80,13 @@ int main(int argc, char** argv)
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
+#if NONISOTHERMAL
+    // wire the mass problem's energy equation to the momentum problem, so it can read the
+    // (lagged) eddy viscosity computed there, see dumux/freeflow/rans/zeroeq/massproblem.hh -
+    // zero-eq is the only RANS model with no mass-domain turbulence representation of its own.
+    massProblem->setMomentumProblem(momentumProblem);
+#endif
+
     // get the time loop parameters: this test reaches a steady turbulent state via
     // pseudo-transient continuation (marching forward in time with growing time steps,
     // relying on the time-derivative term to regularize the high-Reynolds-number nonlinear
@@ -115,12 +122,19 @@ int main(int argc, char** argv)
 
     // initialize the coupling stencils
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
+
+    // Compute the (solution-independent) wall distances once, now that the problem is fully
+    // constructed - and, in the nonisothermal case, crucially *before* massGridVariables->init()
+    // below, since that immediately triggers ZeroEqMassVolumeVariables::update() for every
+    // element, which reads momentumProblem->dynamicEddyViscosity(eIdx): an out-of-bounds read on
+    // the still-empty (not yet sized) momentum-side eddyViscosity_ vector if this were called
+    // after (see the other RANS tests' main.cc for the same ordering bug/fix - harmless for the
+    // isothermal case, which never reads momentum-side data from the mass side at all).
+    momentumProblem->updateStaticWallProperties();
+
     // initializing the gridvariables requires the coupling manager to be set up
     momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
-
-    // compute the (solution-independent) wall distances once, now that the problem is fully constructed
-    momentumProblem->updateStaticWallProperties();
 
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;

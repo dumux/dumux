@@ -73,6 +73,10 @@ public:
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.0e5);
+#if NONISOTHERMAL
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
+        wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 303.15);
+#endif
 
         if constexpr (!ParentType::isMomentumProblem())
         {
@@ -80,7 +84,11 @@ public:
             using FluidState = GetPropType<TypeTag, Properties::FluidState>;
             FluidState fluidState;
             fluidState.setPressure(0, 1e5);
+#if NONISOTHERMAL
+            fluidState.setTemperature(inletTemperature_);
+#else
             fluidState.setTemperature(283.15);
+#endif
             const Scalar density = FluidSystem::density(fluidState, 0);
             const Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, 0)/density;
 
@@ -120,6 +128,9 @@ public:
                 values.setDirichlet(Indices::pressureIdx);
                 values.setDirichlet(Indices::turbulentKineticEnergyIdx);
                 values.setDirichlet(Indices::dissipationIdx);
+#if NONISOTHERMAL
+                values.setDirichlet(Indices::energyEqIdx);
+#endif
             }
         }
 
@@ -142,6 +153,9 @@ public:
             // Only ever queried at the inlet - see boundaryTypesAtPos() (walls are Neumann).
             values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
+#if NONISOTHERMAL
+            values[Indices::temperatureIdx] = inletTemperature_;
+#endif
         }
 
         return values;
@@ -183,6 +197,20 @@ public:
             // At walls, both k and epsilon are Neumann with zero flux here - their actual
             // near-wall values are enforced entirely via the internal Dirichlet constraints in
             // Dumux::KEpsilonMassProblem, not through this boundary treatment.
+#if NONISOTHERMAL
+            else if (isOnWallAtPos(globalPos))
+            {
+                // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition -
+                // same trick as the other RANS-NI tests use, not the Jayatilleke wall-function
+                // energy flux the deleted releases/3.10 k-epsilon model had (a deliberate
+                // simplification, see whatisimplemented.md's Phase 8 section).
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                const auto& insideVars = elemVolVars[insideScv];
+                const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+                values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
+                    *(insideVars.temperature() - wallTemperature_)/distance;
+            }
+#endif
         }
 
         return values;
@@ -209,6 +237,9 @@ public:
             values[Indices::pressureIdx] = outletPressure_;
             values[Indices::turbulentKineticEnergyIdx] = isOnWallAtPos(globalPos) ? 0.0 : turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
+#if NONISOTHERMAL
+            values[Indices::temperatureIdx] = isOnWallAtPos(globalPos) ? wallTemperature_ : inletTemperature_;
+#endif
         }
 
         return values;
@@ -254,6 +285,10 @@ private:
     Scalar outletPressure_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
+#if NONISOTHERMAL
+    Scalar inletTemperature_;
+    Scalar wallTemperature_;
+#endif
 };
 
 } // end namespace Dumux
