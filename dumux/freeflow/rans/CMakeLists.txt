@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(common)
+add_subdirectory(kepsilon)
 add_subdirectory(komega)
 add_subdirectory(oneeq)
 add_subdirectory(zeroeq)
