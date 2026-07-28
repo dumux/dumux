@@ -108,13 +108,19 @@ public:
     }
 
 private:
-    //! Upwinded advective (rho*k, rho*epsilon) plus two-point-TPFA diffusive
-    //! ((mu_t/sigma_k+mu), (mu_t/sigma_epsilon+mu)) terms - ported from
+    //! Two-point-TPFA diffusive ((mu_t/sigma_k+mu), (mu_t/sigma_epsilon+mu)) terms - ported from
     //! releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/staggered/fluxvariables.hh::computeMassFlux().
     //! The k-diffusive term is additionally suppressed across a face where both sides, or one
     //! side, are matching-point cells adjacent to a near-wall-region cell, exactly as old code
     //! did - preventing the algebraic wall-function region from diffusively coupling back into
     //! the resolved log-layer solution.
+    //!
+    //! \note The advective (upwind) part of the k/epsilon flux is *not* added here - it is
+    //! already included in ParentType::computeFlux()'s result via the KEpsilonMassModelTraits-
+    //! specific Dumux::AdvectiveFlux specialization, which NavierStokesMassOnePFluxVariables::
+    //! advectiveFlux() dispatches to automatically for every equation index, not just
+    //! conti0EqIdx. Adding it again here would double-count k/epsilon advection (a bug found and
+    //! fixed while implementing Phases 6/7, see komega/localresidual.hh for the same note).
     void addTurbulenceFlux_(NumEqVector& flux,
                             const Problem& problem,
                             const Element& element,
@@ -126,17 +132,7 @@ private:
         const auto& insideVars = elemVars[insideScv];
         const auto& outsideVars = elemVars[scvf.outsideScvIdx()];
 
-        const auto velocity = problem.faceVelocity(element, fvGeometry, scvf);
-        const auto vn = velocity*scvf.unitOuterNormal();
         const auto area = Extrusion::area(fvGeometry, scvf)*insideVars.extrusionFactor();
-
-        const auto rhoKUpwind = vn > 0.0 ? insideVars.density()*insideVars.turbulentKineticEnergy()
-                                         : outsideVars.density()*outsideVars.turbulentKineticEnergy();
-        const auto rhoEpsilonUpwind = vn > 0.0 ? insideVars.density()*insideVars.dissipation()
-                                               : outsideVars.density()*outsideVars.dissipation();
-
-        flux[Indices::turbulentKineticEnergyEqIdx] += vn*rhoKUpwind*area;
-        flux[Indices::dissipationEqIdx] += vn*rhoEpsilonUpwind*area;
 
         const auto distance = scvf.boundary()
             ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
