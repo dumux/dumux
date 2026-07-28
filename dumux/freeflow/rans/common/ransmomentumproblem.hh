@@ -33,8 +33,8 @@ namespace Dumux {
  *
  * This is a from-scratch reimplementation of
  * releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase, restricted to what the
- * one-equation model actually needs (no stress-tensor scalar product, no flat-wall-bounded
- * y+/u+ bookkeeping - see whatisimplemented.md for the rationale). Like the old class, all
+ * one- and two-equation models actually need (no flat-wall-bounded y+/u+ bookkeeping - see
+ * whatisimplemented.md for the rationale). Like the old class, all
  * quantities here are computed explicitly from main.cc, once per time step
  * (updateDynamicWallProperties), from the *previous* converged solution - a deliberate,
  * lagged/Picard-in-time treatment matching releases/3.10's actual numerics (as opposed to
@@ -100,6 +100,7 @@ public:
 
         velocityGradientTensor_.assign(wallDistance_.size(), DimMatrix(0.0));
         vorticityTensorScalarProduct_.assign(wallDistance_.size(), 0.0);
+        stressTensorScalarProduct_.assign(wallDistance_.size(), 0.0);
         storedDensity_.assign(wallDistance_.size(), 0.0);
         storedViscosity_.assign(wallDistance_.size(), 0.0);
     }
@@ -127,13 +128,18 @@ public:
             velocityGradientTensor_[eIdx] = gradV;
 
             Scalar vorticitySquaredSum = 0.0;
+            Scalar stressSquaredSum = 0.0;
             for (int i = 0; i < dim; ++i)
                 for (int j = 0; j < dim; ++j)
                 {
                     const Scalar vorticity_ij = 0.5*(gradV[i][j] - gradV[j][i]);
                     vorticitySquaredSum += vorticity_ij*vorticity_ij;
+
+                    const Scalar stress_ij = 0.5*(gradV[i][j] + gradV[j][i]);
+                    stressSquaredSum += stress_ij*stress_ij;
                 }
             vorticityTensorScalarProduct_[eIdx] = vorticitySquaredSum;
+            stressTensorScalarProduct_[eIdx] = stressSquaredSum;
 
             const auto& scv = *scvs(fvGeometry).begin();
             storedDensity_[eIdx] = this->density(element, scv);
@@ -149,6 +155,11 @@ public:
 
     Scalar vorticityTensorScalarProduct(std::size_t eIdx) const
     { return vorticityTensorScalarProduct_[eIdx]; }
+
+    //! S_ij*S_ij with S_ij = 1/2*(dv_i/dx_j + dv_j/dx_i), needed by two-equation models'
+    //! production term (P = 2*mu_t*S:S) - not used by the one-equation model.
+    Scalar stressTensorScalarProduct(std::size_t eIdx) const
+    { return stressTensorScalarProduct_[eIdx]; }
 
     Scalar kinematicViscosity(std::size_t eIdx) const
     { return storedViscosity_[eIdx]/storedDensity_[eIdx]; }
@@ -195,6 +206,7 @@ private:
     std::vector<Scalar> wallDistance_;
     std::vector<DimMatrix> velocityGradientTensor_;
     std::vector<Scalar> vorticityTensorScalarProduct_;
+    std::vector<Scalar> stressTensorScalarProduct_;
     std::vector<Scalar> storedDensity_;
     std::vector<Scalar> storedViscosity_;
 };
