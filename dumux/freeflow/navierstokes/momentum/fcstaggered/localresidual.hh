@@ -154,6 +154,7 @@ public:
         flux += fluxVars.advectiveMomentumFlux();
         flux += fluxVars.diffusiveMomentumFlux();
         flux += fluxVars.pressureContribution();
+        flux += fluxVars.turbulentKineticEnergyContribution();
         return flux;
     }
 
