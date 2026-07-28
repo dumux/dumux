@@ -73,6 +73,10 @@ public:
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.0e5);
+#if NONISOTHERMAL
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
+        wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 303.15);
+#endif
     }
 
     /*!
@@ -97,7 +101,12 @@ public:
             values.setAllNeumann();
 
             if (isInlet_(globalPos))
+            {
                 values.setDirichlet(Indices::pressureIdx);
+#if NONISOTHERMAL
+                values.setDirichlet(Indices::energyEqIdx);
+#endif
+            }
         }
 
         return values;
@@ -122,6 +131,9 @@ public:
         else
         {
             values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
+#if NONISOTHERMAL
+            values[Indices::temperatureIdx] = inletTemperature_;
+#endif
         }
 
         return values;
@@ -144,9 +156,22 @@ public:
         }
         else
         {
+            const auto& globalPos = scvf.ipGlobal();
             using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
-            if (isOutlet_(scvf.ipGlobal()))
+            if (isOutlet_(globalPos))
                 values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
+#if NONISOTHERMAL
+            else if (isOnWallAtPos(globalPos))
+            {
+                // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition -
+                // same trick as the other RANS-NI tests use.
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                const auto& insideVars = elemVolVars[insideScv];
+                const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+                values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
+                    *(insideVars.temperature() - wallTemperature_)/distance;
+            }
+#endif
         }
 
         return values;
@@ -169,7 +194,12 @@ public:
             values[Indices::velocityYIdx] = 0.0;
         }
         else
+        {
             values[Indices::pressureIdx] = outletPressure_;
+#if NONISOTHERMAL
+            values[Indices::temperatureIdx] = isOnWallAtPos(globalPos) ? wallTemperature_ : inletTemperature_;
+#endif
+        }
 
         return values;
     }
@@ -219,6 +249,10 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     Scalar inletVelocity_;
     Scalar outletPressure_;
+#if NONISOTHERMAL
+    Scalar inletTemperature_;
+    Scalar wallTemperature_;
+#endif
 };
 
 } // end namespace Dumux

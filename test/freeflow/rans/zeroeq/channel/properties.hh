@@ -22,6 +22,10 @@
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
+#if NONISOTHERMAL
+#include <dumux/freeflow/rans/zeroeq/model.hh>
+#include <dumux/freeflow/rans/zeroeq/massproblem.hh>
+#endif
 
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/air.hh>
@@ -37,7 +41,11 @@ namespace Dumux::Properties {
 namespace TTag {
 struct RANSZeroEqChannelTest {};
 struct RANSZeroEqChannelTestMomentum { using InheritsFrom = std::tuple<RANSZeroEqChannelTest, NavierStokesMomentum, FaceCenteredStaggeredModel>; };
+#if NONISOTHERMAL
+struct RANSZeroEqChannelTestMass { using InheritsFrom = std::tuple<RANSZeroEqChannelTest, NavierStokesMassOneZeroEqNI, CCTpfaModel>; };
+#else
 struct RANSZeroEqChannelTestMass { using InheritsFrom = std::tuple<RANSZeroEqChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
+#endif
 } // end namespace TTag
 
 // Set the problem property: the momentum problem is layered on top of Dumux::ZeroEqProblem
@@ -48,7 +56,16 @@ struct Problem<TypeTag, TTag::RANSZeroEqChannelTestMomentum>
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::RANSZeroEqChannelTestMass>
-{ using type = RANSZeroEqChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
+{
+#if NONISOTHERMAL
+private:
+    using MomentumProblem = GetPropType<TTag::RANSZeroEqChannelTestMomentum, Properties::Problem>;
+public:
+    using type = RANSZeroEqChannelTestProblem<TypeTag, Dumux::ZeroEqMassProblem<TypeTag, MomentumProblem>>;
+#else
+    using type = RANSZeroEqChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>;
+#endif
+};
 
 // the fluid system: air, matching releases/3.10:test/freeflow/rans/ (PipeLauferProblem)
 template<class TypeTag>

@@ -75,6 +75,10 @@ public:
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         outletPressure_ = getParam<Scalar>("Problem.OutletPressure", 1.0e5);
+#if NONISOTHERMAL
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
+        wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 303.15);
+#endif
 
         // k/epsilon inflow estimates are only meaningful (and only compile: FluidState is only
         // defined) on the mass domain, exactly as for the k-omega test's turbulentKineticEnergy_.
@@ -84,7 +88,11 @@ public:
             using FluidState = GetPropType<TypeTag, Properties::FluidState>;
             FluidState fluidState;
             fluidState.setPressure(0, 1e5);
+#if NONISOTHERMAL
+            fluidState.setTemperature(inletTemperature_);
+#else
             fluidState.setTemperature(283.15);
+#endif
             const Scalar density = FluidSystem::density(fluidState, 0);
             const Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, 0)/density;
 
@@ -124,6 +132,9 @@ public:
                 values.setDirichlet(Indices::pressureIdx);
                 values.setDirichlet(Indices::turbulentKineticEnergyIdx);
                 values.setDirichlet(Indices::dissipationIdx);
+#if NONISOTHERMAL
+                values.setDirichlet(Indices::energyEqIdx);
+#endif
             }
         }
 
@@ -146,6 +157,9 @@ public:
             // Only ever queried at the inlet - see boundaryTypesAtPos() (walls are Neumann).
             values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
+#if NONISOTHERMAL
+            values[Indices::temperatureIdx] = inletTemperature_;
+#endif
         }
 
         return values;
@@ -188,6 +202,10 @@ public:
                 const auto diffCoeffEpsilon = insideVars.dynamicEddyViscosity()/insideVars.sigmaEpsilon() + insideVars.viscosity();
                 values[Indices::turbulentKineticEnergyEqIdx] = diffCoeffK*insideVars.turbulentKineticEnergy()/distance;
                 values[Indices::dissipationEqIdx] = diffCoeffEpsilon*insideVars.dissipationTilde()/distance;
+#if NONISOTHERMAL
+                values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
+                    *(insideVars.temperature() - wallTemperature_)/distance;
+#endif
             }
         }
 
@@ -215,6 +233,9 @@ public:
             values[Indices::pressureIdx] = outletPressure_;
             values[Indices::turbulentKineticEnergyIdx] = isOnWallAtPos(globalPos) ? 0.0 : turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = isOnWallAtPos(globalPos) ? 0.0 : dissipation_;
+#if NONISOTHERMAL
+            values[Indices::temperatureIdx] = isOnWallAtPos(globalPos) ? wallTemperature_ : inletTemperature_;
+#endif
         }
 
         return values;
@@ -258,6 +279,10 @@ private:
     Scalar outletPressure_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
+#if NONISOTHERMAL
+    Scalar inletTemperature_;
+    Scalar wallTemperature_;
+#endif
 };
 
 } // end namespace Dumux
