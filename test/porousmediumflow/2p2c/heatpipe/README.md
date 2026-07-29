@@ -10,7 +10,7 @@ A one-dimensional horizontal porous column is considered. A constant heat flux i
 
 According to the capillary pressure–saturation relationship a gradient of the capillary pressure into the same direction is produced. Hence, the pressure gradients of the phases have opposite directions and a circulation flow is created. After a stationary system state has been reached, three regions can be distinguished, each of them associated with a dominant heat-transport process.
 
-![Schematic description](heatpipe-schematic-description.png){html: width=80%}
+![Schematic description](heatpipe_schematic_description.png){html: width=80%}
 
 
 **Semi-analytical Reference Solution**
@@ -129,15 +129,16 @@ To run the test and produce the plots below, execute:
 ```bash
 python3 compile_run_plot.py
 ```
-The script builds and runs the simulation, evaluates the semi-analytical solution described above, and produces two figures in the `build-cmake` directory:
-- `heatpipe_lineplot_comparison.png`: comparison of the numerical solution against the semi-analytical solution for wetting-phase saturation $S_w$, temperature $T$, gas-phase pressure $p_g$, and gas-phase air mole fraction $x_g^a$, all plotted along $x$
+The script builds and runs the simulation, evaluates the semi-analytical solution described above, and produces three figures in the `build-cmake` directory:
+- `heatpipe_lineplot_comparison.svg`: comparison of the numerical solution against the semi-analytical solution for wetting-phase saturation $S_w$, temperature $T$, gas-phase pressure $p_g$, and gas-phase air mole fraction $x_g^a$, all plotted along $x$
+- `heatpipe_saturation_comparison.svg`: the wetting-phase saturation panel alone, used as the thumbnail on the benchmarks overview page
 - `heatpipe_sw.png`: numerical wetting-phase saturation field
 
 The script expects PyVista, Matplotlib, NumPy and SciPy to be available for post-processing.
 
 The results of the numerical simulation and the semi-analytical solution are compared below. Gas-phase pressure and gas-phase air mole fraction agree almost exactly. Wetting-phase saturation and temperature agree closely everywhere except right at the very end of the two-phase zone: the wetting phase becomes immobile ($k_{rw}\to 0$) and fully evaporates over a sharp front, whose location the semi-analytical solution places at $x\approx 2.18\ \text{m}$ versus $\approx 2.24\ \text{m}$ numerically (a genuine residual difference, since the semi-analytical solution holds the water density, viscosities and latent heat constant, whereas the numerical model's fluid properties vary with the local temperature). The dry-zone conductive temperature slope beyond that front matches to within 0.01\%, confirming the small offset is purely positional (in $x$), not a difference in the underlying physics.
 
-![Line plot](heatpipe_lineplot_comparison.png)
+![Line plot](heatpipe_lineplot_comparison.svg)
 
 ![Saturation field](heatpipe_sw.png){html: width=80%}
 

@@ -23,7 +23,7 @@ for more information.
 | ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
-| ![heatpipe](heatpipe-schematic-description.png) | @ref benchmark-heatpipe "↗️ Heatpipe" | @ref TwoPTwoCModel, @ref BoxDiscretization | One-dimensional non-isothermal two-phase two-component flow |
+| ![heatpipe](heatpipe_saturation_comparison.svg) | @ref benchmark-heatpipe "↗️ Heatpipe" | @ref TwoPTwoCModel, @ref BoxDiscretization | One-dimensional non-isothermal two-phase two-component flow |
 
 ## Benchmarks in documented examples
 
