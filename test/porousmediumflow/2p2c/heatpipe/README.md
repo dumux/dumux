@@ -86,10 +86,10 @@ The following model parameters were used for the simulation run:
 
 The effective heat conductivity $\lambda(S_w)$ is not an independent input but computed by DuMux's `ThermalConductivitySomertonTwoP` (the default for `TwoPTwoCNI`) as a porosity-weighted geometric mean of $\lambda_s$ and the phase heat conductivities, interpolated between the dry and fully saturated endpoints with $\sqrt{S_w}$:
 ```math
-\lambda_{pm}^{S_w=1} = \lambda_s^{1-\phi}\left(\lambda_w^\text{fluid}\right)^\phi \approx 1.586\ \text{W/(m$\cdot$K)}, \qquad
-\lambda_{pm}^{S_w=0} = \lambda_s^{1-\phi}\left(\lambda_g^\text{fluid}\right)^\phi \approx 0.428\ \text{W/(m$\cdot$K)},
+\lambda_{pm}^{S_w=1} = \lambda_s^{1-\phi}\left(\lambda_w^\text{fluid}\right)^\phi \approx 1.586\ \text{W/(m*K)}, \qquad
+\lambda_{pm}^{S_w=0} = \lambda_s^{1-\phi}\left(\lambda_g^\text{fluid}\right)^\phi \approx 0.428\ \text{W/(m*K)},
 ```
-using the real water liquid heat conductivity $\lambda_w^\text{fluid}\approx 0.676\ \text{W/(m$\cdot$K)}$ (evaluated at a representative $T=370\ \text{K}$) and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m$\cdot$K)}$ used internally by DuMux's `Components::Air`. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13/0.582 W/(m$\cdot$K), for a different solid conductivity), and using the correct ones visibly improves the agreement between the numerical and semi-analytical solutions.
+using the real water liquid heat conductivity $\lambda_w^\text{fluid}\approx 0.676\ \text{W/(m*K)}$ (evaluated at a representative $T=370\ \text{K}$) and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m*K)}$ used internally by DuMux's `Components::Air`. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13/0.582 W/(m*K), for a different solid conductivity), and using the correct ones visibly improves the agreement between the numerical and semi-analytical solutions.
 
 A function according to  Fatt and Klikoff (1959) \cite Fatt:1959 is chosen for the relative permeability-saturation relationship:
 ```math
@@ -115,7 +115,7 @@ D_{pm} = \phi\, S_g^3 \sqrt[3]{\phi\, S_g}\; D_g^{aw}(T, p_g),
 ```
 using the binary diffusion coefficient of the (unoverridden) `H2OAir` fluid system, `BinaryCoeff::H2O_Air::gasDiffCoeff`:
 ```math
-D_g^{aw}(T, p_g) = 2.13\cdot 10^{-5}\ \text{m$^2$/s} \cdot \frac{10^5\ \text{Pa}}{p_g} \left(\frac{T}{273.15\ \text{K}}\right)^{1.8} .
+D_g^{aw}(T, p_g) = 2.13\cdot 10^{-5}\ \text{m}^2\text{/s} \cdot \frac{10^5\ \text{Pa}}{p_g} \left(\frac{T}{273.15\ \text{K}}\right)^{1.8} .
 ```
 
 The dimension of the model domain in x--direction is chosen at 2.4 m. However, this is not important for the length of the heatpipe after the stationary state has been reached as long as the domain is sufficicently large for the heatpipe to be built. We used a discretization length of $\Delta x = 0.04$ m.
