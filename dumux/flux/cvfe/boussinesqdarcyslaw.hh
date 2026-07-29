@@ -34,10 +34,17 @@
  *   ρ is used unmodified and is expected to stay at its (Boussinesq)
  *   reference value -- this class does not touch those terms.
  *
- * For a fully worked example (a fluid system with a linear density law, used
- * both in a "full" compressible-density model and in a Boussinesq-approximated
- * one sharing the same problem), see
- * `test/porousmediumflow/1pnc/1p2c/isothermal/boussinesqintrusion/`.
+ * For a fully worked example, see
+ * `test/porousmediumflow/1pnc/1p2c/isothermal/lockexchange/`: an artificial,
+ * exactly-linear-density lock-exchange problem is run once with the full
+ * (composition-dependent) fluid system, and once with a variant whose density is the
+ * constant reference (combined with this class), where `Problem::buoyantDensity()`
+ * supplies the linear density law's composition-driven deviation from that reference.
+ * The density variance there is deliberately kept small (a couple of percent) to stay
+ * within the range where the Boussinesq approximation is expected to hold; note that
+ * `test/porousmediumflow/1pnc/1p2c/isothermal/saltwaterintrusion/` uses a *much*
+ * larger, realistic salinity range (up to 3.5%) and is not a good fit for this
+ * approximation for that reason.
  */
 #ifndef DUMUX_FLUX_CVFE_BOUSSINESQ_DARCYS_LAW_HH
 #define DUMUX_FLUX_CVFE_BOUSSINESQ_DARCYS_LAW_HH

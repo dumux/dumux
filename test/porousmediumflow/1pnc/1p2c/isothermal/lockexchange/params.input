@@ -1,0 +1,16 @@
+[TimeLoop]
+DtInitial = 200      # [s]
+MaxTimeStepSize = 200 # [s] fixed (non-adaptive) time step, for a clean full-vs-Boussinesq comparison
+TEnd = 20000         # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 2 1
+Cells = 40 20
+
+[Problem]
+Name = lockexchange # name passed to the output routines
+EnableGravity = true
+
+[Vtk]
+AddVelocity = true
