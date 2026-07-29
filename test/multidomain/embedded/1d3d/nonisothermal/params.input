@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 43200     # [s]
-TEnd = 432000         # [s] = 5 years
-EpisodeLength = 7200 #43200 # [s] = 0.5 years
+TEnd = 432000         # [s] = 5 days
+EpisodeLength = 7200  # [s] = 2 hours
 
 [Voids.Grid]
 File = ./grids/pipe.dgf
@@ -11,8 +11,8 @@ Positions0 = 0 30
 Positions1 = -5 0 5
 Positions2 = -5 0 5
 Cells0 = 25
-Cells1 = 50 50
-Cells2 = 50 50
+Cells1 = 30 30
+Cells2 = 30 30
 Grading1 = -1.2 1.2
 Grading2 = -1.2 1.2
 
