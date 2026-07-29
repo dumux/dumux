@@ -14,6 +14,9 @@ Name = test_1p2c_henry_fahs_box
 EnableGravity = true
 InflowRate = 5.7024 # [m^3/d] = q_d * d = 6.6e-5 m^2/s * 1 m * 86400 s/d, matching
                      # Fahs et al. (2016) Table 2 exactly
+MolecularDiffusion = 18.86e-6 # [m^2/s], Fahs et al. 2016 Table 2, Test Case 1
+AlphaL = 0 # [m], no dispersion in Test Case 1 (purely diffusive)
+AlphaT = 0 # [m]
 
 [Vtk]
 AddVelocity = true

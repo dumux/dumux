@@ -27,6 +27,13 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct HenryFahsTest { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
+// Test Case 2 (Fahs et al. 2016): same problem/fluid/spatialparams as Test Case 1,
+// just with velocity-dependent (Scheidegger) dispersion enabled -- see
+// spatialparams.hh's dispersionAlphas() and params_case2.input's nonzero
+// Problem.AlphaL/Problem.AlphaT. ScheideggersDispersionTensor is already the default
+// CompositionalDispersionModel for the whole PorousMediumFlow property tree, so no
+// need to set it explicitly here.
+struct HenryFahsCase2Test { using InheritsFrom = std::tuple<HenryFahsTest>; };
 } // end namespace TTag
 
 // Use a structured yasp grid
@@ -54,6 +61,10 @@ struct SpatialParams<TypeTag, TTag::HenryFahsTest>
 // Use mass fractions to set salinity conveniently
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::HenryFahsTest> { static constexpr bool value = false; };
+
+// Enable velocity-dependent (Scheidegger) dispersion for Test Case 2
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::HenryFahsCase2Test> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 

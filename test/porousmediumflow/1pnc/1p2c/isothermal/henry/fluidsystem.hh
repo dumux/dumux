@@ -7,11 +7,14 @@
 /*!
  * \file
  * \ingroup OnePNCTests
- * \brief Fluid system for the classic (purely diffusive) Henry problem, parameterized
- *        to match "Test Case 1" of Fahs et al. (2016, WRR,
- *        doi:10.1002/2016WR019288) -- their semianalytical validation case, itself the
- *        original Henry (1964) configuration with an exaggerated molecular diffusion
- *        coefficient.
+ * \brief Fluid system for the Henry problem, parameterized to match the test cases of
+ *        Fahs et al. (2016, WRR, doi:10.1002/2016WR019288). Density, viscosity and
+ *        component naming are fixed (identical across all three of the paper's test
+ *        cases, Table 2); only the molecular diffusion coefficient is a runtime
+ *        parameter (Problem.MolecularDiffusion), since it differs between "Test Case
+ *        1" (purely diffusive, no velocity-dependent dispersion) and Test Cases 2/3
+ *        (velocity-dependent dispersion via spatialparams.hh's dispersionAlphas(),
+ *        smaller molecular diffusion).
  */
 #ifndef DUMUX_TEST_HENRY_FAHS_FLUIDSYSTEM_HH
 #define DUMUX_TEST_HENRY_FAHS_FLUIDSYSTEM_HH
@@ -20,16 +23,18 @@
 #include <limits>
 
 #include <dumux/io/name.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 namespace Dumux::FluidSystems {
 
 /*!
  * \ingroup OnePNCTests
- * \brief Single-phase, two-component fluid system matching Fahs et al. (2016) Test
- *        Case 1 (Table 2): rho0 = 1000 kg/m^3, rho1 = 1025 kg/m^3, Dm = 18.86e-6 m^2/s,
- *        no dispersion (alphaL = alphaT = 0, i.e. purely diffusive -- matching that
- *        this model has no dispersion tensor at all).
+ * \brief Single-phase, two-component fluid system matching Fahs et al. (2016), Table
+ *        2: rho0 = 1000 kg/m^3, rho1 = 1025 kg/m^3, mu = 1e-3 Pa s (identical across
+ *        all three test cases); the molecular diffusion coefficient Dm is read from
+ *        Problem.MolecularDiffusion (18.86e-6 m^2/s for Test Case 1, 9.43e-8 m^2/s for
+ *        Test Cases 2 and 3).
  *
  * The salt mass fraction is scaled so that X = 0.035 at the seaward boundary; only the
  * ratio X/0.035 (the paper's dimensionless concentration c) is physically meaningful
@@ -121,12 +126,15 @@ public:
     { return phaseIdx == compIdx ? 1.0 : std::numeric_limits<Scalar>::infinity(); }
 
     using Base<Scalar, ThisType>::binaryDiffusionCoefficient;
-    //! Molecular diffusion coefficient Dm = 18.86e-6 m^2/s (Fahs et al. 2016, Table 2,
-    //! Test Case 1 -- the exaggerated value matching the original Henry [1964] problem)
+    //! Molecular diffusion coefficient [m^2/s], read from Problem.MolecularDiffusion
+    //! (see the class documentation above for the value used in each test case)
     template<class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState& fluidState,
                                              int phaseIdx, int compIIdx, int compJIdx)
-    { return 18.86e-6; }
+    {
+        static const Scalar Dm = getParam<Scalar>("Problem.MolecularDiffusion");
+        return Dm;
+    }
 };
 
 } // end namespace Dumux::FluidSystems

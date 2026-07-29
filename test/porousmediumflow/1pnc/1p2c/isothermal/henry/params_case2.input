@@ -1,0 +1,28 @@
+[TimeLoop]
+DtInitial = 86.4   # [s]
+TEnd = 345600      # [s], 4 d -- Fahs et al. (2016) note that velocity-dependent
+                   # dispersion slows convergence to steady state considerably
+                   # compared to Test Case 1 (purely diffusive); this is a generous
+                   # first guess, not empirically verified
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 3 1   # aspect ratio 3, matching Fahs et al. (2016) Table 2 (xi = 3)
+Cells = 180 60     # finer than Test Case 1's 120x40: the paper notes buoyancy effects
+                   # (and hence mesh sensitivity) are far more pronounced once
+                   # dispersion is enabled -- they used 12,288 mesh elements (vs. 7,500
+                   # for Test Case 1) for a mesh-independent solution. dx = dy = 1/60,
+                   # so the Table D2 Z-values (multiples of 0.05) still land exactly on
+                   # grid nodes (60 is a multiple of 20).
+
+[Problem]
+Name = test_1p2c_henry_fahs_case2_box
+EnableGravity = true
+InflowRate = 5.7024   # [m^3/d], same as Test Case 1 (Fahs et al. 2016 Table 2, q_d
+                       # is identical across all three test cases)
+MolecularDiffusion = 9.43e-8 # [m^2/s], Fahs et al. 2016 Table 2, Test Cases 2 and 3
+AlphaL = 0.1  # [m], longitudinal dispersivity, Test Case 2
+AlphaT = 0.01 # [m], transverse dispersivity, Test Case 2
+
+[Vtk]
+AddVelocity = true

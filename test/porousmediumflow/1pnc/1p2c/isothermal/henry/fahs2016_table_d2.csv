@@ -1,0 +1,35 @@
+# Digitized 10/50/90% isochlor positions for "Test Case 2" (velocity-dependent
+# dispersion, alphaL=0.1 m, alphaT=0.01 m, Dm=9.43e-8 m^2/s) of:
+#   Fahs, M., B. Ataie-Ashtiani, A. Younes, C. T. Simmons, and P. Ackerer (2016),
+#   The Henry problem: New semianalytical solution for velocity-dependent dispersion,
+#   Water Resour. Res., 52, 7382-7407, doi:10.1002/2016WR019288.
+# Source: Appendix D, Table D2 (converged semianalytical solution, Nc=4725 Fourier
+# modes). Z and X are dimensionless coordinates (Z = z/d, X = x/d) on their domain
+# (aspect ratio xi = length/depth = 3, i.e. length 3, depth 1). Reproduced here (as
+# the paper itself invites: "To facilitate the validation of numerical codes... the
+# digitized data are provided") to validate this repository's Henry problem
+# implementation (see problem.hh, fluidsystem.hh, spatialparams.hh,
+# validate_fahs2016.py).
+#
+# Unlike Table D1 (Test Case 1), all 19 rows here were legible and consistent across
+# independent re-extractions from the source PDF.
+Z,X10,X50,X90
+0.050,1.685,1.803,2.091
+0.100,1.752,1.910,2.205
+0.150,1.830,2.027,2.326
+0.200,1.908,2.142,2.438
+0.250,1.995,2.254,2.538
+0.300,2.086,2.360,2.626
+0.350,2.177,2.459,2.702
+0.400,2.266,2.551,2.766
+0.450,2.353,2.636,2.825
+0.500,2.438,2.714,2.881
+0.550,2.518,2.782,2.934
+0.600,2.592,2.837,2.968
+0.650,2.655,2.876,2.980
+0.700,2.703,2.901,2.985
+0.750,2.736,2.916,2.987
+0.800,2.755,2.924,2.988
+0.850,2.763,2.928,2.989
+0.900,2.766,2.929,2.989
+0.950,2.765,2.929,2.989
