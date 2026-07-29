@@ -284,17 +284,41 @@ def point_data(mesh, field: str):
     return x[order], mesh.point_data[field][order]
 
 
-def create_line_plot(vtu: Path, image_file: Path) -> None:
-    pv, plt = require_plot_modules()
-
-    fig, axes = plt.subplots(2, 2, figsize=(11, 7.5), constrained_layout=True)
-    ax_sw, ax_T, ax_pg, ax_xa = axes[0, 0], axes[0, 1], axes[1, 0], axes[1, 1]
-
+def _comparison_data(vtu: Path):
+    pv, _ = require_plot_modules()
     mesh = pv.read(vtu)
     x_max = mesh.points[:, 0].max()
     x_analytic = np.linspace(0, x_max, 2000)
     analytic = semianalytical_solution(x_analytic)
     print(f"semi-analytical heat-pipe length: {analytic['heatpipe_length']:.4f} m")
+    return mesh, x_max, x_analytic, analytic
+
+
+def create_saturation_lineplot(vtu: Path, image_file: Path) -> None:
+    """Single-panel wetting-phase saturation comparison (used as the benchmark thumbnail)."""
+    _, plt = require_plot_modules()
+    mesh, x_max, x_analytic, analytic = _comparison_data(vtu)
+
+    fig, ax = plt.subplots(figsize=(8.2, 4.8), constrained_layout=True)
+    x, sw = point_data(mesh, SATURATION_FIELD)
+    ax.plot(x, sw, label="numerical", linewidth=2)
+    ax.plot(x_analytic, analytic["Sw"], "k--", linewidth=2.4, label="semi-analytical")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel(r"Wetting-phase saturation $S_w$ [-]")
+    ax.set_xlim(0, x_max)
+    ax.set_ylim(-0.02, 1.02)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.savefig(image_file, dpi=200)
+    plt.close(fig)
+
+
+def create_line_plot(vtu: Path, image_file: Path) -> None:
+    _, plt = require_plot_modules()
+    mesh, x_max, x_analytic, analytic = _comparison_data(vtu)
+
+    fig, axes = plt.subplots(2, 2, figsize=(11, 7.5), constrained_layout=True)
+    ax_sw, ax_T, ax_pg, ax_xa = axes[0, 0], axes[0, 1], axes[1, 0], axes[1, 1]
 
     x, sw = point_data(mesh, SATURATION_FIELD)
     ax_sw.plot(x, sw, label="numerical", linewidth=1.8)
@@ -361,7 +385,9 @@ def main() -> None:
     out_dir = case_build_dir()
 
     print("Creating line plot...")
-    create_line_plot(vtu, out_dir / f"{BASE_NAME}_lineplot_comparison.png")
+    create_line_plot(vtu, out_dir / f"{BASE_NAME}_lineplot_comparison.svg")
+    print("Creating saturation line plot...")
+    create_saturation_lineplot(vtu, out_dir / f"{BASE_NAME}_saturation_comparison.svg")
     print("Creating saturation field image...")
     create_saturation_image(vtu, out_dir / f"{BASE_NAME}_sw.png")
 
