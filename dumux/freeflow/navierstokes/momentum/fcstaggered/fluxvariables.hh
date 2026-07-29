@@ -294,7 +294,8 @@ public:
         // In the end, we are only interested in a pressure gradient between the two relevant faces so we can
         // subtract a constant reference value from the actual pressure contribution.
         const auto referencePressure = this->problem().referencePressure(this->element(), this->fvGeometry(), scvf);
-        result -= referencePressure*Extrusion::area(this->fvGeometry(), scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
+
+        result = (pressure-referencePressure)*Extrusion::area(this->fvGeometry(), scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
 
         // Account for the orientation of the face.
         result *= scvf.directionSign();
