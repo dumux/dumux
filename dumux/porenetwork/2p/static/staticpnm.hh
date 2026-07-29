@@ -28,6 +28,7 @@ template<class GridGeometry, class Scalar>
 class TwoPStatic
 {
     using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
@@ -67,6 +68,16 @@ public:
             // if the throat is already invaded, just check the snap-off and continue
             if (elementIsInvaded[eIdx])
             {
+                // a trapped throat's local capillary pressure is decoupled from pcGlobal
+                // Trapped non-wetting-phase clusters (i.e. invaded throats that have lost
+                // their connected, invaded pathway back to the inlet, the only non-wetting-phase
+                // pressure source in this model) are excluded from both the snap-off check and
+                // the invasion seed search, since their local capillary pressure is decoupled
+                // from pcGlobal once trapped.
+                // so its snap-off state can no longer change
+                if (throatIsTrapped_[eIdx])
+                    continue;
+
                 if (pcGlobal <= pcSnapOff_[eIdx])
                 {
                     --numThroatsInvaded_;
@@ -96,7 +107,9 @@ public:
                     {
                         const auto& neighborElement = intersection.outside();
                         const auto nIdx = gridView_.indexSet().index(neighborElement);
-                        if (elementIsInvaded[nIdx] && pcGlobal >= pcEntry_[eIdx] && (allowDraingeOfOutlet_ || throatLabel_[eIdx] != outletThroatLabel_))
+                        // a trapped neighbor has lost its connection to the inlet and can
+                        // therefore no longer act as a seed for further invasion
+                        if (elementIsInvaded[nIdx] && !throatIsTrapped_[nIdx] && pcGlobal >= pcEntry_[eIdx] && (allowDraingeOfOutlet_ || throatLabel_[eIdx] != outletThroatLabel_))
                         {
                             ++numThroatsInvaded_;
                             isSeed = true;
