@@ -70,11 +70,11 @@ def build_and_run() -> Path:
 # Semi-analytical reference solution (Udell & Fitch 1985 / Huang et al. 2015)
 # ---------------------------------------------------------------------------
 
-# physical parameters, matching spatialparams.hh, krpcheatpipe.hh,
-# problem.hh and params.input
+# physical parameters, matching spatialparams.hh
+# (dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh), problem.hh and params.input
 K = 1.0e-12  # m^2,  Problem.Permeability in params.input
 PHI = 0.4  # -,    HeatPipeSpatialParams::porosity_
-SWR = 0.15  # -,    swr passed to KrPcHeatPipe::Params in spatialparams.hh
+SWR = 0.15  # -,    Swr passed to HeatPipeLaw::EffToAbsParams in spatialparams.hh
 RHO_W = 958.4  # kg/m^3, water density near the phase-change reference state
 MU_W = 2.938e-4  # Pa*s
 MU_G_A = 2.08e-5  # Pa*s, dynamic viscosity of air
