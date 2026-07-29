@@ -4,7 +4,7 @@
 
 **Problem Description**
 
-The Heatpipe Effect can be observed in a nonisothermal water-gas system in a porous medium, in which the heat transfer processes convection, conduction, and diffusion, as well as capillary forces, play an essential role. Udell and Fitch (1985) \cite Udell:1985 provide a semi-analytical solution for this system, which is practical for comparing with numerical results (e.g., see  Emmert, 1997 \cite emmertpromo).
+The Heatpipe Effect can be observed in a nonisothermal water-gas system in a porous medium, in which the heat transfer processes convection, conduction, and diffusion, as well as capillary forces, play an essential role. Udell and Fitch (1985) [1] provide a semi-analytical solution for this system, which is practical for comparing with numerical results (e.g., see  Emmert, 1997 [2]).
 
 A one-dimensional horizontal porous column is considered. A constant heat flux is applied at the right boundary. Due to the heat flux, the system is heated until boiling temperature is reached and steam is produced at the right-hand boundary. This causes a pressure gradient in the gas phase and the steam flows away from the heat source. After reaching cooler regions of the column, the steam condenses and sets free its latent heat of vaporization. After a while, a non-uniform saturation profile is obtained with a gradient from the cooler to the hot end of the heatpipe.
 
@@ -15,9 +15,9 @@ According to the capillary pressure–saturation relationship a gradient of the 
 
 **Semi-analytical Reference Solution**
 
-Udell and Fitch (1985) \cite Udell:1985 derive four coupled first-order differential equations for pressure, saturation, temperature and gas-phase mole fraction. These equations are solved by numerical integration by means of a fourth-order Runge–Kutta method. The numerical simulation of the heatpipe system was carried out with the BOX discretization method. Note that the choice of BOX or CVFE makes no difference in the present one-dimensional case.
+Udell and Fitch (1985) [1] derive four coupled first-order differential equations for pressure, saturation, temperature and gas-phase mole fraction. These equations are solved by numerical integration by means of a fourth-order Runge–Kutta method. The numerical simulation of the heatpipe system was carried out with the BOX discretization method. Note that the choice of BOX or CVFE makes no difference in the present one-dimensional case.
 
-The four coupled ODEs are implemented directly in `compile_run_plot.py`, following the formulation given by Huang, Kolditz and Shao (2015) \cite Huang:2015, whose reference implementation \cite ogs:heatpipe was used to validate this Python re-implementation. The system is integrated with `scipy.integrate.solve_ivp` from the left (Dirichlet) boundary towards the heat source, using the effective wetting-phase saturation $S_e = (S_w - S_{wr})/(1-S_{wr})$ (see the $p_c$, $k_{rw}$, $k_{rg}$ relations given below in **Setup**) as the integrated state variable, together with the gas-phase pressure $p_g$, the gas-phase air mole fraction $x_g^a$ and the temperature $T$. With the gas-phase density $\rho_g = \rho_g^a + \rho_g^w$, the gas-phase viscosity $\mu_g = x_g^a \mu_g^a + (1-x_g^a)\mu_g^w$ (mole-fraction-weighted mixture of $\mu_g^a$ and $\mu_g^w$), the kinematic viscosities $\nu_g = \mu_g/\rho_g$ and $\nu_w = \mu_w/\rho_w$, the mobility ratio $\beta = \nu_w/\nu_g$, the saturation-dependent heat conductivity $\lambda(S_w) = \lambda_{pm}^{S_w=0} + \sqrt{S_w}(\lambda_{pm}^{S_w=1}-\lambda_{pm}^{S_w=0})$ and the diffusive pore conductance $D_{pm}$ (both matched to the numerical model's actual effective-property laws, see **Setup**), the following auxiliary quantities are introduced:
+The four coupled ODEs are implemented directly in `compile_run_plot.py`, following the formulation given by Huang, Kolditz and Shao (2015) [3], whose reference implementation [4] was used to validate this Python re-implementation. The system is integrated with `scipy.integrate.solve_ivp` from the left (Dirichlet) boundary towards the heat source, using the effective wetting-phase saturation $S_e = (S_w - S_{wr})/(1-S_{wr})$ (see the $p_c$, $k_{rw}$, $k_{rg}$ relations given below in **Setup**) as the integrated state variable, together with the gas-phase pressure $p_g$, the gas-phase air mole fraction $x_g^a$ and the temperature $T$. With the gas-phase density $\rho_g = \rho_g^a + \rho_g^w$, the gas-phase viscosity $\mu_g = x_g^a \mu_g^a + (1-x_g^a)\mu_g^w$ (mole-fraction-weighted mixture of $\mu_g^a$ and $\mu_g^w$), the kinematic viscosities $\nu_g = \mu_g/\rho_g$ and $\nu_w = \mu_w/\rho_w$, the mobility ratio $\beta = \nu_w/\nu_g$, the saturation-dependent heat conductivity $\lambda(S_w) = \lambda_{pm}^{S_w=0} + \sqrt{S_w}(\lambda_{pm}^{S_w=1}-\lambda_{pm}^{S_w=0})$ and the diffusive pore conductance $D_{pm}$ (both matched to the numerical model's actual effective-property laws, see **Setup**), the following auxiliary quantities are introduced:
 ```math
 \alpha = 1 + \frac{p_c}{\rho_w h_v^w}, \qquad
 \xi = \frac{1}{k_{rg}}\left(1 + \frac{\rho_w R T}{p_g M^w}\frac{1}{1-x_g^a}\right) + \frac{\beta}{k_{rw}},
@@ -91,7 +91,7 @@ The effective heat conductivity $\lambda(S_w)$ is not an independent input but c
 ```
 using the real water liquid heat conductivity $\lambda_w^\text{fluid}\approx 0.676\ \text{W/(m*K)}$ (evaluated at a representative $T=370\ \text{K}$) and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m*K)}$ used internally by DuMux's `Components::Air`. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13/0.582 W/(m*K), for a different solid conductivity), and using the correct ones visibly improves the agreement between the numerical and semi-analytical solutions.
 
-A function according to  Fatt and Klikoff (1959) \cite Fatt:1959 is chosen for the relative permeability-saturation relationship:
+A function according to  Fatt and Klikoff (1959) [5] is chosen for the relative permeability-saturation relationship:
 ```math
 k_{rg} = (1 - S_e)^3 \quad \text{for steam (gas phase)} \nonumber 
 ```
@@ -102,14 +102,14 @@ with the effective water-phase saturation
 ```math
 S_e = \frac{S_w - S_{wr}}{1-S_{wr}}\; .
 ```
-For the capillary pressure-saturation relationship, the following function of Leverett (1941) \cite lev1 is used:
+For the capillary pressure-saturation relationship, the following function of Leverett (1941) [6] is used:
 ```math
 p_c = p_0 \cdot \gamma \cdot 1.417(1-S_e) - 2.120(1-S_e)^2 + 1.263(1-S_e)^3 \, .
 ```
 
-The surface tension $\gamma$ at $T = 100.5$$^\circ$C is 0.05878 Nm$^{-1}$ and $p_0 = \sqrt{\phi/K}$ applies for the scaling pressure.
+The surface tension $\gamma$ at $T = 100.5^\circ$C is 0.05878 Nm$^{-1}$ and $p_0 = \sqrt{\phi/K}$ applies for the scaling pressure.
 
-The diffusive pore conductance $D_{pm}$ is likewise not a constant but computed with DuMux's default effective diffusivity model for `TwoPTwoC`, `DiffusivityMillingtonQuirk` \cite millington1961:
+The diffusive pore conductance $D_{pm}$ is likewise not a constant but computed with DuMux's default effective diffusivity model for `TwoPTwoC`, `DiffusivityMillingtonQuirk` [7]:
 ```math
 D_{pm} = \phi\, S_g^3 \sqrt[3]{\phi\, S_g}\; D_g^{aw}(T, p_g),
 ```
@@ -150,14 +150,16 @@ With the given initial conditions, the model could reproduce the heating at the 
 
 **References**
 
-M. Emmert. Numerische Simulation von isothermen/ nichtisothermen Mehrphasen-prozessen unter Berücksichtigung der Veränderung der Fluideigenschaften. PhD thesis, Institut für Wasserbau, Universität Stuttgart, 1997.
+[1] K.S. Udell and J.S. Fitch, editors. Heat and mass transfer in capillary porous media considering evaporation, condensation and non-condensible gas effects, Denver, CO, August 1985. Paper presented at 23rd ASME/AIChE National Heat Transfer Conference.
 
-I. Fatt and W.A. Klikoff. Effect of fractional wettability on multiphase flow through porous media. AIME Transactions, 216:246, 1959.
+[2] M. Emmert. Numerische Simulation von isothermen/ nichtisothermen Mehrphasen-prozessen unter Berücksichtigung der Veränderung der Fluideigenschaften. PhD thesis, Institut für Wasserbau, Universität Stuttgart, 1997.
 
-M.C. Leverett. Capillary Behavior in Porous Solids, volume 142. AIME Transactions, 1941.
+[3] Y. Huang, O. Kolditz, and H. Shao. Extending the persistent primary variable algorithm to simulate non-isothermal two-phase two-component flow with phase change phenomena. Geothermal Energy, 3(1), 2015. https://doi.org/10.1186/s40517-015-0030-8
 
-K.S. Udell and J.S. Fitch, editors. Heat and mass transfer in capillary porous media considering evaporation, condensation and non-condensible gas effects, Denver, CO, August 1985. Paper presented at 23rd ASME/AIChE National Heat Transfer Conference.
+[4] B. Meng and Y. Huang. Heat pipe problem. OpenGeoSys benchmark documentation, 2022. https://www.opengeosys.org/docs/benchmarks/thermal-two-phase-flow/heatpipe/
 
-Y. Huang, O. Kolditz, and H. Shao. Extending the persistent primary variable algorithm to simulate non-isothermal two-phase two-component flow with phase change phenomena. Geothermal Energy, 3(1), 2015. https://doi.org/10.1186/s40517-015-0030-8
+[5] I. Fatt and W.A. Klikoff. Effect of fractional wettability on multiphase flow through porous media. AIME Transactions, 216:246, 1959.
 
-B. Meng and Y. Huang. Heat pipe problem. OpenGeoSys benchmark documentation, 2022. https://www.opengeosys.org/docs/benchmarks/thermal-two-phase-flow/heatpipe/
+[6] M.C. Leverett. Capillary Behavior in Porous Solids, volume 142. AIME Transactions, 1941.
+
+[7] R.J. Millington and J.P. Quirk. Permeability of porous solids. Transactions of the Faraday Society, 57:1200-1207, 1961. https://doi.org/10.1039/TF9615701200
