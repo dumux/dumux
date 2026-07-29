@@ -268,6 +268,11 @@ int main(int argc, char** argv)
         }
         averageSaturation /= totalPoreVolume;
 
+        // recompute which throats are trapped (disconnected from the inlet) for the next step,
+        // now that this step's saturation update has already consumed the previous trapped state
+        staticModel.updateTrappedState(elementIsTrapped, elementIsInvaded);
+
+
         // write to logfile
         logfile << averageSaturation << " " << pcGlobal << std::endl;
 
