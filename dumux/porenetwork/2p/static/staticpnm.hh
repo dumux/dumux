@@ -47,6 +47,7 @@ public:
     , outletThroatLabel_(outletPoreLabel)
     , allowDraingeOfOutlet_(allowDraingeOfOutlet)
     , numThroatsInvaded_(numThroatsInvaded)
+    , throatIsTrapped_(gridView_.size(0), false)
     {}
 
 
@@ -144,6 +145,74 @@ public:
     std::size_t numThroatsInvaded() const
     { return numThroatsInvaded_; }
 
+    /*!
+     * \brief Returns whether a throat currently belongs to a non-wetting-phase
+     *        cluster that has lost its connected, invaded pathway back to the
+     *        inlet (i.e. is trapped).
+     */
+    bool isThroatTrapped(std::size_t eIdx) const
+    { return throatIsTrapped_[eIdx]; }
+
+    /*!
+     * \brief Recomputes which invaded throats are trapped, by searching the
+     *        currently-invaded throat graph for connectivity to the inlet.
+     *        Invaded throats not reachable from an invaded inlet throat are
+     *        marked trapped; all other throats are marked as not trapped.
+     *
+     * \param elementIsInvaded A vector storing the invasion state of the network.
+     *
+     * \note Must be called once per step, after updateInvasionState() and after
+     *       the saturation distribution has been updated.
+     */
+    void updateTrappedState(const std::vector<bool>& elementIsInvaded)
+    {
+        std::vector<bool> connectedToInletThroughNonWettingPhase(gridView_.size(0), false);
+
+        // use iteration instead of recursion here because the recursion can get too deep
+        std::stack<Element> elementStack;
+
+        // seed the search at every invaded inlet throat
+        for (const auto& element : elements(gridView_))
+        {
+            const auto eIdx = gridView_.indexSet().index(element);
+            if (elementIsInvaded[eIdx] && throatLabel_[eIdx] == inletThroatLabel_)
+            {
+                connectedToInletThroughNonWettingPhase[eIdx] = true;
+                elementStack.push(element);
+            }
+        }
+
+        // find an invaded throat which was not connected to the inlet through non-wetting phase
+        // but has an connected neighbor
+        while (!elementStack.empty())
+        {
+            auto e = elementStack.top();
+            elementStack.pop();
+
+            for (const auto& intersection : intersections(gridView_, e))
+            {
+                if (intersection.neighbor())
+                {
+                    const auto& neighborElement = intersection.outside();
+                    const auto nIdx = gridView_.indexSet().index(neighborElement);
+                    if (elementIsInvaded[nIdx] && !connectedToInletThroughNonWettingPhase[nIdx])
+                    {
+                        connectedToInletThroughNonWettingPhase[nIdx] = true;
+                        elementStack.push(neighborElement);
+                    }
+                }
+            }
+        }
+
+        // a throat is trapped if and only if it is invaded but
+        // not reachable from the inlet through non-wetting phase
+        for (const auto& element : elements(gridView_))
+        {
+            const auto eIdx = gridView_.indexSet().index(element);
+            throatIsTrapped_[eIdx] = elementIsInvaded[eIdx] && !connectedToInletThroughNonWettingPhase[eIdx];
+        }
+    }
+
 private:
     const GridView& gridView_;
     const std::vector<Scalar>& pcEntry_;
@@ -153,6 +222,7 @@ private:
     const int outletThroatLabel_;
     const int allowDraingeOfOutlet_;
     std::size_t numThroatsInvaded_;
+    std::vector<bool> throatIsTrapped_;
 };
 
 } // namespace Dumux::PoreNetwork
