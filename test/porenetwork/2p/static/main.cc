@@ -190,7 +190,7 @@ int main(int argc, char** argv)
                                                                throatLabel,
                                                                inletThroatLabel,
                                                                outletThroatLabel,
-                                                                        allowDraingeOfOutlet);
+                                                               allowDraingeOfOutlet);
 
     // prepare logfile
     std::ofstream logfile;

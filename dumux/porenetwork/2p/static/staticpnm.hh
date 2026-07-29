@@ -125,7 +125,6 @@ public:
                 elementIsInvaded[eIdx] = true;
 
                 // use iteration instead of recursion here because the recursion can get too deep
-                using Element = typename GridView::template Codim<0>::Entity;
                 std::stack<Element> elementStack;
                 elementStack.push(element);
                 while (!elementStack.empty())
