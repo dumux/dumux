@@ -7,23 +7,37 @@
 /*!
  * \file
  * \ingroup CVFEFlux
- * \brief CVFE Darcy law for the dimensionless Boussinesq approximation.
+ * \brief CVFE Darcy law for the Boussinesq approximation.
  *
  * Identical to CVFEDarcysLaw except that the density used in the gravity
  * (buoyancy) term is
  *
- *   ρ_buoy = 1 + C
+ *   ρ_buoy = ρ + Δρ
  *
- * where C = massFraction(phase0, soluteIdx) is the dimensionless solute
- * concentration.  The fluid-system density is kept at 1 (Boussinesq), so
- * the continuity and transport storage terms remain incompressible.
+ * where ρ = volVars.density(phaseIdx) is the (Boussinesq: constant reference)
+ * fluid-system density, and Δρ = problem.buoyantDensity(volVars) is a
+ * problem-supplied density deviation, in the same units as ρ (kg/m^3), that
+ * drives buoyancy.
  *
- * With g = (0, -1) (dimensionless unit gravity pointing down) this gives
+ * \note Interface contract for `Problem::buoyantDensity(volVars)`:
+ * - It must return a *real* density deviation Δρ, in kg/m^3 -- not a
+ *   dimensionless or otherwise normalized quantity. There is no implicit
+ *   scaling applied by this class.
+ * - Δρ must be defined consistently with the reference density ρ returned
+ *   by the fluid system in use (`volVars.density(phaseIdx)`), since the two
+ *   are summed directly in the gravity term below. Typically ρ is a constant
+ *   reference density (e.g. that of the solvent) and Δρ is a linear function
+ *   of whatever drives the density change (e.g. solute mass fraction or
+ *   temperature), such as Δρ = ρ_ref * β * C for a solute with a linear
+ *   density law of slope β.
+ * - Everywhere else (storage, transport, mobility), the fluid-system density
+ *   ρ is used unmodified and is expected to stay at its (Boussinesq)
+ *   reference value -- this class does not touch those terms.
  *
- *   q = -(K/μ)( ∇p + (1+C)·g ) = -(K/μ)( ∇p - (1+C)·ẑ ) = -(∇P - C·ẑ)
- *
- * where P = p - z is the dynamic pressure, matching eq. (2) of the
- * dimensionless Boussinesq system.
+ * For a fully worked example (a fluid system with a linear density law, used
+ * both in a "full" compressible-density model and in a Boussinesq-approximated
+ * one sharing the same problem), see
+ * `test/porousmediumflow/1pnc/1p2c/isothermal/boussinesqintrusion/`.
  */
 #ifndef DUMUX_FLUX_CVFE_BOUSSINESQ_DARCYS_LAW_HH
 #define DUMUX_FLUX_CVFE_BOUSSINESQ_DARCYS_LAW_HH
@@ -40,11 +54,12 @@ namespace Dumux {
  * \ingroup CVFEFlux
  * \brief CVFE Darcy law with Boussinesq buoyancy.
  *
- * The buoyancy density is assembled as ρ·(1 + problem.boussinesq_term(volVars)),
- * i.e. the fluid-system density scaled by one plus a problem-supplied dimensionless
- * driver (typically the transported solute concentration) rather than a density that
- * itself varies with composition -- the defining simplification of the Boussinesq
- * approximation.
+ * The buoyancy density is assembled as ρ + problem.buoyantDensity(volVars), i.e.
+ * the (Boussinesq: constant reference) fluid-system density plus a problem-supplied
+ * real density deviation Δρ [kg/m^3], rather than a density that itself varies with
+ * composition -- the defining simplification of the Boussinesq approximation.
+ * See the file-level documentation above for the full interface contract of
+ * `buoyantDensity()`.
  *
  * \tparam Scalar      scalar type
  * \tparam GridGeometry grid geometry type
@@ -70,8 +85,10 @@ public:
     /*!
      * \brief Advective (Darcy) flux with Boussinesq buoyancy.
      *
-     * The buoyancy density is (1 + C) rather than the fluid-system density
-     * (which equals 1 for Boussinesq).
+     * The buoyancy density is ρ + Δρ, where ρ is the fluid-system density
+     * (expected to stay at its Boussinesq reference value) and
+     * Δρ = problem.buoyantDensity(volVars) is the problem-supplied density
+     * deviation that drives buoyancy.
      */
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
@@ -106,7 +123,7 @@ public:
             const Scalar N = shapeValues[scv.indexInElement()][0];
 
             if (enableGravity)
-                rho += N * volVars.density(phaseIdx) * (1.0 + problem.boussinesq_term(volVars));
+                rho += N * (volVars.density(phaseIdx) + problem.buoyantDensity(volVars));
 
             gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
         }
