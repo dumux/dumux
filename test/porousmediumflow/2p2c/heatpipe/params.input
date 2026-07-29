@@ -12,8 +12,6 @@ NumericDifferenceMethod = 0
 [Problem]
 Permeability = 1.e-12   # m^2
 HeatFlux = -100.0       # W/m^2
-MultiplierPC = 1.0      # Scaling factor for the capillary pressure' order of magnitude
-                        # used here only for quick manipulation of capillary pressures
 Name = heatpipe
 EnableGravity = false
 
