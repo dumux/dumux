@@ -12,6 +12,8 @@
 #ifndef DUMUX_CONSTRAINT_MODEL_HH
 #define DUMUX_CONSTRAINT_MODEL_HH
 
+#include <dumux/discretization/defaultlocaloperator.hh>
+
 // The property tag is simply an empty struct with the name `PNMConstraintModel`
 namespace Dumux::Properties::TTag {
 //! The pnm constraint model tag
@@ -88,9 +90,9 @@ private:
  */
 template<class TypeTag>
 class PNMConstraintModelLocalResidual
-: public GetPropType<TypeTag, Properties::BaseLocalResidual>
+: public DiscretizationDefaultLocalOperator<TypeTag>
 {
-    using ParentType = GetPropType<TypeTag, Properties::BaseLocalResidual>;
+    using ParentType = DiscretizationDefaultLocalOperator<TypeTag>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
