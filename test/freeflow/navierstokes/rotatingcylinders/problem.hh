@@ -26,16 +26,16 @@
 namespace Dumux {
 
 /*!
- * \brief Test problem for the (Navier-) Stokes model in a 3D channel
+ * \brief Test problem for the (Navier-) Stokes model in the annulus between
+ *        two independently rotating, concentric cylinders (Taylor-Couette flow)
  *
  * Benchmark case from
- *   Turek, Schaefer et a (1996) Benchmark computations of laminar flow around cylinder.
- *   Flow Simulation with High-Performance Computers II,
- *   Notes on Numerical Fluid Mechanics 52, 547-566, Vieweg 1996
- *   https://doi.org/10.1007/978-3-322-89849-4_39
+ *   Taylor, G. I. (1923) Stability of a Viscous Liquid Contained between
+ *   Two Rotating Cylinders. Philosophical Transactions of the Royal Society A,
+ *   223, 289-343. https://doi.org/10.1098/rsta.1923.0008
  */
 template <class TypeTag, class BaseProblem>
-class DFGChannelTestProblem : public BaseProblem
+class RotatingCylinders : public BaseProblem
 {
     using ParentType = BaseProblem;
 
@@ -61,7 +61,7 @@ class DFGChannelTestProblem : public BaseProblem
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    DFGChannelTestProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    RotatingCylinders(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");
@@ -152,7 +152,7 @@ public:
         else
         {
             using std::log;
-            values[Indices::pressureIdx] = 0.5*a*a*radius*radius + 2*a*b*log(radius) + 0.5*b*b/(radius*radius);
+            values[Indices::pressureIdx] = 0.5*a*a*radius*radius + 2*a*b*log(radius) - 0.5*b*b/(radius*radius);
         }
 
         return values;

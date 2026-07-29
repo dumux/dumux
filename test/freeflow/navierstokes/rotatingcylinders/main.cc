@@ -8,12 +8,13 @@
 
 #include <iostream>
 #include <random>
+#include <fstream>
+#include <cstdlib>
+#include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/version.hh>
-#include <dune/common/parametertree.hh>
-#include <dune/common/parametertreeparser.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -32,10 +33,10 @@
 
 #include <dumux/freeflow/navierstokes/velocityoutput.hh>
 
-#include "properties.hh"
+#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/evalsolution.hh>
 
-#include <fstream>
-#include "jsonparametertools.hh"
+#include "properties.hh"
 
 template<class Vector, class MomGG, class MassGG, class MomP, class MomIdx, class MassIdx>
 auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
@@ -85,52 +86,8 @@ int main(int argc, char** argv)
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    // Manually peek for the JSON file in the command line arguments
-    std::string jsonFile = "";
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg.find("JsonParameterFile=") == 0) {
-            jsonFile = arg.substr(18); // Length of "JsonParameterFile="
-        }
-    }
-
-    // Use the Dumux Parameters::init overload that takes a lambda.
-    Dumux::Parameters::init([&](Dune::ParameterTree& tree) {
-
-        // Handle the standard .input file (ONLY if it's not the JSON file)
-        std::string inputFile = (argc > 1 && argv[1][0] != '-') ? argv[1] : "";
-
-        // Fix: Don't let Dune try to parse the JSON file as an INI file
-        if (!inputFile.empty() && inputFile.find("JsonParameterFile=") == std::string::npos && inputFile.find(".json") == std::string::npos) {
-            try {
-                Dune::ParameterTreeParser::readINITree(inputFile, tree);
-            } catch (...) {
-                // If it fails to open a standard file, we just move on to JSON/CLI
-            }
-        }
-
-        // Handle standard Command Line arguments (-Parameter.Key Value)
-        Dune::ParameterTreeParser::readOptions(argc, argv, tree);
-
-        // Merge the JSON file
-        if (!jsonFile.empty()) {
-            Dune::ParameterTree jsonPt;
-            Dumux::Utils::parseNestedJson(jsonFile, jsonPt);
-
-            auto mergeFunc = [](auto& self, const auto& source, auto& dest) -> void {
-                for (const auto& key : source.getValueKeys())
-                    dest[key] = source[key];
-                for (const auto& subKey : source.getSubKeys())
-                    self(self, source.sub(subKey), dest.sub(subKey));
-            };
-            mergeFunc(mergeFunc, jsonPt, tree);
-        }
-
-        // Save to a file for easier inspection
-        if (mpiHelper.rank() == 0) {
-            std::ofstream debugFile("debug_flattened_params.ini");
-        }
-    });
+    // parse command line arguments and input file
+    Parameters::init(argc, argv);
 
     // create a grid
     using Grid = GetPropType<MassTypeTag, Properties::Grid>;
@@ -162,6 +119,10 @@ int main(int argc, char** argv)
     auto momentumProblem = std::make_shared<MomentumProblem>(momentumGridGeometry, couplingManager);
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
+
+    // Extract indices for L2 norm calculation
+    using MassIndices = typename GetPropType<MassTypeTag, Properties::ModelTraits>::Indices;
+    using MomentumIndices = typename GetPropType<MomentumTypeTag, Properties::ModelTraits>::Indices;
 
     // the solution vector
     constexpr auto momentumIdx = CouplingManager::freeFlowMomentumIndex;
@@ -222,25 +183,143 @@ int main(int argc, char** argv)
         nonLinearSolver.solve(x);
     }
 
-    // write vtk output
+    // Calculate difference for one pressure element (first cell center)
+    auto fvGeometry = localView(*massGridGeometry);
+    bool found = false;
+    double pressureDiff = 0.0;
+    for (const auto& element : elements(leafGridView))
+    {
+        if (found) break;
+        fvGeometry.bind(element);
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            const auto globalPos = scv.center();
+            const auto simP = x[massIdx][scv.dofIndex()];
+            const auto exactValues = massProblem->analyticalSolution(globalPos);
+            const auto exactP = exactValues[MassIndices::pressureIdx];
+            pressureDiff = simP - exactP;
+            std::cout << "Pressure difference at position " << globalPos
+                    << " (DOF index " << scv.dofIndex() << "): simulated = " << simP
+                    << ", analytical = " << exactP << ", difference = " << pressureDiff << std::endl;
+            found = true;
+            break;
+        }
+    }
+
+    // Subtract the difference from the entire pressure solution vector
+    for (auto & val : x[massIdx])
+        val -= pressureDiff;
+    std::cout << "Subtracted pressure difference (" << pressureDiff << ") from the entire pressure solution vector." << std::endl;
+
     vtkWriter.write(1.0);
 
-    // update coupling manager for output
-    couplingManager->updateSolution(x);
+    // Initialize error variables
+    using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
+    Scalar l2ErrorMassSquared = 0.0;
+    Scalar l2NormMassExactSquared = 0.0;
 
-    timer.stop();
-    const auto& comm = leafGridView.comm();
-    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-              << comm.size() << " processes.\n"
-              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+    Scalar l2ErrorMomentumSquared = 0.0;
+    Scalar l2NormMomentumExactSquared = 0.0;
+
+    // Loop over elements to integrate error
+    for (const auto& element : elements(leafGridView))
+    {
+        auto geometry = element.geometry();
+        const auto& quad = Dune::QuadratureRules<Scalar, Grid::dimension>::rule(element.type(), 3);
+
+        for (const auto& qp : quad)
+        {
+            const auto& pos = geometry.global(qp.position());
+            const auto weight = qp.weight() * geometry.integrationElement(qp.position());
+
+            // --- Mass (Pressure) Error ---
+            auto massElemSol = elementSolution(element, x[massIdx], *massGridGeometry);
+            auto massNum = evalSolution(element, geometry, *massGridGeometry, massElemSol, pos);
+            auto massExact = massProblem->analyticalSolution(pos);
+
+            Scalar pDiff = massNum[MassIndices::pressureIdx] - massExact[MassIndices::pressureIdx];
+            l2ErrorMassSquared += pDiff * pDiff * weight;
+            l2NormMassExactSquared += massExact[MassIndices::pressureIdx] * massExact[MassIndices::pressureIdx] * weight;
+
+            // --- Momentum (Velocity) Error ---
+            auto momElemSol = elementSolution(element, x[momentumIdx], *momentumGridGeometry);
+            auto momNum = evalSolution(element, geometry, *momentumGridGeometry, momElemSol, pos);
+            auto momExact = momentumProblem->analyticalSolution(pos);
+
+            Scalar vDiffX = momNum[MomentumIndices::velocityXIdx] - momExact[MomentumIndices::velocityXIdx];
+            Scalar vDiffY = momNum[MomentumIndices::velocityYIdx] - momExact[MomentumIndices::velocityYIdx];
+
+            l2ErrorMomentumSquared += (vDiffX*vDiffX + vDiffY*vDiffY) * weight;
+            l2NormMomentumExactSquared += (momExact[MomentumIndices::velocityXIdx]*momExact[MomentumIndices::velocityXIdx] +
+                                           momExact[MomentumIndices::velocityYIdx]*momExact[MomentumIndices::velocityYIdx]) * weight;
+        }
+    }
+
+    // Collect from all MPI ranks and take the square root
+    Scalar totalL2ErrorMass = std::sqrt(leafGridView.comm().sum(l2ErrorMassSquared));
+    Scalar totalNormMass = std::sqrt(leafGridView.comm().sum(l2NormMassExactSquared));
+
+    Scalar totalL2ErrorMomentum = std::sqrt(leafGridView.comm().sum(l2ErrorMomentumSquared));
+    Scalar totalNormMomentum = std::sqrt(leafGridView.comm().sum(l2NormMomentumExactSquared));
+
+    // Calculate Relative Errors
+    // Note: We use a small epsilon or check to prevent division by zero
+    Scalar relativeL2Mass = (totalNormMass > 1e-18) ? (totalL2ErrorMass / totalNormMass) : totalL2ErrorMass;
+    Scalar relativeL2Momentum = (totalNormMomentum > 1e-18) ? (totalL2ErrorMomentum / totalNormMomentum) : totalL2ErrorMomentum;
+
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
 
-    // print dumux end message
     if (mpiHelper.rank() == 0)
     {
+        std::cout << "\n--- Saving Metrics and Creating Zip ---" << std::endl;
+
+        std::string problemName = massProblem->name();
+        if (problemName == "") problemName = getParam<std::string>("Problem.Name", "sim");
+
+        std::string jsonPath = "solution_metrics.json";
+
+        size_t lastSlash = problemName.find_last_of('/');
+        if (lastSlash != std::string::npos)
+        {
+            std::string directory = problemName.substr(0, lastSlash);
+            jsonPath = directory + "/solution_metrics.json";
+        }
+
+        std::ofstream out(jsonPath);
+        if (out.is_open())
+        {
+            out << "{\n";
+            out << "  \"l2_error_pressure_rel\": " << relativeL2Mass << ",\n";
+            out << "  \"l2_error_velocity_rel\": " << relativeL2Momentum << "\n";
+            out << "}\n";
+            out.close();
+            std::cout << "Metrics saved to: " << jsonPath << std::endl;
+        }
+        else
+        {
+            std::cerr << "Error: Could not open file for writing: " << jsonPath << std::endl;
+        }
+
+        // Create the ZIP containing ONLY .pvd and .vtu
+        std::string zipCmd = "zip -j \"" + problemName + ".zip\" \"" + problemName + ".pvd\" \"" + problemName + "\"*.vtu";
+
+        std::cout << "Executing: " << zipCmd << std::endl;
+        int result = std::system(zipCmd.c_str());
+
+        if (result == 0)
+        {
+            std::cout << "Successfully created " << problemName << ".zip containing VTK results." << std::endl;
+            std::cout << "Cleaning up raw VTK files..." << std::endl;
+            std::string rmCommand = "rm " + problemName + ".pvd " + problemName + "*.vtu";
+            std::system(rmCommand.c_str());
+        }
+        else
+        {
+            std::cerr << "Warning: Zip command failed. Original files kept for safety." << std::endl;
+        }
         Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
     }

@@ -1,6 +1,6 @@
 [Grid]
-Cells0 = 20 20
-Cells1 = 160
+Cells0 = 80 80
+Cells1 = 320
 Grading0 = 1.1 -1.1
 Grading1 = 1.0
 Radial0 = 1.0 1.5 2.0
@@ -9,7 +9,7 @@ Angular1 = 0.0 360.0
 [Problem]
 Name = test_rotatingcylinders
 Omega1 = 100.0
-Omega2 = -50.0
+Omega2 = 0.0
 EnableGravity = false
 EnableInertiaTerms = true
 
@@ -54,4 +54,4 @@ AmgCriterionSymmetric = true
 [Newton]
 MinSteps = 1
 EnableAbsoluteResidualCriterion = true
-MaxAbsoluteResidual = 4e-6
+MaxAbsoluteResidual = 1e-4
