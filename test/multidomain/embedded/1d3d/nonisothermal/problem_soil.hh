@@ -125,8 +125,6 @@ public:
      */
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        //! As a default, i.e. if the user's problem does not overload any neumann method
-        //! return no-flow Neumann boundary conditions at all Neumann boundaries
         return NumEqVector(0.0);
     }
 
