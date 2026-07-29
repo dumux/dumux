@@ -137,6 +137,8 @@ int main(int argc, char** argv)
 
     // simulation data
     std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
+    std::vector<bool> throatIsTrapped(leafGridView.size(0), false);
+    std::vector<bool> throatWasTrapped(leafGridView.size(0), false);
     std::vector<Scalar> pcEntry(leafGridView.size(0));
     std::vector<Scalar> pcSnapOff(leafGridView.size(0));
     std::vector<int> throatLabel(leafGridView.size(0));
@@ -216,9 +218,14 @@ int main(int argc, char** argv)
         {
             const auto eIdx = leafGridView.indexSet().index(element);
 
+            throatWasTrapped[eIdx] = throatIsTrapped[eIdx];
+
             // update the capillary pressure of each pore body
             // pores connected to the invading phase receive the global capillary pressure, the otherones are set to zero
-            if (elementIsInvaded[eIdx])
+            // trapped throats are excluded: their local capillary pressure is decoupled from pcGlobal
+            // (note: staticModel's trapped state still reflects the previous step's connectivity here,
+            // which is required for a pore that becomes newly trapped this step to still get its final update)
+            if (elementIsInvaded[eIdx] && !throatWasTrapped[eIdx])
             {
                 for (int i = 0; i < 2; ++i)
                 {
