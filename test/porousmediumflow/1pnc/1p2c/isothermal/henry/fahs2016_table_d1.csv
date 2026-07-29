@@ -1,0 +1,36 @@
+# Digitized 10/50/90% isochlor positions for the classic (purely diffusive) Henry
+# problem, "Test Case 1" of:
+#   Fahs, M., B. Ataie-Ashtiani, A. Younes, C. T. Simmons, and P. Ackerer (2016),
+#   The Henry problem: New semianalytical solution for velocity-dependent dispersion,
+#   Water Resour. Res., 52, 7382-7407, doi:10.1002/2016WR019288.
+# Source: Appendix D, Table D1 (converged semianalytical solution, Nc=1868 Fourier
+# modes). Z and X are dimensionless coordinates (Z = z/d, X = x/d) on their domain
+# (aspect ratio xi = length/depth = 3, i.e. length 3, depth 1). Reproduced here (as
+# the paper itself invites: "To facilitate the validation of numerical codes... the
+# digitized data are provided") to validate this repository's Henry problem
+# implementation (see problem.hh, fluidsystem.hh, spatialparams.hh,
+# validate_fahs2016.py).
+#
+# NOTE: the source table's last row (Z=0.950) is omitted here -- it renders
+# ambiguously across repeated extractions from the source PDF and could not be
+# reliably confirmed; all other rows were confirmed identically across independent
+# re-extractions.
+Z,X10,X50,X90
+0.050,2.018,2.402,2.773
+0.100,2.029,2.431,2.791
+0.150,2.045,2.466,2.816
+0.200,2.067,2.507,2.844
+0.250,2.093,2.552,2.871
+0.300,2.124,2.600,2.896
+0.350,2.159,2.649,2.917
+0.400,2.198,2.699,2.936
+0.450,2.243,2.748,2.952
+0.500,2.291,2.795,2.964
+0.550,2.344,2.838,2.972
+0.600,2.402,2.877,2.979
+0.650,2.464,2.909,2.985
+0.700,2.531,2.934,2.989
+0.750,2.603,2.951,2.992
+0.800,2.678,2.965,2.993
+0.850,2.755,2.978,2.995
+0.900,2.827,2.985,2.996

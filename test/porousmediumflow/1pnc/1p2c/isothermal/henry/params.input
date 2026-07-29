@@ -1,0 +1,19 @@
+[TimeLoop]
+DtInitial = 86.4   # [s]
+TEnd = 172800       # [s], 2 d -- well past the ~4 h physical time Fahs et al. (2016)
+                    # report for this case (their Test Case 1) to reach steady state
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 3 1   # aspect ratio 3, matching Fahs et al. (2016) Table 2 (xi = 3)
+Cells = 120 40     # dx = dy = 0.025, so the Table D1 Z-values (multiples of 0.05)
+                   # land exactly on grid nodes
+
+[Problem]
+Name = test_1p2c_henry_fahs_box
+EnableGravity = true
+InflowRate = 5.7024 # [m^3/d] = q_d * d = 6.6e-5 m^2/s * 1 m * 86400 s/d, matching
+                     # Fahs et al. (2016) Table 2 exactly
+
+[Vtk]
+AddVelocity = true
