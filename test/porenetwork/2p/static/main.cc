@@ -183,8 +183,12 @@ int main(int argc, char** argv)
     Scalar pcGlobal = initialPc;
 
     // get the drainage model
-    PoreNetwork::TwoPStatic<GridGeometry, Scalar> staticModel(*gridGeometry, pcEntry, pcSnapOff, throatLabel,
-                                                                        inletThroatLabel, outletThroatLabel,
+    PoreNetwork::TwoPStatic<GridGeometry, Scalar> staticModel(*gridGeometry,
+                                                               pcEntry,
+                                                               pcSnapOff,
+                                                               throatLabel,
+                                                               inletThroatLabel,
+                                                               outletThroatLabel,
                                                                         allowDraingeOfOutlet);
 
     // prepare logfile
