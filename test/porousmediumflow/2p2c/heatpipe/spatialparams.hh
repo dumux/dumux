@@ -8,8 +8,7 @@
 #define DUMUX_HEATPIPE_SPATIAL_PARAMS_HH
 
 #include <dumux/porousmediumflow/fvspatialparamsmp.hh>
-
-#include "krpcheatpipe.hh"
+#include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
 
 namespace Dumux
 {
@@ -26,7 +25,7 @@ class HeatPipeSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using PcKrSwCurve = FluidMatrix::KrPcHeatPipeDefault<Scalar>;
+    using PcKrSwCurve = FluidMatrix::HeatPipeLaw<Scalar>;
 
 public:
     using PermeabilityType = Scalar;
@@ -37,9 +36,11 @@ public:
         permeability_ = getParam<Scalar>("Problem.Permeability");
         porosity_ = 0.4;
         Scalar p0 = std::pow((porosity_/permeability_), 0.5);
+        Scalar gamma = 0.0588; // surface tension of water, matching the Leverett function used here
 
-        typename PcKrSwCurve::BasicParams params(0.15, 0.0, p0);
-        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params);
+        typename PcKrSwCurve::Params params(gamma, p0);
+        typename PcKrSwCurve::EffToAbsParams effToAbsParams(0.15, 0.0); // Swr, Snr
+        pcKrSwCurve_ = std::make_unique<PcKrSwCurve>(params, effToAbsParams);
     }
 
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
