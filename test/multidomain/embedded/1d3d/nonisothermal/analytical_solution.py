@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Analytical solution for pipe-flow BHE heat transport — two formulations compared.
+Analytical solution for pipe-flow BHE heat transport — Ramey (1962).
 
-Formulation A (OGS original): U referred to r_po, characteristic length X uses r_pi (inconsistent)
-Formulation B (consistent):   U and X both referred to r_pi — Ramey (1962)
+U and characteristic length X both referred to r_pi (consistent).
 """
 import glob
 import os
@@ -69,33 +68,26 @@ else:
 
 h = lambda_f * Nu_p / (2 * r_pi)
 
-# ── Overall heat transfer coefficients ────────────────────────────────────────
+# ── Overall heat transfer coefficient ─────────────────────────────────────────
 r_po = r_pi + t_pi
 
-# Formulation A: U referred to r_po, X uses r_pi (inconsistent)
-U_A = 1 / (r_po / (r_pi * h) + r_po * (np.log(r_po / r_pi) / lambda_pi + np.log(r_b / r_po) / lambda_g))
-
-# Formulation B: U and X both referred to r_pi (consistent)
+# U and X both referred to r_pi (consistent)
 U_B = 1 / (1 / h + r_pi * (np.log(r_po / r_pi) / lambda_pi + np.log(r_b / r_po) / lambda_g))
 
 print(f"Re={Re:.1f}, Pr={Pr:.3f}, Nu={Nu_p:.4f}, h={h:.4f} W/m²K")
-print(f"  U_A (ref r_po={r_po:.5f} m) = {U_A:.4f} W/m²K")
-print(f"  U_B (ref r_pi={r_pi:.5f} m) = {U_B:.4f} W/m²K")
+print(f"  U (ref r_pi={r_pi:.5f} m) = {U_B:.4f} W/m²K")
 
 # ── Compute analytical solutions ───────────────────────────────────────────────
 time_range = range(7200, t + 1, 7200)
 
-data_A = pd.DataFrame(index=Z, columns=list(time_range))
 data_B = pd.DataFrame(index=Z, columns=list(time_range))
 
 for delta_z in Z:
-    T_A, T_B = [], []
+    T_B = []
     for delta_t in time_range:
         t_D = dimensionless_time(lambda_re, delta_t, rho_re, c_p_re, r_b)
         f_t = time_function(t_D)
-        T_A.append(outlet_temp(T_d, T_i, delta_z, coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_A, f_t)))
         T_B.append(outlet_temp(T_d, T_i, delta_z, coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B, f_t)))
-    data_A.loc[delta_z] = T_A
     data_B.loc[delta_z] = T_B
 
 # ── Load DuMux output ──────────────────────────────────────────────────────────
@@ -157,15 +149,6 @@ ogs_T = np.array([
     24.78336707, 24.76205898, 24.74184908, 24.72262861, 24.70430449, 24.68679654,
     24.67003519,
 ])
-ogs_error_A = np.array([
-    -7.74064046, -0.56492394,  0.71049789,  0.76404746,  0.67145754,  0.56154154,
-     0.46794475,  0.39242137,  0.33228395,  0.28454449,  0.24660294,  0.21634100,
-     0.19208005,  0.17250760,  0.15660424,  0.14358037,  0.13282477,  0.12386385,
-     0.11632997,  0.10993699,  0.10446154,  0.09972859,  0.09560050,  0.09196854,
-     0.08874648,  0.08586559,  0.08327079,  0.08091778,  0.07877067,  0.07680025,
-     0.07498260,
-])
-
 analytical_B_at_ogs = np.array([
     outlet_temp(T_d, T_i, Z[-1],
                 coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B,
@@ -197,7 +180,7 @@ ogs_T_profile = np.array([
     24.4956013 , 24.5394493 , 24.58297793, 24.62650656, 24.67003519,
 ])
 
-# ── DuMux error vs Formulation B ──────────────────────────────────────────────
+# ── DuMux error vs Ramey ──────────────────────────────────────────────────────
 dumux_time_s = dumux_error = None
 if dumux_time_d is not None:
     dumux_time_s = dumux_time_d * 86400
@@ -212,10 +195,8 @@ if dumux_time_d is not None:
 # ── Plot ───────────────────────────────────────────────────────────────────────
 fig, ax1 = plt.subplots(figsize=(10, 8))
 
-ax1.plot(list(time_range), data_A.iloc[-1, :], "k.", markersize=10, markerfacecolor="none",
-         label=f"Ramey A — OGS, different r in U and X")
 ax1.plot(list(time_range), data_B.iloc[-1, :], "b.", markersize=10, markerfacecolor="none",
-         label=f"Ramey B — same r in U and X")
+         label="Ramey (1962)")
 
 # skip t=0
 mask_ogs = ogs_time_s > 0
@@ -233,20 +214,18 @@ ax1.spines["bottom"].set_linewidth(2)
 ax1.tick_params(axis="both", labelsize=16)
 
 ax2 = ax1.twinx()
-ax2.plot(ogs_time_s[mask_ogs], ogs_error_A[mask_ogs], color="red", linestyle="--",
-         label="OGS error vs Ramey A")
 ax2.plot(ogs_time_s[mask_ogs], ogs_error_B[mask_ogs], color="red", linestyle="-.",
-         label="OGS error vs Ramey B")
+         label="OGS error vs Ramey")
 if dumux_error is not None:
     ax2.plot(dumux_time_s[mask_d], dumux_error[mask_d], color="green", linestyle="--",
-             label="DuMux error vs Ramey B")
+             label="DuMux error vs Ramey")
 ax2.set_ylabel("Absolute error (°C)", fontsize=20)
 ax2.spines["right"].set_linewidth(2)
 ax2.tick_params(axis="y", labelsize=16)
 ax2.grid(axis="y", color="gray", linewidth=0.5)
 
 print("Outlet temperature at t=5 days:")
-print(f"Analytical B: {data_B.iloc[-1, -1]:.4f}")
+print(f"Analytical (Ramey): {data_B.iloc[-1, -1]:.4f}")
 if dumux_T is not None:
     print(f"DuMux:        {dumux_T[-1]:.4f}")
     print(f"Relative error: {(dumux_T[-1] - data_B.iloc[-1, -1]) / (data_B.iloc[-1, -1] - 20.0) * 100:.2f} %")
@@ -260,17 +239,13 @@ print("Saved: wellbore_outlet_temperature.png")
 # (mirrors OGS benchmark Fig. 3: distributed fluid temperature + absolute error
 #  at the final timestep, t = 5 days)
 f_t_final = time_function(dimensionless_time(lambda_re, t, rho_re, c_p_re, r_b))
-X_final_A = coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_A, f_t_final)
 X_final_B = coefficient_x(q, rho_f, c_p_f, lambda_re, r_pi, U_B, f_t_final)
 
-ogs_error_A_profile = ogs_T_profile - outlet_temp(T_d, T_i, ogs_x_profile, X_final_A)
 ogs_error_B_profile = ogs_T_profile - outlet_temp(T_d, T_i, ogs_x_profile, X_final_B)
 
 fig2, bx1 = plt.subplots(figsize=(10, 8))
-bx1.plot(Z, data_A.iloc[:, -1], "k.", markersize=10, markerfacecolor="none",
-         label="Ramey A — OGS, different r in U and X")
 bx1.plot(Z, data_B.iloc[:, -1], "b.", markersize=10, markerfacecolor="none",
-         label="Ramey B — same r in U and X")
+         label="Ramey (1962)")
 bx1.plot(ogs_x_profile, ogs_T_profile, "red", label="OGS")
 if dumux_x is not None:
     bx1.plot(dumux_x, dumux_T_profile, "green", label="DuMux")
@@ -282,14 +257,12 @@ bx1.spines["bottom"].set_linewidth(2)
 bx1.tick_params(axis="both", labelsize=16)
 
 bx2 = bx1.twinx()
-bx2.plot(ogs_x_profile, ogs_error_A_profile, color="red", linestyle="--",
-         label="OGS error vs Ramey A")
 bx2.plot(ogs_x_profile, ogs_error_B_profile, color="red", linestyle="-.",
-         label="OGS error vs Ramey B")
+         label="OGS error vs Ramey")
 if dumux_x is not None:
     dumux_error_profile = dumux_T_profile - outlet_temp(T_d, T_i, dumux_x, X_final_B)
     bx2.plot(dumux_x, dumux_error_profile, color="green", linestyle="--",
-             label="DuMux error vs Ramey B")
+             label="DuMux error vs Ramey")
 bx2.set_ylabel("Absolute error (°C)", fontsize=20)
 bx2.spines["right"].set_linewidth(2)
 bx2.tick_params(axis="y", labelsize=16)
@@ -301,11 +274,11 @@ fig2.savefig("wellbore_temperature_distribution.png", dpi=150)
 print("Saved: wellbore_temperature_distribution.png")
 
 print("Temperature distribution at t=5 days:")
-print(f"  Outlet (z=30 m) Ramey B:      {outlet_temp(T_d, T_i, 30.0, X_final_B):.4f}")
-print(f"  Outlet (z=30 m) OGS:          {ogs_T_profile[-1]:.4f}")
-print(f"  OGS max |error| vs Ramey B:   {np.abs(ogs_error_B_profile).max():.4f}")
+print(f"  Outlet (z=30 m) Ramey:      {outlet_temp(T_d, T_i, 30.0, X_final_B):.4f}")
+print(f"  Outlet (z=30 m) OGS:        {ogs_T_profile[-1]:.4f}")
+print(f"  OGS max |error| vs Ramey:   {np.abs(ogs_error_B_profile).max():.4f}")
 if dumux_x is not None:
-    print(f"  Outlet (z=30 m) DuMux:        {dumux_T_profile[-1]:.4f}")
-    print(f"  DuMux max |error| vs Ramey B: {np.abs(dumux_error_profile).max():.4f}")
+    print(f"  Outlet (z=30 m) DuMux:      {dumux_T_profile[-1]:.4f}")
+    print(f"  DuMux max |error| vs Ramey: {np.abs(dumux_error_profile).max():.4f}")
 
 plt.show()
