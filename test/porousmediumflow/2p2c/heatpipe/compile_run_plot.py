@@ -62,7 +62,7 @@ def build_and_run() -> Path:
     run(["cmake", "--build", ".", "--target", TARGET], cwd=build_dir)
 
     remove_old_outputs(BASE_NAME)
-    run([str(case_build_dir() / TARGET), "heatpipe.input"], cwd=case_build_dir())
+    run([str(case_build_dir() / TARGET), "params.input"], cwd=case_build_dir())
     return latest_vtu(BASE_NAME)
 
 
@@ -70,11 +70,11 @@ def build_and_run() -> Path:
 # Semi-analytical reference solution (Udell & Fitch 1985 / Huang et al. 2015)
 # ---------------------------------------------------------------------------
 
-# physical parameters, matching heatpipespatialparams.hh, krpcheatpipe.hh,
-# heatpipeproblem.hh and heatpipe.input
-K = 1.0e-12  # m^2,  Problem.Permeability in heatpipe.input
+# physical parameters, matching spatialparams.hh, krpcheatpipe.hh,
+# problem.hh and params.input
+K = 1.0e-12  # m^2,  Problem.Permeability in params.input
 PHI = 0.4  # -,    HeatPipeSpatialParams::porosity_
-SWR = 0.15  # -,    swr passed to KrPcHeatPipe::Params in heatpipespatialparams.hh
+SWR = 0.15  # -,    swr passed to KrPcHeatPipe::Params in spatialparams.hh
 RHO_W = 958.4  # kg/m^3, water density near the phase-change reference state
 MU_W = 2.938e-4  # Pa*s
 MU_G_A = 2.08e-5  # Pa*s, dynamic viscosity of air
@@ -93,7 +93,7 @@ T0_REF = 373.15  # K, reference (boiling) temperature for the Clausius-Clapeyron
 #   lambda_wet = lambda_solid^(1-phi) * lambda_liquid_fluid^phi
 #   lambda_dry = lambda_solid^(1-phi) * lambda_gas_fluid^phi
 # (geometric mean, see dumux/material/fluidmatrixinteractions/2p/thermalconductivity/somerton.hh)
-# with lambda_solid = 2.8 W/(m*K) (heatpipe.input, Component.SolidThermalConductivity),
+# with lambda_solid = 2.8 W/(m*K) (params.input, Component.SolidThermalConductivity),
 # lambda_gas_fluid = 0.0255535 W/(m*K) (Dumux::Components::Air::gasThermalConductivity,
 # a constant), and lambda_liquid_fluid the real IAPWS water thermal conductivity
 # (Dumux::Components::H2O::liquidThermalConductivity), here evaluated at a
