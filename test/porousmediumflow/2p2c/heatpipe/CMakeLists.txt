@@ -6,6 +6,6 @@ dune_symlink_to_source_files(FILES grids)
 
 dumux_add_test(NAME test_heatpipe_box
               TIMEOUT 1800
-              SOURCES heatpipe.cc
+              SOURCES main.cc
               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_heatpipe_box
-              CMD_ARGS heatpipe.input -TimeLoop.TEnd 1e5 -TimeLoop.EpisodeLength 1e5)
+              CMD_ARGS params.input -TimeLoop.TEnd 1e5 -TimeLoop.EpisodeLength 1e5)

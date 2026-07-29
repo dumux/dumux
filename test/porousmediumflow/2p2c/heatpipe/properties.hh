@@ -15,8 +15,8 @@
 
 #include <dumux/porousmediumflow/2p2c/model.hh>
 
-#include "heatpipespatialparams.hh"
-#include "heatpipeproblem.hh"
+#include "spatialparams.hh"
+#include "problem.hh"
 
 namespace Dumux::Properties
 {
