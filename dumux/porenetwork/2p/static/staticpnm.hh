@@ -48,7 +48,6 @@ public:
     , outletThroatLabel_(outletPoreLabel)
     , allowDraingeOfOutlet_(allowDraingeOfOutlet)
     , numThroatsInvaded_(numThroatsInvaded)
-    , throatIsTrapped_(gridView_.size(0), false)
     {}
 
 
@@ -56,9 +55,10 @@ public:
      * \brief Updates the invasion state of the network for the given global capillary pressure.
      *
      * \param elementIsInvaded A vector storing the invasion state of the network.
+     * \param elementIsTrapped A vector for identifying the trapped throat in the network.
      * \param pcGlobal The global capillary pressure to be applied.
      */
-    void updateInvasionState(std::vector<bool>& elementIsInvaded, const Scalar pcGlobal)
+    void updateInvasionState(std::vector<bool>& elementIsInvaded, const std::vector<bool>& elementIsTrapped, const Scalar pcGlobal)
     {
         // iterate over all elements (throats)
         for (const auto& element : elements(gridView_))
@@ -75,7 +75,7 @@ public:
                 // the invasion seed search, since their local capillary pressure is decoupled
                 // from pcGlobal once trapped.
                 // so its snap-off state can no longer change
-                if (throatIsTrapped_[eIdx])
+                if (elementIsTrapped[eIdx])
                     continue;
 
                 if (pcGlobal <= pcSnapOff_[eIdx])
@@ -109,7 +109,7 @@ public:
                         const auto nIdx = gridView_.indexSet().index(neighborElement);
                         // a trapped neighbor has lost its connection to the inlet and can
                         // therefore no longer act as a seed for further invasion
-                        if (elementIsInvaded[nIdx] && !throatIsTrapped_[nIdx] && pcGlobal >= pcEntry_[eIdx] && (allowDraingeOfOutlet_ || throatLabel_[eIdx] != outletThroatLabel_))
+                        if (elementIsInvaded[nIdx] && !elementIsTrapped[nIdx] && pcGlobal >= pcEntry_[eIdx] && (allowDraingeOfOutlet_ || throatLabel_[eIdx] != outletThroatLabel_))
                         {
                             ++numThroatsInvaded_;
                             isSeed = true;
@@ -158,13 +158,6 @@ public:
     std::size_t numThroatsInvaded() const
     { return numThroatsInvaded_; }
 
-    /*!
-     * \brief Returns whether a throat currently belongs to a non-wetting-phase
-     *        cluster that has lost its connected, invaded pathway back to the
-     *        inlet (i.e. is trapped).
-     */
-    bool isThroatTrapped(std::size_t eIdx) const
-    { return throatIsTrapped_[eIdx]; }
 
     /*!
      * \brief Recomputes which invaded throats are trapped, by searching the
@@ -173,11 +166,12 @@ public:
      *        marked trapped; all other throats are marked as not trapped.
      *
      * \param elementIsInvaded A vector storing the invasion state of the network.
+     * \param elementIsTrapped A vector for identifying the trapped throat in the network.
      *
      * \note Must be called once per step, after updateInvasionState() and after
      *       the saturation distribution has been updated.
      */
-    void updateTrappedState(const std::vector<bool>& elementIsInvaded)
+    void updateTrappedState(std::vector<bool>& elementIsTrapped, const std::vector<bool>& elementIsInvaded)
     {
         std::vector<bool> connectedToInletThroughNonWettingPhase(gridView_.size(0), false);
 
@@ -222,7 +216,7 @@ public:
         for (const auto& element : elements(gridView_))
         {
             const auto eIdx = gridView_.indexSet().index(element);
-            throatIsTrapped_[eIdx] = elementIsInvaded[eIdx] && !connectedToInletThroughNonWettingPhase[eIdx];
+            elementIsTrapped[eIdx] = elementIsInvaded[eIdx] && !connectedToInletThroughNonWettingPhase[eIdx];
         }
     }
 
@@ -235,7 +229,6 @@ private:
     const int outletThroatLabel_;
     const int allowDraingeOfOutlet_;
     std::size_t numThroatsInvaded_;
-    std::vector<bool> throatIsTrapped_;
 };
 
 } // namespace Dumux::PoreNetwork
