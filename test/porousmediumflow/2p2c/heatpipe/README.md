@@ -146,7 +146,7 @@ The script expects PyVista, Matplotlib, NumPy and SciPy to be available for post
 
 **Grid Resolution**
 
-The comparison above uses the finest of three grid resolutions (120, 240 and 480 cells in $x$-direction) that `compile_run_plot.py` runs for a grid-convergence study. The default, committed test (and CTest) always runs at the coarsest, 120-cell resolution (`grids/heatpipe.dgf`), for a fast runtime; a full run at 480 cells still only takes on the order of a minute.
+The comparison above uses the finest of three grid resolutions (120, 240 and 480 cells in $x$-direction) that `compile_run_plot.py` runs for a grid-convergence study. The default test runs at the coarsest, 120-cell resolution (`grids/heatpipe.dgf`), in order to reduce runtime.
 
 ![Grid convergence](heatpipe_grid_convergence.svg)
 
