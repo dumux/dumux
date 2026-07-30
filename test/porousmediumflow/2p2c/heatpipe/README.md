@@ -89,9 +89,9 @@ These water and air properties are only used by the semi-analytical solution abo
 The effective heat conductivity $\lambda(S_w)$ is not an independent input but computed by DuMux's `ThermalConductivitySomertonTwoP` (the default for `TwoPTwoCNI`) as a porosity-weighted geometric mean of $\lambda_s$ and the phase heat conductivities, interpolated between the dry and fully saturated endpoints with $\sqrt{S_w}$:
 ```math
 \lambda_{pm}^{S_w=1} = \lambda_s^{1-\phi}\left(\lambda_w^\text{fluid}\right)^\phi \approx 1.586\ \text{W/(m*K)}, \qquad
-\lambda_{pm}^{S_w=0} = \lambda_s^{1-\phi}\left(\lambda_g^\text{fluid}\right)^\phi \approx 0.428\ \text{W/(m*K)},
+\lambda_{pm}^{S_w=0} = \lambda_s^{1-\phi}\left(\lambda_g^\text{fluid}\right)^\phi \approx 0.428\ \text{W/(m*K)}.
 ```
-using the real water liquid heat conductivity $\lambda_w^\text{fluid}\approx 0.676\ \text{W/(m*K)}$ (evaluated at a representative $T=370\ \text{K}$) and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m*K)}$ used internally by DuMux's `Components::Air`. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13/0.582 W/(m*K), for a different solid conductivity), and using the correct ones visibly improves the agreement between the numerical and semi-analytical solutions.
+Here, the water heat conductivity $\lambda_w^\text{fluid}\approx 0.676\ \text{W/(m*K)}$ (evaluated at a representative $T=370\ \text{K}$) and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m*K)}$ are used. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13 and 0.582 W/(m*K), for a different solid conductivity), and using the correct ones visibly improves the agreement between the numerical and semi-analytical solutions.
 
 A function according to Fatt and Klikoff (1959) is chosen for the relative permeability-saturation relationship:
 ```math
