@@ -84,7 +84,7 @@ The following model parameters were used for the simulation run:
 | Dynamic viscosity of air                     | $\mu_g^a$  | $2.08\text{e-}5$       | Pa*s |
 | Dynamic viscosity of steam                   | $\mu_g^w$  | $1.2\text{e-}5$        | Pa*s |
 
-These water and air properties are only used by the semi-analytical solution above; the numerical model uses DuMux's real, temperature/pressure-dependent water and air correlations throughout (the default `FluidSystems::H2OAir` fluid system, with no overrides), which is the source of the small residual mismatch discussed in **Result**.
+These water and air properties are only used by the semi-analytical solution above; the numerical model uses DuMux's temperature/pressure-dependent relations for water and air correlations throughout.
 
 The effective heat conductivity $\lambda(S_w)$ is not an independent input but computed by DuMux's `ThermalConductivitySomertonTwoP` (the default for `TwoPTwoCNI`) as a porosity-weighted geometric mean of $\lambda_s$ and the phase heat conductivities, interpolated between the dry and fully saturated endpoints with $\sqrt{S_w}$:
 ```math
