@@ -148,7 +148,7 @@ The results of the numerical simulation (finest, 480-cell resolution) and the se
 Due to the complex interaction of different physical processes and the good agreement between the simulation and the semi-analytical solution, we state that the verification of the numerical model for an air--water system was 
 successful.
 
-With the given initial conditions, the model could reproduce the heating at the right-hand boundary from 70$^\circ$C up to boiling temperature. Also, the gradual extension of the heatpipe region until the stationary system state was reached was modeled correctly. The disappearance of the water phase associated with a change of the phase state and a substitution of the primary variables was carried out well. The gas-phase pressure profile shows clearly the pressure buildup driving steam away from the heat source.
+With the given initial conditions, the model could reproduce the heating at the right-hand boundary from 70$^\circ$C up to boiling temperature. Also, the gradual extension of the heatpipe region until the stationary system state was modeled correctly. The disappearance of the water phase associated with a change of the phase state and a substitution of the primary variables was carried out well. The gas-phase pressure profile shows clearly the pressure buildup driving steam away from the heat source.
 
 
 **Grid Resolution**
