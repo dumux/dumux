@@ -139,16 +139,9 @@ The script builds once, then runs the simulation at three grid resolutions (120,
 
 The script expects PyVista, Matplotlib, NumPy and SciPy to be available for post-processing.
 
-The results of the numerical simulation (finest, 480-cell resolution) and the semi-analytical solution are compared below. Gas-phase pressure and gas-phase air mole fraction agree almost exactly. Wetting-phase saturation and temperature agree closely throughout the two-phase zone; right at its end, the wetting phase becomes immobile ($k_{rw}\to 0$) and fully evaporates over a sharp front, whose location the semi-analytical solution places at $x\approx 2.19\ \text{m}$ versus $\approx 2.19\ \text{m}$ numerically at this resolution (a difference of less than $0.01\ \text{m}$; see **Grid Resolution** for how this residual gap depends on grid resolution). The dry-zone conductive temperature slope beyond that front matches closely, confirming the small remaining offset is predominantly positional (in $x$), consistent with the numerical model's real, temperature/pressure-dependent fluid properties versus the semi-analytical solution's constant ones (see **Setup**).
-
 ![Line plot](heatpipe_lineplot_comparison.svg)
 
 ![Saturation field](heatpipe_sw.png){html: width=80%}
-
-Due to the complex interaction of different physical processes and the good agreement between the simulation and the semi-analytical solution, we state that the verification of the numerical model for an air--water system was 
-successful.
-
-With the given initial conditions, the model could reproduce the heating at the right-hand boundary from 70$^\circ$C up to boiling temperature. Also, the gradual extension of the heatpipe region until the stationary system state was modeled correctly. The disappearance of the water phase associated with a change of the phase state and a substitution of the primary variables was carried out well. The gas-phase pressure profile shows clearly the pressure buildup driving steam away from the heat source.
 
 
 **Grid Resolution**
@@ -157,7 +150,7 @@ The comparison above uses the finest of three grid resolutions (120, 240 and 480
 
 ![Grid convergence](heatpipe_grid_convergence.svg)
 
-Away from the dry-out front, wetting-phase saturation and temperature already agree closely with the semi-analytical solution at all three resolutions. The residual mismatch discussed in **Result** is concentrated at the dry-out front itself, and shrinks markedly with resolution: the numerical front position is $2.260\ \text{m}$, $2.210\ \text{m}$ and $2.185\ \text{m}$ at 120, 240 and 480 cells, respectively, versus the semi-analytical value of $2.189\ \text{m}$ — a gap of $0.071\ \text{m}$, $0.021\ \text{m}$ and $0.004\ \text{m}$. This is consistent with the mismatch being dominated by numerical diffusion smoothing out the sharp dry-out front, which a finer grid resolves increasingly well, rather than by the constant-versus-real fluid-property difference discussed in **Setup**, which does not depend on grid resolution. This is also why the coarse, 120-cell default test still gives a reasonable, if visibly less sharp, result: the physics and phase-change handling are already correct there, and only the exact position of the sharp front benefits from a finer grid.
+The dry-out front position, where the wetting phase becomes immobile ($k_{rw}\to 0$) and fully evaporates, is $2.260\ \text{m}$, $2.210\ \text{m}$ and $2.185\ \text{m}$ at 120, 240 and 480 cells, respectively, versus the semi-analytical value of $2.189\ \text{m}$ — a gap of $0.071\ \text{m}$, $0.021\ \text{m}$ and $0.004\ \text{m}$, shrinking with resolution. This is consistent with the mismatch being dominated by numerical diffusion smoothing out the sharp dry-out front, which a finer grid resolves increasingly well, rather than by the constant-versus-real fluid-property difference discussed in **Setup**, which does not depend on grid resolution.
 
 
 **References**
