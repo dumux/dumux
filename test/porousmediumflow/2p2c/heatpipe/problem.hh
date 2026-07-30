@@ -38,6 +38,7 @@ public:
     : ParentType(fVGridGeometry)
     {
         FluidSystem::init();
+        heatFlux_ = getParam<Scalar>("Problem.HeatFlux");
     }
 
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
@@ -81,7 +82,7 @@ public:
         // right boundary: constant heat-only flux, like from a cooktop
         if (globalPos[0] > (this->gridGeometry().bBoxMax()[0] - eps_))
         {
-            values[Indices::energyEqIdx] = getParam<Scalar>("Problem.HeatFlux");
+            values[Indices::energyEqIdx] = heatFlux_;
         }
 
         return values;
@@ -109,6 +110,7 @@ private:
     }
 
     static constexpr Scalar eps_ = 1e-6;
+    Scalar heatFlux_;
 };
 
 } // namespace Dumux
