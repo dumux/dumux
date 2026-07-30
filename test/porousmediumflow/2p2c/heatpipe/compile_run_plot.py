@@ -25,6 +25,16 @@ from scipy.integrate import solve_ivp
 TARGET = "test_heatpipe_box"
 BASE_NAME = "heatpipe"
 
+# Grid resolutions compared in the convergence study; the default test (and
+# CTest) always runs at 120 cells (grids/heatpipe.dgf) for a fast runtime.
+# See the README for why the residual mismatch near the dry-out front shrinks
+# with resolution.
+RESOLUTIONS = {
+    120: "grids/heatpipe.dgf",
+    240: "grids/heatpipe_240.dgf",
+    480: "grids/heatpipe_480.dgf",
+}
+
 SATURATION_FIELD = "S_liq"
 PRESSURE_FIELD = "p_gas"
 TEMPERATURE_FIELD = "T"
@@ -33,6 +43,10 @@ AIR_MOLEFRACTION_FIELD = "x^Air_gas"
 
 def root_dir() -> Path:
     return Path(__file__).resolve().parents[4]
+
+
+def case_source_dir() -> Path:
+    return Path(__file__).resolve().parent
 
 
 def case_build_dir() -> Path:
@@ -57,13 +71,31 @@ def latest_vtu(name: str) -> Path:
     return files[-1]
 
 
-def build_and_run() -> Path:
+def build_and_run_all() -> dict[int, Path]:
+    """Build once, then run the grid convergence study at each resolution.
+
+    Returns a dict mapping cell count -> path of its final VTU output.
+    """
     build_dir = root_dir() / "build-cmake"
     run(["cmake", "--build", ".", "--target", TARGET], cwd=build_dir)
 
-    remove_old_outputs(BASE_NAME)
-    run([str(case_build_dir() / TARGET), "params.input"], cwd=case_build_dir())
-    return latest_vtu(BASE_NAME)
+    vtus = {}
+    for cells, grid_file in RESOLUTIONS.items():
+        name = f"{BASE_NAME}_{cells}"
+        remove_old_outputs(name)
+        run(
+            [
+                str(case_build_dir() / TARGET),
+                "params.input",
+                "-Problem.Name",
+                name,
+                "-Grid.File",
+                str(case_source_dir() / grid_file),
+            ],
+            cwd=case_build_dir(),
+        )
+        vtus[cells] = latest_vtu(name)
+    return vtus
 
 
 # ---------------------------------------------------------------------------
@@ -79,13 +111,12 @@ RHO_W = 958.4  # kg/m^3, water density near the phase-change reference state
 MU_W = 2.938e-4  # Pa*s
 MU_G_A = 2.08e-5  # Pa*s, dynamic viscosity of air
 MU_G_W = 1.2e-5  # Pa*s, dynamic viscosity of steam
-GAMMA = 0.05878  # N/m, surface tension of water at ~100.5°C
-MW = 0.018016  # kg/mol, molar mass of water
-MA = 0.02897  # kg/mol, molar mass of air
-R_GAS = 8.3144621  # J/(mol*K)
+GAMMA = 0.0588  # N/m, surface tension of water; matches the literal value used in
+# HeatPipeSpatialParams (spatialparams.hh), not the 0.05878 quoted in older literature
+MW = 0.01801518  # kg/mol, molar mass of water; Dumux::Components::H2O::molarMass (IAPWS::Common)
+MA = 0.02896  # kg/mol, molar mass of air; Dumux::Components::Air::molarMass()
+R_GAS = 8.314472  # J/(mol*K); Dumux::Constants<Scalar>::R
 H_WG = 2.258e6  # J/kg, latent heat of vaporization of water
-P0_REF = 101325.0  # Pa, reference pressure for the Clausius-Clapeyron relation
-T0_REF = 373.15  # K, reference (boiling) temperature for the Clausius-Clapeyron relation
 
 # Effective thermal conductivity: DuMux's TwoPTwoCNI model uses
 # ThermalConductivitySomertonTwoP by default (dumux/porousmediumflow/2p2c/model.hh),
@@ -140,6 +171,24 @@ def _krl(se: float) -> float:
 
 def _krg(se: float) -> float:
     return (1 - se) ** 3
+
+
+def _vapor_pressure(T: float) -> float:
+    """Dumux::Components::H2O::vaporPressure(T) (dumux/material/components/iapws/region4.hh,
+    Region4::saturationPressure), the IAPWS-97 Region 4 saturation-pressure correlation
+    (backward equation for p_sat(T))."""
+    n = [
+        0.11670521452767e4, -0.72421316703206e6, -0.17073846940092e2,
+        0.12020824702470e5, -0.32325550322333e7, 0.14915108613530e2,
+        -0.48232657361591e4, 0.40511340542057e6, -0.23855557567849,
+        0.65017534844798e3,
+    ]
+    sigma = T + n[8] / (T - n[9])
+    A = (sigma + n[0]) * sigma + n[1]
+    B = (n[2] * sigma + n[3]) * sigma + n[4]
+    C = (n[5] * sigma + n[6]) * sigma + n[7]
+    term = 2.0 * C / (np.sqrt(B * B - 4.0 * A * C) - B)
+    return 1e6 * term**4
 
 
 def _binary_diffusion_coefficient(T: float, p: float) -> float:
@@ -216,10 +265,14 @@ def semianalytical_solution(x: np.ndarray) -> dict:
     dry zone extending to the end of the domain.
     """
     se_bc = (SW_BC - SWR) / (1 - SWR)
-    pc_bc = _capillary_pressure(se_bc)
-    xa_bc = 1 - P0_REF / PG_BC * np.exp(
-        (1 / T0_REF - 1 / T_BC) * H_WG * MW / R_GAS - pc_bc * MW / RHO_W / R_GAS / T_BC
-    )
+    # Equilibrium air mole fraction at the boundary, from equating the liquid- and
+    # gas-phase fugacities of water (Dumux::FluidSystems::H2OAir::fugacityCoefficient):
+    # phi_liq * x_liq^w * p_liq = phi_gas * x_gas^w * p_gas, with phi_liq = p_vap(T)/p_liq
+    # and phi_gas = 1 (ideal gas). The liquid-phase pressure p_liq cancels out of
+    # phi_liq * p_liq, so capillary pressure does not enter here (default
+    # useKelvinVaporPressure = false); dissolved air in the liquid is neglected
+    # (x_liq^w ~= 1), giving simply xa_bc = 1 - p_vap(T_bc) / pg_bc.
+    xa_bc = 1 - _vapor_pressure(T_BC) / PG_BC
 
     sol = solve_ivp(
         _rhs,
@@ -380,16 +433,67 @@ def create_saturation_image(vtu: Path, image_file: Path) -> None:
     plotter.show(screenshot=str(image_file), auto_close=True)
 
 
+def create_grid_convergence_plot(vtus: dict[int, Path], image_file: Path) -> None:
+    """Wetting-phase saturation and temperature at each grid resolution, zoomed
+    to the dry-out front where the resolution-dependent mismatch actually shows
+    up (gas-phase pressure and air mole fraction barely change with resolution,
+    so they are not repeated here)."""
+    _, plt = require_plot_modules()
+    pv, _ = require_plot_modules()
+
+    finest = max(vtus)
+    mesh_finest = pv.read(vtus[finest])
+    x_max = mesh_finest.points[:, 0].max()
+    x_analytic_full = np.linspace(0, x_max, 4000)
+    x_zoom_min = max(0.0, semianalytical_solution(x_analytic_full)["heatpipe_length"] - 0.6)
+
+    # Restrict all plotted data to the zoomed window up front, rather than plotting
+    # the full domain and relying on `ax.set_xlim` to crop it: matplotlib's SVG
+    # backend draws the un-cropped line past the axis bounds and hides the excess
+    # via an SVG clip-path, which some SVG renderers (e.g. GitLab's markdown
+    # sanitizer) strip, making the "hidden" part of the line visible again.
+    x_analytic = np.linspace(x_zoom_min, x_max, 2000)
+    analytic = semianalytical_solution(x_analytic)
+
+    fig, (ax_sw, ax_T) = plt.subplots(1, 2, figsize=(11, 4.8), constrained_layout=True)
+    colors = plt.cm.viridis(np.linspace(0.15, 0.85, len(vtus)))
+    for color, cells in zip(colors, sorted(vtus)):
+        mesh = pv.read(vtus[cells])
+        x, sw = point_data(mesh, SATURATION_FIELD)
+        _, T = point_data(mesh, TEMPERATURE_FIELD)
+        zoom = x >= x_zoom_min
+        ax_sw.plot(x[zoom], sw[zoom], color=color, linewidth=1.6, label=f"{cells} cells")
+        ax_T.plot(x[zoom], T[zoom], color=color, linewidth=1.6, label=f"{cells} cells")
+
+    ax_sw.plot(x_analytic, analytic["Sw"], "k--", linewidth=2, label="semi-analytical")
+    ax_T.plot(x_analytic, analytic["T"], "k--", linewidth=2, label="semi-analytical")
+
+    ax_sw.set_xlabel("x [m]")
+    ax_sw.set_ylabel(r"Wetting-phase saturation $S_w$ [-]")
+    ax_T.set_xlabel("x [m]")
+    ax_T.set_ylabel("Temperature $T$ [K]")
+    for ax in (ax_sw, ax_T):
+        ax.set_xlim(x_zoom_min, x_max)
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=9)
+
+    fig.savefig(image_file, dpi=200)
+    plt.close(fig)
+
+
 def main() -> None:
-    vtu = build_and_run()
+    vtus = build_and_run_all()
+    finest = vtus[max(vtus)]
     out_dir = case_build_dir()
 
-    print("Creating line plot...")
-    create_line_plot(vtu, out_dir / f"{BASE_NAME}_lineplot_comparison.svg")
-    print("Creating saturation line plot...")
-    create_saturation_lineplot(vtu, out_dir / f"{BASE_NAME}_saturation_comparison.svg")
-    print("Creating saturation field image...")
-    create_saturation_image(vtu, out_dir / f"{BASE_NAME}_sw.png")
+    print("Creating line plot (finest resolution)...")
+    create_line_plot(finest, out_dir / f"{BASE_NAME}_lineplot_comparison.svg")
+    print("Creating saturation line plot (finest resolution)...")
+    create_saturation_lineplot(finest, out_dir / f"{BASE_NAME}_saturation_comparison.svg")
+    print("Creating saturation field image (finest resolution)...")
+    create_saturation_image(finest, out_dir / f"{BASE_NAME}_sw.png")
+    print("Creating grid convergence plot...")
+    create_grid_convergence_plot(vtus, out_dir / f"{BASE_NAME}_grid_convergence.svg")
 
 
 if __name__ == "__main__":
