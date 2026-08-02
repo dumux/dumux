@@ -59,8 +59,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class ResidualVector, class PartialReassembler = DefaultPartialReassembler>
-    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
+    template <class JacobianMatrix_ = JacobianMatrix, class ResidualVector, class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix_& jac, ResidualVector& res, GridVariables& gridVariables,
                                      const PartialReassembler* partialReassembler)
     {
         this->asImp_().bindLocalViews();
@@ -80,7 +80,8 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix.
      */
-    void assembleJacobian(JacobianMatrix& jac, GridVariables& gridVariables)
+    template <class JacobianMatrix_ = JacobianMatrix>
+    void assembleJacobian(JacobianMatrix_& jac, GridVariables& gridVariables)
     {
         this->asImp_().bindLocalViews();
         this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
@@ -161,7 +162,8 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class JacobianMatrix_ = JacobianMatrix>
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix_& A, GridVariables& gridVariables)
     {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
