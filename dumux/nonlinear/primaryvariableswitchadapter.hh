@@ -96,6 +96,12 @@ public:
     bool switched() const
     { return priVarsSwitchedInLastIteration_; }
 
+    /*!
+     * \brief How many dofs changed their phase state in the last call to invoke
+     */
+    std::size_t numSwitched() const
+    { return priVarSwitch_->numSwitched(); }
+
 private:
     //! the class handling the primary variable switch
     std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
@@ -120,6 +126,8 @@ public:
     void invoke(SolutionVector&, Variables&) {}
 
     bool switched() const { return false; }
+
+    std::size_t numSwitched() const { return 0; }
 };
 
 } // end namespace Dumux

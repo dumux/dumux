@@ -656,9 +656,12 @@ public:
      */
     virtual bool newtonConverged() const
     {
-        // in case the model has a priVar switch and some some primary variables
-        // actually switched their state in the last iteration, enforce another iteration
-        if (priVarSwitchAdapter_->switched())
+        // A dof that changed its phase state is described by different primary variables than
+        // it was in the previous iteration, so by default another iteration is enforced. Where
+        // a front advances across the domain a few more dofs cross the phase boundary in every
+        // iteration, and that condition can hold for as long as the solver is willing to
+        // iterate; raising the tolerance lets such a step be accepted on its residual instead.
+        if (priVarSwitchAdapter_->numSwitched() > toleratedPriVarSwitches_)
             return false;
 
         if (enableShiftCriterion_ && !enableResidualCriterion_)
@@ -901,6 +904,9 @@ protected:
     // shift criterion variables
     Scalar shift_;
     Scalar lastShift_;
+
+    //! how many dofs may change their phase state in the last iteration of a converged step
+    std::size_t toleratedPriVarSwitches_ = 0;
 
     //! message stream to be displayed at the end of iterations
     std::ostringstream endIterMsgStream_;
@@ -1237,6 +1243,7 @@ private:
         setTargetSteps(getParamFromGroup<int>(group, solverName_ + ".TargetSteps", 10));
         setMinSteps(getParamFromGroup<int>(group, solverName_ + ".MinSteps", 2));
         setMaxSteps(getParamFromGroup<int>(group, solverName_ + ".MaxSteps", 18));
+        toleratedPriVarSwitches_ = getParamFromGroup<std::size_t>(group, solverName_ + ".ToleratedPriVarSwitches", 0);
 
         enablePartialReassembly_ = getParamFromGroup<bool>(group, solverName_ + ".EnablePartialReassembly", false);
         reassemblyMinThreshold_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyMinThreshold", 1e-1*shiftTolerance_);

@@ -35,6 +35,7 @@ public:
     template<typename... Args> void reset(Args&&...) {}
     template<typename... Args> bool wasSwitched(Args&&...) const { return false; }
     template<typename... Args> bool update(Args&&...) { return false; }
+    std::size_t numSwitched() const { return 0; }
     template<typename... Args> void updateSwitchedVolVars(Args&&...) {}
     template<typename... Args> void updateSwitchedFluxVarsCache(Args&&...) {}
     template<typename... Args> void updateDirichletConstraints(Args&&...) {}
@@ -62,7 +63,12 @@ public:
     void reset(const std::size_t numDofs)
     {
         wasSwitched_.assign(numDofs, false);
+        numSwitched_ = 0;
     }
+
+    //! The number of dofs that changed their phase state in the last call to update
+    std::size_t numSwitched() const
+    { return numSwitched_; }
 
     /*!
      * \brief Updates the variable switch / phase presence.
@@ -86,42 +92,14 @@ public:
             visited_.assign(wasSwitched_.size(), false);
             std::size_t countSwitched = 0;
 
-            auto fvGeometry = localView(gridGeometry);
-            auto elemVolVars = localView(gridVariables.curGridVolVars());
-
             for (const auto& element : elements(gridGeometry.gridView()))
-            {
-                // make sure FVElementGeometry is bound to the element
-                fvGeometry.bindElement(element);
-                elemVolVars.bindElement(element, fvGeometry, curSol);
-
-                const auto curElemSol = elementSolution(element, curSol, gridGeometry);
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    if (!asImp_().skipDof_(element, fvGeometry, scv, problem))
-                    {
-                        const auto dofIdxGlobal = scv.dofIndex();
-                        // Note this implies that volume variables don't differ
-                        // in any sub control volume associated with the dof!
-                        visited_[dofIdxGlobal] = true;
-                        // Compute volVars on which grounds we decide
-                        // if we need to switch the primary variables
-                        auto& volVars = getVolVarAccess_(gridVariables.curGridVolVars(), elemVolVars, scv);
-                        volVars.update(curElemSol, problem, element, scv);
-
-                        if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
-                        {
-                            switched = true;
-                            ++countSwitched;
-                        }
-                    }
-                }
-            }
+                updateElement_(element, curSol, gridVariables, problem, gridGeometry, switched, countSwitched);
 
             if (verbosity_ > 0 && countSwitched > 0)
                 std::cout << "Switched primary variables at " << countSwitched << " dof locations on processor "
                         << comm.rank() << "." << std::endl;
 
+            numSwitched_ = countSwitched;
             successfulUpdate = true;
         }
         catch (const Dumux::NumericalProblem& e)
@@ -146,8 +124,46 @@ public:
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
         if (comm.size() > 1)
+        {
             switched = comm.max(switched);
+            numSwitched_ = comm.sum(numSwitched_);
+        }
 
+        return switched;
+    }
+
+    /*!
+     * \brief Switch primary variables on a subset of the grid only
+     * \param elementIndices indices of the elements to consider
+     *
+     * Degrees of freedom outside the given elements keep their primary variables and their state. This
+     * serves solvers that update one part of the domain at a time and must leave the rest untouched;
+     * the switch decision is local to a degree of freedom, so restricting the loop restricts the effect.
+     *
+     * \note Unlike the whole-grid overload this performs no parallel reduction: the caller owns the
+     *       subset and decides how, or whether, results are combined across processes.
+     */
+    template<class SolutionVector, class GridVariables, class Problem, class ElementIndices>
+    bool update(SolutionVector& curSol,
+                GridVariables& gridVariables,
+                const Problem& problem,
+                const typename GridVariables::GridGeometry& gridGeometry,
+                const ElementIndices& elementIndices)
+    {
+        bool switched = false;
+        std::size_t countSwitched = 0;
+
+        visited_.assign(wasSwitched_.size(), false);
+
+        for (const auto eIdx : elementIndices)
+            updateElement_(gridGeometry.element(eIdx), curSol, gridVariables, problem, gridGeometry,
+                           switched, countSwitched);
+
+        if (verbosity_ > 0 && countSwitched > 0)
+            std::cout << "Switched primary variables at " << countSwitched
+                      << " dof locations in a subdomain." << std::endl;
+
+        numSwitched_ = countSwitched;
         return switched;
     }
 
@@ -306,6 +322,46 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    // Consider every degree of freedom of one element for a switch
+    template<class Element, class SolutionVector, class GridVariables, class Problem, class GridGeometry>
+    void updateElement_(const Element& element,
+                        SolutionVector& curSol,
+                        GridVariables& gridVariables,
+                        const Problem& problem,
+                        const GridGeometry& gridGeometry,
+                        bool& switched,
+                        std::size_t& countSwitched)
+    {
+        auto fvGeometry = localView(gridGeometry);
+        auto elemVolVars = localView(gridVariables.curGridVolVars());
+
+        // make sure FVElementGeometry is bound to the element
+        fvGeometry.bindElement(element);
+        elemVolVars.bindElement(element, fvGeometry, curSol);
+
+        const auto curElemSol = elementSolution(element, curSol, gridGeometry);
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            if (!asImp_().skipDof_(element, fvGeometry, scv, problem))
+            {
+                const auto dofIdxGlobal = scv.dofIndex();
+                // Note this implies that volume variables don't differ
+                // in any sub control volume associated with the dof!
+                visited_[dofIdxGlobal] = true;
+                // Compute volVars on which grounds we decide
+                // if we need to switch the primary variables
+                auto& volVars = getVolVarAccess_(gridVariables.curGridVolVars(), elemVolVars, scv);
+                volVars.update(curElemSol, problem, element, scv);
+
+                if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                {
+                    switched = true;
+                    ++countSwitched;
+                }
+            }
+        }
+    }
+
     // Perform variable switch at a degree of freedom location
     template<class VolumeVariables, class GlobalPosition>
     bool update_(typename VolumeVariables::PrimaryVariables& priVars,
@@ -457,6 +513,7 @@ protected:
 
     std::vector<bool> wasSwitched_;
     std::vector<bool> visited_;
+    std::size_t numSwitched_ = 0;
 
 private:
     template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
