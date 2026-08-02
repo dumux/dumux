@@ -13,6 +13,10 @@ dumux_add_test(SOURCES test_nonlinear_preconditioning_subdomain_assembly.cc
 
 dune_symlink_to_source_files(FILES params.input)
 
+dumux_add_test(SOURCES test_nonlinear_preconditioning_ras_jacobian.cc
+               LABELS unit nonlinear preconditioning
+               CMD_ARGS params.input)
+
 dumux_add_test(SOURCES test_nonlinear_preconditioning_schwarznewton.cc
                LABELS unit nonlinear preconditioning
                CMD_ARGS params.input)
