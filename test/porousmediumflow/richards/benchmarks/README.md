@@ -153,3 +153,25 @@ reference (markers). This reproduces Fig. 5 of Vanderborght et al. (2005).
 ![Infiltration benchmark](richards_benchmark_infiltration.png)
 
 ![Evaporation benchmark](richards_benchmark_evaporation.png)
+
+**Nonlinear solver comparison**
+
+The infiltration case is a useful stress test for nonlinear solvers: the difficulty is confined to a sharp
+wetting front a few cells wide that moves through an otherwise nearly linear column. Sand, 300 cells, run to
+the first output time with an adaptive time step and the same controller for both solvers, each given the
+same saturation chop (`test/nonlinear/preconditioning/test_nonlinear_preconditioning_richards1d.cc`):
+
+| $\Delta t$ cap | solver | steps | rejected | iterations | wasted | subdomain iters | time [s] |
+|---|---|---|---|---|---|---|---|
+| 25 s | Newton | 354 | 1 | 2081 | 14 | — | 0.51 |
+| 25 s | Schwarz | 352 | 0 | 662 | 0 | 2851 | 0.68 |
+| none | Newton | 34 | 10 | 371 | 176 | — | 0.19 |
+| none | Schwarz | 40 | 14 | 107 | 420 | 686 | 1.52 |
+
+Nonlinear preconditioning reduces the outer iteration count substantially (2081 to 662 at the benchmark's
+own time-step cap, with no rejected steps at all), but each outer iteration carries a set of subdomain
+solves, and on this problem that trades badly: it is about 1.3 times slower under the cap and considerably
+slower without one. The single-step robustness is real — from the initial state it converges at time steps
+around 500 times larger than Newton manages — but an adaptive controller recovers from Newton's failures
+cheaply enough that the advantage does not survive into a whole run here. The method is worth reaching for
+when a step must succeed, not to make an already-working simulation faster.
