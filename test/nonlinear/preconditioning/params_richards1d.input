@@ -1,0 +1,41 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 8640 17280 25920 # [s]
+MaxTimeStepSize = 25 # [s]
+
+[Grid]
+Cells0 = 300
+Grading0 = 1.0
+Positions0 = -2.0 0
+
+[Analytical]
+WaterContentRefDepth = -42.78 # cm determined with 1500 cells
+WaterContentRefTime = 0.1 # days
+WaterContentSurface = 0.2824
+PlotLimits = 5.0 -10.0
+
+[Flux]
+UpwindWeight = 0.5
+
+[Problem]
+Name = test_richards_benchmark_infiltration_sand
+EnableGravity = true
+InitialHeadInCm = -400.0
+CriticalSurfaceHeadInCm = 0
+SurfaceFluxMilliMeterPerDay = -1000.0
+
+[Newton]
+MaxRelativeShift = 1e-6
+
+[SpatialParams]
+Name = sand
+Swr = 0.10465116279
+Snr = 0.0
+VanGenuchtenPcLowSweThreshold = 0.0
+VanGenuchtenPcHighSweThreshold = 1.0
+VanGenuchtenKrwHighSweThreshold = 1.0
+VanGenuchtenAlpha = 1.52905199e-3
+VanGenuchtenN = 3.0
+VanGenuchtenL = 0.5
+Porosity = 0.43
+Permeability = 1.1798241e-11

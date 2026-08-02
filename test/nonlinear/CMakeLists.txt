@@ -4,3 +4,4 @@
 add_subdirectory(findscalarroot)
 add_subdirectory(leastsquares)
 add_subdirectory(newton)
+add_subdirectory(preconditioning)
