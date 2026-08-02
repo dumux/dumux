@@ -4,3 +4,5 @@
 file(GLOB DUMUX_NONLINEAR_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_NONLINEAR_HEADERS}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/nonlinear)
+
+add_subdirectory(preconditioning)
