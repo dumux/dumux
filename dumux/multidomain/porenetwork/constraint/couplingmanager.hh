@@ -15,6 +15,8 @@
 
 #include <iostream>
 #include <vector>
+#include <type_traits>
+#include <utility>
 
 #include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
@@ -38,6 +40,9 @@ class PNMConstraintCouplingManager
 
     using Scalar = typename MDTraits::Scalar;
     using SolutionVector = typename MDTraits::SolutionVector;
+
+    template<std::size_t i>
+    using SubSolutionVector = std::decay_t<decltype(std::declval<SolutionVector>()[Dune::index_constant<i>()])>;
 
 public:
     static constexpr auto poreNetworkIndex = typename MDTraits::template SubDomain<0>::Index();
@@ -69,6 +74,7 @@ private:
     {
         FVElementGeometry<poreNetworkIndex> fvGeometry;
         ElementVolumeVariables<poreNetworkIndex> elemVolVars;
+        ElementVolumeVariables<poreNetworkIndex> prevElemVolVars;
     };
 
     using CouplingStencil = std::vector<std::size_t>;
@@ -90,6 +96,16 @@ public:
         couplingMapper_.update(*this);
     }
 
+    //! use as regular coupling manager in a transient setting
+    void init(std::shared_ptr<Problem<domainIdx<0>()>> problem0,
+              std::shared_ptr<Problem<domainIdx<1>()>> problem1,
+              const SolutionVector& curSol,
+              const SolutionVector& prevSol)
+    {
+        init(problem0, problem1, curSol);
+        setPrevSol(prevSol);
+    }
+
     /*!
      * \brief set the pointers to the grid variables
      * \param gridVariables A tuple of shared pointers to the grid variables
@@ -105,6 +121,16 @@ public:
     template<class  GridVariables, std::size_t i>
     void setGridVariables(std::shared_ptr<GridVariables> gridVariables, Dune::index_constant<i> domainIdx)
     { std::get<i>(gridVariables_) = gridVariables; }
+
+    /*!
+     * \brief Set the pointer to the solution vector of the previous time step
+     *        (needed to evaluate prevElemVolVars for the constraint domain)
+     * \param prevSol the previous multidomain solution vector; the caller has to make sure
+     *        this object stays alive for the remainder of the simulation (e.g. it is fine
+     *        for its values to be overwritten in place, as done for xOld each time step)
+     */
+    void setPrevSol(const SolutionVector& prevSol)
+    { prevSolPtr_ = &prevSol[poreNetworkIndex]; }
 
     /*!
      * \brief Return a reference to the grid variables of a sub problem
@@ -200,6 +226,18 @@ public:
     }
 
     /*!
+     * \brief Returns the element volume variables of the previous time step for an element
+     * \note setPrevSol() has to be called once before this function is usable
+     */
+    const ElementVolumeVariables<poreNetworkIndex>& prevElemVolVars(const Element<constraintIndex>& element) const
+    {
+        assert(couplingContext_.size() == 1);
+        if (!hasPrevSol_())
+            DUNE_THROW(Dune::InvalidStateException, "The previous solution was not set. Use setPrevSol() before calling this function");
+        return couplingContext_[0].prevElemVolVars;
+    }
+
+    /*!
      * \brief Returns the theta, i.e. the state indicator for a given element
      */
     Scalar theta(const Element<constraintIndex>& element) const
@@ -240,6 +278,10 @@ private:
         // Nothing to do for now
     }
 
+    //! whether a previous solution has been set via setPrevSol()
+    bool hasPrevSol_() const
+    { return static_cast<bool>(prevSolPtr_); }
+
     void bindCouplingContext_(Dune::index_constant<constraintIndex> domainI, const Element<constraintIndex>& element) const
     {
         couplingContext_.clear();
@@ -249,13 +291,23 @@ private:
         auto elemVolVars = localView(gridVars_(poreNetworkIndex).curGridVolVars());
         elemVolVars.bind(fvGeometry.element(), fvGeometry, this->curSol(poreNetworkIndex));
 
-        couplingContext_.push_back({fvGeometry, elemVolVars});
+        // only bind the previous time step's volume variables if a previous solution was set;
+        // otherwise this local view stays unbound and must not be used (see prevElemVolVars())
+        auto prevElemVolVars = hasPrevSol_() ? localView(gridVars_(poreNetworkIndex).prevGridVolVars())
+                                              : localView(gridVars_(poreNetworkIndex).curGridVolVars());
+        if (hasPrevSol_())
+            prevElemVolVars.bind(fvGeometry.element(), fvGeometry, *prevSolPtr_);
+
+        couplingContext_.push_back({fvGeometry, elemVolVars, prevElemVolVars});
     }
 
     /*!
      * \brief A tuple of std::shared_ptrs to the grid variables of the sub problems
      */
     GridVariablesTuple gridVariables_;
+
+    //! pointer to the pore-network sub-vector of the previous time step's solution, set via setPrevSol()
+    const SubSolutionVector<poreNetworkIndex>* prevSolPtr_ = nullptr;
 
     PNMConstraintCouplingMapper<MDTraits> couplingMapper_;
     // ToDo store in some container
