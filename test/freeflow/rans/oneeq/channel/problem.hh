@@ -31,7 +31,7 @@ namespace Dumux {
  * \ingroup NavierStokesTests
  * \brief Test problem for turbulent channel flow using the one-equation (Spalart-Allmaras)
  *        RANS model, mirroring test/freeflow/rans/zeroeq/channel's geometry/BCs/fluid, with
- *        the same 1/7 power-law inflow profile and the same graded, wall-refined mesh, but
+ *        the same uniform inflow profile and the same graded, wall-refined mesh, but
  *        also setting boundary/initial conditions for the working viscosity ν̃ (Dirichlet at
  *        walls/inlet, outflow at the outlet) - matching
  *        releases/3.10:test/freeflow/rans/problem.hh's PipeLauferProblem (one-eq branch).
@@ -149,9 +149,9 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // 1/7 power-law profile, see test/freeflow/rans/zeroeq/channel/problem.hh for the
-            // rationale (a physically consistent approximate turbulent mean-velocity shape).
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            // Uniform inflow profile, see test/freeflow/rans/zeroeq/channel/problem.hh for the
+            // rationale.
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -226,7 +226,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -262,16 +262,14 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    Scalar powerLawProfile_(const Scalar y) const
+    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
+    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];
         const Scalar yMax = this->gridGeometry().bBoxMax()[1];
-        const Scalar halfHeight = 0.5*(yMax - yMin);
         const Scalar distanceToWall = std::min(y - yMin, yMax - y);
-
-        using std::pow;
-        using std::max;
-        return inletVelocity_ * pow(max(distanceToWall, Scalar(0.0))/halfHeight, 1.0/7.0);
+        return distanceToWall > eps_ ? inletVelocity_ : 0.0;
     }
 
     static constexpr Scalar eps_ = 1e-6;

@@ -7,8 +7,7 @@
 /*!
  * \file
  * \ingroup FreeflowModels
- * \brief Nonisothermal mass-domain wiring for the zero-equation RANS turbulence closure - see
- *        whatisimplemented.md's Phase 8 section.
+ * \brief Nonisothermal mass-domain wiring for the zero-equation RANS turbulence closure.
  *
  * Unlike every other RANS model, the isothermal zero-equation closure
  * (dumux/freeflow/rans/zeroeq/problem.hh) needs no dedicated mass-domain TypeTag at all: it adds

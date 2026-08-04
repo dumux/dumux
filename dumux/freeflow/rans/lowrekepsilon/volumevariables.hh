@@ -23,11 +23,10 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation, low-Reynolds-number k-epsilon (Chien 1982) turbulence closure for the
- *        turbulent kinetic energy k and the transported dissipation epsilon-tilde (see
- *        whatisimplemented.md/proposedimplementation.md for why k/epsilon-tilde live here - as
- *        two extra equations on the mass sub-model - rather than on a separate coupled
- *        sub-domain, following the same strategy validated for the one-equation and k-omega
- *        models).
+ *        turbulent kinetic energy k and the transported dissipation epsilon-tilde, fused as
+ *        two extra equations on the mass sub-model rather than on a separate coupled
+ *        sub-domain, following the same strategy already used for the one-equation and
+ *        k-omega models.
  *
  * Unlike the wall-function k-epsilon model (dumux/freeflow/rans/kepsilon/), this model damps the
  * eddy viscosity and the epsilon-tilde production/destruction terms analytically as functions of

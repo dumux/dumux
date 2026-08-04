@@ -27,12 +27,9 @@ namespace Dumux {
  *        with the one-equation (Spalart-Allmaras) turbulence transport equation for ν̃.
  *
  * Extends Dumux::NavierStokesMassOnePLocalResidual's storage/flux with the ν̃ transport
- * terms, ported from the deleted releases/3.10:dumux/freeflow/rans/oneeq/staggered/
- * fluxvariables.hh's computeMassFlux() (advective + diffusive terms) - reusing this mass
- * model's own, already-correct, always-live velocity lookup (problem.velocity(...), the
- * same one the pressure equation's own advective flux already uses, see
- * whatisimplemented.md for why this avoids the stale-cached-velocity bug that hit the
- * previous (parked) 3-domain attempt).
+ * terms (advective + diffusive), reusing this mass model's own, already-correct, always-live
+ * velocity lookup (problem.velocity(...)), the same one the pressure equation's own advective
+ * flux already uses.
  *
  * Production/destruction/cross-diffusion source terms are *not* added here: they go through
  * the standard DuMux problem.source(...) extension point instead (implemented in
@@ -111,12 +108,10 @@ public:
     }
 
 private:
-    //! Upwinded advective ρν̃(v·n) plus a two-point-TPFA diffusive ((μ+ρν̃)/σ) term - ported
-    //! from releases/3.10:dumux/freeflow/rans/oneeq/staggered/fluxvariables.hh::computeMassFlux(),
-    //! reusing problem.faceVelocity(element,fvGeometry,scvf) - the exact same, always-live
-    //! velocity lookup dumux/freeflow/navierstokes/scalarfluxvariables.hh's getAdvectiveFlux()
-    //! already uses for the pressure equation's own advective flux (see
-    //! whatisimplemented.md/proposedimplementation.md).
+    //! Upwinded advective ρν̃(v·n) plus a two-point-TPFA diffusive ((μ+ρν̃)/σ) term, reusing
+    //! problem.faceVelocity(element,fvGeometry,scvf) - the exact same, always-live velocity
+    //! lookup dumux/freeflow/navierstokes/scalarfluxvariables.hh's getAdvectiveFlux() already
+    //! uses for the pressure equation's own advective flux.
     //!
     //! \note Called for interior faces *and* for boundary faces with a pure-Dirichlet BC (the
     //!       inlet here, see CCLocalResidual::evalFlux) - Neumann boundaries (walls/outlet) go

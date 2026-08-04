@@ -25,10 +25,9 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation SST (Menter 1994) turbulence closure for the turbulent kinetic energy k
- *        and the specific dissipation rate omega (see turbulenceequations.md and
- *        whatisimplemented.md/proposedimplementation.md for why k/omega live here - as two extra
- *        equations on the mass sub-model - rather than on a separate coupled sub-domain,
- *        following the same strategy validated for k-omega).
+ *        and the specific dissipation rate omega, fused as two extra equations on the mass
+ *        sub-model rather than on a separate coupled sub-domain, following the same strategy
+ *        already used for k-omega.
  *
  * Closure constants/functions ported near-verbatim from the deleted
  * releases/3.10:dumux/freeflow/rans/twoeq/sst/volumevariables.hh, with
@@ -144,8 +143,7 @@ public:
     //! solution) - exercised once, when GridVariables::init() eagerly caches the t=0 volume
     //! variables in main.cc. Returning 0.0 there (a value F1 legitimately takes far from the
     //! wall) avoids a 0.0/0.0 NaN that would otherwise poison that cached state; it is never
-    //! read by any solved time step (see whatisimplemented.md's Phase 7 section, and Phase 6's
-    //! analogous guard for LowReKEpsilonMassProblem::yPlus()).
+    //! read by any solved time step (see the analogous guard for LowReKEpsilonMassProblem::yPlus()).
     Scalar F1() const
     {
         using std::max;

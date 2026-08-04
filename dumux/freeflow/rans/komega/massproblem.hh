@@ -12,6 +12,7 @@
 #ifndef DUMUX_RANS_KOMEGA_MASS_PROBLEM_HH
 #define DUMUX_RANS_KOMEGA_MASS_PROBLEM_HH
 
+#include <cmath>
 #include <memory>
 #include <vector>
 #include <bitset>
@@ -38,14 +39,10 @@ namespace Dumux {
  * \tparam MomentumProblem The concrete momentum problem type (a Dumux::KOmegaMomentumProblem),
  *         explicit template parameter, exactly as for Dumux::RANSMassOneEqProblem.
  *
- * Ported from the deleted releases/3.10:dumux/freeflow/rans/twoeq/komega/problem.hh
- * (RANSProblemImpl<TypeTag, TurbulenceModel::komega>) and, for the wall condition,
- * releases/3.10:test/freeflow/rans/problem.hh's isDirichletCell_/dirichletTurbulentTwoEq_
- * komega branches. stressTensorScalarProduct() is *not* recomputed here - it is a frozen
- * (lagged) value computed once per time step by the momentum domain's
- * Dumux::RANSMomentumProblem and forwarded, read-only, through the stored momentum-problem
- * pointer - the same lagging strategy Dumux::RANSMassOneEqProblem already established, see
- * whatisimplemented.md/proposedimplementation.md for why.
+ * stressTensorScalarProduct() is *not* recomputed here - it is a frozen (lagged) value
+ * computed once per time step by the momentum domain's Dumux::RANSMomentumProblem and
+ * forwarded, read-only, through the stored momentum-problem pointer - the same lagging
+ * strategy Dumux::RANSMassOneEqProblem already established.
  */
 template<class TypeTag, class MomentumProblem>
 class KOmegaMassProblem : public NavierStokesMassProblem<TypeTag>
@@ -99,56 +96,52 @@ public:
     { return 0.0708; }
 
     /*!
-     * \brief Updates the (lagged) k/omega gradients used by the cross-diffusion source term,
-     *        via a Green-Gauss reconstruction over CCTpfa's own face/neighbor connectivity -
-     *        the same approach Dumux::RANSMassOneEqProblem already uses for ∇ν̃. Called once
-     *        per time step from main.cc, before the next assembly.
+     * \brief Updates the (lagged) k/omega gradients used by the cross-diffusion source term, via
+     *        a central difference over each element's two neighbors along every axis - reusing
+     *        the momentum domain's neighborIndex()/cellCenter() bookkeeping - reproducing
+     *        releases/3.10:dumux/freeflow/rans/twoeq/komega/problem.hh's own gradient
+     *        computation verbatim (a Green-Gauss reconstruction over CCTpfa's face/neighbor
+     *        connectivity was used here previously; it gives a shorter effective distance at
+     *        boundary-adjacent cells, see Dumux::SSTMassProblem for where that was found to
+     *        matter). Called once per time step from main.cc, before the next assembly.
      */
     template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& sol)
     {
         const auto& gridGeometry = this->gridGeometry();
-        crossDiffusionGradientProduct_.assign(gridGeometry.elementMapper().size(), 0.0);
+        const auto numElements = gridGeometry.elementMapper().size();
+        crossDiffusionGradientProduct_.assign(numElements, 0.0);
 
+        std::vector<Scalar> k(numElements);
+        std::vector<Scalar> omega(numElements);
         auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bind(element);
             const auto& insideScv = *scvs(fvGeometry).begin();
             const auto eIdx = insideScv.elementIndex();
-            const Scalar kInside = sol[insideScv.dofIndex()][Indices::turbulentKineticEnergyIdx];
-            const Scalar omegaInside = sol[insideScv.dofIndex()][Indices::dissipationIdx];
+            k[eIdx] = sol[insideScv.dofIndex()][Indices::turbulentKineticEnergyIdx];
+            omega[eIdx] = sol[insideScv.dofIndex()][Indices::dissipationIdx];
+        }
+
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto eIdx = gridGeometry.elementMapper().index(element);
 
             DimVector kGradient(0.0);
             DimVector omegaGradient(0.0);
-            for (const auto& scvf : scvfs(fvGeometry))
+            for (int axisIdx = 0; axisIdx < dim; ++axisIdx)
             {
-                Scalar kFace;
-                Scalar omegaFace;
-                if (scvf.boundary())
-                {
-                    if (this->asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::turbulentKineticEnergyEqIdx))
-                        kFace = this->asImp_().dirichlet(element, scvf)[Indices::turbulentKineticEnergyIdx];
-                    else
-                        kFace = kInside; // zero-gradient extrapolation
+                const auto neighborIdx0 = momentumProblem_->neighborIndex(eIdx, axisIdx, 0);
+                const auto neighborIdx1 = momentumProblem_->neighborIndex(eIdx, axisIdx, 1);
+                const auto distance = momentumProblem_->cellCenter(neighborIdx1)[axisIdx]
+                                     - momentumProblem_->cellCenter(neighborIdx0)[axisIdx];
+                if (std::abs(distance) < 1e-8)
+                    continue;
 
-                    if (this->asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::dissipationEqIdx))
-                        omegaFace = this->asImp_().dirichlet(element, scvf)[Indices::dissipationIdx];
-                    else
-                        omegaFace = omegaInside;
-                }
-                else
-                {
-                    const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                    kFace = 0.5*(kInside + sol[outsideScv.dofIndex()][Indices::turbulentKineticEnergyIdx]);
-                    omegaFace = 0.5*(omegaInside + sol[outsideScv.dofIndex()][Indices::dissipationIdx]);
-                }
-
-                kGradient.axpy((kFace - kInside)*scvf.area(), scvf.unitOuterNormal());
-                omegaGradient.axpy((omegaFace - omegaInside)*scvf.area(), scvf.unitOuterNormal());
+                kGradient[axisIdx] = (k[neighborIdx1] - k[neighborIdx0])/distance;
+                omegaGradient[axisIdx] = (omega[neighborIdx1] - omega[neighborIdx0])/distance;
             }
-            kGradient /= insideScv.volume();
-            omegaGradient /= insideScv.volume();
 
             crossDiffusionGradientProduct_[eIdx] = kGradient*omegaGradient;
         }

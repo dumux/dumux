@@ -21,10 +21,9 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation, high-Reynolds-number wall-function k-epsilon turbulence closure for the
- *        turbulent kinetic energy k and the dissipation rate epsilon (see turbulenceequations.md
- *        \S8 for the physics, and whatisimplemented.md/proposedimplementation.md for why k/epsilon
- *        live here rather than on a separate coupled sub-domain, following the same strategy
- *        already validated for the one-equation and k-omega models).
+ *        turbulent kinetic energy k and the dissipation rate epsilon, fused as two extra
+ *        equations on the mass sub-model rather than on a separate coupled sub-domain,
+ *        following the same strategy already used for the one-equation and k-omega models.
  *
  * Closure constants/functions ported near-verbatim from the deleted
  * releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/volumevariables.hh.
