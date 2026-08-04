@@ -30,20 +30,14 @@ namespace Dumux {
  * \ingroup NavierStokesTests
  * \brief Test problem for turbulent channel flow using the zero-equation RANS model.
  *
- * Flow from left to right in a two-dimensional channel, with an approximate turbulent
- * (1/7 power-law) inflow velocity profile at the inlet (left), a fixed pressure at the
- * outlet (right), and no-slip walls at the top and bottom. The Reynolds number is chosen
- * high enough for the flow to be turbulent (see params.input), so that the zero-equation
- * eddy-viscosity closure implemented in Dumux::ZeroEqProblem
- * (dumux/freeflow/rans/zeroeq/problem.hh) is exercised.
- *
- * \note A parabolic (Poiseuille) profile would be physically inconsistent with a RANS
- *       simulation: it is the *laminar* fully-developed channel-flow shape, i.e. it implies
- *       momentum is transported across the channel purely by molecular diffusion, exactly
- *       the assumption a turbulence closure exists to correct for. The 1/7 power-law profile
- *       used here (see powerLawProfile_) is the standard approximate shape for a turbulent
- *       mean velocity profile: much flatter in the core, with the velocity variation
- *       concentrated in a thin near-wall region, instead of a smooth quadratic bump.
+ * Flow from left to right in a two-dimensional channel, with a uniform (top-hat) inflow
+ * velocity profile at the inlet (left), a fixed pressure at the outlet (right), and no-slip
+ * walls at the top and bottom - matching releases/3.10:test/freeflow/rans/problem.hh's
+ * PipeLauferProblem inflow exactly, so that Problem.InletVelocity means the same thing (the
+ * bulk/mean inflow velocity) here as it did there. The Reynolds number is chosen high enough
+ * for the flow to be turbulent (see params.input), so that the zero-equation eddy-viscosity
+ * closure implemented in Dumux::ZeroEqProblem (dumux/freeflow/rans/zeroeq/problem.hh) is
+ * exercised.
  */
 template<class TypeTag, class BaseProblem>
 class RANSZeroEqChannelTestProblem : public BaseProblem
@@ -119,13 +113,10 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // The 1/7 power-law profile is used for every velocity-Dirichlet boundary (inlet
-            // and walls): it is zero at y=yMin/yMax (walls) and reaches inletVelocity_ (the
-            // centerline/maximum velocity) at the channel centerline (inlet). Smooth,
-            // wall-consistent BC/initial guess for Newton (avoids an abrupt uniform-to-zero
-            // jump at the wall-inlet corner), and - unlike a parabolic profile - a physically
-            // reasonable approximation of a turbulent mean velocity profile shape.
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            // The uniform inflow profile is used for every velocity-Dirichlet boundary (inlet
+            // and walls): it is zero at y=yMin/yMax (walls) and inletVelocity_ everywhere else
+            // (inlet), matching releases/3.10's PipeLauferProblem.
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -190,7 +181,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -226,24 +217,16 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    //! Approximate turbulent mean-velocity profile using the empirical 1/7 power law
-    //! (see class documentation above for why this is used instead of a parabolic profile):
-    //! zero at the walls (y=yMin/yMax), inletVelocity_ (the centerline/maximum velocity) at
-    //! the channel centerline, varying with the 1/7 power of the distance to the nearest wall
-    //! in between. Note that, unlike the parabolic profile this replaces, the derivative of
-    //! this profile is unbounded exactly at the wall (d^(1/7) has infinite slope at d=0) -
-    //! this only affects the continuous profile's slope, not the (finite, well-defined)
-    //! Dirichlet values themselves, so it does not cause any issue at the discrete level.
-    Scalar powerLawProfile_(const Scalar y) const
+    //! Uniform (top-hat) inflow profile: zero at the walls (y=yMin/yMax), inletVelocity_
+    //! everywhere else, matching releases/3.10:test/freeflow/rans/problem.hh's
+    //! PipeLauferProblem::initialAtPos() exactly, so that Problem.InletVelocity is the bulk
+    //! (flux-averaged) inflow velocity, not a centerline/peak value.
+    Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];
         const Scalar yMax = this->gridGeometry().bBoxMax()[1];
-        const Scalar halfHeight = 0.5*(yMax - yMin);
         const Scalar distanceToWall = std::min(y - yMin, yMax - y);
-
-        using std::pow;
-        using std::max;
-        return inletVelocity_ * pow(max(distanceToWall, Scalar(0.0))/halfHeight, 1.0/7.0);
+        return distanceToWall > eps_ ? inletVelocity_ : 0.0;
     }
 
     static constexpr Scalar eps_ = 1e-6;

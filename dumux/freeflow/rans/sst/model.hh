@@ -14,9 +14,8 @@
  * SST blends the k-omega closure (near the wall) with a transformed k-epsilon closure (in the
  * free stream) via the F1 blending function, and optionally limits the eddy viscosity using
  * Bradshaw's assumption (the runtime-selectable RANS.SSTModelVersion = "SST" vs. "BSL" variant,
- * see Dumux::SSTModel in dumux/freeflow/turbulencemodel.hh). See turbulenceequations.md for the
- * physics, and whatisimplemented.md/proposedimplementation.md for why these equations live on
- * the *mass* sub-model, following the same strategy already validated for k-omega.
+ * see Dumux::SSTModel in dumux/freeflow/turbulencemodel.hh). The two transport equations are
+ * fused onto the *mass* sub-model, following the same strategy already used for k-omega.
  */
 #ifndef DUMUX_RANS_SST_MASS_MODEL_HH
 #define DUMUX_RANS_SST_MASS_MODEL_HH
@@ -85,7 +84,7 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneSST> { using type = SSTMassIOFields; };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Nonisothermal variant - see whatisimplemented.md's Phase 8 section.
+// Nonisothermal variant.
 //////////////////////////////////////////////////////////////////////////////////////
 
 namespace TTag {

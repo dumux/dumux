@@ -89,8 +89,9 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::RANSOneEqChannelTest>
 { static constexpr bool value = true; };
 
 // Set the coupling manager property: the existing, unmodified momentum<->mass coupling
-// manager - no dedicated turbulence coupling manager is needed, see
-// whatisimplemented.md/proposedimplementation.md.
+// manager - no dedicated turbulence coupling manager is needed, since the working
+// viscosity ν̃ is solved as an extra equation on the mass sub-model rather than on a
+// separate sub-domain.
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::RANSOneEqChannelTest>
 {

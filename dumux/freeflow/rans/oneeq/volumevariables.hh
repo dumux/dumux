@@ -24,9 +24,8 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        one-equation (Spalart-Allmaras) turbulence transport equation for the working
- *        viscosity ν̃ (see turbulenceequations.md \S7 for the physics, and
- *        whatisimplemented.md/proposedimplementation.md for why ν̃ lives here - as a second
- *        equation on the mass sub-model - rather than on a separate coupled sub-domain).
+ *        viscosity ν̃, fused as a second equation on the mass sub-model rather than on a
+ *        separate coupled sub-domain.
  *
  * The Spalart-Allmaras closure functions here are ported near-verbatim from the deleted
  * releases/3.10:dumux/freeflow/rans/oneeq/volumevariables.hh, with wallDistance()/

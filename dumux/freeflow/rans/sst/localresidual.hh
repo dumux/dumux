@@ -13,6 +13,7 @@
 #define DUMUX_RANS_SST_MASS_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/math.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/localresidual.hh>
 
@@ -129,17 +130,35 @@ private:
 
         const auto area = Extrusion::area(fvGeometry, scvf)*insideVars.extrusionFactor();
 
-        const auto distance = scvf.boundary()
-            ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
-            : (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - insideScv.dofPosition()).two_norm();
-
         const auto diffCoeffKInside = insideVars.viscosity() + insideVars.sigmaK(problem)*insideVars.dynamicEddyViscosity(problem);
         const auto diffCoeffKOutside = outsideVars.viscosity() + outsideVars.sigmaK(problem)*outsideVars.dynamicEddyViscosity(problem);
         const auto diffCoeffOmegaInside = insideVars.viscosity() + insideVars.sigmaOmega(problem)*insideVars.dynamicEddyViscosity(problem);
         const auto diffCoeffOmegaOutside = outsideVars.viscosity() + outsideVars.sigmaOmega(problem)*outsideVars.dynamicEddyViscosity(problem);
 
-        const auto diffCoeffK = scvf.boundary() ? diffCoeffKInside : 0.5*(diffCoeffKInside + diffCoeffKOutside);
-        const auto diffCoeffOmega = scvf.boundary() ? diffCoeffOmegaInside : 0.5*(diffCoeffOmegaInside + diffCoeffOmegaOutside);
+        // Distance-weighted (not plain-averaged) interpolation of the diffusion coefficient to
+        // the face, and the corresponding cell-to-cell distance - reproducing
+        // releases/3.10:dumux/freeflow/rans/twoeq/sst/staggered/fluxvariables.hh's
+        // arithmeticMean()-based interior-face treatment verbatim. On a graded mesh, a plain
+        // 0.5*(inside+outside) average (used here previously) deviates most exactly where the
+        // diffusion coefficient itself jumps most sharply between neighboring cells - found to
+        // matter right at the wall-adjacent cell, where the analytically-pinned omega there
+        // implies a much larger eddy viscosity than its neighbor.
+        Scalar distance, diffCoeffK, diffCoeffOmega;
+        if (scvf.boundary())
+        {
+            distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            diffCoeffK = diffCoeffKInside;
+            diffCoeffOmega = diffCoeffOmegaInside;
+        }
+        else
+        {
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const auto distanceInside = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const auto distanceOutside = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
+            diffCoeffK = arithmeticMean(diffCoeffKInside, diffCoeffKOutside, distanceOutside, distanceInside);
+            diffCoeffOmega = arithmeticMean(diffCoeffOmegaInside, diffCoeffOmegaOutside, distanceOutside, distanceInside);
+        }
 
         flux[Indices::turbulentKineticEnergyEqIdx]
             += diffCoeffK*(insideVars.turbulentKineticEnergy() - outsideVars.turbulentKineticEnergy())/distance*area;

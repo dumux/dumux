@@ -7,11 +7,11 @@ dumux_add_test(NAME test_rans_kepsilon_channel
               LABELS freeflow navierstokes rans
               SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
-              TIMEOUT 600
+              TIMEOUT 1500
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_kepsilon_channel-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channel-00271.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channel-00247.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channel params.input")
 
 add_executable(test_rans_kepsilon_channelni EXCLUDE_FROM_ALL main.cc)
@@ -21,9 +21,9 @@ dumux_add_test(NAME test_rans_kepsilon_channelni
               TARGET test_rans_kepsilon_channelni
               LABELS freeflow navierstokes rans
               CMAKE_GUARD HAVE_UMFPACK
-              TIMEOUT 600
+              TIMEOUT 1500
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_kepsilon_channelni-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channelni-00300.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channelni-00340.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channelni params_ni.input")

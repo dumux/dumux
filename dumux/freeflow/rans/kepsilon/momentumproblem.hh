@@ -36,11 +36,10 @@ namespace Dumux {
  * The wall function is implemented as a plain Neumann momentum flux at the matching-point wall
  * face (the same mechanism already used for the outlet's fixedPressureMomentumFlux, just gated
  * to matching-point cells instead) rather than a dumux/freeflow/navierstokes/momentum/
- * slipcondition.hh SlipConditions policy - see whatisimplemented.md/proposedimplementation.md
- * for why: the slip-velocity mechanism there solves for an *equivalent slip velocity* that
- * reproduces a desired flux through the standard finite-difference viscous-flux formula, a
- * nontrivial reformulation of the deleted releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/
- * problem.hh's wallFunction(), which instead returns the shear-stress flux directly.
+ * slipcondition.hh SlipConditions policy: the slip-velocity mechanism there solves for an
+ * *equivalent slip velocity* that reproduces a desired flux through the standard
+ * finite-difference viscous-flux formula, whereas the wall function directly returns the
+ * shear-stress flux.
  *
  * The matching-point classification and uStarNominal/yPlusNominal values are lagged (computed
  * once per time step on the mass domain, see Dumux::KEpsilonMassProblem) - reading them via the

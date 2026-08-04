@@ -42,11 +42,7 @@ namespace Dumux {
  * to the last coordinate direction, with the flow direction assumed to be the
  * complementary axis in 2D) rather than the old code's per-element dynamic axis
  * detection from local geometry/velocity direction - a deliberate simplification for
- * straight-channel-type test geometries, see whatisimplemented.md. See
- * turbulenceequations.md (repository root) for the underlying physics and exact
- * formulas, and whatisimplemented.md for how this maps onto (and deviates from) the
- * turbulence models that existed in DuMux at releases/3.10 before the
- * mass/momentum-split discretization refactor.
+ * straight-channel-type test geometries.
  *
  * Usage: derive your test problem from this class instead of directly from
  * Dumux::NavierStokesMomentumProblem<TypeTag>, e.g.

@@ -160,11 +160,11 @@ int main(int argc, char** argv)
     {
         // Update the momentum-side wall-distance/velocity-gradient/stress-tensor bookkeeping
         // once per time step, from the previous (converged) solution - the same Picard-in-time
-        // treatment already validated for the other RANS models, see whatisimplemented.md/
-        // proposedimplementation.md. Unlike k-omega/k-epsilon, the mass side needs no per-step
-        // update at all here (see dumux/freeflow/rans/lowrekepsilon/massproblem.hh). k and
-        // epsilon-tilde themselves remain fully implicit primary variables of the mass
-        // sub-model, solved by Newton like every other equation.
+        // treatment already used for the other RANS models. Unlike k-omega/k-epsilon, the mass
+        // side needs no per-step update at all here (see
+        // dumux/freeflow/rans/lowrekepsilon/massproblem.hh). k and epsilon-tilde themselves
+        // remain fully implicit primary variables of the mass sub-model, solved by Newton
+        // like every other equation.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
 
         // solve the non-linear system with time step control

@@ -383,9 +383,10 @@ public:
      *        (e.g. the one-equation Spalart-Allmaras model, see
      *        dumux/freeflow/rans/oneeq/volumevariables.hh) define one; every other
      *        (non-RANS) mass model is unaffected and this returns 0 for it. Averaged the
-     *        same way as effectiveViscosity() above. See whatisimplemented.md/
-     *        proposedimplementation.md for why this additive hook exists instead of a
-     *        dedicated turbulence coupling manager.
+     *        same way as effectiveViscosity() above. This additive hook lets RANS models
+     *        that fuse their turbulence transport equations into the mass balance forward
+     *        the eddy viscosity to the momentum domain without needing a dedicated
+     *        turbulence coupling manager.
      */
     Scalar turbulentViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,

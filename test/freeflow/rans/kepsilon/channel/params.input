@@ -20,7 +20,7 @@ EnableGravity = false
 WallNormalAxis = 1
 
 [KEpsilon]
-YPlusThreshold = 30.0
+YPlusThreshold = 10.0
 
 [Newton]
 MaxSteps = 15

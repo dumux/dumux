@@ -33,9 +33,7 @@ namespace Dumux {
  *        mirroring test/freeflow/rans/komega/channel's geometry/BCs/fluid and wall treatment
  *        exactly - SST solves omega all the way to the wall via the same internal Dirichlet
  *        constraint mechanism k-omega uses, with the same (unblended) betaOmega()=0.0708
- *        constant, confirmed to be reused unchanged (not the blended betaSST()/betaBSL()) by
- *        the deleted releases/3.10:dumux/freeflow/rans/twoeq/sst/problem.hh, which never
- *        overrides betaOmega() - see whatisimplemented.md's Phase 7 section.
+ *        constant, not the blended betaSST()/betaBSL().
  *
  * \note Walls are kept Neumann (not Dirichlet) for both pressure *and* k, exactly as in the
  *       k-omega test: dumux/assembly/cclocalassembler.hh rejects mixed Dirichlet/Neumann
@@ -145,7 +143,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -221,7 +219,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -259,16 +257,14 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    Scalar powerLawProfile_(const Scalar y) const
+    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
+    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];
         const Scalar yMax = this->gridGeometry().bBoxMax()[1];
-        const Scalar halfHeight = 0.5*(yMax - yMin);
         const Scalar distanceToWall = std::min(y - yMin, yMax - y);
-
-        using std::pow;
-        using std::max;
-        return inletVelocity_ * pow(max(distanceToWall, Scalar(0.0))/halfHeight, 1.0/7.0);
+        return distanceToWall > eps_ ? inletVelocity_ : 0.0;
     }
 
     static constexpr Scalar eps_ = 1e-6;

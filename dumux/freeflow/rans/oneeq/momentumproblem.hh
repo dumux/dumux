@@ -29,11 +29,9 @@ namespace Dumux {
  *        algebraic, not transport-equation-based) eddy viscosity.
  *
  * Unlike the zero-equation model, the eddy viscosity here is read live (i.e. from the
- * *current* Newton iterate, not lagged) through the coupling manager's turbulentViscosity(),
- * matching releases/3.10's default (RANS.UseStoredEddyViscosity = false) - see
- * whatisimplemented.md/proposedimplementation.md for why only the production-term inputs
- * (velocity gradients/vorticity, handled by the RANSMomentumProblem base) are lagged, while
- * this one feedback link is not.
+ * *current* Newton iterate, not lagged) through the coupling manager's turbulentViscosity().
+ * Only the production-term inputs (velocity gradients/vorticity, handled by the
+ * RANSMomentumProblem base) are lagged; this feedback link is not.
  *
  * Usage: derive your test problem from this class instead of directly from
  * Dumux::NavierStokesMomentumProblem<TypeTag>/Dumux::RANSMomentumProblem<TypeTag>, exactly

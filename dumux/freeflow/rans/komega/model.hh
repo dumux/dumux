@@ -11,9 +11,8 @@
  *        transported equations (turbulent kinetic energy k, specific dissipation rate omega)
  *        onto the single-phase Navier-Stokes mass balance.
  *
- * See turbulenceequations.md \S8 for the physics, and whatisimplemented.md/
- * proposedimplementation.md for why these equations live on the *mass* sub-model, following
- * the same strategy already validated for the one-equation Spalart-Allmaras model.
+ * The two transport equations are fused onto the *mass* sub-model, following the same
+ * strategy already used for the one-equation Spalart-Allmaras model.
  */
 #ifndef DUMUX_RANS_KOMEGA_MASS_MODEL_HH
 #define DUMUX_RANS_KOMEGA_MASS_MODEL_HH
@@ -82,10 +81,9 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneKOmega> { using type = KOmegaMassIOFields; };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Nonisothermal variant - see whatisimplemented.md's Phase 8 section for the design
-// rationale (the injection point is Properties::ThermalConductivityModel, and every
-// class here - KOmegaMassVolumeVariables, KOmegaMassLocalResidual - is reused unmodified,
-// only instantiated with nonisothermal-flavored ModelTraits/Traits).
+// Nonisothermal variant. The injection point is Properties::ThermalConductivityModel;
+// every class here (KOmegaMassVolumeVariables, KOmegaMassLocalResidual) is reused
+// unmodified, only instantiated with nonisothermal-flavored ModelTraits/Traits.
 //////////////////////////////////////////////////////////////////////////////////////
 
 namespace TTag {

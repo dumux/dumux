@@ -146,7 +146,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -226,7 +226,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -264,16 +264,14 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    Scalar powerLawProfile_(const Scalar y) const
+    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
+    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];
         const Scalar yMax = this->gridGeometry().bBoxMax()[1];
-        const Scalar halfHeight = 0.5*(yMax - yMin);
         const Scalar distanceToWall = std::min(y - yMin, yMax - y);
-
-        using std::pow;
-        using std::max;
-        return inletVelocity_ * pow(max(distanceToWall, Scalar(0.0))/halfHeight, 1.0/7.0);
+        return distanceToWall > eps_ ? inletVelocity_ : 0.0;
     }
 
     static constexpr Scalar eps_ = 1e-6;

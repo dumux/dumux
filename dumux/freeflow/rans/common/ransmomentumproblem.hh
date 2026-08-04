@@ -23,7 +23,6 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/walldistance.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
-#include <dumux/freeflow/navierstokes/momentum/fcstaggered/velocitygradients.hh>
 
 namespace Dumux {
 
@@ -33,22 +32,20 @@ namespace Dumux {
  *        bookkeeping shared by transport-equation-based RANS turbulence closures
  *        (one-equation Spalart-Allmaras, and, in the future, two-equation models).
  *
- * This is a from-scratch reimplementation of
- * releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase, restricted to what the
- * one- and two-equation models actually need (no flat-wall-bounded y+/u+ bookkeeping - see
- * whatisimplemented.md for the rationale). Like the old class, all
- * quantities here are computed explicitly from main.cc, once per time step
- * (updateDynamicWallProperties), from the *previous* converged solution - a deliberate,
- * lagged/Picard-in-time treatment matching releases/3.10's actual numerics (as opposed to
- * differentiating these terms through Newton), see whatisimplemented.md and
- * proposedimplementation.md for why this replaces the fully-implicit 3-domain design that
- * was attempted and parked before this.
+ * This provides the subset of wall-distance/near-wall bookkeeping the one- and two-equation
+ * models actually need (no flat-wall-bounded y+/u+ bookkeeping). All quantities here are
+ * computed explicitly from main.cc, once per time step (updateDynamicWallProperties), from
+ * the *previous* converged solution - a deliberate, lagged/Picard-in-time treatment rather
+ * than differentiating these terms through Newton.
  *
- * Unlike the old code (which reconstructed velocity gradients via finite differences over
- * a hand-rolled structured-neighbor search), gradients are obtained by directly reusing the
- * existing, unmodified FCStaggeredVelocityGradients helper (fullGradient=true) - the same
- * mechanism already used and proven working by Dumux::ZeroEqProblem
- * (dumux/freeflow/rans/zeroeq/problem.hh) - rather than re-deriving gradient reconstruction.
+ * Velocity gradients are reconstructed by a cell-center-averaged central difference over each
+ * element's two neighbors along the differentiated axis (releases/3.10's own
+ * calculateCCVelocities_()/calculateCCVelocityGradients_() convention, reproduced verbatim -
+ * including its Dirichlet-velocity-boundary handling, which differences the boundary value
+ * against the next interior element rather than the boundary-adjacent element's own value),
+ * rather than the generic FCStaggeredVelocityGradients helper: the latter's shorter effective
+ * distance at boundary-adjacent cells was found to bias every model's near-wall turbulence
+ * level, and for the low-Re k-epsilon closure to destabilize the wall-adjacent cell outright.
  *
  * Usage: derive your test problem from this class (or, more commonly, from a further mixin
  * like Dumux::OneEqMomentumProblem that itself extends this one), analogous to
@@ -75,9 +72,10 @@ class RANSMomentumProblem : public NavierStokesMomentumProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
 
     using WallDistanceHelper = WallDistance<GridGeometry>;
-    using VelocityGradients = FCStaggeredVelocityGradients;
 
 public:
     using ParentType::ParentType;
@@ -125,6 +123,41 @@ public:
         const auto& gridGeometry = this->gridGeometry();
         auto fvGeometry = localView(gridGeometry);
         auto elemVolVars = localView(gridVariables.curGridVolVars());
+        const auto numElements = gridGeometry.elementMapper().size();
+
+        // First pass: each element's own per-axis dof value and dof position - the latter only
+        // to determine, below, which side of the cell that dof sits on (needed to pair it with
+        // the correct neighbor when averaging). Everything here is read from the currently-bound
+        // element alone, no neighbor access required yet.
+        std::vector<DimVector> ownVelocity(numElements);
+        std::vector<DimVector> ownDofPosition(numElements);
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto eIdx = gridGeometry.elementMapper().index(element);
+            fvGeometry.bind(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                ownVelocity[eIdx][scv.dofAxis()] = elemVolVars[scv].velocity();
+                ownDofPosition[eIdx][scv.dofAxis()] = scv.dofPosition()[scv.dofAxis()];
+            }
+        }
+
+        // Second pass: the cell-center-averaged velocity at every element, reproducing
+        // releases/3.10:dumux/freeflow/rans/problem.hh's calculateCCVelocities_() ("faces are
+        // equidistant to cell center"). This element's own dof sits on one side of the cell; the
+        // dof on the other side is the same-axis dof of the neighboring element on that side.
+        std::vector<DimVector> ccVelocity(numElements, DimVector(0.0));
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto eIdx = gridGeometry.elementMapper().index(element);
+            for (int i = 0; i < dim; ++i)
+            {
+                const bool ownDofOnUpperSide = ownDofPosition[eIdx][i] > cellCenter(eIdx)[i];
+                const auto otherIdx = neighborIndex(eIdx, i, ownDofOnUpperSide ? 0 : 1);
+                ccVelocity[eIdx][i] = 0.5*(ownVelocity[eIdx][i] + ownVelocity[otherIdx][i]);
+            }
+        }
 
         for (const auto& element : elements(gridGeometry.gridView()))
         {
@@ -132,7 +165,54 @@ public:
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, sol);
 
-            const auto gradV = elementVelocityGradientTensor_(fvGeometry, elemVolVars);
+            // Central-difference gradient over the *two* neighboring elements' cell-center
+            // velocities (skipping this element's own value entirely), reproducing
+            // releases/3.10:dumux/freeflow/rans/problem.hh's calculateCCVelocityGradients_().
+            DimMatrix gradV(0.0);
+            for (int j = 0; j < dim; ++j)
+            {
+                const auto neighborIdx0 = neighborIndex(eIdx, j, 0);
+                const auto neighborIdx1 = neighborIndex(eIdx, j, 1);
+                const auto distance = cellCenter(neighborIdx1)[j] - cellCenter(neighborIdx0)[j];
+
+                if (std::abs(distance) < 1e-8)
+                    continue;
+
+                for (int i = 0; i < dim; ++i)
+                    gradV[i][j] = (ccVelocity[neighborIdx1][i] - ccVelocity[neighborIdx0][i])/distance;
+            }
+
+            // At every Dirichlet-velocity boundary face (walls, and - on these axis-aligned
+            // channel meshes - the inlet too), releases/3.10 instead differenced the boundary
+            // value directly against the *next* interior element - one element further away
+            // than the central-difference stencil above would otherwise reach.
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                for (const auto& scvf : scvfs(fvGeometry, scv))
+                {
+                    if (!scvf.boundary())
+                        continue;
+
+                    const auto axisIdx = scvf.normalAxis();
+                    const auto bcTypes = asImp_().boundaryTypes(element, scvf);
+                    bool anyDirichletVelocity = false;
+                    for (int i = 0; i < dim; ++i)
+                        anyDirichletVelocity = anyDirichletVelocity || bcTypes.isDirichlet(Indices::velocity(i));
+                    if (!anyDirichletVelocity)
+                        continue;
+
+                    auto neighborIdx = neighborIndex(eIdx, axisIdx, 0);
+                    if (scvf.center()[axisIdx] < cellCenter(eIdx)[axisIdx])
+                        neighborIdx = neighborIndex(eIdx, axisIdx, 1);
+                    const auto distance = cellCenter(neighborIdx)[axisIdx] - scvf.center()[axisIdx];
+                    const auto dirichletValues = asImp_().dirichlet(element, scvf);
+
+                    for (int i = 0; i < dim; ++i)
+                        if (bcTypes.isDirichlet(Indices::velocity(i)))
+                            gradV[i][axisIdx] = (ccVelocity[neighborIdx][i] - dirichletValues[Indices::velocity(i)])/distance;
+                }
+            }
+
             velocityGradientTensor_[eIdx] = gradV;
 
             Scalar vorticitySquaredSum = 0.0;
@@ -227,21 +307,6 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "isOnWallAtPos or isOnWall not implemented for this problem."); }
 
 private:
-    //! Full local velocity gradient tensor (du_i/dx_j), reusing the existing, unmodified
-    //! FCStaggeredVelocityGradients helper - the same one Dumux::ZeroEqProblem already uses.
-    //! Falls back to zero if the element has no interior frontal scvf to seed the
-    //! full-gradient reconstruction from (only possible in a mesh one cell wide).
-    template<class ElementVolumeVariables>
-    DimMatrix elementVelocityGradientTensor_(const FVElementGeometry& fvGeometry, const ElementVolumeVariables& elemVolVars) const
-    {
-        for (const auto& scv : scvs(fvGeometry))
-            for (const auto& scvf : scvfs(fvGeometry, scv))
-                if (scvf.isFrontal() && !scvf.boundary())
-                    return VelocityGradients::velocityGradient(fvGeometry, scvf, elemVolVars, /*fullGradient=*/true);
-
-        return DimMatrix(0.0);
-    }
-
     //! Axis-aligned nearest-neighbor search via cell-center comparison, ported from
     //! releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase::findNeighborIndices_() -
     //! only meaningful/used for structured, axis-aligned (flat-wall-bounded) meshes, exactly as

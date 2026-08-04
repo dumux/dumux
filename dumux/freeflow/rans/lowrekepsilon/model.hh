@@ -11,9 +11,8 @@
  *        fused as two extra transported equations (turbulent kinetic energy k, transported
  *        dissipation epsilon-tilde) onto the single-phase Navier-Stokes mass balance.
  *
- * See turbulenceequations.md for the physics, and whatisimplemented.md/
- * proposedimplementation.md for why these equations live on the *mass* sub-model, following
- * the same strategy already validated for the one-equation and k-omega models.
+ * The two transport equations are fused onto the *mass* sub-model, following the same
+ * strategy already used for the one-equation and k-omega models.
  */
 #ifndef DUMUX_RANS_LOWREKEPSILON_MASS_MODEL_HH
 #define DUMUX_RANS_LOWREKEPSILON_MASS_MODEL_HH
@@ -82,7 +81,7 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneLowReKEpsilon> { using type = LowReKEpsilonMassIOFields; };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Nonisothermal variant - see whatisimplemented.md's Phase 8 section.
+// Nonisothermal variant.
 //////////////////////////////////////////////////////////////////////////////////////
 
 namespace TTag {
