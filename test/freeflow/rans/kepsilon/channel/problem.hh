@@ -37,11 +37,11 @@ namespace Dumux {
  *
  * \note Walls are Neumann (not Dirichlet) for pressure, k, *and* epsilon: the actual near-wall
  *       values are enforced entirely through Dumux::KEpsilonMassProblem's internal (whole-cell)
- *       Dirichlet constraints, not through boundary conditions - see that class and
- *       whatisimplemented.md for the near-wall-region/matching-point mechanism. Momentum is
- *       Dirichlet no-slip everywhere except the outlet *and* the matching-point cell's own wall
- *       face, where Dumux::KEpsilonMomentumProblem::boundaryTypes() switches to Neumann so the
- *       log-law wall-shear flux can be applied instead (see neumann() below).
+ *       Dirichlet constraints, not through boundary conditions - see that class for the
+ *       near-wall-region/matching-point mechanism. Momentum is Dirichlet no-slip everywhere
+ *       except the outlet *and* the matching-point cell's own wall face, where
+ *       Dumux::KEpsilonMomentumProblem::boundaryTypes() switches to Neumann so the log-law
+ *       wall-shear flux can be applied instead (see neumann() below).
  */
 template<class TypeTag, class BaseProblem>
 class RANSKEpsilonChannelTestProblem : public BaseProblem
@@ -144,7 +144,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -201,9 +201,8 @@ public:
             else if (isOnWallAtPos(globalPos))
             {
                 // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition -
-                // same trick as the other RANS-NI tests use, not the Jayatilleke wall-function
-                // energy flux the deleted releases/3.10 k-epsilon model had (a deliberate
-                // simplification, see whatisimplemented.md's Phase 8 section).
+                // same trick as the other RANS-NI tests use, not a Jayatilleke wall-function
+                // energy flux (a deliberate simplification).
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVars = elemVolVars[insideScv];
                 const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
@@ -229,7 +228,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            values[Indices::velocityXIdx] = powerLawProfile_(globalPos[1]);
+            values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
@@ -268,16 +267,14 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    Scalar powerLawProfile_(const Scalar y) const
+    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
+    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];
         const Scalar yMax = this->gridGeometry().bBoxMax()[1];
-        const Scalar halfHeight = 0.5*(yMax - yMin);
         const Scalar distanceToWall = std::min(y - yMin, yMax - y);
-
-        using std::pow;
-        using std::max;
-        return inletVelocity_ * pow(max(distanceToWall, Scalar(0.0))/halfHeight, 1.0/7.0);
+        return distanceToWall > eps_ ? inletVelocity_ : 0.0;
     }
 
     static constexpr Scalar eps_ = 1e-6;

@@ -88,8 +88,9 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::RANSLowReKEpsilonChannelTes
 { static constexpr bool value = true; };
 
 // Set the coupling manager property: the existing, unmodified momentum<->mass coupling
-// manager - no dedicated turbulence coupling manager is needed, see
-// whatisimplemented.md/proposedimplementation.md.
+// manager - no dedicated turbulence coupling manager is needed, since k and
+// epsilon-tilde are solved as extra equations on the mass sub-model rather than on a
+// separate sub-domain.
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::RANSLowReKEpsilonChannelTest>
 {

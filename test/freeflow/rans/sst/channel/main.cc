@@ -161,11 +161,10 @@ int main(int argc, char** argv)
         // Update the momentum-side wall-distance/velocity-gradient/vorticity/stress-tensor
         // bookkeeping and the mass-side (lagged) stored k/omega and cross-diffusion gradient
         // product, once per time step, from the previous (converged) solution - the same
-        // Picard-in-time treatment already validated for the one-equation and k-omega models,
-        // see whatisimplemented.md/proposedimplementation.md. k and omega themselves remain
-        // fully implicit primary variables of the mass sub-model (except where the internal
-        // Dirichlet constraint pins omega at the wall), solved by Newton like every other
-        // equation.
+        // Picard-in-time treatment already used for the one-equation and k-omega models. k
+        // and omega themselves remain fully implicit primary variables of the mass sub-model
+        // (except where the internal Dirichlet constraint pins omega at the wall), solved by
+        // Newton like every other equation.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
         massProblem->updateDynamicWallProperties(x[massIdx]);
 

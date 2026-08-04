@@ -39,11 +39,10 @@ namespace Dumux {
  *         explicit template parameter, exactly as for Dumux::RANSMassOneEqProblem/
  *         Dumux::KOmegaMassProblem.
  *
- * Ported from the deleted releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/problem.hh
- * (RANSProblemImpl<TypeTag, TurbulenceModel::kepsilon>) and, for the wall condition,
- * releases/3.10:test/freeflow/rans/problem.hh's isDirichletCell_/dirichletTurbulentTwoEq_
- * kepsilon branches. See whatisimplemented.md for the operational definition of "near-wall
- * region"/"matching point" established while reading that code.
+ * The "matching point" is the cell whose wall distance is closest to the target y+ at which
+ * the log-law and viscous sublayer profiles are matched; the "near-wall region" comprises the
+ * cells between the wall and the matching point, where k/epsilon are not solved for but
+ * instead fixed via internal Dirichlet constraints from the blended two-layer closure.
  *
  * wallDistance()/stressTensorScalarProduct()/wallElementIndex()/neighborIndex()/
  * velocityGradient()/kinematicViscosity()/karmanConstant() are *not* recomputed here - they are

@@ -11,10 +11,8 @@
  *        transported equation (the working viscosity ν̃) onto the single-phase Navier-Stokes
  *        mass balance.
  *
- * See turbulenceequations.md \S7 for the physics, and whatisimplemented.md/
- * proposedimplementation.md for why this equation lives on the *mass* sub-model (mirroring
- * how releases/3.10 had ν̃ share the same monolithic primary-variable block as pressure and
- * velocity) rather than on a dedicated third coupled sub-domain.
+ * The transport equation is fused onto the *mass* sub-model rather than living on a
+ * dedicated third coupled sub-domain.
  */
 #ifndef DUMUX_RANS_ONEEQ_MASS_MODEL_HH
 #define DUMUX_RANS_ONEEQ_MASS_MODEL_HH
@@ -83,7 +81,7 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOnePOneEq> { using type = OneEqMassIOFields; };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Nonisothermal variant - see whatisimplemented.md's Phase 8 section.
+// Nonisothermal variant.
 //////////////////////////////////////////////////////////////////////////////////////
 
 namespace TTag {

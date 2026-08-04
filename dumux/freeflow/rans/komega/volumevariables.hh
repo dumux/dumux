@@ -24,10 +24,9 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation k-omega (Wilcox 2008) turbulence closure for the turbulent kinetic
- *        energy k and the specific dissipation rate omega (see turbulenceequations.md \S8 for
- *        the physics, and whatisimplemented.md/proposedimplementation.md for why k/omega live
- *        here - as two extra equations on the mass sub-model - rather than on a separate
- *        coupled sub-domain, following the same strategy validated for the one-equation model).
+ *        energy k and the specific dissipation rate omega, fused as two extra equations on
+ *        the mass sub-model rather than on a separate coupled sub-domain, following the same
+ *        strategy already used for the one-equation model.
  *
  * Closure constants/functions ported near-verbatim from the deleted
  * releases/3.10:dumux/freeflow/rans/twoeq/komega/volumevariables.hh, with
@@ -85,9 +84,8 @@ public:
 
     //! The dynamic eddy viscosity mu_t = rho*k/max(omega, limiter) - the quantity the momentum
     //! domain reads through the coupling manager's turbulentViscosity()/effectiveViscosity().
-    //! The Wilcox2008 dissipation limiter is always enabled (releases/3.10's
-    //! RANS.UseStoredEddyViscosity-style runtime opt-out is not ported, matching the
-    //! simplification already made for the one-equation model, see whatisimplemented.md).
+    //! The Wilcox2008 dissipation limiter is always enabled (no runtime opt-out, matching
+    //! the simplification already made for the one-equation model).
     Scalar dynamicEddyViscosity() const
     {
         using std::sqrt;

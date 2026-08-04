@@ -11,7 +11,7 @@ dumux_add_test(NAME test_rans_zeroeq_channel
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_zeroeq_channel-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_zeroeq_channel-00045.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_zeroeq_channel-00046.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_zeroeq_channel params.input")
 
 add_executable(test_rans_zeroeq_channelni EXCLUDE_FROM_ALL main.cc)
@@ -25,5 +25,5 @@ dumux_add_test(NAME test_rans_zeroeq_channelni
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_zeroeq_channelni-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_zeroeq_channelni-00049.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_zeroeq_channelni-00053.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_zeroeq_channelni params_ni.input")

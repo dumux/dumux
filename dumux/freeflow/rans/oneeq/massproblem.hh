@@ -39,21 +39,16 @@ namespace Dumux {
  *         setMomentumProblem(), mirroring how e.g. Problem::setTimeLoop() is wired in
  *         main.cc elsewhere in this codebase.
  *
- * Ported from the deleted releases/3.10:dumux/freeflow/rans/oneeq/problem.hh
- * (RANSProblemImpl<TypeTag, TurbulenceModel::oneeq>). As in that class, wallDistance()/
- * vorticityTensorScalarProduct() are *not* recomputed here - they are frozen (lagged) values
- * computed once per time step by the momentum domain's Dumux::RANSMomentumProblem and simply
- * forwarded, read-only, through the stored momentum-problem pointer (both grids share the
- * same underlying element indexing, see whatisimplemented.md). This is deliberately *not*
- * routed through a CouplingManager: since these values are frozen for the whole time step,
- * there is nothing for Newton to differentiate, which is the crux of why this port avoids
- * the singular-Jacobian issue the previous (parked) fully-implicit 3-domain attempt hit -
- * see proposedimplementation.md.
+ * wallDistance()/vorticityTensorScalarProduct() are *not* recomputed here - they are frozen
+ * (lagged) values computed once per time step by the momentum domain's
+ * Dumux::RANSMomentumProblem and simply forwarded, read-only, through the stored
+ * momentum-problem pointer (both grids share the same underlying element indexing). This is
+ * deliberately *not* routed through a CouplingManager: since these values are frozen for the
+ * whole time step, there is nothing for Newton to differentiate against.
  *
- * Unlike the old code (which reconstructed ∇ν̃ via finite differences over a hand-rolled
- * structured-neighbor search), the gradient here is obtained via a standard Green-Gauss
- * reconstruction over CCTpfa's own face/neighbor connectivity - works on general grids, no
- * flat-wall-bounded assumption needed (see updateDynamicWallProperties() below).
+ * The gradient ∇ν̃ is obtained via a standard Green-Gauss reconstruction over CCTpfa's own
+ * face/neighbor connectivity - works on general grids, no flat-wall-bounded assumption needed
+ * (see updateDynamicWallProperties() below).
  */
 template<class TypeTag, class MomentumProblem>
 class RANSMassOneEqProblem : public NavierStokesMassProblem<TypeTag>

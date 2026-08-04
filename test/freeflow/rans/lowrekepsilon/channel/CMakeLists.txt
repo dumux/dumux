@@ -11,7 +11,7 @@ dumux_add_test(NAME test_rans_lowrekepsilon_channel
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_lowrekepsilon_channel-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_lowrekepsilon_channel-00060.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_lowrekepsilon_channel-00065.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_lowrekepsilon_channel params.input")
 
 add_executable(test_rans_lowrekepsilon_channelni EXCLUDE_FROM_ALL main.cc)
@@ -25,5 +25,5 @@ dumux_add_test(NAME test_rans_lowrekepsilon_channelni
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_lowrekepsilon_channelni-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_lowrekepsilon_channelni-00061.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_lowrekepsilon_channelni-00068.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_lowrekepsilon_channelni params_ni.input")

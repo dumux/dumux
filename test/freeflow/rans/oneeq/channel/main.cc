@@ -125,8 +125,6 @@ int main(int argc, char** argv)
     // immediately triggers OneEqMassVolumeVariables::update() for every element, which reads
     // momentumProblem->wallDistance(eIdx)/vorticityTensorScalarProduct(eIdx): an out-of-bounds
     // read on the still-empty momentum-side bookkeeping vectors if this were called after.
-    // (The same ordering bug hit the previous, now-parked, fully-implicit attempt - see
-    // whatisimplemented.md.)
     momentumProblem->updateStaticWallProperties();
 
     // initializing the gridvariables requires the coupling manager to be set up
@@ -162,10 +160,9 @@ int main(int argc, char** argv)
     {
         // Update the momentum-side wall-distance/velocity-gradient/vorticity bookkeeping and
         // the mass-side (lagged) ν̃ gradient, once per time step, from the previous (converged)
-        // solution - a deliberate Picard-in-time treatment matching releases/3.10's actual
-        // numerics (rather than differentiating these terms through Newton), see
-        // whatisimplemented.md/proposedimplementation.md. ν̃ itself remains a fully implicit
-        // primary variable of the mass sub-model, solved by Newton like every other equation.
+        // solution - a deliberate Picard-in-time treatment rather than differentiating these
+        // terms through Newton. ν̃ itself remains a fully implicit primary variable of the mass
+        // sub-model, solved by Newton like every other equation.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
         massProblem->updateDynamicWallProperties(x[massIdx]);
 

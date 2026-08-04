@@ -168,10 +168,10 @@ int main(int argc, char** argv)
         // Update the momentum-side wall-distance/velocity-gradient/stress-tensor bookkeeping
         // and the mass-side (lagged) matching-point/near-wall-region classification and blended
         // eddy viscosity, once per time step, from the previous (converged) solution - the same
-        // Picard-in-time treatment already validated for the one-equation and k-omega models,
-        // see whatisimplemented.md/proposedimplementation.md. k and epsilon themselves remain
-        // fully implicit primary variables of the mass sub-model (except where the internal
-        // Dirichlet constraints pin them), solved by Newton like every other equation.
+        // Picard-in-time treatment already used for the one-equation and k-omega models. k and
+        // epsilon themselves remain fully implicit primary variables of the mass sub-model
+        // (except where the internal Dirichlet constraints pin them), solved by Newton like
+        // every other equation.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
         massProblem->updateDynamicWallProperties(x[massIdx]);
 

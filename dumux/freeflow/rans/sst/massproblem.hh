@@ -12,6 +12,7 @@
 #ifndef DUMUX_RANS_SST_MASS_PROBLEM_HH
 #define DUMUX_RANS_SST_MASS_PROBLEM_HH
 
+#include <cmath>
 #include <memory>
 #include <vector>
 #include <bitset>
@@ -35,9 +36,9 @@ namespace Dumux {
  *        needed by F1() and the cross-diffusion source term, and the wall-adjacent analytical
  *        omega Dirichlet condition omega_wall = 6*nu/(beta_omega*y^2), enforced as an internal
  *        (cell, not boundary-face) Dirichlet constraint - identical in every respect to
- *        Dumux::KOmegaMassProblem's own wall condition (SST does not override betaOmega(), see
- *        whatisimplemented.md's Phase 7 section for why this known 0.0708-vs-0.075 discrepancy
- *        is a deliberately preserved quirk of the ported formula, not a bug).
+ *        Dumux::KOmegaMassProblem's own wall condition (SST does not override betaOmega(); the
+ *        resulting 0.0708-vs-0.075 discrepancy is a deliberately preserved quirk of the ported
+ *        formula, not a bug).
  *
  * \tparam TypeTag The mass sub-model's TypeTag.
  * \tparam MomentumProblem The concrete momentum problem type (a Dumux::SSTMomentumProblem),
@@ -127,13 +128,15 @@ public:
     { return 0.0708; }
 
     /*!
-     * \brief Updates the (lagged) stored k/omega and their cross-diffusion gradient product,
-     *        via a Green-Gauss reconstruction over CCTpfa's own face/neighbor connectivity - the
-     *        same approach Dumux::KOmegaMassProblem already uses for its cross-diffusion term,
-     *        generalized to reconstruct both gradients (needed here since F1() also needs
-     *        storedTurbulentKineticEnergy()/storedDissipation() themselves, unlike k-omega which
-     *        only needs the gradient dot product). Called once per time step from main.cc,
-     *        before the next assembly.
+     * \brief Updates the (lagged) stored k/omega and their cross-diffusion gradient product, via
+     *        a central difference over each element's two neighbors along every axis - reusing
+     *        the momentum domain's neighborIndex()/cellCenter() bookkeeping - reproducing
+     *        releases/3.10:dumux/freeflow/rans/twoeq/sst/problem.hh's own gradient computation
+     *        verbatim (a Green-Gauss reconstruction over CCTpfa's face/neighbor connectivity was
+     *        used here previously; it gives a shorter effective distance at boundary-adjacent
+     *        cells that was found to needlessly amplify SST's already gradient-sensitive
+     *        near-wall blending). Called once per time step from main.cc, before the next
+     *        assembly.
      */
     template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& sol)
@@ -152,42 +155,22 @@ public:
 
         for (const auto& element : elements(gridGeometry.gridView()))
         {
-            fvGeometry.bind(element);
-            const auto& insideScv = *scvs(fvGeometry).begin();
-            const auto eIdx = insideScv.elementIndex();
-            const Scalar kInside = storedTurbulentKineticEnergy_[eIdx];
-            const Scalar omegaInside = storedDissipation_[eIdx];
+            const auto eIdx = gridGeometry.elementMapper().index(element);
 
             DimVector kGradient(0.0);
             DimVector omegaGradient(0.0);
-            for (const auto& scvf : scvfs(fvGeometry))
+            for (int axisIdx = 0; axisIdx < dim; ++axisIdx)
             {
-                Scalar kFace;
-                Scalar omegaFace;
-                if (scvf.boundary())
-                {
-                    if (this->asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::turbulentKineticEnergyEqIdx))
-                        kFace = this->asImp_().dirichlet(element, scvf)[Indices::turbulentKineticEnergyIdx];
-                    else
-                        kFace = kInside; // zero-gradient extrapolation
+                const auto neighborIdx0 = momentumProblem_->neighborIndex(eIdx, axisIdx, 0);
+                const auto neighborIdx1 = momentumProblem_->neighborIndex(eIdx, axisIdx, 1);
+                const auto distance = momentumProblem_->cellCenter(neighborIdx1)[axisIdx]
+                                     - momentumProblem_->cellCenter(neighborIdx0)[axisIdx];
+                if (std::abs(distance) < 1e-8)
+                    continue;
 
-                    if (this->asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::dissipationEqIdx))
-                        omegaFace = this->asImp_().dirichlet(element, scvf)[Indices::dissipationIdx];
-                    else
-                        omegaFace = omegaInside;
-                }
-                else
-                {
-                    const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                    kFace = 0.5*(kInside + storedTurbulentKineticEnergy_[outsideScv.elementIndex()]);
-                    omegaFace = 0.5*(omegaInside + storedDissipation_[outsideScv.elementIndex()]);
-                }
-
-                kGradient.axpy((kFace - kInside)*scvf.area(), scvf.unitOuterNormal());
-                omegaGradient.axpy((omegaFace - omegaInside)*scvf.area(), scvf.unitOuterNormal());
+                kGradient[axisIdx] = (storedTurbulentKineticEnergy_[neighborIdx1] - storedTurbulentKineticEnergy_[neighborIdx0])/distance;
+                omegaGradient[axisIdx] = (storedDissipation_[neighborIdx1] - storedDissipation_[neighborIdx0])/distance;
             }
-            kGradient /= insideScv.volume();
-            omegaGradient /= insideScv.volume();
 
             crossDiffusionGradientProduct_[eIdx] = kGradient*omegaGradient;
         }
