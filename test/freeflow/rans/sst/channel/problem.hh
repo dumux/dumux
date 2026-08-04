@@ -194,7 +194,7 @@ public:
                 const auto& insideVars = elemVolVars[insideScv];
                 const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                 const auto diffCoeff = insideVars.viscosity()
-                    + insideVars.sigmaK(*this)*insideVars.dynamicEddyViscosity(*this);
+                    + insideVars.sigmaK(*this)*insideVars.dynamicEddyViscosity();
                 values[Indices::turbulentKineticEnergyEqIdx] = diffCoeff*insideVars.turbulentKineticEnergy()/distance;
 #if NONISOTHERMAL
                 values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()

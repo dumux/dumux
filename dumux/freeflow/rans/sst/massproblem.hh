@@ -193,7 +193,7 @@ public:
         NumEqVector source(0.0);
         const auto& volVars = elemVolVars[scv];
 
-        const Scalar dynamicEddyViscosity = volVars.dynamicEddyViscosity(*this);
+        const Scalar dynamicEddyViscosity = volVars.dynamicEddyViscosity();
         const Scalar kinematicEddyViscosity = dynamicEddyViscosity/volVars.density();
         const Scalar productionTerm = 2.0*dynamicEddyViscosity*volVars.stressTensorScalarProduct();
         source[Indices::turbulentKineticEnergyEqIdx] += productionTerm;

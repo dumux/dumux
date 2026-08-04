@@ -67,16 +67,30 @@ public:
         storedDissipation_ = problem.storedDissipation(eIdx);
         crossDiffusionGradientProduct_ = problem.storedCrossDiffusionGradientProduct(eIdx);
 
+        // Cached here (rather than computed on demand from a Problem argument, the way
+        // calculateEddyViscosity() itself needs one to branch on sstModelVersion()) so that a
+        // plain no-argument dynamicEddyViscosity() getter can be exposed below - matching the
+        // signature every other RANS model's own dynamicEddyViscosity() already has. This
+        // matters beyond mere convention: dumux/multidomain/freeflow/couplingmanager_staggered.hh's
+        // turbulentViscosity() (the sole path through which the momentum domain ever receives a
+        // turbulent viscosity contribution) duck-types this exact zero-argument signature via
+        // Dune::Std::is_detected; a Problem-argument-only overload is invisible to it and it
+        // silently falls back to returning 0.0 - i.e. the momentum equation would run with
+        // molecular viscosity only, no turbulence contribution at all. Recomputed here on every
+        // update() call (i.e. every Newton iteration), so this is exactly as "live" as calling
+        // calculateEddyViscosity(problem) directly would be - releases/3.10's optional
+        // RANS.UseStoredEddyViscosity lagging opt-out is (deliberately) not ported, the same
+        // simplification already made for the one-equation and k-omega models.
+        dynamicEddyViscosity_ = calculateEddyViscosity(problem);
+
         // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs for why this must be done explicitly here rather than automatically. SST's
-        // dynamicEddyViscosity() needs the problem (for sstModelVersion()), so the formula is
-        // inlined here rather than reusing that header's no-argument helper.
+        // class docs for why this must be done explicitly here rather than automatically.
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
         {
             using FluidSystem = typename Traits::FluidSystem;
             static const Scalar turbulentPrandtlNumber = getParam<Scalar>("RANS.TurbulentPrandtlNumber", 1.0);
             this->lambdaEff_ = this->fluidThermalConductivity()
-                + this->dynamicEddyViscosity(problem)*FluidSystem::heatCapacity(this->fluidState(), 0)/turbulentPrandtlNumber;
+                + dynamicEddyViscosity_*FluidSystem::heatCapacity(this->fluidState(), 0)/turbulentPrandtlNumber;
         }
     }
 
@@ -118,10 +132,18 @@ public:
         return sqrt(2.0*vorticityTensorScalarProduct());
     }
 
-    //! \brief Returns the dynamic eddy viscosity for the SST model, branching on the
-    //!        (runtime-selected) SST model version.
+    //! The (live, current-Newton-iterate) dynamic eddy viscosity, cached in update() - see its
+    //! comment for why this needs to be a stored member with a no-argument getter rather than
+    //! computed on demand from calculateEddyViscosity(problem) at every call site.
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
+    //! \brief Computes the dynamic eddy viscosity for the SST model, branching on the
+    //!        (runtime-selected) SST model version. Only called from update() (see
+    //!        dynamicEddyViscosity() above for the cached, no-argument accessor everything
+    //!        else should use).
     template<class Problem>
-    Scalar dynamicEddyViscosity(const Problem& problem) const
+    Scalar calculateEddyViscosity(const Problem& problem) const
     {
         using std::max;
 
@@ -260,6 +282,7 @@ protected:
     Scalar storedTurbulentKineticEnergy_ = 0.0;
     Scalar storedDissipation_ = 0.0;
     Scalar crossDiffusionGradientProduct_ = 0.0;
+    Scalar dynamicEddyViscosity_ = 0.0;
 };
 
 } // end namespace Dumux

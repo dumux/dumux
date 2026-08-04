@@ -130,10 +130,10 @@ private:
 
         const auto area = Extrusion::area(fvGeometry, scvf)*insideVars.extrusionFactor();
 
-        const auto diffCoeffKInside = insideVars.viscosity() + insideVars.sigmaK(problem)*insideVars.dynamicEddyViscosity(problem);
-        const auto diffCoeffKOutside = outsideVars.viscosity() + outsideVars.sigmaK(problem)*outsideVars.dynamicEddyViscosity(problem);
-        const auto diffCoeffOmegaInside = insideVars.viscosity() + insideVars.sigmaOmega(problem)*insideVars.dynamicEddyViscosity(problem);
-        const auto diffCoeffOmegaOutside = outsideVars.viscosity() + outsideVars.sigmaOmega(problem)*outsideVars.dynamicEddyViscosity(problem);
+        const auto diffCoeffKInside = insideVars.viscosity() + insideVars.sigmaK(problem)*insideVars.dynamicEddyViscosity();
+        const auto diffCoeffKOutside = outsideVars.viscosity() + outsideVars.sigmaK(problem)*outsideVars.dynamicEddyViscosity();
+        const auto diffCoeffOmegaInside = insideVars.viscosity() + insideVars.sigmaOmega(problem)*insideVars.dynamicEddyViscosity();
+        const auto diffCoeffOmegaOutside = outsideVars.viscosity() + outsideVars.sigmaOmega(problem)*outsideVars.dynamicEddyViscosity();
 
         // Distance-weighted (not plain-averaged) interpolation of the diffusion coefficient to
         // the face, and the corresponding cell-to-cell distance - reproducing
