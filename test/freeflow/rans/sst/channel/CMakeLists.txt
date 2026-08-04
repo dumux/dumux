@@ -25,5 +25,5 @@ dumux_add_test(NAME test_rans_sst_channelni
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_sst_channelni-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_sst_channelni-00068.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_sst_channelni-00066.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_sst_channelni params_ni.input")
