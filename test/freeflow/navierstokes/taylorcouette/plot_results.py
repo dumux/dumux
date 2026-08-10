@@ -3,7 +3,7 @@
 plot_results.py
 ================
 
-Unified post-processing suite for rotating-cylinder benchmark cases.
+Unified post-processing suite for Taylor-Couette benchmark cases.
 
 Features
 --------
@@ -79,7 +79,7 @@ def discover_cases(results_dir: Path, conf: str | None = None):
         if conf and d.name != conf:
             continue
 
-        zip_file = d / "test_rotatingcylinders.zip"
+        zip_file = d / "test_ff_taylorcouette.zip"
 
         if not zip_file.exists():
             continue
@@ -523,7 +523,7 @@ def render_matplotlib_fields(
 def main():
 
     parser = argparse.ArgumentParser(
-        description="Unified rotating-cylinder post-processing suite"
+        description="Unified Taylor-Couette post-processing suite"
     )
 
     parser.add_argument(

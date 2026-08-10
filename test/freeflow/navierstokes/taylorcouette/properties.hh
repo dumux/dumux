@@ -7,17 +7,17 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief The properties for the rotating cylinders benchmark.
+ * \brief The properties for the Taylor-Couette benchmark.
  */
-#ifndef DUMUX_ROTATING_CYLINDERS_PROPERTIES_HH
-#define DUMUX_ROTATING_CYLINDERS_PROPERTIES_HH
+#ifndef DUMUX_TAYLOR_COUETTE_PROPERTIES_HH
+#define DUMUX_TAYLOR_COUETTE_PROPERTIES_HH
 
 #ifndef TYPETAG_MOMENTUM
-#define TYPETAG_MOMENTUM RotatingCylindersTestMomentumDiamond
+#define TYPETAG_MOMENTUM TaylorCouetteTestMomentumDiamond
 #endif
 
 #ifndef TYPETAG_MASS
-#define TYPETAG_MASS RotatingCylindersTestMassTpfa
+#define TYPETAG_MASS TaylorCouetteTestMassTpfa
 #endif
 
 #include <dune/grid/uggrid.hh>
@@ -43,17 +43,17 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct RotatingCylindersTest {};
-struct RotatingCylindersTestMomentumDiamond { using InheritsFrom = std::tuple<RotatingCylindersTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
-struct RotatingCylindersTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<RotatingCylindersTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
-struct RotatingCylindersTestMassTpfa { using InheritsFrom = std::tuple<RotatingCylindersTest, NavierStokesMassOneP, CCTpfaModel>; };
-struct RotatingCylindersTestMassBox { using InheritsFrom = std::tuple<RotatingCylindersTest, NavierStokesMassOneP, BoxModel>; };
-struct RotatingCylindersTestMassDiamond { using InheritsFrom = std::tuple<RotatingCylindersTest, NavierStokesMassOneP, FaceCenteredDiamondModel>; };
+struct TaylorCouetteTest {};
+struct TaylorCouetteTestMomentumDiamond { using InheritsFrom = std::tuple<TaylorCouetteTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
+struct TaylorCouetteTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<TaylorCouetteTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
+struct TaylorCouetteTestMassTpfa { using InheritsFrom = std::tuple<TaylorCouetteTest, NavierStokesMassOneP, CCTpfaModel>; };
+struct TaylorCouetteTestMassBox { using InheritsFrom = std::tuple<TaylorCouetteTest, NavierStokesMassOneP, BoxModel>; };
+struct TaylorCouetteTestMassDiamond { using InheritsFrom = std::tuple<TaylorCouetteTest, NavierStokesMassOneP, FaceCenteredDiamondModel>; };
 } // end namespace TTag
 
 // the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::RotatingCylindersTest>
+struct FluidSystem<TypeTag, TTag::TaylorCouetteTest>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
@@ -61,7 +61,7 @@ struct FluidSystem<TypeTag, TTag::RotatingCylindersTest>
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::RotatingCylindersTest>
+struct Grid<TypeTag, TTag::TaylorCouetteTest>
 {
     using type = Dune::UGGrid<2>;
 };
@@ -69,21 +69,21 @@ struct Grid<TypeTag, TTag::RotatingCylindersTest>
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
-{ using type = RotatingCylinders<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>> ; };
+{ using type = TaylorCouette<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>> ; };
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TYPETAG_MASS>
-{ using type = RotatingCylinders<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>> ; };
+{ using type = TaylorCouette<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>> ; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::RotatingCylindersTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::TaylorCouetteTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::RotatingCylindersTest> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::TaylorCouetteTest> { static constexpr bool value = true; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::RotatingCylindersTest> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TaylorCouetteTest> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::RotatingCylindersTest>
+struct CouplingManager<TypeTag, TTag::TaylorCouetteTest>
 {
     using Traits = MultiDomainTraits<TTag::TYPETAG_MOMENTUM, TTag::TYPETAG_MASS>;
     using type = FreeFlowCouplingManager<Traits>;

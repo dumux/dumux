@@ -4,8 +4,8 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROBLEM_HH
-#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROBLEM_HH
+#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_TAYLORCOUETTE_PROBLEM_HH
+#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_TAYLORCOUETTE_PROBLEM_HH
 
 #include <cmath>
 #include <numeric>
@@ -35,7 +35,7 @@ namespace Dumux {
  *   223, 289-343. https://doi.org/10.1098/rsta.1923.0008
  */
 template <class TypeTag, class BaseProblem>
-class RotatingCylinders : public BaseProblem
+class TaylorCouette : public BaseProblem
 {
     using ParentType = BaseProblem;
 
@@ -61,7 +61,7 @@ class RotatingCylinders : public BaseProblem
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
 public:
-    RotatingCylinders(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
+    TaylorCouette(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridGeometry, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");

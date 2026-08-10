@@ -7,7 +7,7 @@ Radial0 = 1.0 1.5 2.0
 Angular1 = 0.0 360.0
 
 [Problem]
-Name = test_rotatingcylinders
+Name = test_ff_taylorcouette
 Omega1 = 100.0
 Omega2 = 0.0
 EnableGravity = false
