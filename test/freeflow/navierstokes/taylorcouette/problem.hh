@@ -29,10 +29,7 @@ namespace Dumux {
  * \brief Test problem for the (Navier-) Stokes model in the annulus between
  *        two independently rotating, concentric cylinders (Taylor-Couette flow)
  *
- * Benchmark case from
- *   Taylor, G. I. (1923) Stability of a Viscous Liquid Contained between
- *   Two Rotating Cylinders. Philosophical Transactions of the Royal Society A,
- *   223, 289-343. https://doi.org/10.1098/rsta.1923.0008
+ * Benchmark case from \cite taylor1923.
  */
 template <class TypeTag, class BaseProblem>
 class TaylorCouette : public BaseProblem
