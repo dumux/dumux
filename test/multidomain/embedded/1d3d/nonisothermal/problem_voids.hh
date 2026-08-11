@@ -108,7 +108,8 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
+        // the outlet at the bottom of the wellbore
+        if(globalPos[2] < this->gridGeometry().bBoxMin()[2] + eps_)
             values.setDirichlet(pressureIdx);
         return values;
     }
@@ -158,8 +159,8 @@ public:
         // initialize values to zero, i.e. no-flow Neumann boundary conditions
         NumEqVector values(0.0);
 
-        // get the inflow from params.input
-        if(globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
+        // get the inflow from params.input at the inlet on top of the wellbore
+        if(globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_)
         {
             // injectionRate_ [m³/s] converted to mass flux per area [kg/(m² s)]
             values[conti0EqIdx] = -injectionRate_ * insideVolVars.density() / area;
@@ -326,7 +327,8 @@ public:
             // we can now iterate over the scvs:
             for (auto&& scv: scvs(fvGeometry))
             {
-                if(scv.dofPosition()[0] == this->gridGeometry().bBoxMax()[0])
+                // log the outlet temperature at the bottom of the wellbore
+                if(scv.dofPosition()[2] < this->gridGeometry().bBoxMin()[2] + eps_)
                 {
                     const auto& volVars = elemVolVars[scv];
                     std::ofstream ToutLog;
