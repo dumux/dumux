@@ -35,6 +35,10 @@ public:
     }
 };
 
+template<class MDTraits, class CouplingMode>
+struct CouplingManagerSupportsMultithreadedAssembly<WellboreCouplingManager<MDTraits, CouplingMode>>
+: public CouplingManagerSupportsMultithreadedAssembly<Embedded1d3dCouplingManager<MDTraits, CouplingMode>> {};
+
 } // end namespace Dumux
 
 #endif
