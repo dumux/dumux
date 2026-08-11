@@ -95,8 +95,9 @@ public:
     {
         BoundaryTypes values;
         values.setAllDirichlet();
-        if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_
-           || globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_)
+        // no-flow at the top and bottom faces, i.e. the faces normal to the wellbore axis
+        if(globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_
+           || globalPos[2] < this->gridGeometry().bBoxMin()[2] + eps_)
             values.setAllNeumann();
         return values;
     }

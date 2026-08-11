@@ -15,7 +15,6 @@
 #include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
-//#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
@@ -132,7 +131,7 @@ struct SpatialParams<TypeTag, TTag::Voids>
 };
 
 template<class Traits>
-using TheCouplingManager = WellboreCouplingManager<Traits, COUPLINGMODE>;
+using TheCouplingManager = WellboreCouplingManager<Traits, Embedded1d3dCouplingMode::Surface>;
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::Soil> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::Voids>>; };
