@@ -109,7 +109,11 @@ else:
 
 # ── Load DuMux temperature profile along depth (final-timestep 1d VTP) ─────────
 def load_dumux_profile(prefix, search_dirs):
-    """Return (x, T[°C]) along the pipe at the final timestep, from the 1d VTP output."""
+    """Return (depth, T[°C]) along the pipe at the final timestep, from the 1d VTP output.
+
+    The wellbore is vertical: the inlet is at z = 0 and the bottom at z = -30 m,
+    so the depth along the borehole is -z.
+    """
     try:
         import vtk
         from vtk.util.numpy_support import vtk_to_numpy
@@ -131,7 +135,7 @@ def load_dumux_profile(prefix, search_dirs):
     reader.SetFileName(vtp)
     reader.Update()
     poly = reader.GetOutput()
-    x = vtk_to_numpy(poly.GetPoints().GetData())[:, 0]
+    x = -vtk_to_numpy(poly.GetPoints().GetData())[:, 2]  # depth along the borehole
     T = vtk_to_numpy(poly.GetPointData().GetArray("T")) - 273.15  # K -> °C
     order = np.argsort(x)
     print(f"Loaded DuMux profile: {vtp}  ({len(x)} points)")
@@ -228,7 +232,7 @@ print("Outlet temperature at t=5 days:")
 print(f"Analytical (Ramey): {data_B.iloc[-1, -1]:.4f}")
 if dumux_T is not None:
     print(f"DuMux:        {dumux_T[-1]:.4f}")
-    print(f"Relative error: {(dumux_T[-1] - data_B.iloc[-1, -1]) / (data_B.iloc[-1, -1] - 20.0) * 100:.2f} %")
+    print(f"Relative error: {(dumux_T[-1] - data_B.iloc[-1, -1]) / (data_B.iloc[-1, -1] - T_i) * 100:.2f} %")
 
 plt.figlegend(fontsize=14, loc="center right", bbox_to_anchor=(0.88, 0.5), frameon=False)
 fig.tight_layout()
@@ -274,11 +278,14 @@ fig2.savefig("wellbore_temperature_distribution.png", dpi=150)
 print("Saved: wellbore_temperature_distribution.png")
 
 print("Temperature distribution at t=5 days:")
-print(f"  Outlet (z=30 m) Ramey:      {outlet_temp(T_d, T_i, 30.0, X_final_B):.4f}")
-print(f"  Outlet (z=30 m) OGS:        {ogs_T_profile[-1]:.4f}")
-print(f"  OGS max |error| vs Ramey:   {np.abs(ogs_error_B_profile).max():.4f}")
+print("  At the outlet (z=30 m):")
+print(f"    Ramey: {outlet_temp(T_d, T_i, 30.0, X_final_B):.4f}")
+print(f"    OGS:   {ogs_T_profile[-1]:.4f}  (error vs Ramey {ogs_error_B_profile[-1]:+.4f})")
 if dumux_x is not None:
-    print(f"  Outlet (z=30 m) DuMux:      {dumux_T_profile[-1]:.4f}")
-    print(f"  DuMux max |error| vs Ramey: {np.abs(dumux_error_profile).max():.4f}")
+    print(f"    DuMux: {dumux_T_profile[-1]:.4f}  (error vs Ramey {dumux_error_profile[-1]:+.4f})")
+print("  Max |error| vs Ramey along the borehole:")
+print(f"    OGS:   {np.abs(ogs_error_B_profile).max():.4f}")
+if dumux_x is not None:
+    print(f"    DuMux: {np.abs(dumux_error_profile).max():.4f}")
 
 plt.show()
