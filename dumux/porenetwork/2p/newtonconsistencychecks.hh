@@ -12,17 +12,21 @@
 #ifndef DUMUX_PNM_NEWTON_CONSISTENCY_CHECKS
 #define DUMUX_PNM_NEWTON_CONSISTENCY_CHECKS
 
+#include <type_traits>
 #include <vector>
 #include <iostream>
 #include <dune/common/exceptions.hh>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/localview.hh>
+#include <dumux/porenetwork/2p/invasionstate.hh>
 
 namespace Dumux::PoreNetwork {
 
 #ifndef DOXYGEN
 namespace Detail {
+
 
 // Primary template
 template <typename T, typename U = int>
@@ -55,6 +59,56 @@ struct SaturationIndex <T, decltype((void) T::s0Idx, 0)>
  * \ingroup PNMTwoPModel
  * \brief Consistency checks for the PNM two-phase model
  */
+
+/*!
+ * \brief Checks if the capillary pressure at the pore from which a throat was invaded is
+ *        sufficiently close to the throat's entry capillary pressure.
+ * \note Only throats invaded during the current time step are considered, which is why both time
+ *       levels of the invasion state are needed.
+ */
+template<class Problem, class SolutionVector, class GridVolumeVariables,
+         class GridFluxVariablesCache, class InvasionState>
+void checkIfCapillaryPressureIsCloseToEntryPressure(const Problem& problem,
+                                                    const SolutionVector& sol,
+                                                    const GridVolumeVariables& gridVolVars,
+                                                    const GridFluxVariablesCache& gridFluxVarsCache,
+                                                    const InvasionState& invasionState,
+                                                    const InvasionState& prevInvasionState)
+{
+    using Scalar = typename SolutionVector::block_type::value_type;
+    static const Scalar accuracyCriterion = getParamFromGroup<Scalar>(problem.paramGroup(), "InvasionState.AccuracyCriterion", -1.0);
+
+    if (accuracyCriterion < 0.0)
+        return;
+
+    auto fvGeometry = localView(problem.gridGeometry());
+    auto elemVolVars = localView(gridVolVars);
+    auto elemFluxVarsCache = localView(gridFluxVarsCache);
+    for (auto&& element : elements(problem.gridGeometry().gridView()))
+    {
+        // Only consider throats which have been invaded during the current time step
+        const auto eIdx = problem.gridGeometry().elementMapper().index(element);
+        if (!invasionState.invaded()[eIdx] || prevInvasionState.invaded()[eIdx] == invasionState.invaded()[eIdx])
+            continue;
+
+        fvGeometry.bindElement(element);
+        elemVolVars.bind(element, fvGeometry, sol);
+        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            // checks if pc is close enough to the entry pressure value
+            const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+
+            using std::max;
+            const Scalar pc = max(elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure());
+
+            if (pc < accuracyCriterion * fluxVarsCache.pcEntry())
+                DUNE_THROW(NumericalProblem, "At element " << eIdx << ": pc " << pc << " too far away form pcEntry " << fluxVarsCache.pcEntry());
+        }
+    }
+}
+
 template<class GridVariables, class SolutionVector>
 class TwoPNewtonConsistencyChecks
 {
@@ -68,6 +122,23 @@ public:
         checkRelativeSaturationShift(gridVariables, uCurrentIter, prevSol);
         checkIfValuesArePhysical(gridVariables, uCurrentIter);
         checkIfCapillaryPressureIsCloseToEntryPressure(gridVariables, uCurrentIter);
+    }
+
+    /*!
+     * \brief Perform all checks, with the invasion states of both time levels given
+     * \note Used when the invasion state describes a single time level, see StateSwitchMethod
+     */
+    template<class InvasionState>
+    void performChecks(const GridVariables& gridVariables, const SolutionVector& uCurrentIter, const SolutionVector& prevSol,
+                       const InvasionState& invasionState, const InvasionState& prevInvasionState) const
+    {
+        checkRelativeSaturationShift(gridVariables, uCurrentIter, prevSol);
+        checkIfValuesArePhysical(gridVariables, uCurrentIter);
+        PoreNetwork::checkIfCapillaryPressureIsCloseToEntryPressure(
+            gridVariables.gridFluxVarsCache().problem(), uCurrentIter,
+            gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache(),
+            invasionState, prevInvasionState
+        );
     }
 
     /*!

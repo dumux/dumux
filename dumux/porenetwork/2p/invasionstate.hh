@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup PNMTwoPModel
- * \brief Invasion state class for the two-phase PNM.
+ * \brief Invasion state of the pore throats for the two-phase PNM
  */
 #ifndef DUMUX_PNM_2P_INVASIONSTATE_HH
 #define DUMUX_PNM_2P_INVASIONSTATE_HH
@@ -26,6 +26,10 @@ namespace Dumux::PoreNetwork {
 
 namespace StateSwitchMethod {
 
+//! Switched per Newton iteration, keeping the previous time step inside the invasion state itself
+struct IterationWithPrevTimeStepInformation : public Utility::Tag<IterationWithPrevTimeStepInformation>
+{ static std::string name() { return "iterationWithPrevTimeStepInformation"; } };
+
 struct Iteration : public Utility::Tag<Iteration>
 { static std::string name() { return "iteration"; } };
 
@@ -34,7 +38,35 @@ struct EndOfTimeStep : public Utility::Tag<EndOfTimeStep>
 
 } // end namespace StateSwitchMethod
 
-template<class P, class SwitchMethod = StateSwitchMethod::Iteration>
+namespace Detail {
+
+//! The grid element type, reached through the problem's public grid geometry accessor
+template<class T>
+using ProblemElement = typename std::decay_t<
+    decltype(std::declval<const T&>().gridGeometry().gridView())
+>::template Codim<0>::Entity;
+
+template<class T>
+using ProblemInitialInvasionState = decltype(std::declval<const T&>().initialInvasionState(
+    std::declval<const ProblemElement<T>&>()
+));
+
+//! whether the problem provides the initial invasion state of a throat
+template<class T>
+constexpr inline bool hasInitialInvasionState()
+{ return Dune::Std::is_detected<ProblemInitialInvasionState, T>::value; }
+
+template<class T>
+using ProblemGlobalCapillaryPressure = decltype(std::declval<const T&>().globalCapillaryPressure());
+
+//! whether the problem restricts the invasion by a global capillary pressure
+template<class T>
+constexpr inline bool hasGlobalCapillaryPressure()
+{ return Dune::Std::is_detected<ProblemGlobalCapillaryPressure, T>::value; }
+
+} // end namespace Detail
+
+template<class P, class SwitchMethod = StateSwitchMethod::IterationWithPrevTimeStepInformation>
 class TwoPInvasionState;
 
 /*!
@@ -42,17 +74,15 @@ class TwoPInvasionState;
  * \brief This class updates the invasion state for the two-phase PNM.
  */
 template<class P>
-class TwoPInvasionState<P, StateSwitchMethod::Iteration>
+class TwoPInvasionState<P, StateSwitchMethod::IterationWithPrevTimeStepInformation>
 {
     using Problem = P;
 
-    template<class T>
-    using InitialInvasionStateDetector = decltype(std::declval<T>().initialInvasionState(std::declval<typename T::GridGeometry::GridView::template Codim<0>::Entity>()));
+public:
+    //! export the state switch method
+    using SwitchMethod = StateSwitchMethod::IterationWithPrevTimeStepInformation;
 
-    //! whether the problem provides the initial invasion state of a throat
-    template<class T>
-    static constexpr bool hasInitialInvasionState()
-    { return Dune::Std::is_detected<InitialInvasionStateDetector, T>::value; }
+private:
 
     template <class T>
     using GlobalCapillaryPressureDetector = decltype(std::declval<T>().globalCapillaryPressure());
@@ -64,18 +94,9 @@ class TwoPInvasionState<P, StateSwitchMethod::Iteration>
     enum class EventType {invasion, snapOff, none};
 
 public:
-    //! export the state method
-    using SwitchMethod = StateSwitchMethod::Iteration;
 
-    /*!
-     * \brief The constructor
-     * \param problem The problem
-     * \param initialInvasionState A callable returning the initial invasion state of a given throat,
-     *                             i.e. bool(const Element&). Defaults to all throats being non-invaded.
-     */
-    template<class InitialInvasionState>
-    TwoPInvasionState(const Problem& problem, const InitialInvasionState& initialInvasionState)
-    : problem_(problem)
+    [[deprecated("Use StateSwitchMethod::Iteration, where the previous time step is held by the problem. Will be removed after 3.12.")]]
+    TwoPInvasionState(const Problem& problem) : problem_(problem)
     {
         // initialize the invasion state
         invadedCurrentIteration_.resize(problem.gridGeometry().gridView().size(0));
@@ -84,7 +105,7 @@ public:
         for (auto&& element : elements(problem.gridGeometry().gridView()))
         {
             const auto eIdx = problem.gridGeometry().elementMapper().index(element);
-            invadedCurrentIteration_[eIdx] = initialInvasionState(element);
+            invadedCurrentIteration_[eIdx] = problem.initialInvasionState(element);
             invadedPreviousTimeStep_[eIdx] = invadedCurrentIteration_[eIdx];
         }
 
@@ -101,21 +122,6 @@ public:
                           << "     Invasion behavior will NOT be restricted! ***\n" << std::endl;
         }
     }
-
-    /*!
-     * \brief Constructor taking the initial state from the problem, if it provides one
-     * \note Kept so that problems implementing initialInvasionState() keep working unchanged.
-     *       Prefer passing the initial state explicitly.
-     */
-    TwoPInvasionState(const Problem& problem)
-    : TwoPInvasionState(problem, [&problem](const auto& element)
-      {
-          if constexpr (hasInitialInvasionState<Problem>())
-              return problem.initialInvasionState(element);
-          else
-              return false;
-      })
-    {}
 
     //! Return whether a given throat is invaded or not.
     template<class Element>
@@ -221,9 +227,6 @@ public:
             }
         }
     }
-
-    bool updateAfterTimeStep() const
-    { return false; }
 
 private:
 
@@ -343,6 +346,242 @@ private:
     const Problem& problem_;
 };
 
+
+/*!
+ * \ingroup PNMTwoPModel
+ * \brief This class updates the invasion state for the two-phase PNM.
+ */
+template<class P>
+class TwoPInvasionState<P, StateSwitchMethod::Iteration>
+{
+    using Problem = P;
+
+    enum class EventType {invasion, snapOff, none};
+
+public:
+    //! export the state method
+    using SwitchMethod = StateSwitchMethod::Iteration;
+
+    /*!
+     * \brief The constructor
+     * \param problem The problem
+     * \param initialInvasionState A callable returning the initial invasion state of a given throat,
+     *                             i.e. bool(const Element&). Defaults to all throats being non-invaded.
+     */
+    template<class InitialInvasionState>
+    TwoPInvasionState(const Problem& problem, const InitialInvasionState& initialInvasionState)
+    : problemPtr_(&problem)
+    {
+        // initialize the invasion state
+        invaded_.resize(problem.gridGeometry().gridView().size(0));
+
+        for (auto&& element : elements(problem.gridGeometry().gridView()))
+        {
+            const auto eIdx = problem.gridGeometry().elementMapper().index(element);
+            invaded_[eIdx] = initialInvasionState(element);
+        }
+
+        numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
+        verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.Verbosity", true);
+        restrictToGlobalCapillaryPressure_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.RestrictInvasionToGlobalCapillaryPressure", false);
+
+        if constexpr (Detail::hasGlobalCapillaryPressure<Problem>())
+        {
+            if (restrictToGlobalCapillaryPressure_)
+                std::cout << "\n *** Invasion behavior is restricted by a global capillary pressure defined in the problem! *** \n" << std::endl;
+            else
+                std::cout << "\n *** WARNING: global capillary pressure defined in the problem but InvasionState.RestrictInvasionToGlobalCapillaryPressure is set to false.\n"
+                          << "     Invasion behavior will NOT be restricted! ***\n" << std::endl;
+        }
+    }
+
+    /*!
+     * \brief Constructor taking the initial state from the problem, if it provides one
+     * \note Kept so that problems implementing initialInvasionState() keep working unchanged.
+     *       Prefer passing the initial state explicitly.
+     */
+    TwoPInvasionState(const Problem& problem)
+    : TwoPInvasionState(problem, [&problem](const auto& element)
+      {
+          if constexpr (Detail::hasInitialInvasionState<Problem>())
+              return problem.initialInvasionState(element);
+          else
+              return false;
+      })
+    {}
+
+    //! Return whether a given throat is invaded or not.
+    template<class Element>
+    bool invaded(const Element& element) const
+    {
+        const auto eIdx = problemPtr_->gridGeometry().elementMapper().index(element);
+        return invaded_[eIdx];
+    }
+
+    //! Return the number of currently invaded throats
+    std::size_t numThroatsInvaded() const
+    { return numThroatsInvaded_; }
+
+    //! Update the invasion state of all throats. This is done after each Newton step by a call from the Newton solver.
+    template<class SolutionVector, class GridVolumeVariables, class GridFluxVariablesCache>
+    bool update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
+    {
+        hasChangedInCurrentIteration_ = false;
+        auto fvGeometry = localView(problemPtr_->gridGeometry());
+        auto elemVolVars = localView(gridVolVars);
+        auto elemFluxVarsCache = localView(gridFluxVarsCache);
+        for (auto&& element : elements(problemPtr_->gridGeometry().gridView()))
+        {
+            fvGeometry.bindElement(element);
+            elemVolVars.bind(element, fvGeometry, sol);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                // checks if invasion or snap-off occurred after Newton iteration step
+                if (const auto invasionResult = invasionSwitch_(element, elemVolVars, elemFluxVarsCache[scvf]); invasionResult)
+                {
+                    hasChangedInCurrentIteration_ = true;
+                    if constexpr (GridFluxVariablesCache::cachingEnabled)
+                    {
+                        const auto eIdx = problemPtr_->gridGeometry().elementMapper().index(element);
+                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(*problemPtr_, element, fvGeometry, elemVolVars, scvf, invaded_[eIdx]);
+                    }
+                }
+            }
+        }
+        numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
+        return hasChangedInCurrentIteration_;
+    }
+
+    //! Return whether an invasion or snap-off occurred anywhere during the current Newton iteration.
+    bool hasChangedInCurrentIteration() const
+    { return hasChangedInCurrentIteration_; }
+
+    //! Return the invasion state of all throats, e.g. for comparing two time levels
+    const std::vector<bool>& invaded() const
+    { return invaded_; }
+
+
+    bool updateAfterTimeStep() const
+    { return false; }
+
+private:
+
+    //! The switch for determining the invasion state of a pore throat. Called at the end of each Newton step.
+    template<class Element, class ElementVolumeVariables, class FluxVariablesCache>
+    auto invasionSwitch_(const Element& element,
+                         const ElementVolumeVariables& elemVolVars,
+                         const FluxVariablesCache& fluxVarsCache)
+
+    {
+        using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
+        const auto& gridGeometry = problemPtr_->gridGeometry();
+        const auto& spatialParams = problemPtr_->spatialParams();
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        bool invadedBeforeSwitch = invaded_[eIdx];
+        bool invadedAfterSwitch = invadedBeforeSwitch;
+
+        // Result type, containing the local scv index of the pore from which the invasion/snap-off occurred
+        // Evaluates to 'false' if no invasion/snap-off occurred
+        struct Result
+        {
+            std::uint8_t localScvIdxWithCriticalPc;
+            Scalar criticalPc;
+            EventType event = EventType::none;
+
+            operator bool() const
+            { return event != EventType::none; }
+        };
+
+        // Block non-wetting phase flux out of the outlet
+        static const auto blockNonwettingPhase = getParamFromGroup<std::vector<int>>(problemPtr_->paramGroup(), "InvasionState.BlockNonwettingPhaseAtThroatLabel", std::vector<int>{});
+        if (!blockNonwettingPhase.empty() && std::find(blockNonwettingPhase.begin(), blockNonwettingPhase.end(), gridGeometry.throatLabel(eIdx)) != blockNonwettingPhase.end())
+        {
+            invaded_[eIdx] = false;
+            return Result{}; // nothing happened
+        }
+
+        //Determine whether throat gets invaded or snap-off occurs
+        const std::array<Scalar, 2> pc = { elemVolVars[0].capillaryPressure(), elemVolVars[1].capillaryPressure() };
+        const auto pcMax = std::max_element(pc.begin(), pc.end());
+        const Scalar pcEntry = fluxVarsCache.pcEntry();
+        const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
+
+        // check if there is a user-specified global capillary pressure which needs to be obeyed
+        if (maybeRestrictToGlobalCapillaryPressure_(pcEntry))
+        {
+            if (*pcMax > pcEntry)
+            {
+                std::cout << "Throat " << eIdx << " would have been invaded by pc of " << *pcMax << "but a global capillary pressure restricion was set in the problem.";
+                std::cout << ". pcEntry: " << spatialParams.pcEntry(element, elemVolVars) << std::endl;
+            }
+
+            invaded_[eIdx] = false;
+            return Result{}; //nothing happened
+        }
+
+        if (*pcMax > pcEntry)
+           invadedAfterSwitch = true;
+        else if (*pcMax <= pcSnapoff)
+           invadedAfterSwitch = false;
+
+        invaded_[eIdx] = invadedAfterSwitch;
+
+        if (invadedBeforeSwitch == invadedAfterSwitch)
+            return Result{}; // nothing happened
+        else
+        {
+            Result result;
+            result.localScvIdxWithCriticalPc = std::distance(pc.begin(), pcMax);
+            result.criticalPc = *pcMax;
+            result.event = !invadedBeforeSwitch && invadedAfterSwitch ? EventType::invasion : EventType::snapOff;
+
+            if (verbose_)
+            {
+                const auto wPhaseIdx = spatialParams.template wettingPhase<typename ElementVolumeVariables::VolumeVariables::FluidSystem>(element, elemVolVars);
+                const std::array sw = { elemVolVars[0].saturation(wPhaseIdx), elemVolVars[1].saturation(wPhaseIdx) };
+                const auto vIdx = gridGeometry.gridView().indexSet().subIndex(element, result.localScvIdxWithCriticalPc, 1);
+                if (result.event == EventType::invasion)
+                {
+                    std::cout << "Throat " << eIdx << " was invaded from pore "  << vIdx << " :";
+                    std::cout << " pc: " << *pcMax;
+                    std::cout << ", pcEntry: " << spatialParams.pcEntry(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                }
+                else
+                {
+                    std::cout << "Snap-off occurred at throat " << eIdx << " from pore "  << vIdx << " :";
+                    std::cout << " pc: " << *pcMax;
+                    std::cout << ", pcSnapoff: " << spatialParams.pcSnapoff(element, elemVolVars);
+                    std::cout << ", sw: " << sw[result.localScvIdxWithCriticalPc] << std::endl;
+                }
+            }
+
+            return result;
+        }
+    }
+
+    //! If the user has specified a global capillary pressure, check if it is lower than the given entry capillary pressure.
+    //! This may be needed to exactly reproduce pc-S curves given by static network models.
+    template<class Scalar>
+    bool maybeRestrictToGlobalCapillaryPressure_(const Scalar pcEntry) const
+    {
+        if constexpr (Detail::hasGlobalCapillaryPressure<Problem>())
+            return restrictToGlobalCapillaryPressure_ && (pcEntry > problemPtr_->globalCapillaryPressure());
+        else
+            return false;
+    }
+
+    std::vector<bool> invaded_;
+    bool hasChangedInCurrentIteration_ = false;
+    std::size_t numThroatsInvaded_;
+    bool verbose_;
+    bool restrictToGlobalCapillaryPressure_;
+
+    const Problem* problemPtr_;
+};
+
 /*!
  * \ingroup PNMTwoPModel
  * \brief This class updates the invasion state for the two-phase PNM after each time step.
@@ -363,14 +602,6 @@ template<class P>
 class TwoPInvasionState<P, StateSwitchMethod::EndOfTimeStep>
 {
     using Problem = P;
-
-    template<class T>
-    using InitialInvasionStateDetector = decltype(std::declval<T>().initialInvasionState(std::declval<typename T::GridGeometry::GridView::template Codim<0>::Entity>()));
-
-    //! whether the problem provides the initial invasion state of a throat
-    template<class T>
-    static constexpr bool hasInitialInvasionState()
-    { return Dune::Std::is_detected<InitialInvasionStateDetector, T>::value; }
 
     template<class C>
     using ThroatStateThetaDetector = decltype(std::declval<C>().theta());
@@ -394,7 +625,7 @@ public:
      */
     template<class InitialInvasionState>
     TwoPInvasionState(const Problem& problem, const InitialInvasionState& initialInvasionState)
-    : problem_(problem)
+    : problemPtr_(&problem)
     {
         invasionThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.InvasionThetaThreshold", 1e-10);
         snapoffThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.SnapoffThetaThreshold", 1-1e-10);
@@ -422,7 +653,7 @@ public:
     TwoPInvasionState(const Problem& problem)
     : TwoPInvasionState(problem, [&problem](const auto& element)
       {
-          if constexpr (hasInitialInvasionState<Problem>())
+          if constexpr (Detail::hasInitialInvasionState<Problem>())
               return problem.initialInvasionState(element);
           else
               return false;
@@ -433,7 +664,7 @@ public:
     template<class Element>
     bool invaded(const Element& element) const
     {
-        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
+        const auto eIdx = problemPtr_->gridGeometry().elementMapper().index(element);
         return invaded_[eIdx];
     }
 
@@ -445,11 +676,10 @@ public:
     template<class SolutionVector, class GridVolumeVariables, class GridFluxVariablesCache>
     void update(const SolutionVector& sol, const GridVolumeVariables& gridVolVars, GridFluxVariablesCache& gridFluxVarsCache)
     {
-        hasChanged_ = false;
-        auto fvGeometry = localView(problem_.gridGeometry());
+        auto fvGeometry = localView(problemPtr_->gridGeometry());
         auto elemVolVars = localView(gridVolVars);
         auto elemFluxVarsCache = localView(gridFluxVarsCache);
-        for (auto&& element : elements(problem_.gridGeometry().gridView()))
+        for (auto&& element : elements(problemPtr_->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);
             elemVolVars.bind(element, fvGeometry, sol);
@@ -460,11 +690,10 @@ public:
                 // checks if invasion or snap-off occurred within time step
                 if (const auto invasionResult = invasionSwitch_(element, fvGeometry, elemVolVars, elemFluxVarsCache[scvf], scvf); invasionResult)
                 {
-                    hasChanged_ = true;
                     if constexpr (GridFluxVariablesCache::cachingEnabled)
                     {
-                        const auto eIdx = problem_.gridGeometry().elementMapper().index(element);
-                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(problem_, element, fvGeometry, elemVolVars, scvf, *this);
+                        const auto eIdx = problemPtr_->gridGeometry().elementMapper().index(element);
+                        gridFluxVarsCache.cache(eIdx, scvf.index()).update(*problemPtr_, element, fvGeometry, elemVolVars, scvf, invaded_[eIdx]);
                     }
                 }
             }
@@ -472,9 +701,9 @@ public:
         numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
     }
 
-    //! Return whether an invasion or snap-off occurred anywhere. Can be used, e.g., for output file writing control.
-    bool hasChanged() const
-    { return hasChanged_; }
+    //! Return the invasion state of all throats, e.g. for comparing two time levels
+    const std::vector<bool>& invaded() const
+    { return invaded_; }
 
     bool updateAfterTimeStep() const
     { return true; }
@@ -491,8 +720,8 @@ private:
 
     {
         using Scalar = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables::value_type;
-        const auto& gridGeometry = problem_.gridGeometry();
-        const auto& spatialParams = problem_.spatialParams();
+        const auto& gridGeometry = problemPtr_->gridGeometry();
+        const auto& spatialParams = problemPtr_->spatialParams();
         const auto eIdx = gridGeometry.elementMapper().index(element);
         bool invadedPrev = invaded_[eIdx];
         bool invadedCur = invadedPrev;
@@ -585,9 +814,8 @@ private:
     std::vector<bool> invaded_;
     std::size_t numThroatsInvaded_;
     bool verbose_;
-    bool hasChanged_ = false;
 
-    const Problem& problem_;
+    const Problem* problemPtr_;
 };
 
 } // end namespace Dumux::PoreNetwork

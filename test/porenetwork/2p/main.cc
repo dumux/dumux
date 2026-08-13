@@ -82,9 +82,10 @@ int main(int argc, char** argv)
 
     // the invasion state of the throats, owned by the problem
     using InvasionState = typename Problem::InvasionState;
-    problem->setInvasionState(std::make_shared<InvasionState>(
-        *problem, [](const auto& element){ return false; }
-    ));
+    const auto initialInvasionState = [](const auto& element){ return false; };
+    auto invasionState = std::make_shared<InvasionState>(*problem, initialInvasionState);
+    auto prevInvasionState = std::make_shared<InvasionState>(*problem, initialInvasionState);
+    problem->setInvasionState(invasionState, prevInvasionState);
 
     // the solution vector
     using GridView = typename GridGeometry::GridView;
@@ -130,11 +131,14 @@ int main(int argc, char** argv)
 
     // the non-linear solver
 #if !USETHETAREGULARIZATION && !SWITCHATENDOFTIMESTEP
-    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver,
+                                                       PoreNetwork::TwoPNewtonConsistencyChecks,
+                                                       PoreNetwork::StateSwitchMethod::Iteration>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, invasionState, prevInvasionState);
 #else
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-#endif
     NewtonSolver nonLinearSolver(assembler, linearSolver);
+#endif
 
     // time loop
     timeLoop->start(); do
@@ -145,8 +149,8 @@ int main(int argc, char** argv)
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
-        if (gridVariables->gridFluxVarsCache().invasionState().updateAfterTimeStep())
-            gridVariables->gridFluxVarsCache().invasionState().update(x, gridVariables->curGridVolVars(), gridVariables->gridFluxVarsCache());
+        if (invasionState->updateAfterTimeStep())
+            invasionState->update(x, gridVariables->curGridVolVars(), gridVariables->gridFluxVarsCache());
 
         // advance the time loop to the next step
         timeLoop->advanceTimeStep();
@@ -154,6 +158,9 @@ int main(int argc, char** argv)
         // write vtk output
         if(problem->shouldWriteOutput(timeLoop->timeStepIndex(), *gridVariables))
             vtkWriter.write(timeLoop->time());
+
+        // the invasion state of the converged time step becomes the previous time level
+        *prevInvasionState = *invasionState;
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

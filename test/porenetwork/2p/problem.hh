@@ -62,7 +62,7 @@ public:
 #if USETHETAREGULARIZATION || SWITCHATENDOFTIMESTEP
     using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem, PoreNetwork::StateSwitchMethod::EndOfTimeStep>;
 #else
-    using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem>;
+    using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem, PoreNetwork::StateSwitchMethod::Iteration>;
 #endif
 
     template<class SpatialParams>
@@ -90,9 +90,9 @@ public:
             return true;
 
         if (vtpOutputFrequency_ == 0)
-            return (timeStepIndex == 0 || this->invasionState().hasChanged());
+            return (timeStepIndex == 0 || (this->prevInvasionState().invaded() != this->invasionState().invaded()));
         else
-            return (timeStepIndex % vtpOutputFrequency_ == 0 || this->invasionState().hasChanged());
+            return (timeStepIndex % vtpOutputFrequency_ == 0 || (this->prevInvasionState().invaded() != this->invasionState().invaded()));
     }
 
      /*!
@@ -192,21 +192,35 @@ public:
      * \brief Sets the invasion state of the throats
      * \note The invasion state is constructed after the problem and handed to it, see the main file
      */
-    void setInvasionState(std::shared_ptr<InvasionState> invasionState)
-    { invasionState_ = invasionState; }
+    void setInvasionState(std::shared_ptr<InvasionState> invasionState,
+                          std::shared_ptr<InvasionState> prevInvasionState)
+    {
+        invasionState_ = invasionState;
+        prevInvasionState_ = prevInvasionState;
+    }
 
     /*!
      * \brief Returns the invasion state of the throats
      */
-    InvasionState& invasionState() const
+    const InvasionState& invasionState() const
     {
         if (!invasionState_)
             DUNE_THROW(Dune::InvalidStateException, "No invasion state set. Call setInvasionState() before using the problem.");
         return *invasionState_;
     }
 
+    //! Returns the invasion state of the throats at the previous time level
+    const InvasionState& prevInvasionState() const
+    {
+        if (!prevInvasionState_)
+            DUNE_THROW(Dune::InvalidStateException, "No invasion state set. Call setInvasionState() before using the problem.");
+        return *prevInvasionState_;
+    }
+
+
 private:
     std::shared_ptr<InvasionState> invasionState_;
+    std::shared_ptr<InvasionState> prevInvasionState_;
 
     bool isInletPore_(const SubControlVolume& scv) const
     {

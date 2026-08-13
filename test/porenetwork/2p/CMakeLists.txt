@@ -54,19 +54,18 @@ dumux_add_test(NAME test_pnm_2p_switch_at_end_of_time_step
                                         -Problem.Name test_pnm_2p_switch_at_end_of_time_step
                                         -TimeLoop.MaxTimeStepSize 1e-4 -TimeLoop.TEnd 0.005")
 
-dumux_add_test(NAME test_pnm_2p_reg
+dumux_add_test(NAME test_pnm_2p_theta_regularization
                SOURCES main.cc
                LABELS porenetwork
                COMPILE_DEFINITIONS ISOTHERMAL=1 USETHETAREGULARIZATION=1
                COMMAND ${DUMUX_RUNTEST}
                CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p_reg-reference.vtp
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_reg-00259.vtp
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_reg params.input
-                                        -Problem.Name test_pnm_2p_reg
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p_theta_regularization-reference.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_theta_regularization-00259.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_theta_regularization params.input
+                                        -Problem.Name test_pnm_2p_theta_regularization
                                         -TimeLoop.MaxTimeStepSize 1e-4 -TimeLoop.TEnd 0.005
-                                        -InvasionState.AccuracyCriterion 0.99
                                         -Problem.RegularizationDelta 1e-4
                                         -InvasionState.InvasionThetaThreshold 1e-14")
 
