@@ -18,6 +18,7 @@
 
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
 #include "problem.hh"
 #include "fluidsystem.hh"
@@ -61,6 +62,15 @@ struct SpatialParams<TypeTag, TTag::HenryFahsTest>
 // Use mass fractions to set salinity conveniently
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::HenryFahsTest> { static constexpr bool value = false; };
+
+// The default (Millington-Quirk, D_eff = Dm*phi^(1/3)) does not match Fahs et al.
+// (2016)'s transport equation, which scales molecular diffusion linearly by porosity
+// alone (their eq. 3: epsilon*Dm, no separate tortuosity reduction). Constant
+// tortuosity with tau=1 (set via SpatialParams.Tortuosity in params.input) reproduces
+// that exactly: D_eff = phi*Sw*tau*Dm = phi*Dm.
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::HenryFahsTest>
+{ using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // Enable velocity-dependent (Scheidegger) dispersion for Test Case 2
 template<class TypeTag>
