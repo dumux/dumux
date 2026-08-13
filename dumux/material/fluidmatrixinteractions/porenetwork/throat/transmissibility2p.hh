@@ -55,6 +55,26 @@ struct CreviceResistanceFactorZhou
 template<class Scalar, class CreviceResistanceFactor = CreviceResistanceFactorZhou>
 struct RansohoffRadke
 {
+    /*!
+    * \brief Returns the conductivity of a wetting layer occupying one corner of a throat
+    *
+    * \param wettingLayerArea The cross-sectional area of the wetting layer in that corner
+    * \param rC The radius of curvature of the fluid-fluid interface
+    * \param throatLength The length of the throat
+    * \param creviceResistanceFactor The crevice resistance factor beta of that corner
+    *
+    * Ransohoff & Radke (1988), see also Zhou et al. (1997), eq. 19
+    *
+    * \note This overload is the formula itself and only takes the quantities it depends on.
+    *       Evaluate it for whatever state is of interest, e.g. the current one or the one at
+    *       the entry pressure, or use it without a flux variables cache at all.
+    */
+    static Scalar wettingLayerTransmissibility(const Scalar wettingLayerArea,
+                                               const Scalar rC,
+                                               const Scalar throatLength,
+                                               const Scalar creviceResistanceFactor)
+    { return wettingLayerArea * rC*rC / (throatLength*creviceResistanceFactor); }
+
     class WettingLayerCache
     {
         using NumCornerVector = Dune::ReservedVector<Scalar, 4>;
@@ -85,7 +105,7 @@ struct RansohoffRadke
     };
 
     /*!
-    * \brief Returns the integral conductivity of all wetting layers occupying the corners of a throat
+    * \brief Returns the integral wetting-phase conductivity of all wetting layers occupying the corners of a throat
     */
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar wettingLayerTransmissibility(const Element& element,
@@ -103,10 +123,42 @@ struct RansohoffRadke
         // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
         Scalar result = 0.0;
         for (int i = 0; i < numCorners; ++i)
-            result += fluxVarsCache.wettingLayerCrossSectionalArea(i) * rC*rC / (throatLength*fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i));
+            result += wettingLayerTransmissibility(
+                fluxVarsCache.wettingLayerCrossSectionalArea(i), rC, throatLength,
+                fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i)
+            );
 
         return result;
     }
+
+    /*!
+    * \brief Returns the integral wetting-phase conductivity of all wetting layers at the entry pressure
+    * \note Only supplies the quantities evaluated at the entry pressure, the formula itself is
+    *       the per-corner overload above.
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar entryWettingLayerTransmissibility(const Element& element,
+                                                    const FVElementGeometry& fvGeometry,
+                                                    const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                    const FluxVariablesCache& fluxVarsCache)
+    {
+        const Scalar throatLength = fluxVarsCache.throatLength();
+        const Scalar rC = fluxVarsCache.curvatureRadiusInvasion();
+        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto shape = fvGeometry.gridGeometry().throatCrossSectionShape(eIdx);
+        const auto numCorners = Throat::numCorners(shape);
+
+        // treat the wetting film layer in each corner of the throat individually (might have different corner half-angle and beta)
+        Scalar result = 0.0;
+        for (int i = 0; i < numCorners; ++i)
+            result += wettingLayerTransmissibility(
+                fluxVarsCache.entryWettingLayerArea(i), rC, throatLength,
+                fluxVarsCache.wettingLayerFlowVariables().creviceResistanceFactor(i)
+            );
+
+        return result;
+    }
+
 };
 } // end namespace WettingLayerTransmissibility
 
@@ -118,21 +170,37 @@ struct Mogensen
 {
     using NonWettingPhaseCache = EmptyCache;
 
+
+    /*!
+    * \brief Returns the conductivity of the nonwetting phase occupying the center of a throat
+    *
+    * \param aNw The cross-sectional area occupied by the nonwetting phase
+    * \param throatInscribedRadius The inscribed radius of the throat
+    * \param throatLength The length of the throat
+    *
+    * Mogensen et al. (1999), does not really recover the single phase value
+    */
+    static Scalar nonWettingPhaseTransmissibility(const Scalar aNw,
+                                                  const Scalar throatInscribedRadius,
+                                                  const Scalar throatLength)
+    {
+        using std::sqrt;
+        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + throatInscribedRadius);
+        const Scalar result = M_PI/(8*throatLength) * rEff*rEff*rEff*rEff;
+        return result;
+    }
+
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar nonWettingPhaseTransmissibility(const Element& element,
                                                   const FVElementGeometry& fvGeometry,
                                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                                   const FluxVariablesCache& fluxVarsCache)
     {
-        // Mogensen et al. (1999), does not really revover the single phase value
-        using std::sqrt;
-        const Scalar throatLength = fluxVarsCache.throatLength();
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar result = M_PI/(8*throatLength) * rEff*rEff*rEff*rEff;
-        return result;
+        return nonWettingPhaseTransmissibility(aNw, fluxVarsCache.throatInscribedRadius(), fluxVarsCache.throatLength());
     }
+
 };
 
 //! TODO: evaluate and maybe remove
@@ -140,6 +208,7 @@ template<class Scalar, class SinglePhaseTransmissibilityLaw>
 struct Valvatne
 {
     using NonWettingPhaseCache = EmptyCache;
+
 
     template<class Element, class FVElementGeometry, class FluxVariablesCache>
     static Scalar nonWettingPhaseTransmissibility(const Element& element,
@@ -165,6 +234,30 @@ struct BakkeOren
 {
     using NonWettingPhaseCache = EmptyCache;
 
+
+    /*!
+    * \brief Returns the conductivity of the nonwetting phase occupying the center of a throat
+    *
+    * \param aNw The cross-sectional area occupied by the nonwetting phase
+    * \param throatInscribedRadius The inscribed radius of the throat
+    * \param throatLength The length of the throat
+    *
+    * Tora et al. (2012), quite close for single-phase value of square
+    *
+    * \note This overload is the formula itself and only takes the quantities it depends on.
+    *       Evaluate it for whatever state is of interest, e.g. the current one or the one at
+    *       the entry pressure, or use it without a flux variables cache at all.
+    */
+    static Scalar nonWettingPhaseTransmissibility(const Scalar aNw,
+                                                  const Scalar throatInscribedRadius,
+                                                  const Scalar throatLength)
+    {
+        using std::sqrt;
+        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + throatInscribedRadius);
+        const Scalar result = rEff*rEff*aNw / (8.0*throatLength);
+        return result;
+    }
+
     /*!
     * \brief Returns the conductivity of a throat.
     *
@@ -176,15 +269,25 @@ struct BakkeOren
                                                   const typename FVElementGeometry::SubControlVolumeFace& scvf,
                                                   const FluxVariablesCache& fluxVarsCache)
     {
-        // Tora et al. (2012), quite close for single-phase value of square
-        using std::sqrt;
-        const Scalar throatLength = fluxVarsCache.throatLength();
         const auto nPhaseIdx = fluxVarsCache.nPhaseIdx();
         const Scalar aNw = fluxVarsCache.throatCrossSectionalArea(nPhaseIdx);
-        const Scalar rEff = 0.5*(sqrt(aNw / M_PI) + fluxVarsCache.throatInscribedRadius());
-        const Scalar result = rEff*rEff*aNw / (8.0*throatLength);
-        return result;
+        return nonWettingPhaseTransmissibility(aNw, fluxVarsCache.throatInscribedRadius(), fluxVarsCache.throatLength());
     }
+    /*!
+    * \brief Returns the conductivity of a throat at the entry pressure.
+    * \note Only supplies the quantities evaluated at the entry pressure, the formula itself is
+    *       the overload above.
+    */
+    template<class Element, class FVElementGeometry, class FluxVariablesCache>
+    static Scalar entryNonWettingPhaseTransmissibility(const Element& element,
+                                                       const FVElementGeometry& fvGeometry,
+                                                       const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                                       const FluxVariablesCache& fluxVarsCache)
+    {
+        const Scalar aNwCrit = fluxVarsCache.nonWettingAreaEntry();
+        return nonWettingPhaseTransmissibility(aNwCrit, fluxVarsCache.throatInscribedRadius(), fluxVarsCache.throatLength());
+    }
+
 };
 } // end namespace NonWettingPhaseTransmissibility
 } // end namespace Dumux::PoreNetwork
