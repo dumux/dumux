@@ -283,6 +283,10 @@ private:
         else
         {
             // regularize once pc is below the snap-off pressure
+            // a vanishing snap-off pressure means that snap-off cannot occur
+            if (pcSnapoff_ == Scalar(0.0))
+                return Scalar(1.0);
+
             const Scalar dp = clamp(pc_/abs(pcSnapoff_) - sign(pcSnapoff_), -delta, Scalar(0.0));
             return Scalar(0.5*(1.0 + sin(M_PI*(dp + 0.5*delta)/delta)));
         }
