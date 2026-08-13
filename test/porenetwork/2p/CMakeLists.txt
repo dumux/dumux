@@ -41,6 +41,19 @@ dumux_add_test(NAME test_pnm_2p_accuracy_check
                                         -TimeLoop.MaxTimeStepSize 1e-4 -TimeLoop.TEnd 0.005
                                         -InvasionState.AccuracyCriterion 0.99")
 
+dumux_add_test(NAME test_pnm_2p_switch_at_end_of_time_step
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1 SWITCHATENDOFTIMESTEP=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p_switch_at_end_of_time_step-reference.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_switch_at_end_of_time_step-00060.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_switch_at_end_of_time_step params.input
+                                        -Problem.Name test_pnm_2p_switch_at_end_of_time_step
+                                        -TimeLoop.MaxTimeStepSize 1e-4 -TimeLoop.TEnd 0.005")
+
 dumux_add_test(NAME test_pnm_2p_reg
                SOURCES main.cc
                LABELS porenetwork

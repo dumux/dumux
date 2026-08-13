@@ -129,7 +129,7 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-#if !USETHETAREGULARIZATION
+#if !USETHETAREGULARIZATION && !SWITCHATENDOFTIMESTEP
     using NewtonSolver = PoreNetwork::TwoPNewtonSolver<Assembler, LinearSolver>;
 #else
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

@@ -59,7 +59,7 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The invasion state of the throats, owned by this problem
-#if USETHETAREGULARIZATION
+#if USETHETAREGULARIZATION || SWITCHATENDOFTIMESTEP
     using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem, PoreNetwork::StateSwitchMethod::EndOfTimeStep>;
 #else
     using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem>;
