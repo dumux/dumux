@@ -14,12 +14,22 @@
 #define DUMUX_FLUX_PNM_ADVECTION_HH
 
 #include <array>
+#include <type_traits>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux::PoreNetwork::Detail {
 
 template<class... TransmissibilityLawTypes>
 struct Transmissibility : public TransmissibilityLawTypes... {};
+
+template<class C>
+using ThroatStateTheta = decltype(std::declval<C>().theta());
+
+//! whether a flux variables cache provides the throat state theta
+template<class C>
+constexpr inline bool hasThroatStateTheta()
+{ return Dune::Std::is_detected<ThroatStateTheta, C>::value; }
 
 } // end namespace Dumux::PoreNetwork::Detail
 
@@ -112,15 +122,38 @@ public:
             const int wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, elemVolVars);
             const bool invaded = fluxVarsCache.invaded();
 
-            if (phaseIdx == wPhaseIdx)
+            // With a throat state the transmissibilities are weighted with theta, the fraction of
+            // the time step at which the invasion or the snap-off occurs, instead of being
+            // switched discretely. For theta = 0 and theta = 1 both branches coincide.
+            if constexpr (Detail::hasThroatStateTheta<FluxVariablesCache>())
             {
-                return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                const Scalar theta = fluxVarsCache.theta();
+                if (phaseIdx == wPhaseIdx)
+                {
+                    const Scalar k1p = Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                    const Scalar kw = invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                              : Transmissibility::entryWettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return theta*kw + (1.0 - theta)*k1p;
+                }
+                else // non-wetting phase
+                {
+                    const Scalar kn = invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                              : Transmissibility::entryNonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache);
+                    return theta*kn;
+                }
             }
-            else // non-wetting phase
+            else
             {
-                return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
-                               : 0.0;
+                if (phaseIdx == wPhaseIdx)
+                {
+                    return invaded ? Transmissibility::wettingLayerTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                   : Transmissibility::singlePhaseTransmissibility(problem, element, fvGeometry, scvf, elemVolVars, fluxVarsCache, phaseIdx);
+                }
+                else // non-wetting phase
+                {
+                    return invaded ? Transmissibility::nonWettingPhaseTransmissibility(element, fvGeometry, scvf, fluxVarsCache)
+                                   : 0.0;
+                }
             }
         }
     }
