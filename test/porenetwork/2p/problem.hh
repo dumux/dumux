@@ -12,8 +12,11 @@
 #ifndef DUMUX_PNM2P_PROBLEM_HH
 #define DUMUX_PNM2P_PROBLEM_HH
 
+#include <dune/common/exceptions.hh>
+#include <memory>
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/porenetwork/2p/invasionstate.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -55,6 +58,9 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
 
 public:
+    //! The invasion state of the throats, owned by this problem
+    using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem>;
+
     template<class SpatialParams>
     DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
     : ParentType(gridGeometry, spatialParams)
@@ -80,9 +86,9 @@ public:
             return true;
 
         if (vtpOutputFrequency_ == 0)
-            return (timeStepIndex == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
+            return (timeStepIndex == 0 || this->invasionState().hasChanged());
         else
-            return (timeStepIndex % vtpOutputFrequency_ == 0 || gridVariables.gridFluxVarsCache().invasionState().hasChanged());
+            return (timeStepIndex % vtpOutputFrequency_ == 0 || this->invasionState().hasChanged());
     }
 
      /*!
@@ -175,13 +181,28 @@ public:
         return values;
     }
 
-    //!  Evaluate the initial invasion state of a pore throat
-    bool initialInvasionState(const Element& element) const
-    { return false; }
-
     // \}
 
+
+    /*!
+     * \brief Sets the invasion state of the throats
+     * \note The invasion state is constructed after the problem and handed to it, see the main file
+     */
+    void setInvasionState(std::shared_ptr<InvasionState> invasionState)
+    { invasionState_ = invasionState; }
+
+    /*!
+     * \brief Returns the invasion state of the throats
+     */
+    InvasionState& invasionState() const
+    {
+        if (!invasionState_)
+            DUNE_THROW(Dune::InvalidStateException, "No invasion state set. Call setInvasionState() before using the problem.");
+        return *invasionState_;
+    }
+
 private:
+    std::shared_ptr<InvasionState> invasionState_;
 
     bool isInletPore_(const SubControlVolume& scv) const
     {

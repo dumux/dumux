@@ -46,6 +46,14 @@ class TwoPInvasionState<P, StateSwitchMethod::Iteration>
 {
     using Problem = P;
 
+    template<class T>
+    using InitialInvasionStateDetector = decltype(std::declval<T>().initialInvasionState(std::declval<typename T::GridGeometry::GridView::template Codim<0>::Entity>()));
+
+    //! whether the problem provides the initial invasion state of a throat
+    template<class T>
+    static constexpr bool hasInitialInvasionState()
+    { return Dune::Std::is_detected<InitialInvasionStateDetector, T>::value; }
+
     template <class T>
     using GlobalCapillaryPressureDetector = decltype(std::declval<T>().globalCapillaryPressure());
 
@@ -59,7 +67,15 @@ public:
     //! export the state method
     using SwitchMethod = StateSwitchMethod::Iteration;
 
-    TwoPInvasionState(const Problem& problem) : problem_(problem)
+    /*!
+     * \brief The constructor
+     * \param problem The problem
+     * \param initialInvasionState A callable returning the initial invasion state of a given throat,
+     *                             i.e. bool(const Element&). Defaults to all throats being non-invaded.
+     */
+    template<class InitialInvasionState>
+    TwoPInvasionState(const Problem& problem, const InitialInvasionState& initialInvasionState)
+    : problem_(problem)
     {
         // initialize the invasion state
         invadedCurrentIteration_.resize(problem.gridGeometry().gridView().size(0));
@@ -68,7 +84,7 @@ public:
         for (auto&& element : elements(problem.gridGeometry().gridView()))
         {
             const auto eIdx = problem.gridGeometry().elementMapper().index(element);
-            invadedCurrentIteration_[eIdx] = problem.initialInvasionState(element);
+            invadedCurrentIteration_[eIdx] = initialInvasionState(element);
             invadedPreviousTimeStep_[eIdx] = invadedCurrentIteration_[eIdx];
         }
 
@@ -85,6 +101,21 @@ public:
                           << "     Invasion behavior will NOT be restricted! ***\n" << std::endl;
         }
     }
+
+    /*!
+     * \brief Constructor taking the initial state from the problem, if it provides one
+     * \note Kept so that problems implementing initialInvasionState() keep working unchanged.
+     *       Prefer passing the initial state explicitly.
+     */
+    TwoPInvasionState(const Problem& problem)
+    : TwoPInvasionState(problem, [&problem](const auto& element)
+      {
+          if constexpr (hasInitialInvasionState<Problem>())
+              return problem.initialInvasionState(element);
+          else
+              return false;
+      })
+    {}
 
     //! Return whether a given throat is invaded or not.
     template<class Element>
@@ -316,20 +347,30 @@ private:
  * \ingroup PNMTwoPModel
  * \brief This class updates the invasion state for the two-phase PNM after each time step.
  *
- * The state of a throat is described by the continuous variable theta within [0,1]. It is
- * interpreted as the fraction of the time step at which the invasion or the snap-off of the
- * throat occurs, i.e. the event takes place at theta*dt. The discrete invasion state is therefore
- * only updated once the time step has converged, based on whether theta exceeds a threshold,
- * instead of being switched within the Newton iteration.
+ * In contrast to StateSwitchMethod::Iteration, the discrete state is not switched within the
+ * Newton iteration but only once the time step has converged. No additional Newton iteration is
+ * therefore enforced by a switch. Two configurations are supported:
  *
- * The throat transmissibilities are weighted with theta rather than being switched discretely,
- * see CreepingFlow. Theta therefore has to be a differentiable function of the
- * solution, which is what distinguishes it from the discrete invasion state.
+ * - If the flux variables cache provides the continuous throat state theta, see
+ *   TwoPRegularizedFluxVariablesCache, theta is the primary criterion. It is interpreted as the
+ *   fraction of the time step at which the invasion or the snap-off of the throat occurs, i.e.
+ *   the event takes place at theta*dt, and the transmissibilities are weighted with it rather
+ *   than being switched discretely. The state is switched once theta exceeds a threshold.
+ * - Otherwise the switch is purely based on the capillary pressure, i.e. a discrete switch that
+ *   is evaluated once per time step rather than once per Newton iteration.
  */
 template<class P>
 class TwoPInvasionState<P, StateSwitchMethod::EndOfTimeStep>
 {
     using Problem = P;
+
+    template<class T>
+    using InitialInvasionStateDetector = decltype(std::declval<T>().initialInvasionState(std::declval<typename T::GridGeometry::GridView::template Codim<0>::Entity>()));
+
+    //! whether the problem provides the initial invasion state of a throat
+    template<class T>
+    static constexpr bool hasInitialInvasionState()
+    { return Dune::Std::is_detected<InitialInvasionStateDetector, T>::value; }
 
     template<class C>
     using ThroatStateThetaDetector = decltype(std::declval<C>().theta());
@@ -345,7 +386,15 @@ public:
     //! export the state method
     using SwitchMethod = StateSwitchMethod::EndOfTimeStep;
 
-    TwoPInvasionState(const Problem& problem) : problem_(problem)
+    /*!
+     * \brief The constructor
+     * \param problem The problem
+     * \param initialInvasionState A callable returning the initial invasion state of a given throat,
+     *                             i.e. bool(const Element&). Defaults to all throats being non-invaded.
+     */
+    template<class InitialInvasionState>
+    TwoPInvasionState(const Problem& problem, const InitialInvasionState& initialInvasionState)
+    : problem_(problem)
     {
         invasionThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.InvasionThetaThreshold", 1e-10);
         snapoffThetaThreshold_ = getParamFromGroup<double>(problem.paramGroup(), "InvasionState.SnapoffThetaThreshold", 1-1e-10);
@@ -358,12 +407,27 @@ public:
         for (auto&& element : elements(problem.gridGeometry().gridView()))
         {
             const auto eIdx = problem.gridGeometry().elementMapper().index(element);
-            invaded_[eIdx] = problem.initialInvasionState(element);
+            invaded_[eIdx] = initialInvasionState(element);
         }
 
         numThroatsInvaded_ = std::count(invaded_.begin(), invaded_.end(), true);
         verbose_ = getParamFromGroup<bool>(problem.paramGroup(), "InvasionState.Verbosity", true);
     }
+
+    /*!
+     * \brief Constructor taking the initial state from the problem, if it provides one
+     * \note Kept so that problems implementing initialInvasionState() keep working unchanged.
+     *       Prefer passing the initial state explicitly.
+     */
+    TwoPInvasionState(const Problem& problem)
+    : TwoPInvasionState(problem, [&problem](const auto& element)
+      {
+          if constexpr (hasInitialInvasionState<Problem>())
+              return problem.initialInvasionState(element);
+          else
+              return false;
+      })
+    {}
 
     //! Return whether a given throat is invaded or not.
     template<class Element>

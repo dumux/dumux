@@ -78,6 +78,12 @@ int main(int argc, char** argv)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry, spatialParams);
 
+    // the invasion state of the throats, owned by the problem
+    using InvasionState = typename Problem::InvasionState;
+    problem->setInvasionState(std::make_shared<InvasionState>(
+        *problem, [](const auto& element){ return false; }
+    ));
+
     // the solution vector
     using GridView = typename GridGeometry::GridView;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;

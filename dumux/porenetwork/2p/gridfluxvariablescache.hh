@@ -12,6 +12,8 @@
 #ifndef DUMUX_PNM_2P_GRID_FLUXVARSCACHE_HH
 #define DUMUX_PNM_2P_GRID_FLUXVARSCACHE_HH
 
+#include <type_traits>
+#include <dune/common/std/type_traits.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
@@ -20,16 +22,57 @@
 
 namespace Dumux::PoreNetwork {
 
+namespace Detail {
+
+template<class P>
+using ProblemInvasionState = decltype(std::declval<const P&>().invasionState());
+
+//! whether the problem provides the invasion state, i.e. is its owner
+template<class P>
+constexpr inline bool problemProvidesInvasionState()
+{ return Dune::Std::is_detected<ProblemInvasionState, P>::value; }
+
+//! the invasion state as provided by the problem, a reference to the state owned by it
+template<class P>
+struct InvasionStateFromProblem
+{ using type = ProblemInvasionState<P>; };
+
+//! the invasion state as selected by the traits, owned by the grid flux variables cache
+template<class Traits>
+struct InvasionStateFromTraits
+{ using type = typename Traits::InvasionState; };
+
+/*!
+ * \brief The type of the invasion state held by the grid flux variables cache.
+ * \note Only one of the two is ever named: a reference to the problem's state if it provides one,
+ *       the type selected by the traits otherwise, which is the deprecated way of choosing it.
+ */
+template<class Problem, class Traits>
+using InvasionStateType = typename std::conditional_t<problemProvidesInvasionState<Problem>(),
+                                                      InvasionStateFromProblem<Problem>,
+                                                      InvasionStateFromTraits<Traits>>::type;
+
+} // end namespace Detail
+
 /*!
  * \ingroup PNMTwoPModel
  * \brief Flux variable caches traits
+ *
+ * \tparam P The problem
+ * \tparam FVC The flux variables cache
+ * \tparam IS The invasion state.
+ *             \deprecated Selecting the invasion state here is deprecated, let the problem own it
+ *             instead by providing invasionState(). This parameter and the InvasionState member it
+ *             defines will be removed after 3.12.
  */
 template<class P, class FVC, class IS = TwoPInvasionState<P>>
 struct PNMTwoPDefaultGridFVCTraits
 {
     using Problem = P;
     using FluxVariablesCache = FVC;
-    using InvasionState = IS;
+
+    //! \deprecated Let the problem own the invasion state instead. Will be removed after 3.12.
+    using InvasionState [[deprecated("Let the problem own the invasion state instead. Will be removed after 3.12.")]] = IS;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = PNMTwoPElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
@@ -56,7 +99,7 @@ class PNMTwoPGridFluxVariablesCache<P, FVC, true, Traits>
 {
     using Problem = typename Traits::Problem;
     using ThisType = PNMTwoPGridFluxVariablesCache<P, FVC, true, Traits>;
-    using InvasionState = typename Traits::InvasionState;
+    using InvasionStateType = Detail::InvasionStateType<Problem, Traits>;
 
 public:
     //! export the flux variable cache type
@@ -70,7 +113,7 @@ public:
 
     PNMTwoPGridFluxVariablesCache(const Problem& problem)
     : problemPtr_(&problem)
-    , invasionState_(problem) {}
+    , invasionState_(makeInvasionState_(problem)) {}
 
     template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const GridGeometry& gridGeometry,
@@ -118,16 +161,31 @@ public:
     FluxVariablesCache& cache(std::size_t eIdx, [[maybe_unused]] std::size_t scvfIdx)
     { return fluxVarsCache_[eIdx]; }
 
-    const InvasionState& invasionState() const
-    { return invasionState_; }
+    /*!
+     * \brief Returns the invasion state of the throats
+     * \note If the problem provides an invasion state, it is the owner and this only refers to it.
+     *       Otherwise the state is owned here, as it always was.
+     */
+    decltype(auto) invasionState()
+    { return (invasionState_); }
 
-    InvasionState& invasionState()
-    { return invasionState_; }
+    //! \copydoc invasionState()
+    decltype(auto) invasionState() const
+    { return (invasionState_); }
 
 private:
+    //! Refer to the problem's invasion state if it provides one, otherwise construct our own
+    static InvasionStateType makeInvasionState_(const Problem& problem)
+    {
+        if constexpr (Detail::problemProvidesInvasionState<Problem>())
+            return problem.invasionState();
+        else
+            return InvasionStateType(problem);
+    }
+
     const Problem* problemPtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
-    InvasionState invasionState_;
+    InvasionStateType invasionState_;
 };
 
 /*!
@@ -140,7 +198,7 @@ class PNMTwoPGridFluxVariablesCache<P, FVC, false, Traits>
 {
     using Problem = typename Traits::Problem;
     using ThisType = PNMTwoPGridFluxVariablesCache<P, FVC, false, Traits>;
-    using InvasionState = typename Traits::InvasionState;
+    using InvasionStateType = Detail::InvasionStateType<Problem, Traits>;
 
     public:
     //! export the flux variable cache type
@@ -154,7 +212,7 @@ class PNMTwoPGridFluxVariablesCache<P, FVC, false, Traits>
 
     PNMTwoPGridFluxVariablesCache(const Problem& problem)
     : problemPtr_(&problem)
-    , invasionState_(problem) {}
+    , invasionState_(makeInvasionState_(problem)) {}
 
     template<class GridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const GridGeometry& gridGeometry,
@@ -165,15 +223,30 @@ class PNMTwoPGridFluxVariablesCache<P, FVC, false, Traits>
     const Problem& problem() const
     { return *problemPtr_; }
 
-    const InvasionState& invasionState() const
-    { return invasionState_; }
+    /*!
+     * \brief Returns the invasion state of the throats
+     * \note If the problem provides an invasion state, it is the owner and this only refers to it.
+     *       Otherwise the state is owned here, as it always was.
+     */
+    decltype(auto) invasionState()
+    { return (invasionState_); }
 
-    InvasionState& invasionState()
-    { return invasionState_; }
+    //! \copydoc invasionState()
+    decltype(auto) invasionState() const
+    { return (invasionState_); }
 
 private:
+    //! Refer to the problem's invasion state if it provides one, otherwise construct our own
+    static InvasionStateType makeInvasionState_(const Problem& problem)
+    {
+        if constexpr (Detail::problemProvidesInvasionState<Problem>())
+            return problem.invasionState();
+        else
+            return InvasionStateType(problem);
+    }
+
     const Problem* problemPtr_;
-    InvasionState invasionState_;
+    InvasionStateType invasionState_;
 };
 } // end namespace Dumux::PoreNetwork
 
