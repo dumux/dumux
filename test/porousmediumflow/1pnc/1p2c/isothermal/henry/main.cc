@@ -108,9 +108,9 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
-    // the linear solver
-    using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
+    // the linear solver: direct, since the linear system here is small (~39,000 DOFs)
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver);
