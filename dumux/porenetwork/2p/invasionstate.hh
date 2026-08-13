@@ -746,6 +746,8 @@ private:
         const Scalar pcEntry = fluxVarsCache.pcEntry();
         const Scalar pcSnapoff = fluxVarsCache.pcSnapoff();
 
+        using std::abs;
+
         // If the flux variables cache carries a regularized throat state theta, the event within the
         // time step is resolved by it and theta is the primary criterion. Otherwise the switch is
         // purely based on the capillary pressure, i.e. a discrete switch evaluated once per time step.
@@ -753,16 +755,16 @@ private:
         {
             const auto theta = fluxVarsCache.theta();
             if(!fluxVarsCache.invaded())
-                invadedCur = theta > invasionThetaThreshold_ || *pcMax - pcEntry >  -invasionRelativePcThreshold_*pcEntry;
+                invadedCur = theta > invasionThetaThreshold_ || *pcMax - pcEntry >  -invasionRelativePcThreshold_*abs(pcEntry);
             else
-                invadedCur = theta > snapoffThetaThreshold_ || *pcMax - pcSnapoff >  -snapoffRelativePcThreshold_*pcSnapoff;
+                invadedCur = theta > snapoffThetaThreshold_ || *pcMax - pcSnapoff >  -snapoffRelativePcThreshold_*abs(pcSnapoff);
         }
         else
         {
             if(!fluxVarsCache.invaded())
-                invadedCur = *pcMax - pcEntry >  -invasionRelativePcThreshold_*pcEntry;
+                invadedCur = *pcMax - pcEntry >  -invasionRelativePcThreshold_*abs(pcEntry);
             else
-                invadedCur = *pcMax - pcSnapoff >  -snapoffRelativePcThreshold_*pcSnapoff;
+                invadedCur = *pcMax - pcSnapoff >  -snapoffRelativePcThreshold_*abs(pcSnapoff);
         }
 
         invaded_[eIdx] = invadedCur;
