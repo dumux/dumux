@@ -17,6 +17,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porenetwork/2p/model.hh>
 #include <dumux/porenetwork/2p/spatialparams.hh>
+#include <dumux/porenetwork/2p/regularizedfluxvariablescache.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/multishapelocalrules.hh>
 
 #include <dumux/common/properties.hh>
@@ -67,6 +68,14 @@ public:
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
+
+#if USETHETAREGULARIZATION
+//! The flux variables cache carrying the throat state theta
+template<class TypeTag>
+struct FluxVariablesCache<TypeTag, TTag::DrainageProblem>
+{ using type = PoreNetwork::TwoPRegularizedFluxVariablesCache<GetPropType<TypeTag, Properties::AdvectionType>>; };
+
+#endif
 
 } //end namespace Dumux::Properties
 

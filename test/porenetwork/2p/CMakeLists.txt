@@ -41,6 +41,22 @@ dumux_add_test(NAME test_pnm_2p_accuracy_check
                                         -TimeLoop.MaxTimeStepSize 1e-4 -TimeLoop.TEnd 0.005
                                         -InvasionState.AccuracyCriterion 0.99")
 
+dumux_add_test(NAME test_pnm_2p_reg
+               SOURCES main.cc
+               LABELS porenetwork
+               COMPILE_DEFINITIONS ISOTHERMAL=1 USETHETAREGULARIZATION=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND HAVE_UMFPACK )"
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_pnm_2p_reg-reference.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_reg-00259.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_pnm_2p_reg params.input
+                                        -Problem.Name test_pnm_2p_reg
+                                        -TimeLoop.MaxTimeStepSize 1e-4 -TimeLoop.TEnd 0.005
+                                        -InvasionState.AccuracyCriterion 0.99
+                                        -Problem.RegularizationDelta 1e-4
+                                        -InvasionState.InvasionThetaThreshold 1e-14")
+
 dumux_add_test(NAME test_pnm_2pni
                SOURCES main.cc
                LABELS porenetwork

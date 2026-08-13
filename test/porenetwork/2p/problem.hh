@@ -59,7 +59,11 @@ class DrainageProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The invasion state of the throats, owned by this problem
+#if USETHETAREGULARIZATION
+    using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem, PoreNetwork::StateSwitchMethod::EndOfTimeStep>;
+#else
     using InvasionState = PoreNetwork::TwoPInvasionState<DrainageProblem>;
+#endif
 
     template<class SpatialParams>
     DrainageProblem(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<SpatialParams> spatialParams)
