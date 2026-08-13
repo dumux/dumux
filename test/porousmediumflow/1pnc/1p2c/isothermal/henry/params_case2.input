@@ -1,19 +1,23 @@
 [TimeLoop]
 DtInitial = 86.4   # [s]
-TEnd = 345600      # [s], 4 d -- Fahs et al. (2016) note that velocity-dependent
-                   # dispersion slows convergence to steady state considerably
-                   # compared to Test Case 1 (purely diffusive); this is a generous
-                   # first guess, not empirically verified
+TEnd = 86400       # [s], 1 d, same as Test Case 1 -- Fahs et al. (2016) note that
+                   # velocity-dependent dispersion slows convergence to steady state
+                   # considerably compared to Test Case 1 (purely diffusive), so this
+                   # margin is tighter here than for Test Case 1 in principle; in
+                   # practice, 1 d is enough (measured max relative error against Table
+                   # D2: 0.0223, close to Test Case 1's 0.0186 against Table D1)
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 3 1   # aspect ratio 3, matching Fahs et al. (2016) Table 2 (xi = 3)
-Cells = 180 60     # finer than Test Case 1's 120x40: the paper notes buoyancy effects
-                   # (and hence mesh sensitivity) are far more pronounced once
-                   # dispersion is enabled -- they used 12,288 mesh elements (vs. 7,500
-                   # for Test Case 1) for a mesh-independent solution. dx = dy = 1/60,
-                   # so the Table D2 Z-values (multiples of 0.05) still land exactly on
-                   # grid nodes (60 is a multiple of 20).
+Cells = 240 80     # same resolution as Test Case 1 (dx = dy = 0.0125), so the Table D2
+                   # Z-values (multiples of 0.05) land exactly on grid nodes here too.
+                   # The paper uses a finer mesh for this case (buoyancy/mesh
+                   # sensitivity are more pronounced once dispersion is enabled: 12,288
+                   # elements vs. 7,500 for their Test Case 1) -- not replicated here,
+                   # for a fair, low-cost side-by-side comparison; this resolution is
+                   # sufficient in practice (measured max relative error against Table
+                   # D2: 0.0223).
 
 [Problem]
 Name = test_1p2c_henry_fahs_case2_box
@@ -23,6 +27,13 @@ InflowRate = 5.7024   # [m^3/d], same as Test Case 1 (Fahs et al. 2016 Table 2, 
 MolecularDiffusion = 9.43e-8 # [m^2/s], Fahs et al. 2016 Table 2, Test Cases 2 and 3
 AlphaL = 0.1  # [m], longitudinal dispersivity, Test Case 2
 AlphaT = 0.01 # [m], transverse dispersivity, Test Case 2
+
+[SpatialParams]
+Tortuosity = 1 # [-]; see params.input -- makes the molecular diffusion term match
+                # Fahs et al. (2016)'s epsilon*Dm exactly. Does not affect the
+                # (separate) Scheidegger dispersion tensor, which already has no
+                # porosity/tortuosity factor in either the paper or this
+                # implementation.
 
 [Vtk]
 AddVelocity = true

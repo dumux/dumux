@@ -1,12 +1,12 @@
 [TimeLoop]
 DtInitial = 86.4   # [s]
-TEnd = 172800       # [s], 2 d -- well past the ~4 h physical time Fahs et al. (2016)
+TEnd = 86400        # [s], 1 d -- well past the ~4 h physical time Fahs et al. (2016)
                     # report for this case (their Test Case 1) to reach steady state
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 3 1   # aspect ratio 3, matching Fahs et al. (2016) Table 2 (xi = 3)
-Cells = 120 40     # dx = dy = 0.025, so the Table D1 Z-values (multiples of 0.05)
+Cells = 240 80     # dx = dy = 0.0125, so the Table D1 Z-values (multiples of 0.05)
                    # land exactly on grid nodes
 
 [Problem]
@@ -17,6 +17,13 @@ InflowRate = 5.7024 # [m^3/d] = q_d * d = 6.6e-5 m^2/s * 1 m * 86400 s/d, matchi
 MolecularDiffusion = 18.86e-6 # [m^2/s], Fahs et al. 2016 Table 2, Test Case 1
 AlphaL = 0 # [m], no dispersion in Test Case 1 (purely diffusive)
 AlphaT = 0 # [m]
+
+[SpatialParams]
+Tortuosity = 1 # [-]; makes EffectiveDiffusivityModel's D_eff = phi*Dm exactly,
+                # matching Fahs et al. (2016)'s epsilon*Dm (they apply no separate
+                # tortuosity reduction). Without this, the default (Millington-Quirk)
+                # model would use D_eff = Dm*phi^(1/3) =~ 2x too much diffusion at
+                # phi=0.35.
 
 [Vtk]
 AddVelocity = true

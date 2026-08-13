@@ -16,29 +16,28 @@ dumux_add_test(NAME test_1p2c_henry_fahs_box
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=HenryFahsTest
+              TIMEOUT 7200 # [s]; measured ~953s wall clock with the direct (UMFPack)
+                           # linear solver on the current 240x80/1 d setup
               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/validate_fahs2016.py
-              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-02000.vtu
+              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-01000.vtu
                         --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d1.csv
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box params.input")
 
 # "Test Case 2": same problem, but with velocity-dependent (Scheidegger) dispersion
 # enabled (alphaL=0.1 m, alphaT=0.01 m, smaller molecular diffusion 9.43e-8 m^2/s --
 # see params_case2.input and properties.hh's HenryFahsCase2Test). Validated against
-# Appendix D, Table D2 the same way Test Case 1 is validated against Table D1. Uses a
-# finer mesh and longer run than Test Case 1 (see params_case2.input) since the paper
-# reports both mesh sensitivity and time-to-steady-state increase substantially once
-# dispersion is enabled.
+# Appendix D, Table D2 the same way Test Case 1 is validated against Table D1. Same
+# mesh and number of time steps as Test Case 1 (see params_case2.input); dispersion's
+# extra per-flux cost makes this run somewhat slower regardless (measured: ~1269s vs.
+# Test Case 1's ~953s).
 dumux_add_test(NAME test_1p2c_henry_fahs_case2_box
               LABELS porousmediumflow 1p2c
               SOURCES main.cc
               LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=HenryFahsCase2Test
-              TIMEOUT 7200 # [s]; finer mesh + 2x the time steps of Test Case 1 (which
-                           # took ~117s wall clock), plus dispersion's extra per-flux
-                           # cost -- default ctest timeout (1500s) is unlikely to be
-                           # enough. Not empirically measured, adjust once you've timed
-                           # an actual run.
+              TIMEOUT 7200 # [s]; measured ~1269s wall clock with the direct (UMFPack)
+                           # linear solver on the current 240x80/1 d setup
               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/validate_fahs2016.py
-              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-04000.vtu
+              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-01000.vtu
                         --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d2.csv
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")

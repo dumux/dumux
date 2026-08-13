@@ -10,9 +10,10 @@ diffusive Henry [1964] problem).
 This is a physics validation against an independent, externally published reference
 solution (a different numerical method entirely: Fourier-Galerkin semianalytical, not
 just a re-run of our own code) -- not a byte-for-byte regression test. The default
---tolerance is a first, deliberately generous guess (this repository's convention,
-see e.g. the lockexchange test, is to tighten tolerances empirically once real output
-is available; nobody has run this script against real DuMux output yet).
+--tolerance was empirically tightened (this repository's convention, see e.g. the
+lockexchange test) after observing max relative errors of 0.0186 (Test Case 1) and
+0.0223 (Test Case 2) at the current 240x80 grid/1 d TEnd (see params.input,
+params_case2.input); the default leaves roughly 2x headroom above the worse of the two.
 """
 
 import argparse
@@ -73,7 +74,7 @@ def main():
     parser.add_argument("--reference", required=True, help="Path to the digitized reference CSV (Z,X10,X50,X90)")
     parser.add_argument("--field", default="X^solute_liq", help="VTU point data field name for the salt mass fraction")
     parser.add_argument("--seawater-fraction", type=float, default=0.035, help="Mass fraction at c=1 (seawater) in this simulation's FluidSystem")
-    parser.add_argument("--tolerance", type=float, default=0.15, help="Maximum allowed relative error in isochlor x-position (generous default -- see module docstring)")
+    parser.add_argument("--tolerance", type=float, default=0.05, help="Maximum allowed relative error in isochlor x-position (empirically set -- see module docstring)")
     args = parser.parse_args()
 
     try:
