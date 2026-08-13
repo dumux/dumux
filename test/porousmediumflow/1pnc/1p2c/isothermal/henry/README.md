@@ -113,19 +113,35 @@ molecular diffusion ($0.35^{1/3}/0.35\approx2.01$).
 
 **Validation**
 
-Fahs et al. (2016) digitized their converged semianalytical isochlor
-positions (Appendix D, Tables D1/D2/D3). The test extracts the simulated 10/50/90% isochlor
-($c=0.1,0.5,0.9$) $x$-positions at each tabulated depth $Z$ by linear interpolation
-of the concentration field, and compares them directly against those table values.
+Each test case is checked two independent ways, each its own ctest target with its own
+full simulation run:
+
+1. **Physics validation** (`test_1p2c_henry_fahs_box` / `test_1p2c_henry_fahs_case2_box`).
+   Fahs et al. (2016) digitized their converged semianalytical isochlor positions
+   (Appendix D, Tables D1/D2/D3). `validate_fahs2016.py` extracts the simulated
+   10/50/90% isochlor ($c=0.1,0.5,0.9$) $x$-positions at each tabulated depth $Z$ by
+   linear interpolation of the concentration field, and compares them directly against
+   those table values (max relative error, current 240x80/1 d setup: 0.0186 for Test
+   Case 1, 0.0223 for Test Case 2).
+2. **Regression check** (`test_1p2c_henry_fahs_box_regression` /
+   `test_1p2c_henry_fahs_case2_box_regression`), following the standard DuMux
+   `dumux_runtest.py --script fuzzy` convention (see e.g. the `co2` or
+   `2pncmin/isothermal` tests): a fuzzy mesh comparison of the full VTU output against
+   a stored, accepted reference
+   (`test/references/test_1p2c_henry_fahs_<case>-reference.vtu`), to catch unintended
+   changes to the solution that the isochlor-only table check wouldn't notice. This is
+   not independent validation -- the reference is our own accepted output, not an
+   external source -- only the table comparison above establishes correctness.
 
 **Results**
 
-To run a test case and validate it against the corresponding table:
+To run a test case (both the table-validation and the regression-check target) against
+the corresponding table/reference:
 
 ```bash
 cd <build-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry
-ctest -R test_1p2c_henry_fahs_box       # Test Case 1, vs. Table D1
-ctest -R test_1p2c_henry_fahs_case2_box # Test Case 2, vs. Table D2
+ctest -R test_1p2c_henry_fahs_box       # Test Case 1, vs. Table D1 + regression reference
+ctest -R test_1p2c_henry_fahs_case2_box # Test Case 2, vs. Table D2 + regression reference
 ```
 
 To reproduce an animated view of the transient approach to steady state, together

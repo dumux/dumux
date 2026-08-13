@@ -23,6 +23,25 @@ dumux_add_test(NAME test_1p2c_henry_fahs_box
                         --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d1.csv
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box params.input")
 
+# Regression test for Test Case 1: reuses the executable built above (no SOURCES, so
+# no rebuild) and re-runs it under ${DUMUX_RUNTEST}'s standard `--script fuzzy`
+# mechanism (see e.g. test/porousmediumflow/co2/CMakeLists.txt, test/porousmediumflow/
+# 2pncmin/isothermal/CMakeLists.txt for the same pattern), comparing the full VTU
+# output field-by-field against a stored, accepted reference
+# (test/references/test_1p2c_henry_fahs_box-reference.vtu, generated at the current
+# 240x80/1 d setup). This is a second, independent ctest -- and a second full
+# simulation run -- since validate_fahs2016.py above only checks a handful of
+# extracted isochlor positions, not the full solution field.
+dumux_add_test(NAME test_1p2c_henry_fahs_box_regression
+              TARGET  test_1p2c_henry_fahs_box
+              LABELS porousmediumflow 1p2c 1pnc
+              TIMEOUT 7200
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_henry_fahs_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-01000.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box params.input")
+
 # "Test Case 2": same problem, but with velocity-dependent (Scheidegger) dispersion
 # enabled (alphaL=0.1 m, alphaT=0.01 m, smaller molecular diffusion 9.43e-8 m^2/s --
 # see params_case2.input and properties.hh's HenryFahsCase2Test). Validated against
@@ -40,4 +59,16 @@ dumux_add_test(NAME test_1p2c_henry_fahs_case2_box
               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/validate_fahs2016.py
               CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-01000.vtu
                         --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d2.csv
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")
+
+# Regression test for Test Case 2, same pattern as test_1p2c_henry_fahs_box_regression
+# above, against test/references/test_1p2c_henry_fahs_case2_box-reference.vtu.
+dumux_add_test(NAME test_1p2c_henry_fahs_case2_box_regression
+              TARGET  test_1p2c_henry_fahs_case2_box
+              LABELS porousmediumflow 1p2c 1pnc
+              TIMEOUT 7200
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_henry_fahs_case2_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-01000.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")
