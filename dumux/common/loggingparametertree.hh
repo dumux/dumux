@@ -14,14 +14,31 @@
 
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <memory>
 #include <mutex>
+#include <type_traits>
+#include <utility>
 
 #include <dune/common/parametertree.hh>
 #include <dumux/common/exceptions.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+
+// detect whether a value of type T can be written to an std::ostream
+template<typename T, typename = void>
+struct IsStreamable : std::false_type {};
+
+template<typename T>
+struct IsStreamable<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>
+: std::true_type {};
+
+} // end namespace Detail
+#endif // DOXYGEN
 
 /*!
  * \ingroup Parameter
@@ -44,6 +61,7 @@ public:
     , defaultParams_(defaultParams)
     , usedRuntimeParams_(std::make_unique<Dune::ParameterTree>())
     , usedDefaultParams_(std::make_unique<Dune::ParameterTree>())
+    , usedFallbackDefaultParams_(std::make_unique<Dune::ParameterTree>())
     {}
 
     /** \brief test for key
@@ -163,6 +181,9 @@ public:
         stream << "\n# Global default parameters used:" << std::endl;
         usedDefaultParams_->report(stream);
 
+        stream << "\n# Fallback default parameters used (hardcoded at the call site in the source code):" << std::endl;
+        usedFallbackDefaultParams_->report(stream);
+
         const auto unusedParams = getUnusedKeys();
         if (!unusedParams.empty())
         {
@@ -227,6 +248,8 @@ public:
             return returnValue;
         }
 
+        // log that we used the fallback default value hardcoded at the call site
+        logUsedFallbackDefaultParam_(key, defaultValue);
         return defaultValue;
     }
 
@@ -333,6 +356,15 @@ public:
             // log that we used this parameter
             logUsedRuntimeParam_(key, params_[key]);
             return params_.template get<T>(key);
+        }
+
+        // log that we used the fallback default value hardcoded at the call site
+        // (skipped for types that cannot be written to a stream, e.g. some functors)
+        if constexpr (Detail::IsStreamable<T>::value)
+        {
+            std::ostringstream oss;
+            oss << std::boolalpha << defaultValue;
+            logUsedFallbackDefaultParam_(key, oss.str());
         }
 
         return defaultValue;
@@ -541,16 +573,28 @@ private:
         usedDefaultParams_->operator[](key) = value;
     }
 
+    /** \brief Log the key value pair as a used fallback default
+     *         (a default value hardcoded at the getParam call site,
+     *         as opposed to one coming from Dumux's global default parameter tree)
+     */
+    void logUsedFallbackDefaultParam_(const std::string& key, const std::string& value) const
+    {
+        std::scoped_lock lock{ usedFallbackDefaultMutex_ };
+        usedFallbackDefaultParams_->operator[](key) = value;
+    }
+
     const Dune::ParameterTree& params_;
     const Dune::ParameterTree& defaultParams_;
 
     // logging caches (externally stored)
     std::unique_ptr<Dune::ParameterTree> usedRuntimeParams_;
     std::unique_ptr<Dune::ParameterTree> usedDefaultParams_;
+    std::unique_ptr<Dune::ParameterTree> usedFallbackDefaultParams_;
 
     // access to the caches have to be protected for thread-safety
     mutable std::mutex usedRuntimeMutex_;
     mutable std::mutex usedDefaultMutex_;
+    mutable std::mutex usedFallbackDefaultMutex_;
 };
 
 } // end namespace Dumux
