@@ -172,8 +172,14 @@ public:
      * Prints all entries with given prefix.
      *
      * \param stream Stream to print to
+     * \param printFallbackDefaults if true, also print an additional section listing
+     *        parameters that were not found in the parameter file and therefore fell
+     *        back to a default value hardcoded at the getParam call site (as opposed
+     *        to Dumux's centrally registered global default parameters). Off by
+     *        default since this section can be long and is mainly useful for
+     *        debugging/auditing which values a run actually used.
      */
-    void reportAll(std::ostream& stream = std::cout) const
+    void reportAll(std::ostream& stream = std::cout, bool printFallbackDefaults = false) const
     {
         stream << "\n# Runtime-specified parameters used:" << std::endl;
         usedRuntimeParams_->report(stream);
@@ -181,8 +187,11 @@ public:
         stream << "\n# Global default parameters used:" << std::endl;
         usedDefaultParams_->report(stream);
 
-        stream << "\n# Fallback default parameters used (hardcoded at the call site in the source code):" << std::endl;
-        usedFallbackDefaultParams_->report(stream);
+        if (printFallbackDefaults)
+        {
+            stream << "\n# Fallback default parameters used (hardcoded at the call site in the source code):" << std::endl;
+            usedFallbackDefaultParams_->report(stream);
+        }
 
         const auto unusedParams = getUnusedKeys();
         if (!unusedParams.empty())

@@ -161,9 +161,9 @@ void Parameters::init(const std::string& parameterFileName,
 }
 
 // prints all used and unused parameters
-void Parameters::print()
+void Parameters::print(bool printFallbackDefaults)
 {
-    getTree().reportAll();
+    getTree().reportAll(std::cout, printFallbackDefaults);
 }
 
 // Parse command line arguments into a parameter tree

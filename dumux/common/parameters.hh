@@ -98,8 +98,13 @@ public:
                      bool inputFileOverwritesParams = true,
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {});
 
-    //! prints all used and unused parameters
-    static void print();
+    /*!
+     * \brief prints all used and unused parameters
+     * \param printFallbackDefaults if true, also print parameters that fell back to a
+     *        default value hardcoded at the getParam call site (off by default, since
+     *        this section can be long and is mainly useful for debugging/auditing)
+     */
+    static void print(bool printFallbackDefaults = false);
 
     //! Parse command line arguments into a parameter tree
     static Dune::ParameterTree parseCommandLine(int argc, char **argv);
