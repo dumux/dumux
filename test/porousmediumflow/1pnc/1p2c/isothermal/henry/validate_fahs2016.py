@@ -2,18 +2,24 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-Runs the Henry-problem simulation given by --command, then validates its output
-against the digitized semianalytical isochlor positions of Fahs et al. (2016, WRR,
-doi:10.1002/2016WR019288), Appendix D, Table D1 ("Test Case 1": the classic, purely
-diffusive Henry [1964] problem).
+Validates a Henry-problem simulation's output against the digitized semianalytical
+isochlor positions of Fahs et al. (2016, WRR, doi:10.1002/2016WR019288), Appendix D,
+Table D1 ("Test Case 1": the classic, purely diffusive Henry [1964] problem).
+
+If --command is given, the simulation is (re-)run first. Otherwise --vtu is read as-is,
+which lets the ctest target for this script depend on and reuse the VTU already produced
+by the byte-for-byte regression ctest target (see CMakeLists.txt), avoiding a second full
+simulation run of the same case.
 
 This is a physics validation against an independent, externally published reference
 solution (a different numerical method entirely: Fourier-Galerkin semianalytical, not
-just a re-run of our own code) -- not a byte-for-byte regression test. The default
---tolerance was empirically tightened (this repository's convention, see e.g. the
-lockexchange test) after observing max relative errors of 0.0186 (Test Case 1) and
-0.0223 (Test Case 2) at the current 240x80 grid/1 d TEnd (see params.input,
-params_case2.input); the default leaves roughly 2x headroom above the worse of the two.
+just a re-run of our own code) -- not a byte-for-byte regression test (see CMakeLists.txt
+for that, a separate ctest target following the standard DuMux dumux_runtest.py/
+`--script fuzzy` convention against a stored reference VTU). The default --tolerance
+was empirically tightened (this repository's convention, see e.g. the lockexchange
+test) after observing max relative errors of 0.0186 (Test Case 1) and 0.0223 (Test
+Case 2) at the current 240x80 grid/1 d TEnd (see params.input, params_case2.input);
+the default leaves roughly 2x headroom above the worse of the two.
 """
 
 import argparse
@@ -69,7 +75,7 @@ def extractIsochlorX(points, values, z, levels, atol=1e-6):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-c", "--command", required=True, help="The simulation executable and arguments, as a single string")
+    parser.add_argument("-c", "--command", help="The simulation executable and arguments, as a single string. If omitted, --vtu is read as-is without (re-)running the simulation.")
     parser.add_argument("--vtu", required=True, help="Path to the resulting VTU file to validate")
     parser.add_argument("--reference", required=True, help="Path to the digitized reference CSV (Z,X10,X50,X90)")
     parser.add_argument("--field", default="X^solute_liq", help="VTU point data field name for the salt mass fraction")
@@ -77,13 +83,14 @@ def main():
     parser.add_argument("--tolerance", type=float, default=0.05, help="Maximum allowed relative error in isochlor x-position (empirically set -- see module docstring)")
     args = parser.parse_args()
 
-    try:
-        result = subprocess.call(shlex.split(args.command))
-    except OSError:
-        print(f"OSError: could not run command: {args.command}")
-        sys.exit(1)
-    if result:
-        sys.exit(result)
+    if args.command:
+        try:
+            result = subprocess.call(shlex.split(args.command))
+        except OSError:
+            print(f"OSError: could not run command: {args.command}")
+            sys.exit(1)
+        if result:
+            sys.exit(result)
 
     reference = readReferenceTable(args.reference)
 

@@ -113,25 +113,27 @@ molecular diffusion ($0.35^{1/3}/0.35\approx2.01$).
 
 **Validation**
 
-Each test case is checked two independent ways, each its own ctest target with its own
-full simulation run:
+Each test case is checked two independent ways, but only **one** full simulation run is
+performed for each (the regression target below); the physics-validation target depends
+on it and reuses its VTU output rather than re-running the simulation a second time:
 
-1. **Physics validation** (`test_1p2c_henry_fahs_box` / `test_1p2c_henry_fahs_case2_box`).
-   Fahs et al. (2016) digitized their converged semianalytical isochlor positions
-   (Appendix D, Tables D1/D2/D3). `validate_fahs2016.py` extracts the simulated
-   10/50/90% isochlor ($c=0.1,0.5,0.9$) $x$-positions at each tabulated depth $Z$ by
-   linear interpolation of the concentration field, and compares them directly against
-   those table values (max relative error, current 240x80/1 d setup: 0.0186 for Test
-   Case 1, 0.0223 for Test Case 2).
-2. **Regression check** (`test_1p2c_henry_fahs_box_regression` /
+1. **Regression check** (`test_1p2c_henry_fahs_box_regression` /
    `test_1p2c_henry_fahs_case2_box_regression`), following the standard DuMux
    `dumux_runtest.py --script fuzzy` convention (see e.g. the `co2` or
-   `2pncmin/isothermal` tests): a fuzzy mesh comparison of the full VTU output against
-   a stored, accepted reference
+   `2pncmin/isothermal` tests): runs the simulation once, then a fuzzy mesh comparison
+   of the full VTU output against a stored, accepted reference
    (`test/references/test_1p2c_henry_fahs_<case>-reference.vtu`), to catch unintended
-   changes to the solution that the isochlor-only table check wouldn't notice. This is
-   not independent validation -- the reference is our own accepted output, not an
-   external source -- only the table comparison above establishes correctness.
+   changes to the solution that the isochlor-only table check below wouldn't notice.
+   This is not independent validation -- the reference is our own accepted output, not
+   an external source -- only the table comparison below establishes correctness.
+2. **Physics validation** (`test_1p2c_henry_fahs_box` / `test_1p2c_henry_fahs_case2_box`),
+   a ctest `DEPENDS` on the regression target above. Fahs et al. (2016) digitized their
+   converged semianalytical isochlor positions (Appendix D, Tables D1/D2/D3).
+   `validate_fahs2016.py` extracts the simulated 10/50/90% isochlor ($c=0.1,0.5,0.9$)
+   $x$-positions at each tabulated depth $Z$ by linear interpolation of the
+   concentration field already produced by the regression target's run, and compares
+   them directly against those table values (max relative error, current 240x80/1 d
+   setup: 0.0186 for Test Case 1, 0.0223 for Test Case 2).
 
 **Results**
 
