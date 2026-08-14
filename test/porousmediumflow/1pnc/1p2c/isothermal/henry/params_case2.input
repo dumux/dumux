@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 86.4   # [s]
+DtInitial = 864   # [s]
 TEnd = 86400       # [s], 1 d, same as Test Case 1 -- Fahs et al. (2016) note that
                    # velocity-dependent dispersion slows convergence to steady state
                    # considerably compared to Test Case 1 (purely diffusive), so this
@@ -10,7 +10,7 @@ TEnd = 86400       # [s], 1 d, same as Test Case 1 -- Fahs et al. (2016) note th
 [Grid]
 LowerLeft = 0 0
 UpperRight = 3 1   # aspect ratio 3, matching Fahs et al. (2016) Table 2 (xi = 3)
-Cells = 240 80     # same resolution as Test Case 1 (dx = dy = 0.0125), so the Table D2
+Cells = 120 40     # same resolution as Test Case 1 (dx = dy = 0.0125), so the Table D2
                    # Z-values (multiples of 0.05) land exactly on grid nodes here too.
                    # The paper uses a finer mesh for this case (buoyancy/mesh
                    # sensitivity are more pronounced once dispersion is enabled: 12,288

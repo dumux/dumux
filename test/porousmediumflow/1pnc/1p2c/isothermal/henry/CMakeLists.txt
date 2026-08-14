@@ -19,7 +19,7 @@ dumux_add_test(NAME test_1p2c_henry_fahs_box
               TIMEOUT 7200 # [s]; measured ~953s wall clock with the direct (UMFPack)
                            # linear solver on the current 240x80/1 d setup
               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/validate_fahs2016.py
-              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-01000.vtu
+              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-00100.vtu
                         --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d1.csv
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box params.input")
 
@@ -39,7 +39,7 @@ dumux_add_test(NAME test_1p2c_henry_fahs_box_regression
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_henry_fahs_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-01000.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box-00100.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_box params.input")
 
 # "Test Case 2": same problem, but with velocity-dependent (Scheidegger) dispersion
@@ -57,7 +57,7 @@ dumux_add_test(NAME test_1p2c_henry_fahs_case2_box
               TIMEOUT 7200 # [s]; measured ~1269s wall clock with the direct (UMFPack)
                            # linear solver on the current 240x80/1 d setup
               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/validate_fahs2016.py
-              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-01000.vtu
+              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-00100.vtu
                         --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d2.csv
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")
 
@@ -70,5 +70,5 @@ dumux_add_test(NAME test_1p2c_henry_fahs_case2_box_regression
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_henry_fahs_case2_box-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-01000.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-00100.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")
