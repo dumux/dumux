@@ -351,9 +351,6 @@ private:
         for (int i = 0; i < cylSamples; ++i)
         {
             const auto& point = cylIntegration.integrationPoint(i);
-            // TODO: below only works for Cartesian grids with ijk numbering (e.g. level 0 YaspGrid (already fails when refined))
-            // more general is the bounding box tree solution which always works, however it's much slower
-            //const auto bulkIndices = intersectingEntities(point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
             if (const bool hasIntersection = intersectsPointBoundingBox(point, min, max); hasIntersection)
             {
                 const auto bulkElementIdx = bulkElementIndex_(point, min, max, cells);
