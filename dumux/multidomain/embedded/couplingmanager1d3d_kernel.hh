@@ -76,8 +76,9 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
     static constexpr bool isBox()
     { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
-    static_assert(!isBox<bulkIdx>() && !isBox<lowDimIdx>(), "The kernel coupling method is only implemented for the tpfa method");
-    static_assert(Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v, "The kernel coupling method is only implemented for structured grids");
+    //! Cartesian bulk grids allow an O(1) point lookup; otherwise the bounding box tree is used
+    static constexpr bool bulkIsCartesian
+        = Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v;
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
@@ -317,10 +318,18 @@ private:
                              const CylIntegration& cylIntegration, int embeddings)
     {
         // Monte-carlo integration on the cylinder defined by line and radius
-        static const auto bulkParamGroup = this->problem(bulkIdx).paramGroup();
-        static const auto min = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.LowerLeft");
-        static const auto max = getParamFromGroup<GlobalPosition>(bulkParamGroup, "Grid.UpperRight");
-        static const auto cells = getParamFromGroup<std::array<int, bulkDim>>(bulkParamGroup, "Grid.Cells");
+        // The bounding box is taken from the grid itself so that unstructured grids, which
+        // have no Grid.LowerLeft/UpperRight/Cells parameters, work unchanged. Only the
+        // Cartesian fast path needs the cell counts.
+        const auto& min = this->problem(bulkIdx).gridGeometry().bBoxMin();
+        const auto& max = this->problem(bulkIdx).gridGeometry().bBoxMax();
+        std::array<int, bulkDim> cells{};
+        if constexpr (bulkIsCartesian)
+        {
+            static const auto bulkParamGroup = this->problem(bulkIdx).paramGroup();
+            static const auto cartesianCells = getParamFromGroup<std::array<int, bulkDim>>(bulkParamGroup, "Grid.Cells");
+            cells = cartesianCells;
+        }
         const auto cylSamples = cylIntegration.size();
         const auto& a = line.corner(0);
         const auto& b = line.corner(1);
@@ -342,24 +351,48 @@ private:
         for (int i = 0; i < cylSamples; ++i)
         {
             const auto& point = cylIntegration.integrationPoint(i);
-            // TODO: below only works for Cartesian grids with ijk numbering (e.g. level 0 YaspGrid (already fails when refined))
-            // more general is the bounding box tree solution which always works, however it's much slower
-            //const auto bulkIndices = intersectingEntities(point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
             if (const bool hasIntersection = intersectsPointBoundingBox(point, min, max); hasIntersection)
             {
-                const auto bulkElementIdx = intersectingEntityCartesianGrid(point, min, max, cells);
+                const auto bulkElementIdx = bulkElementIndex_(point, min, max, cells);
+                if (bulkElementIdx == invalidElement_)
+                    continue;
                 assert(bulkElementIdx < this->problem(bulkIdx).gridGeometry().gridView().size(0));
                 const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/Scalar(embeddings);
                 integral += localWeight;
-                if (!bulkSourceIds_[bulkElementIdx][0].empty() && id == bulkSourceIds_[bulkElementIdx][0].back())
+
+                if constexpr (isBox<bulkIdx>())
                 {
-                    bulkSourceWeights_[bulkElementIdx][0].back() += localWeight;
+                    using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                    const auto& gg = this->problem(bulkIdx).gridGeometry();
+                    ShapeValues shapeValues;
+                    this->getShapeValues(bulkIdx, gg, gg.element(bulkElementIdx).geometry(), point, shapeValues);
+
+                    bool addedStencil = false;
+                    for (int v = 0; v < static_cast<int>(shapeValues.size()); ++v)
+                    {
+                        const auto w = localWeight*shapeValues[v][0];
+                        if (!bulkSourceIds_[bulkElementIdx][v].empty() && id == bulkSourceIds_[bulkElementIdx][v].back())
+                            bulkSourceWeights_[bulkElementIdx][v].back() += w;
+                        else
+                        {
+                            bulkSourceIds_[bulkElementIdx][v].emplace_back(id);
+                            bulkSourceWeights_[bulkElementIdx][v].emplace_back(w);
+                            addedStencil = true;
+                        }
+                    }
+                    if (addedStencil)
+                        addBulkSourceStencils_(bulkElementIdx, lowDimElementIdx, coupledBulkElementIdx);
                 }
                 else
                 {
-                    bulkSourceIds_[bulkElementIdx][0].emplace_back(id);
-                    bulkSourceWeights_[bulkElementIdx][0].emplace_back(localWeight);
-                    addBulkSourceStencils_(bulkElementIdx, lowDimElementIdx, coupledBulkElementIdx);
+                    if (!bulkSourceIds_[bulkElementIdx][0].empty() && id == bulkSourceIds_[bulkElementIdx][0].back())
+                        bulkSourceWeights_[bulkElementIdx][0].back() += localWeight;
+                    else
+                    {
+                        bulkSourceIds_[bulkElementIdx][0].emplace_back(id);
+                        bulkSourceWeights_[bulkElementIdx][0].emplace_back(localWeight);
+                        addBulkSourceStencils_(bulkElementIdx, lowDimElementIdx, coupledBulkElementIdx);
+                    }
                 }
             }
         }
@@ -367,6 +400,30 @@ private:
         // the surface factor (which fraction of the source is inside the domain and needs to be considered)
         const auto length = (a-b).two_norm()/Scalar(embeddings);
         return integral/length;
+    }
+
+    static constexpr GridIndex<bulkIdx> invalidElement_ = std::numeric_limits<GridIndex<bulkIdx>>::max();
+
+    /*!
+     * \brief Locate the bulk element containing a point.
+     *
+     *        A Cartesian grid allows an O(1) index computation; any other grid needs the
+     *        bounding box tree, which is general but markedly slower. The distinction is a
+     *        compile-time grid capability, so unstructured grids pay only for what they use.
+     */
+    GridIndex<bulkIdx> bulkElementIndex_(const GlobalPosition& point,
+                                        const GlobalPosition& min,
+                                        const GlobalPosition& max,
+                                        const std::array<int, bulkDim>& cells) const
+    {
+        if constexpr (bulkIsCartesian)
+            return intersectingEntityCartesianGrid(point, min, max, cells);
+        else
+        {
+            const auto candidates = intersectingEntities(
+                point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
+            return candidates.empty() ? invalidElement_ : GridIndex<bulkIdx>(candidates[0]);
+        }
     }
 
     void prepareDataStructures_()
@@ -399,8 +456,8 @@ private:
         {
             this->couplingStencils(bulkIdx)[bulkElementIdx].reserve(10);
             extendedSourceStencil_.stencil()[bulkElementIdx].reserve(10);
-            bulkSourceIds_[bulkElementIdx][0].reserve(10);
-            bulkSourceWeights_[bulkElementIdx][0].reserve(10);
+            for (auto& ids : bulkSourceIds_[bulkElementIdx]) ids.reserve(10);
+            for (auto& w : bulkSourceWeights_[bulkElementIdx]) w.reserve(10);
         }
     }
 
