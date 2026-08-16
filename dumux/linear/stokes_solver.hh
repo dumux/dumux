@@ -454,9 +454,9 @@ private:
                     using Extrusion = Extrusion_t<PressureGG>;
                     const auto dofIndex = scv.dofIndex();
                     if (element.partitionType() == Dune::GhostEntity) // do not modify ghosts
-                        (*massMatrix)[dofIndex][dofIndex] = 1.0;
+                        (*massMatrix)[dofIndex][dofIndex][0][0] = 1.0;
                     else
-                        (*massMatrix)[dofIndex][dofIndex] += weight_*Extrusion::volume(fvGeometry, scv)/(2.0*viscosity_);
+                        (*massMatrix)[dofIndex][dofIndex][0][0] += weight_*Extrusion::volume(fvGeometry, scv)/(2.0*viscosity_);
                 }
             }
 

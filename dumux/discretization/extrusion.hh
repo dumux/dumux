@@ -15,9 +15,24 @@
 #ifndef DUMUX_DISCRETIZATION_EXTRUSION_HH
 #define DUMUX_DISCRETIZATION_EXTRUSION_HH
 
+#include <concepts>
+#include <type_traits>
+
 #include <dune/common/std/type_traits.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+//! On grids where an scv/face wrapper and an entity geometry are the same type (YaspGrid), both
+//! overloads below match, so the wrapper ones exclude the entity geometry explicitly
+template<class T, class FVGeo, int codim>
+concept EntityGeometry = std::same_as<
+    std::decay_t<T>,
+    typename FVGeo::GridGeometry::GridView::template Codim<codim>::Entity::Geometry
+>;
+
+} // end namespace Detail
 
 /*!
  * \ingroup Discretization
@@ -26,6 +41,7 @@ namespace Dumux {
 struct NoExtrusion
 {
     template<class FVGeo, class Face>
+        requires (!Detail::EntityGeometry<Face, FVGeo, 1>)
     static constexpr auto area(const FVGeo&, const Face& face)
     { return face.area(); }
 
@@ -34,6 +50,7 @@ struct NoExtrusion
     { return geo.volume(); }
 
     template<class FVGeo, class SCV>
+        requires (!Detail::EntityGeometry<SCV, FVGeo, 0>)
     static constexpr auto volume(const FVGeo&, const SCV& scv)
     { return scv.volume(); }
 
@@ -61,6 +78,7 @@ struct RotationalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class FVGeo, class Face>
+        requires (!Detail::EntityGeometry<Face, FVGeo, 1>)
     static constexpr auto area(const FVGeo&, const Face& face)
     {
         static_assert(int(Face::Traits::Geometry::mydimension) == int(Face::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
@@ -91,6 +109,7 @@ struct RotationalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class FVGeo, class SCV>
+        requires (!Detail::EntityGeometry<SCV, FVGeo, 0>)
     static constexpr auto volume(const FVGeo&, const SCV& scv)
     {
         static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");
@@ -141,6 +160,7 @@ struct SphericalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class FVGeo, class Face>
+        requires (!Detail::EntityGeometry<Face, FVGeo, 1>)
     static constexpr auto area(const FVGeo&, const Face& face)
     {
         static_assert(int(Face::Traits::Geometry::mydimension) == int(Face::Traits::Geometry::coorddimension-1), "Area element to be called with a codim-1-entity!");
@@ -171,6 +191,7 @@ struct SphericalExtrusion
      * \note Mid-point rule integrals are only exact for constants
      */
     template<class FVGeo, class SCV>
+        requires (!Detail::EntityGeometry<SCV, FVGeo, 0>)
     static constexpr auto volume(const FVGeo& fvGeometry, const SCV& scv)
     {
         static_assert(int(SCV::Traits::Geometry::mydimension) == int(SCV::Traits::Geometry::coorddimension), "Volume element to be called with a codim-0-entity!");

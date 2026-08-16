@@ -401,14 +401,14 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
             for (unsigned int i = 0; i < targetLocalBasis.size(); ++i)
             {
                 const auto dofIdxI = targetLocalView.index(i);
-                forwardM[dofIdxI][dofIdxI] += ie*weight*targetShapeVals[i]*targetShapeVals[i];
+                forwardM[dofIdxI][dofIdxI][0][0] += ie*weight*targetShapeVals[i]*targetShapeVals[i];
 
                 for (unsigned int j = i+1; j < targetLocalBasis.size(); ++j)
                 {
                     const auto dofIdxJ = targetLocalView.index(j);
                     const auto value = ie*weight*targetShapeVals[i]*targetShapeVals[j];
-                    forwardM[dofIdxI][dofIdxJ] += value;
-                    forwardM[dofIdxJ][dofIdxI] += value;
+                    forwardM[dofIdxI][dofIdxJ][0][0] += value;
+                    forwardM[dofIdxJ][dofIdxI][0][0] += value;
                 }
             }
 
@@ -433,14 +433,14 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
                     const auto domainShapeVal = domainShapeVals[i];
                     if (doBidirectional)
                     {
-                        backwardM[dofIdxDomain][dofIdxDomain] += ie*weight*domainShapeVal*domainShapeVal;
+                        backwardM[dofIdxDomain][dofIdxDomain][0][0] += ie*weight*domainShapeVal*domainShapeVal;
 
                         for (unsigned int j = i+1; j < domainLocalBasis.size(); ++j)
                         {
                             const auto dofIdxDomainJ = domainLocalView.index(j);
                             const auto value = ie*weight*domainShapeVal*domainShapeVals[j];
-                            backwardM[dofIdxDomain][dofIdxDomainJ] += value;
-                            backwardM[dofIdxDomainJ][dofIdxDomain] += value;
+                            backwardM[dofIdxDomain][dofIdxDomainJ][0][0] += value;
+                            backwardM[dofIdxDomainJ][dofIdxDomain][0][0] += value;
                         }
                     }
 
@@ -449,9 +449,9 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
                         const auto dofIdxTarget = targetLocalView.index(j);
                         const auto entry = ie*weight*domainShapeVal*targetShapeVals[j];
 
-                        forwardP[dofIdxTarget][dofIdxDomain] += entry/numNeighbors;
+                        forwardP[dofIdxTarget][dofIdxDomain][0][0] += entry/numNeighbors;
                         if (doBidirectional)
-                            backwardP[dofIdxDomain][dofIdxTarget] += entry;
+                            backwardP[dofIdxDomain][dofIdxTarget][0][0] += entry;
                     }
                 }
             }
@@ -462,14 +462,14 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
     if (treatDiagonalZeroes)
     {
         for (std::size_t dofIdxTarget = 0; dofIdxTarget < forwardM.N(); ++dofIdxTarget)
-            if (forwardM[dofIdxTarget][dofIdxTarget] == 0.0)
-                forwardM[dofIdxTarget][dofIdxTarget] = 1.0;
+            if (forwardM[dofIdxTarget][dofIdxTarget][0][0] == 0.0)
+                forwardM[dofIdxTarget][dofIdxTarget][0][0] = 1.0;
 
         if (doBidirectional)
         {
             for (std::size_t dofIdxDomain = 0; dofIdxDomain < backwardM.N(); ++dofIdxDomain)
-                if (backwardM[dofIdxDomain][dofIdxDomain] == 0.0)
-                    backwardM[dofIdxDomain][dofIdxDomain] = 1.0;
+                if (backwardM[dofIdxDomain][dofIdxDomain][0][0] == 0.0)
+                    backwardM[dofIdxDomain][dofIdxDomain][0][0] = 1.0;
         }
     }
 
@@ -506,7 +506,7 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
     // determine the dofs that do not take part in intersections
     std::vector<bool> isVoidTarget(forwardM.N(), false);
     for (std::size_t dofIdxTarget = 0; dofIdxTarget < forwardM.N(); ++dofIdxTarget)
-        if (forwardM[dofIdxTarget][dofIdxTarget] == 0.0)
+        if (forwardM[dofIdxTarget][dofIdxTarget][0][0] == 0.0)
             isVoidTarget[dofIdxTarget] = true;
 
     std::vector<bool> isVoidDomain;
@@ -514,7 +514,7 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
     {
         isVoidDomain.resize(backwardM.N(), false);
         for (std::size_t dofIdxDomain = 0; dofIdxDomain < backwardM.N(); ++dofIdxDomain)
-            if (backwardM[dofIdxDomain][dofIdxDomain] == 0.0)
+            if (backwardM[dofIdxDomain][dofIdxDomain][0][0] == 0.0)
                 isVoidDomain[dofIdxDomain] = true;
     }
 

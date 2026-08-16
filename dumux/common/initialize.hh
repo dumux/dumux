@@ -64,9 +64,9 @@ class KokkosScopeGuard
 public:
     static Kokkos::ScopeGuard& instance(int& argc, char* argv[])
     {
-        Kokkos::InitArguments arguments;
+        Kokkos::InitializationSettings arguments;
         if (const char* dumuxNumThreads = std::getenv("DUMUX_NUM_THREADS"))
-            arguments.num_threads = std::max(1, std::stoi(std::string{ dumuxNumThreads }));
+            arguments.set_num_threads(std::max(1, std::stoi(std::string{ dumuxNumThreads })));
 
         static Kokkos::ScopeGuard guard(arguments);
         return guard;
