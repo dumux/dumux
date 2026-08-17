@@ -89,7 +89,8 @@ endif()
 
 find_package(MPI QUIET)
 find_package(TBB QUIET)
-find_package(Kokkos QUIET)
+# Require at least 3.7 (need InitializationSettings)
+find_package(Kokkos 3.7 QUIET)
 find_package(OpenMP QUIET)
 
 # Create the dumux library target exported as Dumux::Dumux
