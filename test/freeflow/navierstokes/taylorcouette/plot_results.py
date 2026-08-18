@@ -5,43 +5,32 @@
 plot_results.py
 ================
 
-Unified post-processing suite for Taylor-Couette benchmark cases.
+Post-processing for a single Taylor-Couette benchmark run.
+Always generates an analytical comparison plot using the
+pressureExact and velocityExact fields already written to the
+VTK output; optionally also renders 2D field maps.
 
 Features
 --------
-1. Global convergence plot
-2. Optional ParaView 2D field rendering
-3. Optional analytical comparison plots
-4. Single-configuration filtering
-5. Custom results directory support
+1. Analytical comparison plot (always generated)
+2. Optional 2D field rendering (pressure, velocity)
 
 Examples
 --------
-# Process ALL cases (convergence plot only)
-pvpython3 plot_results.py
-
-# Process a SPECIFIC configuration
-pvpython3 plot_results.py --conf 100_0_80_320
+# Point at the directory containing test_ff_taylorcouette.pvd
+# (e.g. your build output directory)
+pvpython plot_results.py /path/to/build-cmake/test/freeflow/navierstokes/taylorcouette
 
 # Also generate 2D field maps
-pvpython3 plot_results.py --conf 100_0_80_320 --fields
-
-# Also generate analytical comparison plot
-pvpython3 plot_results.py --conf 100_0_80_320 --analytical
-
-# Generate everything
-pvpython3 plot_results.py --conf 100_0_80_320 --fields --analytical
-
-# Explicit results directory
-pvpython3 plot_results.py --conf 100_0_80_320 --fields --analytical /path/to/results
+pvpython plot_results.py /path/to/build-cmake/test/freeflow/navierstokes/taylorcouette --fields
 """
 
 from __future__ import annotations
 
 import argparse
 import re
+import shutil
 import tempfile
-import zipfile
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -66,43 +55,19 @@ VIEW_SIZE = [2000, 1600]
 # =============================================================================
 
 
-def discover_cases(results_dir: Path, conf: str | None = None):
+def find_case(results_dir: Path):
     """
-    Discover benchmark case directories.
+    Look for the DuMux VTK output in the given directory.
     """
 
-    cases = []
+    pvd_file = results_dir / "test_ff_taylorcouette.pvd"
 
-    for d in sorted(results_dir.iterdir()):
+    if not pvd_file.exists():
+        raise RuntimeError(
+            f"No test_ff_taylorcouette.pvd found in: {results_dir}"
+        )
 
-        if not d.is_dir():
-            continue
-
-        if conf and d.name != conf:
-            continue
-
-        zip_file = d / "test_ff_taylorcouette.zip"
-
-        if not zip_file.exists():
-            continue
-
-        tokens = d.name.split("_")
-
-        if len(tokens) != 4:
-            continue
-
-        omega1, omega2, nr, ntheta = map(float, tokens)
-
-        cases.append({
-            "path": d,
-            "zip": zip_file,
-            "omega1": omega1,
-            "omega2": omega2,
-            "nr": int(nr),
-            "ntheta": int(ntheta),
-        })
-
-    return cases
+    return {"path": results_dir, "pvd": pvd_file}
 
 
 # =============================================================================
@@ -110,28 +75,23 @@ def discover_cases(results_dir: Path, conf: str | None = None):
 # =============================================================================
 
 
-def extract_pvd_and_vtus(zip_path: Path, tmpdir: Path):
+def prepare_pvd_for_paraview(case_dir: Path, tmpdir: Path):
     """
-    Extract PVD and VTU files from archive and clean paths inside PVD.
+    Copy the PVD and its referenced VTU files into a working directory
+    and clean the paths inside the PVD, so ParaView can open it
+    regardless of where the original run wrote its output.
     """
 
-    with zipfile.ZipFile(zip_path, "r") as zf:
+    pvd_src = case_dir / "test_ff_taylorcouette.pvd"
 
-        for item in zf.namelist():
+    if not pvd_src.exists():
+        raise RuntimeError(f"No PVD file found in: {case_dir}")
 
-            filename = Path(item).name
+    for vtu_src in case_dir.glob("test_ff_taylorcouette*.vtu"):
+        shutil.copy(vtu_src, tmpdir / vtu_src.name)
 
-            if item.endswith(".pvd") or item.endswith(".vtu"):
-
-                with zf.open(item) as source, open(tmpdir / filename, "wb") as target:
-                    target.write(source.read())
-
-    pvd_files = list(tmpdir.glob("*.pvd"))
-
-    if not pvd_files:
-        raise RuntimeError(f"No PVD file found in: {zip_path}")
-
-    pvd_path = pvd_files[0]
+    pvd_path = tmpdir / pvd_src.name
+    shutil.copy(pvd_src, pvd_path)
 
     pvd_content = pvd_path.read_text()
 
@@ -163,6 +123,8 @@ def parse_data_via_vtk(pvd_filepath: Path):
 
     vtk_p_array = client_data.GetCellData().GetArray("p")
     vtk_v_array = client_data.GetCellData().GetArray("velocity_liq (m/s)")
+    vtk_p_exact_array = client_data.GetCellData().GetArray("pressureExact")
+    vtk_v_exact_array = client_data.GetCellData().GetArray("velocityExact")
 
     num_cells = client_data.GetNumberOfCells()
 
@@ -173,6 +135,16 @@ def parse_data_via_vtk(pvd_filepath: Path):
 
     velocity = np.array([
         vtk_v_array.GetTuple(i)
+        for i in range(num_cells)
+    ])
+
+    pressure_exact = np.array([
+        vtk_p_exact_array.GetValue(i)
+        for i in range(num_cells)
+    ])
+
+    velocity_exact = np.array([
+        vtk_v_exact_array.GetTuple(i)
         for i in range(num_cells)
     ])
 
@@ -199,45 +171,67 @@ def parse_data_via_vtk(pvd_filepath: Path):
 
     Delete(data_reader)
 
-    return x, y, pressure, velocity
+    num_nan_p_exact = int(np.isnan(pressure_exact).sum())
+    num_nan_v_exact = int(np.isnan(velocity_exact).any(axis=1).sum())
+    print(f"  Diagnostic: {num_nan_p_exact} / {num_cells} cells have NaN pressureExact")
+    print(f"  Diagnostic: {num_nan_v_exact} / {num_cells} cells have NaN velocityExact")
 
-
-# =============================================================================
-# Analytical Solution
-# =============================================================================
-
-
-def analytical_solution(r, omega1, omega2, r1=1.0, r2=2.0):
-    """
-    Taylor-Couette analytical solution.
-    """
-
-    A = (
-        (omega2 * r2**2 - omega1 * r1**2)
-        / (r2**2 - r1**2)
-    )
-
-    B = (
-        ((omega1 - omega2) * r1**2 * r2**2)
-        / (r2**2 - r1**2)
-    )
-
-    u = A * r + B / r
-
-    p = (
-        A**2 * r**2 / 2
-        + 2 * A * B * np.log(r)
-        - B**2 / (2 * r**2)
-    )
-
-    p -= p[0]
-
-    return u, p
+    return x, y, pressure, velocity, pressure_exact, velocity_exact
 
 
 # =============================================================================
 # Radial Profiles
 # =============================================================================
+
+
+def _bin_radially(r_filtered, values_filtered, bins, n_bins):
+    """
+    Helper: average a per-cell scalar field into radial bins.
+    """
+
+    idx = np.clip(
+        np.digitize(r_filtered, bins) - 1,
+        0,
+        n_bins - 1,
+    )
+
+    return np.array([
+        values_filtered[idx == i].mean()
+        if (idx == i).any()
+        else np.nan
+        for i in range(n_bins)
+    ])
+
+
+def sorted_exact_profile(cx, cy, pressure_exact, velocity_exact, r1=1.0, r2=2.0):
+    """
+    Return the analytical fields directly from the per-cell VTK data,
+    sorted by radius (no binning). The analytical field is smooth by
+    construction, so unlike the numerical solution it doesn't need
+    binning to average out angular scatter -- and binning it onto a
+    fixed-width grid can leave bins empty wherever the underlying mesh
+    is coarser than the bin width, producing spurious gaps.
+    """
+
+    r_cells = np.sqrt(cx**2 + cy**2)
+    mask = (r_cells >= r1) & (r_cells <= r2)
+
+    r_filtered = r_cells[mask]
+    p_exact_filtered = pressure_exact[mask]
+
+    vx_exact = velocity_exact[:, 0]
+    vy_exact = velocity_exact[:, 1]
+    speed_exact = np.sqrt(vx_exact**2 + vy_exact**2)
+    s_exact_filtered = speed_exact[mask]
+
+    order = np.argsort(r_filtered)
+    r_sorted = r_filtered[order]
+    p_exact_sorted = p_exact_filtered[order]
+    s_exact_sorted = s_exact_filtered[order]
+
+    p_exact_sorted = p_exact_sorted - p_exact_sorted[0]
+
+    return r_sorted, s_exact_sorted, p_exact_sorted
 
 
 def compute_radial_profiles(
@@ -250,7 +244,8 @@ def compute_radial_profiles(
     n_bins=80,
 ):
     """
-    Compute radial averages.
+    Compute radial averages for the numerical solution, binning to
+    average out angular scatter at each radius.
     """
 
     vx = velocity[:, 0]
@@ -270,25 +265,8 @@ def compute_radial_profiles(
 
     bc = 0.5 * (bins[:-1] + bins[1:])
 
-    idx = np.clip(
-        np.digitize(r_filtered, bins) - 1,
-        0,
-        n_bins - 1,
-    )
-
-    p_bin = np.array([
-        p_filtered[idx == i].mean()
-        if (idx == i).any()
-        else np.nan
-        for i in range(n_bins)
-    ])
-
-    s_bin = np.array([
-        s_filtered[idx == i].mean()
-        if (idx == i).any()
-        else np.nan
-        for i in range(n_bins)
-    ])
+    p_bin = _bin_radially(r_filtered, p_filtered, bins, n_bins)
+    s_bin = _bin_radially(r_filtered, s_filtered, bins, n_bins)
 
     if not np.isnan(p_bin).all():
         p_bin -= p_bin[~np.isnan(p_bin)][0]
@@ -301,16 +279,14 @@ def compute_radial_profiles(
 # =============================================================================
 
 
-def generate_analytical_plot(case, r_num, u_num, p_num):
+def generate_analytical_plot(case, r_num, u_num, p_num, r_ref, u_ref, p_ref):
     """
-    Generate analytical comparison plot.
+    Generate analytical comparison plot. u_ref/p_ref are the raw
+    per-cell analytical fields from the VTK output, sorted by radius
+    r_ref (unbinned, so the line is smooth regardless of local mesh
+    coarseness). u_num/p_num are the binned numerical solution at
+    radii r_num.
     """
-
-    u_ref, p_ref = analytical_solution(
-        r_num,
-        case["omega1"],
-        case["omega2"],
-    )
 
     fig, (ax1, ax2) = plt.subplots(
         1,
@@ -321,7 +297,7 @@ def generate_analytical_plot(case, r_num, u_num, p_num):
 
     # Velocity
     ax1.plot(
-        r_num,
+        r_ref,
         u_ref,
         lw=2,
         color="black",
@@ -346,7 +322,7 @@ def generate_analytical_plot(case, r_num, u_num, p_num):
 
     # Pressure
     ax2.plot(
-        r_num,
+        r_ref,
         p_ref,
         lw=2,
         color="black",
@@ -537,21 +513,9 @@ def main():
     )
 
     parser.add_argument(
-        "--conf",
-        type=str,
-        help="Process only a specific configuration",
-    )
-
-    parser.add_argument(
         "--fields",
         action="store_true",
         help="Generate pressure and velocity field maps",
-    )
-
-    parser.add_argument(
-        "--analytical",
-        action="store_true",
-        help="Generate analytical comparison plots",
     )
 
     args = parser.parse_args()
@@ -563,87 +527,76 @@ def main():
             f"Results directory not found: {results_dir}"
         )
 
-    cases = discover_cases(results_dir, args.conf)
-
-    if not cases:
-        raise RuntimeError(
-            f"No matching cases found inside: {results_dir}"
-        )
-
-    metrics_data = []
+    case = find_case(results_dir)
 
     print("=" * 80)
     print(f"Results directory: {results_dir}")
-
-    if args.conf:
-        print(f"Selected configuration: {args.conf}")
-
     print("=" * 80)
 
-    # =========================================================================
-    # Process Cases
-    # =========================================================================
+    with tempfile.TemporaryDirectory() as tmp:
 
-    for case in cases:
+        tmpdir = Path(tmp)
 
-        print(f"\nProcessing Case: {case['path'].name}")
+        pvd_path = prepare_pvd_for_paraview(
+            case["path"],
+            tmpdir,
+        )
 
-        with tempfile.TemporaryDirectory() as tmp:
+        # -----------------------------------------------------------------
+        # Extract data
+        # -----------------------------------------------------------------
 
-            tmpdir = Path(tmp)
+        cx, cy, pressure, velocity, pressure_exact, velocity_exact = parse_data_via_vtk(
+            pvd_path
+        )
 
-            pvd_path = extract_pvd_and_vtus(
-                case["zip"],
-                tmpdir,
-            )
+        # -----------------------------------------------------------------
+        # Radial profiles
+        # -----------------------------------------------------------------
 
-            # -----------------------------------------------------------------
-            # Extract data
-            # -----------------------------------------------------------------
+        r_num, u_num, p_num = compute_radial_profiles(
+            cx,
+            cy,
+            pressure,
+            velocity,
+        )
 
-            cx, cy, pressure, velocity = parse_data_via_vtk(
-                pvd_path
-            )
+        r_ref, u_ref, p_ref = sorted_exact_profile(
+            cx,
+            cy,
+            pressure_exact,
+            velocity_exact,
+        )
 
-            # -----------------------------------------------------------------
-            # Radial profiles
-            # -----------------------------------------------------------------
+        # -----------------------------------------------------------------
+        # Analytical comparison
+        # -----------------------------------------------------------------
 
-            r_num, u_num, p_num = compute_radial_profiles(
+        generate_analytical_plot(
+            case,
+            r_num,
+            u_num,
+            p_num,
+            r_ref,
+            u_ref,
+            p_ref,
+        )
+
+        # -----------------------------------------------------------------
+        # ParaView field rendering
+        # -----------------------------------------------------------------
+
+        if args.fields:
+
+            print("  Rendering pressure field...")
+
+            render_matplotlib_fields(
                 cx,
                 cy,
                 pressure,
                 velocity,
+                case["path"],
             )
-
-            # -----------------------------------------------------------------
-            # Analytical comparison
-            # -----------------------------------------------------------------
-
-            if args.analytical:
-
-                generate_analytical_plot(
-                    case,
-                    r_num,
-                    u_num,
-                    p_num,
-                )
-
-            # -----------------------------------------------------------------
-            # ParaView field rendering
-            # -----------------------------------------------------------------
-
-            if args.fields:
-
-                print("  Rendering pressure field...")
-
-                render_matplotlib_fields(
-                    cx,
-                    cy,
-                    pressure,
-                    velocity,
-                    case["path"],
-                )
 
 
 # =============================================================================

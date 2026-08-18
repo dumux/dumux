@@ -7,9 +7,9 @@
 #include <config.h>
 
 #include <iostream>
+#include <cmath>
 #include <random>
 #include <fstream>
-#include <cstdlib>
 #include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -160,6 +160,58 @@ int main(int argc, char** argv)
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name(), "", mode);
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
+
+    using VelocityVectorOut = Dune::FieldVector<double, MassGridGeometry::GridView::dimensionworld>;
+    std::vector<double> pressureExact(massGridGeometry->numDofs());
+    std::vector<VelocityVectorOut> velocityExact(massGridGeometry->numDofs());
+
+    // evaluates the analytical solution at the same points (scv centers)
+    // as the numerical solution is defined on, and checks every dof
+    // was actually visited and produced a finite value
+    auto computeAnalyticalFields = [&]()
+    {
+        std::vector<bool> visited(massGridGeometry->numDofs(), false);
+        auto massFvGeometry = localView(*massGridGeometry);
+        for (const auto& element : elements(leafGridView))
+        {
+            massFvGeometry.bind(element);
+            for (const auto& scv : scvs(massFvGeometry))
+            {
+                const auto globalPos = scv.center();
+                const auto dofIdx = scv.dofIndex();
+
+                pressureExact[dofIdx] = massProblem->analyticalSolution(globalPos)[MassIndices::pressureIdx];
+                const auto exactVelocity = momentumProblem->analyticalSolution(globalPos);
+                velocityExact[dofIdx][0] = exactVelocity[MomentumIndices::velocityXIdx];
+                velocityExact[dofIdx][1] = exactVelocity[MomentumIndices::velocityYIdx];
+
+                visited[dofIdx] = true;
+            }
+        }
+
+        using std::isnan;
+        std::size_t numBad = 0;
+        for (std::size_t i = 0; i < massGridGeometry->numDofs(); ++i)
+        {
+            const bool badPressure = !visited[i] || isnan(pressureExact[i]);
+            const bool badVelocity = !visited[i] || isnan(velocityExact[i][0]) || isnan(velocityExact[i][1]);
+            if (badPressure || badVelocity)
+            {
+                ++numBad;
+                if (numBad <= 10) // avoid flooding stderr
+                    std::cerr << "Warning: analytical field invalid at dof " << i
+                              << " (visited=" << visited[i] << ")" << std::endl;
+            }
+        }
+        if (numBad > 0)
+            std::cerr << "Warning: " << numBad << " / " << massGridGeometry->numDofs()
+                      << " dofs have an invalid analytical field value." << std::endl;
+    };
+
+    computeAnalyticalFields();
+    vtkWriter.addField(pressureExact, "pressureExact");
+    vtkWriter.addField(velocityExact, "velocityExact");
+
     vtkWriter.write(0.0);
 
     // the linearize and solve
@@ -210,6 +262,11 @@ int main(int argc, char** argv)
     for (auto & val : x[massIdx])
         val -= pressureDiff;
     std::cout << "Subtracted pressure difference (" << pressureDiff << ") from the entire pressure solution vector." << std::endl;
+
+    // recompute the analytical fields right before the final write, and
+    // re-verify: if any dof is still bad here, it's a real problem with
+    // the analytical formula or the grid/dof mapping, not a stale value
+    computeAnalyticalFields();
 
     vtkWriter.write(1.0);
 
@@ -274,7 +331,7 @@ int main(int argc, char** argv)
 
     if (mpiHelper.rank() == 0)
     {
-        std::cout << "\n--- Saving Metrics and Creating Zip ---" << std::endl;
+        std::cout << "\n--- Saving Metrics ---" << std::endl;
 
         std::string problemName = massProblem->name();
         if (problemName == "") problemName = getParam<std::string>("Problem.Name", "sim");
@@ -303,23 +360,6 @@ int main(int argc, char** argv)
             std::cerr << "Error: Could not open file for writing: " << jsonPath << std::endl;
         }
 
-        // Create the ZIP containing ONLY .pvd and .vtu
-        std::string zipCmd = "zip -j \"" + problemName + ".zip\" \"" + problemName + ".pvd\" \"" + problemName + "\"*.vtu";
-
-        std::cout << "Executing: " << zipCmd << std::endl;
-        int result = std::system(zipCmd.c_str());
-
-        if (result == 0)
-        {
-            std::cout << "Successfully created " << problemName << ".zip containing VTK results." << std::endl;
-            std::cout << "Cleaning up raw VTK files..." << std::endl;
-            std::string rmCommand = "rm " + problemName + ".pvd " + problemName + "*.vtu";
-            std::system(rmCommand.c_str());
-        }
-        else
-        {
-            std::cerr << "Warning: Zip command failed. Original files kept for safety." << std::endl;
-        }
         Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
     }
