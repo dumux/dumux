@@ -22,6 +22,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/common/multimapperview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
@@ -384,7 +385,8 @@ public:
         );
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));
@@ -532,7 +534,8 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));

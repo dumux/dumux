@@ -22,6 +22,8 @@
 #include <utility>
 
 #include <dumux/common/concepts/ipdata_.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
@@ -80,7 +82,10 @@ public:
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) &
-    { eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element); }
+    {
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        eIdx_ = gridDiscretization.elementMapper().index(element);
+    }
 
     /*!
     * \brief bind the local view (r-value overload)
@@ -161,7 +166,8 @@ private:
 template<class GFVC>
 class HybridCVFEElementFluxVariablesCache<GFVC, false>
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<GFVC>().problem().gridGeometry())>;
+    using Problem = std::decay_t<decltype(std::declval<GFVC>().problem())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using GridView = typename GridGeometry::GridView;
 
     //!< maximum number of boundary faces per element, here assumed to be the number of faces of a dim-dimensional hypercube

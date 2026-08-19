@@ -16,6 +16,7 @@
 #include <ranges>
 #include <unordered_map>
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/parallel/parallel_for.hh>
 
 // make the local view function available whenever we use this class
@@ -151,7 +152,8 @@ public:
     {
         if constexpr (FluxVariablesCache::isSolDependent)
         {
-            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+            const auto eIdx = gridDiscretization.elementMapper().index(element);
 
             // Build offset vector and resize flat cache
             scvfOffset_[eIdx].resize(fvGeometry.numScvf() + 1, 0);

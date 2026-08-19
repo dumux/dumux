@@ -12,6 +12,7 @@
 #ifndef DUMUX_DISCRETIZATION_CVFE_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CVFE_GRID_FLUXVARSCACHE_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/parallel/parallel_for.hh>
 
 // make the local view function available whenever we use this class
@@ -114,7 +115,8 @@ public:
     {
         if constexpr (FluxVariablesCache::isSolDependent)
         {
-            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+            const auto eIdx = gridDiscretization.elementMapper().index(element);
             fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
             for (const auto& scvf : scvfs(fvGeometry))
                 cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf);
@@ -212,7 +214,8 @@ public:
     {
         if constexpr (FluxVariablesCache::isSolDependent)
         {
-            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+            const auto eIdx = gridDiscretization.elementMapper().index(element);
 
             // Compute offsets for this element
             qpsOffset_[eIdx].resize(fvGeometry.numScvf() + 1, 0);

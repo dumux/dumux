@@ -37,6 +37,8 @@
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/deprecated.hh>
 
 #include <dumux/geometry/intersectionentityset.hh>
 
@@ -119,7 +121,7 @@ template<class MomentumProblem,
          class MomentumSolutionVector,
          class Intersections,
          class REVGeo,
-         typename MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>,
+         typename MomentumGridGeometry = typename Dumux::ProblemTraits<MomentumProblem>::GridGeometry,
          typename std::enable_if_t<Dumux::DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>, int> = 0>
 auto average(const MomentumProblem& momentumProblem,
              const MassProblem& massProblem,
@@ -132,7 +134,7 @@ auto average(const MomentumProblem& momentumProblem,
     double phiAvg(0.0);
     GlobalPosition vAvg(0.0);
 
-    const auto& momentumGridGeometry = momentumProblem.gridGeometry();
+    const auto& momentumGridGeometry = Dumux::Deprecated::gridGeometry(momentumProblem);
     for(const auto& is : intersections(iset))
     {
         const auto isGeo = is.geometry();
@@ -165,7 +167,7 @@ template<class MomentumProblem,
          class MomentumSolutionVector,
          class Intersections,
          class REVGeo,
-         typename MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>,
+         typename MomentumGridGeometry = typename Dumux::ProblemTraits<MomentumProblem>::GridGeometry,
          typename std::enable_if_t<MomentumGridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered, int> = 0>
 auto average(const MomentumProblem& momentumProblem,
              const MassProblem& massProblem,
@@ -179,7 +181,7 @@ auto average(const MomentumProblem& momentumProblem,
 
     GlobalPosition vAvg(0.0);
 
-    const auto& massGridGeometry = massProblem.gridGeometry();
+    const auto& massGridGeometry = Dumux::Deprecated::gridGeometry(massProblem);
 
     // Calculate element velocities
     std::vector<GlobalPosition> velocity(massGridGeometry.gridView().size(0));

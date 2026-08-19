@@ -17,6 +17,7 @@
 #include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/concepts/variables_.hh>
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/method.hh>
 #include "velocityreconstruction.hh"
 
@@ -74,7 +75,8 @@ public:
                            int phaseIdx) const override
     {
         using CouplingManager = std::decay_t<decltype(elemVolVars.gridVolVars().problem().couplingManager())>;
-        using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
+        using MomentumProblem = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex))>;
+        using MomGG = typename ProblemTraits<MomentumProblem>::GridGeometry;
         if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVolVars);
         else if constexpr (DiscretizationMethods::isCVFE<typename MomGG::DiscretizationMethod>)
@@ -148,7 +150,8 @@ public:
                            int phaseIdx) const override
     {
         using CouplingManager = std::decay_t<decltype(elemVars.gridVariablesCache().problem().couplingManager())>;
-        using MomGG = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex).gridGeometry())>;
+        using MomentumProblem = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex))>;
+        using MomGG = typename ProblemTraits<MomentumProblem>::GridGeometry;
         if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
             calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVars);
         else if constexpr (DiscretizationMethods::isCVFE<typename MomGG::DiscretizationMethod>)

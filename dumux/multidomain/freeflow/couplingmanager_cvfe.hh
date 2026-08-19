@@ -24,6 +24,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
@@ -221,7 +222,7 @@ public:
                     const bool considerPreviousTimeStep = false) const
     {
         assert(!(considerPreviousTimeStep && !this->isTransient_));
-        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& gg = Deprecated::gridGeometry(this->problem(freeFlowMassIndex));
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
@@ -268,7 +269,7 @@ public:
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
 
-        auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+        auto massFvGeometry = localView(Deprecated::gridGeometry(this->problem(freeFlowMassIndex)));
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
         const auto& gridVarsCache = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
@@ -346,7 +347,7 @@ public:
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
 
-        auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+        auto massFvGeometry = localView(Deprecated::gridGeometry(this->problem(freeFlowMassIndex)));
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
         const auto& gridVarsCache = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
@@ -391,7 +392,7 @@ public:
                                 const SubControlVolumeFace<freeFlowMassIndex>& scvf) const
     {
         // TODO: optimize this function for tpfa where the scvf ip coincides with the dof location
-        auto fvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+        auto fvGeometry = localView(Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex)));
         fvGeometry.bindElement(element);
 
         const auto& localBasis = fvGeometry.feLocalBasis();
@@ -413,7 +414,7 @@ public:
      */
     VelocityVector elementVelocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry) const
     {
-        auto momentumFvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+        auto momentumFvGeometry = localView(Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex)));
         momentumFvGeometry.bindElement(fvGeometry.element());
 
         const auto& localBasis = momentumFvGeometry.feLocalBasis();
@@ -440,7 +441,7 @@ public:
         assert(!(considerPreviousTimeStep && !this->isTransient_));
 
         const auto& element = fvGeometry.element();
-        const auto& gg = this->problem(freeFlowMomentumIndex).gridGeometry();
+        const auto& gg = Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex));
         auto momentumFvGeometry = localView(gg);
         momentumFvGeometry.bindElement(fvGeometry.element());
 
@@ -480,7 +481,7 @@ public:
                                               const Element<freeFlowMassIndex>& elementI,
                                               Dune::index_constant<freeFlowMomentumIndex> domainJ) const
     {
-        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI);
+        const auto eIdx = Deprecated::gridGeometry(this->problem(freeFlowMassIndex)).elementMapper().index(elementI);
         return massAndEnergyToMomentumStencils_[eIdx];
     }
 
@@ -496,7 +497,7 @@ public:
                                                const Element<freeFlowMomentumIndex>& elementI,
                                                Dune::index_constant<freeFlowMassIndex> domainJ) const
     {
-        const auto eIdx = this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI);
+        const auto eIdx = Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex)).elementMapper().index(elementI);
         return momentumToMassAndEnergyStencils_[eIdx];
     }
 
@@ -543,9 +544,9 @@ public:
                 if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
                 {
                     const auto& problem = this->problem(domainJ);
-                    const auto& deflectedElement = problem.gridGeometry().element(dofIdxGlobalJ);
-                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
-                    auto fvGeometry = localView(problem.gridGeometry());
+                    const auto& deflectedElement = Deprecated::gridGeometry(problem).element(dofIdxGlobalJ);
+                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), Deprecated::gridGeometry(problem));
+                    auto fvGeometry = localView(Deprecated::gridGeometry(problem));
                     fvGeometry.bind(deflectedElement);
                     const auto& scv = fvGeometry.scv(dofIdxGlobalJ);
 
@@ -561,10 +562,10 @@ public:
                 if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
                 {
                     const auto& problem = this->problem(domainJ);
-                    const auto deflectedElementIdx = problem.gridGeometry().elementMapper().index(localAssemblerI.element());
-                    const auto& deflectedElement = problem.gridGeometry().element(deflectedElementIdx);
-                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
-                    auto fvGeometry = localView(problem.gridGeometry());
+                    const auto deflectedElementIdx = Deprecated::gridGeometry(problem).elementMapper().index(localAssemblerI.element());
+                    const auto& deflectedElement = Deprecated::gridGeometry(problem).element(deflectedElementIdx);
+                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), Deprecated::gridGeometry(problem));
+                    auto fvGeometry = localView(Deprecated::gridGeometry(problem));
                     fvGeometry.bind(deflectedElement);
 
                     // ToDo: Replace once all mass models are also working with local dofs
@@ -598,12 +599,12 @@ public:
         {
             // use coloring of the mass discretization for both domains
             // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
-            elementSets_ = computeColoring(this->problem(freeFlowMassIndex).gridGeometry()).sets;
+            elementSets_ = computeColoring(Deprecated::gridGeometry(this->problem(freeFlowMassIndex))).sets;
         }
         else
         {
             // use coloring of the momentum discretization for both domains
-            elementSets_ = computeColoring(this->problem(freeFlowMomentumIndex).gridGeometry()).sets;
+            elementSets_ = computeColoring(Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex))).sets;
         }
     }
 
@@ -623,7 +624,7 @@ public:
         // for this we have to color the elements so that we don't get
         // race conditions when writing into the global matrix
         // each color can be assembled using multiple threads
-        const auto& grid = this->problem(freeFlowMassIndex).gridGeometry().gridView().grid();
+        const auto& grid = Deprecated::gridGeometry(this->problem(freeFlowMassIndex)).gridView().grid();
         for (const auto& elements : elementSets_)
         {
             Dumux::parallelFor(elements.size(), [&](const std::size_t eIdx)
@@ -682,7 +683,7 @@ private:
         if constexpr (GridVariablesCache<freeFlowMassIndex>::cachingEnabled)
             return MomentumCouplingContextGlobalCaching{};
         else
-            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, fvGeometry.gridGeometry())};
+            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, Deprecated::gridGeometry(fvGeometry))};
     }
 
     /*!
@@ -713,8 +714,8 @@ private:
 
     void computeCouplingStencils_()
     {
-        const auto& momentumGridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
-        const auto& massGridGeometry = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& momentumGridGeometry = Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex));
+        const auto& massGridGeometry = Deprecated::gridGeometry(this->problem(freeFlowMassIndex));
         auto momentumFvGeometry = localView(momentumGridGeometry);
         auto massFvGeometry = localView(massGridGeometry);
 

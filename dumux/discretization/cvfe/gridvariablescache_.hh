@@ -19,6 +19,7 @@
 #include <dumux/parallel/parallel_for.hh>
 
 #include <dumux/common/concepts/localdofs_.hh>
+#include <dumux/common/deprecated.hh>
 
 // make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
@@ -223,7 +224,8 @@ private:
                     const FVElementGeometry& fvGeometry,
                     const ElementVariables& elemVars)
         {
-            const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
+            const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+            const auto eIdx = gridDiscretization.elementMapper().index(element);
             elementCaches_[eIdx].update(problem, element, fvGeometry, elemVars);
         }
 

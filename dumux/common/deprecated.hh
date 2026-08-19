@@ -36,6 +36,19 @@ namespace Deprecated {
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif // __clang__
 
+//! Get the grid discretization from a problem or an element discretization
+//! (e.g. FVElementGeometry, FEElementDiscretization), preferring the new
+//! gridDiscretization() interface where available and otherwise falling
+//! back to the gridGeometry() interface.
+template<class T>
+decltype(auto) gridGeometry(const T& t)
+{
+    if constexpr (requires { t.gridDiscretization(); })
+        return t.gridDiscretization();
+    else
+        return t.gridGeometry();
+}
+
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif  // __clang__

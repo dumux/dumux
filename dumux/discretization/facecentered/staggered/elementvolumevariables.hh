@@ -17,6 +17,7 @@
 #include <vector>
 #include <utility>
 
+#include <dumux/common/typetraits/problem.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
@@ -36,7 +37,8 @@ template<class GVV>
 class FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/true>
 {
     using ThisType = FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/true>;
-    using GridGeometry = std::decay_t<decltype(std::declval<GVV>().problem().gridGeometry())>;
+    using Problem = std::decay_t<decltype(std::declval<GVV>().problem())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
 
@@ -208,7 +210,8 @@ template<class GVV>
 class FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/false>
 {
     using ThisType = FaceCenteredStaggeredElementVolumeVariables<GVV, /*cachingEnabled*/false>;
-    using GridGeometry = std::decay_t<decltype(std::declval<GVV>().problem().gridGeometry())>;
+    using Problem = std::decay_t<decltype(std::declval<GVV>().problem())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
 

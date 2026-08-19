@@ -22,6 +22,8 @@
 
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/common/concepts/localdofs_.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
@@ -182,7 +184,8 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol) &
     {
-        eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        eIdx_ = gridDiscretization.elementMapper().index(element);
     }
 
     //! The grid variables cache object we are a restriction of
@@ -209,7 +212,8 @@ template<class GVC>
 class HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>
 {
     using ThisType = HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>;
-    using GridGeometry = std::decay_t<decltype(std::declval<GVC>().problem().gridGeometry())>;
+    using Problem = std::decay_t<decltype(std::declval<GVC>().problem())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using GridView = typename GridGeometry::GridView;
 
     //!< maximum number of boundary intersections per element, here assumed to be the number of faces of a dim-dimensional hypercube
@@ -325,7 +329,8 @@ public:
                      const SolutionVector& sol) &
     {
         // get the solution at the dofs of the element
-        auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        auto elemSol = elementSolution(element, sol, gridDiscretization);
 
         // resize variables to the required size
         variables_.resize(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
