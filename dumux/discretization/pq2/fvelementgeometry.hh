@@ -200,13 +200,13 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(element_->type()).localBasis();
+        return gridDiscretization().feCache().get(element_->type()).localBasis();
     }
 
     //! Get a local finite element basis
     const auto& feLocalCoefficients() const
     {
-        return gridGeometry().feCache().get(element_->type()).localCoefficients();
+        return gridDiscretization().feCache().get(element_->type()).localCoefficients();
     }
 
     //! The total number of element-local dofs
@@ -262,7 +262,7 @@ public:
     {
         element_ = element;
         // cache element index
-        eIdx_ = gridGeometry().elementMapper().index(element);
+        eIdx_ = gridDiscretization().elementMapper().index(element);
         elementGeometry_.emplace(element.geometry());
     }
 
@@ -277,10 +277,6 @@ public:
     //! The bound element geometry
     const typename Element::Geometry& elementGeometry() const
     { return *elementGeometry_; }
-
-    //! The grid geometry we are a restriction of
-    const GridGeometry& gridGeometry() const
-    { return ggCache_->gridGeometry(); }
 
     //! The grid discretization we are a restriction of
     const GridGeometry& gridDiscretization() const
@@ -403,10 +399,10 @@ private:
     template<class LocalKey>
     static GridIndexType dofIndex_(const PQ2FVElementGeometry& fvGeometry, const LocalKey& lk)
     {
-        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
-            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
+        if constexpr (requires { fvGeometry.gridDiscretization().dofIndex(fvGeometry.element(), lk); })
+            return static_cast<GridIndexType>(fvGeometry.gridDiscretization().dofIndex(fvGeometry.element(), lk));
         else
-            return static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
+            return static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridDiscretization().dofMapper(), fvGeometry.element(), lk));
     }
 
     const GGCache* ggCache_;
