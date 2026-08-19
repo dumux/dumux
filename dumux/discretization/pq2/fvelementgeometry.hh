@@ -128,13 +128,7 @@ public:
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    [&]() -> GridIndexType {
-                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
-                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
-                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
-                        else
-                            return static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
-                    }(),
+                    dofIndex_(fvGeometry, fvGeometry.feLocalCoefficients().localKey(i)),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });
@@ -147,13 +141,7 @@ public:
             | std::views::transform([&](size_t i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    [&]() -> GridIndexType {
-                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
-                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
-                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
-                        else
-                            return static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
-                    }(),
+                    dofIndex_(fvGeometry, fvGeometry.feLocalCoefficients().localKey(i)),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             });
@@ -165,13 +153,7 @@ public:
             Dune::range(std::size_t(0), fvGeometry.numLocalDofs()), [&](const auto i) {
                 return CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
-                    [&]() -> GridIndexType {
-                        const auto& lk = fvGeometry.feLocalCoefficients().localKey(i);
-                        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
-                            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
-                        else
-                            return static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
-                    }(),
+                    dofIndex_(fvGeometry, fvGeometry.feLocalCoefficients().localKey(i)),
                     static_cast<GridIndexType>(fvGeometry.elementIndex())
                 };
             }
@@ -415,6 +397,18 @@ public:
     }
 
 private:
+    //! Determine the grid dof index for a given local key, preferring the grid geometry's
+    //! own dofIndex if available. Implemented as a named function rather than an immediately
+    //! invoked lambda to avoid a spurious GCC -Wreturn-type warning for if-constexpr in lambdas.
+    template<class LocalKey>
+    static GridIndexType dofIndex_(const PQ2FVElementGeometry& fvGeometry, const LocalKey& lk)
+    {
+        if constexpr (requires { fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk); })
+            return static_cast<GridIndexType>(fvGeometry.gridGeometry().dofIndex(fvGeometry.element(), lk));
+        else
+            return static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(), lk));
+    }
+
     const GGCache* ggCache_;
     GridIndexType eIdx_;
 
