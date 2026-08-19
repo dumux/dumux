@@ -691,9 +691,9 @@ public:
     }
 
 private:
-    Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
-
     typename Element::Geometry geo_;
+
+    Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType> boxHelper_;
 };
 
 } // end namespace Dumux
