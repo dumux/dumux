@@ -128,7 +128,7 @@ struct ElementBoundaryTypes<TypeTag, TTag::PQ1NonconformingBase>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GG = typename ProblemTraits<Problem>::GridGeometry;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
     // Check if problem has new boundaryTypes interface
@@ -196,7 +196,7 @@ template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethods::PQ1Nonconforming>
 {
 private:
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GG = ProblemGridGeometry<Problem>;
 public:
     using GridGeometry = GG;
     // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, boundaryFace)

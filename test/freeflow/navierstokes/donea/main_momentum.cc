@@ -46,6 +46,9 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/deprecated.hh>
+
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
@@ -72,9 +75,11 @@ void printErrors(std::shared_ptr<Problem> problem,
                  const GridVariables& gridVariables,
                  const SolutionVector& x)
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     static constexpr int dim = GridGeometry::GridView::dimension;
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+
+    const auto& gridGeometry = Deprecated::gridGeometry(*problem);
 
     if (printErrors)
     {
@@ -84,7 +89,7 @@ void printErrors(std::shared_ptr<Problem> problem,
             const auto [totalVolume, errors] = calculateL2AndH1Errors(*problem, gridVariables, x);
 
             std::ofstream logFile(problem->name() + ".csv", std::ios::app);
-            auto numDofs = problem->gridGeometry().numDofs();
+            auto numDofs = gridGeometry.numDofs();
             logFile << numDofs << ", ";
             logFile << std::pow(totalVolume / numDofs, 1.0/dim);
 

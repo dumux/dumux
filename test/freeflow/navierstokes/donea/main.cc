@@ -39,6 +39,8 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/deprecated.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 #include <test/freeflow/navierstokes/errors_cvfe.hh>
@@ -102,9 +104,13 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
                  const MomentumIdx momentumIdx,
                  const MassIdx massIdx)
 {
-    using MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
-    using MassGridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
+    using MomentumGridGeometry = typename ProblemTraits<MomentumProblem>::GridGeometry;
+    using MassGridGeometry = typename ProblemTraits<MassProblem>::GridGeometry;
     static constexpr int dim = MomentumGridGeometry::GridView::dimension;
+
+    const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem);
+
+    const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem);
 
     // print discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
@@ -126,7 +132,7 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         if (printConvergenceTestFile)
         {
             std::ofstream logFile(momentumProblem->name() + "_errors_velocity.csv", std::ios::app);
-            auto numDofs = momentumProblem->gridGeometry().numDofs();
+            auto numDofs = momentumGridGeometry.numDofs();
             logFile << numDofs << ", ";
             logFile << std::pow(totalVolume / numDofs, 1.0/dim);
             writeError_(logFile, errors);
@@ -144,7 +150,7 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         if (printConvergenceTestFile)
         {
             std::ofstream logFile(massProblem->name() + "_errors_pressure.csv", std::ios::app);
-            auto numDofs = massProblem->gridGeometry().numDofs();
+            auto numDofs = massGridGeometry.numDofs();
             logFile << numDofs << ", ";
             logFile << std::pow(totalVolume / numDofs, 1.0/dim);
             writeError_(logFile, errors);

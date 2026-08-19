@@ -23,6 +23,8 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/io/format.hh>
 #include <dumux/geometry/diameter.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -38,7 +40,7 @@ std::vector<std::string> velocityLabels()
 template<class Problem, class Scalar = double>
 class NavierStokesErrors
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using SubControlVolume = typename GridGeometry::SubControlVolume;
     using Extrusion = Extrusion_t<GridGeometry>;
     using Indices = typename Problem::Indices;
@@ -94,8 +96,10 @@ private:
         PrimaryVariables maxReference(0.0);
         PrimaryVariables maxError(0.0);
 
-        auto fvGeometry = localView(problem_->gridGeometry());
-        for (const auto& element : elements(problem_->gridGeometry().gridView()))
+        const auto& gridGeometry = Deprecated::gridGeometry(*problem_);
+
+        auto fvGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bindElement(element);
 
@@ -180,7 +184,7 @@ NavierStokesErrors(std::shared_ptr<Problem>, SolutionVector&&, Scalar)
 template<class Problem, class Scalar = double>
 class NavierStokesErrorCSVWriter
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     using Indices = typename Problem::Indices;
 
     static constexpr int dim = GridGeometry::GridView::dimension;
@@ -189,8 +193,10 @@ public:
     NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem, const std::string& suffix = "")
     : name_(problem->name() + (suffix.empty() ? "_error" : "_error_" + suffix))
     {
-        const int numCCDofs = problem->gridGeometry().numCellCenterDofs();
-        const int numFaceDofs = problem->gridGeometry().numFaceDofs();
+        const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+
+        const int numCCDofs = gridGeometry.numCellCenterDofs();
+        const int numFaceDofs = gridGeometry.numFaceDofs();
 
         // print auxiliary file with the number of dofs
         std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
@@ -262,12 +268,14 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
                                  const NavierStokesErrors<Problem>& errors)
 {
     static constexpr int dim
-        = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>::GridView::dimension;
+        = ProblemTraits<Problem>::GridGeometry::GridView::dimension;
 
     const auto velLabels = velocityLabels();
 
-    const auto numCCDofs = problem->gridGeometry().numCellCenterDofs();
-    const auto numFaceDofs = problem->gridGeometry().numFaceDofs();
+    const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+
+    const auto numCCDofs = gridGeometry.numCellCenterDofs();
+    const auto numFaceDofs = gridGeometry.numFaceDofs();
 
     logFile << Fmt::format(
         "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
@@ -312,7 +320,7 @@ class ErrorsSubProblem
 {
     static constexpr bool isMomentumProblem = Problem::isMomentumProblem();
     static constexpr int dim
-    = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>::GridView::dimension;
+    = ProblemTraits<Problem>::GridGeometry::GridView::dimension;
 
     using ErrorVector = typename std::conditional_t< isMomentumProblem,
                                                      Dune::FieldVector<Scalar, dim>,
@@ -367,13 +375,16 @@ private:
         // calculate helping variables
         totalVolume_ = 0.0;
         hMax_ = 0.0;
-        numDofs_ = problem_->gridGeometry().numDofs();
 
-        using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+        using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
+        const auto& gridGeometry = Deprecated::gridGeometry(*problem_);
+
+        numDofs_ = gridGeometry.numDofs();
+
         // We do not consider the overlapping Dofs, i.e. elements, in the errors
         if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble
                       || GridGeometry::discMethod == DiscretizationMethods::pq2)
-            numDofs_ -= problem_->gridGeometry().gridView().size(0);
+            numDofs_ -= gridGeometry.gridView().size(0);
 
         ErrorVector sumReference(0.0);
         ErrorVector sumError(0.0);
@@ -382,8 +393,8 @@ private:
 
         using namespace Dune::Indices;
 
-        auto fvGeometry = localView(problem_->gridGeometry());
-        for (const auto& element : elements(problem_->gridGeometry().gridView()))
+        auto fvGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             hMax_ = std::max(hMax_, diameter(element.geometry()));
             fvGeometry.bindElement(element);
@@ -515,7 +526,7 @@ template<class MomentumProblem, class MassProblem, class Scalar = double>
 class Errors
 {
     static constexpr int dim
-        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+        = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
 
     using ErrorVector = Dune::FieldVector<Scalar, dim+1>;
     using NumSubProblemVector = Dune::FieldVector<Scalar, 2>;
@@ -631,7 +642,7 @@ template<class MomentumProblem, class MassProblem, class Scalar = double>
 class ErrorCSVWriter
 {
     static constexpr int dim
-        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+        = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
 
 public:
     ErrorCSVWriter(std::shared_ptr<const MomentumProblem> momentumProblem,
@@ -639,8 +650,12 @@ public:
                    const std::string& suffix = "")
     : name_(massProblem->name() + (suffix.empty() ? "_error" : "_error_" + suffix))
     {
-        const int numCCDofs = massProblem->gridGeometry().numDofs();
-        const int numFaceDofs = momentumProblem->gridGeometry().numDofs();
+        const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem);
+
+        const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem);
+
+        const int numCCDofs = massGridGeometry.numDofs();
+        const int numFaceDofs = momentumGridGeometry.numDofs();
 
         // print auxiliary file with the number of dofs
         std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
@@ -707,12 +722,16 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
                                  const Errors<MomentumProblem, MassProblem>& errors)
 {
     static constexpr int dim
-        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+        = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
 
     const auto velLabels = velocityLabels();
 
-    const auto numCCDofs = massProblem->gridGeometry().numDofs();
-    const auto numFaceDofs = momentumProblem->gridGeometry().numDofs();
+    const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem);
+
+    const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem);
+
+    const auto numCCDofs = massGridGeometry.numDofs();
+    const auto numFaceDofs = momentumGridGeometry.numDofs();
 
     logFile << Fmt::format(
         "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
@@ -759,10 +778,13 @@ void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
                                          const ErrorsSubProblem<MomentumProblem>& errors)
 {
     static constexpr int dim
-        = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>::GridView::dimension;
+        = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
 
     const auto velLabels = velocityLabels();
-    const auto numFaceDofs = problem->gridGeometry().numDofs();
+
+    const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+
+    const auto numFaceDofs = gridGeometry.numDofs();
 
     logFile << Fmt::format(
         "[ConvergenceTest] numFaceDofs = {}",

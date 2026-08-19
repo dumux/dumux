@@ -29,6 +29,7 @@
 #include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
 #include <dumux/common/constraintinfo.hh>
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -177,8 +178,9 @@ public:
     {
         Scalar influx = 0.0;
         Scalar outflux = 0.0;
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        const auto& gridGeometry = Deprecated::gridGeometry(*this);
+        auto fvGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bind(element);
             for (const auto& scvf : scvfs(fvGeometry))
@@ -219,8 +221,9 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        const auto& gridGeometry = Deprecated::gridGeometry(*this);
+        auto fvGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bind(element);
 
