@@ -19,6 +19,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/fem/fedofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
@@ -69,6 +70,7 @@ public:
     template<class ElemDisc, class BoundaryFace>
     static auto localDofsOnBoundaryFace(const ElemDisc& elemDisc, const BoundaryFace& boundaryFace)
     {
+        const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
         return Dune::transformedRangeView(
             Dune::range(numLocalDofsIntersection(elemDisc.element().type(), boundaryFace.intersectionIndex())),
             [&](const auto i) {
@@ -76,7 +78,7 @@ public:
                 return CVFE::LocalDof(
                     static_cast<LocalIndexType>(localDofIdx),
                     static_cast<GridIndexType>(Dumux::Experimental::FEDofHelper<GridView>::dofIndex(
-                        elemDisc.gridGeometry().dofMapper(),
+                        gridDiscretization.dofMapper(),
                         elemDisc.element(),
                         elemDisc.feLocalCoefficients().localKey(localDofIdx))),
                     static_cast<GridIndexType>(elemDisc.elementIndex())

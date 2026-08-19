@@ -124,7 +124,7 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridDiscretization().dofMapper(), fvGeometry.element(),
                                                                fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
@@ -140,7 +140,7 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridDiscretization().dofMapper(), fvGeometry.element(),
                                                                fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
@@ -155,7 +155,7 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
+                static_cast<GridIndexType>(DofHelper::dofIndex(fvGeometry.gridDiscretization().dofMapper(), fvGeometry.element(),
                                                                fvGeometry.feLocalCoefficients().localKey(i))),
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
@@ -202,13 +202,13 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(element_->type()).localBasis();
+        return gridDiscretization().feCache().get(element_->type()).localBasis();
     }
 
     //! Get the local finite element coefficients
     const auto& feLocalCoefficients() const
     {
-        return gridGeometry().feCache().get(element_->type()).localCoefficients();
+        return gridDiscretization().feCache().get(element_->type()).localCoefficients();
     }
 
     //! The total number of element-local dofs
@@ -264,7 +264,7 @@ public:
     {
         element_ = element;
         // cache element index
-        eIdx_ = gridGeometry().elementMapper().index(element);
+        eIdx_ = gridDiscretization().elementMapper().index(element);
         elementGeometry_.emplace(element.geometry());
     }
 
@@ -281,6 +281,7 @@ public:
     { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
+    [[deprecated("Use gridDiscretization() instead")]]
     const GridGeometry& gridGeometry() const
     { return ggCache_->gridGeometry(); }
 
@@ -366,7 +367,7 @@ public:
     friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const SubControlVolume& scv)
     {
         const auto type = fvGeometry.element().type();
-        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+        const auto& localKey = fvGeometry.gridDiscretization().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
 
         return CVFE::LocalDofInterpolationPointData{ DofHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
@@ -376,7 +377,7 @@ public:
     friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
         const auto type = fvGeometry.element().type();
-        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
+        const auto& localKey = fvGeometry.gridDiscretization().feCache().get(type).localCoefficients().localKey(localDof.index());
         const auto& localPos = DofHelper::localDofPosition(type, localKey);
 
         return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
