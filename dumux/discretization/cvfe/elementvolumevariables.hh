@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <dumux/common/concepts/localdofs_.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
@@ -124,7 +125,8 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol) &
     {
-        eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element);
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        eIdx_ = gridDiscretization.elementMapper().index(element);
     }
 
     //! The global volume variables object we are a restriction of
@@ -226,7 +228,8 @@ public:
                      const SolutionVector& sol) &
     {
         // get the solution at the dofs of the element
-        auto elemSol = elementSolution(element, sol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        auto elemSol = elementSolution(element, sol, gridDiscretization);
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());

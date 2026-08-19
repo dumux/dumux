@@ -19,6 +19,7 @@
 #include <dune/common/std/type_traits.hh>
 
 #include <dumux/common/concepts/ipdata_.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
@@ -97,7 +98,10 @@ public:
     void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) &
-    { eIdx_ = fvGeometry.gridGeometry().elementMapper().index(element); }
+    {
+        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        eIdx_ = gridDiscretization.elementMapper().index(element);
+    }
 
     /*!
     * \brief bind the local view (r-value overload)
