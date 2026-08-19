@@ -21,6 +21,7 @@
 
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/common/concepts/localdofs_.hh>
+#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
@@ -176,7 +177,8 @@ public:
                      const ElementDiscretization& elemDisc,
                      const SolutionVector& sol) &
     {
-        eIdx_ = elemDisc.gridGeometry().elementMapper().index(element);
+        const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
+        eIdx_ = gridDiscretization.elementMapper().index(element);
     }
 
     //! The grid variables cache object we are a restriction of

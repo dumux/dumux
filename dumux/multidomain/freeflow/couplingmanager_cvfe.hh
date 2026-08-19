@@ -683,7 +683,7 @@ private:
         if constexpr (GridVariablesCache<freeFlowMassIndex>::cachingEnabled)
             return MomentumCouplingContextGlobalCaching{};
         else
-            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, fvGeometry.gridGeometry())};
+            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, Deprecated::gridGeometry(fvGeometry))};
     }
 
     /*!
