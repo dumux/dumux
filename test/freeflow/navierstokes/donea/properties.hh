@@ -136,40 +136,6 @@ public:
 
 //! The grid variables
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1BubbleHybrid>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! The grid variables
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ2Hybrid>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! The grid variables
-template<class TypeTag>
 struct GridVariables<TypeTag, TTag::DoneaTestMassBox>
 {
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;

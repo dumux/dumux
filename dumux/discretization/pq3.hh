@@ -18,11 +18,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/typetraits/boundary_.hh>
 
-#include <dumux/assembly/cvfelocalresidual.hh>
 #include <dumux/assembly/cvfelocalresidual_.hh>
 
 #include <dumux/discretization/method.hh>
@@ -33,6 +31,7 @@
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/hybrid/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/pq3/fvgridgeometry.hh>
 #include <dumux/discretization/pq3/fegriddiscretization.hh>
@@ -100,6 +99,23 @@ private:
     >;
 public:
     using type = HybridCVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+};
+
+//! The grid variables for the hybrid model
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::PQ3HybridModel>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 
 template<class TypeTag>
@@ -189,16 +205,7 @@ concept PQ3HybridModel = PQ3Model<T> && Dumux::Properties::inheritsFrom<Properti
 
 template<PQ3HybridModel TypeTag>
 struct DiscretizationDefaultLocalOperator<TypeTag>
-{
-private:
-    using GV = GetPropType<TypeTag, Properties::GridVariables>;
-    static constexpr bool usesGeneralGridVariables =
-        Dumux::Concept::GridVariables<GV> && !Dumux::Concept::FVGridVariables<GV>;
-public:
-    using type = std::conditional_t<usesGeneralGridVariables,
-                                    Dumux::Experimental::CVFELocalResidual<TypeTag>,
-                                    Dumux::CVFELocalResidual<TypeTag>>;
-};
+{ using type = Dumux::Experimental::CVFELocalResidual<TypeTag>; };
 
 template<class T>
 concept PQ3FEModel = PQ3Model<T> && Dumux::Properties::inheritsFrom<Properties::TTag::PQ3FEModel, T>();
