@@ -410,7 +410,19 @@ private:
     {
 #if HAVE_MPI
         solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
-        configureCommunication_(gridView, dofMapper, std::bool_constant<LinearSolverTraits::canCommunicate>{});
+        if constexpr (LinearSolverTraits::canCommunicate)
+        {
+            if (solverCategory_ == Dune::SolverCategory::sequential)
+                scalarProduct_ = std::make_shared<ScalarProduct>();
+            else
+            {
+                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
+                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
+                buildParallelHelper_(gridView, dofMapper, *communication_);
+            }
+        }
+        else
+            scalarProduct_ = std::make_shared<ScalarProduct>();
 #else
         solverCategory_ = Dune::SolverCategory::sequential;
         scalarProduct_ = std::make_shared<ScalarProduct>();
@@ -420,28 +432,6 @@ private:
     }
 
 #if HAVE_MPI
-    // the discretization cannot communicate at all -> always sequential
-    template <class GridView, class DofMapper>
-    void configureCommunication_(const GridView&, const DofMapper&, std::false_type /*canCommunicate*/)
-    {
-        scalarProduct_ = std::make_shared<ScalarProduct>();
-    }
-
-    // the discretization can communicate -> the category is only known at runtime
-    template <class GridView, class DofMapper>
-    void configureCommunication_(const GridView& gridView, const DofMapper& dofMapper, std::true_type /*canCommunicate*/)
-    {
-        if (solverCategory_ == Dune::SolverCategory::sequential)
-        {
-            scalarProduct_ = std::make_shared<ScalarProduct>();
-            return;
-        }
-
-        communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
-        scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
-        buildParallelHelper_(gridView, dofMapper, *communication_);
-    }
-
     //! Build parallelHelper_ and set up its parallel index set for the given communication
     template <class GridView, class DofMapper>
     void buildParallelHelper_(const GridView& gridView, const DofMapper& dofMapper, Comm& comm)
