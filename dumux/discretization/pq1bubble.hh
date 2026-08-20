@@ -32,7 +32,6 @@
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/hybrid/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
@@ -40,7 +39,6 @@
 #include <dumux/discretization/pq1bubble/fegriddiscretization.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
-#include <dumux/discretization/cvfe/hybrid/fluxvariablescache.hh>
 
 #include <dumux/assembly/localresidual.hh>
 #include <dumux/discretization/fem/elementvariables.hh>
