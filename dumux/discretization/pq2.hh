@@ -29,14 +29,11 @@
 #include <dumux/discretization/elementboundarytypes.hh>
 
 #include <dumux/discretization/cvfe/elementboundarytypes.hh>
-#include <dumux/discretization/cvfe/hybrid/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
 #include <dumux/discretization/pq2/fegriddiscretization.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
-#include <dumux/discretization/cvfe/hybrid/fluxvariablescache.hh>
 
 #include <dumux/assembly/localresidual.hh>
 #include <dumux/discretization/fem/elementvariables.hh>
@@ -44,7 +41,6 @@
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 #include <dumux/discretization/gridvariables.hh>
 
-#include <dumux/flux/fluxvariablescaching.hh>
 
 namespace Dumux::Properties {
 
@@ -52,7 +48,7 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct PQ2Base { using InheritsFrom = std::tuple<GridProperties>; };
-struct PQ2HybridModel { using InheritsFrom = std::tuple<FiniteVolumeModel, PQ2Base>; };
+struct PQ2HybridModel { using InheritsFrom = std::tuple<PQ2Base>; };
 struct PQ2FEModel { using InheritsFrom = std::tuple<PQ2Base>; };
 } // end namespace TTag
 
@@ -66,46 +62,6 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
     using type = PQ2FVGridGeometry<Scalar, GridView, enableCache>;
-};
-
-//! The grid volume variables vector class
-template<class TypeTag>
-struct GridVolumeVariables<TypeTag, TTag::PQ2HybridModel>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using Traits = Dumux::Detail::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables>;
-public:
-    using type = Dumux::Detail::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-};
-
-//! The flux variables cache class
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::PQ2HybridModel>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = HybridCVFEFluxVariablesCache<Scalar, GridGeometry>;
-};
-
-//! The grid flux variables cache vector class
-template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::PQ2HybridModel>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluxVariablesCache = GetPropTypeOr<TypeTag,
-        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
-    >;
-public:
-    using type = HybridCVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! The grid variables for the hybrid model
@@ -123,6 +79,30 @@ private:
     using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
 public:
     using type = Dumux::Experimental::GridVariables<GG, GVC>;
+};
+
+//! TODO: Replace property
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::PQ2HybridModel> { static constexpr bool value = false; };
+
+//! TODO: Replace property
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::PQ2HybridModel> { static constexpr bool value = false; };
+
+//! TODO: Replace and move to LinearAlgebra traits
+template<class TypeTag>
+struct SolutionVector<TypeTag, TTag::PQ2HybridModel> { using type = Dune::BlockVector<GetPropType<TypeTag, Properties::PrimaryVariables>>; };
+
+//! TODO: Replace and move to LinearAlgebra traits
+template<class TypeTag>
+struct JacobianMatrix<TypeTag, TTag::PQ2HybridModel>
+{
+private:
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
+    using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+public:
+    using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
 
 //! Set the default for the ElementBoundaryTypes
