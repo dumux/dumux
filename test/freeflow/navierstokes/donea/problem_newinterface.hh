@@ -26,6 +26,16 @@
 #include <dumux/discretization/dirichletconstraints.hh>
 #include <dumux/common/constraintinfo.hh>
 
+//! Reproduce the vertex-based boundary treatment of the old interface.
+//! At a corner where a Dirichlet and a Neumann boundary meet, the old
+//! (scv/vertex-based) interface classifies the shared corner dof by its own
+//! position, so the corner dof stays unconstrained and the adjacent boundary
+//! faces carry the flux. The new interface classifies per boundary face
+//! instead. Enable this to obtain the old behaviour.
+#ifndef REPRODUCE_OLD_BOUNDARY_BEHAVIOR
+#define REPRODUCE_OLD_BOUNDARY_BEHAVIOR 0
+#endif
+
 namespace Dumux {
 
 /*!
@@ -118,6 +128,32 @@ public:
      *
      * \param globalPos The position at the boundary
      */
+#if REPRODUCE_OLD_BOUNDARY_BEHAVIOR
+    /*!
+     * \brief Vertex-style boundary types: a boundary face is a flux boundary
+     *        as soon as one of its local dofs lies on a flux boundary.
+     */
+    template<class FVEG>
+    BoundaryTypes boundaryTypes(const FVEG& fvGeometry,
+                                const typename FVEG::BoundaryFace& boundaryFace) const
+    {
+        BoundaryTypes values;
+        if constexpr (ParentType::isMomentumProblem())
+        {
+            for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                if (isMomentumFluxBoundary_(ipData(fvGeometry, localDof).global()))
+                {
+                    values.setAllFluxBoundary();
+                    return values;
+                }
+        }
+        else
+            values.setFluxBoundary(Indices::conti0EqIdx);
+
+        return values;
+    }
+#endif
+
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
@@ -343,11 +379,19 @@ private:
 
             for(const auto& boundaryFace : boundaryFaces(fvGeometry))
             {
-                if(!isMomentumFluxBoundary_(boundaryFace.center()))
                 {
                     for(const auto& localDof : localDofs(fvGeometry, boundaryFace))
                     {
                         const auto& globalPos = ipData(fvGeometry, localDof).global();
+#if REPRODUCE_OLD_BOUNDARY_BEHAVIOR
+                        // vertex-style: classify each dof by its own position
+                        if (isMomentumFluxBoundary_(globalPos))
+                            continue;
+#else
+                        // face-based: the whole face is Dirichlet or it is not
+                        if (isMomentumFluxBoundary_(boundaryFace.center()))
+                            break;
+#endif
                         ConstraintInfo info;
                         info.setAll();
 
