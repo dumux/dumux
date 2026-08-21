@@ -150,6 +150,7 @@ public:
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->updateSolution(curSol);
+        prevSol_ = nullptr;
 
         computeCouplingStencils_();
     }
@@ -163,7 +164,6 @@ public:
     {
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         prevSol_ = &prevSol;
-        isTransient_ = true;
     }
 
     //! use as binary coupling manager in multi model context
@@ -175,6 +175,7 @@ public:
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->attachSolution(curSol);
+        prevSol_ = nullptr;
 
         computeCouplingStencils_();
     }
@@ -221,7 +222,7 @@ public:
                     const IpData& ipData,
                     const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
         const auto& gg = Deprecated::gridGeometry(this->problem(freeFlowMassIndex));
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
@@ -264,7 +265,7 @@ public:
                    const IpData& ipData,
                    const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
 
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
@@ -342,7 +343,7 @@ public:
                               const IpData& ipData,
                               const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
 
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
@@ -438,7 +439,7 @@ public:
                             const IpData& ipData,
                             const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
 
         const auto& element = fvGeometry.element();
         const auto& gg = Deprecated::gridGeometry(this->problem(freeFlowMomentumIndex));
@@ -764,8 +765,11 @@ private:
     //! A tuple of std::shared_ptrs to the grid variables of the sub problems
     GridVariablesTuple gridVariables_;
 
-    const SolutionVector* prevSol_;
-    bool isTransient_;
+    //! we are in a transient setting if a previous solution has been set
+    bool isTransient_() const
+    { return prevSol_ != nullptr; }
+
+    const SolutionVector* prevSol_ = nullptr;
 
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };
