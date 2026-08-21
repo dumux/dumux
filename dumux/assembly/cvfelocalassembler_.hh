@@ -22,7 +22,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/common/multimapperview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
@@ -94,7 +93,7 @@ public:
                                      const CouplingFunction& maybeAssembleCouplingBlocks = {})
     {
         this->asImp_().bindLocalViews();
-        const auto eIdxGlobal = Deprecated::gridGeometry(this->asImp_().problem()).elementMapper().index(this->element());
+        const auto eIdxGlobal = this->asImp_().problem().gridDiscretization().elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
@@ -122,7 +121,7 @@ public:
             assert(this->elementIsGhost());
 
             // handle dofs per codimension
-            const auto& gridDiscretization = Deprecated::gridGeometry(this->asImp_().problem());
+            const auto& gridDiscretization = this->asImp_().problem().gridDiscretization();
             Dune::Hybrid::forEach(std::make_integer_sequence<int, dim+1>{}, [&](auto d)
             {
                 constexpr int codim = dim - d;
@@ -268,7 +267,7 @@ public:
         );
 
         // create the element solution
-        const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
+        const auto& gridDiscretization = elemDisc.gridDiscretization();
         auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives

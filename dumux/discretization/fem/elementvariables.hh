@@ -21,7 +21,6 @@
 
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/common/concepts/localdofs_.hh>
-#include <dumux/common/deprecated.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
@@ -177,7 +176,7 @@ public:
                      const ElementDiscretization& elemDisc,
                      const SolutionVector& sol) &
     {
-        const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
+        const auto& gridDiscretization = elemDisc.gridDiscretization();
         eIdx_ = gridDiscretization.elementMapper().index(element);
     }
 
