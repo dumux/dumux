@@ -81,8 +81,8 @@ namespace Dumux::Experimental {
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true, class LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>>
 class Assembler
 {
-    using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GridGeo::GridView;
+    using GridDisc = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridDisc::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
     using TimeLoop = TimeLoopBase<GetPropType<TypeTag, Properties::Scalar>>;
@@ -98,7 +98,9 @@ public:
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
-    using GridGeometry = GridGeo;
+    using GridDiscretization = GridDisc;
+    //! support old interfaces
+    using GridGeometry = GridDisc;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     /*!
@@ -107,17 +109,17 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     Assembler(std::shared_ptr<const Problem> problem,
-              std::shared_ptr<const GridGeometry> gridGeometry,
+              std::shared_ptr<const GridDiscretization> gridDiscretization,
               std::shared_ptr<GridVariables> gridVariables)
     : problem_(problem)
-    , gridGeometry_(gridGeometry)
+    , gridDiscretization_(gridDiscretization)
     , gridVariables_(gridVariables)
     , timeLoop_()
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
-            && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
+        enableMultithreading_ = SupportsColoring<typename GridDiscretization::DiscretizationMethod>::value
+            && Grid::Capabilities::supportsMultithreading(gridDiscretization_->gridView())
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
@@ -130,19 +132,19 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     Assembler(std::shared_ptr<const Problem> problem,
-              std::shared_ptr<const GridGeometry> gridGeometry,
+              std::shared_ptr<const GridDiscretization> gridDiscretization,
               std::shared_ptr<GridVariables> gridVariables,
               std::shared_ptr<const TimeLoop> timeLoop,
               const SolutionVector& prevSol)
     : problem_(problem)
-    , gridGeometry_(gridGeometry)
+    , gridDiscretization_(gridDiscretization)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
     , isStationaryProblem_(!timeLoop)
     {
-        enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
-            && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
+        enableMultithreading_ = SupportsColoring<typename GridDiscretization::DiscretizationMethod>::value
+            && Grid::Capabilities::supportsMultithreading(gridDiscretization_->gridView())
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
@@ -166,7 +168,7 @@ public:
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridGeometry_);
+        enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridDiscretization_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -181,7 +183,7 @@ public:
 
             (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
         };
-        enforceProblemConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
+        enforceProblemConstraints_(*problem_, *gridDiscretization_, applyDirichletConstraint);
     }
 
     /*!
@@ -198,7 +200,7 @@ public:
             localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, curSol, *gridGeometry_);
+        enforcePeriodicConstraints_(*jacobian_, curSol, *gridDiscretization_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -211,7 +213,7 @@ public:
 
             (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
         };
-        enforceProblemConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
+        enforceProblemConstraints_(*problem_, *gridDiscretization_, applyDirichletConstraint);
     }
 
     //! compute the residuals using the internal residual
@@ -232,7 +234,7 @@ public:
             localAssembler.assembleResidual(r);
         });
 
-        enforcePeriodicConstraints_(r, curSol, *gridGeometry_);
+        enforcePeriodicConstraints_(r, curSol, *gridDiscretization_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -241,7 +243,7 @@ public:
         {
             r[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
         };
-        enforceProblemConstraints_(*problem_, *gridGeometry_, applyDirichletConstraint);
+        enforceProblemConstraints_(*problem_, *gridDiscretization_, applyDirichletConstraint);
     }
 
     /*!
@@ -291,19 +293,23 @@ public:
 
     //! Returns the number of degrees of freedom
     std::size_t numDofs() const
-    { return gridGeometry_->numDofs(); }
+    { return gridDiscretization_->numDofs(); }
 
     //! The problem
     const Problem& problem() const
     { return *problem_; }
 
-    //! The global finite volume geometry
-    const GridGeometry& gridGeometry() const
-    { return *gridGeometry_; }
+    //! The grid discretization
+    const GridDiscretization& gridDiscretization() const
+    { return *gridDiscretization_; }
+
+    //! support old interfaces
+    const GridDiscretization& gridGeometry() const
+    { return *gridDiscretization_; }
 
     //! The gridview
     const GridView& gridView() const
-    { return gridGeometry().gridView(); }
+    { return gridDiscretization().gridView(); }
 
     //! The global grid variables
     GridVariables& gridVariables()
@@ -378,7 +384,7 @@ private:
         jacobian_->setSize(numDofs, numDofs);
 
         // create occupation pattern of the jacobian
-        const auto occupationPattern = getJacobianPattern<isImplicit>(gridGeometry());
+        const auto occupationPattern = getJacobianPattern<isImplicit>(gridDiscretization());
 
         // export pattern to jacobian
         occupationPattern.exportIdx(*jacobian_);
@@ -392,7 +398,7 @@ private:
     void maybeComputeColors_()
     {
         if (enableMultithreading_)
-            elementSets_ = computeColoring(gridGeometry()).sets;
+            elementSets_ = computeColoring(gridDiscretization()).sets;
     }
 
     // reset the residual vector to 0.0
@@ -488,11 +494,11 @@ private:
     }
 
     template<class GG>
-    void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) const
+    void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridDiscretization) const
     {
         if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
-            for (const auto& m : gridGeometry.periodicDofMap())
+            for (const auto& m : gridDiscretization.periodicDofMap())
             {
                 if (m.first < m.second)
                 {
@@ -531,11 +537,11 @@ private:
     }
 
     template<class GG>
-    void enforcePeriodicConstraints_(JacobianMatrix& jac, const SolutionVector&, const GG& gridGeometry) const
+    void enforcePeriodicConstraints_(JacobianMatrix& jac, const SolutionVector&, const GG& gridDiscretization) const
     {
         if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
-            for (const auto& m : gridGeometry.periodicDofMap())
+            for (const auto& m : gridDiscretization.periodicDofMap())
             {
                 if (m.first < m.second)
                 {
@@ -570,11 +576,11 @@ private:
     }
 
     template<class GG>
-    void enforcePeriodicConstraints_(ResidualType& res, const SolutionVector& curSol, const GG& gridGeometry) const
+    void enforcePeriodicConstraints_(ResidualType& res, const SolutionVector& curSol, const GG& gridDiscretization) const
     {
         if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
-            for (const auto& m : gridGeometry.periodicDofMap())
+            for (const auto& m : gridDiscretization.periodicDofMap())
             {
                 if (m.first < m.second)
                 {
@@ -615,8 +621,8 @@ private:
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
-    //! the finite volume geometry of the grid
-    std::shared_ptr<const GridGeometry> gridGeometry_;
+    //! the grid discretization
+    std::shared_ptr<const GridDiscretization> gridDiscretization_;
 
     //! the variables container for the grid
     std::shared_ptr<GridVariables> gridVariables_;

@@ -48,6 +48,7 @@ template<class Problem>
 struct ProblemTraits
 {
     using GridGeometry = Detail::ProblemGridGeometry<Problem>;
+    using GridDiscretization = Detail::ProblemGridGeometry<Problem>;
     using BoundaryTypes = typename Detail::template ProblemTraits<Problem, typename GridGeometry::DiscretizationMethod>::BoundaryTypes;
 };
 

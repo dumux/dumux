@@ -131,7 +131,7 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    CVFEElementVariables bind(const typename FVElementGeometry::Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SolutionVector& sol)  &&
     {
@@ -142,7 +142,7 @@ public:
     // For compatibility reasons with the case of not storing the variables.
     // function to be called before assembling an element, preparing the variables within the stencil
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol) &
     {
@@ -155,7 +155,7 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    CVFEElementVariables bindElement(const typename FVElementGeometry::Element& element,
                                      const FVElementGeometry& fvGeometry,
                                      const SolutionVector& sol)  &&
     {
@@ -165,7 +165,7 @@ public:
 
     // function to prepare the variables within the element
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol) &
     {
@@ -270,7 +270,7 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    CVFEElementVariables bind(const typename FVElementGeometry::Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SolutionVector& sol)  &&
     {
@@ -280,7 +280,7 @@ public:
 
     // specialization for control-volume finite element, simply forwards to the bindElement method
     template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    void bind(const typename FVElementGeometry::Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol) &
     {
@@ -293,7 +293,7 @@ public:
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
     template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    CVFEElementVariables bindElement(const typename FVElementGeometry::Element& element,
                                           const FVElementGeometry& fvGeometry,
                                           const SolutionVector& sol)  &&
     {
@@ -303,7 +303,7 @@ public:
 
     // specialization for control-volume finite element
     template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::GridGeometry::GridView::template Codim<0>::Entity& element,
+    void bindElement(const typename FVElementGeometry::Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol) &
     {

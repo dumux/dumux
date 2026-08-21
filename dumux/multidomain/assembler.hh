@@ -76,7 +76,7 @@ public:
     using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
 
     template<std::size_t id>
-    using GridGeometry = typename MDTraits::template SubDomain<id>::GridGeometry;
+    using GridDiscretization = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
 
     template<std::size_t id>
     using Problem = typename MDTraits::template SubDomain<id>::Problem;
@@ -96,7 +96,7 @@ public:
 private:
 
     using ProblemTuple = typename MDTraits::template TupleOfSharedPtrConst<Problem>;
-    using GridGeometryTuple = typename MDTraits::template TupleOfSharedPtrConst<GridGeometry>;
+    using GridDiscretizationTuple = typename MDTraits::template TupleOfSharedPtrConst<GridDiscretization>;
     using GridVariablesTuple = typename MDTraits::template TupleOfSharedPtr<GridVariables>;
 
     using TimeLoop = TimeLoopBase<Scalar>;
@@ -139,7 +139,7 @@ private:
     };
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<typename GridGeometry<id>::DiscretizationMethod, id>::type;
+    using SubDomainAssembler = typename SubDomainAssemblerType<typename GridDiscretization<id>::DiscretizationMethod, id>::type;
 
 public:
 
@@ -149,12 +149,12 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     MultiDomainAssembler(ProblemTuple problem,
-                         GridGeometryTuple gridGeometry,
+                         GridDiscretizationTuple gridDiscretization,
                          GridVariablesTuple gridVariables,
                          std::shared_ptr<CouplingManager> couplingManager)
     : couplingManager_(couplingManager)
     , problemTuple_(std::move(problem))
-    , gridGeometryTuple_(std::move(gridGeometry))
+    , gridDiscretizationTuple_(std::move(gridDiscretization))
     , gridVariablesTuple_(std::move(gridVariables))
     , timeLoop_()
     , isStationaryProblem_(true)
@@ -164,7 +164,7 @@ public:
         std::cout << "Instantiated assembler for a stationary problem." << std::endl;
 
         enableMultithreading_ = CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value
-            && Grid::Capabilities::allGridsSupportsMultithreading(gridGeometryTuple_)
+            && Grid::Capabilities::allGridsSupportsMultithreading(gridDiscretizationTuple_)
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
@@ -177,14 +177,14 @@ public:
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     MultiDomainAssembler(ProblemTuple problem,
-                         GridGeometryTuple gridGeometry,
+                         GridDiscretizationTuple gridDiscretization,
                          GridVariablesTuple gridVariables,
                          std::shared_ptr<CouplingManager> couplingManager,
                          std::shared_ptr<const TimeLoop> timeLoop,
                          const SolutionVector& prevSol)
     : couplingManager_(couplingManager)
     , problemTuple_(std::move(problem))
-    , gridGeometryTuple_(std::move(gridGeometry))
+    , gridDiscretizationTuple_(std::move(gridDiscretization))
     , gridVariablesTuple_(std::move(gridVariables))
     , timeLoop_(timeLoop)
     , prevSol_(&prevSol)
@@ -194,7 +194,7 @@ public:
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
 
         enableMultithreading_ = CouplingManagerSupportsMultithreadedAssembly<CouplingManager>::value
-            && Grid::Capabilities::allGridsSupportsMultithreading(gridGeometryTuple_)
+            && Grid::Capabilities::allGridsSupportsMultithreading(gridDiscretizationTuple_)
             && !Multithreading::isSerial()
             && getParam<bool>("Assembly.Multithreading", true);
 
@@ -219,9 +219,9 @@ public:
             const auto& subSol = curSol[domainId];
             this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
 
-            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
-            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
-            enforceProblemConstraints_(domainId, jacRow, subRes, *gridGeometry, subSol);
+            const auto gridDiscretization = std::get<domainId>(gridDiscretizationTuple_);
+            enforcePeriodicConstraints_(domainId, jacRow, subRes, *gridDiscretization, subSol);
+            enforceProblemConstraints_(domainId, jacRow, subRes, *gridDiscretization, subSol);
         });
     }
 
@@ -249,9 +249,9 @@ public:
             const auto& subSol = curSol[domainId];
             this->assembleResidual_(domainId, subRes, curSol);
 
-            const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
-            enforcePeriodicConstraints_(domainId, subRes, *gridGeometry, subSol);
-            enforceProblemConstraints_(domainId, subRes, *gridGeometry, subSol);
+            const auto gridDiscretization = std::get<domainId>(gridDiscretizationTuple_);
+            enforcePeriodicConstraints_(domainId, subRes, *gridDiscretization, subSol);
+            enforceProblemConstraints_(domainId, subRes, *gridDiscretization, subSol);
         });
     }
 
@@ -337,22 +337,22 @@ public:
     //! the number of dof locations of domain i
     template<std::size_t i>
     std::size_t numDofs(Dune::index_constant<i> domainId) const
-    { return std::get<domainId>(gridGeometryTuple_)->numDofs(); }
+    { return std::get<domainId>(gridDiscretizationTuple_)->numDofs(); }
 
     //! the problem of domain i
     template<std::size_t i>
     const auto& problem(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(problemTuple_); }
 
-    //! the finite volume grid geometry of domain i
+    //! the grid discretization of domain i
     template<std::size_t i>
-    const auto& gridGeometry(Dune::index_constant<i> domainId) const
-    { return *std::get<domainId>(gridGeometryTuple_); }
+    const auto& gridDiscretization(Dune::index_constant<i> domainId) const
+    { return *std::get<domainId>(gridDiscretizationTuple_); }
 
     //! the grid view of domain i
     template<std::size_t i>
     const auto& gridView(Dune::index_constant<i> domainId) const
-    { return gridGeometry(domainId).gridView(); }
+    { return gridDiscretization(domainId).gridView(); }
 
     //! the grid variables of domain i
     template<std::size_t i>
@@ -563,7 +563,7 @@ private:
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
-        const auto& gg = gridGeometry(domainI);
+        const auto& gg = gridDiscretization(domainI);
         auto pattern = getJacobianPattern<isImplicit()>(gg);
         couplingManager_->extendJacobianPattern(domainI, pattern);
         return pattern;
@@ -575,17 +575,17 @@ private:
                                              Dune::index_constant<j> domainJ) const
     {
         return getCouplingJacobianPattern<isImplicit()>(*couplingManager_,
-                                                        domainI, gridGeometry(domainI),
-                                                        domainJ, gridGeometry(domainJ));
+                                                        domainI, gridDiscretization(domainI),
+                                                        domainJ, gridDiscretization(domainJ));
     }
 
     // build periodic constraints into the system matrix
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
-    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridDiscretization, const Sol& curSol) const
     {
         if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
-            for (const auto& m : gridGeometry.periodicDofMap())
+            for (const auto& m : gridDiscretization.periodicDofMap())
             {
                 if (m.first < m.second)
                 {
@@ -641,7 +641,7 @@ private:
 
     // enforce global constraints into the system matrix
     template<std::size_t i, class JacRow, class Res, class GG, class Sol>
-    void enforceProblemConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    void enforceProblemConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const GG& gridDiscretization, const Sol& curSol) const
     {
         if constexpr (Dumux::Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
         {
@@ -692,11 +692,11 @@ private:
 
     // build periodic constraints in residual only
     template<std::size_t i, class Res, class GG, class Sol>
-    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridDiscretization, const Sol& curSol) const
     {
         if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
         {
-            for (const auto& m : gridGeometry.periodicDofMap())
+            for (const auto& m : gridDiscretization.periodicDofMap())
             {
                 if (m.first < m.second)
                 {
@@ -712,7 +712,7 @@ private:
 
     // enforce global constraints in residual only
     template<std::size_t i, class Res, class GG, class Sol>
-    void enforceProblemConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridGeometry, const Sol& curSol) const
+    void enforceProblemConstraints_(Dune::index_constant<i> domainI, Res& res, const GG& gridDiscretization, const Sol& curSol) const
     {
         if constexpr (Dumux::Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
         {
@@ -737,8 +737,8 @@ private:
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;
 
-    //! the finite volume geometry of the grid
-    GridGeometryTuple gridGeometryTuple_;
+    //! the grid discretization
+    GridDiscretizationTuple gridDiscretizationTuple_;
 
     //! the variables container for the grid
     GridVariablesTuple gridVariablesTuple_;

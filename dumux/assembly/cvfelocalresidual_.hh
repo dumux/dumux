@@ -48,11 +48,11 @@ class CVFELocalResidual : public LocalResidual<TypeTag>
 {
     using ParentType = LocalResidual<TypeTag>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using FVElementGeometry = typename GridDiscretization::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

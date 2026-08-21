@@ -172,7 +172,7 @@ public:
     std::span<const ScvContext> contexts(const ElementDiscretization& elemDisc,
                                          const typename ElementDiscretization::SubControlVolume& scv) const
     {
-        const auto eIdx = elemDisc.gridGeometry().elementMapper().index(elemDisc.element());
+        const auto eIdx = elemDisc.gridDiscretization().elementMapper().index(elemDisc.element());
         const auto scvIdx = scv.indexInElement();
         const auto it = map_.find({eIdx, scvIdx});
         return (it != map_.end()) ? std::span<const ScvContext>(it->second)

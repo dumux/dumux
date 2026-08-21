@@ -78,8 +78,8 @@ public:
     using BoundaryFaceQuadratureRule = typename Traits::BoundaryFaceQuadratureRule;
 
     //! Constructor
-    FEGridDiscretization(std::shared_ptr<BasicGridGeometry> gg)
-    : ParentType(std::move(gg))
+    FEGridDiscretization(std::shared_ptr<BasicGridGeometry> gd)
+    : ParentType(std::move(gd))
     , dofMapper_(this->gridView(), Traits::layout())
     , cache_(*this)
     , periodicGridTraits_(this->gridView().grid())
@@ -135,8 +135,8 @@ public:
     { return periodicDofMap_; }
 
     //! local view of this object (constructed with the internal cache)
-    friend inline LocalView localView(const FEGridDiscretization& gg)
-    { return { gg.cache_ }; }
+    friend inline LocalView localView(const FEGridDiscretization& gd)
+    { return { gd.cache_ }; }
 
 private:
     class FEGridDiscretizationCache
@@ -146,8 +146,8 @@ private:
         //! export the dof helper type
         using DofHelper = typename Traits::DofHelper;
 
-        explicit FEGridDiscretizationCache(const FEGridDiscretization& gg)
-        : gridDiscretization_(&gg)
+        explicit FEGridDiscretizationCache(const FEGridDiscretization& gd)
+        : gridDiscretization_(&gd)
         {}
 
         const FEGridDiscretization& gridDiscretization() const
