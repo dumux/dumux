@@ -83,16 +83,16 @@ public:
         Dumux::parallelFor(gridDiscretization.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
         {
             const auto element = gridDiscretization.element(eIdx);
-            const auto fvGeometry = localView(gridDiscretization).bindElement(element);
+            const auto elemDisc = localView(gridDiscretization).bindElement(element);
 
             // get the element solution
             auto elemSol = elementSolution(element, sol, gridDiscretization);
 
-            variables_[eIdx].resize(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
-            for (const auto& localDof : localDofs(fvGeometry))
-                variables_[eIdx][localDof.index()].update(elemSol, problem, fvGeometry, ipData(fvGeometry, localDof));
+            variables_[eIdx].resize(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
+            for (const auto& localDof : localDofs(elemDisc))
+                variables_[eIdx][localDof.index()].update(elemSol, problem, elemDisc, ipData(elemDisc, localDof));
 
-            ipDataCache_->update(problem, element, fvGeometry, variables_[eIdx]);
+            ipDataCache_->update(problem, element, elemDisc, variables_[eIdx]);
         });
     }
 
@@ -106,15 +106,15 @@ public:
             Dumux::parallelFor(gridDiscretization.gridView().size(0), [&, &problem = problem(), newIpDataCache](const std::size_t eIdx)
             {
                 const auto element = gridDiscretization.element(eIdx);
-                const auto fvGeometry = localView(gridDiscretization).bindElement(element);
+                const auto elemDisc = localView(gridDiscretization).bindElement(element);
 
                 // get the element solution
                 auto elemSol = elementSolution(element, sol, gridDiscretization);
 
-                for (const auto& localDof : localDofs(fvGeometry))
-                    variables_[eIdx][localDof.index()].update(elemSol, problem, fvGeometry, ipData(fvGeometry, localDof));
+                for (const auto& localDof : localDofs(elemDisc))
+                    variables_[eIdx][localDof.index()].update(elemSol, problem, elemDisc, ipData(elemDisc, localDof));
 
-                newIpDataCache->update(problem, element, fvGeometry, variables_[eIdx]);
+                newIpDataCache->update(problem, element, elemDisc, variables_[eIdx]);
             });
 
             ipDataCache_ = std::move(newIpDataCache);
@@ -124,13 +124,13 @@ public:
             Dumux::parallelFor(gridDiscretization.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
             {
                 const auto element = gridDiscretization.element(eIdx);
-                const auto fvGeometry = localView(gridDiscretization).bindElement(element);
+                const auto elemDisc = localView(gridDiscretization).bindElement(element);
 
                 // get the element solution
                 auto elemSol = elementSolution(element, sol, gridDiscretization);
 
-                for (const auto& localDof : localDofs(fvGeometry))
-                    variables_[eIdx][localDof.index()].update(elemSol, problem, fvGeometry, ipData(fvGeometry, localDof));
+                for (const auto& localDof : localDofs(elemDisc))
+                    variables_[eIdx][localDof.index()].update(elemSol, problem, elemDisc, ipData(elemDisc, localDof));
             });
         }
     }
@@ -179,28 +179,28 @@ private:
             template<class Problem, class ElementDiscretization, class ElementVariables>
             void update(const Problem& problem,
                         const typename ElementDiscretization::Element& element,
-                        const ElementDiscretization& fvGeometry,
+                        const ElementDiscretization& elemDisc,
                         const ElementVariables& elemVars)
             {
-                qpsOffset.resize(fvGeometry.numScvf() + 1, 0);
-                for (const auto& scvf : scvfs(fvGeometry))
+                qpsOffset.resize(elemDisc.numScvf() + 1, 0);
+                for (const auto& scvf : scvfs(elemDisc))
                 {
-                    const auto numQps = std::ranges::size(Dumux::CVFE::quadratureRule(fvGeometry, scvf));
+                    const auto numQps = std::ranges::size(Dumux::CVFE::quadratureRule(elemDisc, scvf));
                     qpsOffset[scvf.index() + 1] = numQps;
                 }
                 for (std::size_t i = 2; i < qpsOffset.size(); ++i)
                     qpsOffset[i] += qpsOffset[i-1];
 
                 scvfCache.resize(qpsOffset.back());
-                for (const auto& scvf : scvfs(fvGeometry))
+                for (const auto& scvf : scvfs(elemDisc))
                 {
-                    for (const auto& qpData : Dumux::CVFE::quadratureRule(fvGeometry, scvf))
+                    for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scvf))
                     {
                         const auto scvfIdx = qpData.ipData().scvfIndex();
                         const auto qpIdx = qpData.ipData().qpIndex();
                         scvfCache[qpsOffset[scvfIdx] + qpIdx].update(problem,
                                                                      element,
-                                                                     fvGeometry,
+                                                                     elemDisc,
                                                                      elemVars,
                                                                      qpData.ipData());
                     }
@@ -221,12 +221,12 @@ private:
         template<class Problem, class ElementDiscretization, class ElementVariables>
         void update(const Problem& problem,
                     const typename ElementDiscretization::Element& element,
-                    const ElementDiscretization& fvGeometry,
+                    const ElementDiscretization& elemDisc,
                     const ElementVariables& elemVars)
         {
-            const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+            const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
             const auto eIdx = gridDiscretization.elementMapper().index(element);
-            elementCaches_[eIdx].update(problem, element, fvGeometry, elemVars);
+            elementCaches_[eIdx].update(problem, element, elemDisc, elemVars);
         }
 
         // access operator

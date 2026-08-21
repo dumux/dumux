@@ -25,12 +25,12 @@ using NumLocalDofsDetector = decltype(
 );
 
 template<typename ElementDiscretization>
-constexpr int numLocalDofs(const ElementDiscretization& fvGeometry)
+constexpr int numLocalDofs(const ElementDiscretization& elemDisc)
 {
     if constexpr (Dune::Std::is_detected<NumLocalDofsDetector, ElementDiscretization>::value)
-        return fvGeometry.numLocalDofs();
+        return elemDisc.numLocalDofs();
     else
-        return fvGeometry.numScv();
+        return elemDisc.numScv();
 }
 
 //! helper struct detecting if a fvElementGeometry object has a nonCVLocalDofs() function

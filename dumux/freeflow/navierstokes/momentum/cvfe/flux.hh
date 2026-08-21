@@ -44,13 +44,13 @@ public:
     //! Initialize the flux variables storing some temporary pointers
     NavierStokesMomentumFluxContext(
         const Problem& problem,
-        const ElementDiscretization& fvGeometry,
+        const ElementDiscretization& elemDisc,
         const ElementVolumeVariables& elemVolVars,
         const ElementFluxVariablesCache& elemFluxVarsCache,
         const SubControlVolumeFace& scvf
     )
     : problem_(problem)
-    , fvGeometry_(fvGeometry)
+    , elemDisc_(elemDisc)
     , elemVolVars_(elemVolVars)
     , elemFluxVarsCache_(elemFluxVarsCache)
     , scvf_(scvf)
@@ -60,13 +60,13 @@ public:
     { return problem_; }
 
     const Element& element() const
-    { return fvGeometry_.element(); }
+    { return elemDisc_.element(); }
 
     const SubControlVolumeFace& scvFace() const
     { return scvf_; }
 
-    const ElementDiscretization& fvGeometry() const
-    { return fvGeometry_; }
+    const ElementDiscretization& elemDisc() const
+    { return elemDisc_; }
 
     const ElementVolumeVariables& elemVolVars() const
     { return elemVolVars_; }
@@ -76,7 +76,7 @@ public:
 
 private:
     const Problem& problem_;
-    const ElementDiscretization& fvGeometry_;
+    const ElementDiscretization& elemDisc_;
     const ElementVolumeVariables& elemVolVars_;
     const ElementFluxVariablesCache& elemFluxVarsCache_;
     const SubControlVolumeFace& scvf_;
@@ -110,12 +110,12 @@ public:
     //! Initialize the flux variables storing some temporary pointers
     NavierStokesMomentumFluxFunctionContext(
         const Problem& problem,
-        const ElementDiscretization& fvGeometry,
+        const ElementDiscretization& elemDisc,
         const ElementVolumeVariables& elemVolVars,
         const IpData& ipData
     )
     : problem_(problem)
-    , fvGeometry_(fvGeometry)
+    , elemDisc_(elemDisc)
     , elemVolVars_(elemVolVars)
     , ipData_(ipData)
     , velocity_(0.0)
@@ -129,10 +129,10 @@ public:
     { return problem_; }
 
     const Element& element() const
-    { return fvGeometry_.element(); }
+    { return elemDisc_.element(); }
 
-    const ElementDiscretization& fvGeometry() const
-    { return fvGeometry_; }
+    const ElementDiscretization& elemDisc() const
+    { return elemDisc_; }
 
     const ElementVolumeVariables& elemVolVars() const
     { return elemVolVars_; }
@@ -147,13 +147,13 @@ private:
     void calculateVelocity_()
     {
         const auto& shapeValues = ipData_.shapeValues();
-        for (const auto& localDof : localDofs(fvGeometry_))
+        for (const auto& localDof : localDofs(elemDisc_))
             velocity_.axpy(shapeValues[localDof.index()][0], elemVolVars_[localDof.index()].velocity());
     }
 
     void calculateGradVelocity()
     {
-        for (const auto& localDof : localDofs(fvGeometry_))
+        for (const auto& localDof : localDofs(elemDisc_))
         {
             const auto& volVars = elemVolVars_[localDof.index()];
             for (int dir = 0; dir < dim; ++dir)
@@ -162,7 +162,7 @@ private:
     }
 
     const Problem& problem_;
-    const ElementDiscretization& fvGeometry_;
+    const ElementDiscretization& elemDisc_;
     const ElementVolumeVariables& elemVolVars_;
     const IpData& ipData_;
     GlobalPosition velocity_;
@@ -198,7 +198,7 @@ public:
         if (!context.problem().enableInertiaTerms())
             return NumEqVector(0.0);
 
-        const auto& fvGeometry = context.fvGeometry();
+        const auto& elemDisc = context.elemDisc();
         const auto& elemVolVars = context.elemVolVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
@@ -206,21 +206,21 @@ public:
 
         // interpolate velocity at scvf
         NumEqVector v(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
+        for (const auto& localDof : localDofs(elemDisc))
             v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
 
         // get density from the problem
-        const Scalar density = context.problem().density(context.element(), context.fvGeometry(), fluxVarCache.ipData());
+        const Scalar density = context.problem().density(context.element(), context.elemDisc(), fluxVarCache.ipData());
 
         const auto vn = v*scvf.unitOuterNormal();
-        const auto& insideVolVars = elemVolVars[fvGeometry.scv(scvf.insideScvIdx())];
-        const auto& outsideVolVars = elemVolVars[fvGeometry.scv(scvf.outsideScvIdx())];
+        const auto& insideVolVars = elemVolVars[elemDisc.scv(scvf.insideScvIdx())];
+        const auto& outsideVolVars = elemVolVars[elemDisc.scv(scvf.outsideScvIdx())];
         const auto upwindVelocity = vn > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
         const auto downwindVelocity = vn > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
         static const auto upwindWeight = getParamFromGroup<Scalar>(context.problem().paramGroup(), "Flux.UpwindWeight");
         const auto advectiveTermIntegrand = density*vn * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
 
-        return advectiveTermIntegrand * Extrusion::area(fvGeometry, scvf) * insideVolVars.extrusionFactor();
+        return advectiveTermIntegrand * Extrusion::area(elemDisc, scvf) * insideVolVars.extrusionFactor();
     }
 
     /*!
@@ -230,14 +230,14 @@ public:
     NumEqVector diffusiveMomentumFlux(const Context& context) const
     {
         const auto& element = context.element();
-        const auto& fvGeometry = context.fvGeometry();
+        const auto& elemDisc = context.elemDisc();
         const auto& elemVolVars = context.elemVolVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
 
         // interpolate velocity gradient at scvf
         Tensor gradV(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
+        for (const auto& localDof : localDofs(elemDisc))
         {
             const auto& volVars = elemVolVars[localDof];
             for (int dir = 0; dir < dim; ++dir)
@@ -245,7 +245,7 @@ public:
         }
 
         // get viscosity from the problem
-        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, fluxVarCache.ipData());
+        const auto mu = context.problem().effectiveViscosity(element, elemDisc, fluxVarCache.ipData());
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -261,7 +261,7 @@ public:
         if (enableDilatationTerm)
             diffusiveFlux += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal();
 
-        diffusiveFlux *= Extrusion::area(fvGeometry, scvf) * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+        diffusiveFlux *= Extrusion::area(elemDisc, scvf) * elemVolVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
         return diffusiveFlux;
     }
 
@@ -269,13 +269,13 @@ public:
     NumEqVector pressureContribution(const Context& context) const
     {
         const auto& element = context.element();
-        const auto& fvGeometry = context.fvGeometry();
+        const auto& elemDisc = context.elemDisc();
         const auto& elemVolVars = context.elemVolVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
 
         // The pressure force needs to take the extruded scvf area into account
-        const auto pressure = context.problem().pressure(element, fvGeometry, fluxVarCache.ipData());
+        const auto pressure = context.problem().pressure(element, elemDisc, fluxVarCache.ipData());
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
@@ -284,7 +284,7 @@ public:
         const auto referencePressure = context.problem().referencePressure();
 
         NumEqVector pn(scvf.unitOuterNormal());
-        pn *= (pressure-referencePressure)*Extrusion::area(fvGeometry, scvf)*elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+        pn *= (pressure-referencePressure)*Extrusion::area(elemDisc, scvf)*elemVolVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
 
         return pn;
     }
@@ -316,7 +316,7 @@ public:
     template<class Problem, class ElementDiscretization, class ElementVariables,
              class SubControlVolumeFace, class VelocityVector>
     NumEqVector advectiveMomentumFluxIntegral(const Problem& problem,
-                                              const ElementDiscretization& fvGeometry,
+                                              const ElementDiscretization& elemDisc,
                                               const ElementVariables& elemVars,
                                               const SubControlVolumeFace& scvf,
                                               const VelocityVector& integratedVelocity) const
@@ -325,11 +325,11 @@ public:
             return NumEqVector(0.0);
 
         // get density from the problem
-        const Scalar density = problem.density(fvGeometry.element(), fvGeometry, ipData(fvGeometry, scvf));
+        const Scalar density = problem.density(elemDisc.element(), elemDisc, ipData(elemDisc, scvf));
 
         const auto vn_integral = integratedVelocity*scvf.unitOuterNormal();
-        const auto& insideVolVars = elemVars[fvGeometry.scv(scvf.insideScvIdx())];
-        const auto& outsideVolVars = elemVars[fvGeometry.scv(scvf.outsideScvIdx())];
+        const auto& insideVolVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
+        const auto& outsideVolVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
         const auto upwindVelocity = vn_integral > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
         const auto downwindVelocity = vn_integral > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
         static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
@@ -345,10 +345,10 @@ public:
     NumEqVector diffusiveMomentumFluxIntegrand(const Context& context, const IpData& ipData) const
     {
         const auto& element = context.element();
-        const auto& fvGeometry = context.fvGeometry();
+        const auto& elemDisc = context.elemDisc();
 
         // get viscosity from the problem
-        const auto mu = context.problem().effectiveViscosity(element, fvGeometry, ipData);
+        const auto mu = context.problem().effectiveViscosity(element, elemDisc, ipData);
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
@@ -372,10 +372,10 @@ public:
     NumEqVector pressureFluxIntegrand(const Context& context, const IpData& ipData) const
     {
         const auto& element = context.element();
-        const auto& fvGeometry = context.fvGeometry();
+        const auto& elemDisc = context.elemDisc();
 
         // The pressure force integrand
-        const auto pressure = context.problem().pressure(element, fvGeometry, ipData);
+        const auto pressure = context.problem().pressure(element, elemDisc, ipData);
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
         // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.

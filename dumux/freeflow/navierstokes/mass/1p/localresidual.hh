@@ -86,13 +86,13 @@ public:
     /*!
      * \brief Calculate the storage term of the equation
      *
-     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemDisc The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
      * \param scv The sub control volume
      * \param isPreviousTimeLevel If set to true, the storage term is evaluated on the previous time level.
      *
      */
-    NumEqVector storageIntegral(const ElementDiscretization& fvGeometry,
+    NumEqVector storageIntegral(const ElementDiscretization& elemDisc,
                                 const ElementVariables& elemVars,
                                 const SubControlVolume& scv,
                                 bool isPreviousTimeLevel) const
@@ -106,7 +106,7 @@ public:
         if constexpr (ModelTraits::enableEnergyBalance())
             storage[ModelTraits::Indices::energyEqIdx] = vars.density() * vars.internalEnergy();
 
-        storage *= Extrusion::volume(fvGeometry, scv) * vars.extrusionFactor();
+        storage *= Extrusion::volume(elemDisc, scv) * vars.extrusionFactor();
 
         return storage;
     }
@@ -116,7 +116,7 @@ public:
      *
      * \param problem The problem
      * \param element The element
-     * \param fvGeometry The finite volume geometry context
+     * \param elemDisc The finite volume geometry context
      * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face to compute the flux on
      * \param elemFluxVarsCache The cache related to flux computation
@@ -124,19 +124,19 @@ public:
     template<class ElementFluxVariablesCache>
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
-                            const ElementDiscretization& fvGeometry,
+                            const ElementDiscretization& elemDisc,
                             const ElementVariables& elemVars,
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(problem, element, fvGeometry, elemVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, elemDisc, elemVars, scvf, elemFluxVarsCache);
         auto flux = fluxVars.flux(0);
 
         // the auxiliary flux is enabled if the trait is specialized for the problem
         // this can be used, for example, to implement flux stabilization terms
         if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
-            flux += problem.auxiliaryFlux(element, fvGeometry, elemVars, elemFluxVarsCache, scvf);
+            flux += problem.auxiliaryFlux(element, elemDisc, elemVars, elemFluxVarsCache, scvf);
 
         return flux;
     }
@@ -144,35 +144,35 @@ public:
     /*!
      * \brief Calculates the flux integral over a face of a sub control volume.
      *
-     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemDisc The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face
      *
      */
-    NumEqVector fluxIntegral(const ElementDiscretization& fvGeometry,
+    NumEqVector fluxIntegral(const ElementDiscretization& elemDisc,
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
     {
         const auto& problem = this->asImp().problem();
         NumEqVector flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf))
         {
             const auto& faceIpData = qpData.ipData();
-            flux += qpData.weight() * (problem.velocity(fvGeometry, faceIpData) * faceIpData.unitOuterNormal());
+            flux += qpData.weight() * (problem.velocity(elemDisc, faceIpData) * faceIpData.unitOuterNormal());
         }
 
         static const auto upwindWeight
             = getParamFromGroup<Scalar>(this->problem().paramGroup(), "Flux.UpwindWeight", 1.0);
 
-        const auto& insideVars = elemVars[fvGeometry.scv(scvf.insideScvIdx())];
-        const auto& outsideVars = elemVars[fvGeometry.scv(scvf.outsideScvIdx())];
+        const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
+        const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
 
         flux *= (upwindWeight * insideVars.density() + (1.0 - upwindWeight) * outsideVars.density());
 
         // the auxiliary flux is enabled if the trait is specialized for the problem
         // this can be used, for example, to implement flux stabilization terms
         if constexpr (ImplementsAuxiliaryFluxNavierStokesMassOneP<Problem>::value)
-            flux += problem.auxiliaryFlux(fvGeometry.element(), fvGeometry, elemVars, scvf);
+            flux += problem.auxiliaryFlux(elemDisc.element(), elemDisc, elemVars, scvf);
 
         return flux * insideVars.extrusionFactor();
     }
