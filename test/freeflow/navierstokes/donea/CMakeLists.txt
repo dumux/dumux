@@ -78,9 +78,9 @@ dumux_add_test(NAME test_ff_stokes_donea_box_stabilized
                SOURCES main.cc
                CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
                COMPILE_DEFINITIONS ENABLECACHING=1
-               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumBox
                COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
-               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=BoxModel
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
