@@ -14,6 +14,7 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -26,7 +27,7 @@ std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Pr
                                                                         const SolutionVector& x,
                                                                         int order = 5)
 {
-    using GridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
     double totalVolume = 0.0;
     Dune::FieldVector<double, 2> errors(0.0);

@@ -117,13 +117,13 @@ template<Concept::GridVariables GridVariables>
 class NavierStokesVelocityOutput<GridVariables> : public VelocityOutput<GridVariables>
 {
     using ParentType = VelocityOutput<GridVariables>;
-    using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridDiscretization = typename GridVariables::GridDiscretization;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Variables = typename ElementVariables::Variables;
     using FluidSystem = typename Variables::FluidSystem;
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FieldType = typename ParentType::FieldType;
 
@@ -145,43 +145,43 @@ public:
 
     void calculateVelocity(VelocityVector& velocity,
                            const Element& element,
-                           const FVElementGeometry& fvGeometry,
+                           const ElementDiscretization& elemDisc,
                            const ElementVariables& elemVars,
                            int phaseIdx) const override
     {
         using CouplingManager = std::decay_t<decltype(elemVars.gridVariablesCache().problem().couplingManager())>;
         using MomentumProblem = std::decay_t<decltype(std::declval<CouplingManager>().problem(CouplingManager::freeFlowMomentumIndex))>;
-        using MomGG = typename ProblemTraits<MomentumProblem>::GridGeometry;
-        if constexpr (MomGG::discMethod == DiscretizationMethods::fcstaggered)
-            calculateVelocityForStaggeredGrid_(velocity, element, fvGeometry, elemVars);
-        else if constexpr (DiscretizationMethods::isCVFE<typename MomGG::DiscretizationMethod>)
-            calculateVelocityForCVFESchemes_(velocity, element, fvGeometry, elemVars);
+        using MomGD = typename ProblemTraits<MomentumProblem>::GridDiscretization;
+        if constexpr (MomGD::discMethod == DiscretizationMethods::fcstaggered)
+            calculateVelocityForStaggeredGrid_(velocity, element, elemDisc, elemVars);
+        else if constexpr (DiscretizationMethods::isCVFE<typename MomGD::DiscretizationMethod>)
+            calculateVelocityForCVFESchemes_(velocity, element, elemDisc, elemVars);
         else
-            DUNE_THROW(Dune::NotImplemented, "Navier-Stokes velocity output for scheme " << MomGG::discMethod);
+            DUNE_THROW(Dune::NotImplemented, "Navier-Stokes velocity output for scheme " << MomGD::discMethod);
     }
 
 private:
     void calculateVelocityForStaggeredGrid_(VelocityVector& velocity,
                                             const Element& element,
-                                            const FVElementGeometry& fvGeometry,
+                                            const ElementDiscretization& elemDisc,
                                             const ElementVariables& elemVars) const
     {
-        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-        const auto getFaceVelocity = [&](const FVElementGeometry& fvG, const auto& scvf)
+        const auto eIdx = elemDisc.gridGeometry().elementMapper().index(element);
+        const auto getFaceVelocity = [&](const ElementDiscretization& elemD, const auto& scvf)
         {
-            return elemVars.gridVariablesCache().problem().faceVelocity(element, fvGeometry, scvf);
+            return elemVars.gridVariablesCache().problem().faceVelocity(element, elemDisc, scvf);
         };
 
-        velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, fvGeometry);
+        velocity[eIdx] = StaggeredVelocityReconstruction::cellCenterVelocity(getFaceVelocity, elemDisc);
     }
 
     void calculateVelocityForCVFESchemes_(VelocityVector& velocity,
                                           const Element& element,
-                                          const FVElementGeometry& fvGeometry,
+                                          const ElementDiscretization& elemDisc,
                                           const ElementVariables& elemVars) const
     {
-        const auto eIdx = fvGeometry.gridGeometry().elementMapper().index(element);
-        velocity[eIdx] = elemVars.gridVariablesCache().problem().elementVelocity(fvGeometry);
+        const auto eIdx = elemDisc.gridDiscretization().elementMapper().index(element);
+        velocity[eIdx] = elemVars.gridVariablesCache().problem().elementVelocity(elemDisc);
     }
 
     bool enableOutput_;
