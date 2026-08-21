@@ -36,7 +36,7 @@ class LocalAssemblerBase
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using ElementDiscretization = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -67,7 +67,7 @@ public:
     explicit LocalAssemblerBase(const Assembler& assembler,
                                 const Element& element,
                                 const SolutionVector& curSol,
-                                const FVElementGeometry& fvGeometry,
+                                const ElementDiscretization& fvGeometry,
                                 const ElementVariables& curElemVars,
                                 const ElementVariables& prevElemVars,
                                 const LocalResidual& localResidual,
@@ -203,7 +203,7 @@ public:
     { return curSol_; }
 
     //! The element discretization
-    FVElementGeometry& fvGeometry()
+    ElementDiscretization& fvGeometry()
     { return fvGeometry_; }
 
     //! The current element variables
@@ -219,7 +219,7 @@ public:
     { return localResidual_; }
 
     //! The finite volume geometry
-    const FVElementGeometry& fvGeometry() const
+    const ElementDiscretization& fvGeometry() const
     { return fvGeometry_; }
 
     //! The current element variables
@@ -247,7 +247,7 @@ private:
     const Element& element_; //!< the element whose residual is assembled
     const SolutionVector& curSol_; //!< the current solution
 
-    FVElementGeometry fvGeometry_;
+    ElementDiscretization fvGeometry_;
     ElementVariables curElemVars_;
     ElementVariables prevElemVars_;
 

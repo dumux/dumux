@@ -42,15 +42,15 @@ public:
      * \param curElemVars The variables for all local dofs of the element at the current  time level
      * \param timeStepSize The current time step size
      */
-    template<class ResidualVector, class Problem, class FVElementGeometry, class ElementVariables>
+    template<class ResidualVector, class Problem, class ElementDiscretization, class ElementVariables>
     static void addStorageTerms(ResidualVector& residual,
                                 const Problem& problem,
-                                const FVElementGeometry& fvGeometry,
+                                const ElementDiscretization& fvGeometry,
                                 const ElementVariables& prevElemVars,
                                 const ElementVariables& curElemVars,
                                 const Scalar timeStepSize)
     {
-        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
             // Make sure we don't iterate over quadrature points if there are no hybrid dofs
             if (nonCVLocalDofs(fvGeometry).empty())
@@ -62,7 +62,7 @@ public:
             // We apply mass lumping such that we only need to calculate the integral of basis functions
             const auto& geometry = fvGeometry.elementGeometry();
             const auto& element = fvGeometry.element();
-            using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
+            using GlobalPosition = typename ElementDiscretization::GridGeometry::GlobalCoordinate;
             using FeIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
 
             for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
@@ -102,13 +102,13 @@ public:
      * \param fvGeometry The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
      */
-    template<class ResidualVector, class Problem, class FVElementGeometry, class ElementVariables>
+    template<class ResidualVector, class Problem, class ElementDiscretization, class ElementVariables>
     static void addFluxAndSourceTerms(ResidualVector& residual,
                                       const Problem& problem,
-                                      const FVElementGeometry& fvGeometry,
+                                      const ElementDiscretization& fvGeometry,
                                       const ElementVariables& elemVars)
     {
-        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
             // Make sure we don't iterate over quadrature points if there are no hybrid dofs
             if (nonCVLocalDofs(fvGeometry).empty())
@@ -125,7 +125,7 @@ public:
 
             const auto& element = fvGeometry.element();
             using Cache = typename ElementVariables::InterpolationPointData;
-            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, Cache>;
+            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, ElementDiscretization, ElementVariables, Cache>;
             for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
                 const auto& ipData = qpData.ipData();

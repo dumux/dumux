@@ -67,9 +67,9 @@ class NavierStokesMomentumCVFELocalResidual
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ElementDiscretization = typename GridGeometry::LocalView;
+    using SubControlVolume = typename ElementDiscretization::SubControlVolume;
+    using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
@@ -107,7 +107,7 @@ public:
      *
      */
     NumEqVector computeStorage(const Problem& problem,
-                               const FVElementGeometry& fvGeometry,
+                               const ElementDiscretization& fvGeometry,
                                const SubControlVolume& scv,
                                const Variables& vars,
                                const bool isPreviousStorage) const
@@ -124,7 +124,7 @@ public:
      * \param isPreviousTimeLevel If set to true, the storage term is evaluated on the previous time level.
      *
      */
-    NumEqVector storageIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector storageIntegral(const ElementDiscretization& fvGeometry,
                                 const ElementVariables& elemVars,
                                 const SubControlVolume& scv,
                                 bool isPreviousTimeLevel) const
@@ -152,13 +152,13 @@ public:
      */
     NumEqVector computeSource(const Problem& problem,
                               const Element& element,
-                              const FVElementGeometry& fvGeometry,
+                              const ElementDiscretization& fvGeometry,
                               const ElementVariables& elemVars,
                               const SubControlVolume& scv) const
     {
         NumEqVector source;
 
-        if constexpr (Detail::hasProblemSourceWithIpDataInterface<Problem, FVElementGeometry, ElementVariables, BaseIpData>())
+        if constexpr (Detail::hasProblemSourceWithIpDataInterface<Problem, ElementDiscretization, ElementVariables, BaseIpData>())
         {
             source = problem.source(fvGeometry, elemVars, ipData(fvGeometry, scv.center()));
 
@@ -207,7 +207,7 @@ public:
      * \param scv The sub control volume
      *
      */
-    NumEqVector sourceIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector sourceIntegral(const ElementDiscretization& fvGeometry,
                                const ElementVariables& elemVars,
                                const SubControlVolume& scv) const
     {
@@ -249,12 +249,12 @@ public:
     template<class ElementFluxVariablesCache>
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
-                            const FVElementGeometry& fvGeometry,
+                            const ElementDiscretization& fvGeometry,
                             const ElementVariables& elemVars,
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        using FluxContext = NavierStokesMomentumFluxContext<Problem, FVElementGeometry, ElementVariables, ElementFluxVariablesCache>;
+        using FluxContext = NavierStokesMomentumFluxContext<Problem, ElementDiscretization, ElementVariables, ElementFluxVariablesCache>;
         FluxContext context(problem, fvGeometry, elemVars, elemFluxVarsCache, scvf);
         FluxHelper fluxHelper;
 
@@ -273,7 +273,7 @@ public:
      * \param scvf The sub control volume face
      *
      */
-    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector fluxIntegral(const ElementDiscretization& fvGeometry,
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
     {
@@ -282,7 +282,7 @@ public:
         NumEqVector flux(0.0);
         GlobalPosition velIntegral(0.0);
         FluxFunctionHelper fluxFunctionHelper;
-        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, typename GridVariablesCache::InterpolationPointData>;
+        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, ElementDiscretization, ElementVariables, typename GridVariablesCache::InterpolationPointData>;
 
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
         {
@@ -303,7 +303,7 @@ public:
     void addToElementStorageResidual(ElementResidualVector& residual,
                                      const Problem& problem,
                                      const Element& element,
-                                     const FVElementGeometry& fvGeometry,
+                                     const ElementDiscretization& fvGeometry,
                                      const ElementVariables& prevElemVolVars,
                                      const ElementVariables& curElemVolVars) const
     {
@@ -315,7 +315,7 @@ public:
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const Element& element,
-                                           const FVElementGeometry& fvGeometry,
+                                           const ElementDiscretization& fvGeometry,
                                            const ElementVariables& elemVars) const
     {
         FeResidual::addFluxAndSourceTerms(

@@ -27,24 +27,24 @@ namespace Dumux {
  * \brief Context for computing fluxes
  *
  * \tparam Problem the problem type to solve
- * \tparam FVElementGeometry the element geometry type
+ * \tparam ElementDiscretization the element geometry type
  * \tparam ElementVolumeVariables the element volume variables type
  * \tparam ElementFluxVariablesCache the element flux variables cache type
  */
 template<class Problem,
-         class FVElementGeometry,
+         class ElementDiscretization,
          class ElementVolumeVariables,
          class ElementFluxVariablesCache>
 class NavierStokesMomentumFluxContext
 {
-    using Element = typename FVElementGeometry::Element;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Element = typename ElementDiscretization::Element;
+    using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
 public:
 
     //! Initialize the flux variables storing some temporary pointers
     NavierStokesMomentumFluxContext(
         const Problem& problem,
-        const FVElementGeometry& fvGeometry,
+        const ElementDiscretization& fvGeometry,
         const ElementVolumeVariables& elemVolVars,
         const ElementFluxVariablesCache& elemFluxVarsCache,
         const SubControlVolumeFace& scvf
@@ -65,7 +65,7 @@ public:
     const SubControlVolumeFace& scvFace() const
     { return scvf_; }
 
-    const FVElementGeometry& fvGeometry() const
+    const ElementDiscretization& fvGeometry() const
     { return fvGeometry_; }
 
     const ElementVolumeVariables& elemVolVars() const
@@ -76,7 +76,7 @@ public:
 
 private:
     const Problem& problem_;
-    const FVElementGeometry& fvGeometry_;
+    const ElementDiscretization& fvGeometry_;
     const ElementVolumeVariables& elemVolVars_;
     const ElementFluxVariablesCache& elemFluxVarsCache_;
     const SubControlVolumeFace& scvf_;
@@ -87,21 +87,21 @@ private:
  * \brief Context for interpolating data on interpolation points
  *
  * \tparam Problem the problem type to solve
- * \tparam FVElementGeometry the element geometry type
+ * \tparam ElementDiscretization the element geometry type
  * \tparam ElementVolumeVariables the element volume variables type
  * \tparam IpData the interpolation point data type
  */
 template<class Problem,
-         class FVElementGeometry,
+         class ElementDiscretization,
          class ElementVolumeVariables,
          class IpData>
 class NavierStokesMomentumFluxFunctionContext
 {
-    using Element = typename FVElementGeometry::Element;
+    using Element = typename ElementDiscretization::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr int dim = FVElementGeometry::GridGeometry::GridView::dimension;
-    static constexpr int dimWorld = FVElementGeometry::GridGeometry::GridView::dimensionworld;
+    static constexpr int dim = ElementDiscretization::GridGeometry::GridView::dimension;
+    static constexpr int dimWorld = ElementDiscretization::GridGeometry::GridView::dimensionworld;
 
     using Tensor = Dune::FieldMatrix<typename GlobalPosition::value_type, dim, dimWorld>;
 
@@ -110,7 +110,7 @@ public:
     //! Initialize the flux variables storing some temporary pointers
     NavierStokesMomentumFluxFunctionContext(
         const Problem& problem,
-        const FVElementGeometry& fvGeometry,
+        const ElementDiscretization& fvGeometry,
         const ElementVolumeVariables& elemVolVars,
         const IpData& ipData
     )
@@ -131,7 +131,7 @@ public:
     const Element& element() const
     { return fvGeometry_.element(); }
 
-    const FVElementGeometry& fvGeometry() const
+    const ElementDiscretization& fvGeometry() const
     { return fvGeometry_; }
 
     const ElementVolumeVariables& elemVolVars() const
@@ -162,7 +162,7 @@ private:
     }
 
     const Problem& problem_;
-    const FVElementGeometry& fvGeometry_;
+    const ElementDiscretization& fvGeometry_;
     const ElementVolumeVariables& elemVolVars_;
     const IpData& ipData_;
     GlobalPosition velocity_;
@@ -313,10 +313,10 @@ public:
     /*!
      * \brief Returns the advective momentum flux contribution for a given integrated velocity at the face
      */
-    template<class Problem, class FVElementGeometry, class ElementVariables,
+    template<class Problem, class ElementDiscretization, class ElementVariables,
              class SubControlVolumeFace, class VelocityVector>
     NumEqVector advectiveMomentumFluxIntegral(const Problem& problem,
-                                              const FVElementGeometry& fvGeometry,
+                                              const ElementDiscretization& fvGeometry,
                                               const ElementVariables& elemVars,
                                               const SubControlVolumeFace& scvf,
                                               const VelocityVector& integratedVelocity) const

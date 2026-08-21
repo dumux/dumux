@@ -51,9 +51,9 @@ class NavierStokesMassOnePLocalResidual
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ElementDiscretization = typename GridGeometry::LocalView;
+    using SubControlVolume = typename ElementDiscretization::SubControlVolume;
+    using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
@@ -92,7 +92,7 @@ public:
      * \param isPreviousTimeLevel If set to true, the storage term is evaluated on the previous time level.
      *
      */
-    NumEqVector storageIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector storageIntegral(const ElementDiscretization& fvGeometry,
                                 const ElementVariables& elemVars,
                                 const SubControlVolume& scv,
                                 bool isPreviousTimeLevel) const
@@ -124,7 +124,7 @@ public:
     template<class ElementFluxVariablesCache>
     NumEqVector computeFlux(const Problem& problem,
                             const Element& element,
-                            const FVElementGeometry& fvGeometry,
+                            const ElementDiscretization& fvGeometry,
                             const ElementVariables& elemVars,
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
@@ -149,7 +149,7 @@ public:
      * \param scvf The sub control volume face
      *
      */
-    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector fluxIntegral(const ElementDiscretization& fvGeometry,
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
     {

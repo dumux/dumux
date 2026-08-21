@@ -176,10 +176,10 @@ private:
             std::vector<InterpolationPointData> scvfCache;
             std::vector<std::size_t> qpsOffset;
 
-            template<class Problem, class FVElementGeometry, class ElementVariables>
+            template<class Problem, class ElementDiscretization, class ElementVariables>
             void update(const Problem& problem,
-                        const typename FVElementGeometry::Element& element,
-                        const FVElementGeometry& fvGeometry,
+                        const typename ElementDiscretization::Element& element,
+                        const ElementDiscretization& fvGeometry,
                         const ElementVariables& elemVars)
             {
                 qpsOffset.resize(fvGeometry.numScvf() + 1, 0);
@@ -218,10 +218,10 @@ private:
             elementCaches_.resize(numElements);
         }
 
-        template<class Problem, class FVElementGeometry, class ElementVariables>
+        template<class Problem, class ElementDiscretization, class ElementVariables>
         void update(const Problem& problem,
-                    const typename FVElementGeometry::Element& element,
-                    const FVElementGeometry& fvGeometry,
+                    const typename ElementDiscretization::Element& element,
+                    const ElementDiscretization& fvGeometry,
                     const ElementVariables& elemVars)
         {
             const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);

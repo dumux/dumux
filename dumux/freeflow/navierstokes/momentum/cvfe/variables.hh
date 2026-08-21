@@ -43,10 +43,10 @@ public:
      * \param fvGeometry The local geometry
      * \param ipData The interpolation point data
      */
-    template<class ElementSolution, class Problem, class FVElementGeometry, Concept::LocalDofIpData IpData>
+    template<class ElementSolution, class Problem, class ElementDiscretization, Concept::LocalDofIpData IpData>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,
-                const FVElementGeometry& fvGeometry,
+                const ElementDiscretization& fvGeometry,
                 const IpData& ipData)
     {
         priVars_ = elemSol[ipData.localDofIndex()];
