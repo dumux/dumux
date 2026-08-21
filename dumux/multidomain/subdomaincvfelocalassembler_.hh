@@ -59,9 +59,9 @@ class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assem
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
-    using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using GridView = typename GridGeometry::GridView;
+    using GridDiscretization = typename GridVariables::GridGeometry;
+    using FVElementGeometry = typename GridDiscretization::LocalView;
+    using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CouplingManager = typename Assembler::CouplingManager;
@@ -86,7 +86,7 @@ public:
     : ParentType(assembler,
                  element,
                  curSol,
-                 localView(assembler.gridGeometry(domainId)),
+                 localView(assembler.gridDiscretization(domainId)),
                  localView(assembler.gridVariables(domainId).curGridVars()),
                  localView(assembler.gridVariables(domainId).prevGridVars()),
                  assembler.localResidual(domainId),
@@ -242,9 +242,9 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /
     using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GridGeometry::GridView;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridDiscretization::GridView;
+    using FVElementGeometry = typename GridDiscretization::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 

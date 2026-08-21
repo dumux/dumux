@@ -54,7 +54,7 @@ public:
     : LocalAssemblerBase(assembler,
                          element,
                          curSol,
-                         localView(assembler.gridGeometry()),
+                         localView(assembler.gridDiscretization()),
                          localView(assembler.gridVariables().curGridVars()),
                          localView(assembler.gridVariables().prevGridVars()),
                          assembler.localResidual(),

@@ -15,6 +15,7 @@
 
 #include <concepts>
 #include <type_traits>
+#include <utility>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
@@ -107,11 +108,11 @@ struct ElementBoundaryTypes<TypeTag, TTag::PQ3Base>
 {
 private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridDiscretization())>;
+    using GD = typename ProblemTraits<Problem>::GridDiscretization;
     using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
 public:
     using type = std::conditional_t<
-        Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<Problem, typename GG::LocalView>(),
+        Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<Problem, typename GD::LocalView>(),
         Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
         Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
     >;
@@ -172,10 +173,10 @@ template<class Problem>
 struct ProblemTraits<Problem, DiscretizationMethods::PQ3>
 {
 private:
-    using GG = std::decay_t<decltype(std::declval<Problem>().gridDiscretization())>;
+    using GD = std::decay_t<decltype(std::declval<Problem>().gridDiscretization())>;
 public:
-    using GridGeometry = GG;
-    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView>::type;
+    using GridDiscretization = GD;
+    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GD::LocalView>::type;
 };
 
 template<class TypeTag>

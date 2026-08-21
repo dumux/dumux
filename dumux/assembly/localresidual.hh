@@ -44,8 +44,8 @@ class LocalResidual
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementDiscretization = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Extrusion = Extrusion_t<GridGeometry>;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Extrusion = Extrusion_t<GridDiscretization>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;

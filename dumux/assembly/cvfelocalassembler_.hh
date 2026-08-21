@@ -70,10 +70,10 @@ class CVFELocalAssemblerBase : public LocalAssemblerBase<TypeTag, Assembler, Imp
     using ParentType = LocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridGeometry =  GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridDiscretization =  GetPropType<TypeTag, Properties::GridGeometry>;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-    static constexpr int dim = GridGeometry::GridView::dimension;
+    static constexpr int dim = GridDiscretization::GridView::dimension;
 
 public:
 
