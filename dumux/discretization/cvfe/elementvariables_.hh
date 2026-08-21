@@ -97,11 +97,11 @@ public:
     //! export type of the variables
     using Variables = typename GridVariablesCache::Variables;
     //! export type of deflection policy
-    template<class FVElementGeometry>
+    template<class ElementDiscretization>
     using DeflectionPolicy = std::conditional_t<
         InterpolationPointData::isSolDependent,
-        Dumux::Detail::CVFE::VariablesDeflectionPolicyWithIpCacheUpdate<MutableView, FVElementGeometry>,
-        Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, FVElementGeometry>
+        Dumux::Detail::CVFE::VariablesDeflectionPolicyWithIpCacheUpdate<MutableView, ElementDiscretization>,
+        Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, ElementDiscretization>
     >;
 
     //! Constructor
@@ -130,9 +130,9 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bind(const typename FVElementGeometry::Element& element,
-                              const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    CVFEElementVariables bind(const typename ElementDiscretization::Element& element,
+                              const ElementDiscretization& fvGeometry,
                               const SolutionVector& sol)  &&
     {
         this->bindElement(element, fvGeometry, sol);
@@ -141,9 +141,9 @@ public:
 
     // For compatibility reasons with the case of not storing the variables.
     // function to be called before assembling an element, preparing the variables within the stencil
-    template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::Element& element,
-              const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    void bind(const typename ElementDiscretization::Element& element,
+              const ElementDiscretization& fvGeometry,
               const SolutionVector& sol) &
     {
         bindElement(element, fvGeometry, sol);
@@ -154,9 +154,9 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bindElement(const typename FVElementGeometry::Element& element,
-                                     const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    CVFEElementVariables bindElement(const typename ElementDiscretization::Element& element,
+                                     const ElementDiscretization& fvGeometry,
                                      const SolutionVector& sol)  &&
     {
         this->bindElement(element, fvGeometry, sol);
@@ -164,9 +164,9 @@ public:
     }
 
     // function to prepare the variables within the element
-    template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::Element& element,
-                     const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    void bindElement(const typename ElementDiscretization::Element& element,
+                     const ElementDiscretization& fvGeometry,
                      const SolutionVector& sol) &
     {
         const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
@@ -251,11 +251,11 @@ public:
     using Variables = typename GridVariablesCache::Variables;
 
     //! export type of deflection policy
-    template<class FVElementGeometry>
+    template<class ElementDiscretization>
     using DeflectionPolicy = std::conditional_t<
         InterpolationPointData::isSolDependent,
-        Dumux::Detail::CVFE::VariablesDeflectionPolicyWithIpCacheUpdate<MutableView, FVElementGeometry>,
-        Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, FVElementGeometry>
+        Dumux::Detail::CVFE::VariablesDeflectionPolicyWithIpCacheUpdate<MutableView, ElementDiscretization>,
+        Dumux::Detail::CVFE::VariablesDeflectionPolicy<MutableView, ElementDiscretization>
     >;
 
     //! Constructor
@@ -269,9 +269,9 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bind(const typename FVElementGeometry::Element& element,
-                              const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    CVFEElementVariables bind(const typename ElementDiscretization::Element& element,
+                              const ElementDiscretization& fvGeometry,
                               const SolutionVector& sol)  &&
     {
         this->bindElement(element, fvGeometry, sol);
@@ -279,9 +279,9 @@ public:
     }
 
     // specialization for control-volume finite element, simply forwards to the bindElement method
-    template<class FVElementGeometry, class SolutionVector>
-    void bind(const typename FVElementGeometry::Element& element,
-              const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    void bind(const typename ElementDiscretization::Element& element,
+              const ElementDiscretization& fvGeometry,
               const SolutionVector& sol) &
     {
         bindElement(element, fvGeometry, sol);
@@ -292,9 +292,9 @@ public:
     * This overload is called when an instance of this class is a temporary in the usage context
     * This allows a usage like this: `const auto view = localView(...).bind(element);`
     */
-    template<class FVElementGeometry, class SolutionVector>
-    CVFEElementVariables bindElement(const typename FVElementGeometry::Element& element,
-                                          const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    CVFEElementVariables bindElement(const typename ElementDiscretization::Element& element,
+                                          const ElementDiscretization& fvGeometry,
                                           const SolutionVector& sol)  &&
     {
         this->bindElement(element, fvGeometry, sol);
@@ -302,9 +302,9 @@ public:
     }
 
     // specialization for control-volume finite element
-    template<class FVElementGeometry, class SolutionVector>
-    void bindElement(const typename FVElementGeometry::Element& element,
-                     const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class SolutionVector>
+    void bindElement(const typename ElementDiscretization::Element& element,
+                     const ElementDiscretization& fvGeometry,
                      const SolutionVector& sol) &
     {
         // get the solution at the dofs of the element
@@ -369,10 +369,10 @@ private:
         InterpolationPointDataCache()
         {}
 
-        template<class Problem, class FVElementGeometry, class ElementVariables>
+        template<class Problem, class ElementDiscretization, class ElementVariables>
         void update(const Problem& problem,
-                    const typename FVElementGeometry::Element& element,
-                    const FVElementGeometry& fvGeometry,
+                    const typename ElementDiscretization::Element& element,
+                    const ElementDiscretization& fvGeometry,
                     const ElementVariables& elemVars)
         {
             updateElementCache_(problem, element, fvGeometry, elemVars);
@@ -387,10 +387,10 @@ private:
         { return scvfCache_[scvfIdx][qpIdx]; }
 
     private:
-        template<class Problem, class FVElementGeometry, class ElementVariables>
+        template<class Problem, class ElementDiscretization, class ElementVariables>
         void updateElementCache_(const Problem& problem,
-                                 const typename FVElementGeometry::Element& element,
-                                 const FVElementGeometry& fvGeometry,
+                                 const typename ElementDiscretization::Element& element,
+                                 const ElementDiscretization& fvGeometry,
                                  const ElementVariables& elemVars)
         {
             scvfCache_.resize(fvGeometry.numScvf());

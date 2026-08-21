@@ -23,15 +23,15 @@
 
 namespace Dumux::Detail::CVFE {
 
-template<class MutableVariablesView, class FVElementGeometry>
+template<class MutableVariablesView, class ElementDiscretization>
 class VolVarsDeflectionPolicy
 {
     using VolumeVariables = typename MutableVariablesView::VolumeVariables;
-    static constexpr int maxNumLocalDofs = Detail::LocalDofs::maxNumLocalDofs<FVElementGeometry>();
+    static constexpr int maxNumLocalDofs = Detail::LocalDofs::maxNumLocalDofs<ElementDiscretization>();
 
 public:
     VolVarsDeflectionPolicy(MutableVariablesView elementVariables,
-                            const FVElementGeometry& fvGeometry,
+                            const ElementDiscretization& fvGeometry,
                             bool deflectAllVariables)
     : elementVariables_(elementVariables)
     , fvGeometry_(fvGeometry)
@@ -87,7 +87,7 @@ public:
 
 private:
     MutableVariablesView elementVariables_;
-    const FVElementGeometry& fvGeometry_;
+    const ElementDiscretization& fvGeometry_;
     const bool deflectAll_;
     Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
 };

@@ -60,7 +60,7 @@ class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assem
     using Scalar = typename GridVariables::Scalar;
 
     using GridDiscretization = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridDiscretization::LocalView;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
     using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -143,7 +143,7 @@ public:
      */
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVariables& elemVars) const
     {
-        static_assert(!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>(), "Separate source calculation not implemented for hybrid schemes.");
+        static_assert(!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>(), "Separate source calculation not implemented for hybrid schemes.");
 
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(this->fvGeometry()));
@@ -244,7 +244,7 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /
 
     using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridDiscretization::GridView;
-    using FVElementGeometry = typename GridDiscretization::LocalView;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 

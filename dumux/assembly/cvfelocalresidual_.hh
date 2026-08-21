@@ -52,10 +52,10 @@ class CVFELocalResidual : public LocalResidual<TypeTag>
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GridDiscretization::LocalView;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
@@ -67,7 +67,7 @@ public:
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
                   const Element& element,
-                  const FVElementGeometry& fvGeometry,
+                  const ElementDiscretization& fvGeometry,
                   const ElementVariables& elemVars,
                   const SubControlVolumeFace& scvf) const
     {
@@ -93,7 +93,7 @@ public:
     //! evaluate flux residuals for one sub control volume face
     NumEqVector evalFlux(const Problem& problem,
                          const Element& element,
-                         const FVElementGeometry& fvGeometry,
+                         const ElementDiscretization& fvGeometry,
                          const ElementVariables& elemVars,
                          const SubControlVolumeFace& scvf) const
     {

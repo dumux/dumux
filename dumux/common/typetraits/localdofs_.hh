@@ -24,10 +24,10 @@ using NumLocalDofsDetector = decltype(
     std::declval<Imp>().numLocalDofs()
 );
 
-template<typename FVElementGeometry>
-constexpr int numLocalDofs(const FVElementGeometry& fvGeometry)
+template<typename ElementDiscretization>
+constexpr int numLocalDofs(const ElementDiscretization& fvGeometry)
 {
-    if constexpr (Dune::Std::is_detected<NumLocalDofsDetector, FVElementGeometry>::value)
+    if constexpr (Dune::Std::is_detected<NumLocalDofsDetector, ElementDiscretization>::value)
         return fvGeometry.numLocalDofs();
     else
         return fvGeometry.numScv();
@@ -47,13 +47,13 @@ constexpr inline bool hasNonCVLocalDofsInterface()
 template<class Imp>
 using MaxNumElementDofs = decltype( Imp::maxNumElementDofs );
 
-template<typename FVElementGeometry>
+template<typename ElementDiscretization>
 constexpr int maxNumLocalDofs()
 {
-    if constexpr (Dune::Std::is_detected<MaxNumElementDofs, FVElementGeometry>::value)
-        return FVElementGeometry::maxNumElementDofs;
+    if constexpr (Dune::Std::is_detected<MaxNumElementDofs, ElementDiscretization>::value)
+        return ElementDiscretization::maxNumElementDofs;
     else
-        return FVElementGeometry::maxNumElementScvs;
+        return ElementDiscretization::maxNumElementScvs;
 }
 
 //! helper struct detecting if a class has a localDofIndex() function
