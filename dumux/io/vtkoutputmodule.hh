@@ -30,6 +30,7 @@
 #include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/concepts/variables_.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/io/format.hh>
@@ -343,10 +344,10 @@ private:
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
 template<class GridVariables, class SolutionVector>
-class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridGeometry>
+class VtkOutputModule : public VtkOutputModuleBase<Dumux::GridDiscretization_t<GridVariables>>
 {
-    using ParentType = VtkOutputModuleBase<typename GridVariables::GridGeometry>;
-    using GridGeometry = typename GridVariables::GridGeometry;
+    using ParentType = VtkOutputModuleBase<Dumux::GridDiscretization_t<GridVariables>>;
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
 
     using VV = Concept::Variables_t<GridVariables>;
     using Scalar = typename GridVariables::Scalar;
@@ -383,7 +384,7 @@ public:
                     const std::string& paramGroup = "",
                     Dune::VTK::DataMode dm = Dune::VTK::conforming,
                     bool verbose = true)
-    : ParentType(gridVariables.gridGeometry(), name, paramGroup, dm, verbose)
+    : ParentType(Dumux::gridDiscretization(gridVariables), name, paramGroup, dm, verbose)
     , gridVariables_(gridVariables)
     , sol_(sol)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
@@ -464,7 +465,7 @@ protected:
     // some return functions for differing implementations to use
     const auto& problem() const { return curGridVariables_().problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
-    const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
+    const GridGeometry& gridGeometry() const { return Dumux::gridDiscretization(gridVariables_); }
     const SolutionVector& sol() const { return sol_; }
 
     const std::vector<VolVarScalarDataInfo>& volVarScalarDataInfo() const { return volVarScalarDataInfo_; }

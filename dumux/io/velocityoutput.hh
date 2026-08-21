@@ -30,11 +30,12 @@ template<Concept::FVGridVariables GridVariables>
 class VelocityOutput<GridVariables>
 {
     using Scalar = typename GridVariables::Scalar;
-    static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
+    using GridGeometry = typename GridVariables::GridGeometry;
+    static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
-    using FVElementGeometry = typename GridVariables::GridGeometry::LocalView;
-    using Element = typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GridGeometry::LocalView;
+    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
 
 public:
     using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
@@ -82,11 +83,12 @@ template<Concept::GridVariables GridVariables>
 class VelocityOutput<GridVariables>
 {
     using Scalar = typename GridVariables::Scalar;
-    static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
+    using GridDiscretization = typename GridVariables::GridDiscretization;
+    static constexpr int dimWorld = GridDiscretization::GridView::dimensionworld;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
-    using FVElementGeometry = typename GridVariables::GridGeometry::LocalView;
-    using Element = typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
+    using Element = typename GridDiscretization::GridView::template Codim<0>::Entity;
 
 public:
     using VelocityVector = std::vector<Dune::FieldVector<Scalar, dimWorld>>;
@@ -110,7 +112,7 @@ public:
 
     virtual void calculateVelocity(VelocityVector& velocity,
                                    const Element& element,
-                                   const FVElementGeometry& fvGeometry,
+                                   const ElementDiscretization& elemDisc,
                                    const ElementVariables& elemVars,
                                    int phaseIdx) const
     {}

@@ -59,7 +59,7 @@ class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assem
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
-    using GridDiscretization = typename GridVariables::GridGeometry;
+    using GridDiscretization = typename GridVariables::GridDiscretization;
     using ElementDiscretization = typename GridDiscretization::LocalView;
     using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

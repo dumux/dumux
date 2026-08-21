@@ -112,11 +112,12 @@ void computeWallShearStress(
     const auto& gg = Dumux::Deprecated::gridGeometry(problem);
     const auto& gv = gg.gridView();
 
-    using GridView = typename GridVariables::GridGeometry::GridView;
+    using GridDiscretization = Dumux::GridDiscretization_t<GridVariables>;
+    using GridView = typename GridDiscretization::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = typename GridVariables::GridGeometry::GlobalCoordinate;
+    using GlobalPosition = typename GridDiscretization::GlobalCoordinate;
 
     using Grid = Dune::FoamGrid<dim-1, dimWorld>;
     Dune::GridFactory<Grid> factory;
