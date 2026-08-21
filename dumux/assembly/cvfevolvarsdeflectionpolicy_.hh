@@ -31,14 +31,14 @@ class VolVarsDeflectionPolicy
 
 public:
     VolVarsDeflectionPolicy(MutableVariablesView elementVariables,
-                            const ElementDiscretization& fvGeometry,
+                            const ElementDiscretization& elemDisc,
                             bool deflectAllVariables)
     : elementVariables_(elementVariables)
-    , fvGeometry_(fvGeometry)
+    , elemDisc_(elemDisc)
     , deflectAll_(deflectAllVariables)
     {
         if (deflectAll_)
-            for (const auto& scv : scvs(fvGeometry))
+            for (const auto& scv : scvs(elemDisc))
                 origVolVars_.push_back(elementVariables_[scv]);
     }
 
@@ -48,7 +48,7 @@ public:
         if (!deflectAll_)
         {
             origVolVars_.clear();
-            for(const auto& scv : scvs(fvGeometry_, localDof))
+            for(const auto& scv : scvs(elemDisc_, localDof))
                 origVolVars_.push_back(elementVariables_[scv]);
         }
     }
@@ -59,12 +59,12 @@ public:
                 const Problem& problem)
     {
         if (deflectAll_)
-            for (const auto& scv : scvs(fvGeometry_))
-                elementVariables_[scv].update(elemSol, problem, fvGeometry_.element(), scv);
+            for (const auto& scv : scvs(elemDisc_))
+                elementVariables_[scv].update(elemSol, problem, elemDisc_.element(), scv);
         else
         {
-            for(const auto& scv : scvs(fvGeometry_, localDof))
-                elementVariables_[scv].update(elemSol, problem, fvGeometry_.element(), scv);
+            for(const auto& scv : scvs(elemDisc_, localDof))
+                elementVariables_[scv].update(elemSol, problem, elemDisc_.element(), scv);
         }
     }
 
@@ -74,20 +74,20 @@ public:
         if (!deflectAll_)
         {
             unsigned int idx = 0;
-            for(const auto& scv : scvs(fvGeometry_, localDof))
+            for(const auto& scv : scvs(elemDisc_, localDof))
             {
                 elementVariables_[scv] = origVolVars_[idx];
                 idx++;
             }
         }
         else
-            for (const auto& scv : scvs(fvGeometry_))
+            for (const auto& scv : scvs(elemDisc_))
                 elementVariables_[scv] = origVolVars_[scv.indexInElement()];
     }
 
 private:
     MutableVariablesView elementVariables_;
-    const ElementDiscretization& fvGeometry_;
+    const ElementDiscretization& elemDisc_;
     const bool deflectAll_;
     Dune::ReservedVector<VolumeVariables, maxNumLocalDofs> origVolVars_;
 };

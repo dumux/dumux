@@ -146,13 +146,13 @@ public:
         static_assert(!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>(), "Separate source calculation not implemented for hybrid schemes.");
 
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(this->fvGeometry()));
+        ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(this->elemDisc()));
 
         // evaluate the source term
         // forward to the local residual specialized for the discretization methods
-        for (const auto& scv : scvs(this->fvGeometry()))
+        for (const auto& scv : scvs(this->elemDisc()))
         {
-            residual[scv.localDofIndex()] = this->localResidual().sourceIntegral(this->fvGeometry(), elemVars, scv);
+            residual[scv.localDofIndex()] = this->localResidual().sourceIntegral(this->elemDisc(), elemVars, scv);
         }
 
         return residual;
@@ -172,26 +172,26 @@ public:
         // get some references for convenience
         const auto& element = this->element();
         const auto& curSol = this->curSol(domainId);
-        auto&& fvGeometry = this->fvGeometry();
+        auto&& elemDisc = this->elemDisc();
         auto&& curElemVars = this->curElemVars();
 
         // bind the caches
         couplingManager_.bindCouplingContext(domainId, element, this->assembler());
-        fvGeometry.bind(element);
+        elemDisc.bind(element);
 
         if constexpr (implicit)
         {
-            curElemVars.bind(element, fvGeometry, curSol);
+            curElemVars.bind(element, elemDisc, curSol);
             if (!this->assembler().isStationaryProblem())
-                this->prevElemVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+                this->prevElemVars().bindElement(element, elemDisc, this->assembler().prevSol()[domainId]);
         }
         else
         {
             auto& prevElemVars = this->prevElemVars();
             const auto& prevSol = this->assembler().prevSol()[domainId];
 
-            curElemVars.bindElement(element, fvGeometry, curSol);
-            prevElemVars.bind(element, fvGeometry, prevSol);
+            curElemVars.bindElement(element, elemDisc, curSol);
+            prevElemVars.bind(element, elemDisc, prevSol);
         }
     }
 
@@ -289,7 +289,7 @@ public:
 
         // get some aliases for convenience
         const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
+        const auto& elemDisc = this->elemDisc();
         auto&& curElemVars = this->curElemVars();
 
         // convenience lambda for call to update self
@@ -326,7 +326,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+                ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
 
                 const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
                 static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
@@ -337,7 +337,7 @@ public:
 
                 // update the global stiffness matrix with the current partial derivatives
                 // Note: For the new interface Dirichlet constraints are incorporated later
-                for (const auto& localDof : localDofs(fvGeometry))
+                for (const auto& localDof : localDofs(elemDisc))
                 {
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     {

@@ -67,17 +67,17 @@ public:
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
                   const Element& element,
-                  const ElementDiscretization& fvGeometry,
+                  const ElementDiscretization& elemDisc,
                   const ElementVariables& elemVars,
                   const SubControlVolumeFace& scvf) const
     {
-        const auto flux = this->asImp().evalFlux(problem, element, fvGeometry, elemVars, scvf);
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto flux = this->asImp().evalFlux(problem, element, elemDisc, elemVars, scvf);
+        const auto& insideScv = elemDisc.scv(scvf.insideScvIdx());
         residual[insideScv.localDofIndex()] += flux;
 
         if (!scvf.boundary())
         {
-            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const auto& outsideScv = elemDisc.scv(scvf.outsideScvIdx());
 
             // for control-volume finite element schemes with overlapping control volumes
             if constexpr (Detail::hasScvfIsOverlapping<SubControlVolumeFace>())
@@ -93,14 +93,14 @@ public:
     //! evaluate flux residuals for one sub control volume face
     NumEqVector evalFlux(const Problem& problem,
                          const Element& element,
-                         const ElementDiscretization& fvGeometry,
+                         const ElementDiscretization& elemDisc,
                          const ElementVariables& elemVars,
                          const SubControlVolumeFace& scvf) const
     {
         NumEqVector flux(0.0);
 
         if (!scvf.boundary())
-            flux += this->asImp().fluxIntegral(fvGeometry, elemVars, scvf);
+            flux += this->asImp().fluxIntegral(elemDisc, elemVars, scvf);
         else
             DUNE_THROW(Dune::InvalidStateException, "evalFlux should not be called for boundary scvfs. "
                                                     " Boundary fluxes are added via addBoundaryFluxIntegral instead.");

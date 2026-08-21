@@ -67,7 +67,7 @@ public:
     explicit LocalAssemblerBase(const Assembler& assembler,
                                 const Element& element,
                                 const SolutionVector& curSol,
-                                const ElementDiscretization& fvGeometry,
+                                const ElementDiscretization& elemDisc,
                                 const ElementVariables& curElemVars,
                                 const ElementVariables& prevElemVars,
                                 const LocalResidual& localResidual,
@@ -75,7 +75,7 @@ public:
     : assembler_(assembler)
     , element_(element)
     , curSol_(curSol)
-    , fvGeometry_(fvGeometry)
+    , elemDisc_(elemDisc)
     , curElemVars_(curElemVars)
     , prevElemVars_(prevElemVars)
     , localResidual_(localResidual)
@@ -140,7 +140,7 @@ public:
      */
     ElementResidualVector evalLocalFluxAndSourceResidual(const ElementVariables& elemVars) const
     {
-        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVars);
+        return localResidual_.evalFluxAndSource(element_, elemDisc_, elemVars);
     }
 
     /*!
@@ -149,7 +149,7 @@ public:
      */
     ElementResidualVector evalLocalStorageResidual() const
     {
-        return localResidual_.evalStorage(element_, fvGeometry_, prevElemVars_, curElemVars_);
+        return localResidual_.evalStorage(element_, elemDisc_, prevElemVars_, curElemVars_);
     }
 
     /*!
@@ -162,23 +162,23 @@ public:
         const auto& element = this->element();
         const auto& curSol = this->curSol();
         const auto& prevSol = this->assembler().prevSol();
-        auto&& fvGeometry = this->fvGeometry();
+        auto&& elemDisc = this->elemDisc();
         auto&& curElemVars = this->curElemVars();
         auto&& prevElemVars = this->prevElemVars();
 
         // bind the caches
-        fvGeometry.bind(element);
+        elemDisc.bind(element);
 
         if (isImplicit())
         {
-            curElemVars.bind(element, fvGeometry, curSol);
+            curElemVars.bind(element, elemDisc, curSol);
             if (!this->assembler().isStationaryProblem())
-                prevElemVars.bindElement(element, fvGeometry, this->assembler().prevSol());
+                prevElemVars.bindElement(element, elemDisc, this->assembler().prevSol());
         }
         else
         {
-            curElemVars.bindElement(element, fvGeometry, curSol);
-            prevElemVars.bind(element, fvGeometry, prevSol);
+            curElemVars.bindElement(element, elemDisc, curSol);
+            prevElemVars.bind(element, elemDisc, prevSol);
         }
     }
 
@@ -203,8 +203,8 @@ public:
     { return curSol_; }
 
     //! The element discretization
-    ElementDiscretization& fvGeometry()
-    { return fvGeometry_; }
+    ElementDiscretization& elemDisc()
+    { return elemDisc_; }
 
     //! The current element variables
     ElementVariables& curElemVars()
@@ -218,9 +218,9 @@ public:
     LocalResidual& localResidual()
     { return localResidual_; }
 
-    //! The finite volume geometry
-    const ElementDiscretization& fvGeometry() const
-    { return fvGeometry_; }
+    //! The element discretization
+    const ElementDiscretization& elemDisc() const
+    { return elemDisc_; }
 
     //! The current element variables
     const ElementVariables& curElemVars() const
@@ -247,7 +247,7 @@ private:
     const Element& element_; //!< the element whose residual is assembled
     const SolutionVector& curSol_; //!< the current solution
 
-    ElementDiscretization fvGeometry_;
+    ElementDiscretization elemDisc_;
     ElementVariables curElemVars_;
     ElementVariables prevElemVars_;
 

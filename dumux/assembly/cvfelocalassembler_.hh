@@ -100,7 +100,7 @@ public:
         {
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
 
-            for (const auto& localDof : localDofs(this->fvGeometry()))
+            for (const auto& localDof : localDofs(this->elemDisc()))
                 res[localDof.dofIndex()] += residual[localDof.index()];
 
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
@@ -110,7 +110,7 @@ public:
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
 
-            for (const auto& localDof : localDofs(this->fvGeometry()))
+            for (const auto& localDof : localDofs(this->elemDisc()))
                 res[localDof.dofIndex()] += residual[localDof.index()];
 
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
@@ -175,7 +175,7 @@ public:
         this->asImp_().bindLocalViews();
         const auto residual = this->evalLocalResidual();
 
-        for (const auto& localDof : localDofs(this->fvGeometry()))
+        for (const auto& localDof : localDofs(this->elemDisc()))
             res[localDof.dofIndex()] += residual[localDof.index()];
     }
 
@@ -245,7 +245,7 @@ public:
     {
         // get some aliases for convenience
         const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
+        const auto& elemDisc = this->elemDisc();
         const auto& curSol = this->asImp_().curSol();
 
         auto&& curElemVars = this->curElemVars();
@@ -268,16 +268,16 @@ public:
         );
 
         // create the element solution
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
         auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
 
         auto deflectionPolicy = Dumux::Detail::CVFE::makeVariablesDeflectionPolicy(
             gridVariables.curGridVars(),
             curElemVars,
-            fvGeometry,
+            elemDisc,
             updateAllVars
         );
 
@@ -309,7 +309,7 @@ public:
                                                           eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
-                for (const auto& localDofJ : localDofs(fvGeometry))
+                for (const auto& localDofJ : localDofs(elemDisc))
                 {
                     // don't add derivatives for green dofs
                     if (!partialReassembler
@@ -336,7 +336,7 @@ public:
         };
 
         // calculation of the derivatives
-        for (const auto& localDof : localDofs(fvGeometry))
+        for (const auto& localDof : localDofs(elemDisc))
             assembleDerivative(localDof);
 
         // evaluate additional derivatives that might arise from the coupling (no-op if not coupled)
