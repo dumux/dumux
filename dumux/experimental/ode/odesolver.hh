@@ -58,8 +58,6 @@ namespace Dumux::Experimental {
 /*!
  * \ingroup Experimental
  * \brief Represents a level of the independent variable during ODE integration
- *
- * \tparam Scalar the scalar type
  */
 template<class Scalar>
 class IndependentVariableLevel
@@ -68,7 +66,7 @@ public:
     /*!
      * \brief Constructs a level at a given value of the independent variable
      *
-     * \param current  the current value of the independent variable
+     * \param current the current value of the independent variable
      */
     explicit IndependentVariableLevel(const Scalar current)
     : current_(current)
@@ -79,9 +77,9 @@ public:
     /*!
      * \brief Constructs a level occurring within an integration step
      *
-     * \param current       the current value of the independent variable
-     * \param previous      the value at the beginning of the integration step
-     * \param stepFraction  the fraction of the integration step represented by this level
+     * \param current      the current value of the independent variable
+     * \param previous     the value at the beginning of the integration step
+     * \param stepFraction the fraction of the integration step represented by this level
      */
     IndependentVariableLevel(const Scalar current,
                              const Scalar previous,
@@ -124,8 +122,6 @@ private:
 /*!
  * \ingroup Experimental
  * \brief Stores an ODE solution and its independent-variable level. Generalization of `experimental/common/variables` which are tailored to time as the independent variable.
- *
- * \tparam X the solution-vector type
  */
 template<class X>
 class ODEVariables
@@ -245,8 +241,6 @@ using Variables = typename VariablesChooser<ODESystem>::Type;
  *
  * \param  to   destination object
  * \param  from source object
- * \tparam To   destination type
- * \tparam From source type
  */
 template<class To, class From>
 void assign(To& to, const From& from)
@@ -260,8 +254,7 @@ void assign(To& to, const From& from)
 /*!
  * \brief Sets a scalar, vector, or matrix-like value to zero
  *
- * \param  value value to set to zero
- * \tparam Value type of value to reset
+ * \param value value to set to zero
  */
 template<class Value>
 void setZero(Value& value)
@@ -272,8 +265,7 @@ void setZero(Value& value)
 /*!
  * \brief Sets a scalar or square matrix-like object to the identity
  *
- * \param  matrix object to set to the identity
- * \tparam Matrix matrix or scalar type
+ * \param matrix object to set to the identity
  */
 template<class Matrix>
 void setIdentity(Matrix& matrix)
@@ -291,11 +283,9 @@ void setIdentity(Matrix& matrix)
 /*!
  * \brief Accumulates the scaled vector \f$y \mathrel{+}= \text{factor} x\f$
  *
- * \param  factor scaling factor
- * \param  x      vector to scale and add
- * \param  y      vector to update
- * \tparam Vector vector type
- * \tparam Scalar scaling-factor type
+ * \param factor scaling factor
+ * \param x vector to scale and add
+ * \param y vector to update
  */
 template<class Vector, class Scalar>
 void addScaled(const Scalar factor, const Vector& x, Vector& y)
@@ -306,10 +296,8 @@ void addScaled(const Scalar factor, const Vector& x, Vector& y)
 /*!
  * \brief Scales a matrix-like object in place
  *
- * \param  matrix matrix to scale
- * \param  factor scaling factor
- * \tparam Matrix matrix type
- * \tparam Scalar scaling-factor type
+ * \param matrix matrix to scale
+ * \param factor scaling factor
  */
 template<class Matrix, class Scalar>
 void scaleMatrix(Matrix& matrix, const Scalar factor)
@@ -320,11 +308,9 @@ void scaleMatrix(Matrix& matrix, const Scalar factor)
 /*!
  * \brief Accumulates the scaled matrix \f$y \mathrel{+}= \text{factor} x\f$
  *
- * \param  factor scaling factor
- * \param  x      matrix to scale and add
- * \param  y      matrix to update
- * \tparam Matrix matrix type
- * \tparam Scalar scaling-factor type
+ * \param factor scaling factor
+ * \param x      matrix to scale and add
+ * \param y      matrix to update
  */
 template<class Matrix, class Scalar>
 void addScaledMatrix(const Scalar factor, const Matrix& x, Matrix& y)
@@ -342,12 +328,9 @@ void addScaledMatrix(const Scalar factor, const Matrix& x, Matrix& y)
 /*!
  * \brief Evaluate the right-hand side of an ODE system.
  *
- * \param  odeSystem ODE system to evaluate
- * \param  vars      variables at which to evaluate the right-hand side
- * \param  rhs       right-hand side result
- * \tparam ODESystem ODE system type
- * \tparam Vars      variables type
- * \tparam Residual  residual type
+ * \param odeSystem ODE system to evaluate
+ * \param vars      variables at which to evaluate the right-hand side
+ * \param rhs       right-hand side result
  * \note Supports both `rhs(vars, rhs)` and a value-returning `rhs(vars)`.
  */
 template<class ODESystem, class Vars, class Residual>
@@ -365,12 +348,9 @@ void evaluateRhs(const ODESystem& odeSystem, const Vars& vars, Residual& rhs)
 /*!
  * \brief Evaluate the quantity differentiated with respect to the independent variable.
  *
- * \param  odeSystem ODE system to evaluate
- * \param  vars      variables at which to evaluate the differentiated quantity
- * \param  value     differentiated-quantity result
- * \tparam ODESystem ODE system type
- * \tparam Vars      variables type
- * \tparam Residual  residual type
+ * \param odeSystem ODE system to evaluate
+ * \param vars      variables at which to evaluate the differentiated quantity
+ * \param value     differentiated-quantity result
  * \note If the system provides no `derivativeQuantity` function, the primary variables are used.
  */
 template<class ODESystem, class Vars, class Residual>
@@ -387,12 +367,9 @@ void evaluateDerivativeQuantity(const ODESystem& odeSystem, const Vars& vars, Re
 /*!
  * \brief Evaluate the Jacobian of the ODE right-hand side.
  *
- * \param  odeSystem ODE system to evaluate
- * \param  vars      variables at which to evaluate the Jacobian
- * \param  jacobian  resulting right-hand-side Jacobian
- * \tparam ODESystem ODE system type
- * \tparam Vars      variables type
- * \tparam Jacobian  Jacobian matrix type
+ * \param odeSystem ODE system to evaluate
+ * \param vars      variables at which to evaluate the Jacobian
+ * \param jacobian  resulting right-hand-side Jacobian
  * \note Accepts output-argument and value-returning forms named `rhsJacobian`.
  */
 template<class ODESystem, class Vars, class Jacobian>
@@ -410,13 +387,9 @@ void evaluateRhsJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian&
 /*!
  * \brief Evaluate the Jacobian of the differentiated quantity.
  *
- * \param  odeSystem ODE system to evaluate
- * \param  vars      variables at which to evaluate the Jacobian
- * \param  jacobian  resulting Jacobian of the differentiated quantity
- * \tparam ODESystem ODE system type
- * \tparam Vars      variables type
- * \tparam Residual  residual type used to detect a custom differentiated quantity
- * \tparam Jacobian  Jacobian matrix type
+ * \param odeSystem ODE system to evaluate
+ * \param vars      variables at which to evaluate the Jacobian
+ * \param jacobian  resulting Jacobian of the differentiated quantity
  * \note Uses the identity for the default differentiated quantity and requires an
  *       explicit Jacobian when the ODE system defines a custom quantity.
  */
@@ -438,10 +411,8 @@ void evaluateDerivativeQuantityJacobian(const ODESystem& odeSystem, const Vars& 
 /*!
  * \brief Updates the independent-variable information stored by an ODE variables object
  *
- * \param  vars  variables to update
- * \param  level new independent-variable level
- * \tparam Vars  variables type
- * \tparam Level independent-variable-level type
+ * \param vars  variables to update
+ * \param level new independent-variable level
  */
 template<class Vars, class Level>
 void updateIndependentVariable(Vars& vars, const Level& level)
@@ -456,8 +427,7 @@ void updateIndependentVariable(Vars& vars, const Level& level)
 /*!
  * \brief Compute the Euclidean norm of a scalar or vector-like object.
  *
- * \param  vector the object whose norm is computed
- * \tparam Vector the scalar or vector-like type
+ * \param vector the object whose norm is computed
  * \note Uses `two_norm()` when available and otherwise recursively computes the norm.
  */
 template<class Vector>
@@ -488,11 +458,9 @@ auto norm(const Vector& vector)
 /*!
  * \brief Solve the local linear system \f$A x = b\f$.
  *
- * \param  matrix system matrix \f$A\f$
- * \param  x      solution vector
- * \param  b      right-hand-side vector
- * \tparam Matrix system matrix type
- * \tparam Vector solution and right-hand-side vector type
+ * \param matrix system matrix \f$A\f$
+ * \param x      solution vector
+ * \param b      right-hand-side vector
  * \return `true` if the supported direct solution operation was performed.
  */
 template<class Matrix, class Vector>
@@ -531,9 +499,6 @@ namespace Dumux::Experimental {
  * This is intended for ordinary differential equations with scalar or small
  * fixed-size dense unknowns. Larger systems can pass any linear solver exposing
  * the usual DuMux Newton interface.
- *
- * \tparam JacobianMatrix Jacobian matrix type
- * \tparam ResidualVector residual and correction vector type
  */
 template<class JacobianMatrix, class ResidualVector>
 class ODELocalLinearSolver
@@ -587,8 +552,6 @@ public:
  * `derivativeQuantityJacobian(vars, jacobian)` for equations
  * \f$\frac{\mathrm{d}}{\mathrm{d}\xi} M(u,\xi) = f(u,\xi)\f$, where
  * \f$\xi\f$ denotes an arbitrary independent variable.
- *
- * \tparam ODESystem  the ODE system type
  */
 template<class ODESystem>
 class MultiStageODEAssembler
@@ -830,11 +793,6 @@ private:
 /*!
  * \ingroup Experimental
  * \brief Convenience wrapper composing ODE assembly, Newton, and multi-stage stepping.
- *
- * \tparam ODESystem    ODE system type
- * \tparam LinearSolver linear solver type
- * \tparam Reassembler  partial reassembler type used by the Newton solver
- * \tparam Comm         communication type used by the Newton solver
  */
 template<class ODESystem,
          class LinearSolver = ODELocalLinearSolver<typename ODESystem::JacobianMatrix, typename ODESystem::ResidualType>,
