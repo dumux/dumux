@@ -9,8 +9,8 @@
  * \ingroup Experimental
  * \brief Infrastructure for solving ordinary differential equations with multi-stage methods.
  */
-#ifndef DUMUX_TIMESTEPPING_ODE_SOLVER_HH
-#define DUMUX_TIMESTEPPING_ODE_SOLVER_HH
+#ifndef DUMUX_ODE_SOLVER_HH
+#define DUMUX_ODE_SOLVER_HH
 
 #include <algorithm>
 #include <cmath>
