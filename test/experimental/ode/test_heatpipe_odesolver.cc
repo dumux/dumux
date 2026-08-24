@@ -193,6 +193,7 @@ int main(int argc, char* argv[])
     Experimental::ODESolver<HeatPipeReferenceODE> solver(ode, method);
 
     Experimental::ODEVariables<SolutionVector> vars(ode->initialState());
+    // integrate from 0.0 to 0.25
     solver.solve(vars, 0.25, 2.5e-4);
 
     expectNear(vars.dofs()[HeatPipeReferenceODE::effectiveSaturationIdx], 0.98803128090343983, 1e-8,
@@ -204,6 +205,7 @@ int main(int argc, char* argv[])
     expectNear(vars.dofs()[HeatPipeReferenceODE::temperatureIdx], 357.57126217848389, 1e-8,
                "Heatpipe ODE solve failed for the temperature at x=0.25 m");
 
+    // integrate from 0.25 to 1.0
     solver.solve(vars, 1.0, 2.5e-4);
 
     expectNear(vars.dofs()[HeatPipeReferenceODE::effectiveSaturationIdx], 0.38566288370571478, 1e-6,
