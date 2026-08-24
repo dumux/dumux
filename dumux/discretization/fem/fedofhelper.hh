@@ -65,7 +65,7 @@ public:
         return Dune::transformedRangeView(
             Dune::range(elemDisc.numLocalDofs()),
             [&](const auto i) {
-                return CVFE::LocalDof{
+                return Dumux::CVFE::LocalDof{
                     static_cast<LocalIndexType>(i),
                     static_cast<GridIndexType>(dofIndex(
                         elemDisc.gridDiscretization().dofMapper(),
@@ -104,7 +104,7 @@ public:
                     elemDisc.feLocalCoefficients().localKey(i));
             })
             | std::views::transform([&](std::size_t i) {
-                return CVFE::LocalDof(
+                return Dumux::CVFE::LocalDof(
                     static_cast<LocalIndexType>(i),
                     static_cast<GridIndexType>(dofIndex(
                         gridDisc.dofMapper(),

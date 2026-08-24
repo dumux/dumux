@@ -24,6 +24,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/localresidual.hh>
 #include <dumux/common/constraintinfo.hh>
 
 namespace Dumux {
@@ -67,6 +68,8 @@ public:
     : ParentType(gridDiscretization, couplingManager)
     {
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+        addBoxStabilization_ = getParam<bool>("Problem.AddBoxStabilization", false);
+        boxStabilizationParameter_ = getParam<Scalar>("Problem.StabilizationParameter", 0.1);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
         if constexpr (ParentType::isMomentumProblem())
@@ -79,6 +82,8 @@ public:
     : ParentType(gridDiscretization)
     {
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+        addBoxStabilization_ = getParam<bool>("Problem.AddBoxStabilization", false);
+        boxStabilizationParameter_ = getParam<Scalar>("Problem.StabilizationParameter", 0.1);
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
         appendDirichletConstraints_();
@@ -182,6 +187,8 @@ public:
             const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
             const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] = this->velocity(fvGeometry, faceIpData) * insideDensity * scvf.unitOuterNormal();
+            if (addBoxStabilization_)
+                values[Indices::conti0EqIdx] += stabilizationFlux_(fvGeometry.element(), fvGeometry, elemVars, scvf);
         }
 
         return values;
@@ -334,6 +341,76 @@ private:
             return false;
     }
 
+public:
+    /*!
+     * \brief Flux stabilization for the unstable Box-Box (P1-P1-CVFE) discretization scheme
+     */
+    template<class ElementVariables, class SubControlVolumeFace>
+    Sources auxiliaryFlux(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVariables& elemVars,
+                          const SubControlVolumeFace& scvf) const
+    {
+        Sources flux(0.0);
+        if (addBoxStabilization_)
+        {
+            flux += stabilizationFlux_(element, fvGeometry, elemVars, scvf);
+            using Extrusion = Extrusion_t<typename FVElementGeometry::GridGeometry>;
+            flux *= Extrusion::area(fvGeometry, scvf);
+        }
+        return flux;
+    }
+
+private:
+    template<class ElementVariables, class SubControlVolumeFace>
+    Sources stabilizationFlux_(const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVariables& elemVars,
+                               const SubControlVolumeFace& scvf) const
+    {
+        Sources flux(0.0);
+
+        if constexpr (!ParentType::isMomentumProblem() && GridDiscretization::discMethod == DiscretizationMethods::box)
+        {
+            if (addBoxStabilization_)
+            {
+                // add -rho*C*h^2/mu*(grad P - f) as stabilization, see for instance
+                // Quarteroni & Ruiz-Baier (2011) https://doi.org/10.1007/s00211-011-0373-4
+                // (note that most stabilization terms vanish due to the use of linear basis functions)
+                const auto gradP = [&]
+                {
+                    if (scvf.boundary())
+                    {
+                        const auto& globalPos = scvf.ipGlobal();
+                        return Dune::FieldVector<Scalar, dimWorld>({
+                            dxP_(globalPos[0], globalPos[1]),
+                            dyP_(globalPos[0], globalPos[1])
+                        });
+                    }
+                    else
+                    {
+                        // evaluate the shape function gradients at the integration point of the scvf
+                        Dumux::CVFE::LocalBasisInterpolationPointData<GridDiscretization> basis;
+                        basis.update(*this, element, fvGeometry, elemVars, ipData(fvGeometry, scvf));
+                        Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
+                        for (const auto& scv : scvs(fvGeometry))
+                            gradP.axpy(elemVars[scv].pressure(0), basis.gradN(scv.indexInElement()));
+                        return gradP;
+                    }
+                }();
+
+                const auto rho = densityAtPos(scvf.ipGlobal());
+                const auto mu = effectiveViscosityAtPos(scvf.ipGlobal());
+                const auto h = diameter(element.geometry());
+
+                const auto f = this->couplingManager().problem(CouplingManager::freeFlowMomentumIndex).sourceAtPos(scvf.ipGlobal());
+                flux[0] = -1.0*vtmv(scvf.unitOuterNormal(), boxStabilizationParameter_*h*h*rho/mu, gradP - f);
+            }
+        }
+
+        return flux;
+    }
+
     void appendDirichletConstraints_()
     {
         auto fvGeometry = localView(this->gridDiscretization());
@@ -383,9 +460,19 @@ private:
     }
 
     bool useNeumann_;
+    bool addBoxStabilization_;
+    Scalar boxStabilizationParameter_;
     Scalar mu_;
     std::vector<DirichletConstraintData> constraints_;
 };
+
+
+// enable auxiliary flux evaluation in the mass local residual
+// this is used to implement the stabilization for the Box-Box discretization method
+template <class TypeTag, class BaseProblem>
+struct ImplementsAuxiliaryFluxNavierStokesMassOneP<DoneaTestProblemNewInterface<TypeTag, BaseProblem>>
+: public std::true_type
+{};
 
 } // end namespace Dumux
 
