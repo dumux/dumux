@@ -21,6 +21,7 @@
 
 namespace Dumux {
 
+// ODE of form: \f$ \frac{\mathrm{d}u(\xi)}{\mathrm{d}\xi} = \mathrm{e}^\xi \f$
 class ExponentialRhsODE
 {
 public:
@@ -37,6 +38,7 @@ public:
     }
 };
 
+// ODE of form: \f$ \frac{\mathrm{d}u(\xi)}{\mathrm{d}\xi} = \lambda*u(\xi) + \mathrm{e}^\xi \f$
 class LinearScalarODE
 {
 public:
@@ -63,6 +65,14 @@ private:
     Scalar lambda_;
 };
 
+/* ODE of form:
+ * \f[
+ * \begin{aligned}
+ * \frac{\mathrm{d}u_1(\xi)}{\mathrm{d}\xi} &= u_2(\xi), \\
+ * \frac{\mathrm{d}u_2(\xi)}{\mathrm{d}\xi} &= -u_1(\xi)
+ * \end{aligned}
+ * \f]
+ */
 class HarmonicOscillatorODE
 {
 public:
@@ -86,6 +96,7 @@ public:
     }
 };
 
+// ODE of form: \f$ \frac{\mathrm{d} (2u(\xi))}{\mathrm{d}\xi} = 1.0 \f$
 class ScaledDerivativeQuantityODE
 {
 public:
@@ -129,12 +140,20 @@ int main(int argc, char* argv[])
                        message << " (value: " << value << ", reference: " << reference << ")");
     };
 
+    /*
+     * Solves the ODE: \f$ \frac{\mathrm{d}u(\xi)}{\mathrm{d}\xi} = \mathrm{e}^\xi \f$
+     * on \f$ \xi \in [0,1] \f$ with \f$ u(0)=0 \f$
+     * and a step size of \f$ \Delta \xi = 0.01 \f$
+     *
+     * note: `ExponentialRhsODE` does not need to define `rhsJacobian()` since an explicit solving strategy is used
+     */
     {
         using Method = Experimental::MultiStage::RungeKuttaExplicitFourthOrder<Scalar>;
         auto ode = std::make_shared<ExponentialRhsODE>();
         auto method = std::make_shared<Method>();
         Experimental::ODESolver<ExponentialRhsODE> solverODE(ode, method);
 
+        // initializes \f$ u=0 \f$ at the default independent-variable coordinate \f$ \xi=0 \f$
         Experimental::ODEVariables<Scalar> vars(0.0);
         solverODE.solve(vars, 1.0, 0.01);
 
@@ -142,12 +161,20 @@ int main(int argc, char* argv[])
         expectNear(vars.dofs(), exp(1.0) - 1.0, 1e-10, "Explicit ODE solve with rhs-only system failed");
     }
 
+    /*
+     * Solves the ODE: \f$ \frac{\mathrm{d}u(\xi)}{\mathrm{d}\xi} = -u(\xi) + \mathrm{e}^\xi \f$
+     * on \f$ \xi \in [0,1] \f$ with \f$ u(0)=0 \f$
+     * and a step size of \f$ \Delta \xi = 0.01 \f$
+     *
+     * note: `LinearScalarODE` must define `rhsJacobian()` because this test uses an implicit integration method.
+     */
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
         auto ode = std::make_shared<LinearScalarODE>(-1.0);
         auto method = std::make_shared<Method>(0.5);
         Experimental::ODESolver<LinearScalarODE> solverODE(ode, method);
 
+        // initializes \f$ u=0 \f$ at the default independent-variable coordinate \f$ \xi=0 \f$
         Experimental::ODEVariables<Scalar> vars(0.0);
         solverODE.solve(vars, 1.0, 0.01);
 
@@ -155,6 +182,16 @@ int main(int argc, char* argv[])
         expectNear(vars.dofs(), sinh(1.0), 1e-5, "Implicit scalar ODE solve failed");
     }
 
+    /*
+     * Solves the ODE system:
+     * \f[
+     * \begin{aligned}
+     * \frac{\mathrm{d}u_1(\xi)}{\mathrm{d}\xi} &= u_2(\xi), \\
+     * \frac{\mathrm{d}u_2(\xi)}{\mathrm{d}\xi} &= -u_1(\xi)
+     * \end{aligned}
+     * \f]
+     * with initial conditions \f$ u_1(0) = 1, \qquad u_2(0) = 0 \f$, \f$ \xi \in [0,0.5] \f$ and a step size of \f$ \Delta \xi = 0.01 \f$
+     */
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
         using SolutionVector = HarmonicOscillatorODE::SolutionVector;
@@ -166,6 +203,7 @@ int main(int argc, char* argv[])
         SolutionVector initial;
         initial[0] = 1.0;
         initial[1] = 0.0;
+        // initializes \f$ u=0 \f$ at the default independent-variable coordinate \f$ \xi=0 \f$
         Experimental::ODEVariables<SolutionVector> vars(initial);
         solverODE.solve(vars, 0.5, 0.01);
 
@@ -175,18 +213,33 @@ int main(int argc, char* argv[])
         expectNear(vars.dofs()[1], -sin(0.5), 1e-5, "Implicit vector ODE solve failed for the second component");
     }
 
+    /*
+     * Solves the ODE: \f$ \frac{\mathrm{d} (2u(\xi))}{\mathrm{d}\xi} = 1.0 \f$
+     * on \f$ \xi \in [0,1] \f$ with \f$ u(0)=0 \f$
+     * and a step size of \f$ \Delta \xi = 0.01 \f$
+     *
+     * note: by defining `derivativeQuantity` and `derivativeQuantityJacobian` in `ScaledDerivativeQuantityODE`, one can specify a custom derivative format, otherwise the form \f$ \frac{\mathrm{d}u(\xi)}{\mathrm{d}\xi} \f$ is implicitly assumed.
+     */
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
         auto ode = std::make_shared<ScaledDerivativeQuantityODE>();
         auto method = std::make_shared<Method>(0.5);
         Experimental::ODESolver<ScaledDerivativeQuantityODE> solverODE(ode, method);
 
+        // initializes \f$ u=0 \f$ at the default independent-variable coordinate \f$ \xi=0 \f$
         Experimental::ODEVariables<Scalar> vars(0.0);
         solverODE.solve(vars, 1.0, 0.01);
 
         expectNear(vars.dofs(), 0.5, 1e-10, "ODE solve with a custom differentiated quantity failed");
     }
 
+    /*
+     * Solves the ODE: \f$ \frac{\mathrm{d} (2u(\xi))}{\mathrm{d}\xi} = 1.0 \f$
+     * on \f$ \xi \in [2,4] \f$ with \f$ u(2)=7 \f$
+     * and a step size of \f$ \Delta \xi = 0.01 \f$
+     *
+     * note: here, a non-zero start for the integration is assigned
+     */
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
         auto ode = std::make_shared<ScaledDerivativeQuantityODE>();
@@ -194,6 +247,7 @@ int main(int argc, char* argv[])
         Experimental::ODESolver<ScaledDerivativeQuantityODE> solverODE(ode, method);
 
         using Level = Experimental::IndependentVariableLevel<Scalar>;
+        // initializes vars at \f$ \xi = 2.0 \f$ with value 7.0
         Experimental::ODEVariables<Scalar> vars(7.0, Level{2.0});
         solverODE.solve(vars, 4.0, 0.01);
 
