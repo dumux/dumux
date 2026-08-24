@@ -346,20 +346,21 @@ void evaluateRhs(const ODESystem& odeSystem, const Vars& vars, Residual& rhs)
 }
 
 /*!
- * \brief Evaluate the quantity differentiated with respect to the independent variable.
+ * \brief Evaluate the accumulation mapping \f$M(u,\xi)\f$.
  *
  * \param odeSystem ODE system to evaluate
- * \param vars      variables at which to evaluate the differentiated quantity
- * \param value     differentiated-quantity result
- * \note If the system provides no `derivativeQuantity` function, the primary variables are used.
+ * \param vars      variables at which to evaluate the accumulation mapping
+ * \param value     resulting accumulation value \f$M(u,\xi)\f$
+ * \note If the system provides no `accumulation` function, the primary variables are used,
+ *       corresponding to the default mapping \f$M(u,\xi)=u\f$.
  */
 template<class ODESystem, class Vars, class Residual>
-void evaluateDerivativeQuantity(const ODESystem& odeSystem, const Vars& vars, Residual& value)
+void evaluateAccumulation(const ODESystem& odeSystem, const Vars& vars, Residual& value)
 {
-    if constexpr (requires(const ODESystem& system, const Vars& v, Residual& result) { system.derivativeQuantity(v, result); })
-        odeSystem.derivativeQuantity(vars, value);
-    else if constexpr (requires(const ODESystem& system, const Vars& v) { system.derivativeQuantity(v); })
-        assign(value, odeSystem.derivativeQuantity(vars));
+    if constexpr (requires(const ODESystem& system, const Vars& v, Residual& result) { system.accumulation(v, result); })
+        odeSystem.accumulation(vars, value);
+    else if constexpr (requires(const ODESystem& system, const Vars& v) { system.accumulation(v); })
+        assign(value, odeSystem.accumulation(vars));
     else
         assign(value, Dumux::VariablesBackend<Vars>::dofs(vars));
 }
@@ -385,25 +386,25 @@ void evaluateRhsJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian&
 }
 
 /*!
- * \brief Evaluate the Jacobian of the differentiated quantity.
+ * \brief Evaluate the accumulation Jacobian \f$\partial M/\partial u\f$.
  *
  * \param odeSystem ODE system to evaluate
  * \param vars      variables at which to evaluate the Jacobian
- * \param jacobian  resulting Jacobian of the differentiated quantity
- * \note Uses the identity for the default differentiated quantity and requires an
- *       explicit Jacobian when the ODE system defines a custom quantity.
+ * \param jacobian  resulting accumulation Jacobian \f$\partial M/\partial u\f$
+ * \note Uses the identity for the default mapping \f$M(u,\xi)=u\f$ and requires an
+ *       explicit accumulation Jacobian when the ODE system defines a custom accumulation mapping.
  */
 template<class ODESystem, class Vars, class Residual, class Jacobian>
-void evaluateDerivativeQuantityJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian& jacobian)
+void evaluateAccumulationJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian& jacobian)
 {
-    if constexpr (requires(const ODESystem& system, const Vars& v, Jacobian& j) { system.derivativeQuantityJacobian(v, j); })
-        odeSystem.derivativeQuantityJacobian(vars, jacobian);
-    else if constexpr (requires(const ODESystem& system, const Vars& v) { system.derivativeQuantityJacobian(v); })
-        assign(jacobian, odeSystem.derivativeQuantityJacobian(vars));
-    else if constexpr (requires(const ODESystem& system, const Vars& v, Residual& result) { system.derivativeQuantity(v, result); }
-                       || requires(const ODESystem& system, const Vars& v) { system.derivativeQuantity(v); })
+    if constexpr (requires(const ODESystem& system, const Vars& v, Jacobian& j) { system.accumulationJacobian(v, j); })
+        odeSystem.accumulationJacobian(vars, jacobian);
+    else if constexpr (requires(const ODESystem& system, const Vars& v) { system.accumulationJacobian(v); })
+        assign(jacobian, odeSystem.accumulationJacobian(vars));
+    else if constexpr (requires(const ODESystem& system, const Vars& v, Residual& result) { system.accumulation(v, result); }
+                       || requires(const ODESystem& system, const Vars& v) { system.accumulation(v); })
         DUNE_THROW(Dune::NotImplemented,
-            "ODE systems with a custom derivative quantity require derivativeQuantityJacobian(vars, jacobian) or derivativeQuantityJacobian(vars).");
+            "ODE systems with a custom accumulation require accumulationJacobian(vars, jacobian) or accumulationJacobian(vars).");
     else
         setIdentity(jacobian);
 }
@@ -544,12 +545,12 @@ public:
  *     \frac{\mathrm d}{\mathrm d\xi} M(u,\xi) = f(u,\xi),
  * \f]
  * where \f$\xi\f$ denotes the independent variable. If no
- * `derivativeQuantity()` is provided, the default is \f$M(u,\xi)=u\f$. The ODE system must export
+ * `accumulation()` is provided, the default is \f$M(u,\xi)=u\f$. The ODE system must export
  * `Scalar`, `SolutionVector`, `ResidualType`, and `JacobianMatrix`. They provide
  * `rhs(vars, rhs)` or `rhs(vars)`. Implicit stages additionally require
  * `rhsJacobian(vars, jacobian)` or `rhsJacobian(vars)`. Optionally, systems can provide
- * `derivativeQuantity(vars, value)` and
- * `derivativeQuantityJacobian(vars, jacobian)` for equations
+ * `accumulation(vars, value)` and
+ * `accumulationJacobian(vars, jacobian)` for equations
  * \f$\frac{\mathrm{d}}{\mathrm{d}\xi} M(u,\xi) = f(u,\xi)\f$, where
  * \f$\xi\f$ denotes an arbitrary independent variable.
  */
@@ -631,16 +632,16 @@ public:
         if (!stageParams_)
             DUNE_THROW(Dune::InvalidStateException, "No ODE stage prepared before residual assembly");
 
-        if (stageParams_->size() != rhsTerms_.size() || stageParams_->size() != derivativeQuantities_.size())
+        if (stageParams_->size() != rhsTerms_.size() || stageParams_->size() != accumulationValues_.size())
             DUNE_THROW(Dune::InvalidStateException, "Wrong number of ODE stage residuals");
 
-        evaluateTerms_(vars, derivativeQuantities_.back(), rhsTerms_.back());
+        evaluateTerms_(vars, accumulationValues_.back(), rhsTerms_.back());
 
         residual_ = zeroResidualLike_(vars);
         for (std::size_t k = 0; k < stageParams_->size(); ++k)
         {
             if (!stageParams_->skipTemporal(k))
-                Detail::ODE::addScaled(stageParams_->temporalWeight(k), derivativeQuantities_[k], residual_);
+                Detail::ODE::addScaled(stageParams_->temporalWeight(k), accumulationValues_[k], residual_);
             if (!stageParams_->skipSpatial(k))
                 Detail::ODE::addScaled(-stageParams_->spatialWeight(k), rhsTerms_[k], residual_);
         }
@@ -656,7 +657,7 @@ public:
         assembleResidual(vars);
 
         const auto curStage = stageParams_->size() - 1;
-        Detail::ODE::evaluateDerivativeQuantityJacobian<ODESystem, Variables, ResidualType>(*odeSystem_, vars, jacobian_);
+        Detail::ODE::evaluateAccumulationJacobian<ODESystem, Variables, ResidualType>(*odeSystem_, vars, jacobian_);
         Detail::ODE::scaleMatrix(jacobian_, stageParams_->temporalWeight(curStage));
 
         if (!stageParams_->skipSpatial(curStage))
@@ -696,9 +697,9 @@ public:
                 IndependentVariableLevel<Scalar>{coordinate, coordinate, stageParams_->timeStepFraction(0)}
             );
 
-            derivativeQuantities_.push_back(zeroResidualLike_(vars));
+            accumulationValues_.push_back(zeroResidualLike_(vars));
             rhsTerms_.push_back(zeroResidualLike_(vars));
-            evaluateTerms_(vars, derivativeQuantities_.back(), rhsTerms_.back());
+            evaluateTerms_(vars, accumulationValues_.back(), rhsTerms_.back());
         }
 
         const auto coordinate = stageParams_->timeAtStage(curStage); // uses existing backend for time integration
@@ -709,7 +710,7 @@ public:
             IndependentVariableLevel<Scalar>{coordinate, previousCoordinate, stepFraction}
         );
 
-        derivativeQuantities_.push_back(zeroResidualLike_(vars));
+        accumulationValues_.push_back(zeroResidualLike_(vars));
         rhsTerms_.push_back(zeroResidualLike_(vars));
     }
 
@@ -718,7 +719,7 @@ public:
      */
     void clearStages()
     {
-        derivativeQuantities_.clear();
+        accumulationValues_.clear();
         rhsTerms_.clear();
         stageParams_.reset();
     }
@@ -765,19 +766,19 @@ private:
     }
 
     /*!
-     * \brief Evaluates both differentiated-quantity and right-hand-side terms at the given variables
+     * \brief Evaluates the accumulation and right-hand-side values at the given variables
      *
-     * \param vars               variables at which to evaluate the terms
-     * \param derivativeQuantity resulting differentiated quantity
-     * \param rhs                resulting right-hand-side term
+     * \param vars         variables at which to evaluate the values
+     * \param accumulation resulting accumulation value \f$M(u,\xi)\f$
+     * \param rhs          resulting right-hand-side value \f$f(u,\xi)\f$
      */
     void evaluateTerms_(const Variables& vars,
-                        ResidualType& derivativeQuantity,
+                        ResidualType& accumulation,
                         ResidualType& rhs) const
     {
-        Detail::ODE::setZero(derivativeQuantity);
+        Detail::ODE::setZero(accumulation);
         Detail::ODE::setZero(rhs);
-        Detail::ODE::evaluateDerivativeQuantity(*odeSystem_, vars, derivativeQuantity);
+        Detail::ODE::evaluateAccumulation(*odeSystem_, vars, accumulation);
         Detail::ODE::evaluateRhs(*odeSystem_, vars, rhs);
     }
 
@@ -785,7 +786,7 @@ private:
     ResidualType residual_;
     JacobianMatrix jacobian_;
     SolutionVector previousSolution_;
-    std::vector<ResidualType> derivativeQuantities_;
+    std::vector<ResidualType> accumulationValues_;
     std::vector<ResidualType> rhsTerms_;
     std::shared_ptr<const StageParams> stageParams_;
 };

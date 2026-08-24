@@ -97,7 +97,7 @@ public:
 };
 
 // ODE of form: \f$ \frac{\mathrm{d} (2u(\xi))}{\mathrm{d}\xi} = 1.0 \f$
-class ScaledDerivativeQuantityODE
+class ScaledAccumulationODE
 {
 public:
     using Scalar = double;
@@ -106,10 +106,10 @@ public:
     using JacobianMatrix = Scalar;
     using Variables = Experimental::ODEVariables<SolutionVector>;
 
-    void derivativeQuantity(const Variables& vars, ResidualType& value) const
+    void accumulation(const Variables& vars, ResidualType& value) const
     { value = 2.0*vars.dofs(); }
 
-    void derivativeQuantityJacobian(const Variables&, JacobianMatrix& jacobian) const
+    void accumulationJacobian(const Variables&, JacobianMatrix& jacobian) const
     { jacobian = 2.0; }
 
     void rhs(const Variables&, ResidualType& rhs) const
@@ -218,19 +218,19 @@ int main(int argc, char* argv[])
      * on \f$ \xi \in [0,1] \f$ with \f$ u(0)=0 \f$
      * and a step size of \f$ \Delta \xi = 0.01 \f$
      *
-     * note: by defining `derivativeQuantity` and `derivativeQuantityJacobian` in `ScaledDerivativeQuantityODE`, one can specify a custom derivative format, otherwise the form \f$ \frac{\mathrm{d}u(\xi)}{\mathrm{d}\xi} \f$ is implicitly assumed.
+     * note: by defining `accumulation` and `accumulationJacobian` in `ScaledAccumulationODE`, one can specify the custom accumulation mapping \f$M(u,\xi)=2u\f$; otherwise \f$M(u,\xi)=u\f$ is assumed.
      */
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
-        auto ode = std::make_shared<ScaledDerivativeQuantityODE>();
+        auto ode = std::make_shared<ScaledAccumulationODE>();
         auto method = std::make_shared<Method>(0.5);
-        Experimental::ODESolver<ScaledDerivativeQuantityODE> solverODE(ode, method);
+        Experimental::ODESolver<ScaledAccumulationODE> solverODE(ode, method);
 
         // initializes \f$ u=0 \f$ at the default independent-variable coordinate \f$ \xi=0 \f$
         Experimental::ODEVariables<Scalar> vars(0.0);
         solverODE.solve(vars, 1.0, 0.01);
 
-        expectNear(vars.dofs(), 0.5, 1e-10, "ODE solve with a custom differentiated quantity failed");
+        expectNear(vars.dofs(), 0.5, 1e-10, "ODE solve with a custom accumulation failed");
     }
 
     /*
@@ -242,9 +242,9 @@ int main(int argc, char* argv[])
      */
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
-        auto ode = std::make_shared<ScaledDerivativeQuantityODE>();
+        auto ode = std::make_shared<ScaledAccumulationODE>();
         auto method = std::make_shared<Method>(0.5);
-        Experimental::ODESolver<ScaledDerivativeQuantityODE> solverODE(ode, method);
+        Experimental::ODESolver<ScaledAccumulationODE> solverODE(ode, method);
 
         using Level = Experimental::IndependentVariableLevel<Scalar>;
         // initializes vars at \f$ \xi = 2.0 \f$ with value 7.0
