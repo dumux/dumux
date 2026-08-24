@@ -189,7 +189,7 @@ public:
         const auto type = elemDisc.element().type();
         const auto& localKey = elemDisc.feLocalCoefficients().localKey(localDof.index());
         const auto& localPos = DofHelper::localDofPosition(type, localKey);
-        return CVFE::LocalDofInterpolationPointData{
+        return Dumux::CVFE::LocalDofInterpolationPointData{
             localPos,
             elemDisc.elementGeometry().global(localPos),
             localDof.index()
@@ -200,7 +200,7 @@ public:
     friend inline auto ipData(const FEElementDiscretization& elemDisc,
                               const typename Element::Geometry::GlobalCoordinate& globalPos)
     {
-        return CVFE::InterpolationPointDataLocalMapping{
+        return Dumux::CVFE::InterpolationPointDataLocalMapping{
             [&] (const typename Element::Geometry::GlobalCoordinate& pos) {
                 return elemDisc.elementGeometry().local(pos); },
             globalPos
