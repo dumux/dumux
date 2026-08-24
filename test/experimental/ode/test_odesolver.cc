@@ -86,6 +86,28 @@ public:
     }
 };
 
+class ScaledDerivativeQuantityODE
+{
+public:
+    using Scalar = double;
+    using SolutionVector = Scalar;
+    using ResidualType = Scalar;
+    using JacobianMatrix = Scalar;
+    using Variables = Experimental::ODEVariables<SolutionVector>;
+
+    void derivativeQuantity(const Variables& vars, ResidualType& value) const
+    { value = 2.0*vars.dofs(); }
+
+    void derivativeQuantityJacobian(const Variables&, JacobianMatrix& jacobian) const
+    { jacobian = 2.0; }
+
+    void rhs(const Variables&, ResidualType& rhs) const
+    { rhs = 1.0; }
+
+    void rhsJacobian(const Variables&, JacobianMatrix& jacobian) const
+    { jacobian = 0.0; }
+};
+
 } // end namespace Dumux
 
 int main(int argc, char* argv[])
@@ -152,6 +174,30 @@ int main(int argc, char* argv[])
         expectNear(vars.dofs()[0], cos(0.5), 1e-5, "Implicit vector ODE solve failed for the first component");
         expectNear(vars.dofs()[1], -sin(0.5), 1e-5, "Implicit vector ODE solve failed for the second component");
     }
+
+    {
+        using Method = Experimental::MultiStage::Theta<Scalar>;
+        auto ode = std::make_shared<ScaledDerivativeQuantityODE>();
+        auto method = std::make_shared<Method>(0.5);
+        Experimental::ODESolver<ScaledDerivativeQuantityODE> solverODE(ode, method);
+
+        Experimental::ODEVariables<Scalar> vars(0.0);
+        solverODE.solve(vars, 1.0, 0.01);
+
+        expectNear(vars.dofs(), 0.5, 1e-10, "ODE solve with a custom differentiated quantity failed");
+    }
+
+    {
+        using Method = Experimental::MultiStage::Theta<Scalar>;
+        auto ode = std::make_shared<ScaledDerivativeQuantityODE>();
+        auto method = std::make_shared<Method>(0.5);
+        Experimental::ODESolver<ScaledDerivativeQuantityODE> solverODE(ode, method);
+
+        using Level = Experimental::IndependentVariableLevel<Scalar>;
+        Experimental::ODEVariables<Scalar> vars(7.0, Level{2.0});
+        solverODE.solve(vars, 4.0, 0.01);
+
+        expectNear(vars.dofs(), 8.0, 1e-10, "ODE solve with a custom initialization interval failed");
     }
 
     std::cout << "ODE solver tests passed" << std::endl;
