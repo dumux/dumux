@@ -29,7 +29,7 @@ public:
     using SolutionVector = Dune::FieldVector<Scalar, 4>;
     using ResidualType = SolutionVector;
     using JacobianMatrix = Dune::FieldMatrix<Scalar, 4, 4>;
-    using Variables = Experimental::Variables<SolutionVector>;
+    using Variables = Experimental::ODEVariables<SolutionVector>;
 
     enum Component
     {
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
     auto method = std::make_shared<Method>();
     Experimental::ODESolver<HeatPipeReferenceODE> solver(ode, method);
 
-    Experimental::Variables<SolutionVector> vars(ode->initialState());
+    Experimental::ODEVariables<SolutionVector> vars(ode->initialState());
     solver.solve(vars, 0.25, 2.5e-4);
 
     expectNear(vars.dofs()[HeatPipeReferenceODE::effectiveSaturationIdx], 0.98803128090343983, 1e-8,
