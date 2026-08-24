@@ -240,6 +240,14 @@ struct VariablesChooser<ODESystem>
 template<class ODESystem>
 using Variables = typename VariablesChooser<ODESystem>::Type;
 
+/*!
+ * \brief Assigns an ODE quantity to an output object of a potentially different type
+ *
+ * \param  to   destination object
+ * \param  from source object
+ * \tparam To   destination type
+ * \tparam From source type
+ */
 template<class To, class From>
 void assign(To& to, const From& from)
 {
@@ -249,12 +257,24 @@ void assign(To& to, const From& from)
         static_assert(AlwaysFalse<To>::value, "Cannot assign ODE quantity to the requested output type.");
 }
 
+/*!
+ * \brief Sets a scalar, vector, or matrix-like value to zero
+ *
+ * \param  value value to set to zero
+ * \tparam Value type of value to reset
+ */
 template<class Value>
 void setZero(Value& value)
 {
     value = 0.0;
 }
 
+/*!
+ * \brief Sets a scalar or square matrix-like object to the identity
+ *
+ * \param  matrix object to set to the identity
+ * \tparam Matrix matrix or scalar type
+ */
 template<class Matrix>
 void setIdentity(Matrix& matrix)
 {
@@ -268,18 +288,44 @@ void setIdentity(Matrix& matrix)
     }
 }
 
+/*!
+ * \brief Accumulates the scaled vector \f$y \mathrel{+}= \text{factor} x\f$
+ *
+ * \param  factor scaling factor
+ * \param  x      vector to scale and add
+ * \param  y      vector to update
+ * \tparam Vector vector type
+ * \tparam Scalar scaling-factor type
+ */
 template<class Vector, class Scalar>
 void addScaled(const Scalar factor, const Vector& x, Vector& y)
 {
     Dumux::DofBackend<Vector>::axpy(factor, x, y);
 }
 
+/*!
+ * \brief Scales a matrix-like object in place
+ *
+ * \param  matrix matrix to scale
+ * \param  factor scaling factor
+ * \tparam Matrix matrix type
+ * \tparam Scalar scaling-factor type
+ */
 template<class Matrix, class Scalar>
 void scaleMatrix(Matrix& matrix, const Scalar factor)
 {
     matrix *= factor;
 }
 
+/*!
+ * \brief Accumulates the scaled matrix \f$y \mathrel{+}= \text{factor} x\f$
+ *
+ * \param  factor scaling factor
+ * \param  x      matrix to scale and add
+ * \param  y      matrix to update
+ * \tparam Matrix matrix type
+ * \tparam Scalar scaling-factor type
+ */
 template<class Matrix, class Scalar>
 void addScaledMatrix(const Scalar factor, const Matrix& x, Matrix& y)
 {
@@ -293,6 +339,17 @@ void addScaledMatrix(const Scalar factor, const Matrix& x, Matrix& y)
     }
 }
 
+/*!
+ * \brief Evaluate the right-hand side of an ODE system.
+ *
+ * \param  odeSystem ODE system to evaluate
+ * \param  vars      variables at which to evaluate the right-hand side
+ * \param  rhs       right-hand side result
+ * \tparam ODESystem ODE system type
+ * \tparam Vars      variables type
+ * \tparam Residual  residual type
+ * \note Supports both `rhs(vars, rhs)` and a value-returning `rhs(vars)`.
+ */
 template<class ODESystem, class Vars, class Residual>
 void evaluateRhs(const ODESystem& odeSystem, const Vars& vars, Residual& rhs)
 {
@@ -305,6 +362,17 @@ void evaluateRhs(const ODESystem& odeSystem, const Vars& vars, Residual& rhs)
             "ODE systems must provide rhs(vars, rhs) or rhs(vars).");
 }
 
+/*!
+ * \brief Evaluate the quantity differentiated with respect to the independent variable.
+ *
+ * \param  odeSystem ODE system to evaluate
+ * \param  vars      variables at which to evaluate the differentiated quantity
+ * \param  value     differentiated-quantity result
+ * \tparam ODESystem ODE system type
+ * \tparam Vars      variables type
+ * \tparam Residual  residual type
+ * \note If the system provides no `derivativeQuantity` function, the primary variables are used.
+ */
 template<class ODESystem, class Vars, class Residual>
 void evaluateDerivativeQuantity(const ODESystem& odeSystem, const Vars& vars, Residual& value)
 {
@@ -316,6 +384,17 @@ void evaluateDerivativeQuantity(const ODESystem& odeSystem, const Vars& vars, Re
         assign(value, Dumux::VariablesBackend<Vars>::dofs(vars));
 }
 
+/*!
+ * \brief Evaluate the Jacobian of the ODE right-hand side.
+ *
+ * \param  odeSystem ODE system to evaluate
+ * \param  vars      variables at which to evaluate the Jacobian
+ * \param  jacobian  resulting right-hand-side Jacobian
+ * \tparam ODESystem ODE system type
+ * \tparam Vars      variables type
+ * \tparam Jacobian  Jacobian matrix type
+ * \note Accepts output-argument and value-returning forms named `rhsJacobian`.
+ */
 template<class ODESystem, class Vars, class Jacobian>
 void evaluateRhsJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian& jacobian)
 {
@@ -328,6 +407,19 @@ void evaluateRhsJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian&
             "Implicit ODE stages require rhsJacobian(vars, jacobian) or rhsJacobian(vars).");
 }
 
+/*!
+ * \brief Evaluate the Jacobian of the differentiated quantity.
+ *
+ * \param  odeSystem ODE system to evaluate
+ * \param  vars      variables at which to evaluate the Jacobian
+ * \param  jacobian  resulting Jacobian of the differentiated quantity
+ * \tparam ODESystem ODE system type
+ * \tparam Vars      variables type
+ * \tparam Residual  residual type used to detect a custom differentiated quantity
+ * \tparam Jacobian  Jacobian matrix type
+ * \note Uses the identity for the default differentiated quantity and requires an
+ *       explicit Jacobian when the ODE system defines a custom quantity.
+ */
 template<class ODESystem, class Vars, class Residual, class Jacobian>
 void evaluateDerivativeQuantityJacobian(const ODESystem& odeSystem, const Vars& vars, Jacobian& jacobian)
 {
@@ -343,6 +435,14 @@ void evaluateDerivativeQuantityJacobian(const ODESystem& odeSystem, const Vars& 
         setIdentity(jacobian);
 }
 
+/*!
+ * \brief Updates the independent-variable information stored by an ODE variables object
+ *
+ * \param  vars  variables to update
+ * \param  level new independent-variable level
+ * \tparam Vars  variables type
+ * \tparam Level independent-variable-level type
+ */
 template<class Vars, class Level>
 void updateIndependentVariable(Vars& vars, const Level& level)
 {
@@ -353,6 +453,13 @@ void updateIndependentVariable(Vars& vars, const Level& level)
             "ODE variables must provide updateIndependentVariable(level) or use Dumux::Experimental::ODEVariables.");
 }
 
+/*!
+ * \brief Compute the Euclidean norm of a scalar or vector-like object.
+ *
+ * \param  vector the object whose norm is computed
+ * \tparam Vector the scalar or vector-like type
+ * \note Uses `two_norm()` when available and otherwise recursively computes the norm.
+ */
 template<class Vector>
 auto norm(const Vector& vector)
 {
@@ -378,6 +485,16 @@ auto norm(const Vector& vector)
     }
 }
 
+/*!
+ * \brief Solve the local linear system \f$A x = b\f$.
+ *
+ * \param  matrix system matrix \f$A\f$
+ * \param  x      solution vector
+ * \param  b      right-hand-side vector
+ * \tparam Matrix system matrix type
+ * \tparam Vector solution and right-hand-side vector type
+ * \return `true` if the supported direct solution operation was performed.
+ */
 template<class Matrix, class Vector>
 bool solve(const Matrix& matrix, Vector& x, const Vector& b)
 {
@@ -414,18 +531,41 @@ namespace Dumux::Experimental {
  * This is intended for ordinary differential equations with scalar or small
  * fixed-size dense unknowns. Larger systems can pass any linear solver exposing
  * the usual DuMux Newton interface.
+ *
+ * \tparam JacobianMatrix Jacobian matrix type
+ * \tparam ResidualVector residual and correction vector type
  */
 template<class JacobianMatrix, class ResidualVector>
 class ODELocalLinearSolver
 {
 public:
+    /*!
+     * \brief Accepts the Newton residual-reduction setting
+     *
+     * The residual-reduction argument required by the Newton interface is ignored
+     * because the local linear solver needs no adaptation.
+     */
     void setResidualReduction(double) {}
 
+    /*!
+     * \brief Solve the linearized ODE stage system.
+     *
+     * \param matrix linearized system matrix
+     * \param x      solution vector
+     * \param b      right-hand-side vector
+     * \return `true` if the local system was solved.
+     */
     bool solve(const JacobianMatrix& matrix,
                ResidualVector& x,
                const ResidualVector& b) const
     { return Detail::ODE::solve(matrix, x, b); }
 
+    /*!
+     * \brief Computes the norm used by the Newton convergence check
+     *
+     * \param residual the residual vector
+     * \return norm of the residual vector
+     */
     auto norm(const ResidualVector& residual) const
     { return Detail::ODE::norm(residual); }
 };
@@ -434,13 +574,21 @@ public:
  * \ingroup Experimental
  * \brief Assembler that maps an ODE right-hand-side interface to the DuMux Newton interface.
  *
- * ODE systems are expected in the form \f$\dot u = f(u,t)\f$ and must export
+  * ODE systems are expected in the form
+ * \f[
+ *     \frac{\mathrm d}{\mathrm d\xi} M(u,\xi) = f(u,\xi),
+ * \f]
+ * where \f$\xi\f$ denotes the independent variable. If no
+ * `derivativeQuantity()` is provided, the default is \f$M(u,\xi)=u\f$. The ODE system must export
  * `Scalar`, `SolutionVector`, `ResidualType`, and `JacobianMatrix`. They provide
  * `rhs(vars, rhs)` or `rhs(vars)`. Implicit stages additionally require
- * `jacobian(vars, jacobian)`/`jacobian(vars)` or the equivalent
- * `rhsJacobian` overloads. Optionally, systems can provide
- * `storage(vars, storage)` and `storageJacobian(vars, jacobian)` for equations
- * \f$\partial_t M(u,t) = f(u,t)\f$.
+ * `rhsJacobian(vars, jacobian)` or `rhsJacobian(vars)`. Optionally, systems can provide
+ * `derivativeQuantity(vars, value)` and
+ * `derivativeQuantityJacobian(vars, jacobian)` for equations
+ * \f$\frac{\mathrm{d}}{\mathrm{d}\xi} M(u,\xi) = f(u,\xi)\f$, where
+ * \f$\xi\f$ denotes an arbitrary independent variable.
+ *
+ * \tparam ODESystem  the ODE system type
  */
 template<class ODESystem>
 class MultiStageODEAssembler
@@ -453,28 +601,68 @@ public:
     using Variables = Detail::ODE::Variables<ODESystem>;
     using StageParams = MultiStageParams<Scalar>;
 
+    /*!
+     * \brief Constructs an assembler that shares ownership of an ODE system
+     *
+     * \param odeSystem the ODE system to assemble
+     */
     explicit MultiStageODEAssembler(std::shared_ptr<const ODESystem> odeSystem)
     : odeSystem_(std::move(odeSystem))
     {}
 
+    /*!
+     * \brief Constructs an assembler with an internally owned copy of an ODE system
+     *
+     * \param odeSystem the ODE system to copy
+     */
     explicit MultiStageODEAssembler(const ODESystem& odeSystem)
     : MultiStageODEAssembler(std::make_shared<ODESystem>(odeSystem))
     {}
 
+    /*!
+     * \brief Satisfies the Newton assembler interface
+     *
+     * Local ODE systems do not require additional linear-system setup.
+     */
     void setLinearSystem() {}
 
+    /*!
+     * \brief Returns the assembled Jacobian matrix
+     *
+     * \return assembled Jacobian matrix
+     */
     JacobianMatrix& jacobian()
     { return jacobian_; }
 
+    /*!
+     * \brief Returns the assembled Jacobian matrix
+     *
+     * \return assembled Jacobian matrix
+     */
     const JacobianMatrix& jacobian() const
     { return jacobian_; }
 
+    /*!
+     * \brief Returns the assembled residual vector
+     *
+     * \return assembled residual vector
+     */
     ResidualType& residual()
     { return residual_; }
 
+    /*!
+     * \brief Returns the assembled residual vector
+     *
+     * \return assembled residual vector
+     */
     const ResidualType& residual() const
     { return residual_; }
 
+    /*!
+     * \brief Assemble the weighted residual for the currently prepared stage.
+     *
+     * \param vars variables at which to evaluate the current-stage terms
+     */
     void assembleResidual(const Variables& vars)
     {
         if (!stageParams_)
@@ -495,6 +683,11 @@ public:
         }
     }
 
+    /*!
+     * \brief Assemble the residual and its Jacobian for the current stage.
+     *
+     * \param vars variables at which to evaluate the current-stage terms
+     */
     void assembleJacobianAndResidual(const Variables& vars)
     {
         assembleResidual(vars);
@@ -512,6 +705,12 @@ public:
         }
     }
 
+    /*!
+     * \brief Prepare the next consecutive stage and update its independent-variable information.
+     *
+     * \param vars   variables whose independent-variable level is advanced to the stage coordinate
+     * \param params coefficients and coordinate data for the stage to prepare
+     */
     void prepareStage(Variables& vars,
                       std::shared_ptr<const StageParams> params)
     {
@@ -551,6 +750,9 @@ public:
         rhsTerms_.push_back(zeroResidualLike_(vars));
     }
 
+    /*!
+     * \brief Discards all cached stage terms and the active stage parameters
+     */
     void clearStages()
     {
         derivativeQuantities_.clear();
@@ -558,12 +760,27 @@ public:
         stageParams_.reset();
     }
 
+    /*!
+     * \brief Returns the solution saved at the beginning of the current integration step
+     *
+     * \return solution at the beginning of the current integration step
+     */
     const SolutionVector& prevSol() const
     { return previousSolution_; }
 
+    /*!
+     * \brief Resets stage-local state before repeating or starting an integration step
+     *
+     * The solution argument required by the integration-driver interface is not needed.
+     */
     void resetTimeStep(const SolutionVector&)
     { clearStages(); }
 
+    /*!
+     * \brief Returns the ODE system assembled by this object
+     *
+     * \return assembled ODE system
+     */
     const ODESystem& odeSystem() const
     { return *odeSystem_; }
 
@@ -571,6 +788,12 @@ private:
     using Backend = Dumux::VariablesBackend<Variables>;
     using ResidualBackend = Dumux::DofBackend<ResidualType>;
 
+    /*!
+     * \brief Creates a zero residual with a size compatible with the given variables
+     *
+     * \param vars the variables defining the required residual size
+     * \return a zero-initialized residual
+     */
     ResidualType zeroResidualLike_(const Variables& vars) const
     {
         auto result = ResidualBackend::zeros(Backend::size(Backend::dofs(vars)));
@@ -578,6 +801,13 @@ private:
         return result;
     }
 
+    /*!
+     * \brief Evaluates both differentiated-quantity and right-hand-side terms at the given variables
+     *
+     * \param vars               variables at which to evaluate the terms
+     * \param derivativeQuantity resulting differentiated quantity
+     * \param rhs                resulting right-hand-side term
+     */
     void evaluateTerms_(const Variables& vars,
                         ResidualType& derivativeQuantity,
                         ResidualType& rhs) const
@@ -600,6 +830,11 @@ private:
 /*!
  * \ingroup Experimental
  * \brief Convenience wrapper composing ODE assembly, Newton, and multi-stage stepping.
+ *
+ * \tparam ODESystem    ODE system type
+ * \tparam LinearSolver linear solver type
+ * \tparam Reassembler  partial reassembler type used by the Newton solver
+ * \tparam Comm         communication type used by the Newton solver
  */
 template<class ODESystem,
          class LinearSolver = ODELocalLinearSolver<typename ODESystem::JacobianMatrix, typename ODESystem::ResidualType>,
@@ -616,6 +851,13 @@ public:
     using Method = MultiStageMethod<Scalar>;
     using IntegrationDriver = MultiStageTimeStepper<NonlinearSolver, Scalar>;
 
+    /*!
+     * \brief Construct a solver with a default linear solver and MPI communication.
+     *
+     * \param odeSystem  ODE system to solve.
+     * \param method     multi-stage integration method.
+     * \param paramGroup parameter group used to configure the solver components
+     */
     ODESolver(std::shared_ptr<const ODESystem> odeSystem,
               std::shared_ptr<const Method> method,
               const std::string& paramGroup = "")
@@ -626,6 +868,14 @@ public:
                 paramGroup)
     {}
 
+    /*!
+     * \brief Construct a solver with a default linear solver and custom communication.
+     *
+     * \param odeSystem  ODE system to solve
+     * \param method     multi-stage integration method
+     * \param comm       communication object used by the nonlinear solver
+     * \param paramGroup parameter group used to configure the solver components
+     */
     ODESolver(std::shared_ptr<const ODESystem> odeSystem,
               std::shared_ptr<const Method> method,
               const Comm& comm,
@@ -637,6 +887,14 @@ public:
                 paramGroup)
     {}
 
+    /*!
+     * \brief Construct a solver with a custom linear solver and MPI communication.
+     *
+     * \param odeSystem    ODE system to solve
+     * \param linearSolver linear solver used for implicit stages
+     * \param method       multi-stage integration method
+     * \param paramGroup   parameter group used to configure the solver components
+     */
     ODESolver(std::shared_ptr<const ODESystem> odeSystem,
               std::shared_ptr<LinearSolver> linearSolver,
               std::shared_ptr<const Method> method,
@@ -648,6 +906,15 @@ public:
                 paramGroup)
     {}
 
+    /*!
+     * \brief Construct a solver with custom linear solver and communication objects.
+     *
+     * \param odeSystem    ODE system to solve
+     * \param linearSolver linear solver used for implicit stages
+     * \param method       multi-stage integration method
+     * \param comm         communication object used by the nonlinear solver
+     * \param paramGroup   parameter group used to configure the solver components
+     */
     ODESolver(std::shared_ptr<const ODESystem> odeSystem,
               std::shared_ptr<LinearSolver> linearSolver,
               std::shared_ptr<const Method> method,
@@ -661,9 +928,23 @@ public:
     , integrationDriver_(nonlinearSolver_, method_, paramGroup)
     {}
 
+    /*!
+     * \brief Advance the variables by one integration step.
+     *
+     * \param vars                variables to update in place
+     * \param independentVariable value of the independent variable at the beginning of the step
+     * \param stepSize            integration-step size
+     */
     void step(Variables& vars, const Scalar independentVariable, const Scalar stepSize)
     { integrationDriver_.step(vars, independentVariable, stepSize); }
 
+    /*!
+     * \brief Integrate repeatedly with a fixed maximum step size up to an end coordinate.
+     *
+     * \param vars          variables to update in place
+     * \param endCoordinate final value of the independent variable
+     * \param stepSize      requested step size; the last step may be shortened
+     */
     void solve(Variables& vars, const Scalar endCoordinate, const Scalar stepSize)
     {
         if (!(stepSize > 0.0))
@@ -679,21 +960,51 @@ public:
         }
     }
 
+    /*!
+     * \brief Returns the ODE assembler
+     *
+     * \return ODE assembler
+     */
     Assembler& assembler()
     { return *assembler_; }
 
+    /*!
+     * \brief Returns the ODE assembler
+     *
+     * \return ODE assembler
+     */
     const Assembler& assembler() const
     { return *assembler_; }
 
+    /*!
+     * \brief Returns the nonlinear solver used for implicit stages
+     *
+     * \return nonlinear solver
+     */
     NonlinearSolver& nonlinearSolver()
     { return *nonlinearSolver_; }
 
+    /*!
+     * \brief Returns the nonlinear solver used for implicit stages
+     *
+     * \return nonlinear solver
+     */
     const NonlinearSolver& nonlinearSolver() const
     { return *nonlinearSolver_; }
 
+    /*!
+     * \brief Returns the linear solver used by the nonlinear solver
+     *
+     * \return linear solver
+     */
     LinearSolver& linearSolver()
     { return *linearSolver_; }
 
+    /*!
+     * \brief Returns the linear solver used by the nonlinear solver
+     *
+     * \return linear solver
+     */
     const LinearSolver& linearSolver() const
     { return *linearSolver_; }
 
