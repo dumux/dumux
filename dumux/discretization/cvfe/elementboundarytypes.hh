@@ -15,7 +15,7 @@
 #include <cassert>
 #include <vector>
 
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -48,7 +48,7 @@ public:
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
 
         for (const auto& scv : scvs(fvGeometry))
         {

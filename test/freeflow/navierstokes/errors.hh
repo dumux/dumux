@@ -24,7 +24,7 @@
 #include <dumux/io/format.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 namespace Dumux {
 
@@ -96,7 +96,7 @@ private:
         PrimaryVariables maxReference(0.0);
         PrimaryVariables maxError(0.0);
 
-        const auto& gridGeometry = Deprecated::gridGeometry(*problem_);
+        const auto& gridGeometry = Dumux::gridDiscretization(*problem_);
 
         auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
@@ -193,7 +193,7 @@ public:
     NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem, const std::string& suffix = "")
     : name_(problem->name() + (suffix.empty() ? "_error" : "_error_" + suffix))
     {
-        const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+        const auto& gridGeometry = Dumux::gridDiscretization(*problem);
 
         const int numCCDofs = gridGeometry.numCellCenterDofs();
         const int numFaceDofs = gridGeometry.numFaceDofs();
@@ -272,7 +272,7 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
 
     const auto velLabels = velocityLabels();
 
-    const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
 
     const auto numCCDofs = gridGeometry.numCellCenterDofs();
     const auto numFaceDofs = gridGeometry.numFaceDofs();
@@ -377,7 +377,7 @@ private:
         hMax_ = 0.0;
 
         using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
-        const auto& gridGeometry = Deprecated::gridGeometry(*problem_);
+        const auto& gridGeometry = Dumux::gridDiscretization(*problem_);
 
         numDofs_ = gridGeometry.numDofs();
 
@@ -650,9 +650,9 @@ public:
                    const std::string& suffix = "")
     : name_(massProblem->name() + (suffix.empty() ? "_error" : "_error_" + suffix))
     {
-        const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem);
+        const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
 
-        const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem);
+        const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
 
         const int numCCDofs = massGridGeometry.numDofs();
         const int numFaceDofs = momentumGridGeometry.numDofs();
@@ -726,9 +726,9 @@ void convergenceTestAppendErrors(std::ofstream& logFile,
 
     const auto velLabels = velocityLabels();
 
-    const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem);
+    const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
 
-    const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem);
+    const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
 
     const auto numCCDofs = massGridGeometry.numDofs();
     const auto numFaceDofs = momentumGridGeometry.numDofs();
@@ -782,7 +782,7 @@ void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
 
     const auto velLabels = velocityLabels();
 
-    const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
 
     const auto numFaceDofs = gridGeometry.numDofs();
 
