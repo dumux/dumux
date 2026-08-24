@@ -28,12 +28,12 @@ public:
     using SolutionVector = Scalar;
     using ResidualType = Scalar;
     using JacobianMatrix = Scalar;
-    using Variables = Experimental::Variables<SolutionVector>;
+    using Variables = Experimental::ODEVariables<SolutionVector>;
 
     void rhs(const Variables& vars, ResidualType& rhs) const
     {
         using std::exp;
-        rhs = exp(vars.timeLevel().current());
+        rhs = exp(vars.independentVariableLevel().current());
     }
 };
 
@@ -44,7 +44,7 @@ public:
     using SolutionVector = Scalar;
     using ResidualType = Scalar;
     using JacobianMatrix = Scalar;
-    using Variables = Experimental::Variables<SolutionVector>;
+    using Variables = Experimental::ODEVariables<SolutionVector>;
 
     explicit LinearScalarODE(const Scalar lambda)
     : lambda_(lambda)
@@ -53,10 +53,10 @@ public:
     void rhs(const Variables& vars, ResidualType& rhs) const
     {
         using std::exp;
-        rhs = lambda_*vars.dofs() + exp(vars.timeLevel().current());
+        rhs = lambda_*vars.dofs() + exp(vars.independentVariableLevel().current());
     }
 
-    void jacobian(const Variables&, JacobianMatrix& jacobian) const
+    void rhsJacobian(const Variables&, JacobianMatrix& jacobian) const
     { jacobian = lambda_; }
 
 private:
@@ -70,7 +70,7 @@ public:
     using SolutionVector = Dune::FieldVector<Scalar, 2>;
     using ResidualType = SolutionVector;
     using JacobianMatrix = Dune::FieldMatrix<Scalar, 2, 2>;
-    using Variables = Experimental::Variables<SolutionVector>;
+    using Variables = Experimental::ODEVariables<SolutionVector>;
 
     void rhs(const Variables& vars, ResidualType& rhs) const
     {
@@ -78,7 +78,7 @@ public:
         rhs[1] = -vars.dofs()[0];
     }
 
-    void jacobian(const Variables&, JacobianMatrix& jacobian) const
+    void rhsJacobian(const Variables&, JacobianMatrix& jacobian) const
     {
         jacobian = 0.0;
         jacobian[0][1] = 1.0;
@@ -111,28 +111,26 @@ int main(int argc, char* argv[])
         using Method = Experimental::MultiStage::RungeKuttaExplicitFourthOrder<Scalar>;
         auto ode = std::make_shared<ExponentialRhsODE>();
         auto method = std::make_shared<Method>();
-        Experimental::ODESolver<ExponentialRhsODE> solver(ode, method);
+        Experimental::ODESolver<ExponentialRhsODE> solverODE(ode, method);
 
-        Experimental::Variables<Scalar> vars(0.0);
-        solver.solve(vars, 1.0, 0.01);
+        Experimental::ODEVariables<Scalar> vars(0.0);
+        solverODE.solve(vars, 1.0, 0.01);
 
         using std::exp;
-        expectNear(vars.dofs(), exp(1.0) - 1.0, 1e-10,
-                   "Explicit ODE solve with rhs-only system failed");
+        expectNear(vars.dofs(), exp(1.0) - 1.0, 1e-10, "Explicit ODE solve with rhs-only system failed");
     }
 
     {
         using Method = Experimental::MultiStage::Theta<Scalar>;
         auto ode = std::make_shared<LinearScalarODE>(-1.0);
         auto method = std::make_shared<Method>(0.5);
-        Experimental::ODESolver<LinearScalarODE> solver(ode, method);
+        Experimental::ODESolver<LinearScalarODE> solverODE(ode, method);
 
-        Experimental::Variables<Scalar> vars(0.0);
-        solver.solve(vars, 1.0, 0.01);
+        Experimental::ODEVariables<Scalar> vars(0.0);
+        solverODE.solve(vars, 1.0, 0.01);
 
         using std::sinh;
-        expectNear(vars.dofs(), sinh(1.0), 1e-5,
-                   "Implicit scalar ODE solve failed");
+        expectNear(vars.dofs(), sinh(1.0), 1e-5, "Implicit scalar ODE solve failed");
     }
 
     {
@@ -141,20 +139,19 @@ int main(int argc, char* argv[])
 
         auto ode = std::make_shared<HarmonicOscillatorODE>();
         auto method = std::make_shared<Method>(0.5);
-        Experimental::ODESolver<HarmonicOscillatorODE> solver(ode, method);
+        Experimental::ODESolver<HarmonicOscillatorODE> solverODE(ode, method);
 
         SolutionVector initial;
         initial[0] = 1.0;
         initial[1] = 0.0;
-        Experimental::Variables<SolutionVector> vars(initial);
-        solver.solve(vars, 0.5, 0.01);
+        Experimental::ODEVariables<SolutionVector> vars(initial);
+        solverODE.solve(vars, 0.5, 0.01);
 
         using std::cos;
         using std::sin;
-        expectNear(vars.dofs()[0], cos(0.5), 1e-5,
-                   "Implicit vector ODE solve failed for the first component");
-        expectNear(vars.dofs()[1], -sin(0.5), 1e-5,
-                   "Implicit vector ODE solve failed for the second component");
+        expectNear(vars.dofs()[0], cos(0.5), 1e-5, "Implicit vector ODE solve failed for the first component");
+        expectNear(vars.dofs()[1], -sin(0.5), 1e-5, "Implicit vector ODE solve failed for the second component");
+    }
     }
 
     std::cout << "ODE solver tests passed" << std::endl;
