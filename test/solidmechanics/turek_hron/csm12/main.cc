@@ -6,6 +6,7 @@
 //
 #include <config.h>
 #include <iostream>
+#include <fstream>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
@@ -17,8 +18,6 @@
 #include <dumux/linear/istlsolvers.hh>
 
 #include <dumux/assembly/fvassembler.hh>
-
-#include <dumux/experimental/timestepping/newmarkbeta.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
@@ -42,6 +41,10 @@ int main(int argc, char** argv)
     GridManager<Grid> gridManager;
     gridManager.init();
 
+    // get the refinement
+    const auto refinement = getParam<int>("Grid.Refinement", 0);
+    gridManager.grid().globalRefine(refinement);
+
     // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
@@ -49,9 +52,15 @@ int main(int argc, char** argv)
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
+    const auto numElements = leafGridView.size(0);
+    const auto numDofs = gridGeometry->numDofs();
+
     // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
+
+    const std::string problemName = problem->name();
+    const std::string csvFileName = problemName + "_dumux_box.csv";
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -68,25 +77,10 @@ int main(int argc, char** argv)
     vtkWriter.addVolumeVariable([](const auto& v){
         return Dune::FieldVector<double, 2>{v.displacement(0), v.displacement(1)};
     }, "d");
-    vtkWriter.write(0.0);
 
-    // solution at previous time
-    auto xOld = x;
-
-    // get some time loop parameters
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
-
-    // the time stepping scheme
-    auto newmarkBeta = std::make_shared<Experimental::NewmarkBeta<Scalar, SolutionVector>>();
-    newmarkBeta->initialize(x);
-    problem->setNewmarkScheme(newmarkBeta);
-
-    // the assembler with time loop for a transient problem
+    // the assembler for a stationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
     using LAT = LinearAlgebraTraitsFromAssembler<Assembler>;
@@ -97,34 +91,21 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
 
-    const int vtkInterval = getParam<int>("VTKOutput.Every", 5);
+    // check if file already exists to decide whether to write the header
+    std::ifstream fileCheck(csvFileName);
+    const bool writeHeader = !fileCheck.is_open();
+    fileCheck.close();
 
-    // time loop
-    timeLoop->start(); do
-    {
-        // linearize & solve
-        nonLinearSolver->solve(x);
+    std::ofstream csvFile(csvFileName, std::ios::app);
+    if (writeHeader)
+        csvFile << "level,nel,ndof,ux,uy\n";
 
-        // update the solution in the time stepping scheme
-        newmarkBeta->update(dt, x);
+    nonLinearSolver->solve(x);
+    vtkWriter.write(1.0);
 
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
-
-        // write VTK output
-        if (timeLoop->timeStepIndex() % vtkInterval == 0 || timeLoop->finished())
-            vtkWriter.write(timeLoop->time());
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-
-    } while (!timeLoop->finished());
-
-    timeLoop->finalize(leafGridView.comm());
+    const auto displacementA = problem->evalControlPointDisplacement(*gridVariables, x);
+    csvFile << refinement << "," << numElements << "," << numDofs << ","
+            << displacementA[0] << "," << displacementA[1] << "\n";
 
     return 0;
 }
