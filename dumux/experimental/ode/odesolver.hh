@@ -727,7 +727,7 @@ public:
         {
             previousSolution_ = Dumux::VariablesBackend<Variables>::dofs(vars);
 
-            const auto coordinate = stageParams_->timeAtStage(0);
+            const auto coordinate = stageParams_->timeAtStage(0); // uses existing backend for time integration
             Detail::ODE::updateIndependentVariable(
                 vars,
                 IndependentVariableLevel<Scalar>{coordinate, coordinate, stageParams_->timeStepFraction(0)}
@@ -738,8 +738,8 @@ public:
             evaluateTerms_(vars, derivativeQuantities_.back(), rhsTerms_.back());
         }
 
-        const auto coordinate = stageParams_->timeAtStage(curStage);
-        const auto previousCoordinate = stageParams_->timeAtStage(0);
+        const auto coordinate = stageParams_->timeAtStage(curStage); // uses existing backend for time integration
+        const auto previousCoordinate = stageParams_->timeAtStage(0); // uses existing backend for time integration
         const auto stepFraction = stageParams_->timeStepFraction(curStage);
         Detail::ODE::updateIndependentVariable(
             vars,
