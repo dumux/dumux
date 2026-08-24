@@ -38,7 +38,7 @@
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <dumux/freeflow/navierstokes/fluxoveraxisalignedsurface.hh>
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/geometry/intersectionentityset.hh>
 
@@ -134,7 +134,7 @@ auto average(const MomentumProblem& momentumProblem,
     double phiAvg(0.0);
     GlobalPosition vAvg(0.0);
 
-    const auto& momentumGridGeometry = Dumux::Deprecated::gridGeometry(momentumProblem);
+    const auto& momentumGridGeometry = Dumux::gridDiscretization(momentumProblem);
     for(const auto& is : intersections(iset))
     {
         const auto isGeo = is.geometry();
@@ -181,7 +181,7 @@ auto average(const MomentumProblem& momentumProblem,
 
     GlobalPosition vAvg(0.0);
 
-    const auto& massGridGeometry = Dumux::Deprecated::gridGeometry(massProblem);
+    const auto& massGridGeometry = Dumux::gridDiscretization(massProblem);
 
     // Calculate element velocities
     std::vector<GlobalPosition> velocity(massGridGeometry.gridView().size(0));

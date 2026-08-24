@@ -19,7 +19,7 @@
 #include <dune/common/std/type_traits.hh>
 
 #include <dumux/common/concepts/ipdata_.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
@@ -99,7 +99,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) &
     {
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
         eIdx_ = gridDiscretization.elementMapper().index(element);
     }
 

@@ -19,7 +19,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/indextraits.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/fem/fedofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
@@ -70,7 +70,7 @@ public:
     template<class ElemDisc, class BoundaryFace>
     static auto localDofsOnBoundaryFace(const ElemDisc& elemDisc, const BoundaryFace& boundaryFace)
     {
-        const auto& gridDiscretization = Deprecated::gridGeometry(elemDisc);
+        const auto& gridDiscretization = Dumux::gridDiscretization(elemDisc);
         return Dune::transformedRangeView(
             Dune::range(numLocalDofsIntersection(elemDisc.element().type(), boundaryFace.intersectionIndex())),
             [&](const auto i) {

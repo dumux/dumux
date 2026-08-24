@@ -20,7 +20,7 @@
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -182,7 +182,7 @@ public:
         if constexpr (dim == 2 && isRotationalExtrusion<Extrusion>)
         {
             // the radius with respect to the rotation axis
-            const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+            const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
             const auto r = scv.center()[Extrusion::radialAxis] - gridDiscretization.bBoxMin()[Extrusion::radialAxis];
 
             // The velocity term is new with respect to Cartesian coordinates and handled below as a source term

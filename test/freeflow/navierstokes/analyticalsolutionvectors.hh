@@ -16,7 +16,7 @@
 
 #include <dumux/discretization/method.hh>
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 namespace Dumux {
 /*!
@@ -41,7 +41,7 @@ public:
      */
     void update(Scalar time = 0.0)
     {
-        const auto& gridGeometry = Deprecated::gridGeometry(*problem_);
+        const auto& gridGeometry = Dumux::gridDiscretization(*problem_);
 
         analyticalPressure_.resize(gridGeometry.numCellCenterDofs());
         analyticalVelocity_.resize(gridGeometry.numCellCenterDofs());
@@ -139,9 +139,9 @@ public:
      */
     void update(Scalar time = 0.0)
     {
-        const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem_);
+        const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem_);
 
-        const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem_);
+        const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem_);
 
         analyticalPressure_.resize(massGridGeometry.numDofs());
         analyticalVelocity_.resize(massGridGeometry.gridView().size(0));

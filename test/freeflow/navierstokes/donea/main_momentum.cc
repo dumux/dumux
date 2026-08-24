@@ -47,7 +47,7 @@
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
@@ -79,7 +79,7 @@ void printErrors(std::shared_ptr<Problem> problem,
     static constexpr int dim = GridGeometry::GridView::dimension;
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
 
-    const auto& gridGeometry = Deprecated::gridGeometry(*problem);
+    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
 
     if (printErrors)
     {

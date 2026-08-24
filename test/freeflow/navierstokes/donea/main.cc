@@ -40,7 +40,7 @@
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <dumux/common/typetraits/problem.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 #include <test/freeflow/navierstokes/errors_cvfe.hh>
@@ -108,9 +108,9 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
     using MassGridGeometry = typename ProblemTraits<MassProblem>::GridGeometry;
     static constexpr int dim = MomentumGridGeometry::GridView::dimension;
 
-    const auto& momentumGridGeometry = Deprecated::gridGeometry(*momentumProblem);
+    const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
 
-    const auto& massGridGeometry = Deprecated::gridGeometry(*massProblem);
+    const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
 
     // print discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);

@@ -24,7 +24,7 @@
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/common/multimapperview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
@@ -90,7 +90,7 @@ public:
                                      const CouplingFunction& maybeAssembleCouplingBlocks = noop)
     {
         this->asImp_().bindLocalViews();
-        const auto eIdxGlobal = Deprecated::gridGeometry(this->asImp_().problem()).elementMapper().index(this->element());
+        const auto eIdxGlobal = Dumux::gridDiscretization(this->asImp_().problem()).elementMapper().index(this->element());
 
         this->localResidual().spatialWeight(1.0);
         this->localResidual().temporalWeight(1.0);
@@ -131,7 +131,7 @@ public:
             assert(this->elementIsGhost());
 
             // handle dofs per codimension
-            const auto& gridDiscretization = Deprecated::gridGeometry(this->asImp_().problem());
+            const auto& gridDiscretization = Dumux::gridDiscretization(this->asImp_().problem());
             Dune::Hybrid::forEach(std::make_integer_sequence<int, dim+1>{}, [&](auto d)
             {
                 constexpr int codim = dim - d;
@@ -180,9 +180,9 @@ public:
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
 
             // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
-            if (Deprecated::gridGeometry(this->asImp_().problem()).dofOnPeriodicBoundary(scvI.dofIndex()))
+            if (Dumux::gridDiscretization(this->asImp_().problem()).dofOnPeriodicBoundary(scvI.dofIndex()))
             {
-                const auto periodicDof = Deprecated::gridGeometry(this->asImp_().problem()).periodicallyMappedDof(scvI.dofIndex());
+                const auto periodicDof = Dumux::gridDiscretization(this->asImp_().problem()).periodicallyMappedDof(scvI.dofIndex());
                 res[periodicDof][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
                 constrainedDofs[periodicDof][eqIdx] = 1;
                 const auto end = jac[periodicDof].end();
@@ -405,7 +405,7 @@ private:
         );
 
         // create the element solution
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
         auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
@@ -511,7 +511,7 @@ private:
         auto&& curElemVolVars = this->curElemVolVars();
 
         // create the element solution
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
         auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives

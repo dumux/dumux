@@ -22,7 +22,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/common/multimapperview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
@@ -385,7 +385,7 @@ public:
         );
 
         // create the element solution
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
         auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
@@ -534,7 +534,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        const auto& gridDiscretization = Deprecated::gridGeometry(fvGeometry);
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
         auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
