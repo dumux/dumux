@@ -84,7 +84,6 @@ dumux_add_test(NAME test_ff_stokes_donea_box_stabilized
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
-               COMPILE_DEFINITIONS REPRODUCE_OLD_BOUNDARY_BEHAVIOR=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_box_stabilized-reference.vtu
@@ -202,7 +201,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
-               COMPILE_DEFINITIONS REPRODUCE_OLD_BOUNDARY_BEHAVIOR=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_quad-reference.vtu
