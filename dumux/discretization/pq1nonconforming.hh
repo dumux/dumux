@@ -36,7 +36,7 @@
 
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
 #include <dumux/discretization/pq1nonconforming/fegriddiscretization.hh>
-#include <dumux/discretization/cvfe/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
@@ -77,10 +77,10 @@ struct GridVolumeVariables<TypeTag, TTag::PQ1NonconformingFVModel>
 private:
     static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using Traits = Dumux::Detail::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
 public:
-    using type = Dumux::Detail::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
+    using type = CVFEGridVolumeVariables<Traits, enableCache>;
 };
 
 //! Set the global flux variables cache vector class
