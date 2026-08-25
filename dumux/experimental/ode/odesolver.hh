@@ -909,13 +909,25 @@ public:
         if (!(stepSize > 0.0))
             DUNE_THROW(Dune::InvalidStateException, "ODE integration step size has to be positive");
 
-        auto coordinate = vars.independentVariableLevel().current();
-        while (coordinate < endCoordinate)
+        auto startCoordinate = vars.independentVariableLevel().current();
+
+        if (endCoordinate < startCoordinate)
+            DUNE_THROW(
+                Dune::InvalidStateException,
+                "Backward ODE integration is not supported: end coordinate "
+                << endCoordinate << " is smaller than start coordinate "
+                << startCoordinate
+            );
+
+        if (endCoordinate == startCoordinate)
+            return;
+
+        while (startCoordinate < endCoordinate)
         {
             using std::min;
-            const auto currentStepSize = min(stepSize, endCoordinate - coordinate);
-            step(vars, coordinate, currentStepSize);
-            coordinate = vars.independentVariableLevel().current();
+            const auto currentStepSize = min(stepSize, endCoordinate - startCoordinate);
+            step(vars, startCoordinate, currentStepSize);
+            startCoordinate = vars.independentVariableLevel().current();
         }
     }
 
