@@ -43,7 +43,7 @@ class DoneaTestProblemNewInterface : public BaseProblem
     using ParentType = BaseProblem;
 
     using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridDiscretization::LocalView;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Sources = typename ParentType::Sources;
     using DirichletValues = typename ParentType::DirichletValues;
@@ -56,7 +56,7 @@ class DoneaTestProblemNewInterface : public BaseProblem
     using BoundaryFluxes = typename ParentType::BoundaryFluxes;
 
     static constexpr auto dimWorld = GridDiscretization::GridView::dimensionworld;
-    using Element = typename FVElementGeometry::Element;
+    using Element = typename ElementDiscretization::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
@@ -157,12 +157,12 @@ public:
     /*!
      * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
-     * \param fvGeometry The finite-volume geometry
+     * \param elemDisc The element discretization
      * \param elemVars All variables related to the element
      * \param faceIpData Interpolation point data
      */
     template<class ElementVariables, class FaceIpData>
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
+    BoundaryFluxes boundaryFlux(const ElementDiscretization& elemDisc,
                                 const ElementVariables& elemVars,
                                 const FaceIpData& faceIpData) const
     {
@@ -184,11 +184,11 @@ public:
         }
         else
         {
-            const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
+            const auto& scvf = elemDisc.scvf(faceIpData.scvfIndex());
             const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
-            values[Indices::conti0EqIdx] = this->velocity(fvGeometry, faceIpData) * insideDensity * scvf.unitOuterNormal();
+            values[Indices::conti0EqIdx] = this->velocity(elemDisc, faceIpData) * insideDensity * scvf.unitOuterNormal();
             if (addBoxStabilization_)
-                values[Indices::conti0EqIdx] += stabilizationFlux_(fvGeometry.element(), fvGeometry, elemVars, scvf);
+                values[Indices::conti0EqIdx] += stabilizationFlux_(elemDisc.element(), elemDisc, elemVars, scvf);
         }
 
         return values;
@@ -197,18 +197,18 @@ public:
     /*!
      * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
-     * \param fvGeometry The finite-volume geometry
+     * \param elemDisc The element discretization
      * \param elemVars All variables related to the element
      * \param elemFluxVarsCache The element flux variables cache
      * \param faceIpData Interpolation point data
      */
     template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
+    BoundaryFluxes boundaryFlux(const ElementDiscretization& elemDisc,
                                 const ElementVariables& elemVars,
                                 const ElementFluxVariablesCache& elemFluxVarsCache,
                                 const FaceIpData& faceIpData) const
     {
-        return boundaryFlux(fvGeometry, elemVars, faceIpData);
+        return boundaryFlux(elemDisc, elemVars, faceIpData);
     }
 
     // \}
@@ -347,16 +347,16 @@ public:
      */
     template<class ElementVariables, class SubControlVolumeFace>
     Sources auxiliaryFlux(const Element& element,
-                          const FVElementGeometry& fvGeometry,
+                          const ElementDiscretization& elemDisc,
                           const ElementVariables& elemVars,
                           const SubControlVolumeFace& scvf) const
     {
         Sources flux(0.0);
         if (addBoxStabilization_)
         {
-            flux += stabilizationFlux_(element, fvGeometry, elemVars, scvf);
-            using Extrusion = Extrusion_t<typename FVElementGeometry::GridGeometry>;
-            flux *= Extrusion::area(fvGeometry, scvf);
+            flux += stabilizationFlux_(element, elemDisc, elemVars, scvf);
+            using Extrusion = Extrusion_t<GridDiscretization>;
+            flux *= Extrusion::area(elemDisc, scvf);
         }
         return flux;
     }
@@ -364,7 +364,7 @@ public:
 private:
     template<class ElementVariables, class SubControlVolumeFace>
     Sources stabilizationFlux_(const Element& element,
-                               const FVElementGeometry& fvGeometry,
+                               const ElementDiscretization& elemDisc,
                                const ElementVariables& elemVars,
                                const SubControlVolumeFace& scvf) const
     {
@@ -391,9 +391,9 @@ private:
                     {
                         // evaluate the shape function gradients at the integration point of the scvf
                         Dumux::CVFE::LocalBasisInterpolationPointData<GridDiscretization> basis;
-                        basis.update(*this, element, fvGeometry, elemVars, ipData(fvGeometry, scvf));
+                        basis.update(*this, element, elemDisc, elemVars, ipData(elemDisc, scvf));
                         Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
-                        for (const auto& scv : scvs(fvGeometry))
+                        for (const auto& scv : scvs(elemDisc))
                             gradP.axpy(elemVars[scv].pressure(0), basis.gradN(scv.indexInElement()));
                         return gradP;
                     }
@@ -413,18 +413,18 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto fvGeometry = localView(this->gridDiscretization());
+        auto elemDisc = localView(this->gridDiscretization());
         for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
-            fvGeometry.bind(element);
+            elemDisc.bind(element);
 
-            for(const auto& boundaryFace : boundaryFaces(fvGeometry))
+            for(const auto& boundaryFace : boundaryFaces(elemDisc))
             {
                 if(!isMomentumFluxBoundary_(boundaryFace.center()))
                 {
-                    for(const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    for(const auto& localDof : localDofs(elemDisc, boundaryFace))
                     {
-                        const auto globalPos = ipData(fvGeometry, localDof).global();
+                        const auto globalPos = ipData(elemDisc, localDof).global();
                         ConstraintInfo info;
                         info.setAll();
 
@@ -441,11 +441,11 @@ private:
         static_assert(GridDiscretization::discMethod == DiscretizationMethods::box, "Internal Dirichlet constraints only implemented for Box mass discretization scheme.");
 
         static constexpr Scalar eps = 1e-8;
-        auto fvGeometry = localView(this->gridDiscretization());
+        auto elemDisc = localView(this->gridDiscretization());
         for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
-            fvGeometry.bind(element);
-            for (const auto& scv : scvs(fvGeometry))
+            elemDisc.bind(element);
+            for (const auto& scv : scvs(elemDisc))
             {
                 if  ((scv.dofPosition() - this->gridDiscretization().bBoxMin()).two_norm() < eps)
                 {
