@@ -45,26 +45,26 @@ class ThreeDChannelTestProblemNewInterface : public BaseProblem
     using ParentType = BaseProblem;
 
     using BoundaryTypes = typename ParentType::BoundaryTypes;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
+    using SubControlVolume = typename ElementDiscretization::SubControlVolume;
+    using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryFluxes = typename ParentType::BoundaryFluxes;
-    using BoundaryFlag = Dumux::BoundaryFlag<typename GridGeometry::GridView::Grid>;
+    using BoundaryFlag = Dumux::BoundaryFlag<typename GridDiscretization::GridView::Grid>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ConstraintInfo = Dumux::DirichletConstraintInfo<ModelTraits::numEq()>;
     using ConstraintValues = Dune::FieldVector<Scalar, ModelTraits::numEq()>;
     using DirichletValues = typename ParentType::DirichletValues;
-    using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
+    using GridIndexType = typename IndexTraits<typename GridDiscretization::GridView>::GridIndex;
     using DirichletConstraintData = Dumux::DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
-    static constexpr int dim = GridGeometry::GridView::dimension;
-    static constexpr auto dimWorld = GridGeometry::GridView::dimensionworld;
+    static constexpr int dim = GridDiscretization::GridView::dimension;
+    static constexpr auto dimWorld = GridDiscretization::GridView::dimensionworld;
 
-    using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using Element = typename GridDiscretization::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -72,8 +72,8 @@ class ThreeDChannelTestProblemNewInterface : public BaseProblem
 
 public:
     template<class GridData>
-    ThreeDChannelTestProblemNewInterface(std::shared_ptr<const GridGeometry> gridGeometry, std::shared_ptr<CouplingManager> couplingManager, GridData gridData)
-    : ParentType(gridGeometry, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
+    ThreeDChannelTestProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization, std::shared_ptr<CouplingManager> couplingManager, GridData gridData)
+    : ParentType(gridDiscretization, couplingManager, ParentType::isMomentumProblem() ? "Momentum" : "Mass")
     , gridData_(gridData)
     {
         deltaP_ = getParam<Scalar>("Problem.DeltaP");
@@ -88,11 +88,11 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary face.
      *
-     * \param fvGeometry The finite-volume geometry
+     * \param elemDisc The element discretization
      * \param boundaryFace The boundary face
      */
-    BoundaryTypes boundaryTypes(const FVElementGeometry& fvGeometry,
-                                const FVElementGeometry::BoundaryFace& boundaryFace) const
+    BoundaryTypes boundaryTypes(const ElementDiscretization& elemDisc,
+                                const ElementDiscretization::BoundaryFace& boundaryFace) const
     {
         BoundaryTypes values;
 
@@ -125,31 +125,31 @@ public:
     /*!
      * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
      *
-     * \param fvGeometry The finite-volume geometry
+     * \param elemDisc The element discretization
      * \param elemVars All variables related to the element
      * \param faceIpData Interpolation point data
      */
     template<class ElementVariables, class FaceIpData>
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
+    BoundaryFluxes boundaryFlux(const ElementDiscretization& elemDisc,
                                 const ElementVariables& elemVars,
                                 const FaceIpData& faceIpData) const
     {
         BoundaryFluxes values(0.0);
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (isMomentumFluxBoundary_(boundaryFlag_(fvGeometry, faceIpData)))
+            if (isMomentumFluxBoundary_(boundaryFlag_(elemDisc, faceIpData)))
             {
-                const auto p = isInlet_(boundaryFlag_(fvGeometry, faceIpData)) ? deltaP_ : 0.0;
+                const auto p = isInlet_(boundaryFlag_(elemDisc, faceIpData)) ? deltaP_ : 0.0;
                 values.axpy(-p, faceIpData.unitOuterNormal());
             }
         }
         else
         {
-            const auto& scvf = fvGeometry.scvf(faceIpData.scvfIndex());
+            const auto& scvf = elemDisc.scvf(faceIpData.scvfIndex());
             if (isInlet_(scvf.boundaryFlag()) || isOutlet_(scvf.boundaryFlag()))
             {
                 const auto insideDensity = elemVars[scvf.insideScvIdx()].density();
-                values[Indices::conti0EqIdx] = this->velocity(fvGeometry, faceIpData) * insideDensity * scvf.unitOuterNormal();
+                values[Indices::conti0EqIdx] = this->velocity(elemDisc, faceIpData) * insideDensity * scvf.unitOuterNormal();
             }
         }
 
@@ -158,7 +158,7 @@ public:
 
     template<class ScvOrScvfOrIpData>
     Scalar density(const Element&,
-                   const FVElementGeometry&,
+                   const ElementDiscretization&,
                    const ScvOrScvfOrIpData&,
                    const bool isPreviousTimeStep = false) const
     {
@@ -167,7 +167,7 @@ public:
 
     template<class ScvOrScvfOrIpData>
     Scalar effectiveViscosity(const Element&,
-                              const FVElementGeometry&,
+                              const ElementDiscretization&,
                               const ScvOrScvfOrIpData&) const
     {
         return viscosity_;
@@ -178,20 +178,20 @@ public:
     {
         Scalar influx = 0.0;
         Scalar outflux = 0.0;
-        const auto& gridGeometry = Dumux::gridDiscretization(*this);
-        auto fvGeometry = localView(gridGeometry);
-        for (const auto& element : elements(gridGeometry.gridView()))
+        const auto& gridDiscretization = Dumux::gridDiscretization(*this);
+        auto elemDisc = localView(gridDiscretization);
+        for (const auto& element : elements(gridDiscretization.gridView()))
         {
-            fvGeometry.bind(element);
-            for (const auto& scvf : scvfs(fvGeometry))
+            elemDisc.bind(element);
+            for (const auto& scvf : scvfs(elemDisc))
             {
                 if (scvf.boundary())
                 {
                     if (isInlet_(scvf.boundaryFlag()))
-                        influx += scvf.area() * (sol[fvGeometry.scv(scvf.insideScvIdx()).dofIndex()] * scvf.unitOuterNormal());
+                        influx += scvf.area() * (sol[elemDisc.scv(scvf.insideScvIdx()).dofIndex()] * scvf.unitOuterNormal());
 
                     else if (isOutlet_(scvf.boundaryFlag()))
-                        outflux += scvf.area() * (sol[fvGeometry.scv(scvf.insideScvIdx()).dofIndex()] * scvf.unitOuterNormal());
+                        outflux += scvf.area() * (sol[elemDisc.scv(scvf.insideScvIdx()).dofIndex()] * scvf.unitOuterNormal());
                 }
             }
         }
@@ -205,12 +205,12 @@ public:
 
 private:
     template<class IpData>
-    auto boundaryFlag_(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    auto boundaryFlag_(const ElementDiscretization& elemDisc, const IpData& ipData) const
     {
         if constexpr (Dumux::Concept::ScvfIpData<IpData>)
-            return fvGeometry.scvf(ipData.scvfIndex()).boundaryFlag();
+            return elemDisc.scvf(ipData.scvfIndex()).boundaryFlag();
         else if constexpr (Dumux::Concept::BoundaryFaceIpData<IpData>)
-            return fvGeometry.boundaryFace(ipData.boundaryFaceIndex()).boundaryFlag();
+            return elemDisc.boundaryFace(ipData.boundaryFaceIndex()).boundaryFlag();
         else
             DUNE_THROW(Dune::InvalidStateException, "Unknown type of interpolation point data!");
     }
@@ -221,19 +221,19 @@ private:
 
     void appendDirichletConstraints_()
     {
-        const auto& gridGeometry = Dumux::gridDiscretization(*this);
-        auto fvGeometry = localView(gridGeometry);
-        for (const auto& element : elements(gridGeometry.gridView()))
+        const auto& gridDiscretization = Dumux::gridDiscretization(*this);
+        auto elemDisc = localView(gridDiscretization);
+        for (const auto& element : elements(gridDiscretization.gridView()))
         {
-            fvGeometry.bind(element);
+            elemDisc.bind(element);
 
-            for(const auto& boundaryFace : boundaryFaces(fvGeometry))
+            for(const auto& boundaryFace : boundaryFaces(elemDisc))
             {
                 if(!isMomentumFluxBoundary_(boundaryFace.boundaryFlag()))
                 {
-                    for(const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    for(const auto& localDof : localDofs(elemDisc, boundaryFace))
                     {
-                        const auto globalPos = ipData(fvGeometry, localDof).global();
+                        const auto globalPos = ipData(elemDisc, localDof).global();
                         ConstraintInfo info;
                         info.setAll();
 
@@ -254,7 +254,7 @@ private:
     static constexpr Scalar eps_ = 1e-10;
     Scalar deltaP_, density_, viscosity_;
 
-    std::shared_ptr<GridData<typename GridGeometry::GridView::Grid>> gridData_;
+    std::shared_ptr<GridData<typename GridDiscretization::GridView::Grid>> gridData_;
     std::vector<DirichletConstraintData> constraints_;
 };
 
