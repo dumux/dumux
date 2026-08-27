@@ -469,6 +469,25 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube
                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq2_cube params.input
                            -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq2_cube -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
 
+# same setup as above but with the grid variables cache disabled;
+# has to reproduce the cached result exactly
+dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube_nocaching
+               SOURCES main_momentum.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS ENABLEGRIDVARSCACHING=0
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq2_cube-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq2_cube_nocaching_pq2_1.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_pq2_cube_nocaching params.input
+                           -Problem.Name test_ff_stokes_donea_momentum_hybrid_pq2_cube_nocaching -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+
 dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube_parallel
                TARGET test_ff_stokes_donea_momentum_hybrid_pq2_cube
                LABELS freeflow navierstokes donea

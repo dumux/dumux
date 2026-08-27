@@ -20,6 +20,10 @@
 #define ENABLEFLUXVARSCACHING ENABLECACHING
 #endif
 
+#ifndef ENABLEGRIDVARSCACHING
+#define ENABLEGRIDVARSCACHING ENABLECACHING
+#endif
+
 #ifndef GRIDTYPE
 #define GRIDTYPE Dune::YaspGrid<2>
 #endif
@@ -222,7 +226,7 @@ struct EnableGridGeometryCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constex
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLEGRIDVARSCACHING; };
 
 } // end namespace Dumux::Properties
 
