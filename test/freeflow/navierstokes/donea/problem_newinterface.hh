@@ -424,7 +424,7 @@ private:
                 {
                     for(const auto& localDof : localDofs(fvGeometry, boundaryFace))
                     {
-                        const auto& globalPos = ipData(fvGeometry, localDof).global();
+                        const auto globalPos = ipData(fvGeometry, localDof).global();
                         ConstraintInfo info;
                         info.setAll();
 
