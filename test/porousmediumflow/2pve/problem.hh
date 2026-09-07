@@ -13,6 +13,9 @@
 #ifndef DUMUX_TEST_TWOPVE_PROBLEM_HH
 #define DUMUX_TEST_TWOPVE_PROBLEM_HH
 
+#include <memory>
+#include <string>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundarytypes.hh>

@@ -13,6 +13,12 @@
 #ifndef DUMUX_TEST_TWOPVE_FINE_PROBLEM_HH
 #define DUMUX_TEST_TWOPVE_FINE_PROBLEM_HH
 
+#include <memory>
+
+#include <dumux/common/numeqvector.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+
 #include "spatialparams_fine.hh"
 
 namespace Dumux {

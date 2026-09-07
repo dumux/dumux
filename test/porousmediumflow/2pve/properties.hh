@@ -13,6 +13,8 @@
 #ifndef DUMUX_TEST_TWOPVE_PROPERTIES_HH
 #define DUMUX_TEST_TWOPVE_PROPERTIES_HH
 
+#include <tuple>
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/cctpfa.hh>

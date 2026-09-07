@@ -13,7 +13,11 @@
 #ifndef DUMUX_TWOPVE_FINE_LEVEL_FIELDSTORAGE_HH
 #define DUMUX_TWOPVE_FINE_LEVEL_FIELDSTORAGE_HH
 
+#include <cstddef>
+#include <vector>
+
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
+
 #include <dumux/porousmediumflow/2pve/elementstatefine.hh>
 
 namespace Dumux {
