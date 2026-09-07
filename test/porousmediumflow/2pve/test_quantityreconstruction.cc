@@ -9,10 +9,11 @@
  * \ingroup VETest
  * \brief Unit test for quantity reconstructor.
  */
-#include <iomanip>
-#include <config.h>
 
-#include <cmath>
+#include <config.h>
+#include <initializer_list>
+#include <iomanip>
+#include <string>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>

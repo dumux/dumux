@@ -13,13 +13,16 @@
 #ifndef DUMUX_TWOPVE_VOLUMEVARIABLES_HH
 #define DUMUX_TWOPVE_VOLUMEVARIABLES_HH
 
-#include <execution>
+#include <cstddef>
+#include <vector>
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/parallel/parallel_for.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
+#include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
 namespace Dumux {
 
