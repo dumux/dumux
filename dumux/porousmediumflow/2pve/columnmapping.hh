@@ -13,6 +13,17 @@
 #ifndef DUMUX_TWOPVE_COLUMN_MAPPING_HH
 #define DUMUX_TWOPVE_COLUMN_MAPPING_HH
 
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dumux/geometry/intersectingentities.hh>
+
 namespace Dumux {
 
 template<class GridGeometry, class Scalar>

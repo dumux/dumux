@@ -13,8 +13,16 @@
 #ifndef DUMUX_TWOPVE_QUANTITY_RECONSTRUCTION_HH
 #define DUMUX_TWOPVE_QUANTITY_RECONSTRUCTION_HH
 
+#include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <limits>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
+
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
