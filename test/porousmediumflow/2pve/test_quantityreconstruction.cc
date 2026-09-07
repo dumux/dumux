@@ -9,7 +9,7 @@
  * \ingroup VETest
  * \brief Unit test for quantity reconstructor.
  */
-
+#include <iomanip>
 #include <config.h>
 
 #include <cmath>
@@ -29,9 +29,9 @@ namespace TwoPVE {
                     const Scalar tolerance,
                     const std::string& quantity)
     {
+        int digits = static_cast<int>(std::ceil(-std::log10(tolerance)));
         if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::CmpStyle::absolute>(actual, expected, tolerance))
-            DUNE_THROW(Dune::Exception, "Unexpected " << quantity << ": expected "
-                       << expected << ", obtained " << actual);
+            DUNE_THROW(Dune::Exception, std::fixed << std::setprecision(digits) << "Unexpected " << quantity << ": expected " << expected << ", obtained " << actual);
     }
 
     template<class F>
@@ -140,7 +140,7 @@ int main()
     TwoPVE::checkClose(mobilities[0], relPermWBelowZp/viscosities.wetting, 1.0e-10, "wetting mobility below the plume");
     TwoPVE::checkClose(mobilities[1], 0.0, 1.0e-12, "nonwetting mobility below the plume");
 
-    // test coarse-level saturation
+    // test coarse-level saturation and mobility
     const Scalar coarseSaturationW = 0.7;
     const Scalar computedZp = reconstructor.computeGasPlumeDist(
                                densities,
@@ -152,6 +152,10 @@ int main()
     constexpr int numCells = 100;
     const Scalar cellHeight = domainHeight/numCells;
     Scalar reconstructedSwAverage = 0.0;
+    Scalar mobilityWCoarse = 0.0;
+    Scalar mobilityNwCoarse = 0.0;
+    const Scalar permeabilityFine = 2e-12;
+    const Scalar permeabilityCoarse = permeabilityFine*domainHeight;
     for (int cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
         const Scalar cellCenter = (cellIdx + 0.5)*cellHeight;
@@ -165,9 +169,30 @@ int main()
                                         cellHeight,
                                         brooksCoreyParameters);
         reconstructedSwAverage += reconstructedSw*cellHeight;
+
+        // assuming homogeneous fine-level permeability
+        const std::vector<Scalar> reconstructedMobilites = reconstructor.reconstMobilitiesFine(
+                                                         GasPlumeDistances{computedZp, computedZp},
+                                                         densities,
+                                                         viscosities,
+                                                         residualSaturations,
+                                                         gravity,
+                                                         cellCenter,
+                                                         cellHeight,
+                                                         brooksCoreyParameters);
+        mobilityWCoarse += permeabilityFine*reconstructedMobilites[0]*cellHeight;
+        mobilityNwCoarse += permeabilityFine*reconstructedMobilites[1]*cellHeight;
     }
     reconstructedSwAverage /= domainHeight;
-    TwoPVE::checkClose(reconstructedSwAverage, coarseSaturationW, 1.0e-8, "column-averaged reconstructed saturation");
+    TwoPVE::checkClose(reconstructedSwAverage, coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation");
+
+    mobilityWCoarse /= permeabilityCoarse;
+    mobilityNwCoarse /= permeabilityCoarse;
+    // regression values for the column-integrated mobilities. These values protect against unintended changes in reconstruction and upscaling
+    const Scalar mobilityWRef = 498.59507631;
+    const Scalar mobilityNwRef = 7710.08376616;
+    TwoPVE::checkClose(mobilityWCoarse, mobilityWRef, 1.0e-8, "coarse-level wetting-phase mobility");
+    TwoPVE::checkClose(mobilityNwCoarse, mobilityNwRef, 1.0e-8, "coarse-level non-wetting-phase mobility");
 
     // test parameter constraints for gas plume distance
     const Scalar gravityZero = 0.0;
