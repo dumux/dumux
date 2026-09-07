@@ -1,0 +1,30 @@
+[TimeLoop]
+TEnd = 4e5 #[s]
+DtInitial = 0.125 #[s]
+MaxTimeStepSize = 10000
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 250 55 
+Cells = 40 18
+
+[Problem]
+Name = 2pve_lenses_2d_
+EnableGravity = true
+
+[BoundaryConditions]
+InjectionRate = -5.835e-4 #[kg/(m^2 s)]
+
+[SpatialParams]
+Swr = 0.0
+Snr = 0.0
+BrooksCoreyPcEntry = 1e5
+BrooksCoreyLambda = 2.0
+Permeability = 2e-12
+Porosity = 0.2
+
+[Newton]
+MaxRelativeShift = 1e-12
+
+[Vtk]
+AddVelocity = true
