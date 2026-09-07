@@ -14,7 +14,13 @@
 #define DUMUX_TWOPVE_FINE_LEVEL_VIEW_HH
 
 #include <algorithm>
+#include <memory>
+#include <vector>
 
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 #include <dumux/porousmediumflow/2pve/columnmapping.hh>
 #include <dumux/porousmediumflow/2pve/elementstatefine.hh>
 #include <dumux/porousmediumflow/2pve/fieldstoragefine.hh>

@@ -13,6 +13,10 @@
 #ifndef DUMUX_TWOPVE_FINE_LEVEL_ELEMENTSTATE_HH
 #define DUMUX_TWOPVE_FINE_LEVEL_ELEMENTSTATE_HH
 
+#include <array>
+#include <vector>
+
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
 namespace Dumux {

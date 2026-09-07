@@ -60,6 +60,8 @@
 #ifndef DUMUX_TWOPVE_MODEL_HH
 #define DUMUX_TWOPVE_MODEL_HH
 
+#include <tuple>
+
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/2pve/volumevariables.hh>
 

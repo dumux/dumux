@@ -13,7 +13,11 @@
 #ifndef DUMUX_TEST_TWOPVE_SPATIALPARAMS_FINE_HH
 #define DUMUX_TEST_TWOPVE_SPATIALPARAMS_FINE_HH
 
+#include <memory>
+
 #include <dune/common/fvector.hh>
+
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 

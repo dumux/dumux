@@ -13,8 +13,14 @@
 #ifndef DUMUX_TEST_TWOPVE_SPATIAL_PARAMS_HH
 #define DUMUX_TEST_TWOPVE_SPATIAL_PARAMS_HH
 
-#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
+#include <memory>
+#include <vector>
+
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dumux/material/fluidmatrixinteractions/fluidmatrixinteraction.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
+#include <dumux/porousmediumflow/fvspatialparamsmp.hh>
 #include <dumux/porousmediumflow/2pve/columnmapping.hh>
 
 #include "spatialparams_fine.hh"
