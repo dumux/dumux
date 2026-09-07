@@ -56,6 +56,8 @@ finite elements, Q2-Q1), each with a benchmark page.
 identified with all their periodic images, and all assemblers enforce the periodic constraints for each of them. The periodic
 partner detection of the box, pq1bubble, pq2, pq3 and finite-element discretizations compares the periodic shift instead of only
 the distance, which also accepted unrelated degrees of freedom at the distance of the domain length.
+- __Vertical equilibrium model__: Introduced the vertical equilibrium model and corresponding test cases for simulating fluid flow in porous media.
+
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
