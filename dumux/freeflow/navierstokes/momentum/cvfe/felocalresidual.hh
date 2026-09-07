@@ -210,11 +210,11 @@ public:
                                      const Problem& problem,
                                      const Element& element,
                                      const ElementDiscretization& elemDisc,
-                                     const ElementVariables& prevElemVolVars,
-                                     const ElementVariables& curElemVolVars) const
+                                     const ElementVariables& prevElemVars,
+                                     const ElementVariables& curElemVars) const
     {
         FeResidual::addStorageTerms(
-            residual, problem, elemDisc, prevElemVolVars, curElemVolVars, this->timeLoop().timeStepSize()
+            residual, problem, elemDisc, prevElemVars, curElemVars, this->timeLoop().timeStepSize()
         );
     }
 

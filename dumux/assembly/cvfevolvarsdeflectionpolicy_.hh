@@ -100,17 +100,17 @@ constexpr inline bool definesVariablesDeflectionPolicy()
 { return Dune::Std::is_detected<DefinesDeflectionPolicyType, ElemVars, FVG>::value; }
 
 template<class GridVarsCache, class ElemVars, class FVG>
-auto makeVariablesDeflectionPolicy(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVolVars)
+auto makeVariablesDeflectionPolicy(GridVarsCache& gridVarsCache, ElemVars& elemVars, const FVG& fvg, bool deflectAllVariables)
 {
     if constexpr (definesVariablesDeflectionPolicy<ElemVars, FVG>())
     {
         using DeflectionPolicy = typename ElemVars::template DeflectionPolicy<FVG>;
-        return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVolVars);
+        return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVariables);
     }
     else
     {
         using DeflectionPolicy = Detail::CVFE::VolVarsDeflectionPolicy<typename GridVarsCache::MutableLocalView, FVG>;
-        return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVolVars);
+        return DeflectionPolicy(elemVars.asMutableView(gridVarsCache), fvg, deflectAllVariables);
     }
 };
 

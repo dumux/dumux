@@ -28,12 +28,12 @@ namespace Dumux {
  *
  * \tparam Problem the problem type to solve
  * \tparam ElementDiscretization the element geometry type
- * \tparam ElementVolumeVariables the element volume variables type
+ * \tparam ElementVariables the element variables type
  * \tparam ElementFluxVariablesCache the element flux variables cache type
  */
 template<class Problem,
          class ElementDiscretization,
-         class ElementVolumeVariables,
+         class ElementVariables,
          class ElementFluxVariablesCache>
 class NavierStokesMomentumFluxContext
 {
@@ -45,13 +45,13 @@ public:
     NavierStokesMomentumFluxContext(
         const Problem& problem,
         const ElementDiscretization& elemDisc,
-        const ElementVolumeVariables& elemVolVars,
+        const ElementVariables& elemVars,
         const ElementFluxVariablesCache& elemFluxVarsCache,
         const SubControlVolumeFace& scvf
     )
     : problem_(problem)
     , elemDisc_(elemDisc)
-    , elemVolVars_(elemVolVars)
+    , elemVars_(elemVars)
     , elemFluxVarsCache_(elemFluxVarsCache)
     , scvf_(scvf)
     {}
@@ -68,8 +68,8 @@ public:
     const ElementDiscretization& elemDisc() const
     { return elemDisc_; }
 
-    const ElementVolumeVariables& elemVolVars() const
-    { return elemVolVars_; }
+    const ElementVariables& elemVars() const
+    { return elemVars_; }
 
     const ElementFluxVariablesCache& elemFluxVarsCache() const
     { return elemFluxVarsCache_; }
@@ -77,7 +77,7 @@ public:
 private:
     const Problem& problem_;
     const ElementDiscretization& elemDisc_;
-    const ElementVolumeVariables& elemVolVars_;
+    const ElementVariables& elemVars_;
     const ElementFluxVariablesCache& elemFluxVarsCache_;
     const SubControlVolumeFace& scvf_;
 };
@@ -88,12 +88,12 @@ private:
  *
  * \tparam Problem the problem type to solve
  * \tparam ElementDiscretization the element geometry type
- * \tparam ElementVolumeVariables the element volume variables type
+ * \tparam ElementVariables the element variables type
  * \tparam IpData the interpolation point data type
  */
 template<class Problem,
          class ElementDiscretization,
-         class ElementVolumeVariables,
+         class ElementVariables,
          class IpData>
 class NavierStokesMomentumFluxFunctionContext
 {
@@ -111,12 +111,12 @@ public:
     NavierStokesMomentumFluxFunctionContext(
         const Problem& problem,
         const ElementDiscretization& elemDisc,
-        const ElementVolumeVariables& elemVolVars,
+        const ElementVariables& elemVars,
         const IpData& ipData
     )
     : problem_(problem)
     , elemDisc_(elemDisc)
-    , elemVolVars_(elemVolVars)
+    , elemVars_(elemVars)
     , ipData_(ipData)
     , velocity_(0.0)
     , gradVelocity_(0.0)
@@ -134,8 +134,8 @@ public:
     const ElementDiscretization& elemDisc() const
     { return elemDisc_; }
 
-    const ElementVolumeVariables& elemVolVars() const
-    { return elemVolVars_; }
+    const ElementVariables& elemVars() const
+    { return elemVars_; }
 
     const GlobalPosition& velocity() const
     { return velocity_; }
@@ -148,22 +148,22 @@ private:
     {
         const auto& shapeValues = ipData_.shapeValues();
         for (const auto& localDof : localDofs(elemDisc_))
-            velocity_.axpy(shapeValues[localDof.index()][0], elemVolVars_[localDof.index()].velocity());
+            velocity_.axpy(shapeValues[localDof.index()][0], elemVars_[localDof.index()].velocity());
     }
 
     void calculateGradVelocity()
     {
         for (const auto& localDof : localDofs(elemDisc_))
         {
-            const auto& volVars = elemVolVars_[localDof.index()];
+            const auto& vars = elemVars_[localDof.index()];
             for (int dir = 0; dir < dim; ++dir)
-                gradVelocity_[dir].axpy(volVars.velocity(dir), ipData_.gradN(localDof.index()));
+                gradVelocity_[dir].axpy(vars.velocity(dir), ipData_.gradN(localDof.index()));
         }
     }
 
     const Problem& problem_;
     const ElementDiscretization& elemDisc_;
-    const ElementVolumeVariables& elemVolVars_;
+    const ElementVariables& elemVars_;
     const IpData& ipData_;
     GlobalPosition velocity_;
     Tensor gradVelocity_;
@@ -199,7 +199,7 @@ public:
             return NumEqVector(0.0);
 
         const auto& elemDisc = context.elemDisc();
-        const auto& elemVolVars = context.elemVolVars();
+        const auto& elemVars = context.elemVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
         const auto& shapeValues = fluxVarCache.shapeValues();
@@ -207,20 +207,20 @@ public:
         // interpolate velocity at scvf
         NumEqVector v(0.0);
         for (const auto& localDof : localDofs(elemDisc))
-            v.axpy(shapeValues[localDof.index()][0], elemVolVars[localDof.index()].velocity());
+            v.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
 
         // get density from the problem
         const Scalar density = context.problem().density(context.element(), context.elemDisc(), fluxVarCache.ipData());
 
         const auto vn = v*scvf.unitOuterNormal();
-        const auto& insideVolVars = elemVolVars[elemDisc.scv(scvf.insideScvIdx())];
-        const auto& outsideVolVars = elemVolVars[elemDisc.scv(scvf.outsideScvIdx())];
-        const auto upwindVelocity = vn > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
-        const auto downwindVelocity = vn > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
+        const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
+        const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
+        const auto upwindVelocity = vn > 0 ? insideVars.velocity() : outsideVars.velocity();
+        const auto downwindVelocity = vn > 0 ? outsideVars.velocity() : insideVars.velocity();
         static const auto upwindWeight = getParamFromGroup<Scalar>(context.problem().paramGroup(), "Flux.UpwindWeight");
         const auto advectiveTermIntegrand = density*vn * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
 
-        return advectiveTermIntegrand * Extrusion::area(elemDisc, scvf) * insideVolVars.extrusionFactor();
+        return advectiveTermIntegrand * Extrusion::area(elemDisc, scvf) * insideVars.extrusionFactor();
     }
 
     /*!
@@ -231,7 +231,7 @@ public:
     {
         const auto& element = context.element();
         const auto& elemDisc = context.elemDisc();
-        const auto& elemVolVars = context.elemVolVars();
+        const auto& elemVars = context.elemVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
 
@@ -239,9 +239,9 @@ public:
         Tensor gradV(0.0);
         for (const auto& localDof : localDofs(elemDisc))
         {
-            const auto& volVars = elemVolVars[localDof];
+            const auto& vars = elemVars[localDof];
             for (int dir = 0; dir < dim; ++dir)
-                gradV[dir].axpy(volVars.velocity(dir), fluxVarCache.gradN(localDof.index()));
+                gradV[dir].axpy(vars.velocity(dir), fluxVarCache.gradN(localDof.index()));
         }
 
         // get viscosity from the problem
@@ -261,7 +261,7 @@ public:
         if (enableDilatationTerm)
             diffusiveFlux += 2.0/3.0 * mu * trace(gradV) * scvf.unitOuterNormal();
 
-        diffusiveFlux *= Extrusion::area(elemDisc, scvf) * elemVolVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
+        diffusiveFlux *= Extrusion::area(elemDisc, scvf) * elemVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
         return diffusiveFlux;
     }
 
@@ -270,7 +270,7 @@ public:
     {
         const auto& element = context.element();
         const auto& elemDisc = context.elemDisc();
-        const auto& elemVolVars = context.elemVolVars();
+        const auto& elemVars = context.elemVars();
         const auto& scvf = context.scvFace();
         const auto& fluxVarCache = context.elemFluxVarsCache()[scvf];
 
@@ -284,7 +284,7 @@ public:
         const auto referencePressure = context.problem().referencePressure();
 
         NumEqVector pn(scvf.unitOuterNormal());
-        pn *= (pressure-referencePressure)*Extrusion::area(elemDisc, scvf)*elemVolVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
+        pn *= (pressure-referencePressure)*Extrusion::area(elemDisc, scvf)*elemVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
 
         return pn;
     }
@@ -328,10 +328,10 @@ public:
         const Scalar density = problem.density(elemDisc.element(), elemDisc, ipData(elemDisc, scvf));
 
         const auto vn_integral = integratedVelocity*scvf.unitOuterNormal();
-        const auto& insideVolVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
-        const auto& outsideVolVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
-        const auto upwindVelocity = vn_integral > 0 ? insideVolVars.velocity() : outsideVolVars.velocity();
-        const auto downwindVelocity = vn_integral > 0 ? outsideVolVars.velocity() : insideVolVars.velocity();
+        const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
+        const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
+        const auto upwindVelocity = vn_integral > 0 ? insideVars.velocity() : outsideVars.velocity();
+        const auto downwindVelocity = vn_integral > 0 ? outsideVars.velocity() : insideVars.velocity();
         static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
         const auto advectiveFlux = density*vn_integral * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
 
