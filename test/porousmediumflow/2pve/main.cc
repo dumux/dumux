@@ -15,12 +15,17 @@
  * assumptions and restrictions of the current implementation.
  */
 
+#include <array>
 #include <config.h>
 #include <iostream>
+#include <memory>
+#include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
+#include <dumux/assembly/diffmethod.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>

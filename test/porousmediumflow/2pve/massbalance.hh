@@ -13,6 +13,16 @@
 #ifndef DUMUX_TEST_TWOPVE_MASSBALANCE_HH
 #define DUMUX_TEST_TWOPVE_MASSBALANCE_HH
 
+#include <iostream>
+
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/timeloop.hh>
+#include <dumux/discretization/localview.hh>
+#include <dumux/discretization/scvandscvfiterators.hh>
+
 namespace Dumux::VETest {
 
 template<typename Scalar>
