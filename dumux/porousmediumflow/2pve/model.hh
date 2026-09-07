@@ -33,7 +33,7 @@
  * We can reduce the number of unknowns to two by using reconstruction rules for the VE scheme to obtain the non-wetting phase pressure \f$P_n\f$, and relative permeability \f$K_{r\alpha}\f$ and by taking
  * advantage of the fact that \f$S_w + S_n = 1\f$. The capillary pressure can be computed via \f$P_c =
  * P_n - P_w\f$ but this constraint is not required as a closing condition. Currently, the model only supports
- * choosing \f$p_w\f$ and \f$S_n\f$ as primary variables.
+ * choosing \f$p_w\f$ and \f$S_n\f$ as primary variables. See \cite Buntic2025 for more details on the model.
  *
  * The current implementation has the following restrictions:
  * - only two- and three-dimensional, structured, axis-aligned grids are
