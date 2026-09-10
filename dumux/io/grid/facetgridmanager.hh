@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <vector>
 
+#include <dune/common/reservedvector.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -30,8 +31,24 @@ namespace Detail::FacetGrid {
 
 static constexpr std::size_t undefinedIndex = std::numeric_limits<std::size_t>::max();
 
+//! A host grid intersection a facet grid element was extracted from
+struct HostIntersectionRecord
+{
+    std::size_t elementIndex;
+    unsigned int indexInInside;
+};
+
+using HostIntersectionRecords = Dune::ReservedVector<HostIntersectionRecord, 2>;
+
+//! The host grid entities the facet grid vertices and elements were extracted from
+struct FactoryFillResult
+{
+    std::vector<std::size_t> hostToFacetVertexInsertionIndex;
+    std::vector<HostIntersectionRecords> facetInsertionToHostIntersections;
+};
+
 template<typename Grid, typename HostGridView, typename HostGridVertexSet, typename Selector>
-auto fillFactory(Dune::GridFactory<Grid>& factory,
+FactoryFillResult fillFactory(Dune::GridFactory<Grid>& factory,
                     const HostGridView& hostGridView,
                     const HostGridVertexSet& hostGridVertexSet,
                     Selector&& selector)
@@ -42,6 +59,7 @@ auto fillFactory(Dune::GridFactory<Grid>& factory,
 
     std::vector<unsigned int> localCornerStorage;
     std::vector<std::size_t> domainToFacetVertex(hostGridVertexSet.size(), undefinedIndex);
+    std::vector<HostIntersectionRecords> facetToHostIntersections;
 
     std::size_t vertexCount = 0;
     for (const auto& element : elements(hostGridView))
@@ -76,10 +94,15 @@ auto fillFactory(Dune::GridFactory<Grid>& factory,
             }
 
             factory.insertElement(isGeo.type(), localCornerStorage);
+
+            auto& hostIntersections = facetToHostIntersections.emplace_back();
+            hostIntersections.push_back({elementMapper.index(element), static_cast<unsigned int>(is.indexInInside())});
+            if (!is.boundary())
+                hostIntersections.push_back({elementMapper.index(is.outside()), static_cast<unsigned int>(is.indexInOutside())});
         }
     }
 
-    return domainToFacetVertex;
+    return {std::move(domainToFacetVertex), std::move(facetToHostIntersections)};
 }
 
 }  // end namespace Detail::FacetGrid
@@ -124,13 +147,16 @@ public:
 
     using HostGrid = HG;
     using HostGridVertex = typename HostGrid::template Codim<dim+1>::Entity;
+    using Element = typename Grid::template Codim<0>::Entity;
+    using HostIntersectionRecord = Detail::FacetGrid::HostIntersectionRecord;
+    using HostIntersectionRecords = Detail::FacetGrid::HostIntersectionRecords;
 
     //! Make the grid using an externally created host grid.
     template<Concept::FacetSelector<HostElement, HostIntersection> Selector>
     void init(const HostGrid& hostGrid, const Selector& selector)
     {
         hostVertexSet_ = std::make_unique<HostVertexSet>(hostGrid.leafGridView());
-        auto hostToFacetVertexInsertionIndex = Detail::FacetGrid::fillFactory(
+        auto [hostToFacetVertexInsertionIndex, facetInsertionToHostIntersections] = Detail::FacetGrid::fillFactory(
             facetGridFactory_,
             hostGrid.leafGridView(),
             *hostVertexSet_,
@@ -143,6 +169,7 @@ public:
         for (std::size_t hostVertexIndex = 0; hostVertexIndex < hostToFacetVertexInsertionIndex.size(); ++hostVertexIndex)
             if (hostToFacetVertexInsertionIndex[hostVertexIndex] != Detail::FacetGrid::undefinedIndex)
                 facetInsertionToHostVertexIndex_[hostToFacetVertexInsertionIndex[hostVertexIndex]] = hostVertexIndex;
+        facetInsertionToHostIntersections_ = std::move(facetInsertionToHostIntersections);
     }
 
     //! Make the grid and create the host grid internally.
@@ -176,6 +203,14 @@ public:
     HostGridVertex hostGridVertex(const Vertex& v) const
     { return hostVertexSet_->entity(facetInsertionToHostVertexIndex_.at(facetGridFactory_.insertionIndex(v))); }
 
+    /*!
+     * \brief Return the host grid intersections the given facet grid element was extracted from,
+     *        one per host element adjacent to it. Element indices are those of an element
+     *        layout mapper on the host leaf grid view.
+     */
+    const HostIntersectionRecords& hostGridIntersections(const Element& e) const
+    { return facetInsertionToHostIntersections_.at(facetGridFactory_.insertionIndex(e)); }
+
 protected:
     void initHostGrid_(const std::string& paramGroup)
     {
@@ -191,6 +226,7 @@ protected:
     std::unique_ptr<HostVertexSet> hostVertexSet_{nullptr};
     std::unique_ptr<HostGridManager> hostGridManager_{nullptr};
     std::vector<std::size_t> facetInsertionToHostVertexIndex_;
+    std::vector<HostIntersectionRecords> facetInsertionToHostIntersections_;
 };
 
 
