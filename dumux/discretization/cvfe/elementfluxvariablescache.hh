@@ -165,6 +165,16 @@ public:
             return gridFluxVarsCache().cache(eIdx_, ipData.scvfIndex(), ipData.qpIndex());
     }
 
+    /*!
+     * \brief The cache at an interpolation point.
+     * \note Mirrors the accessor of the caches that hold the flux variables together with the
+     *       volume variables, so that consumers need not know which of the two they hold.
+     */
+    template<Concept::ScvfIpData IpData>
+    friend const FluxVariablesCache& cache(const CVFEElementFluxVariablesCacheImpl& elemFluxVarsCache,
+                                           const IpData& ipData)
+    { return elemFluxVarsCache[ipData]; }
+
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
     {  return *gridFluxVarsCachePtr_; }
@@ -301,6 +311,16 @@ public:
     template<Concept::ScvfIpData IpData>
     FluxVariablesCache& operator [](const IpData& ipData)
     { return fluxVarsCache_[ipData.scvfIndex()]; }
+
+    /*!
+     * \brief The cache at an interpolation point.
+     * \note Mirrors the accessor of the caches that hold the flux variables together with the
+     *       volume variables, so that consumers need not know which of the two they hold.
+     */
+    template<Concept::ScvfIpData IpData>
+    friend const FluxVariablesCache& cache(const CVFEElementFluxVariablesCacheImpl& elemFluxVarsCache,
+                                           const IpData& ipData)
+    { return elemFluxVarsCache[ipData]; }
 
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
@@ -447,6 +467,16 @@ public:
     template<Concept::ScvfQpIpData IpData>
     FluxVariablesCache& operator [](const IpData& ipData)
     { return fluxVarsCache_[ipData.scvfIndex()][ipData.qpIndex()]; }
+
+    /*!
+     * \brief The cache at an interpolation point.
+     * \note Mirrors the accessor of the caches that hold the flux variables together with the
+     *       volume variables, so that consumers need not know which of the two they hold.
+     */
+    template<Concept::ScvfQpIpData IpData>
+    friend const FluxVariablesCache& cache(const CVFEElementFluxVariablesCacheImpl& elemFluxVarsCache,
+                                           const IpData& ipData)
+    { return elemFluxVarsCache[ipData]; }
 
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
