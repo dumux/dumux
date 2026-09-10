@@ -7,71 +7,44 @@
 /*!
  * \file
  * \ingroup Discretization
- * \brief Maps between entities of a discretization and grids defined on its facets.
+ * \brief Mapping between the elements of a facet grid and the intersections of the domain grid
  */
 #ifndef DUMUX_DISCRETIZATION_FACET_GRID_MAPPER_HH
 #define DUMUX_DISCRETIZATION_FACET_GRID_MAPPER_HH
 
-#include <vector>
+#include <limits>
 #include <memory>
-#include <utility>
-#include <type_traits>
-#include <unordered_map>
-#include <algorithm>
 #include <ranges>
+#include <utility>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
-#include <dune/common/float_cmp.hh>
-#include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/indextraits.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/geometry/boundingboxtree.hh>
-#include <dumux/geometry/geometricentityset.hh>
-#include <dumux/geometry/intersectingentities.hh>
+#include <dumux/discretization/localview.hh>
 
 namespace Dumux {
 
-#ifndef DOXYGEN
-namespace Detail::FacetGridMapper {
-
-template<typename Geometry, typename FacetGridView, typename FacetBoundingBoxTree>
-auto overlappingFacetElementIndices(const Geometry& geometry,
-                                    const FacetGridView& facetGridView,
-                                    const FacetBoundingBoxTree& bboxTree)
-{
-    std::vector<std::size_t> result;
-    const auto intersections = intersectingEntities(geometry, bboxTree);
-    if (intersections.empty())
-        return result;
-    result.resize(intersections.size());
-    std::ranges::copy(intersections | std::views::transform([&] (const auto& is) { return is.second(); }), result.begin());
-    std::ranges::sort(result);
-    result.erase(std::unique(result.begin(), result.end()), result.end());
-    return result;
-}
-
-}  // end namespace Detail::FacetGridMapper
-#endif  // DOXYGEN
-
 /*!
  * \ingroup Discretization
- * \brief Maps between entities of finite-volume discretizations and
- *        a grid defined on the facets of the discretization.
+ * \brief Maps between the elements of a grid defined on the facets of a domain grid and the
+ *        intersections of the domain grid they were extracted from.
+ *
+ * A facet grid element is an intersection of the domain grid, with a domain element on each
+ * side. A discretization exposes such an intersection on the domain boundary as a boundary
+ * face of its local view, and everything defined on it, the sub-control volume faces, the
+ * local degrees of freedom and the quadrature rule, is obtained from the local view.
+ *
  * \tparam FacetGridView The facet grid view type
- * \tparam GridGeometry The grid geometry on which the facet grid is defined.
+ * \tparam GG The grid geometry of the domain
  */
 template<typename FacetGridView, typename GG>
-class FVFacetGridMapper
+class FacetGridMapper
 {
-    struct CouplingData
-    {
-        std::vector<std::size_t> scvfIndices;
-        std::vector<std::size_t> scvIndices;
-    };
-
-    using FacetEntitySet = GridViewGeometricEntitySet<FacetGridView>;
-    using FacetElementToCouplingData = std::unordered_map<std::size_t, CouplingData>;
+    using GridIndexType = typename IndexTraits<typename GG::GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<typename GG::GridView>::LocalIndex;
 
     static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GG::DiscretizationMethod>;
     static constexpr int domainDim = GG::GridView::dimension;
@@ -84,92 +57,137 @@ class FVFacetGridMapper
     using DomainElement = typename DomainGridGeometry::GridView::template Codim<0>::Entity;
     using FacetElement = typename FacetGridView::template Codim<0>::Entity;
     using FacetVertex = typename FacetGridView::template Codim<facetDim>::Entity;
+    using BoundaryFace = typename DomainGridGeometry::BoundaryFace;
 
-    explicit FVFacetGridMapper(const FacetGridView& facetGridView, std::shared_ptr<const DomainGridGeometry> gridGeometry)
-    : facetGridView_{facetGridView}
-    , facetEntitySet_{std::make_shared<FacetEntitySet>(facetGridView)}
+    //! A side of a facet element: a domain element and the index of the intersection within it
+    struct Side
+    {
+        GridIndexType elementIndex;
+        LocalIndexType intersectionIndex;
+    };
+
+    template<typename FacetGridManager>
+    FacetGridMapper(const FacetGridManager& facetGridManager, std::shared_ptr<const DomainGridGeometry> gridGeometry)
+    : facetGridView_{facetGridManager.grid().leafGridView()}
     , domainGridGeometry_{std::move(gridGeometry)}
     {
-        BoundingBoxTree<FacetEntitySet> bboxTree{facetEntitySet_};
-        domainElementToCouplingData_.resize(domainGridGeometry_->gridView().size(0));
-
-        for (const auto& element : elements(domainGridGeometry_->gridView()))
-        {
-            // TODO: filter non-candidate elements to speed up computations?
-            const auto eIdx = domainGridGeometry_->elementMapper().index(element);
-            const auto fvGeometry = localView(*domainGridGeometry_).bindElement(element);
-            for (const auto& scv : scvs(fvGeometry))
-                for (const auto facetElementIndex : Detail::FacetGridMapper::overlappingFacetElementIndices(
-                    fvGeometry.geometry(scv),
-                    facetGridView,
-                    bboxTree
-                ))
-                    domainElementToCouplingData_[eIdx][facetElementIndex].scvIndices.push_back([&] () {
-                        if constexpr (isCVFE) return scv.localDofIndex();
-                        else return scv.dofIndex();
-                    }());
-            for (const auto& scvf : scvfs(fvGeometry))
-                for (const auto facetElementIndex : Detail::FacetGridMapper::overlappingFacetElementIndices(
-                    fvGeometry.geometry(scvf),
-                    facetGridView,
-                    bboxTree
-                ))
-                    domainElementToCouplingData_[eIdx][facetElementIndex].scvfIndices.push_back(scvf.index());
-        }
-
-        facetToDomainElements_.resize(domainGridGeometry_->gridView().size(0));
-        for (std::size_t eIdxDomain = 0; eIdxDomain < domainGridGeometry_->gridView().size(0); ++eIdxDomain)
-            for (const auto& [eIdxFacet, _] : domainElementToCouplingData_.at(eIdxDomain))
-            {
-                if (facetToDomainElements_[eIdxFacet].size() == 2)
-                    DUNE_THROW(Dune::InvalidStateException, "Found more than two neighbors to a facet element");
-                facetToDomainElements_[eIdxFacet].push_back(eIdxDomain);
-            }
+        sides_.resize(facetGridView_.size(0));
+        for (const auto& facetElement : elements(facetGridView_))
+            for (const auto& record : facetGridManager.hostGridIntersections(facetElement))
+                sides_[facetGridView_.indexSet().index(facetElement)].push_back({
+                    static_cast<GridIndexType>(record.elementIndex),
+                    static_cast<LocalIndexType>(record.indexInInside)
+                });
     }
 
-    //! Return a range over all domain elements that overlap with the given facet grid element
+    //! Return a range over all domain elements adjacent to the given facet grid element
     std::ranges::view auto domainElementsAdjacentTo(const FacetElement& element) const
     {
-        return facetToDomainElements_.at(facetEntitySet_->index(element))
-            | std::views::transform([&] (const auto& eIdxDomain) {
-                return domainGridGeometry_->element(eIdxDomain);
-            });
+        return sides_[facetGridView_.indexSet().index(element)]
+            | std::views::transform([&] (const Side& side) { return domainGridGeometry_->element(side.elementIndex); });
     }
 
-    //! Return a range over the indices of the scvfs that overlap with the given facet element from within the given domain element
-    std::ranges::view auto domainScvfsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
-    { return domainScesAdjacentTo_(element, domainElement, [] (const auto& couplingData) { return couplingData.scvfIndices; }); }
+    //! Return the index, within the given domain element, of the intersection the facet element lies on
+    LocalIndexType intersectionIndex(const FacetElement& element, const DomainElement& domainElement) const
+    {
+        const auto eIdx = domainGridGeometry_->elementMapper().index(domainElement);
+        for (const auto& side : sides_[facetGridView_.indexSet().index(element)])
+            if (side.elementIndex == eIdx)
+                return side.intersectionIndex;
+        DUNE_THROW(Dune::InvalidStateException, "The given domain element is not adjacent to the facet element");
+    }
 
-    //! Return a range over the indices of the scvs that overlap with the given facet element from within the given domain element
-    std::ranges::view auto domainScvsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
-    { return domainScesAdjacentTo_(element, domainElement, [] (const auto& couplingData) { return couplingData.scvIndices; }); }
+    /*!
+     * \brief Return the boundary face of the given local view that the facet element lies on.
+     * \note The local view must be bound to a domain element adjacent to the facet element, and
+     *       the facet element must lie on the boundary of the domain.
+     */
+    template<typename FVElementGeometry>
+    BoundaryFace boundaryFace(const FVElementGeometry& fvGeometry, const FacetElement& element) const
+    {
+        const auto isIdx = intersectionIndex(element, fvGeometry.element());
+        for (const auto& face : boundaryFaces(fvGeometry))
+            if (face.intersectionIndex() == isIdx)
+                return face;
+        DUNE_THROW(Dune::InvalidStateException, "The facet element does not lie on the boundary of the domain");
+    }
+
+    //! Return the indices of the sub-control volume faces on the given facet element within the given domain element
+    std::vector<GridIndexType> domainScvfsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
+    {
+        const auto fvGeometry = localView(*domainGridGeometry_).bindElement(domainElement);
+        std::vector<GridIndexType> result;
+        // the faces of a control-volume finite element scheme lie inside the elements, so only
+        // a boundary face carries any; a cell-centered scheme has faces on every intersection
+        if constexpr (isCVFE)
+        {
+            const auto isIdx = intersectionIndex(element, domainElement);
+            for (const auto& face : boundaryFaces(fvGeometry))
+                if (face.intersectionIndex() == isIdx)
+                    for (const auto& scvf : scvfs(fvGeometry, face))
+                        result.push_back(scvf.index());
+        }
+        else
+            for (const auto& scvf : scvfs(fvGeometry, faceOf_(fvGeometry, element)))
+                result.push_back(scvf.index());
+        return result;
+    }
+
+    /*!
+     * \brief Return the indices of the local degrees of freedom on the given facet element within
+     *        the given domain element, or the degree of freedom of the element for schemes whose
+     *        degrees of freedom are not associated with the boundary.
+     */
+    std::vector<std::size_t> domainLocalDofsAdjacentTo(const FacetElement& element, const DomainElement& domainElement) const
+    {
+        const auto fvGeometry = localView(*domainGridGeometry_).bindElement(domainElement);
+        std::vector<std::size_t> result;
+        if constexpr (requires { localDofs(fvGeometry, std::declval<const BoundaryFace&>()); })
+            for (const auto& localDof : localDofs(fvGeometry, faceOf_(fvGeometry, element)))
+                result.push_back(localDof.index());
+        else
+            for (const auto& scv : scvs(fvGeometry))
+                result.push_back(scv.dofIndex());
+        return result;
+    }
 
     //! Return the grid geometry of the domain
     const DomainGridGeometry& domainGridGeometry() const
     { return *domainGridGeometry_; }
 
  private:
-    template<typename Accessor>
-    std::ranges::view auto domainScesAdjacentTo_(const FacetElement& element,
-                                                 const DomainElement& domainElement,
-                                                 const Accessor& accessor) const
+    // The boundary face the facet element lies on or, for an interior facet, a face built from
+    // the intersection itself. The latter carries no local index and serves only queries that
+    // are answered from the intersection index.
+    template<typename FVElementGeometry>
+    BoundaryFace faceOf_(const FVElementGeometry& fvGeometry, const FacetElement& element) const
     {
-        const auto eIdx = facetEntitySet_->index(element);
-        return domainElementToCouplingData_.at(domainGridGeometry_->elementMapper().index(domainElement))
-            | std::views::filter([e=eIdx] (const auto& facetElementToCouplingData) { return facetElementToCouplingData.first == e; })
-            | std::views::transform([&] (const auto& facetElementToCouplingData) { return accessor(facetElementToCouplingData.second); })
-            | std::views::join;
+        const auto isIdx = intersectionIndex(element, fvGeometry.element());
+        for (const auto& face : boundaryFaces(fvGeometry))
+            if (face.intersectionIndex() == isIdx)
+                return face;
+
+        for (const auto& is : intersections(domainGridGeometry_->gridView(), fvGeometry.element()))
+            if (is.indexInInside() == isIdx)
+                return BoundaryFace{
+                    is.geometry().center(),
+                    is.geometry().volume(),
+                    is.centerUnitOuterNormal(),
+                    std::numeric_limits<LocalIndexType>::max(),
+                    isIdx,
+                    typename BoundaryFace::Traits::BoundaryFlag{is}
+                };
+        DUNE_THROW(Dune::InvalidStateException, "The domain element has no intersection with the given index");
     }
 
     FacetGridView facetGridView_;
-    std::shared_ptr<FacetEntitySet> facetEntitySet_;
     std::shared_ptr<const DomainGridGeometry> domainGridGeometry_;
-    std::vector<FacetElementToCouplingData> domainElementToCouplingData_;
-    std::vector<Dune::ReservedVector<std::size_t, 2>> facetToDomainElements_;
+    std::vector<Dune::ReservedVector<Side, 2>> sides_;
 };
 
-template<typename FGV, typename GG>
-FVFacetGridMapper(const FGV&, std::shared_ptr<GG>) -> FVFacetGridMapper<FGV, std::remove_const_t<GG>>;
+template<typename FacetGridManager, typename GG>
+FacetGridMapper(const FacetGridManager&, std::shared_ptr<GG>)
+    -> FacetGridMapper<typename FacetGridManager::Grid::LeafGridView, std::remove_const_t<GG>>;
 
 } // end namespace Dumux
 

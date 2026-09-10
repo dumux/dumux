@@ -6,7 +6,8 @@
 //
 /*!
  * \file
- * \brief Test facet grid extraction & entity mapping from finite volume grid geometries.
+ * \brief Test facet grid extraction & the mapping of facet grid elements to the intersections,
+ *        boundary faces, sub-control volume faces and degrees of freedom of a discretization.
  */
 #include <config.h>
 
@@ -19,6 +20,7 @@
 #include <string_view>
 #include <iterator>
 #include <optional>
+#include <type_traits>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -27,12 +29,16 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/geometry/geometryintersection.hh>
+#include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/volume.hh>
 
 #include <dumux/io/format.hh>
 #include <dumux/io/grid/facetgridmanager.hh>
 #include <dumux/discretization/facetgridmapper.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
+#include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
+#include <dumux/discretization/pq2/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
 
@@ -86,7 +92,11 @@ int test()
     using GridGeometry = GG<typename Grid::LeafGridView>;
     Grid grid{size, cells};
     auto gridGeometry = std::make_shared<GridGeometry>(grid.leafGridView());
-    static constexpr bool isBox = Dumux::DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
+    using DM = typename GridGeometry::DiscretizationMethod;
+    static constexpr bool isCVFE = Dumux::DiscretizationMethods::isCVFE<DM>;
+    static constexpr bool isPQ2 = std::is_same_v<DM, Dumux::DiscretizationMethods::PQ2>;
+    // the degrees of freedom on a facet are those of the Lagrange element of the same order on it
+    const auto expectedNumDofs = isCVFE ? (isPQ2 ? std::pow(3, dim-1) : std::pow(2, dim-1)) : 1;
 
     const auto cellsPerSlice = std::pow(cellsPerSide, dim-1);
     const auto pointsPerSlice = std::pow(cellsPerSide+1, dim-1);
@@ -104,54 +114,75 @@ int test()
                                         const auto& domainElement,
                                         const auto& mapper,
                                         const bool isBoundary = false) {
-        if (not intersectionVolume(facetElement.geometry(), domainElement.geometry()).has_value())
+        const auto facetGeometry = facetElement.geometry();
+        if (not intersectionVolume(facetGeometry, domainElement.geometry()).has_value())
             handleError("Facet and domain element do not overlap");
 
-        const auto scvIndices = toVector(mapper.domainScvsAdjacentTo(facetElement, domainElement));
-        const auto expectedNumScvs = isBox ? std::pow(2, dim-1) : 1;
-        if (scvIndices.size() != expectedNumScvs)
-            handleError(Dumux::Fmt::format(
-                "Unexpected number of adjacent sub-control volumes: {}, expected {}",
-                scvIndices.size(),
-                expectedNumScvs
-            ));
-
-        const auto scvfIndices = toVector(mapper.domainScvfsAdjacentTo(facetElement, domainElement));
-        const auto expectedNumScvfs = isBox ? (isBoundary ? expectedNumScvs : 0) : 1;
-        if (scvfIndices.size() != expectedNumScvfs)
-            handleError(Dumux::Fmt::format(
-                "Unexpected number of adjacent sub-control volume faces: {}, expected {}",
-                scvfIndices.size(),
-                expectedNumScvfs
-            ));
-
         const auto fvGeometry = localView(*gridGeometry).bindElement(domainElement);
-        for (const auto scvIndex : scvIndices)
+
+        // the intersection the mapper reports is the one the facet element was extracted from
         {
-            const auto& scv = fvGeometry.scv(scvIndex);
-            const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(scv));
-            const auto expectedVolume = facetElement.geometry().volume()/expectedNumScvs;
-            if (not isVolume.has_value())
-                handleError("Facet element and domain scv do not overlap");
-            if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
-                handleError(Dumux::Fmt::format(
-                    "Unexpected area/volume of the intersection between sub-control volume and facet element: {}, expected {}",
-                    isVolume.value(),
-                    expectedVolume
-                ));
+            const auto isIdx = mapper.intersectionIndex(facetElement, domainElement);
+            bool found = false;
+            for (const auto& is : intersections(grid.leafGridView(), domainElement))
+                if (is.indexInInside() == isIdx)
+                {
+                    found = true;
+                    if ((is.geometry().center() - facetGeometry.center()).two_norm() > 1e-12)
+                        handleError("The mapped intersection does not coincide with the facet element");
+                }
+            if (not found)
+                handleError("The domain element has no intersection with the mapped index");
         }
-        for (const auto scvfIndex : scvfIndices)
+
+        if (isBoundary)
         {
-            const auto& scv = fvGeometry.scvf(scvfIndex);
-            const auto isVolume = intersectionVolume(facetElement.geometry(), fvGeometry.geometry(scv));
-            const auto expectedVolume = facetElement.geometry().volume()/expectedNumScvfs;
-            if (not isVolume.has_value())
-                handleError("Facet element and domain scvf do not overlap");
-            if (isVolume.has_value() and Dune::FloatCmp::ne(isVolume.value(), expectedVolume, expectedVolume*1e-7))
+            const auto face = mapper.boundaryFace(fvGeometry, facetElement);
+            if ((face.center() - facetGeometry.center()).two_norm() > 1e-12)
+                handleError("The boundary face does not coincide with the facet element");
+            if (Dune::FloatCmp::ne(face.area(), facetGeometry.volume(), 1e-7*facetGeometry.volume()))
+                handleError("The boundary face does not have the area of the facet element");
+        }
+
+        const auto dofIndices = toVector(mapper.domainLocalDofsAdjacentTo(facetElement, domainElement));
+        if (dofIndices.size() != expectedNumDofs)
+            handleError(Dumux::Fmt::format(
+                "Unexpected number of adjacent degrees of freedom: {}, expected {}",
+                dofIndices.size(),
+                expectedNumDofs
+            ));
+
+        if constexpr (isCVFE)
+            for (const auto& localDof : localDofs(fvGeometry))
+                if (std::ranges::find(dofIndices, localDof.index()) != dofIndices.end())
+                    if (not Dumux::intersectsPointGeometry(ipData(fvGeometry, localDof).global(), facetGeometry))
+                        handleError("An adjacent degree of freedom does not lie on the facet element");
+
+        // the sub-control volume faces on a facet partition it; a control-volume finite element
+        // scheme has none on an interior facet, since its faces lie inside the elements
+        const auto scvfIndices = toVector(mapper.domainScvfsAdjacentTo(facetElement, domainElement));
+        if (isCVFE and not isBoundary)
+        {
+            if (not scvfIndices.empty())
+                handleError("Expected no sub-control volume faces on an interior facet");
+        }
+        else
+        {
+            double coveredArea = 0.0;
+            for (const auto scvfIndex : scvfIndices)
+            {
+                const auto& scvf = fvGeometry.scvf(scvfIndex);
+                const auto isVolume = intersectionVolume(facetGeometry, fvGeometry.geometry(scvf));
+                if (not isVolume.has_value())
+                    handleError("Facet element and domain scvf do not overlap");
+                else
+                    coveredArea += isVolume.value();
+            }
+            if (Dune::FloatCmp::ne(coveredArea, facetGeometry.volume(), 1e-7*facetGeometry.volume()))
                 handleError(Dumux::Fmt::format(
-                    "Unexpected area/volume of the intersection between sub-control volume face and facet element: {}, expected {}",
-                    isVolume.value(),
-                    expectedVolume
+                    "The sub-control volume faces cover {} of the facet element, expected {}",
+                    coveredArea,
+                    facetGeometry.volume()
                 ));
         }
     };
@@ -162,7 +193,7 @@ int test()
             return std::abs(is.geometry().center()[dim - 1] - 0.5) < 1e-6;
         });
         const auto& facetGridView = facetGridManager.grid().leafGridView();
-        Dumux::FVFacetGridMapper mapper{facetGridView, gridGeometry};
+        Dumux::FacetGridMapper mapper{facetGridManager, gridGeometry};
 
         if (facetGridView.size(0) != cellsPerSlice)
             handleError(Dumux::Fmt::format("Unexpected number of facet grid cells: {}", facetGridView.size(0)));
@@ -187,7 +218,7 @@ int test()
         Dumux::FacetGridManager<Grid, FacetGrid> facetGridManager;
         facetGridManager.init(grid, [] (const auto&, const auto& is) { return is.boundary(); });
         const auto& facetGridView = facetGridManager.grid().leafGridView();
-        Dumux::FVFacetGridMapper mapper{facetGridView, gridGeometry};
+        Dumux::FacetGridMapper mapper{facetGridManager, gridGeometry};
 
         if (facetGridView.size(0) != numBoundaryCells)
             handleError(Dumux::Fmt::format("Unexpected number of trace grid cells: {}", facetGridView.size(0)));
@@ -213,6 +244,8 @@ int test()
 
 template<typename GV> using TpfaGridGeometry = Dumux::CCTpfaFVGridGeometry<GV>;
 template<typename GV> using BoxGridGeometry = Dumux::BoxFVGridGeometry<double, GV>;
+template<typename GV> using PQ1BubbleGridGeometry = Dumux::PQ1BubbleFVGridGeometry<double, GV>;
+template<typename GV> using PQ2GridGeometry = Dumux::PQ2FVGridGeometry<double, GV>;
 
 int main(int argc, char** argv)
 {
@@ -224,11 +257,15 @@ int main(int argc, char** argv)
         using Grid = Dune::FoamGrid<1, 2>;
         exitCode += test<Grid, TpfaGridGeometry>();
         exitCode += test<Grid, BoxGridGeometry>();
+        exitCode += test<Grid, PQ1BubbleGridGeometry>();
+        exitCode += test<Grid, PQ2GridGeometry>();
     }
     {
         using Grid = Dune::ALUGrid<2, 3, Dune::cube, Dune::nonconforming>;
         exitCode += test<Grid, TpfaGridGeometry>();
         exitCode += test<Grid, BoxGridGeometry>();
+        exitCode += test<Grid, PQ1BubbleGridGeometry>();
+        exitCode += test<Grid, PQ2GridGeometry>();
     }
     return exitCode;
 }
