@@ -12,3 +12,7 @@ dumux_add_test(NAME test_l2_projection
                SOURCES test_l2_projection.cc
                CMAKE_GUARD dune-functions_FOUND
                LABELS unit discretization)
+
+dumux_add_test(NAME test_projection_cvfe
+               SOURCES test_projection_cvfe.cc
+               LABELS unit discretization)
