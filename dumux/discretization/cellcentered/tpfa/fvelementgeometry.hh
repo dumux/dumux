@@ -23,6 +23,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/indextraits.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
@@ -149,6 +150,38 @@ public:
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
     }
 
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
+
+    //! The boundary faces of the bound element, one per boundary intersection
+    friend inline Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> boundaryFaces(const ThisType& fvGeometry)
+    {
+        Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> result;
+        fvGeometry.forEachIntersectionWithScvf_([&] (const auto& intersection, const SubControlVolumeFace& scvf) {
+            if (intersection.boundary())
+                result.emplace_back(scvf.center(),
+                                    scvf.area(),
+                                    scvf.unitOuterNormal(),
+                                    static_cast<LocalIndexType>(result.size()),
+                                    static_cast<LocalIndexType>(intersection.indexInInside()),
+                                    typename BoundaryFace::Traits::BoundaryFlag{intersection});
+        });
+        return result;
+    }
+
+    //! The sub-control volume faces on the intersection of a face, a single one for cell-centered schemes
+    friend inline Dune::IteratorRange<const SubControlVolumeFace*>
+    scvfs(const ThisType& fvGeometry, const BoundaryFace& face)
+    {
+        const SubControlVolumeFace* found = nullptr;
+        fvGeometry.forEachIntersectionWithScvf_([&] (const auto& intersection, const SubControlVolumeFace& scvf) {
+            if (intersection.indexInInside() == face.intersectionIndex())
+                found = &scvf;
+        });
+        return found ? Dune::IteratorRange<const SubControlVolumeFace*>(found, found + 1)
+                     : Dune::IteratorRange<const SubControlVolumeFace*>(nullptr, nullptr);
+    }
+
     //! number of sub control volumes in this fv element geometry
     std::size_t numScv() const
     {
@@ -238,6 +271,17 @@ private:
 
     std::optional<Element> element_;
     std::array<GridIndexType, 1> scvIndices_;
+    // the k-th sub-control volume face of the element belongs to the k-th intersection that carries one
+    template<class Visitor>
+    void forEachIntersectionWithScvf_(Visitor&& visit) const
+    {
+        const auto& scvfIndices = gridGeometry().scvfIndicesOfScv(scvIndices_[0]);
+        LocalIndexType k = 0;
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element()))
+            if (intersection.neighbor() || intersection.boundary())
+                visit(intersection, gridGeometry().scvf(scvfIndices[k++]));
+    }
+
     const GridGeometry* gridGeometryPtr_;
 };
 
@@ -351,6 +395,38 @@ public:
     {
         using IteratorType = typename std::vector<SubControlVolumeFace>::const_iterator;
         return Dune::IteratorRange<IteratorType>(g.scvfs_.begin(), g.scvfs_.end());
+    }
+
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
+
+    //! The boundary faces of the bound element, one per boundary intersection
+    friend inline Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> boundaryFaces(const ThisType& fvGeometry)
+    {
+        Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> result;
+        fvGeometry.forEachIntersectionWithScvf_([&] (const auto& intersection, const SubControlVolumeFace& scvf) {
+            if (intersection.boundary())
+                result.emplace_back(scvf.center(),
+                                    scvf.area(),
+                                    scvf.unitOuterNormal(),
+                                    static_cast<LocalIndexType>(result.size()),
+                                    static_cast<LocalIndexType>(intersection.indexInInside()),
+                                    typename BoundaryFace::Traits::BoundaryFlag{intersection});
+        });
+        return result;
+    }
+
+    //! The sub-control volume faces on the intersection of a face, a single one for cell-centered schemes
+    friend inline Dune::IteratorRange<const SubControlVolumeFace*>
+    scvfs(const ThisType& fvGeometry, const BoundaryFace& face)
+    {
+        const SubControlVolumeFace* found = nullptr;
+        fvGeometry.forEachIntersectionWithScvf_([&] (const auto& intersection, const SubControlVolumeFace& scvf) {
+            if (intersection.indexInInside() == face.intersectionIndex())
+                found = &scvf;
+        });
+        return found ? Dune::IteratorRange<const SubControlVolumeFace*>(found, found + 1)
+                     : Dune::IteratorRange<const SubControlVolumeFace*>(nullptr, nullptr);
     }
 
     //! number of sub control volumes in this fv element geometry
@@ -697,6 +773,16 @@ private:
     }
 
     std::optional<Element> element_; //!< the element to which this fvgeometry is bound
+    // the k-th sub-control volume face of the element belongs to the k-th intersection that carries one
+    template<class Visitor>
+    void forEachIntersectionWithScvf_(Visitor&& visit) const
+    {
+        LocalIndexType k = 0;
+        for (const auto& intersection : intersections(gridGeometry().gridView(), element()))
+            if (intersection.neighbor() || intersection.boundary())
+                visit(intersection, scvfs_[k++]);
+    }
+
     const GridGeometry* gridGeometryPtr_;  //!< the grid fvgeometry
 
     // local storage after binding an element

@@ -21,6 +21,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/basegridgeometry.hh>
+#include <dumux/discretization/boundaryface.hh>
 #include <dumux/discretization/checkoverlapsize.hh>
 
 namespace Dumux {
@@ -87,6 +88,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of boundary face
+    using BoundaryFace = Experimental::BoundaryFace<GV>;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export the connectivity map type
@@ -478,6 +481,8 @@ public:
     using SubControlVolume = typename Traits::SubControlVolume;
     //! export the type of sub control volume
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the type of boundary face
+    using BoundaryFace = Experimental::BoundaryFace<GV>;
     //! export the type of extrusion
     using Extrusion = Extrusion_t<Traits>;
     //! export the connectivity map type

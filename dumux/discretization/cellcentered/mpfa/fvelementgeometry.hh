@@ -15,10 +15,13 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 
 #include <optional>
+#include <ranges>
 #include <utility>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
 
 #include <dumux/common/parameters.hh>
@@ -111,6 +114,7 @@ class CCMpfaFVElementGeometry<GG, true>
     using ThisType = CCMpfaFVElementGeometry<GG, true>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -178,6 +182,37 @@ public:
         using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
+    }
+
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
+
+    //! The boundary faces of the bound element, one per boundary intersection
+    friend inline Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> boundaryFaces(const ThisType& fvGeometry)
+    {
+        Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> result;
+        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), fvGeometry.element()))
+            if (intersection.boundary())
+            {
+                const auto geometry = intersection.geometry();
+                result.emplace_back(geometry.center(),
+                                    geometry.volume(),
+                                    intersection.centerUnitOuterNormal(),
+                                    static_cast<LocalIndexType>(result.size()),
+                                    static_cast<LocalIndexType>(intersection.indexInInside()),
+                                    typename BoundaryFace::Traits::BoundaryFlag{intersection});
+            }
+        return result;
+    }
+
+    //! The sub-control volume faces on the intersection of a face, one per corner of the intersection
+    friend inline auto scvfs(const ThisType& fvGeometry, const BoundaryFace& face)
+    {
+        auto range = scvfs(fvGeometry);
+        return std::ranges::subrange(range.begin(), range.end())
+             | std::views::filter([isIdx = static_cast<int>(face.intersectionIndex())] (const SubControlVolumeFace& scvf) {
+                   return scvf.facetInfo().facetIndex == isIdx;
+               });
     }
 
     //! number of sub control volumes in this fv element geometry
@@ -276,6 +311,7 @@ class CCMpfaFVElementGeometry<GG, false>
     using ThisType = CCMpfaFVElementGeometry<GG, false>;
     using GridView = typename GG::GridView;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
+    using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using MpfaHelper = typename GG::MpfaHelper;
 
     static constexpr int dim = GridView::dimension;
@@ -350,6 +386,37 @@ public:
     {
         using IteratorType = typename std::vector<SubControlVolumeFace>::const_iterator;
         return Dune::IteratorRange<IteratorType>(g.scvfs_.begin(), g.scvfs_.end());
+    }
+
+    //! export the boundary face type
+    using BoundaryFace = typename GG::BoundaryFace;
+
+    //! The boundary faces of the bound element, one per boundary intersection
+    friend inline Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> boundaryFaces(const ThisType& fvGeometry)
+    {
+        Dune::ReservedVector<BoundaryFace, 2*GridView::dimension> result;
+        for (const auto& intersection : intersections(fvGeometry.gridGeometry().gridView(), fvGeometry.element()))
+            if (intersection.boundary())
+            {
+                const auto geometry = intersection.geometry();
+                result.emplace_back(geometry.center(),
+                                    geometry.volume(),
+                                    intersection.centerUnitOuterNormal(),
+                                    static_cast<LocalIndexType>(result.size()),
+                                    static_cast<LocalIndexType>(intersection.indexInInside()),
+                                    typename BoundaryFace::Traits::BoundaryFlag{intersection});
+            }
+        return result;
+    }
+
+    //! The sub-control volume faces on the intersection of a face, one per corner of the intersection
+    friend inline auto scvfs(const ThisType& fvGeometry, const BoundaryFace& face)
+    {
+        auto range = scvfs(fvGeometry);
+        return std::ranges::subrange(range.begin(), range.end())
+             | std::views::filter([isIdx = static_cast<int>(face.intersectionIndex())] (const SubControlVolumeFace& scvf) {
+                   return scvf.facetInfo().facetIndex == isIdx;
+               });
     }
 
     //! number of sub control volumes in this fv element geometry

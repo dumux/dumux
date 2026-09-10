@@ -155,5 +155,40 @@ int main (int argc, char *argv[])
         }
         if (!expected.empty())
             DUNE_THROW(Dune::InvalidStateException, "Could not find all expected scvf corners");
+
+        // there is one boundary face per boundary intersection, and the sub-control volume
+        // faces on it are those the intersection was subdivided into
+        std::size_t faceCount = 0;
+        std::size_t subFaceCount = 0;
+        for (const auto& face : boundaryFaces(fvGeometry))
+        {
+            ++faceCount;
+            bool matched = false;
+            for (const auto& intersection : intersections(leafGridView, element))
+                if (intersection.indexInInside() == face.intersectionIndex())
+                {
+                    matched = true;
+                    if ((intersection.geometry().center() - face.center()).two_norm() > 1e-12)
+                        DUNE_THROW(Dune::InvalidStateException, "Boundary face center does not match its intersection");
+                    if ((intersection.centerUnitOuterNormal() - face.unitOuterNormal()).two_norm() > 1e-12)
+                        DUNE_THROW(Dune::InvalidStateException, "Boundary face normal does not match its intersection");
+                }
+            if (!matched)
+                DUNE_THROW(Dune::InvalidStateException, "Boundary face has no intersection with its index");
+
+            for (const auto& scvf : scvfs(fvGeometry, face))
+            {
+                ++subFaceCount;
+                if (!scvf.boundary())
+                    DUNE_THROW(Dune::InvalidStateException, "Sub-control volume face on a boundary face is not a boundary face");
+                if ((scvf.unitOuterNormal() - face.unitOuterNormal()).two_norm() > 1e-12)
+                    DUNE_THROW(Dune::InvalidStateException, "Sub-control volume face does not share the normal of its boundary face");
+            }
+        }
+
+        if (faceCount != 4)
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected number of boundary faces " << faceCount);
+        if (subFaceCount != 8)
+            DUNE_THROW(Dune::InvalidStateException, "The boundary faces carry " << subFaceCount << " sub-control volume faces, expected 8");
     }
 }
