@@ -19,6 +19,7 @@
 #define DUMUX_DISCRETIZATION_PROJECTOR_HH
 
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <utility>
 #include <type_traits>
@@ -311,6 +312,10 @@ void setupReducedMatrices(const Matrix& massMatrix, const Matrix& projMatrix, co
  *        that appear if the two domains occupy different geometric regions (and some
  *        dofs to not take part in the projection as a result) are substituted by ones.
  *        This substitution will lead to those dofs being mapped to zeroes in the target space.
+ * \param quadratureOrder The order of the quadrature rule on the intersections. If not
+ *        given, each intersection uses the order that integrates all products of two shape
+ *        functions of its element pair exactly on affine geometries, twice the higher of
+ *        the two basis orders.
  * \returns An std::pair of projection matrices, where the first entry stores the
  *          matrices of the forward projection and the second entry stores those
  *          of the backward projection. The entries of the returned pair are itself
@@ -321,7 +326,8 @@ template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class G
 auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
                               const FEBasisTarget& feBasisTarget,
                               const GlueType& glue,
-                              bool treatDiagonalZeroes = true)
+                              bool treatDiagonalZeroes = true,
+                              std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
@@ -347,8 +353,6 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
     forwardPatternP.resize(feBasisTarget.size(), feBasisDomain.size());
     if (doBidirectional) backwardPatternP.resize(feBasisDomain.size(), feBasisTarget.size());
 
-    using std::max;
-    unsigned int maxBasisOrder = 0;
     for (const auto& is : intersections(glue))
     {
         // since target dim <= domain dim there is maximum one!
@@ -359,9 +363,6 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
         {
             domainLocalView.bind( is.domainEntity(nIdx) );
             const auto& domainLocalBasis = domainLocalView.tree().finiteElement().localBasis();
-
-            // keep track of maximum basis order (used in integration)
-            maxBasisOrder = max(maxBasisOrder, max(domainLocalBasis.order(), targetLocalBasis.order()));
 
             for (unsigned int i = 0; i < domainLocalBasis.size(); ++i)
                 for (unsigned int j = 0; j < targetLocalBasis.size(); ++j)
@@ -384,6 +385,23 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
         backwardPatternP.exportIdx(backwardP); backwardP = 0.0;
     }
 
+    // one rule serves the mass matrices and the projection matrix of an intersection, so
+    // that the row sums of both agree exactly whatever the geometry; it has to integrate
+    // the square of a shape function of either space, the highest degree among the integrands
+    using std::max;
+    const auto integrationOrder = [&] (const auto& is, unsigned int targetOrder)
+    {
+        if (quadratureOrder)
+            return *quadratureOrder;
+        auto order = targetOrder;
+        for (unsigned int nIdx = 0; nIdx < is.numDomainNeighbors(); ++nIdx)
+        {
+            domainLocalView.bind( is.domainEntity(nIdx) );
+            order = max(order, domainLocalView.tree().finiteElement().localBasis().order());
+        }
+        return static_cast<int>(max(2*order, 1u));
+    };
+
     for (const auto& is : intersections(glue))
     {
         const auto& targetElement = is.targetEntity(0);
@@ -397,7 +415,7 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
         using ctype = typename IsGeometry::ctype;
 
         const auto& isGeometry = is.geometry();
-        const int intOrder = maxBasisOrder + 1;
+        const int intOrder = integrationOrder(is, targetLocalBasis.order());
         const auto& quad = Dune::QuadratureRules<ctype, IsGeometry::mydimension>::rule(isGeometry.type(), intOrder);
         for (auto&& qp : quad)
         {
@@ -496,7 +514,8 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
 template<bool doBidirectional, class FEBasisDomain, class FEBasisTarget, class GlueType>
 auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
                        const FEBasisTarget& feBasisTarget,
-                       const GlueType& glue)
+                       const GlueType& glue,
+                       std::optional<int> quadratureOrder = {})
 {
     using ForwardProjector = typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector;
     using BackwardProjector = typename ProjectorTraits<FEBasisTarget, FEBasisDomain>::Projector;
@@ -504,7 +523,7 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
     using ForwardProjectionMatrix = typename ForwardProjector::Matrix;
     using BackwardProjectionMatrix = typename BackwardProjector::Matrix;
 
-    auto projectionMatrices = createProjectionMatrices<doBidirectional>(feBasisDomain, feBasisTarget, glue, false);
+    auto projectionMatrices = createProjectionMatrices<doBidirectional>(feBasisDomain, feBasisTarget, glue, false, quadratureOrder);
     auto& forwardMatrices = projectionMatrices.first;
     auto& backwardMatrices = projectionMatrices.second;
 
@@ -610,6 +629,8 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The domain finite element space basis
  * \param feBasisTarget The target finite element space basis
  * \param glue The glue object containing the intersections between the grids.
+ * \param quadratureOrder The order of the quadrature rule on the intersections; by default
+ *        the one that integrates the products of the shape functions exactly on affine geometries.
  * \return An std::pair of projectors where the first is the forward
  *         projector from the space with basis feBasisDomain to
  *         the space with basis feBasisTarget and the second
@@ -618,14 +639,15 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
 auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
                        const FEBasisTarget& feBasisTarget,
-                       GlueType glue)
+                       GlueType glue,
+                       std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
     static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
-    return Detail::makeProjectorPair<true>(feBasisDomain, feBasisTarget, glue);
+    return Detail::makeProjectorPair<true>(feBasisDomain, feBasisTarget, glue, quadratureOrder);
 }
 
 /*!
@@ -635,20 +657,23 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The domain finite element space basis
  * \param feBasisTarget The target finite element space basis
  * \param glue The glue object containing the intersections between the grids.
+ * \param quadratureOrder The order of the quadrature rule on the intersections; by default
+ *        the one that integrates the products of the shape functions exactly on affine geometries.
  * \return The forward projector from the space with basis feBasisDomain
  *         to the space with basis feBasisTarget.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
 auto makeProjector(const FEBasisDomain& feBasisDomain,
                    const FEBasisTarget& feBasisTarget,
-                   GlueType glue)
+                   GlueType glue,
+                   std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
     static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
-    return Detail::makeProjectorPair<false>(feBasisDomain, feBasisTarget, glue).first;
+    return Detail::makeProjectorPair<false>(feBasisDomain, feBasisTarget, glue, quadratureOrder).first;
 }
 
 /*!
@@ -656,6 +681,8 @@ auto makeProjector(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The basis to the domain finite element space
  * \param feBasisTarget The basis to the target finite element space
  * \param glue The glue object containing the intersections between the two grids
+ * \param quadratureOrder The order of the quadrature rule on the intersections; by default
+ *        the one that integrates the products of the shape functions exactly on affine geometries.
  * \returns An std::pair of projection matrices, where the first entry stores the
  *          matrices of the forward projection and the second entry stores those
  *          of the backward projection. The entries of the returned pair are itself
@@ -665,14 +692,15 @@ auto makeProjector(const FEBasisDomain& feBasisDomain,
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
 auto makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
                                 const FEBasisTarget& feBasisTarget,
-                                GlueType glue)
+                                GlueType glue,
+                                std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
     static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
 
-    return Detail::createProjectionMatrices<true>(feBasisDomain, feBasisTarget, glue);
+    return Detail::createProjectionMatrices<true>(feBasisDomain, feBasisTarget, glue, true, quadratureOrder);
 }
 
 /*!
@@ -680,20 +708,23 @@ auto makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
  * \param feBasisDomain The basis to the domain finite element space
  * \param feBasisTarget The basis to the target finite element space
  * \param glue The glue object containing the intersections between the two grids
+ * \param quadratureOrder The order of the quadrature rule on the intersections; by default
+ *        the one that integrates the products of the shape functions exactly on affine geometries.
  * \returns An std::pair of matrices, which store the mass matrix in the first and the
  *          projection matrix in the second entry.
  */
 template< class FEBasisDomain, class FEBasisTarget, class GlueType >
 auto makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
                             const FEBasisTarget& feBasisTarget,
-                            GlueType glue)
+                            GlueType glue,
+                            std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
     static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
     static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
 
-    return Detail::createProjectionMatrices<false>(feBasisDomain, feBasisTarget, glue).first;
+    return Detail::createProjectionMatrices<false>(feBasisDomain, feBasisTarget, glue, true, quadratureOrder).first;
 }
 
 } // end namespace Dumux
