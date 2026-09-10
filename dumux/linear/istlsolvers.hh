@@ -13,6 +13,7 @@
 #define DUMUX_LINEAR_ISTL_SOLVERS_HH
 
 #include <memory>
+#include <type_traits>
 #include <variant>
 
 #include <dune/common/exceptions.hh>
@@ -218,27 +219,7 @@ public:
                               const ParameterInitializer& params = "")
     {
         initializeParameters_(params, gridView.comm());
-#if HAVE_MPI
-        solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
-        if constexpr (LinearSolverTraits::canCommunicate)
-        {
-
-            if (solverCategory_ != Dune::SolverCategory::sequential)
-            {
-                parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
-                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
-                parallelHelper_->createParallelIndexSet(*communication_);
-            }
-            else
-                scalarProduct_ = std::make_shared<ScalarProduct>();
-        }
-        else
-            scalarProduct_ = std::make_shared<ScalarProduct>();
-#else
-        solverCategory_ = Dune::SolverCategory::sequential;
-        scalarProduct_ = std::make_shared<ScalarProduct>();
-#endif
+        configureCommunication_(gridView, dofMapper);
     }
 
 #if HAVE_MPI
@@ -259,13 +240,22 @@ public:
         if constexpr (LinearSolverTraits::canCommunicate)
         {
             if (solverCategory_ != Dune::SolverCategory::sequential)
-            {
-                parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-                parallelHelper_->createParallelIndexSet(communication);
-            }
+                buildParallelHelper_(gridView, dofMapper, *communication_);
         }
     }
 #endif
+
+    /*!
+     * \brief Update the solver after the grid and its dof distribution changed,
+     *        e.g. after grid adaption or dynamic load balancing
+     * \note Rebuilds the parallel index sets and communication in place, so holders of a
+     *       pointer to this solver (e.g. a NewtonSolver, which keeps its own shared_ptr copy)
+     *       automatically use the updated structures
+     * \note A matrix set via setMatrix has to be set again after this call
+     */
+    template <class GridView, class DofMapper>
+    void updateAfterGridAdaption(const GridView& gridView, const DofMapper& dofMapper)
+    { configureCommunication_(gridView, dofMapper); }
 
     /*!
      * \brief Solve the linear system Ax = b
@@ -408,6 +398,48 @@ private:
         if (comm.rank() != 0)
             Dumux::LinearSolverParameters<LinearSolverTraits>::disableVerbosity(params_);
     }
+
+    /*!
+     * \brief Establish solverCategory_, communication_, parallelHelper_ and scalarProduct_ for a gridView/dofMapper,
+     *        discarding any cached operator/solver that referred to a previous communication and dof layout
+     * \note Used both on construction (where the cache is already empty) and to rebuild these
+     *       members after grid adaption or dynamic load balancing
+     */
+    template <class GridView, class DofMapper>
+    void configureCommunication_(const GridView& gridView, const DofMapper& dofMapper)
+    {
+#if HAVE_MPI
+        solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
+        if constexpr (LinearSolverTraits::canCommunicate)
+        {
+            if (solverCategory_ == Dune::SolverCategory::sequential)
+                scalarProduct_ = std::make_shared<ScalarProduct>();
+            else
+            {
+                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
+                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
+                buildParallelHelper_(gridView, dofMapper, *communication_);
+            }
+        }
+        else
+            scalarProduct_ = std::make_shared<ScalarProduct>();
+#else
+        solverCategory_ = Dune::SolverCategory::sequential;
+        scalarProduct_ = std::make_shared<ScalarProduct>();
+#endif
+        linearOperator_ = MatrixOperatorHolder{};
+        solver_ = nullptr;
+    }
+
+#if HAVE_MPI
+    //! Build parallelHelper_ and set up its parallel index set for the given communication
+    template <class GridView, class DofMapper>
+    void buildParallelHelper_(const GridView& gridView, const DofMapper& dofMapper, Comm& comm)
+    {
+        parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+        parallelHelper_->createParallelIndexSet(comm);
+    }
+#endif
 
     MatrixOperatorHolder makeSequentialLinearOperator_(std::shared_ptr<Matrix> A)
     {
