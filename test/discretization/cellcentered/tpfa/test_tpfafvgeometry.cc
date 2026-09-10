@@ -11,6 +11,7 @@
  */
 #include <config.h>
 
+#include <cmath>
 #include <iostream>
 #include <utility>
 
@@ -111,5 +112,44 @@ int main (int argc, char *argv[])
         if ((boundaryCount>0) != fvGeometry.hasBoundaryScvf())
             DUNE_THROW(Dune::InvalidStateException, "fvGeometry.hasBoundaryScvf() reports " << fvGeometry.hasBoundaryScvf()
                             << " but the number of boundary scvfs is " << boundaryCount);
+
+        // there is one boundary face per boundary intersection, and it carries the geometry of it
+        std::size_t faceCount = 0;
+        for (const auto& face : boundaryFaces(fvGeometry))
+        {
+            ++faceCount;
+            bool matched = false;
+            for (const auto& intersection : intersections(leafGridView, element))
+                if (intersection.indexInInside() == face.intersectionIndex())
+                {
+                    matched = true;
+                    if (!intersection.boundary())
+                        DUNE_THROW(Dune::InvalidStateException, "Boundary face on an interior intersection");
+                    if ((intersection.geometry().center() - face.center()).two_norm() > 1e-12)
+                        DUNE_THROW(Dune::InvalidStateException, "Boundary face center does not match its intersection");
+                    if ((intersection.centerUnitOuterNormal() - face.unitOuterNormal()).two_norm() > 1e-12)
+                        DUNE_THROW(Dune::InvalidStateException, "Boundary face normal does not match its intersection");
+                    if (std::abs(intersection.geometry().volume() - face.area()) > 1e-12*face.area())
+                        DUNE_THROW(Dune::InvalidStateException, "Boundary face area does not match its intersection");
+                }
+            if (!matched)
+                DUNE_THROW(Dune::InvalidStateException, "Boundary face has no intersection with its index");
+
+            // a cell-centered scheme has exactly one sub-control volume face per intersection
+            std::size_t subFaceCount = 0;
+            for (const auto& scvf : scvfs(fvGeometry, face))
+            {
+                ++subFaceCount;
+                if (!scvf.boundary())
+                    DUNE_THROW(Dune::InvalidStateException, "Sub-control volume face on a boundary face is not a boundary face");
+                if ((scvf.center() - face.center()).two_norm() > 1e-12)
+                    DUNE_THROW(Dune::InvalidStateException, "Sub-control volume face does not lie on its boundary face");
+            }
+            if (subFaceCount != 1)
+                DUNE_THROW(Dune::InvalidStateException, "Expected one sub-control volume face per boundary face, got " << subFaceCount);
+        }
+
+        if (faceCount != boundaryCount)
+            DUNE_THROW(Dune::InvalidStateException, "Found " << faceCount << " boundary faces but " << boundaryCount << " boundary scvfs");
     }
 }
