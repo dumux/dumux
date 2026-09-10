@@ -21,6 +21,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/flux/facetensoraverage.hh>
 
 namespace Dumux {
@@ -64,7 +65,6 @@ public:
                        const int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarCache)
     {
-        const auto& fluxVarCache = elemFluxVarCache[scvf];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
@@ -77,30 +77,46 @@ public:
         insideK *= insideVolVars.extrusionFactor();
         outsideK *= outsideVolVars.extrusionFactor();
 
+        // an average over the two control volumes the face separates, and thus a property of
+        // the face rather than of a point on it
         const auto K = faceTensorAverage(insideK, outsideK, scvf.unitOuterNormal());
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
-        const auto& shapeValues = fluxVarCache.shapeValues();
-
-        // evaluate gradP - rho*g at integration point
-        Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
-        Scalar rho(0.0);
-        for (auto&& scv : scvs(fvGeometry))
+        // The quantity the loop below accumulates is a flux density at an interpolation
+        // point. The form to arrive at is a flux law that offers exactly that, a
+        // (context, ipData) -> density, and leaves the quadrature to the caller: the state
+        // shared by all points, above all the interpolation over the local degrees of
+        // freedom, is then computed once for all phases and components instead of once per
+        // flux law call, as the free-flow momentum residual already does.
+        Scalar flux = 0.0;
+        for (const auto& quadPoint : CVFE::quadratureRule(fvGeometry, scvf))
         {
-            const auto& volVars = elemVolVars[scv];
+            const auto& faceIpData = quadPoint.ipData();
+            const auto& fluxVarCache = cache(elemFluxVarCache, faceIpData);
+            const auto& shapeValues = fluxVarCache.shapeValues();
+
+            // evaluate gradP - rho*g at the integration point
+            Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
+            Scalar rho(0.0);
+            for (const auto& localDof : localDofs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[localDof];
+
+                if (enableGravity)
+                    rho += volVars.density(phaseIdx)*shapeValues[localDof.index()][0];
+
+                // the global shape function gradient
+                gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(localDof.index()));
+            }
 
             if (enableGravity)
-                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+                gradP.axpy(-rho, problem.spatialParams().gravity(faceIpData.global()));
 
-            // the global shape function gradient
-            gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
+            // the quadrature weight carries the area of the face
+            flux -= quadPoint.weight()*vtmv(faceIpData.unitOuterNormal(), K, gradP);
         }
 
-        if (enableGravity)
-            gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
-
-        // apply the permeability and return the flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(fvGeometry, scvf);
+        return flux;
     }
 
     // compute transmissibilities ti for analytical Jacobians
