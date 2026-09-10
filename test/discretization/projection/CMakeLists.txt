@@ -13,6 +13,10 @@ dumux_add_test(NAME test_l2_projection
                CMAKE_GUARD dune-functions_FOUND
                LABELS unit discretization)
 
+dumux_add_test(NAME test_brokenbasis
+               SOURCES test_brokenbasis.cc
+               LABELS unit discretization)
+
 dumux_add_test(NAME test_fejacobianpattern
                SOURCES test_fejacobianpattern.cc
                LABELS unit discretization)
