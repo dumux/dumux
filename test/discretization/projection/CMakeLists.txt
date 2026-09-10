@@ -16,3 +16,7 @@ dumux_add_test(NAME test_l2_projection
 dumux_add_test(NAME test_projection_cvfe
                SOURCES test_projection_cvfe.cc
                LABELS unit discretization)
+
+dumux_add_test(NAME test_fejacobianpattern
+               SOURCES test_fejacobianpattern.cc
+               LABELS unit discretization)
