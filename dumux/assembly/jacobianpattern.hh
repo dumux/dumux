@@ -112,22 +112,31 @@ Dune::MatrixIndexSet getFEJacobianPattern(const FEBasis& feBasis)
 
     auto localView = feBasis.localView();
     // matrix pattern for implicit Jacobians
-    for (const auto& element : elements(feBasis.gridView()))
+    const auto addEntries = [&] (const auto& entityRange)
     {
-        localView.bind(element);
-
-        const auto& finiteElement = localView.tree().finiteElement();
-        const auto numLocalDofs = finiteElement.localBasis().size();
-        for (std::size_t i = 0; i < numLocalDofs; i++)
+        for (const auto& entity : entityRange)
         {
-            const auto dofIdxI = localView.index(i);
-            for (std::size_t j = 0; j < numLocalDofs; j++)
+            localView.bind(entity);
+
+            const auto& finiteElement = localView.tree().finiteElement();
+            const auto numLocalDofs = finiteElement.localBasis().size();
+            for (std::size_t i = 0; i < numLocalDofs; i++)
             {
-                const auto dofIdxJ = localView.index(j);
-                pattern.add(dofIdxI, dofIdxJ);
+                const auto dofIdxI = localView.index(i);
+                for (std::size_t j = 0; j < numLocalDofs; j++)
+                {
+                    const auto dofIdxJ = localView.index(j);
+                    pattern.add(dofIdxI, dofIdxJ);
+                }
             }
         }
-    }
+    };
+
+    // a basis may be defined over a grid or over a bare set of entities
+    if constexpr (requires { feBasis.gridView(); })
+        addEntries(elements(feBasis.gridView()));
+    else
+        addEntries(feBasis.entitySet());
 
     return pattern;
 }
