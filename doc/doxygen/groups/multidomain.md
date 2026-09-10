@@ -26,6 +26,10 @@
 @brief Couples problems of different dimensions where one or more lower-dimensional problems (lowdim) live on the facets of the higher-dimensional domain (bulk). Examples are discrete facet conforming fracture models and problems with physics on a domain surface.
 @ingroup MultiDomain
 
+@defgroup MortarCoupling Mortar coupling mode
+@brief Couples subdomains on non-matching grids through mortar variables on the interfaces between them, following the mortar methods of \cite Boon2022 \cite Boon2023. The subdomains are solved independently and a Krylov method drives the resulting interface problem.
+@ingroup MultiDomain
+
 
 @addtogroup MultiDomain
 
