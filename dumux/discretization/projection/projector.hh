@@ -224,6 +224,16 @@ public:
 namespace Detail {
 
 /*!
+ * \brief The spatial dimension a function space basis is defined on.
+ * \note Bases carry this directly, or on their grid view when defined over a grid.
+ */
+template<class Basis>
+inline constexpr int projectionBasisDimension = [] {
+    if constexpr (requires { Basis::dimension; }) return int(Basis::dimension);
+    else return int(Basis::GridView::dimension);
+}();
+
+/*!
  * \brief Reduces a mass matrix and projection matrix such that they are composed
  *        of only those dofs that actually take part in the projection. Simultaneously,
  *        a container with the index map into the complete target space is filled so that
@@ -321,8 +331,8 @@ auto createProjectionMatrices(const FEBasisDomain& feBasisDomain,
                               std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
-    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
-    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
+    static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "This expects target dim < domain dim, please swap arguments");
 
     using ForwardProjector = typename ProjectorTraits<FEBasisDomain, FEBasisTarget>::Projector;
@@ -641,8 +651,8 @@ auto makeProjectorPair(const FEBasisDomain& feBasisDomain,
                        std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
-    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
-    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
+    static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
     return Detail::makeProjectorPair<true>(feBasisDomain, feBasisTarget, glue, quadratureOrder);
@@ -667,8 +677,8 @@ auto makeProjector(const FEBasisDomain& feBasisDomain,
                    std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
-    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
-    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
+    static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectorPair() expects targetDim < domainDim, please swap arguments");
 
     return Detail::makeProjectorPair<false>(feBasisDomain, feBasisTarget, glue, quadratureOrder).first;
@@ -694,8 +704,8 @@ auto makeProjectionMatricesPair(const FEBasisDomain& feBasisDomain,
                                 std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
-    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
-    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
+    static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
 
     return Detail::createProjectionMatrices<true>(feBasisDomain, feBasisTarget, glue, true, quadratureOrder);
@@ -718,8 +728,8 @@ auto makeProjectionMatrices(const FEBasisDomain& feBasisDomain,
                             std::optional<int> quadratureOrder = {})
 {
     // we assume that target dim <= domain dimension
-    static constexpr int domainDim = FEBasisDomain::GridView::dimension;
-    static constexpr int targetDim = FEBasisTarget::GridView::dimension;
+    static constexpr int domainDim = Detail::projectionBasisDimension<FEBasisDomain>;
+    static constexpr int targetDim = Detail::projectionBasisDimension<FEBasisTarget>;
     static_assert(targetDim <= domainDim, "makeProjectionMatrixPair() expects targetDim < domainDim, please swap arguments");
 
     return Detail::createProjectionMatrices<false>(feBasisDomain, feBasisTarget, glue, true, quadratureOrder).first;
