@@ -212,13 +212,6 @@ template<class GVC>
 class HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>
 {
     using ThisType = HybridCVFEElementVariables<GVC, /*cachingEnabled*/false>;
-    using Problem = std::decay_t<decltype(std::declval<GVC>().problem())>;
-    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
-    using GridView = typename GridGeometry::GridView;
-
-    //!< maximum number of boundary intersections per element, here assumed to be the number of faces of a dim-dimensional hypercube
-    static constexpr std::size_t maxNumBoundaryFaces = GridView::dimension << 1;
-
     class MutableVariablesView
     {
     public:
@@ -462,6 +455,7 @@ private:
             for (const auto& qpData : elemQuadRule)
                 elementCache_[qpData.ipData().qpIndex()].update(problem, element, fvGeometry, elemVars, qpData.ipData());
 
+            boundaryFaceCache_.resize(std::ranges::size(boundaryFaces(fvGeometry)));
             for (const auto& boundaryFace : boundaryFaces(fvGeometry))
             {
                 auto& bfCache = boundaryFaceCache_[boundaryFace.index()];
@@ -478,7 +472,7 @@ private:
 
         std::vector<std::vector<InterpolationPointData>> scvfCache_;
         std::vector<InterpolationPointData> elementCache_;
-        std::array<std::vector<InterpolationPointData>, maxNumBoundaryFaces> boundaryFaceCache_;
+        std::vector<std::vector<InterpolationPointData>> boundaryFaceCache_;
     };
 
     const GridVariablesCache* gridVariablesCachePtr_;
