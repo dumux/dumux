@@ -89,6 +89,23 @@ public:
     }
 
     /*!
+     * \brief Function for defining the porosity at an interpolation point, for degrees of
+     *        freedom that own no sub-control volume.
+     * \param fvGeometry The finite-volume geometry
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
+     */
+    template<class IpData, class ElementSolution>
+    Scalar porosity(const FVElementGeometry& fvGeometry,
+                    const IpData& ipData,
+                    const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return this->asImp_().porosityAtPos(ipData.global());
+    }
+
+    /*!
      * \brief Function for defining the solid volume fraction.
      *        That is possibly solution dependent.
      *
@@ -117,11 +134,35 @@ public:
         return 1.0 - this->asImp_().porosity(element, scv, elemSol);
     }
 
+    //! \copydoc inertVolumeFraction
+    template<class SolidSystem, class IpData, class ElementSolution>
+        requires (SolidSystem::isInert()
+                  && SolidSystem::numInertComponents == 1
+                  && !decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(std::declval<Implementation>()))::value)
+    Scalar inertVolumeFraction(const FVElementGeometry& fvGeometry,
+                               const IpData& ipData,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    {
+        return 1.0 - this->asImp_().porosity(fvGeometry, ipData, elemSol);
+    }
+
     // specialization if there are no inert components at all
     template<class SolidSystem, class ElementSolution,
              typename std::enable_if_t<SolidSystem::numInertComponents == 0, int> = 0>
     Scalar inertVolumeFraction(const Element& element,
                                const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    {
+        return 0.0;
+    }
+
+    //! \copydoc inertVolumeFraction
+    template<class SolidSystem, class IpData, class ElementSolution>
+        requires (SolidSystem::numInertComponents == 0)
+    Scalar inertVolumeFraction(const FVElementGeometry& fvGeometry,
+                               const IpData& ipData,
                                const ElementSolution& elemSol,
                                int compIdx) const
     {
@@ -158,6 +199,19 @@ public:
 
         return this->asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
+
+    //! \copydoc inertVolumeFraction
+    template<class SolidSystem, class IpData, class ElementSolution>
+        requires ((SolidSystem::numInertComponents > 1)
+                  || ((SolidSystem::numInertComponents > 0)
+                      && (!SolidSystem::isInert()
+                          || decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())
+                                  (std::declval<Implementation>()))::value)))
+    Scalar inertVolumeFraction(const FVElementGeometry& fvGeometry,
+                               const IpData& ipData,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    { return this->asImp_().template inertVolumeFractionAtPos<SolidSystem>(ipData.global(), compIdx); }
 };
 
 } // namespace Dumux
