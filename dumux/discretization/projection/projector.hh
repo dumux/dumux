@@ -34,6 +34,7 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dumux/io/format.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -139,7 +140,7 @@ public:
 
         Dune::ParameterTree solverParams;
         solverParams["maxit"] = std::to_string(params.maxIterations);
-        solverParams["reduction"] = std::to_string(params.residualReduction);
+        solverParams["reduction"] = Fmt::format("{}", params.residualReduction);
         solverParams["verbose"] = std::to_string(params.verbosity);
         auto solver = massMatrixSolver_; // copy the solver to modify the parameters
         solver.setParams(solverParams);
