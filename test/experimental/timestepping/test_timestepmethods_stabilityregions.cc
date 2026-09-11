@@ -21,6 +21,7 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/io/json.hh>
+#include <dumux/io/format.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 
 namespace Dumux {
@@ -356,7 +357,8 @@ int main(int argc, char* argv[])
 
         const auto modulus = std::abs(stabilityFunction(entry.method, stiffZ));
         expect(modulus < 1.0e-5,
-               "Implicit method " + entry.method->name() + " should damp stiff modes, but |R(z)|=" + std::to_string(modulus));
+               Fmt::format("Implicit method {} should damp stiff modes, but |R(z)|={}",
+                           entry.method->name(), modulus));
     }
 
     expect(std::abs(std::abs(stabilityFunction(crankNicolson, stiffZ)) - 1.0) < 1.0e-5,

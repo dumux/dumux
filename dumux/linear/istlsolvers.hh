@@ -29,6 +29,7 @@
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 
+#include <dumux/io/format.hh>
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -339,7 +340,7 @@ public:
      */
     void setResidualReduction(double residReduction)
     {
-        params_["reduction"] = std::to_string(residReduction);
+        params_["reduction"] = Fmt::format("{}", residReduction);
 
         // reconstruct the solver with new parameters
         if (solver_)

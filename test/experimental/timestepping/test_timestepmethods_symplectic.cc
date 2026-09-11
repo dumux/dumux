@@ -51,8 +51,8 @@ void expectNear(const Scalar value, const Scalar reference, const Scalar toleran
     using std::abs;
     if (abs(value - reference) > tolerance)
         DUNE_THROW(Dune::InvalidStateException,
-                   msg + " (|" + std::to_string(value) + " - " + std::to_string(reference)
-                   + "| = " + std::to_string(abs(value - reference)) + " > " + std::to_string(tolerance) + ")");
+                   Fmt::format("{} (|{} - {}| = {} > {})",
+                               msg, value, reference, abs(value - reference), tolerance));
 }
 
 Vec2 matVec(const Mat2& A, const Vec2& x)
@@ -233,8 +233,8 @@ int main(int argc, char* argv[])
 
     // the symplectic scheme conserves the quadratic energy to machine precision ...
     expect(driftQinZhang < 1e-10,
-           "Symplectic Qin-Zhang should conserve the quadratic energy to machine precision, but drift = "
-           + std::to_string(driftQinZhang));
+           Fmt::format("Symplectic Qin-Zhang should conserve the quadratic energy to machine precision, "
+                       "but drift = {}", driftQinZhang));
     // ... while the non-symplectic schemes visibly dissipate it (implicit Euler strongly, the
     //     same-order DIRK2 more slowly) -- so it is symplecticity, not the order, that conserves energy
     expect(finalImplicitEuler < 0.5,
