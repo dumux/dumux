@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(cvfe)
+add_subdirectory(fcstaggered)
 
 file(GLOB DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_FREEFLOW_NAVIERSTOKES_MOMENTUM_HEADERS}
