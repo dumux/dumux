@@ -13,6 +13,7 @@
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FFPM_FFMMOMENTUMPM_COUPLINGMANAGER_HH
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FFPM_FFMMOMENTUMPM_COUPLINGMANAGER_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/method.hh>
 
 #include "couplingmanager_staggered_cctpfa.hh"
@@ -24,8 +25,8 @@ namespace FreeFlowMomentumPorousMediumDetail {
 
 // declaration (specialize for different discretization types)
 template<class MDTraits,
-         class DiscFFMomentum = typename MDTraits::template SubDomain<0>::GridGeometry::DiscretizationMethod,
-         class DiscPM = typename MDTraits::template SubDomain<1>::GridGeometry::DiscretizationMethod
+         class DiscFFMomentum = typename GetPropType<typename MDTraits::template SubDomainTypeTag<0>, Properties::GridGeometry>::DiscretizationMethod,
+         class DiscPM = typename GetPropType<typename MDTraits::template SubDomainTypeTag<1>, Properties::GridGeometry>::DiscretizationMethod
          >
 struct FreeFlowMomentumPorousMediumCouplingManagerSelector;
 

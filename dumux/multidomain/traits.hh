@@ -135,11 +135,21 @@ struct MultiDomainTraits
     //! the number of subdomains
     static constexpr std::size_t numSubDomains = sizeof...(SubDomainTypeTags);
 
-private:
-
-    //! the type tag of a sub domain problem
+    /*!
+     * \brief The type tag of the sub domain with the given index.
+     *
+     * Prefer this over `SubDomain<id>::TypeTag` wherever the tag alone suffices,
+     * in particular in default template arguments and other contexts evaluated at
+     * definition time: naming `SubDomain<id>` instantiates that struct and with it
+     * every property query of the sub domain's tag, which pins those properties at
+     * the point of first use and silently bypasses any property specialization
+     * declared later in the same translation unit. This alias is plain tuple access
+     * and triggers no property resolution.
+     */
     template<std::size_t id>
     using SubDomainTypeTag = typename std::tuple_element_t<id, std::tuple<SubDomainTypeTags...>>;
+
+private:
 
     //! helper alias to construct derived multidomain types like tuples
     using Indices = std::make_index_sequence<numSubDomains>;
