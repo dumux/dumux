@@ -19,4 +19,5 @@ dumux_add_test(NAME test_brokenbasis
 
 dumux_add_test(NAME test_fejacobianpattern
                SOURCES test_fejacobianpattern.cc
+               CMAKE_GUARD dune-functions_FOUND
                LABELS unit discretization)
