@@ -40,17 +40,17 @@ public:
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
      *                be simulated
-     * \param fvGeometry The local geometry
+     * \param elemDisc The local geometry
      * \param ipData The interpolation point data
      */
-    template<class ElementSolution, class Problem, class FVElementGeometry, Concept::LocalDofIpData IpData>
+    template<class ElementSolution, class Problem, class ElementDiscretization, Concept::LocalDofIpData IpData>
     void update(const ElementSolution& elemSol,
                 const Problem& problem,
-                const FVElementGeometry& fvGeometry,
+                const ElementDiscretization& elemDisc,
                 const IpData& ipData)
     {
         priVars_ = elemSol[ipData.localDofIndex()];
-        extrusionFactor_ = problem.spatialParams().extrusionFactor(fvGeometry, ipData, elemSol);
+        extrusionFactor_ = problem.spatialParams().extrusionFactor(elemDisc, ipData, elemSol);
     }
 
     /*!

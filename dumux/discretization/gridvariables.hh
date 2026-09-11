@@ -27,7 +27,7 @@ class GridVariables
 {
 public:
     //! export type of the grid discretization
-    using GridGeometry = GG;
+    using GridDiscretization = GG;
 
     //! export type of the grid variables cache
     using GridVariablesCache = GVC;
@@ -43,8 +43,8 @@ public:
 
     template<class Problem>
     GridVariables(std::shared_ptr<Problem> problem,
-                  std::shared_ptr<const GridGeometry> gridGeometry)
-    : gridGeometry_(gridGeometry)
+                  std::shared_ptr<const GridDiscretization> gridDiscretization)
+    : gridDiscretization_(gridDiscretization)
     , curGridVars_(*problem)
     , prevGridVars_(*problem)
     {}
@@ -54,7 +54,7 @@ public:
     void init(const SolutionVector& curSol)
     {
         // initialize and update the current grid variables with a given solution
-        curGridVars_.init(*gridGeometry_, curSol);
+        curGridVars_.init(*gridDiscretization_, curSol);
 
         // set the variables of the previous time step in case we have an instationary problem
         // note that this means some memory overhead in the case of enabled caching, however
@@ -68,7 +68,7 @@ public:
     void update(const SolutionVector& curSol)
     {
         // update the current grid variables for the given solution
-        curGridVars_.update(*gridGeometry_, curSol);
+        curGridVars_.update(*gridDiscretization_, curSol);
     }
 
     //! update all variables after grid adaption
@@ -76,7 +76,7 @@ public:
     void updateAfterGridAdaption(const SolutionVector& curSol)
     {
         // update (always force data cache update as the grid changed)
-        curGridVars_.init(*gridGeometry_, curSol);
+        curGridVars_.init(*gridDiscretization_, curSol);
 
         // for instationary problems also update the variables
         // for the previous time step to the new grid
@@ -117,11 +117,11 @@ public:
     { return prevGridVars_; }
 
     //! return the grid discretization
-    const GridGeometry& gridGeometry() const
-    { return *gridGeometry_; }
+    const GridDiscretization& gridDiscretization() const
+    { return *gridDiscretization_; }
 
 protected:
-    std::shared_ptr<const GridGeometry> gridGeometry_; //!< pointer to the constant grid geometry
+    std::shared_ptr<const GridDiscretization> gridDiscretization_; //!< pointer to the constant grid discretization
 
 private:
     GridVariablesCache curGridVars_; //!< the current variables (primary and secondary variables)

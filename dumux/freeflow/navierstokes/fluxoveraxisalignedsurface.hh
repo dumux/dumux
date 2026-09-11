@@ -20,6 +20,7 @@
 #include <dune/geometry/axisalignedcubegeometry.hh>
 
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/intersectspointgeometry.hh>
@@ -36,7 +37,7 @@ template<class GridVariables, class SolutionVector, class LocalResidual>
 class FluxOverAxisAlignedSurface
 {
     using Scalar = typename GridVariables::Scalar;
-    using GridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
@@ -136,8 +137,9 @@ public:
                               const GlobalPosition& center,
                               const std::size_t normalDirectionIndex)
     {
-        GlobalPosition lowerLeft = gridVariables_.gridGeometry().bBoxMin();
-        GlobalPosition upperRight = gridVariables_.gridGeometry().bBoxMax();
+        const auto& gridDisc = Dumux::gridDiscretization(gridVariables_);
+        GlobalPosition lowerLeft = gridDisc.bBoxMin();
+        GlobalPosition upperRight = gridDisc.bBoxMax();
 
         lowerLeft[normalDirectionIndex] = center[normalDirectionIndex];
         upperRight[normalDirectionIndex] = center[normalDirectionIndex];

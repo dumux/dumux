@@ -27,7 +27,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/deprecated.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
@@ -109,14 +109,15 @@ void computeWallShearStress(
             return gridVariables.curGridVolVars();
     }();
     const auto& problem = curVariables.problem();
-    const auto& gg = Dumux::Deprecated::gridGeometry(problem);
+    const auto& gg = Dumux::gridDiscretization(problem);
     const auto& gv = gg.gridView();
 
-    using GridView = typename GridVariables::GridGeometry::GridView;
+    using GridDiscretization = Dumux::GridDiscretization_t<GridVariables>;
+    using GridView = typename GridDiscretization::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = typename GridVariables::GridGeometry::GlobalCoordinate;
+    using GlobalPosition = typename GridDiscretization::GlobalCoordinate;
 
     using Grid = Dune::FoamGrid<dim-1, dimWorld>;
     Dune::GridFactory<Grid> factory;

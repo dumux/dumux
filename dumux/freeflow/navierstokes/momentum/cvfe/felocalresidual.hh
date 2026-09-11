@@ -37,51 +37,51 @@ public:
      *
      * \param residual The element residual vector to add to
      * \param problem The problem to solve
-     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemDisc The finite-volume geometry of the element
      * \param prevElemVars The variables for all local dofs of the element at the previous time level
      * \param curElemVars The variables for all local dofs of the element at the current  time level
      * \param timeStepSize The current time step size
      */
-    template<class ResidualVector, class Problem, class FVElementGeometry, class ElementVariables>
+    template<class ResidualVector, class Problem, class ElementDiscretization, class ElementVariables>
     static void addStorageTerms(ResidualVector& residual,
                                 const Problem& problem,
-                                const FVElementGeometry& fvGeometry,
+                                const ElementDiscretization& elemDisc,
                                 const ElementVariables& prevElemVars,
                                 const ElementVariables& curElemVars,
                                 const Scalar timeStepSize)
     {
-        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
             // Make sure we don't iterate over quadrature points if there are no hybrid dofs
-            if (nonCVLocalDofs(fvGeometry).empty())
+            if (nonCVLocalDofs(elemDisc).empty())
                 return;
 
-            const auto& localBasis = fvGeometry.feLocalBasis();
+            const auto& localBasis = elemDisc.feLocalBasis();
             std::vector<RangeType> integralShapeFunctions(localBasis.size(), RangeType(0.0));
 
             // We apply mass lumping such that we only need to calculate the integral of basis functions
-            const auto& geometry = fvGeometry.elementGeometry();
-            const auto& element = fvGeometry.element();
-            using GlobalPosition = typename FVElementGeometry::GridGeometry::GlobalCoordinate;
+            const auto& geometry = elemDisc.elementGeometry();
+            const auto& element = elemDisc.element();
+            using GlobalPosition = typename ElementDiscretization::GridGeometry::GlobalCoordinate;
             using FeIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
 
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
             {
                 const auto& ipData = qpData.ipData();
                 // Obtain and store shape function values and gradients at the current quad point
                 FeIpData feIpData(geometry, ipData.local(), ipData.global(), localBasis);
 
                 // get density from the problem
-                for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                for (const auto& localDof : nonCVLocalDofs(elemDisc))
                     integralShapeFunctions[localDof.index()] += qpData.weight() * feIpData.shapeValue(localDof.index());
             }
 
-            for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+            for (const auto& localDof : nonCVLocalDofs(elemDisc))
             {
                 const auto localDofIdx = localDof.index();
-                const auto& data = ipData(fvGeometry, localDof);
-                const auto curDensity = problem.density(element, fvGeometry, data, false);
-                const auto prevDensity = problem.density(element, fvGeometry, data, true);
+                const auto& data = ipData(elemDisc, localDof);
+                const auto curDensity = problem.density(element, elemDisc, data, false);
+                const auto prevDensity = problem.density(element, elemDisc, data, true);
                 const auto curVelocity = curElemVars[localDofIdx].velocity();
                 const auto prevVelocity = prevElemVars[localDofIdx].velocity();
                 auto timeDeriv = (curDensity*curVelocity - prevDensity*prevVelocity);
@@ -99,19 +99,19 @@ public:
      *
      * \param residual The element residual vector to add to
      * \param problem The problem to solve
-     * \param fvGeometry The finite-volume geometry of the element
+     * \param elemDisc The finite-volume geometry of the element
      * \param elemVars The variables for all local dofs of the element
      */
-    template<class ResidualVector, class Problem, class FVElementGeometry, class ElementVariables>
+    template<class ResidualVector, class Problem, class ElementDiscretization, class ElementVariables>
     static void addFluxAndSourceTerms(ResidualVector& residual,
                                       const Problem& problem,
-                                      const FVElementGeometry& fvGeometry,
+                                      const ElementDiscretization& elemDisc,
                                       const ElementVariables& elemVars)
     {
-        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
             // Make sure we don't iterate over quadrature points if there are no hybrid dofs
-            if (nonCVLocalDofs(fvGeometry).empty())
+            if (nonCVLocalDofs(elemDisc).empty())
                 return;
 
             if constexpr (requires { problem.pointSources(); })
@@ -123,24 +123,24 @@ public:
             static const bool enableUnsymmetrizedVelocityGradient
                 = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-            const auto& element = fvGeometry.element();
+            const auto& element = elemDisc.element();
             using Cache = typename ElementVariables::InterpolationPointData;
-            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, FVElementGeometry, ElementVariables, Cache>;
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
+            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, ElementDiscretization, ElementVariables, Cache>;
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
             {
                 const auto& ipData = qpData.ipData();
                 // Obtain and store shape function values and gradients at the current quad point
                 const auto& ipCache = cache(elemVars, ipData);
-                FluxFunctionContext context(problem, fvGeometry, elemVars, ipCache);
+                FluxFunctionContext context(problem, elemDisc, elemVars, ipCache);
                 const auto& v = context.velocity();
                 const auto& gradV = context.gradVelocity();
 
                 // get viscosity from the problem
-                const Scalar mu = problem.effectiveViscosity(element, fvGeometry, ipData);
+                const Scalar mu = problem.effectiveViscosity(element, elemDisc, ipData);
                 // get density from the problem
-                const Scalar density = problem.density(element, fvGeometry, ipData);
+                const Scalar density = problem.density(element, elemDisc, ipData);
 
-                for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                for (const auto& localDof : nonCVLocalDofs(elemDisc))
                 {
                     const auto localDofIdx = localDof.index();
                     NumEqVector fluxAndSourceTerm(0.0);
@@ -154,10 +154,10 @@ public:
                                             : mu*mv(gradV + getTransposed(gradV), ipCache.gradN(localDofIdx));
 
                     // add pressure term
-                    fluxAndSourceTerm -= problem.pressure(element, fvGeometry, ipData) * ipCache.gradN(localDofIdx);
+                    fluxAndSourceTerm -= problem.pressure(element, elemDisc, ipData) * ipCache.gradN(localDofIdx);
 
                     // finally add source and flux boundary term and add everything to residual
-                    auto sourceAtIp = problem.source(fvGeometry, elemVars, ipData);
+                    auto sourceAtIp = problem.source(elemDisc, elemVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
                     sourceAtIp += density * problem.gravity();
 
@@ -210,11 +210,11 @@ public:
                                      const Problem& problem,
                                      const Element& element,
                                      const ElementDiscretization& elemDisc,
-                                     const ElementVariables& prevElemVolVars,
-                                     const ElementVariables& curElemVolVars) const
+                                     const ElementVariables& prevElemVars,
+                                     const ElementVariables& curElemVars) const
     {
         FeResidual::addStorageTerms(
-            residual, problem, elemDisc, prevElemVolVars, curElemVolVars, this->timeLoop().timeStepSize()
+            residual, problem, elemDisc, prevElemVars, curElemVars, this->timeLoop().timeStepSize()
         );
     }
 

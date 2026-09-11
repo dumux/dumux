@@ -251,7 +251,7 @@ public:
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const ElementDiscretization& elemDisc,
-                              const Variables& volVars,
+                              const Variables& vars,
                               const IpData& ipData) const {}
 
     /*!
