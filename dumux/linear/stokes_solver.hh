@@ -408,6 +408,39 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
 #endif
         }
+        else if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.AMGForPressure", false))
+        {
+#if HAVE_MPI
+            if (presComm_)
+            {
+                const bool nonovP = (presComm_->category()
+                                     == Dune::SolverCategory::nonoverlapping);
+                if (nonovP)
+                {
+                    using PressOp = Dune::NonoverlappingSchwarzOperator<P, V, V, Comm>;
+                    using Smoother = Dune::NonoverlappingBlockPreconditioner<Comm, Dune::SeqSSOR<P,V,V>>;
+                    auto lopP = std::make_shared<PressOp>(pmatrix_, *presComm_);
+                    preconditionerForP_ = std::make_shared<
+                        Dune::Amg::AMG<PressOp, V, Smoother, Comm>>(lopP, params, *presComm_);
+                }
+                else
+                {
+                    using PressOp = Dune::OverlappingSchwarzOperator<P, V, V, Comm>;
+                    using Smoother = Dune::BlockPreconditioner<V, V, Comm, Dune::SeqSSOR<P,V,V>>;
+                    auto lopP = std::make_shared<PressOp>(pmatrix_, *presComm_);
+                    preconditionerForP_ = std::make_shared<
+                        Dune::Amg::AMG<PressOp, V, Smoother, Comm>>(lopP, params, *presComm_);
+                }
+            }
+            else
+#endif
+            {
+                auto lopP = std::make_shared<PressureLinearOperator>(pmatrix_);
+                preconditionerForP_ = std::make_shared<
+                    Dune::Amg::AMG<PressureLinearOperator, V, Dumux::ParMTSSOR<P,V,V>>
+                >(lopP, params);
+            }
+        }
         else
         {
             const std::size_t numIterations = pmatrix_.nonzeroes() == pmatrix_.N() ? 1 : 10;
@@ -817,6 +850,19 @@ public:
         return applyIterativeSolver_(ATmp, x, bTmp);
     }
 
+    //! The matrix type of the pressure block of the preconditioner
+    using PressureMatrix = typename Preconditioner::PressureLinearOperator::matrix_type;
+
+    /*!
+     * \brief Use the given matrix in place of the pressure mass matrix in the preconditioner
+     * \note The matrix has to approximate the pressure Schur complement of the system being solved,
+     *       which the mass matrix does for a Stokes problem dominated by viscosity, whereas a
+     *       transient problem with a small time step is dominated by the velocity mass matrix and
+     *       calls for a Poisson-type operator weighted by the inverse density.
+     */
+    void setPressureMatrix(std::shared_ptr<const PressureMatrix> matrix)
+    { pressureMatrix_ = std::move(matrix); }
+
     Scalar norm(const Vector& b) const
     {
 #if HAVE_MPI
@@ -1017,6 +1063,9 @@ private:
     template<class LinearOperator>
     std::shared_ptr<LinearOperator> makePressureLinearOperator_()
     {
+        if (pressureMatrix_)
+            return std::make_shared<LinearOperator>(pressureMatrix_);
+
         using M = typename LinearOperator::matrix_type;
         auto massMatrix = createMassMatrix_<M>();
         return std::make_shared<LinearOperator>(massMatrix);
@@ -1106,6 +1155,7 @@ private:
     }
 
     double density_, viscosity_, weight_;
+    std::shared_ptr<const PressureMatrix> pressureMatrix_;
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
     std::shared_ptr<const VelocityGG> vGridGeometry_;
