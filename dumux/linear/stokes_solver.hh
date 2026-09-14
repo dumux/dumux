@@ -319,6 +319,9 @@ private:
 
         // invert pressure block
         applyPreconditionerForP_(v[_1], dTmp[_1]);
+        if (pressureDiagonal_)
+            for (std::size_t i = 0; i < v[_1].size(); ++i)
+                v[_1][i] += (*pressureDiagonal_)[i]*d[_1][i];
 
         return v;
     }
@@ -507,6 +510,20 @@ private:
     {
         preconditionerForP_->apply(sol, rhs);
     }
+
+public:
+    /*!
+     * \brief Add a diagonal to the inverse of the pressure block, Cahouet & Chabard style
+     *
+     * The pressure operator handed to this preconditioner approximates the Schur complement of the
+     * storage part of the velocity block; the viscous part contributes a scaled mass matrix, whose
+     * inverse is this diagonal. Both inverses are summed.
+     */
+    void setPressureDiagonal(std::shared_ptr<const V> diagonal)
+    { pressureDiagonal_ = std::move(diagonal); }
+
+private:
+    std::shared_ptr<const V> pressureDiagonal_;
 
     //! \brief The matrix we operate on.
     const M& matrix_;
@@ -816,6 +833,7 @@ class StokesSolver
 : public LinearSolver
 {
     using Preconditioner = Detail::StokesPreconditioner<Matrix, Vector, Vector>;
+    using PressureVector = std::decay_t<decltype(std::declval<Vector>()[Dune::Indices::_1])>;
 
 #if HAVE_MPI
     using VTraits = LinearSolverTraits<VelocityGG>;
@@ -976,6 +994,10 @@ public:
     void setPressureMatrix(std::shared_ptr<const PressureMatrix> matrix)
     { pressureMatrix_ = std::move(matrix); }
 
+    //! Set the diagonal added to the inverse of the pressure block (see StokesPreconditioner::setPressureDiagonal)
+    void setPressureDiagonal(std::shared_ptr<const PressureVector> diagonal)
+    { pressureDiagonal_ = std::move(diagonal); }
+
     Scalar norm(const Vector& b) const
     {
 #if HAVE_MPI
@@ -1102,7 +1124,9 @@ private:
     {
         auto op  = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
         auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
-        storedPreconditioner_ = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
+        auto prec = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
+        prec->setPressureDiagonal(pressureDiagonal_);
+        storedPreconditioner_ = prec;
         storedOperator_ = op;
     }
 
@@ -1142,6 +1166,7 @@ private:
             A, vComm_, pComm_, isNonOverlapping_);
         auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
         auto seqPrec = std::make_shared<Preconditioner>(innerOp, pop, params_.sub("preconditioner"), vComm_, pComm_);
+        seqPrec->setPressureDiagonal(pressureDiagonal_);
         storedPreconditioner_ = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
             seqPrec, vComm_, pComm_, isNonOverlapping_);
         storedOperator_ = op;
@@ -1390,6 +1415,7 @@ private:
 
     double density_, viscosity_, weight_;
     std::shared_ptr<const PressureMatrix> pressureMatrix_;
+    std::shared_ptr<const PressureVector> pressureDiagonal_;
     std::shared_ptr<Matrix> storedMatrix_;
     std::shared_ptr<Dune::LinearOperator<Vector, Vector>> storedOperator_;
     std::shared_ptr<Dune::Preconditioner<Vector, Vector>> storedPreconditioner_;
