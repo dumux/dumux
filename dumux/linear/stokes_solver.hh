@@ -1026,10 +1026,11 @@ private:
         const auto cat = isNonOverlapping_ ? Dune::SolverCategory::nonoverlapping
                                            : Dune::SolverCategory::overlapping;
 
-        vParallelHelper_ = std::make_shared<ParallelISTLHelper<VTraits>>(
-            vGridGeometry_->gridView(), VTraits::dofMapper(*vGridGeometry_));
-        pParallelHelper_ = std::make_shared<ParallelISTLHelper<PTraits>>(
-            pGridGeometry_->gridView(), PTraits::dofMapper(*pGridGeometry_));
+        // the helpers keep a reference to their mapper, which the traits may hand out by value
+        vDofMapper_ = std::make_shared<const typename VTraits::DofMapper>(VTraits::dofMapper(*vGridGeometry_));
+        pDofMapper_ = std::make_shared<const typename PTraits::DofMapper>(PTraits::dofMapper(*pGridGeometry_));
+        vParallelHelper_ = std::make_shared<ParallelISTLHelper<VTraits>>(vGridGeometry_->gridView(), *vDofMapper_);
+        pParallelHelper_ = std::make_shared<ParallelISTLHelper<PTraits>>(pGridGeometry_->gridView(), *pDofMapper_);
 
         vComm_ = std::make_shared<Comm>(vGridGeometry_->gridView().comm(), cat);
         vParallelHelper_->createParallelIndexSet(*vComm_);
@@ -1154,7 +1155,7 @@ private:
         static constexpr std::size_t numCodims = dim + 1;
 
         const auto& gv        = vGridGeometry_->gridView();
-        const auto& velMapper = VTraits::dofMapper(*vGridGeometry_);
+        const auto& velMapper = *vDofMapper_;
         const auto velCodims  = activeCodimsBitset_<VTraits, numCodims>();
 
         // --- 1. Velocity diagonal block A[_0][_0]: extendMatrix + sumEntries, exactly
@@ -1402,6 +1403,8 @@ private:
     std::shared_ptr<Dune::ScalarProduct<Vector>> scalarProduct_;
 
 #if HAVE_MPI
+    std::shared_ptr<const typename VTraits::DofMapper> vDofMapper_;
+    std::shared_ptr<const typename PTraits::DofMapper> pDofMapper_;
     std::shared_ptr<ParallelISTLHelper<VTraits>> vParallelHelper_;
     std::shared_ptr<ParallelISTLHelper<PTraits>> pParallelHelper_;
     std::shared_ptr<Comm> vComm_, pComm_;
