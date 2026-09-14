@@ -877,6 +877,32 @@ public:
         return applyIterativeSolver_(ATmp, x, bTmp);
     }
 
+    //! Give the copies of shared degrees of freedom the values of their owners
+    void makeConsistent(Vector& v) const
+    {
+#if HAVE_MPI
+        using namespace Dune::Indices;
+        if (vComm_ && pComm_)
+        {
+            vComm_->copyOwnerToAll(v[_0], v[_0]);
+            pComm_->copyOwnerToAll(v[_1], v[_1]);
+        }
+#endif
+    }
+
+    //! Set the entries of shared degrees of freedom this process does not own to zero
+    void makeUnique(Vector& v) const
+    {
+#if HAVE_MPI
+        using namespace Dune::Indices;
+        if (vComm_ && pComm_)
+        {
+            Detail::makeUnique(*vComm_, v[_0]);
+            Detail::makeUnique(*pComm_, v[_1]);
+        }
+#endif
+    }
+
     //! The matrix type of the pressure block of the preconditioner
     using PressureMatrix = typename Preconditioner::PressureLinearOperator::matrix_type;
 
