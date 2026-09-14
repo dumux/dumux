@@ -877,6 +877,66 @@ public:
         return applyIterativeSolver_(ATmp, x, bTmp);
     }
 
+    /*!
+     * \brief Keep a matrix, together with the operator and preconditioner built on it, for several solves
+     * \note The Dirichlet symmetrization needs the right-hand side and is therefore not available here
+     */
+    void setMatrix(std::shared_ptr<Matrix> A)
+    {
+        if (getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.SymmetrizeDirichlet", true))
+            DUNE_THROW(Dune::InvalidStateException, "A kept matrix cannot symmetrize the Dirichlet constraints, "
+                                                    "set LinearSolver.SymmetrizeDirichlet = false");
+
+        using namespace Dune::Indices;
+        storedMatrix_ = std::make_shared<Matrix>(*A);
+        (*storedMatrix_)[_1] *= -1.0/density_;
+
+#if HAVE_MPI
+        if (vGridGeometry_->gridView().comm().size() > 1)
+        {
+            if (isNonOverlapping_)
+                prepareMatrixParallel_(*storedMatrix_);
+            buildParallelSolverComponents_(*storedMatrix_);
+        }
+        else
+#endif
+            buildSequentialSolverComponents_(*storedMatrix_);
+    }
+
+    //! \copydoc setMatrix(std::shared_ptr<Matrix>)
+    void setMatrix(Matrix& A)
+    { setMatrix(Dune::stackobject_to_shared_ptr(A)); }
+
+    //! Solve with the matrix kept by setMatrix
+    bool solve(Vector& x, const Vector& b)
+    {
+        if (!storedMatrix_)
+            DUNE_THROW(Dune::InvalidStateException, "Called solve(x, b) but no matrix has been set");
+
+        using namespace Dune::Indices;
+        auto bTmp = b;
+        bTmp[_1] *= -1.0/density_;
+
+#if HAVE_MPI
+        if (vGridGeometry_->gridView().comm().size() > 1)
+        {
+            if (isNonOverlapping_)
+                prepareRhsParallel_(*storedMatrix_, bTmp);
+            else
+            {
+                Detail::makeUnique(*vComm_, bTmp[_0]);
+                Detail::makeUnique(*pComm_, bTmp[_1]);
+            }
+
+            const bool converged = runSolver_(storedOperator_, scalarProduct_, storedPreconditioner_, x, bTmp, *storedMatrix_);
+            vComm_->copyOwnerToAll(x[_0], x[_0]);
+            pComm_->copyOwnerToAll(x[_1], x[_1]);
+            return converged;
+        }
+#endif
+        return runSolver_(storedOperator_, scalarProduct_, storedPreconditioner_, x, bTmp, *storedMatrix_);
+    }
+
     //! Give the copies of shared degrees of freedom the values of their owners
     void makeConsistent(Vector& v) const
     {
@@ -1033,10 +1093,16 @@ private:
 
     bool solveSequential_(Matrix& A, Vector& x, Vector& b)
     {
+        buildSequentialSolverComponents_(A);
+        return runSolver_(storedOperator_, scalarProduct_, storedPreconditioner_, x, b, A);
+    }
+
+    void buildSequentialSolverComponents_(const Matrix& A)
+    {
         auto op  = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
         auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
-        auto preconditioner = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
-        return runSolver_(op, scalarProduct_, preconditioner, x, b, A);
+        storedPreconditioner_ = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
+        storedOperator_ = op;
     }
 
 #if HAVE_MPI
@@ -1045,25 +1111,18 @@ private:
         using namespace Dune::Indices;
 
         if (isNonOverlapping_)
-            prepareParallelLinearSystem_(A, b);
+        {
+            prepareMatrixParallel_(A);
+            prepareRhsParallel_(A, b);
+        }
         else
         {
             Detail::makeUnique(*vComm_, b[_0]);
             Detail::makeUnique(*pComm_, b[_1]);
         }
 
-        // innerOp is an AssembledLinearOperator (needed by StokesPreconditioner::getmat());
-        // op is the parallel saddle-point operator (completes the coupling and projects
-        // ghosts after the mat-vec for the non-overlapping case).
-        auto innerOp = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
-        auto op = std::make_shared<Detail::ParallelStokesLinearOperator<Matrix, Vector, Vector>>(
-            A, vComm_, pComm_, isNonOverlapping_);
-        auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
-        auto seqPrec = std::make_shared<Preconditioner>(innerOp, pop, params_.sub("preconditioner"), vComm_, pComm_);
-        auto prec = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
-            seqPrec, vComm_, pComm_, isNonOverlapping_);
-
-        const bool converged = runSolver_(op, scalarProduct_, prec, x, b, A);
+        buildParallelSolverComponents_(A);
+        const bool converged = runSolver_(storedOperator_, scalarProduct_, storedPreconditioner_, x, b, A);
 
         // broadcast solution from owned to ghost DOFs
         vComm_->copyOwnerToAll(x[_0], x[_0]);
@@ -1072,7 +1131,22 @@ private:
         return converged;
     }
 
-    void prepareParallelLinearSystem_(Matrix& A, Vector& b)
+    void buildParallelSolverComponents_(const Matrix& A)
+    {
+        // innerOp is an AssembledLinearOperator (needed by StokesPreconditioner::getmat());
+        // op is the parallel saddle-point operator (completes the coupling and projects
+        // ghosts after the mat-vec for the non-overlapping case).
+        auto innerOp = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
+        auto op = std::make_shared<Detail::ParallelStokesLinearOperator<Matrix, Vector, Vector>>(
+            A, vComm_, pComm_, isNonOverlapping_);
+        auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
+        auto seqPrec = std::make_shared<Preconditioner>(innerOp, pop, params_.sub("preconditioner"), vComm_, pComm_);
+        storedPreconditioner_ = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
+            seqPrec, vComm_, pComm_, isNonOverlapping_);
+        storedOperator_ = op;
+    }
+
+    void prepareMatrixParallel_(Matrix& A)
     {
         using namespace Dune::Indices;
         using GridView = typename VelocityGG::GridView;
@@ -1102,7 +1176,13 @@ private:
         // by summing the partial mat-vec RESULTS across ranks (addOwnerCopyToOwnerCopy),
         // which needs no local column DOF for the far-side contribution. ---
 
-        // --- Make RHS consistent (additive assembly summed across ranks). ---
+    }
+
+    //! Make the additively assembled right-hand side of a non-overlapping decomposition unique
+    void prepareRhsParallel_(const Matrix& A, Vector& b)
+    {
+        using namespace Dune::Indices;
+        using VelBlock = std::decay_t<decltype(A[_0][_0])>;
         using VelVec  = std::decay_t<decltype(b[_0])>;
         using PresVec = std::decay_t<decltype(b[_1])>;
         using VNonoverlapping  = typename VTraits::template ParallelNonoverlapping<VelBlock, VelVec>;
@@ -1309,6 +1389,9 @@ private:
 
     double density_, viscosity_, weight_;
     std::shared_ptr<const PressureMatrix> pressureMatrix_;
+    std::shared_ptr<Matrix> storedMatrix_;
+    std::shared_ptr<Dune::LinearOperator<Vector, Vector>> storedOperator_;
+    std::shared_ptr<Dune::Preconditioner<Vector, Vector>> storedPreconditioner_;
     Dune::InverseOperatorResult result_;
     Dune::ParameterTree params_;
     std::shared_ptr<const VelocityGG> vGridGeometry_;
