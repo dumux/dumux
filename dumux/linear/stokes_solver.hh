@@ -79,6 +79,14 @@ void zeroOverlap(const Comm& comm, Block& v)
 template<class Comm, class Block>
 void completeCouplingResult(const Comm& comm, Block& y)
 {
+    // on an overlapping decomposition the owned rows are already complete and the copies
+    // must not be added to them
+    if (comm.category() == Dune::SolverCategory::overlapping)
+    {
+        makeUnique(comm, y);
+        return;
+    }
+
     zeroOverlap(comm, y);
     comm.addOwnerCopyToOwnerCopy(y, y);
     makeUnique(comm, y);
@@ -363,6 +371,24 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
 #endif
         }
+        // a few smoothing sweeps suffice where the velocity block is dominated by its storage term
+        else if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.SSORForVelocity", false))
+        {
+            const auto sweeps = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.VelocitySweeps", 2);
+            const auto relaxation = getParamFromGroup<scalar_field_type>(paramGroup_, "LinearSolver.Preconditioner.VelocityRelaxation", 1.0);
+            auto seqSSOR = std::make_shared<Dune::SeqSSOR<A,U,U>>(matrix_[_0][_0], sweeps, relaxation);
+#if HAVE_MPI
+            if (velComm_)
+            {
+                if (velComm_->category() == Dune::SolverCategory::nonoverlapping)
+                    preconditionerForA_ = std::make_shared<Dune::NonoverlappingBlockPreconditioner<Comm, Dune::SeqSSOR<A,U,U>>>(seqSSOR, *velComm_);
+                else
+                    preconditionerForA_ = std::make_shared<Dune::BlockPreconditioner<U, U, Comm, Dune::SeqSSOR<A,U,U>>>(seqSSOR, *velComm_);
+            }
+            else
+#endif
+                preconditionerForA_ = seqSSOR;
+        }
         else
         {
 #if HAVE_MPI
@@ -545,21 +571,22 @@ public:
             applyNonoverlapping_(x, y);
         }
         else
+        {
+            // the rows of owned degrees of freedom are complete on an overlapping decomposition,
+            // those of the others are not, so the result is masked to the unique representation
             localOp_.apply(x, y);
+            makeUnique(*vComm_, y[_0]);
+            makeUnique(*pComm_, y[_1]);
+        }
     }
 
     void applyscaleadd(field_type alpha, const X& x, Y& y) const override
     {
         using namespace Dune::Indices;
-        if (nonOverlapping_)
-        {
-            Y Ax(y); Ax = 0;
-            applyNonoverlapping_(x, Ax);
-            y[_0].axpy(alpha, Ax[_0]);
-            y[_1].axpy(alpha, Ax[_1]);
-        }
-        else
-            localOp_.applyscaleadd(alpha, x, y);
+        Y Ax(y); Ax = 0;
+        apply(x, Ax);
+        y[_0].axpy(alpha, Ax[_0]);
+        y[_1].axpy(alpha, Ax[_1]);
     }
 
 private:
@@ -866,21 +893,25 @@ public:
     Scalar norm(const Vector& b) const
     {
 #if HAVE_MPI
-        // The Newton solver calls norm() on the assembled residual, which is in an
-        // ADDITIVE representation (each rank holds only its local partial contribution
-        // at shared DOFs). The scalar product sums over OWNED DOFs only and therefore
-        // expects owner = global value (consistent/unique). Summing the additive
-        // partials across ranks first (addOwnerCopyToOwnerCopy) makes owner = global,
-        // so the owner-only scalar product returns the correct global norm — exactly
-        // what the momentum-only solver does via makeNonOverlappingConsistent before
-        // its norm. Without this, the Newton residual norm is under-reported and the
-        // convergence check misbehaves (false "residual increased").
+        // The assembled residual is in an additive representation on a non-overlapping
+        // decomposition (each rank holds only its partial contribution at shared dofs), so
+        // the partials are summed first; on an overlapping decomposition the owned rows are
+        // complete and the others are masked. Either way the owner-only scalar product then
+        // returns the global norm.
         using namespace Dune::Indices;
         if (vComm_ && pComm_ && vGridGeometry_->gridView().comm().size() > 1)
         {
             Vector bc(b);
-            vComm_->addOwnerCopyToOwnerCopy(bc[_0], bc[_0]);
-            pComm_->addOwnerCopyToOwnerCopy(bc[_1], bc[_1]);
+            if (isNonOverlapping_)
+            {
+                vComm_->addOwnerCopyToOwnerCopy(bc[_0], bc[_0]);
+                pComm_->addOwnerCopyToOwnerCopy(bc[_1], bc[_1]);
+            }
+            else
+            {
+                Detail::makeUnique(*vComm_, bc[_0]);
+                Detail::makeUnique(*pComm_, bc[_1]);
+            }
             return scalarProduct_->norm(bc);
         }
 #endif
@@ -922,6 +953,37 @@ private:
 
         scalarProduct_ = std::make_shared<Detail::ParallelStokesScalarProduct<Vector>>(
             vComm_, pComm_, isNonOverlapping_);
+
+        if (this->verbosity() > 0)
+            reportIndexSets_();
+    }
+
+    //! The decomposition of the degrees of freedom, whose owners have to add up to the global count
+    void reportIndexSets_() const
+    {
+        using Attr = Dune::OwnerOverlapCopyAttributeSet;
+        const auto count = [](const auto& comm, std::size_t& owners, std::size_t& copies, std::size_t& overlaps)
+        {
+            for (const auto& pair : comm.indexSet())
+            {
+                const auto attr = pair.local().attribute();
+                if (attr == Attr::owner) ++owners;
+                else if (attr == Attr::copy) ++copies;
+                else ++overlaps;
+            }
+        };
+
+        std::size_t vOwners = 0, vCopies = 0, vOverlaps = 0, pOwners = 0, pCopies = 0, pOverlaps = 0;
+        count(*vComm_, vOwners, vCopies, vOverlaps);
+        count(*pComm_, pOwners, pCopies, pOverlaps);
+
+        const auto& comm = vGridGeometry_->gridView().comm();
+        std::cout << "Stokes solver rank " << comm.rank() << ": velocity dofs " << vGridGeometry_->numDofs()
+                  << " (index set: " << vOwners << " owner, " << vCopies << " copy, " << vOverlaps << " overlap), pressure dofs "
+                  << pGridGeometry_->numDofs() << " (index set: " << pOwners << " owner, " << pCopies << " copy, " << pOverlaps << " overlap)"
+                  << ", " << (isNonOverlapping_ ? "non-overlapping" : "overlapping") << std::endl;
+        std::cout << "Stokes solver: owners summed over ranks: velocity " << comm.sum(vOwners)
+                  << ", pressure " << comm.sum(pOwners) << std::endl;
     }
 #endif
 
@@ -948,7 +1010,7 @@ private:
         auto op  = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
         auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
         auto preconditioner = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
-        return runSolver_(op, scalarProduct_, preconditioner, x, b);
+        return runSolver_(op, scalarProduct_, preconditioner, x, b, A);
     }
 
 #if HAVE_MPI
@@ -958,6 +1020,11 @@ private:
 
         if (isNonOverlapping_)
             prepareParallelLinearSystem_(A, b);
+        else
+        {
+            Detail::makeUnique(*vComm_, b[_0]);
+            Detail::makeUnique(*pComm_, b[_1]);
+        }
 
         // innerOp is an AssembledLinearOperator (needed by StokesPreconditioner::getmat());
         // op is the parallel saddle-point operator (completes the coupling and projects
@@ -970,7 +1037,7 @@ private:
         auto prec = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
             seqPrec, vComm_, pComm_, isNonOverlapping_);
 
-        const bool converged = runSolver_(op, scalarProduct_, prec, x, b);
+        const bool converged = runSolver_(op, scalarProduct_, prec, x, b, A);
 
         // broadcast solution from owned to ghost DOFs
         vComm_->copyOwnerToAll(x[_0], x[_0]);
@@ -1044,8 +1111,11 @@ private:
     bool runSolver_(std::shared_ptr<LinearOperator> op,
                     std::shared_ptr<SP> sp,
                     std::shared_ptr<Prec> prec,
-                    Vector& x, Vector& b)
+                    Vector& x, Vector& b, const Matrix& A)
     {
+        if (this->verbosity() > 2)
+            checkOperator_(*op, *sp, b, A);
+
         std::unique_ptr<Dune::InverseOperator<Vector, Vector>> solver;
         if (solverType_ == "minres")
             solver = std::make_unique<Dune::MINRESSolver<Vector>>(op, sp, prec, params_);
@@ -1053,11 +1123,68 @@ private:
             solver = std::make_unique<Dune::BiCGSTABSolver<Vector>>(op, sp, prec, params_);
         else if (solverType_ == "gmres")
             solver = std::make_unique<Dune::RestartedGMResSolver<Vector>>(op, sp, prec, params_);
+        else if (solverType_ == "fgmres")
+            solver = std::make_unique<Dune::RestartedFlexibleGMResSolver<Vector>>(op, sp, prec, params_);
         else
             DUNE_THROW(Dune::NotImplemented, "Solver choice " << solverType_ << " is not implemented");
 
         solver->apply(x, b, result_);
         return result_.converged;
+    }
+
+    /*!
+     * \brief Global norms of the operator applied to the vector of ones, block by block
+     * \note These have to agree between runs on any number of processes
+     */
+    template<class LinearOperator, class SP>
+    void checkOperator_(const LinearOperator& op, const SP& sp, const Vector& b, const Matrix& matrix) const
+    {
+        using namespace Dune::Indices;
+        auto ones = b; ones = 1.0;
+        auto image = b; image = 0.0;
+        op.apply(ones, image);
+
+        const auto blockNorm = [&](const auto& v, auto block)
+        {
+            auto masked = v;
+            Dune::Hybrid::forEach(std::make_index_sequence<Vector::size()>{}, [&](auto i)
+            { if constexpr (i != block) masked[i] = 0.0; });
+            return sp.norm(masked);
+        };
+
+        std::cerr << "Stokes solver check: |1| = " << sp.norm(ones)
+                  << ", |A 1| velocity block " << blockNorm(image, _0) << ", pressure block " << blockNorm(image, _1)
+                  << ", |b| velocity block " << blockNorm(b, _0) << ", pressure block " << blockNorm(b, _1) << std::endl;
+
+        // the rows of the pressure block that do not vanish on the vector of ones, which for a
+        // divergence constraint are only the constrained ones
+        const auto rank = vGridGeometry_->gridView().comm().rank();
+        std::size_t numNonZero = 0;
+        std::string samples;
+        for (std::size_t i = 0; i < image[_1].size(); ++i)
+        {
+            using std::abs;
+            if (abs(image[_1][i][0]) > 1e-12)
+            {
+                ++numNonZero;
+                if (numNonZero <= 80)
+                    samples += " " + std::to_string(i) + ":" + std::to_string(image[_1][i][0]);
+            }
+        }
+        std::cerr << "Stokes solver check rank " << rank << ": " << numNonZero
+                  << " pressure rows with (A 1) != 0 (masked to owners), e.g." << samples << std::endl;
+
+        // the entries of selected rows of the divergence and pressure blocks
+        const auto rows = getParamFromGroup<std::vector<int>>(this->paramGroup(), "LinearSolver.CheckRows", std::vector<int>{});
+        for (const auto row : rows)
+        {
+            std::string entries;
+            for (auto column = matrix[_1][_0][row].begin(); column != matrix[_1][_0][row].end(); ++column)
+                entries += " u" + std::to_string(column.index()) + ":" + std::to_string((*column)[0][0]);
+            for (auto column = matrix[_1][_1][row].begin(); column != matrix[_1][_1][row].end(); ++column)
+                entries += " p" + std::to_string(column.index()) + ":" + std::to_string((*column)[0][0]);
+            std::cerr << "Stokes solver check rank " << rank << ": pressure row " << row << ":" << entries << std::endl;
+        }
     }
 
     template<class LinearOperator>
