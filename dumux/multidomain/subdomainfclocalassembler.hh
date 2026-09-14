@@ -323,8 +323,17 @@ public:
             }
         };
 
+        // on a distributed grid, the rows of degrees of freedom inside the overlap are identity rows,
+        // so of an overlap element only the border degrees of freedom couple; the residual of the
+        // others would also be evaluated on faces at the processor boundary that have no neighbor
+        const bool interiorElement = element.partitionType() == Dune::InteriorEntity;
+
         for (const auto& scv : scvs(fvGeometry))
         {
+            if (!interiorElement
+                && element.template subEntity<1>(scv.indexInElement()).partitionType() != Dune::BorderEntity)
+                continue;
+
             const auto& stencil = this->couplingManager().couplingStencil(domainI, element, scv, domainJ);
 
             for (const auto globalJ : stencil)
