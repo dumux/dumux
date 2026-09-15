@@ -18,10 +18,12 @@
 #include <map>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 #include <dune/common/parametertree.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/timer.hh>
 
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/preconditioner.hh>
@@ -216,6 +218,7 @@ public:
     void apply(X& update, const Y& currentDefect) override
     {
         using namespace Dune::Indices;
+        ++numApplications_;
 
         if (mode_ == Mode::symmetric)
         {
@@ -241,6 +244,16 @@ public:
         using namespace Dune::Indices;
         preconditionerForA_->post(update[_0]);
         preconditionerForP_->post(update[_1]);
+
+        if (verbosity_ > 1 && numApplications_ > 0)
+        {
+            std::cout << "=== StokesPreconditioner: " << numApplications_ << " applications, "
+                      << "velocity block " << timeVelocity_/numApplications_*1e3 << " ms, "
+                      << "pressure block " << timePressure_/numApplications_*1e3 << " ms each"
+                      << std::endl;
+            timeVelocity_ = timePressure_ = 0.0;
+            numApplications_ = 0;
+        }
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
@@ -502,14 +515,23 @@ private:
     template<class Sol, class Rhs>
     void applyPreconditionerForA_(Sol& sol, Rhs& rhs) const
     {
+        Dune::Timer timer;
         preconditionerForA_->apply(sol, rhs);
+        timeVelocity_ += timer.elapsed();
     }
 
     template<class Sol, class Rhs>
     void applyPreconditionerForP_(Sol& sol, Rhs& rhs) const
     {
+        Dune::Timer timer;
         preconditionerForP_->apply(sol, rhs);
+        timePressure_ += timer.elapsed();
     }
+
+    //! Accumulated time spent in the two block preconditioners, reported at the end of a solve
+    mutable double timeVelocity_ = 0.0;
+    mutable double timePressure_ = 0.0;
+    mutable std::size_t numApplications_ = 0;
 
 public:
     /*!
