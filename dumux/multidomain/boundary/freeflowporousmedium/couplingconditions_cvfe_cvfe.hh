@@ -22,6 +22,7 @@
 #include <dumux/common/math.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/flux/darcyslaw_fwd.hh>
 #include <dumux/flux/fickslaw_fwd.hh>
@@ -166,10 +167,9 @@ public:
         localBasis.evaluateFunction(ipData.local(), shapeValues);
 
         // interpolate density
-        // TODO: Replace by localDof loop, for now we assume that the mass schemes are pure fv schemes
         Scalar density(0.0);
-        for (const auto& scv : scvs(elemDisc))
-            density += vars[scv].density(pmPhaseIdx)*shapeValues[scv.localDofIndex()][0];
+        for (const auto& localDof : localDofs(elemDisc))
+            density += vars[localDof].density(pmPhaseIdx)*shapeValues[localDof.index()][0];
 
         return density;
     }
@@ -190,10 +190,9 @@ public:
         localBasis.evaluateFunction(ipData.local(), shapeValues);
 
         // interpolate pressure
-        // TODO: Replace by localDof loop, for now we assume that the mass schemes are pure fv schemes
         Scalar pressure(0.0);
-        for (const auto& scv : scvs(elemDisc))
-            pressure += vars[scv].pressure(pmPhaseIdx)*shapeValues[scv.localDofIndex()][0];
+        for (const auto& localDof : localDofs(elemDisc))
+            pressure += vars[localDof].pressure(pmPhaseIdx)*shapeValues[localDof.index()][0];
 
         return pressure;
     }
