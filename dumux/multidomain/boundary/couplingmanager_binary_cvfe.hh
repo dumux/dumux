@@ -21,6 +21,7 @@
 #include <cassert>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/common/concepts/localdofs_.hh>
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
@@ -85,21 +86,27 @@ private:
         const Problem<coupledDomainIdx>& problem;
         ElementSolution elemSol;
 
-        template<class ScvOrIpData>
-        auto vars(const ScvOrIpData& scvOrIpData) const
+        template<class ScvOrLocalDof>
+        auto vars(const ScvOrLocalDof& scvOrLocalDof) const
         {
             Variables<coupledDomainIdx> variables;
             if constexpr (Concept::FVGridVariables<GridVariables<coupledDomainIdx>>)
-                variables.update(elemSol, problem, elemDisc.element(), scvOrIpData);
+            {
+                // the variables are still defined per sub-control volume
+                if constexpr (Concept::LocalDof<ScvOrLocalDof>)
+                    variables.update(elemSol, problem, elemDisc.element(), elemDisc.scv(scvOrLocalDof.index()));
+                else
+                    variables.update(elemSol, problem, elemDisc.element(), scvOrLocalDof);
+            }
             else
-                variables.update(elemSol, problem, elemDisc, ipData(elemDisc, scvOrIpData));
+                variables.update(elemSol, problem, elemDisc, ipData(elemDisc, scvOrLocalDof));
             return variables;
         }
 
-        template<class ScvOrIpData>
-        auto operator[](const ScvOrIpData& scvOrIpData) const
+        template<class ScvOrLocalDof>
+        auto operator[](const ScvOrLocalDof& scvOrLocalDof) const
         {
-            return vars(scvOrIpData);
+            return vars(scvOrLocalDof);
         }
     };
 
