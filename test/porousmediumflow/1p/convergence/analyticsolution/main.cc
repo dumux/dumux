@@ -12,6 +12,7 @@
 #include <config.h>
 #include <iostream>
 #include <iomanip>
+#include <type_traits>
 
 #include <dune/common/parallel/mpihelper.hh>
 
@@ -26,10 +27,15 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/gridwriter.hh>
+#include <dumux/io/cvfegridfunction.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
+#include <dumux/discretization/concepts.hh>
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
 
 #include <dumux/common/metadata.hh>
 
@@ -70,6 +76,50 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
     collector["numDofs"].push_back(numDofs);
     collector["L2errors"].push_back(l2error);
     Dumux::MetaData::writeJsonFile(collector, problem.name());
+}
+
+//! whether the variables are defined per local dof rather than per sub-control volume
+template<class GridVariables>
+constexpr bool usesGeneralGridVariables()
+{ return Dumux::Concept::GridVariables<GridVariables> && !Dumux::Concept::FVGridVariables<GridVariables>; }
+
+/*!
+ * \brief Write the solution to vtk
+ * \note The variables defined per local dof are not known to the output module, so the
+ *       solution is written with the grid writer at the interpolation order of the scheme.
+ */
+template<class TypeTag, class Problem, class GridGeometry, class GridVariables, class SolutionVector>
+void writeVtkOutput(const Problem& problem,
+                    const GridGeometry& gridGeometry,
+                    GridVariables& gridVariables,
+                    const SolutionVector& x)
+{
+    using namespace Dumux;
+
+    if constexpr (usesGeneralGridVariables<GridVariables>())
+    {
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq3)
+        {
+            IO::GridWriter writer{IO::Format::vtu, gridGeometry.gridView(), IO::order<3>};
+            writer.setPointField("p", x);
+            writer.write(problem.name());
+        }
+        else
+        {
+            IO::GridWriter writer{IO::Format::vtu, gridGeometry.gridView(), IO::order<2>};
+            writer.setPointField("p", IO::cvfeGridFunction(gridGeometry, x));
+            writer.write(problem.name());
+        }
+    }
+    else
+    {
+        VtkOutputModule<GridVariables, SolutionVector> vtkWriter(gridVariables, x, problem.name());
+        using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
+        vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(gridVariables));
+        using IOFields = GetPropType<TypeTag, Properties::IOFields>;
+        IOFields::initOutputModule(vtkWriter); // Add model specific output fields
+        vtkWriter.write(1.0);
+    }
 }
 
 int main(int argc, char** argv)
@@ -120,16 +170,10 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // initialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
-    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    using IOFields = GetPropType<TypeTag, Properties::IOFields>;
-    IOFields::initOutputModule(vtkWriter); // Add model specific output fields
-    vtkWriter.write(0.0);
-
     // create assembler & linear solver
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = std::conditional_t<usesGeneralGridVariables<GridVariables>(),
+                                         Dumux::Experimental::Assembler<TypeTag, DiffMethod::numeric>,
+                                         FVAssembler<TypeTag, DiffMethod::numeric>>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -142,8 +186,7 @@ int main(int argc, char** argv)
     // linearize & solve
     nonLinearSolver.solve(x);
 
-    // output result to vtk
-    vtkWriter.write(1.0);
+    writeVtkOutput<TypeTag>(*problem, *gridGeometry, *gridVariables, x);
 
     printL2Error(*problem, x);
 
