@@ -12,19 +12,19 @@ target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
                            PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                                   TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1Bubble
                                   TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBox)
+                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
 
 target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
                            PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                                   TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1BubbleHybrid
                                   TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBox)
+                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
 
 target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
                            PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                                   TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2Hybrid
                                   TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBox
+                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface
                                   QUADRATURE_RULE_FFMASS=Dumux::QuadratureRules::DuneQuadrature<4>)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1
