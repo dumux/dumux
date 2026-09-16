@@ -35,6 +35,7 @@
 #include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
 
@@ -230,6 +231,19 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         printFreeFlowL2Error(momentumProblem, massProblem, Dumux::partial(x, momentumIdx, massIdx));
 }
 
+/*!
+ * \brief Adds the Darcy velocity reconstruction to the output module.
+ * \note The reconstruction is only implemented for variables defined per sub-control volume.
+ */
+template<class TypeTag, class VtkWriter, class GridVariables>
+void addDarcyVelocityOutput(VtkWriter& vtkWriter, GridVariables& gridVariables)
+{
+    using namespace Dumux;
+
+    if constexpr (Dumux::Concept::FVGridVariables<GridVariables>)
+        vtkWriter.addVelocityOutput(std::make_shared<GetPropType<TypeTag, Properties::VelocityOutput>>(gridVariables));
+}
+
 template<class Problem, class GridVariables, class SolutionVector>
 void printDarcyL2Error(std::shared_ptr<Problem> problem,
                        const GridVariables& gridVariables,
@@ -385,7 +399,7 @@ int main(int argc, char** argv)
 
     VtkOutputModule darcyVtkWriter(*darcyGridVariables, sol[porousMediumIndex],  darcyProblem->name());
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
-    darcyVtkWriter.addVelocityOutput(std::make_shared<GetPropType<DarcyTypeTag, Properties::VelocityOutput>>(*darcyGridVariables));
+    addDarcyVelocityOutput<DarcyTypeTag>(darcyVtkWriter, *darcyGridVariables);
     const auto darcyAnalyticalSolution = createDarcyAnalyticalSolution<double>(*darcyProblem);
     darcyVtkWriter.addField(std::get<0>(darcyAnalyticalSolution), "pressureExact");
     darcyVtkWriter.addField(std::get<1>(darcyAnalyticalSolution), "velocityExact");
@@ -426,6 +440,7 @@ int main(int argc, char** argv)
 
     // set Dirichlet constraints
     setConstraints(freeFlowMomentumProblem);
+    setConstraints(darcyProblem);
 
     // solve the non-linear system
     nonLinearSolver.solve(sol);
