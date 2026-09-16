@@ -89,7 +89,7 @@ public:
         // freedom, is then computed once for all phases and components instead of once per
         // flux law call, as the free-flow momentum residual already does.
         Scalar flux = 0.0;
-        for (const auto& quadPoint : CVFE::quadratureRule(fvGeometry, scvf))
+        for (const auto& quadPoint : CVFE::quadratureRule(fvGeometry, scvf, QuadratureRules::MidpointQuadrature{}))
         {
             const auto& faceIpData = quadPoint.ipData();
             const auto& fluxVarCache = cache(elemFluxVarCache, faceIpData);
