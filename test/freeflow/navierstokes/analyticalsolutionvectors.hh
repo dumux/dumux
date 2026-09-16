@@ -160,11 +160,10 @@ public:
                         analyticalVelocity_[eIdx][dirIdx]
                             = momentumProblem_->analyticalSolution(center, time)[MomIndices::velocity(dirIdx)];
 
-                // this works for box and cc methods
                 fvGeometry.bindElement(element);
-                for (const auto& scv : scvs(fvGeometry))
-                    analyticalPressure_[scv.dofIndex()]
-                        = massProblem_->analyticalSolution(scv.dofPosition(), time)[MassIndices::pressureIdx];
+                for (const auto& localDof : localDofs(fvGeometry))
+                    analyticalPressure_[localDof.dofIndex()]
+                        = massProblem_->analyticalSolution(ipData(fvGeometry, localDof).global(), time)[MassIndices::pressureIdx];
             }
         }
 
@@ -181,14 +180,11 @@ public:
                         analyticalVelocityAtDofs_[scv.dofIndex()][scv.dofAxis()]
                             = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
 
-                else if constexpr (DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>)
-                    for (const auto& scv : scvs(fvGeometry))
-                        for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
-                            analyticalVelocityAtDofs_[scv.dofIndex()][dirIdx]
-                                = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[MomIndices::velocity(dirIdx)];
-
                 else
-                    DUNE_THROW(Dune::Exception, "Unknown discretization method: " << MomentumGridGeometry::discMethod);
+                    for (const auto& localDof : localDofs(fvGeometry))
+                        for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+                            analyticalVelocityAtDofs_[localDof.dofIndex()][dirIdx]
+                                = momentumProblem_->analyticalSolution(ipData(fvGeometry, localDof).global(), time)[MomIndices::velocity(dirIdx)];
             }
         }
     }
