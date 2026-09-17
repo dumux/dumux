@@ -242,6 +242,7 @@ class SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::nu
 {
     using ThisType = SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -374,7 +375,6 @@ public:
                     }
 
                     // handle Dirichlet boundary conditions
-                    // TODO internal constraints
                     if (scv.boundary() && this->elemBcTypes().hasDirichlet())
                     {
                         const auto bcTypes = this->elemBcTypes()[fvGeometry.frontalScvfOnBoundary(scv).localIndex()];
@@ -394,6 +394,15 @@ public:
                                 }
                             }
                         }
+                    }
+
+                    // a dof with an internal Dirichlet constraint does not couple to the other domain
+                    if constexpr (Problem::enableInternalDirichletConstraints())
+                    {
+                        if (this->problem().hasInternalDirichletConstraint(element, scv)[scv.dofAxis()])
+                            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                                for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
+                                    A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
                     }
 
                     // restore the current element solution
