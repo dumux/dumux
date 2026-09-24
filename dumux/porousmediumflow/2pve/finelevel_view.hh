@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief Provides access to all fine-level concepts and containers
  */
 
@@ -27,7 +27,12 @@
 
 namespace Dumux {
 
-// history is required for hysteresis
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The gas plume distance of a coarse-level column at the last time step and its minimum over all previous time steps
+ *
+ * The minimum gas plume distance bounds the region with residually trapped gas.
+ */
 template<class Scalar>
 struct TwoPVEColumnHistory
 {
@@ -36,6 +41,13 @@ struct TwoPVEColumnHistory
 };
 
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief Connects the coarse level of the two-phase VE model to its fine level
+ *
+ * Provides the mapping between coarse-level columns and fine-level elements, the history of each column,
+ * and the reconstruction of the fine-level solution from the coarse-level solution.
+ */
 template<class TypeTag, class FineProblemType>
 class TwoPVEFineLevelView
 {
