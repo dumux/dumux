@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup VETest
+ * \ingroup TwoPVETests
  * \brief The spatial params for the vertical equilibrium Darcy test.
  */
 

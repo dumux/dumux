@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief Manages the maps between the coarse and fine level.
  */
 
@@ -26,6 +26,12 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief Maps each coarse-level column to the fine-level elements it contains and each fine-level element to its column
+ *
+ * The fine-level elements of each column are sorted by increasing vertical coordinate.
+ */
 template<class GridGeometry, class Scalar>
 class VEColumnMapping
 {

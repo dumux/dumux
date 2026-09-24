@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief I/O container for storing fine-level quantities, used for vtk output
  */
 
@@ -22,6 +22,10 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief Stores the reconstructed quantities of all fine-level elements for output
+ */
 template<class TypeTag>
 struct TwoPVEFineLevelFieldStorage
 {
