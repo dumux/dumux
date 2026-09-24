@@ -48,6 +48,11 @@
 @copydoc dumux/porousmediumflow/2pncmin/model.hh
 @ingroup PorousmediumflowModels
 
+@defgroup TwoPVEModel 2pve
+@brief Two-phase (immiscible) Darcy flow in vertical equilibrium
+@copydoc dumux/porousmediumflow/2pve/model.hh
+@ingroup PorousmediumflowModels
+
 @defgroup ThreePModel 3p
 @brief Three-phase (immiscible) Darcy flow
 @copydoc dumux/porousmediumflow/3p/model.hh

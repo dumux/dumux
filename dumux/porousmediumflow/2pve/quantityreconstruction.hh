@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief Reconstructs quantities from the coarse to the fine level of the VE scheme.
  */
 
@@ -29,6 +29,10 @@
 namespace Dumux {
 
 namespace TwoPVE {
+    /*!
+     * \ingroup TwoPVEModel
+     * \brief The gas plume distance of a column and its minimum over all previous time steps
+     */
     template<typename Scalar>
     struct GasPlumeDistancesData
     {
@@ -36,6 +40,10 @@ namespace TwoPVE {
         Scalar minimum;
     };
 
+    /*!
+     * \ingroup TwoPVEModel
+     * \brief The densities of the wetting and the nonwetting phase
+     */
     template<typename Scalar>
     struct PhaseDensitiesData
     {
@@ -43,6 +51,10 @@ namespace TwoPVE {
         Scalar nonwetting;
     };
 
+    /*!
+     * \ingroup TwoPVEModel
+     * \brief The viscosities of the wetting and the nonwetting phase
+     */
     template<typename Scalar>
     struct PhaseViscositiesData
     {
@@ -50,6 +62,10 @@ namespace TwoPVE {
         Scalar nonwetting;
     };
 
+    /*!
+     * \ingroup TwoPVEModel
+     * \brief The residual saturations of the wetting and the nonwetting phase
+     */
     template<typename Scalar>
     struct ResidualSaturationsData
     {
@@ -57,6 +73,10 @@ namespace TwoPVE {
         Scalar nonwetting;
     };
 
+    /*!
+     * \ingroup TwoPVEModel
+     * \brief The parameters of the Brooks-Corey material law
+     */
     template<typename Scalar>
     struct BrooksCoreyParametersData
     {
@@ -65,6 +85,14 @@ namespace TwoPVE {
     };
 } // end namespace TwoPVE
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief Reconstructs the fine-level quantities of a column from its coarse-level quantities assuming vertical equilibrium
+ *
+ * The reconstruction uses the Brooks-Corey material law \cite brooks1964hydrau.
+ * Below the gas plume distance, the pore space is water-saturated apart from residually trapped gas.
+ * Above the gas plume distance, the saturation follows from the capillary pressure in hydrostatic equilibrium.
+ */
 template<class TypeTag>
 class TwoPVEQuantityReconst
 {

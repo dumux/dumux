@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup VETest
+ * \ingroup TwoPVETests
  * \brief The immiscible 2p coarse-level VE test problem.
  */
 

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief Adaptation of the fully implicit scheme to the two-phase VE flow model.
  *
  * This model implements two-phase flow of two immiscible fluids
@@ -67,9 +67,9 @@
 
 namespace Dumux::Properties {
 
-// inherit the complete DuMuX 2p model
 namespace TTag {
 
+//! The type tag for the two-phase vertical-equilibrium model, derived from the two-phase model
 struct TwoPVE
 {
     using InheritsFrom = std::tuple<TwoP>;
@@ -77,7 +77,7 @@ struct TwoPVE
 
 } // namespace TTag
 
-// only replace the standard 2p volume variables with the VE implementation
+//! Set the volume variables property, the only property in which the VE model differs from the two-phase model
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::TwoPVE>
 {
