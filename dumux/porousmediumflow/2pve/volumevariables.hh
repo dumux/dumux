@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief Contains the quantities which are constant within a finite volume in the two-phase VE model.
  */
 
@@ -26,6 +26,12 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief Contains the quantities which are constant within a coarse-level finite volume in the two-phase VE model
+ *
+ * The coarse-level mobilities are the permeability-weighted vertical averages of the reconstructed fine-level mobilities.
+ */
 template <class Traits>
 class TwoPVEVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>

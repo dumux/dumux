@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup TwoPVE
+ * \ingroup TwoPVEModel
  * \brief Mimics the volume variables structure of DuMux applied to the fine level of the VE scheme.
  */
 
@@ -21,6 +21,10 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The state of a coarse-level column from which the fine-level quantities are reconstructed
+ */
 template<class Scalar>
 struct TwoPVEColumnState
 {
@@ -48,6 +52,10 @@ struct TwoPVEColumnState
 
 
 
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The quantities of a fine-level element reconstructed from the state of its coarse-level column
+ */
 template<class TypeTag>
 class TwoPVEFineLevelElementState
 {
