@@ -243,6 +243,7 @@ public:
                  state.gravityNorm,
                  state.domainHeight,
                  state.swCoarse,
+                 history.minimumGasPlumeDistance,
                  BrooksCoreyParameters{state.brooksCoreyLambda, state.entryPressure});
         state.minimumGasPlumeDistance = std::min(history.minimumGasPlumeDistance, state.gasPlumeDistance);
 
