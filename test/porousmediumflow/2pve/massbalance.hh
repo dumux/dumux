@@ -7,14 +7,17 @@
 /*!
  * \file
  * \ingroup TwoPVETests
- * \brief Helper class to compute evaluate mass balance in domain for gas phase. Evaluation is only valid while the gas plume tip does not reach the right boundary.
+ * \brief Helper functions to evaluate the mass balance of the gas phase in the domain. The evaluation is only valid while the gas plume tip does not reach the right boundary.
  */
 
 #ifndef DUMUX_TEST_TWOPVE_MASSBALANCE_HH
 #define DUMUX_TEST_TWOPVE_MASSBALANCE_HH
 
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dumux/common/parameters.hh>
@@ -31,6 +34,12 @@ struct VEMassBalance
     Scalar nonwettingMassCoarse{};
     Scalar nonwettingMassFine{};
     Scalar expectedInjectedMass{};
+
+    Scalar relativeErrorCoarse() const
+    { return (expectedInjectedMass - nonwettingMassCoarse)/expectedInjectedMass; }
+
+    Scalar relativeErrorFine() const
+    { return (expectedInjectedMass - nonwettingMassFine)/expectedInjectedMass; }
 };
 
 /*!
@@ -103,7 +112,8 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
         }
     }
 
-    massBalance.expectedInjectedMass = timeLoop.time() * domainHeight * (-injectionRate);
+    const Scalar injectionDuration = std::min(timeLoop.time(), problemVE.injectionEndTime());
+    massBalance.expectedInjectedMass = injectionDuration * domainHeight * (-injectionRate);
 
     return massBalance;
 }
@@ -116,14 +126,27 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
 template<typename Scalar>
 void printMassBalance(const VEMassBalance<Scalar>& massBalance)
 {
-    Scalar errorCoarseLevel = (massBalance.expectedInjectedMass - massBalance.nonwettingMassCoarse)/massBalance.expectedInjectedMass;
-    Scalar errorFineLevel =   (massBalance.expectedInjectedMass - massBalance.nonwettingMassFine)/massBalance.expectedInjectedMass;
-
     std::cout << "-------info about mass conservation-------" << std::endl;
     std::cout << "Expected injected gas mass is: " << massBalance.expectedInjectedMass << "." << std::endl;
     std::cout << "Gas mass in VE coarse system is: " << massBalance.nonwettingMassCoarse <<  " and in VE fine system: " << massBalance.nonwettingMassFine << "." << std::endl;
-    std::cout << "Error on coarse VE level: " << errorCoarseLevel << ", error on fine VE level: " << errorFineLevel << std::endl;
+    std::cout << "Error on coarse VE level: " << massBalance.relativeErrorCoarse() << ", error on fine VE level: " << massBalance.relativeErrorFine() << std::endl;
     std::cout << "-----------------info end-----------------\n";
+}
+
+/*!
+ * \brief Throws if the gas mass on the coarse or on the fine level deviates from the injected gas mass by more than the given relative tolerance
+ *
+ * \param massBalance       object that contains current gas mass in system
+ * \param relativeTolerance maximum relative deviation from the injected gas mass
+ */
+template<typename Scalar>
+void checkMassBalance(const VEMassBalance<Scalar>& massBalance, const Scalar relativeTolerance)
+{
+    using std::abs;
+    if (abs(massBalance.relativeErrorCoarse()) > relativeTolerance || abs(massBalance.relativeErrorFine()) > relativeTolerance)
+        DUNE_THROW(Dune::Exception, "Gas mass deviates from the injected gas mass by more than " << relativeTolerance
+                                    << " (relative error on coarse level: " << massBalance.relativeErrorCoarse()
+                                    << ", on fine level: " << massBalance.relativeErrorFine() << ")");
 }
 
 } // end namespace Dumux::VETest

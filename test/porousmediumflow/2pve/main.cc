@@ -148,6 +148,9 @@ int main(int argc, char** argv)
     auto timeLoopCoarse = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoopCoarse->setMaxTimeStepSize(maxDt);
     timeLoopCoarse->setPeriodicCheckPoint(tEnd/10.0);
+    problemCoarse->setTimeLoop(timeLoopCoarse);
+    if (problemCoarse->injectionEndTime() < tEnd)
+        timeLoopCoarse->setCheckPoint(problemCoarse->injectionEndTime());
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -194,6 +197,8 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolverCoarse(assemblerCoarse, linearSolverCoarse);
 
+    const auto massBalanceTolerance = getParam<Scalar>("MassBalance.RelativeTolerance");
+
     // time loop (solution is conducted on coarse level of VE scheme)
     timeLoopCoarse->start(); do
     {
@@ -213,6 +218,7 @@ int main(int argc, char** argv)
         // compute and print mass balance for gas phase
         const auto massBalance = Dumux::VETest::computeMassBalance<TypeTag>(*gridGeometryCoarse, *gridGeometryFine, *xCoarse, *problemCoarse, *timeLoopCoarse);
         Dumux::VETest::printMassBalance(massBalance);
+        Dumux::VETest::checkMassBalance(massBalance, massBalanceTolerance);
 
         // write vtk files for coarse and fine level
         if (timeLoopCoarse->isCheckPoint() || timeLoopCoarse->finished())
