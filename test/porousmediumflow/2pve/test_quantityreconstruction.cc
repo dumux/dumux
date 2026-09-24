@@ -18,6 +18,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/float_cmp.hh>
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
 #include "properties.hh"
@@ -35,14 +36,14 @@ namespace TwoPVE {
             DUNE_THROW(Dune::Exception, std::fixed << std::setprecision(digits) << "Unexpected " << quantity << ": expected " << expected << ", obtained " << actual);
     }
 
-    template<class F>
+    template<class Exception, class F>
     void expectThrow(F&& function, const std::string& description)
     {
         try
         {
             function();
         }
-        catch (const Dune::InvalidStateException&)
+        catch (const Exception&)
         {
             return;
         }
@@ -77,6 +78,7 @@ int main()
                                         gravity,
                                         domainHeight,
                                         1.0,
+                                        domainHeight,
                                         brooksCoreyParameters);
     TwoPVE::checkClose(gasPlumeDistanceNoGas, domainHeight, 1.0e-12, "gas plume distance for a fully water-saturated column");
 
@@ -149,10 +151,28 @@ int main()
                                gravity,
                                domainHeight,
                                coarseSaturationW,
+                               domainHeight,
                                brooksCoreyParameters);
     constexpr int numCells = 100;
     const Scalar cellHeight = domainHeight/numCells;
-    Scalar reconstructedSwAverage = 0.0;
+
+    // assumes that porosity is constant everywhere
+    const auto columnAverageSaturationW = [&](const Scalar zp, const Scalar zpMin)
+    {
+        Scalar saturationIntegral = 0.0;
+        for (int cellIdx = 0; cellIdx < numCells; ++cellIdx)
+            saturationIntegral += reconstructor.reconstructSaturation(
+                                      GasPlumeDistances{zp, zpMin},
+                                      densities,
+                                      residualSaturations,
+                                      gravity,
+                                      (cellIdx + 0.5)*cellHeight,
+                                      cellHeight,
+                                      brooksCoreyParameters)*cellHeight;
+        return saturationIntegral/domainHeight;
+    };
+    TwoPVE::checkClose(columnAverageSaturationW(computedZp, computedZp), coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation");
+
     Scalar mobilityWCoarse = 0.0;
     Scalar mobilityNwCoarse = 0.0;
     const Scalar permeabilityFine = 2e-12;
@@ -160,16 +180,6 @@ int main()
     for (int cellIdx = 0; cellIdx < numCells; ++cellIdx)
     {
         const Scalar cellCenter = (cellIdx + 0.5)*cellHeight;
-        // assumes that porosity is constant everywhere
-        const Scalar reconstructedSw = reconstructor.reconstructSaturation(
-                                        GasPlumeDistances{computedZp, computedZp},
-                                        densities,
-                                        residualSaturations,
-                                        gravity,
-                                        cellCenter,
-                                        cellHeight,
-                                        brooksCoreyParameters);
-        reconstructedSwAverage += reconstructedSw*cellHeight;
 
         // assuming homogeneous fine-level permeability
         const std::vector<Scalar> reconstructedMobilites = reconstructor.reconstMobilitiesFine(
@@ -184,8 +194,6 @@ int main()
         mobilityWCoarse += permeabilityFine*reconstructedMobilites[0]*cellHeight;
         mobilityNwCoarse += permeabilityFine*reconstructedMobilites[1]*cellHeight;
     }
-    reconstructedSwAverage /= domainHeight;
-    TwoPVE::checkClose(reconstructedSwAverage, coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation");
 
     mobilityWCoarse /= permeabilityCoarse;
     mobilityNwCoarse /= permeabilityCoarse;
@@ -194,6 +202,45 @@ int main()
     const Scalar mobilityNwRef = 7710.08376616;
     TwoPVE::checkClose(mobilityWCoarse, mobilityWRef, 1.0e-8, "coarse-level wetting-phase mobility");
     TwoPVE::checkClose(mobilityNwCoarse, mobilityNwRef, 1.0e-8, "coarse-level non-wetting-phase mobility");
+
+    // test coarse-level saturation for a column with trapped gas between the minimum gas plume distance and the gas plume distance
+    const Scalar minimumZp = 2.0;
+    const Scalar computedZpTrapped = reconstructor.computeGasPlumeDist(
+                                      densities,
+                                      residualSaturations,
+                                      gravity,
+                                      domainHeight,
+                                      coarseSaturationW,
+                                      minimumZp,
+                                      brooksCoreyParameters);
+    if (!(computedZpTrapped > minimumZp))
+        DUNE_THROW(Dune::Exception, "Expected a trapped-gas region, obtained gas plume distance " << computedZpTrapped << " below the minimum " << minimumZp);
+    TwoPVE::checkClose(columnAverageSaturationW(computedZpTrapped, minimumZp), coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation with trapped gas");
+
+    const auto gasPlumeDistanceOnlyTrappedGas = reconstructor.computeGasPlumeDist(
+                                                 densities,
+                                                 residualSaturations,
+                                                 gravity,
+                                                 domainHeight,
+                                                 1.0,
+                                                 minimumZp,
+                                                 brooksCoreyParameters);
+    TwoPVE::checkClose(gasPlumeDistanceOnlyTrappedGas, domainHeight, 1.0e-12, "gas plume distance for a column without mobile gas");
+
+    // test that a coarse-level saturation below the residual saturation is reported as a recoverable numerical problem
+    auto zpCallInfeasibleSaturation = [&]()
+    {
+        reconstructor.computeGasPlumeDist(
+            densities,
+            residualSaturations,
+            gravity,
+            domainHeight,
+            0.5*residualSaturations.wetting,
+            domainHeight,
+            brooksCoreyParameters
+        );
+    };
+    TwoPVE::expectThrow<Dumux::NumericalProblem>(zpCallInfeasibleSaturation, "coarse-level saturation below the residual saturation");
 
     // test parameter constraints for gas plume distance
     const Scalar gravityZero = 0.0;
@@ -205,10 +252,11 @@ int main()
             gravityZero,
             domainHeight,
             coarseSaturationW,
+            domainHeight,
             brooksCoreyParameters
         );
     };
-    TwoPVE::expectThrow(zpCallGravity, "zero gravity");
+    TwoPVE::expectThrow<Dune::InvalidStateException>(zpCallGravity, "zero gravity");
 
     auto zpCallEqualDensities = [&]()
     {
@@ -218,10 +266,11 @@ int main()
             gravity,
             domainHeight,
             coarseSaturationW,
+            domainHeight,
             brooksCoreyParameters
         );
     };
-    TwoPVE::expectThrow(zpCallEqualDensities, "equal phase densities");
+    TwoPVE::expectThrow<Dune::InvalidStateException>(zpCallEqualDensities, "equal phase densities");
 
     auto zpCallDensities = [&]()
     {
@@ -231,10 +280,11 @@ int main()
             gravity,
             domainHeight,
             coarseSaturationW,
+            domainHeight,
             brooksCoreyParameters
         );
     };
-    TwoPVE::expectThrow(zpCallDensities, "wetting-phase density that is smaller than the non-wetting one.");
+    TwoPVE::expectThrow<Dune::InvalidStateException>(zpCallDensities, "wetting-phase density that is smaller than the non-wetting one.");
 
     auto zpCallLambda = [&]()
     {
@@ -244,10 +294,11 @@ int main()
             gravity,
             domainHeight,
             coarseSaturationW,
+            domainHeight,
             BrooksCoreyParameters{1.0, 1.0e5}
         );
     };
-    TwoPVE::expectThrow(zpCallLambda, "Brooks-Corey lambda equal to one");
+    TwoPVE::expectThrow<Dune::InvalidStateException>(zpCallLambda, "Brooks-Corey lambda equal to one");
 
     return 0;
 }
