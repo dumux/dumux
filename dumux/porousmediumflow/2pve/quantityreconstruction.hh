@@ -15,15 +15,13 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <limits>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
 #include <dumux/common/integrate.hh>
@@ -98,18 +96,27 @@ public:
     /*!
      * \brief Computes the gas plume distance for a coarse column, which is the height of the gas plume relative to the bottom of the domain. The gas plume distance should be a value in [0, domainHeight]
      *
+     * The gas plume distance is the root of the column water balance. The water content of the column
+     * accounts for the trapped-gas region between the minimum gas plume distance and the gas plume distance,
+     * such that the column integral of the reconstructed saturation equals the coarse-level saturation.
+     * If the coarse-level saturation exceeds the water content of a column without mobile gas,
+     * the gas plume distance is the domain height.
+     *
      * \param densities             contains the phase densities (here: 2 phases)
      * \param residualSaturations   contains the phase residual saturation (here: 2 phases)
      * \param gravityNorm           norm of the gravity
      * \param domainHeight          height of the whole domain
      * \param satWCoarse            wetting-phase saturation (on the coarse level)
+     * \param minGasPlumeDist       minimum gas plume distance of the previous time steps, a value in [0, domainHeight]
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
+     * \throws NumericalProblem if no gas plume distance in [0, domainHeight] matches the coarse-level saturation
      */
     Scalar computeGasPlumeDist(const PhaseDensities& densities,
                                const ResidualSaturations& residualSaturations,
                                const Scalar& gravityNorm,
                                const Scalar& domainHeight,
                                const Scalar& satWCoarse,
+                               const Scalar& minGasPlumeDist,
                                const BrooksCoreyParameters& brooksCoreyParameters) const
     {
         const Scalar densityW = densities.wetting;
@@ -128,52 +135,31 @@ public:
         if (float_equal_(lambdaBC, 1.0))
             DUNE_THROW(Dune::InvalidStateException, "Brooks-Corey lambda=1 is not supported by the analytical gas-plume-distance formula");
 
-        // lambda function for mass content in column, to be solved
+        // water content of the column minus the coarse-level water content, monotonically increasing in the gas plume distance
         const auto massConservation = [&](const Scalar gasPlumeDist)
         {
-            auto A = std::pow(entryPressureBC,lambdaBC) * (1.0-swr-snr);
+            const Scalar A = std::pow(entryPressureBC,lambdaBC) * (1.0-swr-snr);
+            const Scalar waterBelowMinimum = std::min(gasPlumeDist, minGasPlumeDist);
+            const Scalar waterTrappedRegion = (1.0-snr) * std::max(gasPlumeDist - minGasPlumeDist, 0.0);
             return
-            gasPlumeDist - 0.0
+            waterBelowMinimum
+            + waterTrappedRegion
             - satWCoarse * domainHeight
             + (1.0/(1.0-lambdaBC)) * (1.0/((densityW - densityNw)*gravityNorm)) * A * ( std::pow(entryPressureBC+(densityW - densityNw)*gravityNorm*(domainHeight-gasPlumeDist), 1.0-lambdaBC) - std::pow(entryPressureBC, 1.0-lambdaBC) )
             + swr*(domainHeight-gasPlumeDist);
         };
 
-        // lambda function for derivative of mass content in column
-        const auto massConservationDerivative = [&](const Scalar gasPlumeDist)
-        {
-            auto A = std::pow(entryPressureBC,lambdaBC) * (1.0-swr-snr);
-            return
-            1.0
-            + A * ( std::pow(entryPressureBC+(densityW - densityNw)*gravityNorm*(domainHeight-gasPlumeDist), -lambdaBC) ) *(-1.0)
-            -swr;
-        };
+        if (massConservation(domainHeight) <= 0.0)
+            return domainHeight;
 
-        Scalar gasPlumeDistance = domainHeight;
-        const Scalar initialGuess = 0.5 * domainHeight; // using initialGuess=domainHeight leads to convergence issues
+        const Scalar residualAtBottom = massConservation(0.0);
+        if (residualAtBottom == 0.0)
+            return 0.0;
+        if (residualAtBottom > 0.0)
+            DUNE_THROW(NumericalProblem, "No gas plume distance in [0, " << domainHeight << "] matches the coarse-level wetting-phase saturation " << satWCoarse
+                                         << " (densities: " << densityW << ", " << densityNw << ")");
 
-        if (satWCoarse < 1.0)
-        {
-            try
-            {
-                gasPlumeDistance = findScalarRootNewton(initialGuess, massConservation, massConservationDerivative, 1e-8);
-            }
-            catch (const std::exception& exc)
-            {
-                std::cerr << "\n\n Caught exception in computeGasPlumeDist, the local non-linear solver did not converge! Maybe the initialGuess equals the domainHeight, which is a problem for convergence?" << exc.what() << std::endl;
-                throw;
-            }
-        }
-
-        //check if gas plume distance is within domain
-        if (gasPlumeDistance<0.0 || gasPlumeDistance > domainHeight)
-        {
-            std::ostringstream message;
-            message << "Gas plume distance is outside the column: " << gasPlumeDistance << " not in [0, " << domainHeight << "]. " << "Wetting-phase saturation: " << satWCoarse << ", densities: " << densityW << ", " << densityNw;
-            throw std::runtime_error(message.str());
-        }
-
-        return gasPlumeDistance;
+        return findScalarRootBrent(0.0, domainHeight, massConservation);
     }
 
 
