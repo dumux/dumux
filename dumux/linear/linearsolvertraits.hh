@@ -153,13 +153,22 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::PQ2>
         (Dune::Capabilities::hasSingleGeometryType<Grid>::topologyId ==
          Dune::GeometryTypes::cube(Grid::dimension).id());
 
+    // In 3D a cube carries one DOF per face as well (PQ2MapperTraits::layout())
+    static constexpr bool hasFaceDofs = hasElementDofs && Grid::dimension == 3;
+
     static constexpr std::bitset<Grid::dimension+1> dofCodims{
-        (1UL << Grid::dimension) + (1UL << (Grid::dimension-1)) + (hasElementDofs ? 1UL : 0UL)
+        (1UL << Grid::dimension)                    // vertices
+      + (1UL << (Grid::dimension-1))                // edges
+      + (hasFaceDofs ? (1UL << 1) : 0UL)            // faces
+      + (hasElementDofs ? 1UL : 0UL)                // element centres
     };
 
+    // A codimension that carries DOFs and is not exchanged is silent: the ranks
+    // agree with each other and disagree with serial.
     static constexpr bool canCommunicate
         = Dune::Capabilities::canCommunicate<Grid, Grid::dimension>::v
-        && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v;
+        && Dune::Capabilities::canCommunicate<Grid, Grid::dimension-1>::v
+        && (!hasFaceDofs || Dune::Capabilities::canCommunicate<Grid, 1>::v);
 
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
