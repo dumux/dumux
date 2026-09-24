@@ -13,6 +13,7 @@
 #ifndef DUMUX_TEST_TWOPVE_PROBLEM_HH
 #define DUMUX_TEST_TWOPVE_PROBLEM_HH
 
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -21,6 +22,7 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/fvproblem.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/porousmediumflow/2pve/finelevel_view.hh>
 
 #include "problem_fine.hh"
@@ -67,6 +69,7 @@ public:
                       const std::string& modelParamGroup = "")
         : ParentType(gridGeometryCoarse, modelParamGroup),
           problemName_(getParamFromGroup<std::string>(modelParamGroup, "Problem.Name")),
+          injectionEndTime_(getParamFromGroup<Scalar>(modelParamGroup, "BoundaryConditions.InjectionEndTime", std::numeric_limits<Scalar>::max())),
           fineLevelView_(fineLevelView),
           spatialParams_(std::make_shared<SpatialParams>(gridGeometryCoarse, fineLevelView_->columnMap(), fineLevelView_->spatialParamsPtr(), fineLevelView_->fineCellHeight()))
     {
@@ -79,6 +82,24 @@ public:
     const std::string& name() const
     {
         return problemName_;
+    }
+
+    /*!
+     * \brief Sets the time loop, which determines whether gas is injected in the current time step
+     *
+     * \param timeLoop the time loop of the coarse-level problem
+     */
+    void setTimeLoop(std::shared_ptr<const TimeLoop<Scalar>> timeLoop)
+    {
+        timeLoop_ = timeLoop;
+    }
+
+    /*!
+     * \brief Returns the time at which the gas injection stops
+     */
+    Scalar injectionEndTime() const
+    {
+        return injectionEndTime_;
     }
 
     /*!
@@ -151,7 +172,7 @@ public:
         const unsigned int columnIdx = this->gridGeometry().elementMapper().index(element);
         const auto& column = fineLevelView_->columnMap().column(columnIdx);
 
-        if(onLeftBoundary_(globalPosCoarseScvf))
+        if(onLeftBoundary_(globalPosCoarseScvf) && isInjecting_())
         {
             for(const auto& fineElement : column)
             {
@@ -230,6 +251,12 @@ private:
         return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
     }
 
+    // the midpoint of a time step is unambiguous as long as no time step straddles the injection end time
+    bool isInjecting_() const
+    {
+        return timeLoop_->time() + 0.5*timeLoop_->timeStepSize() < injectionEndTime_;
+    }
+
     /*!
      * \brief Computes the coarse-level permeability and porosity
      */
@@ -239,6 +266,8 @@ private:
     }
 
     std::string problemName_;
+    Scalar injectionEndTime_;
+    std::shared_ptr<const TimeLoop<Scalar>> timeLoop_;
     std::shared_ptr<FineLevelView> fineLevelView_;
     std::shared_ptr<SpatialParams> spatialParams_;
 };

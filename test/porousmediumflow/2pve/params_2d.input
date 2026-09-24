@@ -28,3 +28,6 @@ MaxRelativeShift = 1e-12
 
 [Vtk]
 AddVelocity = true
+
+[MassBalance]
+RelativeTolerance = 1e-8
