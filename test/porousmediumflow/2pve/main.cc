@@ -145,8 +145,9 @@ int main(int argc, char** argv)
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // instantiate time loop
-    auto timeLoopCoarse = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+    auto timeLoopCoarse = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoopCoarse->setMaxTimeStepSize(maxDt);
+    timeLoopCoarse->setPeriodicCheckPoint(tEnd/10.0);
 
     // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
@@ -214,8 +215,11 @@ int main(int argc, char** argv)
         Dumux::VETest::printMassBalance(massBalance);
 
         // write vtk files for coarse and fine level
-        vtkWriterCoarse.write(timeLoopCoarse->time());
-        vtkWriterFineLevel.write(timeLoopCoarse->time());
+        if (timeLoopCoarse->isCheckPoint() || timeLoopCoarse->finished())
+        {
+            vtkWriterCoarse.write(timeLoopCoarse->time());
+            vtkWriterFineLevel.write(timeLoopCoarse->time());
+        }
 
         // report statistics of this time step
         timeLoopCoarse->reportTimeStep();
