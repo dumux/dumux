@@ -230,6 +230,26 @@ int main()
                                                  brooksCoreyParameters);
     TwoPVE::checkClose(gasPlumeDistanceOnlyTrappedGas, domainHeight, 1.0e-12, "gas plume distance for a column without mobile gas");
 
+    // test that the nonwetting mobility is non-negative in thin cells just above the gas plume distance, where krn nearly vanishes
+    for (const Scalar lambda : {2.0, 1.0, 0.5})
+    {
+        for (const Scalar thinCellHeight : {1.0e-6, 1.0e-5, 2.5e-5, 1.0e-4, 1.0e-3})
+        {
+            const auto thinCellMobilities = reconstructor.reconstMobilitiesFine(
+                                                GasPlumeDistances{gasPlumeDistance, gasPlumeDistance},
+                                                densities,
+                                                viscosities,
+                                                residualSaturations,
+                                                gravity,
+                                                gasPlumeDistance + 0.5*thinCellHeight,
+                                                thinCellHeight,
+                                                BrooksCoreyParameters{lambda, brooksCoreyParameters.entryPressure});
+            if (thinCellMobilities[1] < 0.0)
+                DUNE_THROW(Dune::Exception, "Negative nonwetting mobility " << thinCellMobilities[1] << " for lambda " << lambda
+                                            << " in a cell of height " << thinCellHeight << " above the gas plume distance");
+        }
+    }
+
     // test that a coarse-level saturation below the residual saturation is reported as a recoverable numerical problem
     auto zpCallInfeasibleSaturation = [&]()
     {
