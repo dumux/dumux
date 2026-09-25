@@ -47,8 +47,7 @@
  *   coarse cell
  * - gravity must be nonzero and aligned with the vertical coordinate axis
  * - the first fluid phase must be the wetting phase, and it must be denser than the nonwetting phase
- * - the reconstruction uses a Brooks-Corey material law and does not support
- *   \f$\lambda = 1\f$
+ * - the reconstruction uses a Brooks-Corey material law
  * - only the \f$p_w-S_n\f$ primary-variable formulation is supported
  * - the current upscaling implementation assumes scalar, isotropic
  *   permeability (for computation of coarse-level mobilities, we divide by the permeability)
