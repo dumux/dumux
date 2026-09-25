@@ -28,38 +28,39 @@
 
 namespace TwoPVE {
 
-    template<class Scalar>
-    void checkClose(const Scalar actual,
-                    const Scalar expected,
-                    const Scalar tolerance,
-                    const std::string& quantity)
+template<class Scalar>
+void checkClose(const Scalar actual,
+                const Scalar expected,
+                const Scalar tolerance,
+                const std::string& quantity)
+{
+    const int digits = static_cast<int>(std::ceil(-std::log10(tolerance)));
+    if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::CmpStyle::absolute>(actual, expected, tolerance))
+        DUNE_THROW(Dune::Exception, std::fixed << std::setprecision(digits) << "Unexpected " << quantity << ": expected " << expected << ", obtained " << actual);
+}
+
+template<class Exception, class F>
+void expectThrow(F&& function, const std::string& description)
+{
+    try
     {
-        int digits = static_cast<int>(std::ceil(-std::log10(tolerance)));
-        if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::CmpStyle::absolute>(actual, expected, tolerance))
-            DUNE_THROW(Dune::Exception, std::fixed << std::setprecision(digits) << "Unexpected " << quantity << ": expected " << expected << ", obtained " << actual);
+        function();
+    }
+    catch (const Exception&)
+    {
+        return;
     }
 
-    template<class Exception, class F>
-    void expectThrow(F&& function, const std::string& description)
-    {
-        try
-        {
-            function();
-        }
-        catch (const Exception&)
-        {
-            return;
-        }
+    DUNE_THROW(Dune::Exception, "Expected an exception for " << description);
+}
 
-        DUNE_THROW(Dune::Exception, "Expected an exception for " << description);
-    }
 } // end namespace TwoPVE
 
 int main()
 {
     using TypeTag = Dumux::Properties::TTag::TwoPVEImmiscibleTpfa;
     using Scalar = Dumux::GetPropType<TypeTag, Dumux::Properties::Scalar>;
-    using Reconstructor = Dumux::TwoPVEQuantityReconst<TypeTag>;
+    using Reconstructor = Dumux::TwoPVEQuantityReconstruction<TypeTag>;
     using GasPlumeDistances = Dumux::TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = Dumux::TwoPVE::PhaseDensitiesData<Scalar>;
     using PhaseViscosities = Dumux::TwoPVE::PhaseViscositiesData<Scalar>;
@@ -90,14 +91,14 @@ int main()
     const Scalar pressureWCoarse = 2.0e5;
     for (const Scalar height : {2.0, gasPlumeDistance, 7.0})
     {
-        const auto pressures = reconstructor.reconstPressure(
+        const auto pressures = reconstructor.reconstructPressure(
                                 gasPlumeDistance,
                                 densities,
                                 gravity,
                                 height,
                                 pressureWCoarse,
                                 brooksCoreyParameters.entryPressure);
-        const auto capillaryPressure = reconstructor.reconstCapillaryPressure(
+        const auto capillaryPressure = reconstructor.reconstructCapillaryPressure(
                                         gasPlumeDistance,
                                         densities,
                                         gravity,
@@ -133,11 +134,10 @@ int main()
                "saturation in the trapped-gas region");
 
     // test reconstructed mobilities
-    const auto mobilities = reconstructor.reconstMobilitiesFine(
+    const auto mobilities = reconstructor.reconstructMobilitiesFine(
                              GasPlumeDistances{gasPlumeDistance, gasPlumeDistance},
                              densities,
                              viscosities,
-                             residualSaturations,
                              gravity,
                              heightBelowZp,
                              deltaZ,
@@ -185,17 +185,16 @@ int main()
         const Scalar cellCenter = (cellIdx + 0.5)*cellHeight;
 
         // assuming homogeneous fine-level permeability
-        const auto reconstructedMobilites = reconstructor.reconstMobilitiesFine(
+        const auto reconstructedMobilities = reconstructor.reconstructMobilitiesFine(
                                                          GasPlumeDistances{computedZp, computedZp},
                                                          densities,
                                                          viscosities,
-                                                         residualSaturations,
                                                          gravity,
                                                          cellCenter,
                                                          cellHeight,
                                                          brooksCoreyParameters);
-        mobilityWCoarse += permeabilityFine*reconstructedMobilites[0]*cellHeight;
-        mobilityNwCoarse += permeabilityFine*reconstructedMobilites[1]*cellHeight;
+        mobilityWCoarse += permeabilityFine*reconstructedMobilities[0]*cellHeight;
+        mobilityNwCoarse += permeabilityFine*reconstructedMobilities[1]*cellHeight;
     }
 
     mobilityWCoarse /= permeabilityCoarse;
@@ -235,11 +234,10 @@ int main()
     {
         for (const Scalar thinCellHeight : {1.0e-6, 1.0e-5, 2.5e-5, 1.0e-4, 1.0e-3})
         {
-            const auto thinCellMobilities = reconstructor.reconstMobilitiesFine(
+            const auto thinCellMobilities = reconstructor.reconstructMobilitiesFine(
                                                 GasPlumeDistances{gasPlumeDistance, gasPlumeDistance},
                                                 densities,
                                                 viscosities,
-                                                residualSaturations,
                                                 gravity,
                                                 gasPlumeDistance + 0.5*thinCellHeight,
                                                 thinCellHeight,
@@ -361,11 +359,10 @@ int main()
                                                materialParameters);
             TwoPVE::checkClose(reconstructedSw, cellAverage(saturationW, 1.0, lower, upper), 1.0e-12, "cell-averaged saturation" + cell);
 
-            const auto reconstructedMobilities = reconstructor.reconstMobilitiesFine(
+            const auto reconstructedMobilities = reconstructor.reconstructMobilitiesFine(
                                                      GasPlumeDistances{zpReference, zpReference},
                                                      densities,
                                                      viscosities,
-                                                     residualSaturations,
                                                      gravity,
                                                      cellCenter,
                                                      deltaZ,

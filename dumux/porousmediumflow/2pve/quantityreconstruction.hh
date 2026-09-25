@@ -16,8 +16,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <limits>
-#include <string>
 
 #include <dune/common/exceptions.hh>
 
@@ -28,60 +26,62 @@
 namespace Dumux {
 
 namespace TwoPVE {
-    /*!
-     * \ingroup TwoPVEModel
-     * \brief The gas plume distance of a column and its minimum over all previous time steps
-     */
-    template<typename Scalar>
-    struct GasPlumeDistancesData
-    {
-        Scalar current;
-        Scalar minimum;
-    };
 
-    /*!
-     * \ingroup TwoPVEModel
-     * \brief The densities of the wetting and the nonwetting phase
-     */
-    template<typename Scalar>
-    struct PhaseDensitiesData
-    {
-        Scalar wetting;
-        Scalar nonwetting;
-    };
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The gas plume distance of a column and its minimum over all previous time steps
+ */
+template<typename Scalar>
+struct GasPlumeDistancesData
+{
+    Scalar current;
+    Scalar minimum;
+};
 
-    /*!
-     * \ingroup TwoPVEModel
-     * \brief The viscosities of the wetting and the nonwetting phase
-     */
-    template<typename Scalar>
-    struct PhaseViscositiesData
-    {
-        Scalar wetting;
-        Scalar nonwetting;
-    };
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The densities of the wetting and the nonwetting phase
+ */
+template<typename Scalar>
+struct PhaseDensitiesData
+{
+    Scalar wetting;
+    Scalar nonwetting;
+};
 
-    /*!
-     * \ingroup TwoPVEModel
-     * \brief The residual saturations of the wetting and the nonwetting phase
-     */
-    template<typename Scalar>
-    struct ResidualSaturationsData
-    {
-        Scalar wetting;
-        Scalar nonwetting;
-    };
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The viscosities of the wetting and the nonwetting phase
+ */
+template<typename Scalar>
+struct PhaseViscositiesData
+{
+    Scalar wetting;
+    Scalar nonwetting;
+};
 
-    /*!
-     * \ingroup TwoPVEModel
-     * \brief The parameters of the Brooks-Corey material law
-     */
-    template<typename Scalar>
-    struct BrooksCoreyParametersData
-    {
-        Scalar lambda;
-        Scalar entryPressure;
-    };
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The residual saturations of the wetting and the nonwetting phase
+ */
+template<typename Scalar>
+struct ResidualSaturationsData
+{
+    Scalar wetting;
+    Scalar nonwetting;
+};
+
+/*!
+ * \ingroup TwoPVEModel
+ * \brief The parameters of the Brooks-Corey material law
+ */
+template<typename Scalar>
+struct BrooksCoreyParametersData
+{
+    Scalar lambda;
+    Scalar entryPressure;
+};
+
 } // end namespace TwoPVE
 
 /*!
@@ -94,20 +94,13 @@ namespace TwoPVE {
  * The averages of the saturation and the relative permeabilities over fine-level cells are evaluated in closed form.
  */
 template<class TypeTag>
-class TwoPVEQuantityReconst
+class TwoPVEQuantityReconstruction
 {
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    enum {
-        waterPhaseIdx = FluidSystem::phase0Idx, // = 0
-        gasPhaseIdx = FluidSystem::phase1Idx,   // = 1
-        numPhases = FluidSystem::numPhases
-    };
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
+    static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
+    static constexpr int numPhases = FluidSystem::numPhases;
 
     using GasPlumeDistances = TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;
@@ -116,10 +109,6 @@ class TwoPVEQuantityReconst
     using BrooksCoreyParameters = TwoPVE::BrooksCoreyParametersData<Scalar>;
 
 public:
-
-    TwoPVEQuantityReconst(const std::string& spatialParamsGroup = "")
-    {}
-
 
     /*!
      * \brief Computes the gas plume distance for a coarse column, which is the height of the gas plume relative to the bottom of the domain. The gas plume distance should be a value in [0, domainHeight]
@@ -134,36 +123,37 @@ public:
      * \param residualSaturations   contains the phase residual saturation (here: 2 phases)
      * \param gravityNorm           norm of the gravity
      * \param domainHeight          height of the whole domain
-     * \param satWCoarse            wetting-phase saturation (on the coarse level)
+     * \param saturationWCoarse     wetting-phase saturation (on the coarse level)
      * \param minGasPlumeDist       minimum gas plume distance of the previous time steps, a value in [0, domainHeight]
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
      * \throws NumericalProblem if no gas plume distance in [0, domainHeight] matches the coarse-level saturation
      */
     Scalar computeGasPlumeDist(const PhaseDensities& densities,
                                const ResidualSaturations& residualSaturations,
-                               const Scalar& gravityNorm,
-                               const Scalar& domainHeight,
-                               const Scalar& satWCoarse,
-                               const Scalar& minGasPlumeDist,
+                               Scalar gravityNorm,
+                               Scalar domainHeight,
+                               Scalar saturationWCoarse,
+                               Scalar minGasPlumeDist,
                                const BrooksCoreyParameters& brooksCoreyParameters) const
     {
         const Scalar densityW = densities.wetting;
         const Scalar densityNw = densities.nonwetting;
         const Scalar snr = residualSaturations.nonwetting;
 
-        if (float_equal_(gravityNorm, 0.0))
+        if (gravityNorm == 0.0)
             DUNE_THROW(Dune::InvalidStateException, "The two-phase vertical-equilibrium model requires nonzero gravity because its reconstruction assumes gravity-driven vertical segregation");
 
-        if (float_equal_(densityW - densityNw, 0.0) || densityW<densityNw)
+        if (densityW <= densityNw)
             DUNE_THROW(Dune::InvalidStateException, "The two-phase VE reconstruction requires the wetting phase to be denser than the nonwetting phase. Got rho_w=" << densityW << " and rho_n=" << densityNw);
 
         // water content of the column minus the coarse-level water content, monotonically increasing in the gas plume distance
+        using std::max; using std::min;
         const auto massConservation = [&](const Scalar gasPlumeDist)
         {
-            const Scalar waterBelowMinimum = std::min(gasPlumeDist, minGasPlumeDist);
-            const Scalar waterTrappedRegion = (1.0-snr) * std::max(gasPlumeDist - minGasPlumeDist, 0.0);
+            const Scalar waterBelowMinimum = min(gasPlumeDist, minGasPlumeDist);
+            const Scalar waterTrappedRegion = (1.0-snr) * max(gasPlumeDist - minGasPlumeDist, 0.0);
             const Scalar waterAbovePlume = integrateSaturationWAbovePlume_(gasPlumeDist, domainHeight, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
-            return waterBelowMinimum + waterTrappedRegion + waterAbovePlume - satWCoarse * domainHeight;
+            return waterBelowMinimum + waterTrappedRegion + waterAbovePlume - saturationWCoarse * domainHeight;
         };
 
         if (massConservation(domainHeight) <= 0.0)
@@ -173,12 +163,11 @@ public:
         if (residualAtBottom == 0.0)
             return 0.0;
         if (residualAtBottom > 0.0)
-            DUNE_THROW(NumericalProblem, "No gas plume distance in [0, " << domainHeight << "] matches the coarse-level wetting-phase saturation " << satWCoarse
+            DUNE_THROW(NumericalProblem, "No gas plume distance in [0, " << domainHeight << "] matches the coarse-level wetting-phase saturation " << saturationWCoarse
                                          << " (densities: " << densityW << ", " << densityNw << ")");
 
         return findScalarRootBrent(0.0, domainHeight, massConservation);
     }
-
 
     /*!
      * \brief Computes the capillary pressure on the coarse level
@@ -186,60 +175,46 @@ public:
      * \param gasPlumeDist    value of the gas plume distance
      * \param densities       contains the phase densities (here: 2 phases)
      * \param gravityNorm     norm of the gravity
-     * \param entryPressureBC entry pressure of the Brook-Corey model
+     * \param entryPressureBC entry pressure of the Brooks-Corey model
      */
-    const Scalar computeCapillaryPressureCoarse(const Scalar& gasPlumeDist,
-                                                const PhaseDensities& densities,
-                                                const Scalar& gravityNorm,
-                                                const Scalar& entryPressureBC) const
+    Scalar computeCapillaryPressureCoarse(Scalar gasPlumeDist,
+                                          const PhaseDensities& densities,
+                                          Scalar gravityNorm,
+                                          Scalar entryPressureBC) const
     {
-        const Scalar referenceDensityW = densities.wetting;
-        const Scalar referenceDensityNw = densities.nonwetting;
-
-        //calculate the coarse-level capillary pressure
-        const Scalar pcCoarse = gravityNorm * gasPlumeDist * (referenceDensityNw - referenceDensityW) + entryPressureBC;
-        return pcCoarse;
+        return gravityNorm * gasPlumeDist * (densities.nonwetting - densities.wetting) + entryPressureBC;
     }
 
-
     /*!
-     * \brief Reconstructs the fine-level wetting-phase and non-wetting phase pressures
-
+     * \brief Reconstructs the fine-level wetting-phase and nonwetting-phase pressures
      *
      * \param gasPlumeDist      value of the gas plume distance
      * \param densities         contains the phase densities (here: 2 phases)
      * \param gravityNorm       norm of the gravity
      * \param heightAboveBottom height (relative to the bottom of the domain) at which the pressures should be reconstructed
      * \param pressureWCoarse   wetting-phase pressure on the coarse level
-     * \param entryPressureBC   entry pressure of the Brook-Corey model
+     * \param entryPressureBC   entry pressure of the Brooks-Corey model
      */
-    std::array<Scalar, numPhases> reconstPressure(const Scalar& gasPlumeDist,
-                                              const PhaseDensities& densities,
-                                              const Scalar& gravityNorm,
-                                              const Scalar& heightAboveBottom,
-                                              const Scalar& pressureWCoarse,
-                                              const Scalar& entryPressureBC) const
+    std::array<Scalar, numPhases> reconstructPressure(Scalar gasPlumeDist,
+                                                      const PhaseDensities& densities,
+                                                      Scalar gravityNorm,
+                                                      Scalar heightAboveBottom,
+                                                      Scalar pressureWCoarse,
+                                                      Scalar entryPressureBC) const
     {
         const Scalar referenceDensityW = densities.wetting;
         const Scalar referenceDensityNw = densities.nonwetting;
 
+        // the nonwetting-phase pressure below the gas plume exceeds the wetting-phase pressure by the entry pressure (capillary fringe model)
         std::array<Scalar, numPhases> reconstructedPressures;
-
-        //So far, only the capillaryFringe model is implemented
-        if(heightAboveBottom <= gasPlumeDist)
-        {
-            reconstructedPressures[waterPhaseIdx] = pressureWCoarse - referenceDensityW * gravityNorm * heightAboveBottom;
-            reconstructedPressures[gasPhaseIdx] = reconstructedPressures[waterPhaseIdx] + entryPressureBC;
-        }
+        reconstructedPressures[wettingPhaseIdx] = pressureWCoarse - referenceDensityW * gravityNorm * heightAboveBottom;
+        if (heightAboveBottom <= gasPlumeDist)
+            reconstructedPressures[nonwettingPhaseIdx] = reconstructedPressures[wettingPhaseIdx] + entryPressureBC;
         else
-        {
-            reconstructedPressures[waterPhaseIdx] = pressureWCoarse - referenceDensityW * gravityNorm * heightAboveBottom;
-            reconstructedPressures[gasPhaseIdx] = pressureWCoarse - referenceDensityW * gravityNorm * gasPlumeDist - referenceDensityNw * gravityNorm * (heightAboveBottom - gasPlumeDist) + entryPressureBC;
-        }
+            reconstructedPressures[nonwettingPhaseIdx] = pressureWCoarse - referenceDensityW * gravityNorm * gasPlumeDist - referenceDensityNw * gravityNorm * (heightAboveBottom - gasPlumeDist) + entryPressureBC;
 
         return reconstructedPressures;
     }
-
 
     /*!
      * \brief Reconstructs the fine-level wetting-phase saturation as a mean integral of the saturation across the cell height
@@ -251,16 +226,16 @@ public:
      * \param residualSaturations   contains the phase residual saturation (here: 2 phases)
      * \param gravityNorm           norm of the gravity
      * \param heightAboveBottom     height (relative to the bottom of the domain) at which the saturation should be reconstructed
-     * \param deltaZ                discretizaion width of the fine-level grid in vertical direction
+     * \param deltaZ                discretization width of the fine-level grid in vertical direction
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
      */
-    const Scalar reconstructSaturation(const GasPlumeDistances& gasPlumeDistances,
-                                       const PhaseDensities& densities,
-                                       const ResidualSaturations& residualSaturations,
-                                       const Scalar& gravityNorm,
-                                       const Scalar& heightAboveBottom,
-                                       const Scalar& deltaZ,
-                                       const BrooksCoreyParameters& brooksCoreyParameters) const
+    Scalar reconstructSaturation(const GasPlumeDistances& gasPlumeDistances,
+                                 const PhaseDensities& densities,
+                                 const ResidualSaturations& residualSaturations,
+                                 Scalar gravityNorm,
+                                 Scalar heightAboveBottom,
+                                 Scalar deltaZ,
+                                 const BrooksCoreyParameters& brooksCoreyParameters) const
     {
         const Scalar gasPlumeDist = gasPlumeDistances.current;
         const Scalar minGasPlumeDist = gasPlumeDistances.minimum;
@@ -316,7 +291,6 @@ public:
         return saturationIntegral/cellHeight;
     }
 
-
     /*!
      * \brief Reconstructs the fine-level capillary pressure
      *
@@ -324,65 +298,45 @@ public:
      * \param densities         contains the phase densities (here: 2 phases)
      * \param gravityNorm       norm of the gravity
      * \param heightAboveBottom height (relative to the bottom of the domain) at which the capillary pressure should be reconstructed
-     * \param entryPressureBC   entry pressure of the Brook-Corey model
+     * \param entryPressureBC   entry pressure of the Brooks-Corey model
      */
-    const Scalar reconstCapillaryPressure(const Scalar& gasPlumeDist,
-                                          const PhaseDensities& densities,
-                                          const Scalar& gravityNorm,
-                                          const Scalar& heightAboveBottom,
-                                          const Scalar& entryPressureBC) const
+    Scalar reconstructCapillaryPressure(Scalar gasPlumeDist,
+                                        const PhaseDensities& densities,
+                                        Scalar gravityNorm,
+                                        Scalar heightAboveBottom,
+                                        Scalar entryPressureBC) const
     {
         const Scalar referenceDensityW = densities.wetting;
         const Scalar referenceDensityNw = densities.nonwetting;
 
-        Scalar reconstCapillaryPressure = 0.0;
-
-        //for capillary fringe model
-        if(heightAboveBottom <= gasPlumeDist)
-        {
-            reconstCapillaryPressure = entryPressureBC;
-        }
-        else if(heightAboveBottom > gasPlumeDist)
-        {
-            reconstCapillaryPressure = referenceDensityW * gravityNorm * (heightAboveBottom - gasPlumeDist) + entryPressureBC - referenceDensityNw * gravityNorm * (heightAboveBottom - gasPlumeDist);
-        }
-
-        return reconstCapillaryPressure;
+        if (heightAboveBottom <= gasPlumeDist)
+            return entryPressureBC;
+        else
+            return referenceDensityW * gravityNorm * (heightAboveBottom - gasPlumeDist) + entryPressureBC - referenceDensityNw * gravityNorm * (heightAboveBottom - gasPlumeDist);
     }
 
-
     /*!
-     * \brief Reconstructs the fine-level wetting-phase and non-wetting-phase mobilities
+     * \brief Reconstructs the fine-level wetting-phase and nonwetting-phase mobilities
      *
      * \param gasPlumeDistances     contains the gas plume distance and the minimum gas plume distance
      * \param densities             contains the phase densities (here: 2 phases)
      * \param viscosities           contains the phase viscosities (here: 2 phases)
-     * \param residualSaturations   contains the phase residual saturation (here: 2 phases)
      * \param gravityNorm           norm of the gravity
      * \param heightAboveBottom     height (relative to the bottom of the domain) at which the mobilities should be reconstructed
-     * \param deltaZ                discretizaion width of the fine-level grid in vertical direction
+     * \param deltaZ                discretization width of the fine-level grid in vertical direction
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
      */
-    std::array<Scalar, numPhases> reconstMobilitiesFine(const GasPlumeDistances& gasPlumeDistances,
-                                                    const PhaseDensities& densities,
-                                                    const PhaseViscosities& viscosities,
-                                                    const ResidualSaturations& residualSaturations,
-                                                    const Scalar& gravityNorm,
-                                                    const Scalar& heightAboveBottom,
-                                                    const Scalar& deltaZ,
-                                                    const BrooksCoreyParameters& brooksCoreyParameters) const
+    std::array<Scalar, numPhases> reconstructMobilitiesFine(const GasPlumeDistances& gasPlumeDistances,
+                                                            const PhaseDensities& densities,
+                                                            const PhaseViscosities& viscosities,
+                                                            Scalar gravityNorm,
+                                                            Scalar heightAboveBottom,
+                                                            Scalar deltaZ,
+                                                            const BrooksCoreyParameters& brooksCoreyParameters) const
     {
         const Scalar gasPlumeDist = gasPlumeDistances.current;
-        const Scalar viscosityW = viscosities.wetting;
-        const Scalar viscosityNw = viscosities.nonwetting;
-
-        std::array<Scalar, numPhases> mobilitesFine;
-
         const Scalar lowerBound = heightAboveBottom - deltaZ/2.0;
         const Scalar upperBound = heightAboveBottom + deltaZ/2.0;
-
-        Scalar mobilityWFine = 0.0;
-        Scalar mobilityNwFine = 0.0;
 
         const Scalar relPermWBelowPlume = 1.0;
         const Scalar relPermNwBelowPlume = 0.0;
@@ -408,7 +362,8 @@ public:
                                     - integratePower(2.0 + 3.0*lambdaBC, lower, upper);
 
             // close to the gas plume distance, where krn vanishes, the terms cancel up to round-off errors of either sign
-            return std::max(integral, 0.0);
+            using std::max;
+            return max(integral, 0.0);
         };
 
         // the relative permeabilities are piecewise defined, with a kink or jump at the gas plume distance
@@ -429,26 +384,14 @@ public:
                 return relPermBelowPlume * (gasPlumeDist - lowerBound) + integralAbovePlume(gasPlumeDist, upperBound);
         };
 
-        mobilityWFine = integrateRelativePermeability(integrateRelPermWAbovePlume, relPermWBelowPlume);
-        mobilityNwFine = integrateRelativePermeability(integrateRelPermNwAbovePlume, relPermNwBelowPlume);
-
-        //average
-        mobilityWFine = mobilityWFine/(upperBound - lowerBound);
-        mobilityNwFine = mobilityNwFine/(upperBound - lowerBound);
-
-        //turn relative permeability to mobility
-        mobilityWFine = mobilityWFine/viscosityW;
-        mobilityNwFine = mobilityNwFine/viscosityNw;
-
-        //store
-        mobilitesFine[waterPhaseIdx] = mobilityWFine;
-        mobilitesFine[gasPhaseIdx] = mobilityNwFine;
-
-        return mobilitesFine;
+        // cell averages of the relative permeabilities divided by the viscosities
+        std::array<Scalar, numPhases> mobilities;
+        mobilities[wettingPhaseIdx] = integrateRelativePermeability(integrateRelPermWAbovePlume, relPermWBelowPlume)/(upperBound - lowerBound)/viscosities.wetting;
+        mobilities[nonwettingPhaseIdx] = integrateRelativePermeability(integrateRelPermNwAbovePlume, relPermNwBelowPlume)/(upperBound - lowerBound)/viscosities.nonwetting;
+        return mobilities;
     }
 
 private:
-
     /*!
      * \brief Integrates \f$ u^{-m} \f$ with \f$ u = 1 + \Delta\varrho g (z - z_p)/p_e \f$ over \f$ z \in [z_l, z_u] \f$ above the gas plume distance \f$ z_p \f$
      *
@@ -472,15 +415,16 @@ private:
                                      Scalar gravityNorm,
                                      Scalar entryPressureBC) const
     {
+        using std::expm1; using std::log1p; using std::pow;
         const Scalar lengthScale = entryPressureBC/((densities.wetting - densities.nonwetting)*gravityNorm);
         const Scalar uLower = 1.0 + (lowerBound - gasPlumeDist)/lengthScale;
-        const Scalar logRatio = std::log1p((upperBound - lowerBound)/(lengthScale*uLower));
+        const Scalar logRatio = log1p((upperBound - lowerBound)/(lengthScale*uLower));
         const Scalar k = 1.0 - exponent;
         if (k == 0.0)
             return lengthScale*logRatio;
 
         // expm1 keeps the antiderivative accurate for exponents close to one, where it approaches the logarithm
-        return lengthScale*std::pow(uLower, k)*std::expm1(k*logRatio)/k;
+        return lengthScale*pow(uLower, k)*expm1(k*logRatio)/k;
     }
 
     /*!
@@ -507,13 +451,6 @@ private:
         const Scalar integralEffectiveSaturation = integratePowerAbovePlume_(brooksCoreyParameters.lambda, lowerBound, upperBound, gasPlumeDist,
                                                                              densities, gravityNorm, brooksCoreyParameters.entryPressure);
         return swr*(upperBound - lowerBound) + (1.0 - swr - snr)*integralEffectiveSaturation;
-    }
-
-    bool float_equal_(Scalar a,
-                      Scalar b,
-                      Scalar epsilon = std::numeric_limits<Scalar>::epsilon()) const
-    {
-        return std::abs(a - b) <= epsilon * std::max(std::abs(a), std::abs(b));
     }
 };
 

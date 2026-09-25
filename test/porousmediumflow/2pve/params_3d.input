@@ -5,7 +5,7 @@ MaxTimeStepSize = 10000
 
 [Grid]
 LowerLeft = 0 0 0
-UpperRight = 250 100 25 
+UpperRight = 250 100 25
 Cells = 15 8 3
 
 [Problem]
