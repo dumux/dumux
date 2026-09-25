@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     Grid fineGrid(lowerLeft, upperRight, fineCells);
     auto coarseGridGeometry = std::make_shared<GridGeometry>(coarseGrid.leafGridView());
     auto fineGridGeometry = std::make_shared<GridGeometry>(fineGrid.leafGridView());
-    const VEColumnMapping<GridGeometry, Scalar> columnMapping(coarseGridGeometry, fineGridGeometry);
+    const TwoPVEColumnMapping<GridGeometry, Scalar> columnMapping(coarseGridGeometry, fineGridGeometry);
 
     const TwoPVETest::SpatialParams<GridGeometry, SpatialParamsFine> spatialParams(
         coarseGridGeometry, columnMapping, std::make_shared<const SpatialParamsFine>(), fineCellHeight
