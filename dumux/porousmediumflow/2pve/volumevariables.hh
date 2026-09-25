@@ -99,12 +99,13 @@ public:
         priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
         const int columnIdx = problem.gridGeometry().elementMapper().index(element);
+        const auto& fineLevelView = problem.fineLevelView();
         // compute column state
-        const auto columnState = problem.getFineLevelView()->makeColumnState(element, priVars_, problem.spatialParams());
-        const Scalar deltaZ = problem.getFineLevelView()->fineCellHeight();
+        const auto columnState = fineLevelView.makeColumnState(element, priVars_, problem.spatialParams());
+        const Scalar deltaZ = fineLevelView.fineCellHeight();
         unsigned int dim = GlobalPosition::dimension;
 
-        const auto& column = problem.getFineLevelView()->columnMap().column(columnIdx);
+        const auto& column = fineLevelView.columnMap().column(columnIdx);
         std::vector<Scalar> mobilitiesCoarse(numPhases, 0.0);
         std::vector<Scalar> mobWFineEntries(column.size(), 0.0);
         std::vector<Scalar> mobNwFineEntries(column.size(), 0.0);
@@ -116,7 +117,7 @@ public:
         fluidState_.setViscosity(phase1Idx, columnState.viscosityNw);
 
         //compute coarse-level capillary pressure
-        const Scalar pcCoarse = problem.getFineLevelView()->quantityReconstructor().computeCapillaryPressureCoarse(
+        const Scalar pcCoarse = fineLevelView.quantityReconstructor().computeCapillaryPressureCoarse(
              columnState.gasPlumeDistance,
              PhaseDensities{columnState.densityW, columnState.densityNw},
              columnState.gravityNorm,
@@ -127,10 +128,10 @@ public:
         Dumux::parallelFor(column.size(), [&](const std::size_t columnElementIdx)
         {
             const auto& fineElement = column[columnElementIdx];
-            const Scalar fineElementHeight = fineElement.geometry().center()[dim - 1] - problem.getFineLevelView()->gridGeometry().bBoxMin()[dim - 1]; // relative height instead of absolute height is required for comparison with gas plume distance
+            const Scalar fineElementHeight = fineElement.geometry().center()[dim - 1] - fineLevelView.gridGeometry().bBoxMin()[dim - 1]; // relative height instead of absolute height is required for comparison with gas plume distance
 
             //calculate fine-level mobilities
-            std::vector<Scalar> reconstructedMobilites = problem.getFineLevelView()->quantityReconstructor().reconstMobilitiesFine(
+            std::vector<Scalar> reconstructedMobilites = fineLevelView.quantityReconstructor().reconstMobilitiesFine(
                  GasPlumeDistances{columnState.gasPlumeDistance, columnState.minimumGasPlumeDistance},
                  PhaseDensities{columnState.densityW, columnState.densityNw},
                  PhaseViscosities{columnState.viscosityW, columnState.viscosityNw},
