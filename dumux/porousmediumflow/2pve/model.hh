@@ -46,7 +46,7 @@
  * - each fine-cell center must be contained unambiguously in exactly one
  *   coarse cell
  * - gravity must be nonzero and aligned with the vertical coordinate axis
- * - the wetting phase must be denser than the nonwetting phase
+ * - the first fluid phase must be the wetting phase, and it must be denser than the nonwetting phase
  * - the reconstruction uses a Brooks-Corey material law and does not support
  *   \f$\lambda = 1\f$
  * - only the \f$p_w-S_n\f$ primary-variable formulation is supported

@@ -16,6 +16,8 @@
 #include <cstddef>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/parallel/parallel_for.hh>
@@ -189,31 +191,19 @@ public:
                                   const Scalar& gasPlumeDist)
     {
         EnergyVolVars::updateTemperature(elemSol, problemCoarse, element, scv, fluidState, solidState);
-        const auto& spatialParams = problemCoarse.spatialParams();
         const auto& priVars = elemSol[scv.localDofIndex()];
-        const auto wPhaseIdx = spatialParams.template wettingPhase<FluidSystem>(element, scv, elemSol);
+
+        const auto wPhaseIdx = problemCoarse.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        if (wPhaseIdx != phase0Idx)
+            DUNE_THROW(Dune::InvalidStateException, "The two-phase VE model requires the first phase to be the wetting phase");
         fluidState.setWettingPhase(wPhaseIdx);
+
+        fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
+        fluidState.setSaturation(phase0Idx, 1.0 - priVars[saturationIdx]);
+
+        pc_ = pcCoarse;
         fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-        if (fluidState.wettingPhase() == phase1Idx)
-        {
-            fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
-            fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
-
-            pc_ = pcCoarse;
-            fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
-
-            gasPlumeDist_ = gasPlumeDist;
-        }
-        else
-        {
-            const auto Sn = Traits::SaturationReconstruction::reconstructSn(spatialParams, element, scv, elemSol, priVars[saturationIdx]);
-
-            fluidState.setSaturation(phase1Idx, Sn);
-            fluidState.setSaturation(phase0Idx, 1 - Sn);
-
-            pc_ = pcCoarse;
-            fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
-        }
+        fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
 
         gasPlumeDist_ = gasPlumeDist;
 
