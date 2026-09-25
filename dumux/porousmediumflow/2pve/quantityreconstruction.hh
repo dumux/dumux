@@ -400,12 +400,15 @@ public:
         };
         const auto integrateRelPermNwAbovePlume = [&](const Scalar lower, const Scalar upper)
         {
-            return (upper - lower)
-                   - 2.0*integratePower(lambdaBC, lower, upper)
-                   + integratePower(2.0*lambdaBC, lower, upper)
-                   - integratePower(2.0 + lambdaBC, lower, upper)
-                   + 2.0*integratePower(2.0 + 2.0*lambdaBC, lower, upper)
-                   - integratePower(2.0 + 3.0*lambdaBC, lower, upper);
+            const Scalar integral = (upper - lower)
+                                    - 2.0*integratePower(lambdaBC, lower, upper)
+                                    + integratePower(2.0*lambdaBC, lower, upper)
+                                    - integratePower(2.0 + lambdaBC, lower, upper)
+                                    + 2.0*integratePower(2.0 + 2.0*lambdaBC, lower, upper)
+                                    - integratePower(2.0 + 3.0*lambdaBC, lower, upper);
+
+            // close to the gas plume distance, where krn vanishes, the terms cancel up to round-off errors of either sign
+            return std::max(integral, 0.0);
         };
 
         // the relative permeabilities are piecewise defined, with a kink or jump at the gas plume distance
