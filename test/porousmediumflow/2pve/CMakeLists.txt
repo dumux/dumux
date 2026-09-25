@@ -18,8 +18,8 @@ dumux_add_test(NAME test_2pve_immiscible_tpfa_2d
                LABELS porousmediumflow 2pve
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
-                        --zeroThreshold "{\"S_gas\":2e-3,\"mob_gas\":90,\"velocity_gas (m/s)\":5e-6}"
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pve_coarse_2d_reference.vtu
+                        --zeroThreshold "{\"S_gas\":2e-3,\"mob_gas\":90,\"velocity_gas (m/s)\":1e-7}"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pve_immiscible_tpfa_2d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/2pve_lenses_2d_40x0x18-00010.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_2d params_2d.input -Problem.Name 2pve_lenses_2d_ -Grid.LowerLeft '0 0' -Grid.UpperRight '250 55' -Grid.Cells '40 18' -TimeLoop.TEnd 4e5 -TimeLoop.MaxTimeStepSize 10000 -BoundaryConditions.InjectionRate -5.835e-4")
 
@@ -41,7 +41,7 @@ dumux_add_test(NAME test_2pve_immiscible_tpfa_3d
                LABELS porousmediumflow 2pve
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
-                        --zeroThreshold "{\"S_gas\":6e-4,\"mob_gas\":10,\"velocity_gas (m/s)\":2e-7}"
-                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pve_coarse_3d_reference.vtu
+                        --zeroThreshold "{\"S_gas\":6e-4,\"mob_gas\":10,\"velocity_gas (m/s)\":1e-8}"
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pve_immiscible_tpfa_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/2pve_lenses_3d_15x8x3-00010.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_3d params_3d.input -Problem.Name 2pve_lenses_3d_ -Grid.LowerLeft '0 0 0' -Grid.UpperRight '250 100 25' -Grid.Cells '15 8 3' -TimeLoop.TEnd 2e6 -TimeLoop.MaxTimeStepSize 10000 -BoundaryConditions.InjectionRate -1.45875e-3")

@@ -90,8 +90,7 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
 
         for (const auto& scvVE : scvs(fvGeometryVE))
         {
-            Scalar realElementVolumeCoarse = scvVE.volume()/domainHeight;
-            massBalance.nonwettingMassCoarse += coarsePorosity * densityNw * satNwCoarse * realElementVolumeCoarse;
+            massBalance.nonwettingMassCoarse += coarsePorosity * densityNw * satNwCoarse * scvVE.volume();
         }
 
         // iteration over fine-level elements
