@@ -45,6 +45,8 @@
  \f]
  * where \f$ p_e \f$ is the entry pressure, \f$ g \f$ the norm of the gravitational acceleration and
  * \f$ z_p \f$ the gas plume distance, the height of the lower boundary of the mobile nonwetting phase.
+ * If the mobile nonwetting phase fills the column down to its bottom, the capillary fringe extends
+ * below the column and \f$ z_p < 0 \f$.
  *
  * Above the gas plume distance, the wetting-phase saturation follows from the Brooks-Corey
  * capillary pressure \cite brooks1964hydrau in hydrostatic equilibrium,
