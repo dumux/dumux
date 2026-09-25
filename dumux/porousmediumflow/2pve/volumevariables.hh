@@ -50,6 +50,7 @@ class TwoPVEVolumeVariables
 
     static constexpr auto formulation = ModelTraits::priVarFormulation();
     static_assert(formulation == TwoPFormulation::p0s1, "TwoPVEVolumeVariables only supports the p0s1 formulation");
+    static_assert(!ModelTraits::enableEnergyBalance(), "TwoPVEVolumeVariables only supports isothermal flow");
 
     using GasPlumeDistances = TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;

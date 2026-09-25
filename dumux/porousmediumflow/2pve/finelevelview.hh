@@ -14,11 +14,16 @@
 #define DUMUX_TWOPVE_FINE_LEVEL_VIEW_HH
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 #include <dumux/porousmediumflow/2pve/columnmapping.hh>
@@ -65,6 +70,7 @@ class TwoPVEFineLevelView
     static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
     static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
     static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
     using ColumnState = TwoPVEColumnState<Scalar>;
     using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
 
@@ -93,6 +99,7 @@ public:
         problemFine_ = std::make_unique<FineProblemType>(gridGeometryFine_, fineCellHeight_, fineCellDepth_);
 
         const Scalar domainHeight = gridGeometryFine_->bBoxMax()[dim-1] - gridGeometryFine_->bBoxMin()[dim-1];
+        checkColumns_(domainHeight);
         for (auto& history : columnHistory_)
         {
             // initially there is no gas in the columns
@@ -230,13 +237,19 @@ public:
         state.domainHeight = gridGeometryFine_->bBoxMax()[dim - 1] - gridGeometryFine_->bBoxMin()[dim - 1];
 
         const auto fluidMatrixInteraction = coarseSpatialParams.fluidMatrixInteractionAtPos(coarsePosition);
+        using BasicParams = std::decay_t<decltype(fluidMatrixInteraction.pcSwCurve().basicParams())>;
+        static_assert(std::is_same_v<BasicParams, FluidMatrix::BrooksCorey::Params<Scalar>>, "The VE reconstruction requires a Brooks-Corey material law");
         const auto& brooksCoreyParams = fluidMatrixInteraction.pcSwCurve().basicParams();
         const auto& absoluteSaturationParams = fluidMatrixInteraction.pcSwCurve().effToAbsParams();
         state.swr = absoluteSaturationParams.swr();
         state.snr = absoluteSaturationParams.snr();
         state.brooksCoreyLambda = brooksCoreyParams.lambda();
         state.entryPressure = brooksCoreyParams.pcEntry();
-        state.gravityNorm = coarseSpatialParams.gravity(coarsePosition).two_norm();
+        const auto& gravity = coarseSpatialParams.gravity(coarsePosition);
+        for (int dirIdx = 0; dirIdx < dimWorld - 1; ++dirIdx)
+            if (gravity[dirIdx] != 0.0)
+                DUNE_THROW(Dune::InvalidStateException, "The VE model requires gravity to be aligned with the vertical coordinate axis");
+        state.gravityNorm = gravity.two_norm();
 
         // the fluid properties of both phases are evaluated at the coarse-level wetting-phase pressure
         ImmiscibleFluidState<Scalar, FluidSystem> fluidState;
@@ -324,6 +337,24 @@ private:
         }
 
         return upper - lower;
+    }
+
+    /*!
+     * \brief Checks that the fine-level elements have a uniform height and that each column spans the domain height
+     *
+     * \param domainHeight height of the domain
+     */
+    void checkColumns_(Scalar domainHeight) const
+    {
+        using std::abs;
+        const Scalar tolerance = 1e-10*domainHeight;
+        for (const auto& element : elements(gridGeometryFine_->gridView()))
+            if (abs(elementExtent_(element.geometry(), dim - 1) - fineCellHeight_) > tolerance)
+                DUNE_THROW(Dune::InvalidStateException, "The fine grid of the VE model has to be uniform in the vertical direction");
+
+        for (std::size_t columnIdx = 0; columnIdx < columnMapping_.numberOfColumns(); ++columnIdx)
+            if (abs(columnMapping_.column(columnIdx).size()*fineCellHeight_ - domainHeight) > tolerance)
+                DUNE_THROW(Dune::InvalidStateException, "Column " << columnIdx << " does not span the domain height, the coarse grid of the VE model has to consist of a single layer of elements");
     }
 
     /*!
