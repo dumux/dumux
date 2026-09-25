@@ -43,14 +43,10 @@ class TwoPVEVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
     static constexpr int numFluidComps = ParentType::numFluidComponents();
-    enum
-    {
-        pressureIdx = Idx::pressureIdx,
-        saturationIdx = Idx::saturationIdx,
-
-        phase0Idx = FS::phase0Idx,
-        phase1Idx = FS::phase1Idx
-    };
+    static constexpr int pressureIdx = Idx::pressureIdx;
+    static constexpr int saturationIdx = Idx::saturationIdx;
+    static constexpr int phase0Idx = FS::phase0Idx;
+    static constexpr int phase1Idx = FS::phase1Idx;
 
     static constexpr auto formulation = ModelTraits::priVarFormulation();
     static_assert(formulation == TwoPFormulation::p0s1, "TwoPVEVolumeVariables only supports the p0s1 formulation");
@@ -58,7 +54,6 @@ class TwoPVEVolumeVariables
     using GasPlumeDistances = TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;
     using PhaseViscosities = TwoPVE::PhaseViscositiesData<Scalar>;
-    using ResidualSaturations = TwoPVE::ResidualSaturationsData<Scalar>;
     using BrooksCoreyParameters = TwoPVE::BrooksCoreyParametersData<Scalar>;
 
 public:
@@ -83,32 +78,30 @@ public:
      * \param problem the object specifying the problem which ought to be simulated
      * \param element an element which contains part of the control volume
      * \param scv     the sub control volume
-    */
+     */
     template<class ElemSol, class Problem, class Element, class Scv>
     void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const Scv& scv)
     {
+        ParentType::update(elemSol, problem, element, scv);
+
         using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-        priVars_ = elemSol[scv.localDofIndex()];
-        extrusionFactor_ = problem.spatialParams().extrusionFactor(element, scv, elemSol);
-        const int columnIdx = problem.gridGeometry().elementMapper().index(element);
+        const auto columnIdx = problem.gridGeometry().elementMapper().index(element);
         const auto& fineLevelView = problem.fineLevelView();
-        // compute column state
-        const auto columnState = fineLevelView.makeColumnState(element, priVars_, problem.spatialParams());
+        const auto columnState = fineLevelView.makeColumnState(element, this->priVars(), problem.spatialParams());
         const Scalar deltaZ = fineLevelView.fineCellHeight();
         constexpr int dim = GlobalPosition::dimension;
 
         const auto& column = fineLevelView.columnMap().column(columnIdx);
 
-        //use wetting-phase pressure for computation of all coarse-level densities and viscosities
+        // the wetting-phase pressure determines all coarse-level densities and viscosities
         fluidState_.setDensity(phase0Idx, columnState.densityW);
         fluidState_.setViscosity(phase0Idx, columnState.viscosityW);
         fluidState_.setDensity(phase1Idx, columnState.densityNw);
         fluidState_.setViscosity(phase1Idx, columnState.viscosityNw);
 
-        //compute coarse-level capillary pressure
         const Scalar pcCoarse = fineLevelView.quantityReconstructor().computeCapillaryPressureCoarse(
              columnState.gasPlumeDistance,
              PhaseDensities{columnState.densityW, columnState.densityNw},
@@ -125,11 +118,10 @@ public:
             // relative height instead of absolute height is required for comparison with gas plume distance
             const Scalar fineElementHeight = fineElement.geometry().center()[dim - 1] - fineLevelView.gridGeometry().bBoxMin()[dim - 1];
 
-            const auto reconstructedMobilities = fineLevelView.quantityReconstructor().reconstMobilitiesFine(
+            const auto reconstructedMobilities = fineLevelView.quantityReconstructor().reconstructMobilitiesFine(
                  GasPlumeDistances{columnState.gasPlumeDistance, columnState.minimumGasPlumeDistance},
                  PhaseDensities{columnState.densityW, columnState.densityNw},
                  PhaseViscosities{columnState.viscosityW, columnState.viscosityNw},
-                 ResidualSaturations{columnState.swr,columnState.snr},
                  columnState.gravityNorm,
                  fineElementHeight,
                  deltaZ,
@@ -154,7 +146,6 @@ public:
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
-
     /*!
      * \brief Sets complete fluid state. This function is used for the coarse-level elements.
      *
@@ -176,8 +167,8 @@ public:
                                   const Scv& scv,
                                   FluidState& fluidState,
                                   SolidState& solidState,
-                                  const Scalar& pcCoarse,
-                                  const Scalar& gasPlumeDist)
+                                  Scalar pcCoarse,
+                                  Scalar gasPlumeDist)
     {
         EnergyVolVars::updateTemperature(elemSol, problemCoarse, element, scv, fluidState, solidState);
         const auto& priVars = elemSol[scv.localDofIndex()];
@@ -205,7 +196,6 @@ public:
             fluidState.setEnthalpy(phaseIdx, h);
         }
     }
-
 
     /*!
      * \brief Returns the phase state for the control volume.
@@ -298,25 +288,13 @@ public:
      * \brief Returns the wetting phase index
      */
     int wettingPhase() const
-    {  return fluidState_.wettingPhase(); }
+    { return fluidState_.wettingPhase(); }
 
     /*!
      * \brief Returns the gas plume distance within a coarse-level element
      */
-    const Scalar& gasPlumedist() const
+    Scalar gasPlumeDist() const
     { return gasPlumeDist_; }
-
-    /*!
-     * \brief Returns how much the sub-control volume is extruded.
-     *
-     * This means the factor by which a lower-dimensional (1D or 2D)
-     * entity needs to be expanded to get a full dimensional cell. The
-     * default is 1.0 which means that 1D problems are actually
-     * thought as pipes with a cross section of 1 m^2 and 2D problems
-     * are assumed to extend 1 m to the back.
-     */
-    Scalar extrusionFactor() const
-    { return extrusionFactor_; }
 
 protected:
     FluidState fluidState_;
@@ -328,9 +306,6 @@ private:
     Scalar mobility_[ModelTraits::numFluidPhases()];
 
     Scalar gasPlumeDist_;
-    Scalar extrusionFactor_; //extrusionFactor from ParentType is "overloaded"
-
-    PrimaryVariables priVars_;
 };
 
 } // end namespace Dumux

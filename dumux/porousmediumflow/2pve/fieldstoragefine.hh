@@ -33,10 +33,8 @@ private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FineLevelElementState = TwoPVEFineLevelElementState<TypeTag>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    enum {
-        wettingPhaseIdx = FluidSystem::phase0Idx,
-        nonwettingPhaseIdx = FluidSystem::phase1Idx,
-    };
+    static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
+    static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using VTKSeqWriter = typename Dune::VTKSequenceWriter<GridView>;
@@ -76,42 +74,42 @@ public:
      * \param fineIdx          index of fine-level element
      * \param fineElementState state of fine-level element
      */
-    void set(const int fineIdx,
+    void set(std::size_t fineIdx,
              const FineLevelElementState& fineElementState)
     {
-        this->saturationW[fineIdx] = fineElementState.saturation(wettingPhaseIdx);
-        this->saturationNw[fineIdx] = fineElementState.saturation(nonwettingPhaseIdx);
-        this->mobilityW[fineIdx] = fineElementState.mobility(wettingPhaseIdx);
-        this->mobilityNw[fineIdx] = fineElementState.mobility(nonwettingPhaseIdx);
-        this->pressureW[fineIdx] = fineElementState.pressure(wettingPhaseIdx);
-        this->pressureNw[fineIdx] = fineElementState.pressure(nonwettingPhaseIdx);
-        this->capillaryPressure[fineIdx] = fineElementState.capillaryPressure();
-        this->permeability[fineIdx] = fineElementState.permeability();
-        this->porosity[fineIdx] = fineElementState.porosity();
-        this->densityW[fineIdx] = fineElementState.density(wettingPhaseIdx);
-        this->densityNw[fineIdx] = fineElementState.density(nonwettingPhaseIdx);
-        this->gasPlumeDistance[fineIdx] = fineElementState.gasPlumeDist();
+        saturationW[fineIdx] = fineElementState.saturation(wettingPhaseIdx);
+        saturationNw[fineIdx] = fineElementState.saturation(nonwettingPhaseIdx);
+        mobilityW[fineIdx] = fineElementState.mobility(wettingPhaseIdx);
+        mobilityNw[fineIdx] = fineElementState.mobility(nonwettingPhaseIdx);
+        pressureW[fineIdx] = fineElementState.pressure(wettingPhaseIdx);
+        pressureNw[fineIdx] = fineElementState.pressure(nonwettingPhaseIdx);
+        capillaryPressure[fineIdx] = fineElementState.capillaryPressure();
+        permeability[fineIdx] = fineElementState.permeability();
+        porosity[fineIdx] = fineElementState.porosity();
+        densityW[fineIdx] = fineElementState.density(wettingPhaseIdx);
+        densityNw[fineIdx] = fineElementState.density(nonwettingPhaseIdx);
+        gasPlumeDistance[fineIdx] = fineElementState.gasPlumeDist();
     }
 
     /*!
      * \brief Registers fine-level fields to vtk writer, should be called when initializing the vtk writer
      *
-     * \param vtkSequenceWriter time-dependant vtkWriter
+     * \param vtkSequenceWriter time-dependent vtkWriter
      */
     void registerFields(VTKSeqWriter& vtkSequenceWriter) const
     {
-        vtkSequenceWriter.addCellData(this->saturationW, "S_liq");
-        vtkSequenceWriter.addCellData(this->saturationNw, "S_gas");
-        vtkSequenceWriter.addCellData(this->mobilityW, "mob_liq");
-        vtkSequenceWriter.addCellData(this->mobilityNw, "mob_gas");
-        vtkSequenceWriter.addCellData(this->pressureW, "p_liq");
-        vtkSequenceWriter.addCellData(this->pressureNw, "p_gas");
-        vtkSequenceWriter.addCellData(this->capillaryPressure, "pc");
-        vtkSequenceWriter.addCellData(this->permeability, "permeability");
-        vtkSequenceWriter.addCellData(this->porosity, "porosity");
-        vtkSequenceWriter.addCellData(this->densityW, "rho_liq");
-        vtkSequenceWriter.addCellData(this->densityNw, "rho_gas");
-        vtkSequenceWriter.addCellData(this->gasPlumeDistance, "zp");
+        vtkSequenceWriter.addCellData(saturationW, "S_liq");
+        vtkSequenceWriter.addCellData(saturationNw, "S_gas");
+        vtkSequenceWriter.addCellData(mobilityW, "mob_liq");
+        vtkSequenceWriter.addCellData(mobilityNw, "mob_gas");
+        vtkSequenceWriter.addCellData(pressureW, "p_liq");
+        vtkSequenceWriter.addCellData(pressureNw, "p_gas");
+        vtkSequenceWriter.addCellData(capillaryPressure, "pc");
+        vtkSequenceWriter.addCellData(permeability, "permeability");
+        vtkSequenceWriter.addCellData(porosity, "porosity");
+        vtkSequenceWriter.addCellData(densityW, "rho_liq");
+        vtkSequenceWriter.addCellData(densityNw, "rho_gas");
+        vtkSequenceWriter.addCellData(gasPlumeDistance, "zp");
     }
 };
 

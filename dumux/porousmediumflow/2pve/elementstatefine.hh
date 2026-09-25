@@ -49,8 +49,6 @@ struct TwoPVEColumnState
     Scalar minimumGasPlumeDistance{}; // required for hysteresis
 };
 
-
-
 /*!
  * \ingroup TwoPVEModel
  * \brief The quantities of a fine-level element reconstructed from the state of its coarse-level column
@@ -62,16 +60,12 @@ class TwoPVEFineLevelElementState
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    enum {
-        dim = GridView::dimension,
-    };
+    static constexpr int dim = GridView::dimension;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    enum {
-        wettingPhaseIdx = FluidSystem::phase0Idx,
-        nonwettingPhaseIdx = FluidSystem::phase1Idx,
-        numPhases = FluidSystem::numPhases
-    };
-    using QuantityReconstructor = TwoPVEQuantityReconst<TypeTag>;
+    static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
+    static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
+    static constexpr int numPhases = FluidSystem::numPhases;
+    using QuantityReconstructor = TwoPVEQuantityReconstruction<TypeTag>;
 
     using GasPlumeDistances = TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;
@@ -97,10 +91,11 @@ public:
                 const QuantityReconstructor& reconstructor,
                 const Scalar fineCellHeight)
     {
+        // relative height instead of absolute height is required for the reconstruction functions
         const Scalar fineElementPosZ = fineElement.geometry().center()[dim-1];
-        const Scalar heightAboveBottom = fineElementPosZ - fineSpatialParams.gridGeometry().bBoxMin()[dim-1]; // relative height instead of absolute height is required for reconstruction functions
+        const Scalar heightAboveBottom = fineElementPosZ - fineSpatialParams.gridGeometry().bBoxMin()[dim-1];
 
-        const auto pressures = reconstructor.reconstPressure(
+        const auto pressures = reconstructor.reconstructPressure(
             column.gasPlumeDistance,
             PhaseDensities{column.densityW, column.densityNw},
             column.gravityNorm,
@@ -121,7 +116,7 @@ public:
         saturation_[wettingPhaseIdx] = saturationW;
         saturation_[nonwettingPhaseIdx] = 1.0 - saturationW;
 
-        const Scalar capillaryPressure = reconstructor.reconstCapillaryPressure(
+        const Scalar capillaryPressure = reconstructor.reconstructCapillaryPressure(
             column.gasPlumeDistance,
             PhaseDensities{column.densityW, column.densityNw},
             column.gravityNorm,
@@ -129,17 +124,16 @@ public:
             column.entryPressure);
         capillaryPressure_ = capillaryPressure;
 
-        const auto mobilites = reconstructor.reconstMobilitiesFine(
+        const auto mobilities = reconstructor.reconstructMobilitiesFine(
             GasPlumeDistances{column.gasPlumeDistance, column.minimumGasPlumeDistance},
             PhaseDensities{column.densityW, column.densityNw},
             PhaseViscosities{column.viscosityW, column.viscosityNw},
-            ResidualSaturations{column.swr,column.snr},
             column.gravityNorm,
             heightAboveBottom,
             fineCellHeight,
             BrooksCoreyParameters{column.brooksCoreyLambda, column.entryPressure});
-        mobility_[wettingPhaseIdx] = mobilites[wettingPhaseIdx];
-        mobility_[nonwettingPhaseIdx] = mobilites[nonwettingPhaseIdx];
+        mobility_[wettingPhaseIdx] = mobilities[wettingPhaseIdx];
+        mobility_[nonwettingPhaseIdx] = mobilities[nonwettingPhaseIdx];
 
         density_[wettingPhaseIdx] = column.densityW;
         density_[nonwettingPhaseIdx] = column.densityNw;
@@ -153,7 +147,6 @@ public:
         temperature_ = column.temperature;
         gasPlumeDistance_ = column.gasPlumeDistance;
     }
-
 
     /*!
      * \brief Returns the effective pressure of a given phase within

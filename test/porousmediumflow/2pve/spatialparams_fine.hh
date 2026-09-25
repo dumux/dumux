@@ -43,7 +43,6 @@ public:
             gravity_[dimWorld-1] = -9.81;
     }
 
-
     /*!
      * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$ for a specific fine-level element
      *
@@ -51,30 +50,29 @@ public:
      */
     decltype(auto) permeabilityAtElement(const Element& element) const
     {
-        if constexpr(dimWorld==2)
+        if constexpr (dimWorld == 2)
         {
             const auto pos = element.geometry().center();
             const auto relPos = pos - gridGeometry_->bBoxMin();
 
             bool isInUpperLens = relPos[1] > 45.0 && relPos[0] > 70.0 && relPos[0] < 85.0;
-            if(isInUpperLens)
+            if (isInUpperLens)
                 return permeability_*0.00001;
             else
                 return permeability_;
         }
-        else if constexpr(dimWorld==3)
+        else if constexpr (dimWorld == 3)
         {
             const auto pos = element.geometry().center();
             const auto relPos = pos - gridGeometry_->bBoxMin();
 
             bool isInLens = relPos[0]>20.0 && relPos[0]<80 && relPos[1]>35.0 && relPos[1]<65.0 && relPos[dimWorld-1]>15.0;
-            if(isInLens)
+            if (isInLens)
                 return permeability_*0.00001;
             else
                 return permeability_;
         }
     }
-
 
     /*!
      * \brief Returns the porosity for a specific fine-level element
@@ -85,7 +83,6 @@ public:
     {
         return porosity_;
     }
-
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.

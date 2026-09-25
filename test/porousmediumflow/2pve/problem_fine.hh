@@ -36,27 +36,23 @@ class TwoPVEFineProblem
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    enum {
-        pressureH2OIdx = Indices::pressureIdx,
-        saturationGasIdx = Indices::saturationIdx,
-        contiGasEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx,
-    };
-    enum {
-        dim = GridView::dimension,
-    };
+    static constexpr int pressureH2OIdx = Indices::pressureIdx;
+    static constexpr int saturationGasIdx = Indices::saturationIdx;
+    static constexpr int contiGasEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx;
+    static constexpr int dim = GridView::dimension;
     using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
 
 public:
     using SpatialParamsFine = TwoPTestFineSpatialParams<GridGeometry, Scalar>;
 
     TwoPVEFineProblem(std::shared_ptr<const GridGeometry> gridGeometryFine,
-                      const Scalar& fineCellHeight,
-                      const Scalar& fineCellDepth)
+                      Scalar fineCellHeight,
+                      Scalar fineCellDepth)
     : spatialParams_(std::make_shared<SpatialParamsFine>(gridGeometryFine)),
       fineCellHeight_(fineCellHeight),
       fineCellDepth_(fineCellDepth)
     {
-        injectionRate_ = getParam<double>("BoundaryConditions.InjectionRate");
+        injectionRate_ = getParam<Scalar>("BoundaryConditions.InjectionRate");
     }
 
     /*!
@@ -102,20 +98,20 @@ public:
      */
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     {
-        if constexpr(dim==2)
+        if constexpr (dim == 2)
         {
             NumEqVector values(0.0);
             if (onLeftBoundary_(globalPos))
                 values[contiGasEqIdx] = injectionRate_; // kg / (m * s)
             return values;
         }
-        else if constexpr(dim==3)
+        else if constexpr (dim == 3)
         {
             NumEqVector values(0.0);
             // put well at middle of y-direction boundary
-            Scalar halfDepthBox = (spatialParams_->gridGeometry().bBoxMax()[1] - spatialParams_->gridGeometry().bBoxMin()[1])/2.0;
+            const Scalar halfDepthBox = (spatialParams_->gridGeometry().bBoxMax()[1] - spatialParams_->gridGeometry().bBoxMin()[1])/2.0;
 
-            if(onLeftBoundary_(globalPos) &&
+            if (onLeftBoundary_(globalPos) &&
                halfDepthBox <= (globalPos[1]+fineCellDepth_/2.0) &&
                halfDepthBox >  (globalPos[1]-fineCellDepth_/2.0) )
             {
@@ -145,7 +141,6 @@ public:
 
         return values;
     }
-
 
 private:
     static constexpr Scalar eps_ = 1e-6;

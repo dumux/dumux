@@ -16,10 +16,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dumux/geometry/intersectingentities.hh>
@@ -33,7 +32,7 @@ namespace Dumux {
  * The fine-level elements of each column are sorted by increasing vertical coordinate.
  */
 template<class GridGeometry, class Scalar>
-class VEColumnMapping
+class TwoPVEColumnMapping
 {
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -41,12 +40,10 @@ class VEColumnMapping
 public:
     using Column = std::vector<Element>;
 
-    VEColumnMapping(std::shared_ptr<const GridGeometry> gridGeometryCoarse,
-                    std::shared_ptr<const GridGeometry> geometryFine)
-    :   geometryCoarse_(gridGeometryCoarse),
-        geometryFine_(geometryFine)
+    TwoPVEColumnMapping(std::shared_ptr<const GridGeometry> gridGeometryCoarse,
+                        std::shared_ptr<const GridGeometry> gridGeometryFine)
     {
-        build_(*gridGeometryCoarse, *geometryFine);
+        build_(*gridGeometryCoarse, *gridGeometryFine);
     }
 
     /*!
@@ -92,7 +89,7 @@ private:
         const std::size_t numberOfFineElements = gridGeometryFine.elementMapper().size();
 
         if (numberOfCoarseElements == 0)
-            throw std::invalid_argument("Cannot construct columns for an empty coarse grid");
+            DUNE_THROW(Dune::InvalidStateException, "Cannot construct columns for an empty coarse grid");
 
         coarseToFine_.clear();
         coarseToFine_.resize(numberOfCoarseElements);
@@ -107,9 +104,9 @@ private:
 
             const auto coarseCandidates = intersectingEntities(fineCenter, gridGeometryCoarse.boundingBoxTree());
             if (coarseCandidates.empty())
-                throw std::runtime_error("Fine element " + std::to_string(idxFine) + " is not contained in a coarse element");
+                DUNE_THROW(Dune::InvalidStateException, "Fine element " << idxFine << " is not contained in a coarse element");
             if (coarseCandidates.size() != 1)
-                throw std::runtime_error("Fine element " + std::to_string(idxFine) + " intersects more than one coarse element");
+                DUNE_THROW(Dune::InvalidStateException, "Fine element " << idxFine << " intersects more than one coarse element");
             const auto idxCoarse = coarseCandidates.front();
 
             coarseToFine_[idxCoarse].push_back(elementFine);
@@ -147,32 +144,26 @@ private:
         static constexpr int verticalAxis = GridView::dimensionworld - 1;
         const auto expectedColumnSize = numberOfFineElements / numberOfCoarseElements;
 
-        if (numberOfCoarseElements == 0)
-            throw std::runtime_error("Cannot validate columns for an empty coarse grid");
-
         for (std::size_t coarseIdx = 0; coarseIdx < coarseToFine_.size(); ++coarseIdx)
         {
             const auto& column = coarseToFine_[coarseIdx];
 
             // check size
             if (column.size() != expectedColumnSize)
-                throw std::runtime_error("Unexpected number of fine elements in column " + std::to_string(coarseIdx));
+                DUNE_THROW(Dune::InvalidStateException, "Unexpected number of fine elements in column " << coarseIdx);
 
-            //check ordering
+            // check ordering
             for (std::size_t i = 1; i < column.size(); ++i)
             {
                 const Scalar previousZ = column[i - 1].geometry().center()[verticalAxis];
                 const Scalar currentZ = column[i].geometry().center()[verticalAxis];
 
                 if (!(previousZ < currentZ))
-                    throw std::runtime_error("Fine elements do not have strictly increasing vertical coordinates in column " + std::to_string(coarseIdx));
+                    DUNE_THROW(Dune::InvalidStateException, "Fine elements do not have strictly increasing vertical coordinates in column " << coarseIdx);
             }
         }
     }
 
-
-    std::shared_ptr<const GridGeometry> geometryCoarse_;
-    std::shared_ptr<const GridGeometry> geometryFine_;
     std::vector<Column> coarseToFine_;
     std::vector<std::size_t> fineToCoarse_;
 };
