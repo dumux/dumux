@@ -131,13 +131,15 @@ int main(int argc, char** argv)
     auto gridGeometryCoarse = std::make_shared<GridGeometry>(leafGridViewCoarse);
     auto gridGeometryFine = std::make_shared<GridGeometry>(leafGridViewFine);
 
-    // create fine-level view of VE scheme
+    // create the fine-level problem and the fine-level view of the VE scheme
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FineProblem = typename Problem::FineProblem;
     using FineLevelView = typename Problem::FineLevelView;
-    auto fineLevelView = std::make_shared<FineLevelView>(gridGeometryFine, gridGeometryCoarse);
+    auto fineProblem = std::make_shared<FineProblem>(gridGeometryFine);
+    auto fineLevelView = std::make_shared<FineLevelView>(gridGeometryFine, gridGeometryCoarse, fineProblem->spatialParamsPtr());
 
     // the problem (initial and boundary conditions)
-    auto problemCoarse = std::make_shared<Problem>(gridGeometryCoarse, fineLevelView);
+    auto problemCoarse = std::make_shared<Problem>(gridGeometryCoarse, fineLevelView, fineProblem);
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
