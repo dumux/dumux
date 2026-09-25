@@ -13,7 +13,10 @@
 #ifndef DUMUX_TEST_TWOPVE_FINE_PROBLEM_HH
 #define DUMUX_TEST_TWOPVE_FINE_PROBLEM_HH
 
+#include <algorithm>
 #include <memory>
+
+#include <dune/grid/common/rangegenerators.hh>
 
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
@@ -45,15 +48,11 @@ class TwoPVEFineProblem
 public:
     using SpatialParamsFine = TwoPTestFineSpatialParams<GridGeometry, Scalar>;
 
-    TwoPVEFineProblem(std::shared_ptr<const GridGeometry> gridGeometryFine,
-                      Scalar fineCellHeight,
-                      Scalar fineCellDepth)
+    TwoPVEFineProblem(std::shared_ptr<const GridGeometry> gridGeometryFine)
     : spatialParams_(std::make_shared<SpatialParamsFine>(gridGeometryFine)),
-      fineCellHeight_(fineCellHeight),
-      fineCellDepth_(fineCellDepth)
-    {
-        injectionRate_ = getParam<Scalar>("BoundaryConditions.InjectionRate");
-    }
+      fineCellDepth_(computeFineCellDepth_(*gridGeometryFine)),
+      injectionRate_(getParam<Scalar>("BoundaryConditions.InjectionRate"))
+    {}
 
     /*!
      * \brief Return a reference to the fine-level spatial parameters
@@ -155,8 +154,28 @@ private:
         return globalPos[0] > spatialParams_->gridGeometry().bBoxMax()[0] - eps_;
     }
 
+    // extent of the uniform fine-level elements in the horizontal direction along the injection boundary
+    static Scalar computeFineCellDepth_(const GridGeometry& gridGeometry)
+    {
+        if constexpr (dim == 2)
+            return 1.0;
+        else
+        {
+            using std::max; using std::min;
+            const auto geometry = (*elements(gridGeometry.gridView()).begin()).geometry();
+            Scalar lower = geometry.corner(0)[1];
+            Scalar upper = lower;
+            for (int cornerIdx = 1; cornerIdx < geometry.corners(); ++cornerIdx)
+            {
+                lower = min(lower, geometry.corner(cornerIdx)[1]);
+                upper = max(upper, geometry.corner(cornerIdx)[1]);
+            }
+            return upper - lower;
+        }
+    }
+
     std::shared_ptr<const SpatialParamsFine> spatialParams_;
-    Scalar fineCellHeight_, fineCellDepth_;
+    Scalar fineCellDepth_;
     Scalar injectionRate_;
 };
 

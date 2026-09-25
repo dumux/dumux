@@ -57,9 +57,10 @@ struct TwoPVEColumnHistory
  * \tparam FluidSystem the immiscible two-phase fluid system
  * \tparam Indices the primary variable indices of the model
  * \tparam SolutionVector the type of the coarse-level and the fine-level solution vectors
- * \tparam FineProblemType the fine-level problem providing the fine-level spatial parameters
+ * \tparam SpatialParamsFine the fine-level spatial parameters, providing `permeabilityAtElement(fineElement)`,
+ *         `porosityAtElement(fineElement)` and `gridGeometry()`
  */
-template<class GridGeometry, class Scalar, class FluidSystem, class Indices, class SolutionVector, class FineProblemType>
+template<class GridGeometry, class Scalar, class FluidSystem, class Indices, class SolutionVector, class SpatialParamsFine>
 class TwoPVEFineLevelView
 {
     using GridView = typename GridGeometry::GridView;
@@ -71,6 +72,7 @@ class TwoPVEFineLevelView
     static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
+    static_assert(dim == 2 || dim == 3, "TwoPVEFineLevelView only supports two- and three-dimensional grids");
     using ColumnState = TwoPVEColumnState<Scalar>;
     using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
 
@@ -81,23 +83,27 @@ class TwoPVEFineLevelView
 public:
     using FineLevelElementState = TwoPVEFineLevelElementState<GridGeometry, Scalar, FluidSystem>;
     using FineLevelFields = TwoPVEFineLevelFieldStorage<GridGeometry, Scalar, FluidSystem>;
-    using FineProblem = FineProblemType;
-    using SpatialParamsFine = typename FineProblem::SpatialParamsFine;
 
+    /*!
+     * \brief Builds the mapping between the levels and checks that the grids fulfill the requirements of the model
+     *
+     * \param gridGeometry       fine-level grid geometry
+     * \param gridGeometryCoarse coarse-level grid geometry
+     * \param spatialParamsFine  fine-level spatial parameters
+     */
     TwoPVEFineLevelView(std::shared_ptr<const GridGeometry> gridGeometry,
-                        std::shared_ptr<const GridGeometry> gridGeometryCoarse)
+                        std::shared_ptr<const GridGeometry> gridGeometryCoarse,
+                        std::shared_ptr<const SpatialParamsFine> spatialParamsFine)
     : gridGeometryFine_(gridGeometry),
       gridGeometryCoarse_(gridGeometryCoarse),
+      spatialParamsFine_(spatialParamsFine),
       quantityReconstructor_{},
       columnMapping_(gridGeometryCoarse, gridGeometry),
       solution_(gridGeometryFine_->numDofs()),
       fineLevelFields_(gridGeometryFine_->numDofs()),
       fineCellHeight_(computeFineCellHeight_()),
-      fineCellDepth_(computeFineCellDepth_()),
       columnHistory_(gridGeometryCoarse_->numDofs())
     {
-        problemFine_ = std::make_unique<FineProblemType>(gridGeometryFine_, fineCellHeight_, fineCellDepth_);
-
         const Scalar domainHeight = gridGeometryFine_->bBoxMax()[dim-1] - gridGeometryFine_->bBoxMin()[dim-1];
         checkColumns_(domainHeight);
         for (auto& history : columnHistory_)
@@ -117,19 +123,11 @@ public:
     }
 
     /*!
-     * \brief Returns the depth of a fine-level cell (for uniform grid)
-     */
-    Scalar fineCellDepth() const
-    {
-        return fineCellDepth_;
-    }
-
-    /*!
      * \brief Getter function for fine-level spatial parameters
      */
     const SpatialParamsFine& spatialParams() const
     {
-        return problemFine_->spatialParams();
+        return *spatialParamsFine_;
     }
 
     /*!
@@ -137,23 +135,7 @@ public:
      */
     std::shared_ptr<const SpatialParamsFine> spatialParamsPtr() const
     {
-        return problemFine_->spatialParamsPtr();
-    }
-
-    /*!
-     * \brief Getter function for fine-level problem
-     */
-    const FineProblemType& problem() const
-    {
-        return *problemFine_;
-    }
-
-    /*!
-     * \brief Getter function for fine-level problem
-     */
-    FineProblemType& problem()
-    {
-        return *problemFine_;
+        return spatialParamsFine_;
     }
 
     /*!
@@ -306,7 +288,7 @@ public:
                 const auto fineIdx = gridGeometryFine_->elementMapper().index(fineElement);
 
                 FineLevelElementState fineElementState;
-                fineElementState.update(fineElement, columnState, problemFine_->spatialParams(), quantityReconstructor_, fineCellHeight_);
+                fineElementState.update(fineElement, columnState, *spatialParamsFine_, quantityReconstructor_, fineCellHeight_);
                 solution_[fineIdx][pressureIdx] = fineElementState.pressure(wettingPhaseIdx);
                 solution_[fineIdx][saturationIdx] = fineElementState.saturation(nonwettingPhaseIdx);
                 fineLevelFields_.set(fineIdx, fineElementState);
@@ -367,31 +349,15 @@ private:
         return elementExtent_(element.geometry(), dim - 1);
     }
 
-    /*!
-     * \brief Helper function for computing the depth of uniform, fine-level elements
-     */
-    Scalar computeFineCellDepth_() const
-    {
-        if constexpr (dim == 2)
-            return 1.0; // assume same depth for all cells, otherwise use extrusionFactor per element
-        else
-        {
-            static_assert(dim == 3, "TwoPVEFineLevelView currently supports only 2D and 3D grids");
-            const auto& gridView = gridGeometryFine_->gridView();
-            const auto element = *gridView.template begin<0>();
-            return elementExtent_(element.geometry(), dim - 2);
-        }
-    }
-
     std::shared_ptr<const GridGeometry> gridGeometryFine_;
     std::shared_ptr<const GridGeometry> gridGeometryCoarse_;
+    std::shared_ptr<const SpatialParamsFine> spatialParamsFine_;
     QuantityReconstructor quantityReconstructor_;
     ColumnMapping columnMapping_;
     SolutionVector solution_;
     FineLevelFields fineLevelFields_;
-    Scalar fineCellHeight_, fineCellDepth_;
+    Scalar fineCellHeight_;
     std::vector<TwoPVEColumnHistory<Scalar>> columnHistory_;
-    std::unique_ptr<FineProblemType> problemFine_;
 };
 
 } // end namespace Dumux

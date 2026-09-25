@@ -59,26 +59,6 @@ private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
 };
 
-template<class GridGeometry>
-class FineProblem
-{
-public:
-    using SpatialParamsFine = FineSpatialParams<GridGeometry>;
-
-    FineProblem(std::shared_ptr<const GridGeometry> gridGeometry, double fineCellHeight, double fineCellDepth)
-    : spatialParams_(std::make_shared<SpatialParamsFine>(gridGeometry))
-    {}
-
-    const SpatialParamsFine& spatialParams() const
-    { return *spatialParams_; }
-
-    std::shared_ptr<const SpatialParamsFine> spatialParamsPtr() const
-    { return spatialParams_; }
-
-private:
-    std::shared_ptr<const SpatialParamsFine> spatialParams_;
-};
-
 template<class GlobalPosition>
 class CoarseSpatialParams
 {
@@ -133,7 +113,7 @@ int main(int argc, char** argv)
                                                      FluidSystems::OnePLiquid<double, Components::H2O<double>>,
                                                      FluidSystems::OnePGas<double, Components::CH4<double>>>;
     using SolutionVector = Dune::BlockVector<Dune::FieldVector<double, 2>>;
-    using FineLevelView = TwoPVEFineLevelView<GridGeometry, double, FluidSystem, TwoPIndices, SolutionVector, TwoPVETest::FineProblem<GridGeometry>>;
+    using FineLevelView = TwoPVEFineLevelView<GridGeometry, double, FluidSystem, TwoPIndices, SolutionVector, TwoPVETest::FineSpatialParams<GridGeometry>>;
 
     const std::vector<double> horizontalCoordinates({0.0, 1.0, 2.0});
     const auto makeGridGeometry = [&](const std::vector<double>& verticalCoordinates)
@@ -145,7 +125,7 @@ int main(int argc, char** argv)
     {
         const auto [coarseGrid, coarseGridGeometry] = makeGridGeometry(coarseCoordinates);
         const auto [fineGrid, fineGridGeometry] = makeGridGeometry(fineCoordinates);
-        return std::make_tuple(coarseGrid, fineGrid, coarseGridGeometry, std::make_shared<FineLevelView>(fineGridGeometry, coarseGridGeometry));
+        return std::make_tuple(coarseGrid, fineGrid, coarseGridGeometry, std::make_shared<FineLevelView>(fineGridGeometry, coarseGridGeometry, std::make_shared<TwoPVETest::FineSpatialParams<GridGeometry>>(fineGridGeometry)));
     };
 
     // single coarse layer and uniform fine layers
