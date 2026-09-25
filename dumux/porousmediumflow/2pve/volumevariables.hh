@@ -13,14 +13,10 @@
 #ifndef DUMUX_TWOPVE_VOLUMEVARIABLES_HH
 #define DUMUX_TWOPVE_VOLUMEVARIABLES_HH
 
-#include <cstddef>
-#include <vector>
-
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
-#include <dumux/parallel/parallel_for.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
@@ -53,8 +49,7 @@ class TwoPVEVolumeVariables
         saturationIdx = Idx::saturationIdx,
 
         phase0Idx = FS::phase0Idx,
-        phase1Idx = FS::phase1Idx,
-        numPhases = FS::numPhases
+        phase1Idx = FS::phase1Idx
     };
 
     static constexpr auto formulation = ModelTraits::priVarFormulation();
@@ -103,12 +98,9 @@ public:
         // compute column state
         const auto columnState = fineLevelView.makeColumnState(element, priVars_, problem.spatialParams());
         const Scalar deltaZ = fineLevelView.fineCellHeight();
-        unsigned int dim = GlobalPosition::dimension;
+        constexpr int dim = GlobalPosition::dimension;
 
         const auto& column = fineLevelView.columnMap().column(columnIdx);
-        std::vector<Scalar> mobilitiesCoarse(numPhases, 0.0);
-        std::vector<Scalar> mobWFineEntries(column.size(), 0.0);
-        std::vector<Scalar> mobNwFineEntries(column.size(), 0.0);
 
         //use wetting-phase pressure for computation of all coarse-level densities and viscosities
         fluidState_.setDensity(phase0Idx, columnState.densityW);
@@ -124,14 +116,16 @@ public:
              columnState.entryPressure);
         const Scalar permeabilityCoarse = problem.spatialParams().permeability(element, scv, elemSol);
 
-        // const auto firstCellIterator = column.cbegin();
-        Dumux::parallelFor(column.size(), [&](const std::size_t columnElementIdx)
+        // column integrals of the fine-level permeability times the reconstructed fine-level mobilities
+        mobility_[phase0Idx] = 0.0;
+        mobility_[phase1Idx] = 0.0;
+        const auto& spatialParamsFine = problem.spatialParams().spatialParamsFine();
+        for (const auto& fineElement : column)
         {
-            const auto& fineElement = column[columnElementIdx];
-            const Scalar fineElementHeight = fineElement.geometry().center()[dim - 1] - fineLevelView.gridGeometry().bBoxMin()[dim - 1]; // relative height instead of absolute height is required for comparison with gas plume distance
+            // relative height instead of absolute height is required for comparison with gas plume distance
+            const Scalar fineElementHeight = fineElement.geometry().center()[dim - 1] - fineLevelView.gridGeometry().bBoxMin()[dim - 1];
 
-            //calculate fine-level mobilities
-            std::vector<Scalar> reconstructedMobilites = fineLevelView.quantityReconstructor().reconstMobilitiesFine(
+            const auto reconstructedMobilities = fineLevelView.quantityReconstructor().reconstMobilitiesFine(
                  GasPlumeDistances{columnState.gasPlumeDistance, columnState.minimumGasPlumeDistance},
                  PhaseDensities{columnState.densityW, columnState.densityNw},
                  PhaseViscosities{columnState.viscosityW, columnState.viscosityNw},
@@ -141,25 +135,17 @@ public:
                  deltaZ,
                  BrooksCoreyParameters{columnState.brooksCoreyLambda,columnState.entryPressure});
 
-            mobWFineEntries[columnElementIdx] = problem.spatialParams().spatialParamsFine().permeabilityAtElement(fineElement) * reconstructedMobilites[phase0Idx] * deltaZ;
-            mobNwFineEntries[columnElementIdx] = problem.spatialParams().spatialParamsFine().permeabilityAtElement(fineElement) * reconstructedMobilites[phase1Idx] * deltaZ;
-        });
-
-        for(int columnElementsIdx=0; columnElementsIdx<column.size(); columnElementsIdx++)
-        {
-            mobilitiesCoarse[phase0Idx] += mobWFineEntries[columnElementsIdx];
-            mobilitiesCoarse[phase1Idx] += mobNwFineEntries[columnElementsIdx];
+            const Scalar permeabilityFine = spatialParamsFine.permeabilityAtElement(fineElement);
+            mobility_[phase0Idx] += permeabilityFine * reconstructedMobilities[phase0Idx] * deltaZ;
+            mobility_[phase1Idx] += permeabilityFine * reconstructedMobilities[phase1Idx] * deltaZ;
         }
 
         completeFluidStateCoarse(elemSol, problem, element, scv, fluidState_, solidState_, pcCoarse, columnState.gasPlumeDistance);
 
         // permeability-weighted column average, the denominator is the column integral of the fine-level permeability
         const Scalar columnHeight = column.size()*deltaZ;
-        mobilitiesCoarse[phase0Idx] /= permeabilityCoarse*columnHeight;
-        mobilitiesCoarse[phase1Idx] /= permeabilityCoarse*columnHeight;
-
-        mobility_[phase0Idx] = mobilitiesCoarse[phase0Idx];
-        mobility_[phase1Idx] = mobilitiesCoarse[phase1Idx];
+        mobility_[phase0Idx] /= permeabilityCoarse*columnHeight;
+        mobility_[phase1Idx] /= permeabilityCoarse*columnHeight;
 
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
