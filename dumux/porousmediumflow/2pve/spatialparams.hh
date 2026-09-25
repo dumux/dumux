@@ -14,6 +14,7 @@
 #define DUMUX_TWOPVE_SPATIAL_PARAMS_HH
 
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 #include <dune/grid/common/rangegenerators.hh>
@@ -70,6 +71,9 @@ public:
     , permeability_(gridGeometry->elementMapper().size(), 0.0)
     , porosity_(gridGeometry->elementMapper().size(), 0.0)
     {
+        using FinePermeability = std::decay_t<decltype(spatialParamsFine_->permeabilityAtElement(std::declval<const Element&>()))>;
+        static_assert(std::is_convertible_v<FinePermeability, Scalar>, "The VE upscaling requires a scalar fine-level permeability");
+
         for (const auto& element : elements(gridGeometry->gridView()))
         {
             const auto columnIdx = gridGeometry->elementMapper().index(element);
