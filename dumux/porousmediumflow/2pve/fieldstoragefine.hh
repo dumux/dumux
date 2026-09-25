@@ -25,17 +25,18 @@ namespace Dumux {
 /*!
  * \ingroup TwoPVEModel
  * \brief Stores the reconstructed quantities of all fine-level elements for output
+ *
+ * \tparam GridGeometry the fine-level grid geometry
+ * \tparam Scalar the scalar type
+ * \tparam FluidSystem the immiscible two-phase fluid system
  */
-template<class TypeTag>
+template<class GridGeometry, class Scalar, class FluidSystem>
 struct TwoPVEFineLevelFieldStorage
 {
 private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FineLevelElementState = TwoPVEFineLevelElementState<TypeTag>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FineLevelElementState = TwoPVEFineLevelElementState<GridGeometry, Scalar, FluidSystem>;
     static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
     static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using VTKSeqWriter = typename Dune::VTKSequenceWriter<GridView>;
 
