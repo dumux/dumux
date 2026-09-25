@@ -55,6 +55,10 @@
  *
  * These are restrictions of the current implementation and are not general
  * restrictions of vertical-equilibrium models.
+ *
+ * A problem using this model has to provide `fineLevelView()`, returning the
+ * Dumux::TwoPVEFineLevelView that connects the coarse level to the fine level,
+ * and spatial parameters deriving from Dumux::TwoPVESpatialParams.
  */
 
 #ifndef DUMUX_TWOPVE_MODEL_HH
