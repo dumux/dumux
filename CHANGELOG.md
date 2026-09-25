@@ -35,7 +35,7 @@ unknowns. Multidomain assembly supports complex-valued subdomains: all blocks of
 of the subdomain Jacobians, and `MatrixConverter` and `VectorConverter` default to the field type of the converted multi-type object.
 The embedded 1D-3D coupling interpolates complex-valued primary variables at its integration points with real shape values.
 Complex-valued Helmholtz tests in `test/experimental/complex` demonstrate the feature, including a box facet-coupling test.
-- __Vertical equilibrium model__: Introduced the vertical equilibrium model and corresponding test cases for simulating fluid flow in porous media.
+- __Vertical equilibrium model__: Added the two-phase vertical-equilibrium model `2pve` for gravity-segregated two-phase flow. It solves the mass balance equations on a coarse grid of vertical columns and reconstructs the vertical distribution of saturations, pressures and mobilities on a fine grid.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
