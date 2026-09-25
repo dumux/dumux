@@ -143,8 +143,8 @@ public:
             values[saturationGasIdx] += (fineLevelView_->problem().dirichletAtPos(globalPosFineElement)[saturationGasIdx] * fineLevelView_->spatialParams().porosityAtElement(fineElement))*deltaZ;
         }
 
-        //average saturation by coarse-level porosity
-        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element);
+        // porosity-weighted average over the column
+        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element)*column.size()*deltaZ;
 
         return values;
     }
@@ -178,6 +178,9 @@ public:
                 globalPosFineElement[0] = scvf.center()[0];
                 values += fineLevelView_->problem().neumannAtPos(globalPosFineElement)*deltaZ;
             }
+
+            // average over the height of the coarse-level face
+            values /= column.size()*deltaZ;
         }
 
         return values;
@@ -208,8 +211,8 @@ public:
             values[saturationGasIdx] += (fineLevelView_->problem().initialAtPos(globalPosFineElement)[saturationGasIdx] * fineLevelView_->spatialParams().porosityAtElement(fineElement))*deltaZ;
         }
 
-        //average saturation by coarse-level porosity
-        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element);
+        // porosity-weighted average over the column
+        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element)*column.size()*deltaZ;
 
         return values;
     }
