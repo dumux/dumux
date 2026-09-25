@@ -14,7 +14,6 @@
 #define DUMUX_TWOPVE_FINE_LEVEL_ELEMENTSTATE_HH
 
 #include <array>
-#include <vector>
 
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
@@ -101,7 +100,7 @@ public:
         const Scalar fineElementPosZ = fineElement.geometry().center()[dim-1];
         const Scalar heightAboveBottom = fineElementPosZ - fineSpatialParams.gridGeometry().bBoxMin()[dim-1]; // relative height instead of absolute height is required for reconstruction functions
 
-        const std::vector<Scalar> pressures = reconstructor.reconstPressure(
+        const auto pressures = reconstructor.reconstPressure(
             column.gasPlumeDistance,
             PhaseDensities{column.densityW, column.densityNw},
             column.gravityNorm,
@@ -130,7 +129,7 @@ public:
             column.entryPressure);
         capillaryPressure_ = capillaryPressure;
 
-        const std::vector<Scalar> mobilites = reconstructor.reconstMobilitiesFine(
+        const auto mobilites = reconstructor.reconstMobilitiesFine(
             GasPlumeDistances{column.gasPlumeDistance, column.minimumGasPlumeDistance},
             PhaseDensities{column.densityW, column.densityNw},
             PhaseViscosities{column.viscosityW, column.viscosityNw},
