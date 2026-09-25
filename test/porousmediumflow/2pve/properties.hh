@@ -75,13 +75,9 @@ struct Formulation<TypeTag, TTag::TwoPVEImmiscible>
     static constexpr auto value = TwoPFormulation::p0s1;
 };
 
-// Enable caching
+// Cache the volume variables, whose update reconstructs the mobilities of all fine-level elements in a column
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPVEImmiscible> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::TwoPVEImmiscible> { static constexpr bool value = false; };
-template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::TwoPVEImmiscible> { static constexpr bool value = false; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TwoPVEImmiscible> { static constexpr bool value = true; };
 } // end namespace Dumux::Properties
 
 #endif
