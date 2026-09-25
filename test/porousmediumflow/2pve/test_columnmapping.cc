@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 
     auto coarseGridGeometry = std::make_shared<GridGeometry>(coarseGrid.leafGridView());
     auto fineGridGeometry = std::make_shared<GridGeometry>(fineGrid.leafGridView());
-    const Dumux::VEColumnMapping<GridGeometry, Scalar> mapping(coarseGridGeometry, fineGridGeometry);
+    const Dumux::TwoPVEColumnMapping<GridGeometry, Scalar> mapping(coarseGridGeometry, fineGridGeometry);
 
     if (mapping.numberOfColumns() != coarseCells[0])
         DUNE_THROW(Dune::Exception, "Expected " << coarseCells[0] << " columns, obtained " << mapping.numberOfColumns());

@@ -23,7 +23,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/fvproblem.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/porousmediumflow/2pve/finelevel_view.hh>
+#include <dumux/porousmediumflow/2pve/finelevelview.hh>
 
 #include "problem_fine.hh"
 
@@ -43,14 +43,10 @@ class TwoPVETestProblem : public FVProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    enum {
-        pressureH2OIdx = Indices::pressureIdx,
-        saturationGasIdx = Indices::saturationIdx,
-    };
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    static constexpr int pressureH2OIdx = Indices::pressureIdx;
+    static constexpr int saturationGasIdx = Indices::saturationIdx;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -125,7 +121,7 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        const unsigned int columnIdx = this->gridGeometry().elementMapper().index(element);
+        const auto columnIdx = this->gridGeometry().elementMapper().index(element);
         const Scalar deltaZ = fineLevelView_->fineCellHeight();
         const auto& column = fineLevelView_->columnMap().column(columnIdx);
 
@@ -135,7 +131,7 @@ public:
         globalPosFineElementBottom[dim-1] -= 0.5*deltaZ;
         values[pressureH2OIdx] = fineLevelView_->problem().dirichletAtPos(globalPosFineElementBottom)[pressureH2OIdx];
 
-        for(const auto& fineElement : column)
+        for (const auto& fineElement : column)
         {
             GlobalPosition globalPosFineElement = fineElement.geometry().center();
             globalPosFineElement[0] = scvf.center()[0];
@@ -165,14 +161,14 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
-        GlobalPosition globalPosCoarseScvf = scvf.center();
+        const GlobalPosition globalPosCoarseScvf = scvf.center();
         const Scalar deltaZ = fineLevelView_->fineCellHeight();
-        const unsigned int columnIdx = this->gridGeometry().elementMapper().index(element);
+        const auto columnIdx = this->gridGeometry().elementMapper().index(element);
         const auto& column = fineLevelView_->columnMap().column(columnIdx);
 
-        if(onLeftBoundary_(globalPosCoarseScvf) && isInjecting_())
+        if (onLeftBoundary_(globalPosCoarseScvf) && isInjecting_())
         {
-            for(const auto& fineElement : column)
+            for (const auto& fineElement : column)
             {
                 GlobalPosition globalPosFineElement = fineElement.geometry().center();
                 globalPosFineElement[0] = scvf.center()[0];
@@ -195,7 +191,7 @@ public:
     {
         PrimaryVariables values(0.0);
         const Scalar deltaZ = fineLevelView_->fineCellHeight();
-        const unsigned int columnIdx = this->gridGeometry().elementMapper().index(element);
+        const auto columnIdx = this->gridGeometry().elementMapper().index(element);
         const auto& column = fineLevelView_->columnMap().column(columnIdx);
 
         // evaluate pressure at bottom of column
@@ -204,7 +200,7 @@ public:
         globalPosFineElementBottom[dim-1] -= 0.5*deltaZ;
         values[pressureH2OIdx] = fineLevelView_->problem().dirichletAtPos(globalPosFineElementBottom)[pressureH2OIdx];
 
-        for(const auto& fineElement : column)
+        for (const auto& fineElement : column)
         {
             GlobalPosition globalPosFineElement = fineElement.geometry().center();
             // integration of fine-level saturation to obtain coarse-level saturation
@@ -236,7 +232,6 @@ public:
      */
     SpatialParams& spatialParams()
     { return *spatialParams_; }
-
 
 private:
 

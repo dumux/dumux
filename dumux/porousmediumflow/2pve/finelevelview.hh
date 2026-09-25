@@ -40,7 +40,6 @@ struct TwoPVEColumnHistory
     Scalar minimumGasPlumeDistance{};
 };
 
-
 /*!
  * \ingroup TwoPVEModel
  * \brief Connects the coarse level of the two-phase VE model to its fine level
@@ -58,21 +57,17 @@ class TwoPVEFineLevelView
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using QuantityReconstructor = TwoPVEQuantityReconst<TypeTag>;
+    using QuantityReconstructor = TwoPVEQuantityReconstruction<TypeTag>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    enum {
-        pressureH2OIdx = Indices::pressureIdx,
-        saturationGasIdx = Indices::saturationIdx,
-        wettingPhaseIdx = FluidSystem::phase0Idx,
-        nonwettingPhaseIdx = FluidSystem::phase1Idx
-    };
-    enum {
-        dim = GridView::dimension,
-    };
+    static constexpr int pressureIdx = Indices::pressureIdx;
+    static constexpr int saturationIdx = Indices::saturationIdx;
+    static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
+    static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
+    static constexpr int dim = GridView::dimension;
     using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
     using NonwettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::NonwettingPhase;
     using ColumnState = TwoPVEColumnState<Scalar>;
-    using ColumnMapping = VEColumnMapping<GridGeometry, Scalar>;
+    using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
     using SpatialParamsCoarse = GetPropType<TypeTag, Properties::SpatialParams>;
     using ProblemCoarse = GetPropType<TypeTag, Properties::Problem>;
 
@@ -112,7 +107,7 @@ public:
     /*!
      * \brief Returns the height of a fine-level cell (for uniform grid)
      */
-    const Scalar& fineCellHeight() const
+    Scalar fineCellHeight() const
     {
         return fineCellHeight_;
     }
@@ -120,7 +115,7 @@ public:
     /*!
      * \brief Returns the depth of a fine-level cell (for uniform grid)
      */
-    const Scalar& fineCellDepth() const
+    Scalar fineCellDepth() const
     {
         return fineCellDepth_;
     }
@@ -229,8 +224,8 @@ public:
         const auto coarsePosition = coarseElement.geometry().center();
         const auto columnIdx = gridGeometryCoarse_->elementMapper().index(coarseElement);
 
-        state.pwCoarse = coarsePriVars[pressureH2OIdx];
-        state.swCoarse = 1.0 - coarsePriVars[saturationGasIdx];
+        state.pwCoarse = coarsePriVars[pressureIdx];
+        state.swCoarse = 1.0 - coarsePriVars[saturationIdx];
         state.temperature = coarseSpatialParams.temperatureAtPos(coarsePosition);
         const auto& history = columnHistory_[columnIdx];
 
@@ -257,7 +252,8 @@ public:
                  state.swCoarse,
                  history.minimumGasPlumeDistance,
                  BrooksCoreyParameters{state.brooksCoreyLambda, state.entryPressure});
-        state.minimumGasPlumeDistance = std::min(history.minimumGasPlumeDistance, state.gasPlumeDistance);
+        using std::min;
+        state.minimumGasPlumeDistance = min(history.minimumGasPlumeDistance, state.gasPlumeDistance);
 
         return state;
     }
@@ -287,14 +283,14 @@ public:
             history.minimumGasPlumeDistance = columnState.minimumGasPlumeDistance;
 
             const auto& column = columnMapping_.column(coarseIdx);
-            for(const auto& fineElement : column)
+            for (const auto& fineElement : column)
             {
                 const auto fineIdx = gridGeometryFine_->elementMapper().index(fineElement);
 
                 FineLevelElementState fineElementState;
                 fineElementState.update(fineElement, columnState, problemFine_->spatialParams(), quantityReconstructor_, fineCellHeight_);
-                solution_[fineIdx][pressureH2OIdx] = fineElementState.pressure(wettingPhaseIdx);
-                solution_[fineIdx][saturationGasIdx] = fineElementState.saturation(nonwettingPhaseIdx);
+                solution_[fineIdx][pressureIdx] = fineElementState.pressure(wettingPhaseIdx);
+                solution_[fineIdx][saturationIdx] = fineElementState.saturation(nonwettingPhaseIdx);
                 fineLevelFields_.set(fineIdx,fineElementState);
             }
         }
@@ -311,14 +307,15 @@ private:
     template<class ElementGeometry>
     Scalar elementExtent_(const ElementGeometry& geometry, const int direction) const
     {
+        using std::max; using std::min;
         Scalar lower = geometry.corner(0)[direction];
         Scalar upper = lower;
 
         for (int cornerIdx = 1; cornerIdx < geometry.corners(); ++cornerIdx)
         {
             const Scalar coordinate = geometry.corner(cornerIdx)[direction];
-            lower = std::min(lower, coordinate);
-            upper = std::max(upper, coordinate);
+            lower = min(lower, coordinate);
+            upper = max(upper, coordinate);
         }
 
         return upper - lower;

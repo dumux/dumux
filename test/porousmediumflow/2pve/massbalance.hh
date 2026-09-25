@@ -66,7 +66,7 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
     using NonwettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::NonwettingPhase;
 
     constexpr int dim = GridView::dimension;
-    auto injectionRate = getParam<Scalar>("BoundaryConditions.InjectionRate");
+    const auto injectionRate = getParam<Scalar>("BoundaryConditions.InjectionRate");
     const GlobalPosition lowerLeft = getParam<GlobalPosition>("Grid.LowerLeft");
     const GlobalPosition upperRight = getParam<GlobalPosition>("Grid.UpperRight");
     const auto dummyElement = *(fvGridGeometryVE.gridView().template begin<0>());
@@ -74,7 +74,7 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
     const auto& fineSol = problemVE.fineLevelView().solution();
     const auto& spatialParamsCoarse = problemVE.spatialParams();
     const auto& spatialParamsFine = problemVE.fineLevelView().spatialParams();
-    Scalar domainHeight = upperRight[dim-1] - lowerLeft[dim-1];
+    const Scalar domainHeight = upperRight[dim-1] - lowerLeft[dim-1];
     auto massBalance = VEMassBalance<Scalar>();
 
     // iteration over coarse-level elements
@@ -95,7 +95,7 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
 
         // iteration over fine-level elements
         auto column = problemVE.fineLevelView().columnMap().column(elementIdx);
-        for(const auto& fineElement : column)
+        for (const auto& fineElement : column)
         {
             auto elementIdxFine = fvGridGeometryVEFine.elementMapper().index(fineElement);
             auto densityNwFine = NonwettingPhase::density(dummyTemperature, pwCoarse);

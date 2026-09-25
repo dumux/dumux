@@ -42,7 +42,7 @@ class TwoPTestSpatialParams
 
 public:
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
-                          const VEColumnMapping<GridGeometry, Scalar>& columnMapping,
+                          const TwoPVEColumnMapping<GridGeometry, Scalar>& columnMapping,
                           std::shared_ptr<const SpatialParamsFine> spatialParamsFine,
                           const Scalar fineCellHeight)
     : ParentType(gridGeometry, columnMapping, spatialParamsFine, fineCellHeight)
