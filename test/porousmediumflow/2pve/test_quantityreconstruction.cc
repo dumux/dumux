@@ -248,6 +248,21 @@ int main()
         }
     }
 
+    // test a column filled with mobile gas down to its bottom, for which the capillary fringe extends below the column
+    const Scalar drainedSaturationW = 0.3;
+    const Scalar computedZpBelowColumn = reconstructor.computeGasPlumeDist(
+                                          densities,
+                                          residualSaturations,
+                                          gravity,
+                                          domainHeight,
+                                          drainedSaturationW,
+                                          domainHeight,
+                                          brooksCoreyParameters);
+    if (!(computedZpBelowColumn < 0.0))
+        DUNE_THROW(Dune::Exception, "Expected a gas plume distance below the column, obtained " << computedZpBelowColumn);
+    TwoPVE::checkClose(columnAverageSaturationW(computedZpBelowColumn, computedZpBelowColumn, brooksCoreyParameters), drainedSaturationW, 1.0e-8,
+                       "coarse-level wetting-phase saturation with the capillary fringe extending below the column");
+
     // test that a coarse-level saturation below the residual saturation is reported as a recoverable numerical problem
     auto zpCallInfeasibleSaturation = [&]()
     {

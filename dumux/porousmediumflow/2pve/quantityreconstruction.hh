@@ -111,22 +111,23 @@ class TwoPVEQuantityReconstruction
 public:
 
     /*!
-     * \brief Computes the gas plume distance for a coarse column, which is the height of the gas plume relative to the bottom of the domain. The gas plume distance should be a value in [0, domainHeight]
+     * \brief Computes the gas plume distance for a coarse column, which is the height of the lower boundary of the mobile gas relative to the bottom of the domain
      *
      * The gas plume distance is the root of the column water balance. The water content of the column
      * accounts for the trapped-gas region between the minimum gas plume distance and the gas plume distance,
      * such that the column integral of the reconstructed saturation equals the coarse-level saturation.
      * If the coarse-level saturation exceeds the water content of a column without mobile gas,
-     * the gas plume distance is the domain height.
+     * the gas plume distance is the domain height. If the mobile gas fills the column down to its bottom,
+     * the capillary fringe extends below the column and the gas plume distance is negative.
      *
      * \param densities             contains the phase densities (here: 2 phases)
      * \param residualSaturations   contains the phase residual saturation (here: 2 phases)
      * \param gravityNorm           norm of the gravity
      * \param domainHeight          height of the whole domain
      * \param saturationWCoarse     wetting-phase saturation (on the coarse level)
-     * \param minGasPlumeDist       minimum gas plume distance of the previous time steps, a value in [0, domainHeight]
+     * \param minGasPlumeDist       minimum gas plume distance of the previous time steps, at most domainHeight
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
-     * \throws NumericalProblem if no gas plume distance in [0, domainHeight] matches the coarse-level saturation
+     * \throws NumericalProblem if the coarse-level saturation does not exceed the residual saturation
      */
     Scalar computeGasPlumeDist(const PhaseDensities& densities,
                                const ResidualSaturations& residualSaturations,
@@ -138,6 +139,7 @@ public:
     {
         const Scalar densityW = densities.wetting;
         const Scalar densityNw = densities.nonwetting;
+        const Scalar swr = residualSaturations.wetting;
         const Scalar snr = residualSaturations.nonwetting;
 
         if (gravityNorm == 0.0)
@@ -150,23 +152,33 @@ public:
         using std::max; using std::min;
         const auto massConservation = [&](const Scalar gasPlumeDist)
         {
-            const Scalar waterBelowMinimum = min(gasPlumeDist, minGasPlumeDist);
-            const Scalar waterTrappedRegion = (1.0-snr) * max(gasPlumeDist - minGasPlumeDist, 0.0);
-            const Scalar waterAbovePlume = integrateSaturationWAbovePlume_(gasPlumeDist, domainHeight, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
+            const Scalar bottomOfMobileGas = max(gasPlumeDist, 0.0);
+            const Scalar waterBelowMinimum = max(min(gasPlumeDist, minGasPlumeDist), 0.0);
+            const Scalar waterTrappedRegion = (1.0-snr) * max(bottomOfMobileGas - max(minGasPlumeDist, 0.0), 0.0);
+            const Scalar waterAbovePlume = integrateSaturationWAbovePlume_(bottomOfMobileGas, domainHeight, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
             return waterBelowMinimum + waterTrappedRegion + waterAbovePlume - saturationWCoarse * domainHeight;
         };
 
         if (massConservation(domainHeight) <= 0.0)
             return domainHeight;
 
-        const Scalar residualAtBottom = massConservation(0.0);
-        if (residualAtBottom == 0.0)
-            return 0.0;
-        if (residualAtBottom > 0.0)
-            DUNE_THROW(NumericalProblem, "No gas plume distance in [0, " << domainHeight << "] matches the coarse-level wetting-phase saturation " << saturationWCoarse
-                                         << " (densities: " << densityW << ", " << densityNw << ")");
+        // the water content approaches the residual water content as the gas plume distance decreases below the column
+        if (saturationWCoarse <= swr)
+            DUNE_THROW(NumericalProblem, "The coarse-level wetting-phase saturation " << saturationWCoarse << " does not exceed the residual saturation " << swr);
 
-        return findScalarRootBrent(0.0, domainHeight, massConservation);
+        const Scalar fringeHeight = brooksCoreyParameters.entryPressure/((densityW - densityNw)*gravityNorm);
+        Scalar lowerBound = 0.0;
+        Scalar residualAtLowerBound = massConservation(lowerBound);
+        for (Scalar expansion = fringeHeight; residualAtLowerBound > 0.0; expansion *= 2.0)
+        {
+            lowerBound -= expansion;
+            residualAtLowerBound = massConservation(lowerBound);
+        }
+
+        if (residualAtLowerBound == 0.0)
+            return lowerBound;
+
+        return findScalarRootBrent(lowerBound, domainHeight, massConservation);
     }
 
     /*!
