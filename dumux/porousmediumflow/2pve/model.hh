@@ -49,6 +49,8 @@
  * - the first fluid phase must be the wetting phase, and it must be denser than the nonwetting phase
  * - the reconstruction uses a Brooks-Corey material law
  * - only the \f$p_w-S_n\f$ primary-variable formulation is supported
+ * - only the cell-centered two-point flux approximation is supported
+ * - only isothermal flow is supported
  * - the current upscaling implementation assumes scalar, isotropic
  *   permeability (for computation of coarse-level mobilities, we divide by the permeability)
  *
@@ -65,6 +67,7 @@
 
 #include <tuple>
 
+#include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/2pve/volumevariables.hh>
 
@@ -93,6 +96,7 @@ private:
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PermeabilityType = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using DiscretizationMethod = typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod;
+    static_assert(DiscretizationMethod{} == DiscretizationMethods::cctpfa, "The two-phase VE model is only implemented for the cell-centered TPFA discretization");
     static constexpr bool enableBoxInterfaceSolver = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
     using SaturationReconstruction = TwoPScvSaturationReconstruction<DiscretizationMethod, enableBoxInterfaceSolver>;
 
