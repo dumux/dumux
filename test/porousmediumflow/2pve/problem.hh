@@ -72,9 +72,7 @@ public:
           injectionEndTime_(getParamFromGroup<Scalar>(modelParamGroup, "BoundaryConditions.InjectionEndTime", std::numeric_limits<Scalar>::max())),
           fineLevelView_(fineLevelView),
           spatialParams_(std::make_shared<SpatialParams>(gridGeometryCoarse, fineLevelView_->columnMap(), fineLevelView_->spatialParamsPtr(), fineLevelView_->fineCellHeight()))
-    {
-        calcPermeabilityAndPorosityCoarseInSpatialParams_();
-    }
+    {}
 
     /*!
      * \brief Getter function for the problem name
@@ -146,7 +144,7 @@ public:
         }
 
         //average saturation by coarse-level porosity
-        values[saturationGasIdx] /= this->spatialParams().porosityCoarseAtElement(element);
+        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element);
 
         return values;
     }
@@ -211,17 +209,17 @@ public:
         }
 
         //average saturation by coarse-level porosity
-        values[saturationGasIdx] /= this->spatialParams().porosityCoarseAtElement(element);
+        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element);
 
         return values;
     }
 
     /*!
-     * \brief Getter function for pointer to fine-level view
+     * \brief Returns the fine-level view of the VE model
      */
-    const std::shared_ptr<FineLevelView> getFineLevelView() const
+    const FineLevelView& fineLevelView() const
     {
-        return fineLevelView_;
+        return *fineLevelView_;
     }
 
     /*!
@@ -255,14 +253,6 @@ private:
     bool isInjecting_() const
     {
         return timeLoop_->time() + 0.5*timeLoop_->timeStepSize() < injectionEndTime_;
-    }
-
-    /*!
-     * \brief Computes the coarse-level permeability and porosity
-     */
-    void calcPermeabilityAndPorosityCoarseInSpatialParams_()
-    {
-        this->spatialParams().calcSpatialParamsPermeabilityAndPorosityCoarse();
     }
 
     std::string problemName_;
