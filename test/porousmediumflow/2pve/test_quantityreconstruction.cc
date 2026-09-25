@@ -60,7 +60,7 @@ int main()
 {
     using TypeTag = Dumux::Properties::TTag::TwoPVEImmiscibleTpfa;
     using Scalar = Dumux::GetPropType<TypeTag, Dumux::Properties::Scalar>;
-    using Reconstructor = Dumux::TwoPVEQuantityReconstruction<TypeTag>;
+    using Reconstructor = Dumux::TwoPVEQuantityReconstruction<Scalar, Dumux::GetPropType<TypeTag, Dumux::Properties::FluidSystem>>;
     using GasPlumeDistances = Dumux::TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = Dumux::TwoPVE::PhaseDensitiesData<Scalar>;
     using PhaseViscosities = Dumux::TwoPVE::PhaseViscositiesData<Scalar>;
