@@ -185,7 +185,7 @@ int main()
         const Scalar cellCenter = (cellIdx + 0.5)*cellHeight;
 
         // assuming homogeneous fine-level permeability
-        const std::vector<Scalar> reconstructedMobilites = reconstructor.reconstMobilitiesFine(
+        const auto reconstructedMobilites = reconstructor.reconstMobilitiesFine(
                                                          GasPlumeDistances{computedZp, computedZp},
                                                          densities,
                                                          viscosities,
