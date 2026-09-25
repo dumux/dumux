@@ -11,6 +11,7 @@
  */
 
 #include <config.h>
+#include <algorithm>
 #include <initializer_list>
 #include <iomanip>
 #include <string>
@@ -19,6 +20,8 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/exceptions.hh>
+#include <dumux/common/integrate.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
 #include "properties.hh"
@@ -157,7 +160,7 @@ int main()
     const Scalar cellHeight = domainHeight/numCells;
 
     // assumes that porosity is constant everywhere
-    const auto columnAverageSaturationW = [&](const Scalar zp, const Scalar zpMin)
+    const auto columnAverageSaturationW = [&](const Scalar zp, const Scalar zpMin, const BrooksCoreyParameters& materialParameters)
     {
         Scalar saturationIntegral = 0.0;
         for (int cellIdx = 0; cellIdx < numCells; ++cellIdx)
@@ -168,10 +171,10 @@ int main()
                                       gravity,
                                       (cellIdx + 0.5)*cellHeight,
                                       cellHeight,
-                                      brooksCoreyParameters)*cellHeight;
+                                      materialParameters)*cellHeight;
         return saturationIntegral/domainHeight;
     };
-    TwoPVE::checkClose(columnAverageSaturationW(computedZp, computedZp), coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation");
+    TwoPVE::checkClose(columnAverageSaturationW(computedZp, computedZp, brooksCoreyParameters), coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation");
 
     Scalar mobilityWCoarse = 0.0;
     Scalar mobilityNwCoarse = 0.0;
@@ -215,7 +218,7 @@ int main()
                                       brooksCoreyParameters);
     if (!(computedZpTrapped > minimumZp))
         DUNE_THROW(Dune::Exception, "Expected a trapped-gas region, obtained gas plume distance " << computedZpTrapped << " below the minimum " << minimumZp);
-    TwoPVE::checkClose(columnAverageSaturationW(computedZpTrapped, minimumZp), coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation with trapped gas");
+    TwoPVE::checkClose(columnAverageSaturationW(computedZpTrapped, minimumZp, brooksCoreyParameters), coarseSaturationW, 1.0e-8, "coarse-level wetting-phase saturation with trapped gas");
 
     const auto gasPlumeDistanceOnlyTrappedGas = reconstructor.computeGasPlumeDist(
                                                  densities,
@@ -286,19 +289,71 @@ int main()
     };
     TwoPVE::expectThrow<Dune::InvalidStateException>(zpCallDensities, "wetting-phase density that is smaller than the non-wetting one.");
 
-    auto zpCallLambda = [&]()
+    // test Brooks-Corey parameters for which some integrals of powers of the effective saturation are logarithms
+    for (const Scalar lambda : {1.0, 0.5})
     {
-        reconstructor.computeGasPlumeDist(
-            densities,
-            residualSaturations,
-            gravity,
-            domainHeight,
-            coarseSaturationW,
-            domainHeight,
-            BrooksCoreyParameters{1.0, 1.0e5}
-        );
+        const BrooksCoreyParameters materialParameters{lambda, brooksCoreyParameters.entryPressure};
+        const Scalar zp = reconstructor.computeGasPlumeDist(
+                              densities,
+                              residualSaturations,
+                              gravity,
+                              domainHeight,
+                              coarseSaturationW,
+                              domainHeight,
+                              materialParameters);
+        TwoPVE::checkClose(columnAverageSaturationW(zp, zp, materialParameters), coarseSaturationW, 1.0e-8,
+                           "coarse-level wetting-phase saturation for lambda " + std::to_string(lambda));
+    }
+
+    // test the closed-form cell averages against numerically integrated Brooks-Corey laws
+    using MaterialLaw = Dumux::FluidMatrix::BrooksCoreyNoReg<Scalar>;
+    const Scalar zpReference = 4.0;
+    const Scalar densityDifference = densities.wetting - densities.nonwetting;
+    const auto cellAverage = [&](const auto& valueAbovePlume, const Scalar valueBelowPlume, const Scalar lower, const Scalar upper)
+    {
+        const Scalar integralBelowPlume = valueBelowPlume*std::max(std::min(upper, zpReference) - lower, 0.0);
+        const Scalar integralAbovePlume = upper > zpReference ? Dumux::integrateScalarFunction(valueAbovePlume, std::max(lower, zpReference), upper, 1.0e-14) : 0.0;
+        return (integralBelowPlume + integralAbovePlume)/(upper - lower);
     };
-    TwoPVE::expectThrow<Dune::InvalidStateException>(zpCallLambda, "Brooks-Corey lambda equal to one");
+    for (const Scalar lambda : {2.0, 1.0, 0.5})
+    {
+        const BrooksCoreyParameters materialParameters{lambda, brooksCoreyParameters.entryPressure};
+        const MaterialLaw materialLaw(typename MaterialLaw::BasicParams(materialParameters.entryPressure, lambda),
+                                     typename MaterialLaw::EffToAbsParams(residualSaturations.wetting, residualSaturations.nonwetting));
+        const auto saturationW = [&](const Scalar z){ return materialLaw.sw(materialParameters.entryPressure + densityDifference*gravity*(z - zpReference)); };
+        const auto relPermW = [&](const Scalar z){ return materialLaw.krw(saturationW(z)); };
+        const auto relPermNw = [&](const Scalar z){ return materialLaw.krn(saturationW(z)); };
+
+        // cells below, across and above the gas plume distance
+        for (const Scalar cellCenter : {3.5, 4.25, 6.0, 9.5})
+        {
+            const Scalar lower = cellCenter - 0.5*deltaZ;
+            const Scalar upper = cellCenter + 0.5*deltaZ;
+            const std::string cell = " (lambda " + std::to_string(lambda) + ", cell center " + std::to_string(cellCenter) + ")";
+
+            const Scalar reconstructedSw = reconstructor.reconstructSaturation(
+                                               GasPlumeDistances{zpReference, zpReference},
+                                               densities,
+                                               residualSaturations,
+                                               gravity,
+                                               cellCenter,
+                                               deltaZ,
+                                               materialParameters);
+            TwoPVE::checkClose(reconstructedSw, cellAverage(saturationW, 1.0, lower, upper), 1.0e-12, "cell-averaged saturation" + cell);
+
+            const auto reconstructedMobilities = reconstructor.reconstMobilitiesFine(
+                                                     GasPlumeDistances{zpReference, zpReference},
+                                                     densities,
+                                                     viscosities,
+                                                     residualSaturations,
+                                                     gravity,
+                                                     cellCenter,
+                                                     deltaZ,
+                                                     materialParameters);
+            TwoPVE::checkClose(reconstructedMobilities[0]*viscosities.wetting, cellAverage(relPermW, 1.0, lower, upper), 1.0e-12, "cell-averaged wetting relative permeability" + cell);
+            TwoPVE::checkClose(reconstructedMobilities[1]*viscosities.nonwetting, cellAverage(relPermNw, 0.0, lower, upper), 1.0e-12, "cell-averaged nonwetting relative permeability" + cell);
+        }
+    }
 
     return 0;
 }

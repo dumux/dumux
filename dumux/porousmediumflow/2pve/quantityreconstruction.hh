@@ -24,7 +24,6 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
-#include <dumux/common/integrate.hh>
 
 namespace Dumux {
 
@@ -92,6 +91,7 @@ namespace TwoPVE {
  * The reconstruction uses the Brooks-Corey material law \cite brooks1964hydrau.
  * Below the gas plume distance, the pore space is water-saturated apart from residually trapped gas.
  * Above the gas plume distance, the saturation follows from the capillary pressure in hydrostatic equilibrium.
+ * The averages of the saturation and the relative permeabilities over fine-level cells are evaluated in closed form.
  */
 template<class TypeTag>
 class TwoPVEQuantityReconst
@@ -149,10 +149,7 @@ public:
     {
         const Scalar densityW = densities.wetting;
         const Scalar densityNw = densities.nonwetting;
-        const Scalar swr = residualSaturations.wetting;
         const Scalar snr = residualSaturations.nonwetting;
-        const Scalar lambdaBC = brooksCoreyParameters.lambda;
-        const Scalar entryPressureBC = brooksCoreyParameters.entryPressure;
 
         if (float_equal_(gravityNorm, 0.0))
             DUNE_THROW(Dune::InvalidStateException, "The two-phase vertical-equilibrium model requires nonzero gravity because its reconstruction assumes gravity-driven vertical segregation");
@@ -160,21 +157,13 @@ public:
         if (float_equal_(densityW - densityNw, 0.0) || densityW<densityNw)
             DUNE_THROW(Dune::InvalidStateException, "The two-phase VE reconstruction requires the wetting phase to be denser than the nonwetting phase. Got rho_w=" << densityW << " and rho_n=" << densityNw);
 
-        if (float_equal_(lambdaBC, 1.0))
-            DUNE_THROW(Dune::InvalidStateException, "Brooks-Corey lambda=1 is not supported by the analytical gas-plume-distance formula");
-
         // water content of the column minus the coarse-level water content, monotonically increasing in the gas plume distance
         const auto massConservation = [&](const Scalar gasPlumeDist)
         {
-            const Scalar A = std::pow(entryPressureBC,lambdaBC) * (1.0-swr-snr);
             const Scalar waterBelowMinimum = std::min(gasPlumeDist, minGasPlumeDist);
             const Scalar waterTrappedRegion = (1.0-snr) * std::max(gasPlumeDist - minGasPlumeDist, 0.0);
-            return
-            waterBelowMinimum
-            + waterTrappedRegion
-            - satWCoarse * domainHeight
-            + (1.0/(1.0-lambdaBC)) * (1.0/((densityW - densityNw)*gravityNorm)) * A * ( std::pow(entryPressureBC+(densityW - densityNw)*gravityNorm*(domainHeight-gasPlumeDist), 1.0-lambdaBC) - std::pow(entryPressureBC, 1.0-lambdaBC) )
-            + swr*(domainHeight-gasPlumeDist);
+            const Scalar waterAbovePlume = integrateSaturationWAbovePlume_(gasPlumeDist, domainHeight, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
+            return waterBelowMinimum + waterTrappedRegion + waterAbovePlume - satWCoarse * domainHeight;
         };
 
         if (massConservation(domainHeight) <= 0.0)
@@ -280,15 +269,12 @@ public:
         const Scalar upperBound = heightAboveBottom + deltaZ/2.0;
         const Scalar cellHeight = upperBound - lowerBound;
 
-        const Scalar targetAverageError = 1e-10;
-        const Scalar targetIntegralError = targetAverageError * cellHeight;
-
         const Scalar snr = residualSaturations.nonwetting;
         const Scalar saturationWBelowPlume = 1.0;
         const Scalar saturationWTrappedRegion = 1.0 - snr;
-        const auto saturationWAbovePlume = [&](Scalar z)
+        const auto integrateSaturationWAbovePlume = [&](const Scalar lower, const Scalar upper)
         {
-            return saturationWAbovePlume_(z, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
+            return integrateSaturationWAbovePlume_(lower, upper, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
         };
 
         Scalar saturationIntegral = 0.0;
@@ -304,7 +290,7 @@ public:
         if (upperBound <= minGasPlumeDist) // 1)
             saturationIntegral = saturationWBelowPlume*cellHeight;
         else if (lowerBound >= gasPlumeDist) // 2)
-            saturationIntegral = integrateScalarFunction(saturationWAbovePlume, lowerBound, upperBound, targetIntegralError);
+            saturationIntegral = integrateSaturationWAbovePlume(lowerBound, upperBound);
         else if (lowerBound >= minGasPlumeDist && upperBound <= gasPlumeDist) // 3)
             saturationIntegral = saturationWTrappedRegion*cellHeight;
         else if (lowerBound < minGasPlumeDist && upperBound <= gasPlumeDist) // 4)
@@ -316,14 +302,14 @@ public:
         else if (lowerBound >= minGasPlumeDist && upperBound > gasPlumeDist) // 5)
         {
             const Scalar integralTrappedRegion = saturationWTrappedRegion * (gasPlumeDist - lowerBound);
-            const Scalar integralAbovePlume = integrateScalarFunction(saturationWAbovePlume, gasPlumeDist, upperBound, targetIntegralError);
+            const Scalar integralAbovePlume = integrateSaturationWAbovePlume(gasPlumeDist, upperBound);
             saturationIntegral = integralTrappedRegion + integralAbovePlume;
         }
         else // 6)
         {
             const Scalar integralBelowMinimum = saturationWBelowPlume * (minGasPlumeDist - lowerBound);
             const Scalar integralTrappedRegion = saturationWTrappedRegion * (gasPlumeDist - minGasPlumeDist);
-            const Scalar integralAbovePlume = integrateScalarFunction(saturationWAbovePlume, gasPlumeDist, upperBound, targetIntegralError);
+            const Scalar integralAbovePlume = integrateSaturationWAbovePlume(gasPlumeDist, upperBound);
             saturationIntegral = integralBelowMinimum + integralTrappedRegion + integralAbovePlume;
         }
 
@@ -398,42 +384,34 @@ public:
         Scalar mobilityWFine = 0.0;
         Scalar mobilityNwFine = 0.0;
 
-        const Scalar relPermWBelowPlume = 1.0;  //constant value
-        const Scalar relPermNwBelowPlume = 0.0; //constant value
+        const Scalar relPermWBelowPlume = 1.0;
+        const Scalar relPermNwBelowPlume = 0.0;
 
-        const auto saturationWAbovePlume = [&](Scalar z)
+        // Brooks-Corey relative permeabilities in terms of the effective saturation Se = u^(-lambda):
+        // krw = Se^(2/lambda + 3) and krn = (1 - Se)^2 (1 - Se^(2/lambda + 1)), expanded into powers of u
+        const Scalar lambdaBC = brooksCoreyParameters.lambda;
+        const auto integratePower = [&](const Scalar exponent, const Scalar lower, const Scalar upper)
         {
-            return saturationWAbovePlume_(z, gasPlumeDist, densities, residualSaturations, gravityNorm, brooksCoreyParameters);
+            return integratePowerAbovePlume_(exponent, lower, upper, gasPlumeDist, densities, gravityNorm, brooksCoreyParameters.entryPressure);
+        };
+        const auto integrateRelPermWAbovePlume = [&](const Scalar lower, const Scalar upper)
+        {
+            return integratePower(2.0 + 3.0*lambdaBC, lower, upper);
+        };
+        const auto integrateRelPermNwAbovePlume = [&](const Scalar lower, const Scalar upper)
+        {
+            return (upper - lower)
+                   - 2.0*integratePower(lambdaBC, lower, upper)
+                   + integratePower(2.0*lambdaBC, lower, upper)
+                   - integratePower(2.0 + lambdaBC, lower, upper)
+                   + 2.0*integratePower(2.0 + 2.0*lambdaBC, lower, upper)
+                   - integratePower(2.0 + 3.0*lambdaBC, lower, upper);
         };
 
-        //define function for wetting-phase relative peremability (here Brooks-Corey)
-        const auto relPermWAbovePlume = [&saturationWAbovePlume, &brooksCoreyParameters, &residualSaturations](Scalar z)
-        {
-            auto [swr, snr] = residualSaturations;
-            auto lambdaBC = brooksCoreyParameters.lambda;
-            Scalar swe = (saturationWAbovePlume(z)-swr)/(1-swr-snr);
-
-            return std::pow(swe, 2.0/lambdaBC + 3.0);
-        };
-
-        //define function for non-wetting-phase relative peremability (here Brooks-Corey)
-        const auto relPermNwAbovePlume = [&saturationWAbovePlume, &brooksCoreyParameters, &residualSaturations](Scalar z)
-        {
-            auto [swr, snr] = residualSaturations;
-            auto lambdaBC = brooksCoreyParameters.lambda;
-
-            Scalar swe = (saturationWAbovePlume(z)-swr)/(1-swr-snr);
-            const Scalar exponent = 2.0/lambdaBC + 1.0;
-            const Scalar sne = 1.0 - swe;
-            return sne*sne*(1.0 - std::pow(swe, exponent));
-        };
-
-        // splitting the integration interval explicitly at gasPlumeDist is cheaper for the integrator, since integrand is piecewise at gasPlumeDist. If snr!=0, there is also a jump in the saturation at gasPlumeDist
-        const auto integrateRelativePermeability = [&](const auto& integrandAbovePlume, const Scalar relPermBelowPlume)
+        // the relative permeabilities are piecewise defined, with a kink or jump at the gas plume distance
+        const auto integrateRelativePermeability = [&](const auto& integralAbovePlume, const Scalar relPermBelowPlume)
         {
             const Scalar cellHeight = upperBound - lowerBound;
-            const Scalar targetAverageError = 1e-10;
-            const Scalar targetIntegralError = targetAverageError * cellHeight; // since the integral is divided by cellHeight later on for the computation of the mobility
 
             // differentiate between three cases:
             //     1) fine-level element is completely under the gas plume,
@@ -443,21 +421,13 @@ public:
             if (upperBound <= gasPlumeDist)
                 return relPermBelowPlume * cellHeight;
             else if (lowerBound >= gasPlumeDist)
-                return integrateScalarFunction(integrandAbovePlume, lowerBound, upperBound, targetIntegralError);
+                return integralAbovePlume(lowerBound, upperBound);
             else
-            {
-                // part of cell below gas plume
-                const Scalar integralBelowPlume = relPermBelowPlume * (gasPlumeDist - lowerBound);
-
-                // part of cell above gas plume
-                const Scalar integralAbovePlume = integrateScalarFunction(integrandAbovePlume, gasPlumeDist, upperBound, targetIntegralError);
-
-                return integralBelowPlume  + integralAbovePlume;
-            }
+                return relPermBelowPlume * (gasPlumeDist - lowerBound) + integralAbovePlume(gasPlumeDist, upperBound);
         };
 
-        mobilityWFine = integrateRelativePermeability(relPermWAbovePlume, relPermWBelowPlume);
-        mobilityNwFine = integrateRelativePermeability(relPermNwAbovePlume, relPermNwBelowPlume);
+        mobilityWFine = integrateRelativePermeability(integrateRelPermWAbovePlume, relPermWBelowPlume);
+        mobilityNwFine = integrateRelativePermeability(integrateRelPermNwAbovePlume, relPermNwBelowPlume);
 
         //average
         mobilityWFine = mobilityWFine/(upperBound - lowerBound);
@@ -477,32 +447,63 @@ public:
 private:
 
     /*!
-     * \brief Helper function for evaluation wetting-phase saturation above the gas plume
+     * \brief Integrates \f$ u^{-m} \f$ with \f$ u = 1 + \Delta\varrho g (z - z_p)/p_e \f$ over \f$ z \in [z_l, z_u] \f$ above the gas plume distance \f$ z_p \f$
      *
-     * \param heightAboveBottom     height (relative to the bottom of the domain) at which the saturation should be reconstructed
+     * Above the gas plume distance, the Brooks-Corey effective wetting-phase saturation is \f$ u^{-\lambda} \f$,
+     * where \f$ \Delta\varrho \f$ is the density difference of the phases, \f$ g \f$ the norm of the gravity
+     * and \f$ p_e \f$ the entry pressure.
+     *
+     * \param exponent        the exponent \f$ m \f$
+     * \param lowerBound      lower integration bound \f$ z_l \geq z_p \f$
+     * \param upperBound      upper integration bound \f$ z_u \geq z_l \f$
+     * \param gasPlumeDist    gas plume distance \f$ z_p \f$
+     * \param densities       contains the phase densities (here: 2 phases)
+     * \param gravityNorm     norm of the gravity
+     * \param entryPressureBC entry pressure of the Brooks-Corey model
+     */
+    Scalar integratePowerAbovePlume_(Scalar exponent,
+                                     Scalar lowerBound,
+                                     Scalar upperBound,
+                                     Scalar gasPlumeDist,
+                                     const PhaseDensities& densities,
+                                     Scalar gravityNorm,
+                                     Scalar entryPressureBC) const
+    {
+        const Scalar lengthScale = entryPressureBC/((densities.wetting - densities.nonwetting)*gravityNorm);
+        const Scalar uLower = 1.0 + (lowerBound - gasPlumeDist)/lengthScale;
+        const Scalar logRatio = std::log1p((upperBound - lowerBound)/(lengthScale*uLower));
+        const Scalar k = 1.0 - exponent;
+        if (k == 0.0)
+            return lengthScale*logRatio;
+
+        // expm1 keeps the antiderivative accurate for exponents close to one, where it approaches the logarithm
+        return lengthScale*std::pow(uLower, k)*std::expm1(k*logRatio)/k;
+    }
+
+    /*!
+     * \brief Integrates the wetting-phase saturation over \f$ [z_l, z_u] \f$ above the gas plume distance
+     *
+     * \param lowerBound            lower integration bound, not below the gas plume distance
+     * \param upperBound            upper integration bound
      * \param gasPlumeDist          gas plume distance
      * \param densities             contains the phase densities (here: 2 phases)
      * \param residualSaturations   contains the phase residual saturation (here: 2 phases)
      * \param gravityNorm           norm of the gravity
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
      */
-    Scalar saturationWAbovePlume_(Scalar heightAboveBottom,
-                                  Scalar gasPlumeDist,
-                                  const PhaseDensities& densities,
-                                  const ResidualSaturations& residualSaturations,
-                                  Scalar gravityNorm,
-                                  const BrooksCoreyParameters& brooksCoreyParameters) const
+    Scalar integrateSaturationWAbovePlume_(Scalar lowerBound,
+                                           Scalar upperBound,
+                                           Scalar gasPlumeDist,
+                                           const PhaseDensities& densities,
+                                           const ResidualSaturations& residualSaturations,
+                                           Scalar gravityNorm,
+                                           const BrooksCoreyParameters& brooksCoreyParameters) const
     {
-        const Scalar referenceDensityW = densities.wetting;
-        const Scalar referenceDensityNw = densities.nonwetting;
         const Scalar swr = residualSaturations.wetting;
         const Scalar snr = residualSaturations.nonwetting;
-        const Scalar lambdaBC = brooksCoreyParameters.lambda;
-        const Scalar entryPressureBC = brooksCoreyParameters.entryPressure;
-
-        const Scalar satW = std::pow((entryPressureBC + (referenceDensityW-referenceDensityNw)*gravityNorm*(heightAboveBottom-gasPlumeDist)),-lambdaBC)*std::pow(entryPressureBC, lambdaBC)*(1-swr-snr)+swr;
-
-        return satW;
+        const Scalar integralEffectiveSaturation = integratePowerAbovePlume_(brooksCoreyParameters.lambda, lowerBound, upperBound, gasPlumeDist,
+                                                                             densities, gravityNorm, brooksCoreyParameters.entryPressure);
+        return swr*(upperBound - lowerBound) + (1.0 - swr - snr)*integralEffectiveSaturation;
     }
 
     bool float_equal_(Scalar a,
