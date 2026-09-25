@@ -15,8 +15,10 @@
  * assumptions and restrictions of the current implementation.
  */
 
-#include <array>
 #include <config.h>
+
+#include <array>
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -29,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/initialize.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/linearsolvertraits.hh>
@@ -36,7 +39,7 @@
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
-#include <dumux/porousmediumflow/2pve/finelevel_view.hh>
+#include <dumux/porousmediumflow/2pve/finelevelview.hh>
 
 #include "properties.hh"
 #include "massbalance.hh"
@@ -80,17 +83,16 @@ std::string outputNameCoarse(const GetPropType<TypeTag, Properties::Problem>& pr
     constexpr int dim = GridView::dimension;
     using CellArray = std::array<unsigned int, GridView::dimensionworld>;
     const auto numberCellsFine = getParam<CellArray>("Grid.Cells");
-    size_t numCellsDim1 = numberCellsFine[0];
-    size_t numCellsDim2 = 0;
-    if constexpr(dim==3)
+    const std::size_t numCellsDim1 = numberCellsFine[0];
+    std::size_t numCellsDim2 = 0;
+    if constexpr (dim == 3)
         numCellsDim2 = numberCellsFine[1];
-    size_t numCellsDim3 = numberCellsFine[dim-1];
+    const std::size_t numCellsDim3 = numberCellsFine[dim-1];
 
     return problemCoarse.name() + std::to_string(numCellsDim1) + "x" + std::to_string(numCellsDim2) + "x" + std::to_string(numCellsDim3);
 }
 
 } // end namespace Dumux::VETest
-
 
 int main(int argc, char** argv)
 {
@@ -99,8 +101,9 @@ int main(int argc, char** argv)
     // define the type tag for this problem
     using TypeTag = Properties::TTag::TwoPVEImmiscibleTpfa;
 
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    // maybe initialize MPI and/or multithreading backend
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
@@ -156,7 +159,7 @@ int main(int argc, char** argv)
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     auto xCoarse = std::make_shared<SolutionVector>(gridGeometryCoarse->numDofs());
 
-    // intialize solution
+    // initialize solution
     problemCoarse->applyInitialSolution(*xCoarse);
     fineLevelView->updateSol(*problemCoarse, *xCoarse);
 
@@ -168,20 +171,20 @@ int main(int argc, char** argv)
     gridVariablesCoarse->init(*xCoarse);
 
     // coarse-level vtk output
-    std::string VECoarseOutputName = Dumux::VETest::outputNameCoarse<TypeTag>(*problemCoarse);
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriterCoarse(*gridVariablesCoarse, *xCoarse, VECoarseOutputName);
+    const std::string coarseOutputName = Dumux::VETest::outputNameCoarse<TypeTag>(*problemCoarse);
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriterCoarse(*gridVariablesCoarse, *xCoarse, coarseOutputName);
     using IOFieldsVECoarse = GetPropType<TypeTag, Properties::IOFields>;
     using VelocityOutputVE = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriterCoarse.addVelocityOutput(std::make_shared<VelocityOutputVE>(*gridVariablesCoarse));
     vtkWriterCoarse.addVolumeVariable([](const auto& v){return v.permeability();}, "permeability");
-    vtkWriterCoarse.addVolumeVariable([](const auto& v){return v.gasPlumedist();}, "zp");
+    vtkWriterCoarse.addVolumeVariable([](const auto& v){return v.gasPlumeDist();}, "zp");
     IOFieldsVECoarse::initOutputModule(vtkWriterCoarse);
     vtkWriterCoarse.write(0.0);
 
     // fine-level vtk output
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    std::string VEFineOutputName = "fine_" + Dumux::VETest::outputNameCoarse<TypeTag>(*problemCoarse);
-    Dune::VTKSequenceWriter<GridView> vtkWriterFineLevel(gridGeometryFine->gridView(), VEFineOutputName, ".", "");
+    const std::string fineOutputName = "fine_" + Dumux::VETest::outputNameCoarse<TypeTag>(*problemCoarse);
+    Dune::VTKSequenceWriter<GridView> vtkWriterFineLevel(gridGeometryFine->gridView(), fineOutputName, ".", "");
     fineLevelView->fields().registerFields(vtkWriterFineLevel);
     vtkWriterFineLevel.write(0.0);
 
@@ -213,7 +216,7 @@ int main(int argc, char** argv)
         xOldCoarse = *xCoarse;
         gridVariablesCoarse->advanceTimeStep();
 
-        // advance to the time loop to the next step
+        // advance the time loop to the next step
         timeLoopCoarse->advanceTimeStep();
 
         // compute and print mass balance for gas phase

@@ -48,7 +48,7 @@ class TwoPVESpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::LocalView::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ColumnMapping = VEColumnMapping<GridGeometry, Scalar>;
+    using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
 
 public:
     using PermeabilityType = Scalar;
