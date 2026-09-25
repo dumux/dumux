@@ -205,8 +205,9 @@ int main(int argc, char** argv)
         // solve the non-linear system with time step control
         nonLinearSolverCoarse.solve(*xCoarse, *timeLoopCoarse);
 
-        // const auto coarseBefore = *xCoarse;
+        // the cached coarse-level volume variables depend on the column history updated with the fine-level solution
         fineLevelView->updateSol(*problemCoarse, *xCoarse);
+        gridVariablesCoarse->update(*xCoarse);
 
         // make the new solution the old solution
         xOldCoarse = *xCoarse;
