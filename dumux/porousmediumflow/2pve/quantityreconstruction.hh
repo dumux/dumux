@@ -14,10 +14,10 @@
 #define DUMUX_TWOPVE_QUANTITY_RECONSTRUCTION_HH
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <string>
-#include <vector>
 
 #include <dune/common/exceptions.hh>
 
@@ -213,7 +213,7 @@ public:
      * \param pressureWCoarse   wetting-phase pressure on the coarse level
      * \param entryPressureBC   entry pressure of the Brook-Corey model
      */
-    const std::vector<Scalar> reconstPressure(const Scalar& gasPlumeDist,
+    std::array<Scalar, numPhases> reconstPressure(const Scalar& gasPlumeDist,
                                               const PhaseDensities& densities,
                                               const Scalar& gravityNorm,
                                               const Scalar& heightAboveBottom,
@@ -223,7 +223,7 @@ public:
         const Scalar referenceDensityW = densities.wetting;
         const Scalar referenceDensityNw = densities.nonwetting;
 
-        std::vector<Scalar> reconstructedPressures(numPhases, 0.0);
+        std::array<Scalar, numPhases> reconstructedPressures;
 
         //So far, only the capillaryFringe model is implemented
         if(heightAboveBottom <= gasPlumeDist)
@@ -363,7 +363,7 @@ public:
      * \param deltaZ                discretizaion width of the fine-level grid in vertical direction
      * \param brooksCoreyParameters contains the two Brooks-Corey parameters (lambda and entry pressure)
      */
-    const std::vector<Scalar> reconstMobilitiesFine(const GasPlumeDistances& gasPlumeDistances,
+    std::array<Scalar, numPhases> reconstMobilitiesFine(const GasPlumeDistances& gasPlumeDistances,
                                                     const PhaseDensities& densities,
                                                     const PhaseViscosities& viscosities,
                                                     const ResidualSaturations& residualSaturations,
@@ -376,7 +376,7 @@ public:
         const Scalar viscosityW = viscosities.wetting;
         const Scalar viscosityNw = viscosities.nonwetting;
 
-        std::vector<Scalar> mobilitesFine(numPhases);
+        std::array<Scalar, numPhases> mobilitesFine;
 
         const Scalar lowerBound = heightAboveBottom - deltaZ/2.0;
         const Scalar upperBound = heightAboveBottom + deltaZ/2.0;
