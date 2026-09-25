@@ -265,6 +265,9 @@ public:
     /*!
      * \brief Updates fine-level solution and solution fields given the coarse-level solution
      *
+     * Also updates the history of each column, on which the coarse-level volume variables depend.
+     * Cached coarse-level volume variables have to be updated afterwards.
+     *
      * \param coarseProblem  coarse-level problem
      * \param coarseSolution coarse-level solution vector
      */
