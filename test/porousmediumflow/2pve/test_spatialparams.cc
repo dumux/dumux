@@ -107,13 +107,13 @@ int main(int argc, char** argv)
     const Scalar height = top - bottom;
     for (const auto& element : elements(coarseGridGeometry->gridView()))
     {
-        // vertical integrals of the fine-level fields over the column
+        // vertical averages of the fine-level fields over the column
         const Scalar x = element.geometry().center()[0];
-        const Scalar expectedPermeability = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom));
-        const Scalar expectedPorosity = (0.1 + 0.01*x)*height + 0.01*(top*top - bottom*bottom);
+        const Scalar expectedPermeability = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom))/height;
+        const Scalar expectedPorosity = ((0.1 + 0.01*x)*height + 0.01*(top*top - bottom*bottom))/height;
 
-        TwoPVETest::checkClose(spatialParams.permeabilityAtElement(element), expectedPermeability, "column permeability");
-        TwoPVETest::checkClose(spatialParams.porosityAtElement(element), expectedPorosity, "column porosity");
+        TwoPVETest::checkClose(spatialParams.permeabilityAtElement(element), expectedPermeability, "column-averaged permeability");
+        TwoPVETest::checkClose(spatialParams.porosityAtElement(element), expectedPorosity, "column-averaged porosity");
 
         const auto fvGeometry = localView(*coarseGridGeometry).bindElement(element);
         for (const auto& scv : scvs(fvGeometry))
