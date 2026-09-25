@@ -27,8 +27,8 @@ namespace Dumux {
  * \ingroup TwoPVEModel
  * \brief The base class for the coarse-level spatial parameters of the two-phase VE model
  *
- * The coarse-level permeability and porosity of a column are the vertical integrals of the
- * fine-level permeability and porosity over the column, in \f$\mathrm{[m^3]}\f$ and \f$\mathrm{[m]}\f$.
+ * The coarse-level permeability and porosity of a column are the vertical averages of the
+ * fine-level permeability and porosity over the column.
  * The fine-level spatial parameters have to provide `permeabilityAtElement(fineElement)` and
  * `porosityAtElement(fineElement)`. The implementation has to provide
  * `fluidMatrixInteractionAtPos(globalPos)` returning a Brooks-Corey material law and
@@ -73,11 +73,16 @@ public:
         for (const auto& element : elements(gridGeometry->gridView()))
         {
             const auto columnIdx = gridGeometry->elementMapper().index(element);
-            for (const auto& fineElement : columnMapping.column(columnIdx))
+            const auto& column = columnMapping.column(columnIdx);
+            for (const auto& fineElement : column)
             {
                 permeability_[columnIdx] += spatialParamsFine_->permeabilityAtElement(fineElement)*fineCellHeight;
                 porosity_[columnIdx] += spatialParamsFine_->porosityAtElement(fineElement)*fineCellHeight;
             }
+
+            const Scalar columnHeight = column.size()*fineCellHeight;
+            permeability_[columnIdx] /= columnHeight;
+            porosity_[columnIdx] /= columnHeight;
         }
     }
 
@@ -88,7 +93,7 @@ public:
     { return *spatialParamsFine_; }
 
     /*!
-     * \brief Returns the coarse-level permeability \f$\mathrm{[m^3]}\f$ of a column
+     * \brief Returns the coarse-level permeability \f$\mathrm{[m^2]}\f$ of a column
      *
      * \param element coarse-level element
      * \param scv     sub-control volume of the element
@@ -101,7 +106,7 @@ public:
     { return permeabilityAtElement(element); }
 
     /*!
-     * \brief Returns the coarse-level permeability \f$\mathrm{[m^3]}\f$ of a column
+     * \brief Returns the coarse-level permeability \f$\mathrm{[m^2]}\f$ of a column
      *
      * \param element coarse-level element
      */
@@ -109,7 +114,7 @@ public:
     { return permeability_[this->gridGeometry().elementMapper().index(element)]; }
 
     /*!
-     * \brief Returns the coarse-level porosity \f$\mathrm{[m]}\f$ of a column
+     * \brief Returns the coarse-level porosity \f$\mathrm{[-]}\f$ of a column
      *
      * \param element coarse-level element
      * \param scv     sub-control volume of the element
@@ -122,7 +127,7 @@ public:
     { return porosityAtElement(element); }
 
     /*!
-     * \brief Returns the coarse-level porosity \f$\mathrm{[m]}\f$ of a column
+     * \brief Returns the coarse-level porosity \f$\mathrm{[-]}\f$ of a column
      *
      * \param element coarse-level element
      */

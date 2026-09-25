@@ -153,8 +153,10 @@ public:
 
         completeFluidStateCoarse(elemSol, problem, element, scv, fluidState_, solidState_, pcCoarse, columnState.gasPlumeDistance);
 
-        mobilitiesCoarse[phase0Idx] /= permeabilityCoarse;
-        mobilitiesCoarse[phase1Idx] /= permeabilityCoarse;
+        // permeability-weighted column average, the denominator is the column integral of the fine-level permeability
+        const Scalar columnHeight = column.size()*deltaZ;
+        mobilitiesCoarse[phase0Idx] /= permeabilityCoarse*columnHeight;
+        mobilitiesCoarse[phase1Idx] /= permeabilityCoarse*columnHeight;
 
         mobility_[phase0Idx] = mobilitiesCoarse[phase0Idx];
         mobility_[phase1Idx] = mobilitiesCoarse[phase1Idx];
