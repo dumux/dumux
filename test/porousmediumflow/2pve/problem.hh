@@ -43,6 +43,7 @@ class TwoPVETestProblem : public FVProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     static constexpr int pressureH2OIdx = Indices::pressureIdx;
     static constexpr int saturationGasIdx = Indices::saturationIdx;
     static constexpr int dim = GridView::dimension;
@@ -58,7 +59,7 @@ class TwoPVETestProblem : public FVProblem<TypeTag>
 
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using FineLevelView = TwoPVEFineLevelView<TypeTag,FineProblem>;
+    using FineLevelView = TwoPVEFineLevelView<GridGeometry, Scalar, FluidSystem, Indices, SolutionVector, FineProblem>;
 
     TwoPVETestProblem(std::shared_ptr<const GridGeometry> gridGeometryCoarse,
                       std::shared_ptr<FineLevelView> fineLevelView,

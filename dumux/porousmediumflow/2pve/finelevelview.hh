@@ -19,7 +19,7 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dumux/common/properties.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 #include <dumux/porousmediumflow/2pve/columnmapping.hh>
 #include <dumux/porousmediumflow/2pve/elementstatefine.hh>
@@ -46,38 +46,35 @@ struct TwoPVEColumnHistory
  *
  * Provides the mapping between coarse-level columns and fine-level elements, the history of each column,
  * and the reconstruction of the fine-level solution from the coarse-level solution.
+ *
+ * \tparam GridGeometry the grid geometry of both levels
+ * \tparam Scalar the scalar type
+ * \tparam FluidSystem the immiscible two-phase fluid system
+ * \tparam Indices the primary variable indices of the model
+ * \tparam SolutionVector the type of the coarse-level and the fine-level solution vectors
+ * \tparam FineProblemType the fine-level problem providing the fine-level spatial parameters
  */
-template<class TypeTag, class FineProblemType>
+template<class GridGeometry, class Scalar, class FluidSystem, class Indices, class SolutionVector, class FineProblemType>
 class TwoPVEFineLevelView
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using QuantityReconstructor = TwoPVEQuantityReconstruction<TypeTag>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using QuantityReconstructor = TwoPVEQuantityReconstruction<Scalar, FluidSystem>;
     static constexpr int pressureIdx = Indices::pressureIdx;
     static constexpr int saturationIdx = Indices::saturationIdx;
     static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
     static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
     static constexpr int dim = GridView::dimension;
-    using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
-    using NonwettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::NonwettingPhase;
     using ColumnState = TwoPVEColumnState<Scalar>;
     using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
-    using SpatialParamsCoarse = GetPropType<TypeTag, Properties::SpatialParams>;
-    using ProblemCoarse = GetPropType<TypeTag, Properties::Problem>;
 
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;
     using ResidualSaturations = TwoPVE::ResidualSaturationsData<Scalar>;
     using BrooksCoreyParameters = TwoPVE::BrooksCoreyParametersData<Scalar>;
 
 public:
-    using FineLevelElementState = TwoPVEFineLevelElementState<TypeTag>;
-    using FineLevelFields = TwoPVEFineLevelFieldStorage<TypeTag>;
+    using FineLevelElementState = TwoPVEFineLevelElementState<GridGeometry, Scalar, FluidSystem>;
+    using FineLevelFields = TwoPVEFineLevelFieldStorage<GridGeometry, Scalar, FluidSystem>;
     using FineProblem = FineProblemType;
     using SpatialParamsFine = typename FineProblem::SpatialParamsFine;
 
@@ -215,6 +212,7 @@ public:
      * \param coarsePriVars       coarse-level primary variables
      * \param coarseSpatialParams coarse-level spatial parameters
      */
+    template<class PrimaryVariables, class SpatialParamsCoarse>
     ColumnState makeColumnState(const Element& coarseElement,
                                 const PrimaryVariables& coarsePriVars,
                                 const SpatialParamsCoarse& coarseSpatialParams) const
@@ -239,10 +237,16 @@ public:
         state.brooksCoreyLambda = brooksCoreyParams.lambda();
         state.entryPressure = brooksCoreyParams.pcEntry();
         state.gravityNorm = coarseSpatialParams.gravity(coarsePosition).two_norm();
-        state.densityW = WettingPhase::density(state.temperature, state.pwCoarse);
-        state.viscosityW = WettingPhase::viscosity(state.temperature, state.pwCoarse);
-        state.densityNw = NonwettingPhase::density(state.temperature, state.pwCoarse);
-        state.viscosityNw = NonwettingPhase::viscosity(state.temperature, state.pwCoarse);
+
+        // the fluid properties of both phases are evaluated at the coarse-level wetting-phase pressure
+        ImmiscibleFluidState<Scalar, FluidSystem> fluidState;
+        fluidState.setTemperature(state.temperature);
+        fluidState.setPressure(wettingPhaseIdx, state.pwCoarse);
+        fluidState.setPressure(nonwettingPhaseIdx, state.pwCoarse);
+        state.densityW = FluidSystem::density(fluidState, wettingPhaseIdx);
+        state.viscosityW = FluidSystem::viscosity(fluidState, wettingPhaseIdx);
+        state.densityNw = FluidSystem::density(fluidState, nonwettingPhaseIdx);
+        state.viscosityNw = FluidSystem::viscosity(fluidState, nonwettingPhaseIdx);
 
         state.gasPlumeDistance = quantityReconstructor_.computeGasPlumeDist(
                  PhaseDensities{state.densityW, state.densityNw},
@@ -267,6 +271,7 @@ public:
      * \param coarseProblem  coarse-level problem
      * \param coarseSolution coarse-level solution vector
      */
+    template<class ProblemCoarse>
     void updateSol(const ProblemCoarse& coarseProblem,
                    const SolutionVector& coarseSolution)
     {
@@ -291,7 +296,7 @@ public:
                 fineElementState.update(fineElement, columnState, problemFine_->spatialParams(), quantityReconstructor_, fineCellHeight_);
                 solution_[fineIdx][pressureIdx] = fineElementState.pressure(wettingPhaseIdx);
                 solution_[fineIdx][saturationIdx] = fineElementState.saturation(nonwettingPhaseIdx);
-                fineLevelFields_.set(fineIdx,fineElementState);
+                fineLevelFields_.set(fineIdx, fineElementState);
             }
         }
     }

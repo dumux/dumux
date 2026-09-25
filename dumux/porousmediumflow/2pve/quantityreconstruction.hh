@@ -20,7 +20,6 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/nonlinear/findscalarroot.hh>
 
 namespace Dumux {
@@ -92,12 +91,13 @@ struct BrooksCoreyParametersData
  * Below the gas plume distance, the pore space is water-saturated apart from residually trapped gas.
  * Above the gas plume distance, the saturation follows from the capillary pressure in hydrostatic equilibrium.
  * The averages of the saturation and the relative permeabilities over fine-level cells are evaluated in closed form.
+ *
+ * \tparam Scalar the scalar type
+ * \tparam FluidSystem the immiscible two-phase fluid system
  */
-template<class TypeTag>
+template<class Scalar, class FluidSystem>
 class TwoPVEQuantityReconstruction
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
     static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
     static constexpr int numPhases = FluidSystem::numPhases;

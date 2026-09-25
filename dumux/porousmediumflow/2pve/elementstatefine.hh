@@ -15,7 +15,6 @@
 
 #include <array>
 
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
 namespace Dumux {
@@ -52,20 +51,21 @@ struct TwoPVEColumnState
 /*!
  * \ingroup TwoPVEModel
  * \brief The quantities of a fine-level element reconstructed from the state of its coarse-level column
+ *
+ * \tparam GridGeometry the fine-level grid geometry
+ * \tparam Scalar the scalar type
+ * \tparam FluidSystem the immiscible two-phase fluid system
  */
-template<class TypeTag>
+template<class GridGeometry, class Scalar, class FluidSystem>
 class TwoPVEFineLevelElementState
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     static constexpr int dim = GridView::dimension;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
     static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
     static constexpr int numPhases = FluidSystem::numPhases;
-    using QuantityReconstructor = TwoPVEQuantityReconstruction<TypeTag>;
+    using QuantityReconstructor = TwoPVEQuantityReconstruction<Scalar, FluidSystem>;
 
     using GasPlumeDistances = TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;
