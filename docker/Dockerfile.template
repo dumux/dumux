@@ -40,7 +40,7 @@ RUN apt-get update \
 
 # install the doxygen version used for the documentation build
 RUN wget -q -O /tmp/doxygen.tar.gz \
-        https://sourceforge.net/projects/doxygen/files/rel-${DOXYGEN_VERSION}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz/download \
+        https://sourceforge.net/projects/doxygen/files/rel-$${DOXYGEN_VERSION}/doxygen-$${DOXYGEN_VERSION}.linux.bin.tar.gz/download \
     && mkdir -p /opt/doxygen \
     && tar -xzf /tmp/doxygen.tar.gz -C /opt/doxygen --strip-components=1 \
     && ln -sf /opt/doxygen/bin/doxygen /usr/local/bin/doxygen \
