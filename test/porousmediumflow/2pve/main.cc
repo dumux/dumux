@@ -43,7 +43,6 @@
 
 #include "properties.hh"
 #include "massbalance.hh"
-#include "problem_fine.hh"
 
 #ifndef DIFFMETHOD
 #define DIFFMETHOD DiffMethod::numeric
@@ -133,12 +132,11 @@ int main(int argc, char** argv)
     auto gridGeometryFine = std::make_shared<GridGeometry>(leafGridViewFine);
 
     // create fine-level view of VE scheme
-    using FineProblem = TwoPVEFineProblem<TypeTag>;
-    using FineLevelView = TwoPVEFineLevelView<TypeTag, FineProblem>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using FineLevelView = typename Problem::FineLevelView;
     auto fineLevelView = std::make_shared<FineLevelView>(gridGeometryFine, gridGeometryCoarse);
 
     // the problem (initial and boundary conditions)
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problemCoarse = std::make_shared<Problem>(gridGeometryCoarse, fineLevelView);
 
     // get some time loop parameters
