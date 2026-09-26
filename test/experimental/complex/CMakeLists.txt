@@ -40,3 +40,5 @@ dumux_add_test(NAME test_complex_helmholtz_sweep
                SOURCES main_sweep.cc
                LABELS unit experimental
                CMD_ARGS params_sweep.input -Problem.MaxMode 3 -Grid.Cells "40 40")
+
+add_subdirectory(facet)
