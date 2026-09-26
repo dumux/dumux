@@ -82,12 +82,6 @@ public:
         const auto K = faceTensorAverage(insideK, outsideK, scvf.unitOuterNormal());
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
-        // The quantity the loop below accumulates is a flux density at an interpolation
-        // point. The form to arrive at is a flux law that offers exactly that, a
-        // (context, ipData) -> density, and leaves the quadrature to the caller: the state
-        // shared by all points, above all the interpolation over the local degrees of
-        // freedom, is then computed once for all phases and components instead of once per
-        // flux law call, as the free-flow momentum residual already does.
         Scalar flux = 0.0;
         for (const auto& quadPoint : CVFE::quadratureRule(fvGeometry, scvf))
         {
