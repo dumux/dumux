@@ -14,12 +14,15 @@
 
 #include <memory>
 
+#include <dune/common/ftraits.hh>
+
 namespace Dumux {
 
 template <class Traits>
 class BasicVolumeVariables
 {
-    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PrimaryVariable = typename Traits::PrimaryVariables::value_type;
+    using Scalar = typename Dune::FieldTraits<PrimaryVariable>::real_type;
 public:
     //! export the type used for the primary variables
     using PrimaryVariables = typename Traits::PrimaryVariables;
@@ -36,7 +39,7 @@ public:
         priVars_ = elemSol[scv.indexInElement()];
     }
 
-    Scalar priVar(const int pvIdx) const
+    PrimaryVariable priVar(const int pvIdx) const
     { return priVars_[pvIdx]; }
 
     const PrimaryVariables& priVars() const
