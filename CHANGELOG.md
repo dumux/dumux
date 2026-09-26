@@ -16,6 +16,7 @@ times whenever multiple scvs were associated with the same localDof.
 - __Testing__: `dumux_run_test.py` is now installed as a script when installing DuMux (with `make install`).
 - __Multidomain FF-PNM__: The grid manager for the free-flow domain has been improved to allow for up- and downstream grading, even if no additional up- or downstream positions are specified in the input file.
 - __Shallow water equations__: Fixed a bug where the tangential component for the constant water depth boundary condition (fixedWaterDepthBoundary) was missing.
+- __Plate models__: Added the Föppl-von Kármán plate (`dumux/solidmechanics/plate/foeppl_von_karman`), a geometrically nonlinear plate that couples bending and in-plane stretching, with optional inertia and pseudo-time relaxation; the Kirchhoff-Love and Föppl-von Kármán models now support free edges. Benchmarks: manufactured solution, large deflection, free vibration, disk wrinkling under gravity, sheet wrinkling under shear.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 

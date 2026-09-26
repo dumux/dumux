@@ -176,7 +176,7 @@
 @ingroup Hyperelastic
 
 @defgroup Plate Plate mechanics
-@brief Models for thin-plate structural mechanics (Kirchhoff-Love and Mindlin-Reissner).
+@brief Models for thin-plate structural mechanics (Kirchhoff-Love, Mindlin-Reissner and Föppl-von Kármán).
 @ingroup SolidMechanicsModels
 
 @defgroup KirchhoffLovePlate Kirchhoff-Love plate
@@ -192,6 +192,11 @@
 @defgroup MembranePlate Membrane plate
 @brief Models bending of a membrane plate (no bending stiffness).
 @copydoc dumux/solidmechanics/plate/membrane/model.hh
+@ingroup Plate
+
+@defgroup FoepplVonKarmanPlate Föppl-von Kármán plate
+@brief Models moderately large deflections of a thin plate, coupling bending and in-plane stretching.
+@copydoc dumux/solidmechanics/plate/foeppl_von_karman/model.hh
 @ingroup Plate
 
 <!-- PoroMechanicsModels -->
