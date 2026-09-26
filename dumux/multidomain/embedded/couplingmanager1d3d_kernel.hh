@@ -553,7 +553,23 @@ private:
         if (radiusSquared > rho*rho)
             return 0.0;
 
-        return 1.0/(M_PI*rho*rho);
+        /* The default is the uniform disk. Setting MixedDimension.KernelSecondMoment selects
+         * (alpha + beta r^2)(1 - r^2/rho^2)^2 instead, with alpha and beta fixed by unit mass
+         * and by a prescribed second moment M_2. Choosing M_2 = R^2 makes the exterior of a
+         * transverse source agree with the true inclusion's, which the uniform disk does not:
+         * it leaves a spurious doublet of strength (M_2 - R^2)/2 that survives outside the
+         * support. The condition forces the profile to change sign, so weights are not positive.
+         */
+        static const bool useMoment = hasParam("MixedDimension.KernelSecondMoment");
+        if (!useMoment)
+            return 1.0/(M_PI*rho*rho);
+
+        static const Scalar m2 = getParam<Scalar>("MixedDimension.KernelSecondMoment");
+        const auto rho2 = rho*rho;
+        const auto alpha = 8.0/(M_PI*rho2) - 20.0*m2/(M_PI*rho2*rho2);
+        const auto beta = -20.0/(M_PI*rho2*rho2) + 80.0*m2/(M_PI*rho2*rho2*rho2);
+        const auto s = 1.0 - radiusSquared/rho2;
+        return (alpha + beta*radiusSquared)*s*s;
     }
 
     /*!
