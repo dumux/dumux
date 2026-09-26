@@ -165,11 +165,7 @@ public:
             return gridFluxVarsCache().cache(eIdx_, ipData.scvfIndex(), ipData.qpIndex());
     }
 
-    /*!
-     * \brief The cache at an interpolation point.
-     * \note Mirrors the accessor of the caches that hold the flux variables together with the
-     *       volume variables, so that consumers need not know which of the two they hold.
-     */
+    //! The cache at an interpolation point
     template<Concept::ScvfIpData IpData>
     friend const FluxVariablesCache& cache(const CVFEElementFluxVariablesCacheImpl& elemFluxVarsCache,
                                            const IpData& ipData)
@@ -312,11 +308,7 @@ public:
     FluxVariablesCache& operator [](const IpData& ipData)
     { return fluxVarsCache_[ipData.scvfIndex()]; }
 
-    /*!
-     * \brief The cache at an interpolation point.
-     * \note Mirrors the accessor of the caches that hold the flux variables together with the
-     *       volume variables, so that consumers need not know which of the two they hold.
-     */
+    //! The cache at an interpolation point
     template<Concept::ScvfIpData IpData>
     friend const FluxVariablesCache& cache(const CVFEElementFluxVariablesCacheImpl& elemFluxVarsCache,
                                            const IpData& ipData)
@@ -468,11 +460,7 @@ public:
     FluxVariablesCache& operator [](const IpData& ipData)
     { return fluxVarsCache_[ipData.scvfIndex()][ipData.qpIndex()]; }
 
-    /*!
-     * \brief The cache at an interpolation point.
-     * \note Mirrors the accessor of the caches that hold the flux variables together with the
-     *       volume variables, so that consumers need not know which of the two they hold.
-     */
+    //! The cache at an interpolation point
     template<Concept::ScvfQpIpData IpData>
     friend const FluxVariablesCache& cache(const CVFEElementFluxVariablesCacheImpl& elemFluxVarsCache,
                                            const IpData& ipData)
