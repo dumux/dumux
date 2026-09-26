@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <numeric>
+#include <type_traits>
 #include <algorithm>
 #include <iostream>
 
@@ -48,10 +49,13 @@ void checkPartitionOfUnity(const auto& basis)
     {
         localView.bind(entity);
         const auto& localBasis = localView.tree().finiteElement().localBasis();
+        using LocalPosition = typename std::decay_t<decltype(localBasis)>::Traits::DomainType;
         std::vector<Dune::FieldVector<double, 1>> values;
         for (const double x : {0.0, 0.17, 0.37, 0.5, 0.83, 1.0})
         {
-            localBasis.evaluateFunction({x}, values);
+            // on the diagonal, scaled to stay inside both the simplex and the cube
+            const LocalPosition localPos(x/LocalPosition::dimension);
+            localBasis.evaluateFunction(localPos, values);
             const auto sum = std::accumulate(
                 values.begin(), values.end(), 0.0,
                 [] (double a, const auto& v) { return a + v[0]; }
@@ -112,9 +116,11 @@ int main(int argc, char** argv)
     using namespace Dumux;
     initialize(argc, argv);
 
+    using Basis0 = BrokenLagrangeBasis<SegmentSet, 0>;
     using Basis1 = BrokenLagrangeBasis<SegmentSet, 1>;
     using Basis2 = BrokenLagrangeBasis<SegmentSet, 2>;
 
+    static_assert(Concept::ProjectionBasis<Basis0>);
     static_assert(Concept::ProjectionBasis<Basis1>);
     static_assert(Concept::ProjectionBasis<Basis2>);
     static_assert(Concept::EntityRangeProvider<Basis2>);
@@ -128,6 +134,10 @@ int main(int argc, char** argv)
 
     const auto segments = makeSegmentSet();
 
+    const Basis0 basis0{segments};
+    if (basis0.size() != 2)
+        DUNE_THROW(Dune::InvalidStateException, "Expected 2 dofs for P0 on two segments, got " << basis0.size());
+
     const Basis1 basis1{segments};
     if (basis1.size() != 4)
         DUNE_THROW(Dune::InvalidStateException, "Expected 4 dofs for P1 on two segments, got " << basis1.size());
@@ -136,10 +146,13 @@ int main(int argc, char** argv)
     if (basis2.size() != 6)
         DUNE_THROW(Dune::InvalidStateException, "Expected 6 dofs for P2 on two segments, got " << basis2.size());
 
+    checkPartitionOfUnity(basis0);
     checkPartitionOfUnity(basis1);
     checkPartitionOfUnity(basis2);
+    checkIndexMapIsBijective(basis0);
     checkIndexMapIsBijective(basis1);
     checkIndexMapIsBijective(basis2);
+    checkNoSharedDofs(basis0);
     checkNoSharedDofs(basis1);
     checkNoSharedDofs(basis2);
 
@@ -155,13 +168,31 @@ int main(int argc, char** argv)
         using FacetSet = GeometriesEntitySet<Facet>;
         const auto facetSet = std::make_shared<FacetSet>(std::move(facets));
 
-        const BrokenLagrangeBasis<FacetSet, 2> mixed{facetSet};
+        static_assert(BrokenLagrangeBasis<FacetSet, 0>::dimension == 2);
+
+        // one dof per entity, whatever its shape
+        const BrokenLagrangeBasis<FacetSet, 0> mixed0{facetSet};
+        if (mixed0.size() != 2)
+            DUNE_THROW(Dune::InvalidStateException, "Expected 2 dofs for P0/Q0, got " << mixed0.size());
+
+        // P1 on a triangle has 3 dofs, Q1 on a quadrilateral has 4
+        const BrokenLagrangeBasis<FacetSet, 1> mixed1{facetSet};
+        if (mixed1.size() != 7)
+            DUNE_THROW(Dune::InvalidStateException, "Expected 7 dofs for mixed P1/Q1, got " << mixed1.size());
+
         // P2 on a triangle has 6 dofs, Q2 on a quadrilateral has 9
+        const BrokenLagrangeBasis<FacetSet, 2> mixed{facetSet};
         if (mixed.size() != 15)
             DUNE_THROW(Dune::InvalidStateException, "Expected 15 dofs for mixed P2/Q2, got " << mixed.size());
 
+        checkPartitionOfUnity(mixed0);
+        checkPartitionOfUnity(mixed1);
         checkPartitionOfUnity(mixed);
+        checkIndexMapIsBijective(mixed0);
+        checkIndexMapIsBijective(mixed1);
         checkIndexMapIsBijective(mixed);
+        checkNoSharedDofs(mixed0);
+        checkNoSharedDofs(mixed1);
         checkNoSharedDofs(mixed);
     }
 
