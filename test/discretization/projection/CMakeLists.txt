@@ -21,6 +21,10 @@ dumux_add_test(NAME test_brokenbasis
                SOURCES test_brokenbasis.cc
                LABELS unit discretization)
 
+dumux_add_test(NAME test_projection_brokenspaces
+               SOURCES test_projection_brokenspaces.cc
+               LABELS unit discretization)
+
 dumux_add_test(NAME test_fejacobianpattern
                SOURCES test_fejacobianpattern.cc
                LABELS unit discretization)
