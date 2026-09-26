@@ -19,6 +19,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 
+#include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 
 namespace Dumux {
@@ -58,7 +59,6 @@ public:
                                const SubControlVolume& scv,
                                const VolumeVariables& volVars) const
     {
-        // so far we only implement the equilibrium equation
         return NumEqVector(0.0);
     }
 
@@ -75,19 +75,6 @@ public:
         if (scvf.boundary())
             DUNE_THROW(Dune::InvalidStateException, "Calling computeFlux for boundary scvf");
 
-        const auto& fluxVarCache = elemFluxVarsCache[scvf];
-        Dune::FieldVector<Scalar, dimWorld> gradShearGradPotential(0.0);
-        Dune::FieldVector<Scalar, dimWorld> gradDeformation(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[localDof];
-            const auto& gradN = fluxVarCache.gradN(localDof.index());
-            gradShearGradPotential.axpy(volVars.shearGradPotential(), gradN);
-            gradDeformation.axpy(volVars.verticalDeformation(), gradN);
-        }
-
-        const auto rotation = problem.couplingManager().rotation(fvGeometry, scvf);
-
         // rotate with J = [0 1, -1 0]
         const auto tangent = [&](){
             auto tangent = scvf.unitOuterNormal();
@@ -97,9 +84,27 @@ public:
         }();
 
         NumEqVector flux(0.0);
-        flux[Indices::shearGradPotentialEqIdx] = vtmv(scvf.unitOuterNormal(), 1.0, gradShearGradPotential)*scvf.area();
-        flux[Indices::deformationEqIdx] = -vtmv(scvf.unitOuterNormal(), 1.0, (gradDeformation-rotation))*scvf.area();
-        flux[Indices::shearCurlPotentialEqIdx] = -vtmv(tangent, 1.0, rotation)*scvf.area();
+        for (const auto& qp : CVFE::quadratureRule(fvGeometry, scvf))
+        {
+            const auto& fluxVarCache = elemFluxVarsCache[qp.ipData()];
+            Dune::FieldVector<Scalar, dimWorld> gradShearGradPotential(0.0);
+            Dune::FieldVector<Scalar, dimWorld> gradDeformation(0.0);
+            for (const auto& localDof : localDofs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[localDof];
+                const auto& gradN = fluxVarCache.gradN(localDof.index());
+                gradShearGradPotential.axpy(volVars.shearGradPotential(), gradN);
+                gradDeformation.axpy(volVars.verticalDeformation(), gradN);
+            }
+
+            const auto rotation = problem.couplingManager().rotation(fvGeometry, qp.ipData());
+
+            flux[Indices::shearGradPotentialEqIdx]
+                += vtmv(scvf.unitOuterNormal(), 1.0, gradShearGradPotential)*qp.weight();
+            flux[Indices::deformationEqIdx]
+                -= vtmv(scvf.unitOuterNormal(), 1.0, (gradDeformation-rotation))*qp.weight();
+            flux[Indices::shearCurlPotentialEqIdx] -= vtmv(tangent, 1.0, rotation)*qp.weight();
+        }
         return flux;
     }
 };
@@ -155,39 +160,44 @@ public:
         if (scvf.boundary())
             DUNE_THROW(Dune::InvalidStateException, "Calling computeFlux for boundary scvf");
 
-        const auto& cm =  problem.couplingManager();
-        const auto vars = cm.deformationAndPotentials(fvGeometry, scvf);
-        const auto psi = vars[cm.shearCurlPotentialIdx()];
-        const auto phi = vars[cm.shearGradPotentialIdx()];
-
-        Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Q(0.0);
-        Q[0][0] = phi; Q[0][1] = psi;
-        Q[1][0] = -psi;
-        Q[1][1] = phi;
-
-        const auto& fluxVarCache = elemFluxVarsCache[scvf];
-        Dune::FieldMatrix<Scalar, dimWorld, dimWorld> gradRotations(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[localDof];
-            const auto& gradN = fluxVarCache.gradN(localDof.index());
-            for (int dir = 0; dir < dimWorld; ++dir)
-                gradRotations[dir].axpy(volVars.rotation(dir), gradN);
-        }
-
-        const auto& globalPos = scvf.ipGlobal();
-        const auto poissonRatio = problem.poissonRatio(globalPos);
-        const auto D = problem.D(globalPos);
-        Dune::FieldMatrix<Scalar, dimWorld, dimWorld> M(0.0);
-        M[0][0] = -D*(gradRotations[0][0] + poissonRatio*gradRotations[1][1]);
-        M[1][1] = -D*(gradRotations[1][1] + poissonRatio*gradRotations[0][0]);
-        M[0][1] = -D*(1.0-poissonRatio)*0.5*(gradRotations[0][1] + gradRotations[1][0]);
-        M[1][0] = M[0][1];
-        M -= Q;
+        const auto& cm = problem.couplingManager();
 
         NumEqVector flux(0.0);
-        M.mv(scvf.unitOuterNormal(), flux);
-        flux *= -scvf.area();
+        for (const auto& qp : CVFE::quadratureRule(fvGeometry, scvf))
+        {
+            const auto vars = cm.deformationAndPotentials(fvGeometry, qp.ipData());
+            const auto psi = vars[cm.shearCurlPotentialIdx()];
+            const auto phi = vars[cm.shearGradPotentialIdx()];
+
+            Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Q(0.0);
+            Q[0][0] = phi; Q[0][1] = psi;
+            Q[1][0] = -psi;
+            Q[1][1] = phi;
+
+            const auto& fluxVarCache = elemFluxVarsCache[qp.ipData()];
+            Dune::FieldMatrix<Scalar, dimWorld, dimWorld> gradRotations(0.0);
+            for (const auto& localDof : localDofs(fvGeometry))
+            {
+                const auto& volVars = elemVolVars[localDof];
+                const auto& gradN = fluxVarCache.gradN(localDof.index());
+                for (int dir = 0; dir < dimWorld; ++dir)
+                    gradRotations[dir].axpy(volVars.rotation(dir), gradN);
+            }
+
+            const auto& globalPos = qp.ipData().global();
+            const auto poissonRatio = problem.poissonRatio(globalPos);
+            const auto D = problem.D(globalPos);
+            Dune::FieldMatrix<Scalar, dimWorld, dimWorld> M(0.0);
+            M[0][0] = -D*(gradRotations[0][0] + poissonRatio*gradRotations[1][1]);
+            M[1][1] = -D*(gradRotations[1][1] + poissonRatio*gradRotations[0][0]);
+            M[0][1] = -D*(1.0-poissonRatio)*0.5*(gradRotations[0][1] + gradRotations[1][0]);
+            M[1][0] = M[0][1];
+            M -= Q;
+
+            NumEqVector contribution(0.0);
+            M.mv(scvf.unitOuterNormal(), contribution);
+            flux.axpy(-qp.weight(), contribution);
+        }
         return flux;
     }
 };
