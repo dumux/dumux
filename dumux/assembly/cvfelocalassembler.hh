@@ -507,7 +507,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/f
 {
     using ThisType = CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false, Implementation>;
     using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, Detail::CVFE::Impl<Implementation, ThisType>, false>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
@@ -573,7 +573,7 @@ public:
             {
                 partialDerivs = 0.0;
 
-                auto evalStorage = [&](Scalar priVar)
+                auto evalStorage = [&](PrimaryVariable priVar)
                 {
                     // auto partialDerivsTmp = partialDerivs;
                     elemSol[localIdx][pvIdx] = priVar;
@@ -582,7 +582,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[localIdx][pvIdx], partialDerivs, origStorageResiduals,
                                                           eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);

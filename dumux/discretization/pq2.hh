@@ -99,9 +99,9 @@ template<class TypeTag>
 struct JacobianMatrix<TypeTag, TTag::PQ2HybridModel>
 {
 private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+    using MatrixBlock = typename Dune::FieldMatrix<PrimaryVariable, numEq, numEq>;
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
@@ -164,9 +164,9 @@ template<class TypeTag>
 struct JacobianMatrix<TypeTag, TTag::PQ2FEModel>
 {
 private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     enum { numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq() };
-    using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+    using MatrixBlock = typename Dune::FieldMatrix<PrimaryVariable, numEq, numEq>;
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
