@@ -28,6 +28,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/geometry/center.hh>
 #include <dumux/discretization/pq1/dofhelper.hh>
+#include <dumux/discretization/scvfnormal.hh>
 
 namespace Dumux {
 
@@ -485,38 +486,11 @@ public:
         return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, trans, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
     }
 
-    //! get scvf normal vector for dim == 2, dimworld == 3
-    template <int w = dimWorld>
-    typename std::enable_if<w == 3, GlobalPosition>::type
-    normal(const ScvfCornerStorage& scvfCorners,
-           const std::array<LocalIndexType, 2>& scvIndices) const
+    //! get scvf normal vector
+    GlobalPosition normal(const ScvfCornerStorage& scvfCorners,
+                          const std::array<LocalIndexType, 2>& scvIndices) const
     {
-        const auto v1 = geo_.corner(1) - geo_.corner(0);
-        const auto v2 = geo_.corner(2) - geo_.corner(0);
-        const auto v3 = Dumux::crossProduct(v1, v2);
-        const auto t = scvfCorners[1] - scvfCorners[0];
-        GlobalPosition normal = Dumux::crossProduct(v3, t);
-        normal /= normal.two_norm();
-
-        //! ensure the right direction of the normal
-        const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
-        const auto s = v*normal;
-        if (std::signbit(s))
-            normal *= -1;
-
-        return normal;
-    }
-
-    //! get scvf normal vector for dim == 2, dimworld == 2
-    template <int w = dimWorld>
-    typename std::enable_if<w == 2, GlobalPosition>::type
-    normal(const ScvfCornerStorage& scvfCorners,
-           const std::array<LocalIndexType, 2>& scvIndices) const
-    {
-        //! obtain normal vector by 90° counter-clockwise rotation of t
-        const auto t = scvfCorners[1] - scvfCorners[0];
-        GlobalPosition normal({-t[1], t[0]});
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, scvfCorners);
 
         //! ensure the right direction of the normal
         const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
@@ -694,8 +668,7 @@ public:
     GlobalPosition normal(const ScvfCornerStorage& p,
                           const std::array<LocalIndexType, 2>& scvIndices) const
     {
-        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, p);
 
         const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
         const auto s = v*normal;
