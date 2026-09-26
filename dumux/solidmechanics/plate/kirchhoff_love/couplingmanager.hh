@@ -118,29 +118,25 @@ public:
             return defToRotStencils_[eIdx];
     }
 
-    auto rotation(typename GridGeometry<deformationIdx>::LocalView const& fvGeometry,
-                  typename GridGeometry<deformationIdx>::SubControlVolumeFace const& scvf) const
+    //! The rotation vector \f$ \boldsymbol{\theta} \f$ at a point of an element
+    template<class FVElementGeometry, class Position>
+    auto rotation(const FVElementGeometry& fvGeometry, const Position& position) const
     {
         const auto& gg = this->problem(rotationIdx).gridGeometry();
         const auto elemSol = elementSolution(fvGeometry.element(), curSol(rotationIdx), gg);
         return evalSolution(
-            fvGeometry.element(),
-            fvGeometry.element().geometry(),
-            gg, elemSol,
-            scvf.ipGlobal()
+            fvGeometry.element(), fvGeometry.element().geometry(), gg, elemSol, position_(position)
         );
     }
 
-    auto deformationAndPotentials(typename GridGeometry<rotationIdx>::LocalView const& fvGeometry,
-                                  typename GridGeometry<rotationIdx>::SubControlVolumeFace const& scvf) const
+    //! The deformation and potentials \f$ (\varphi, w, \psi) \f$ at a point of an element
+    template<class FVElementGeometry, class Position>
+    auto deformationAndPotentials(const FVElementGeometry& fvGeometry, const Position& position) const
     {
         const auto& gg = this->problem(deformationIdx).gridGeometry();
         const auto elemSol = elementSolution(fvGeometry.element(), curSol(deformationIdx), gg);
         return evalSolution(
-            fvGeometry.element(),
-            fvGeometry.element().geometry(),
-            gg, elemSol,
-            scvf.ipGlobal()
+            fvGeometry.element(), fvGeometry.element().geometry(), gg, elemSol, position_(position)
         );
     }
 
@@ -187,10 +183,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                 "Call computeColorsForAssembly before assembling in parallel!");
 
-        // make this element loop run in parallel
-        // for this we have to color the elements so that we don't get
-        // race conditions when writing into the global matrix or modifying grid variable caches
-        // each color can be assembled using multiple threads
+        // Elements of one color cannot race on matrix entries or grid variable caches.
         const auto& grid = this->problem(domainId).gridGeometry().gridView().grid();
         for (const auto& elements : elementSets_)
         {
@@ -202,10 +195,18 @@ public:
         }
     }
 
-protected:
-    using ParentType::curSol;
-
 private:
+    template<class Position>
+    static decltype(auto) position_(const Position& position)
+    {
+        if constexpr (requires { position.ipGlobal(); })
+            return position.ipGlobal();
+        else if constexpr (requires { position.global(); })
+            return position.global();
+        else
+            return (position);
+    }
+
     //! coloring for multithreaded assembly
     std::deque<std::vector<ElementSeed<deformationIdx>>> elementSets_;
 

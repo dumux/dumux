@@ -48,6 +48,34 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::KLPlateTestDeformation>
 { using type = KirchhoffLovePlateTestProblemDeformation<TypeTag>; };
 
+#if defined(SCVF_QUADRATURE_ORDER)
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::KLPlateTestRotation>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    struct Traits : public PQ1BubbleDefaultGridGeometryTraits<GridView>
+    { using ScvfQuadratureRule = QuadratureRules::DuneQuadrature<SCVF_QUADRATURE_ORDER>; };
+
+    using type = PQ1BubbleFVGridGeometry<Scalar, GridView, enableCache, Traits>;
+};
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::KLPlateTestDeformation>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+
+    struct Traits : public BoxDefaultGridGeometryTraits<GridView>
+    { using ScvfQuadratureRule = QuadratureRules::DuneQuadrature<SCVF_QUADRATURE_ORDER>; };
+
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, Traits>;
+};
+#endif
+
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::KLPlateTestRotation>
 {
