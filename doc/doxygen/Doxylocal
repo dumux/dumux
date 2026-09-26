@@ -25,6 +25,7 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/porousmediumflow/richards/benchmarks/README.md \
                          @top_srcdir@/test/solidmechanics/plate/membrane/README.md \
                          @top_srcdir@/test/solidmechanics/plate/kirchhoff_love/README.md \
+                         @top_srcdir@/test/solidmechanics/plate/kirchhoff_love/annulus/README.md \
                          @top_srcdir@/test/solidmechanics/plate/mindlin_reissner/README.md \
                          @top_srcdir@/test/experimental/timestepping/README.md \
                          @top_srcdir@/test/solidmechanics/turek_hron/README.md \

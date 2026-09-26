@@ -28,7 +28,7 @@ testname = args.executable
 exe_basename = os.path.basename(testname)
 
 title_words = exe_basename.removeprefix("test_").replace("_", " ").title()
-title = f"{title_words}: convergence of vertical deformation"
+title = f"{title_words}:\nConvergence of vertical deformation"
 
 hs, errors = collect_data(testname, args.clmax, args.geo, args.mesh)
 errors = errors["deformation w"]
