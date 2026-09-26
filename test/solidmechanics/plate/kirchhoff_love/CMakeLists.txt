@@ -22,3 +22,4 @@ set_tests_properties(test_kirchhoff_love_plate test_kirchhoff_love_plate_quadrat
                      PROPERTIES RESOURCE_LOCK kirchhoff_love_plate_mesh)
 
 add_subdirectory(annulus)
+add_subdirectory(annulus_clamped)
