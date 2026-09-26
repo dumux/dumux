@@ -93,6 +93,17 @@ find_package(TBB QUIET)
 find_package(Kokkos 3.7 QUIET)
 find_package(OpenMP QUIET)
 
+# MUMPS is a Fortran library: its CMake package config pulls in MPI (C+Fortran),
+# SCALAPACK and LAPACK. Enable the Fortran language (if a compiler is available) so
+# find_package(MUMPS) can resolve those dependencies. Without Fortran the package is
+# simply not found and the MUMPS backend is disabled.
+include(CheckLanguage)
+check_language(Fortran)
+if(CMAKE_Fortran_COMPILER)
+  enable_language(Fortran)
+  find_package(MUMPS QUIET COMPONENTS d)
+endif()
+
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
 dumux_add_library(dumux
@@ -131,6 +142,11 @@ endif()
 if (OpenMP_FOUND)
   target_compile_definitions(dumux PUBLIC DUMUX_HAVE_OPENMP=1)
   target_link_libraries(dumux INTERFACE OpenMP::OpenMP_CXX)
+endif()
+
+if (MUMPS_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_MUMPS=1)
+  target_link_libraries(dumux INTERFACE MUMPS::DMUMPS)
 endif()
 
 if (NOT DUMUX_HAVE_STD_FORMAT)
