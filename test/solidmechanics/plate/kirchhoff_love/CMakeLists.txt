@@ -24,3 +24,4 @@ set_tests_properties(test_kirchhoff_love_plate test_kirchhoff_love_plate_quadrat
 add_subdirectory(annulus)
 add_subdirectory(annulus_clamped)
 add_subdirectory(free_corner)
+add_subdirectory(navier_square)

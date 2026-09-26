@@ -1,0 +1,25 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 16 16
+CellType = Simplex
+
+[Problem]
+Name = test_kirchhoff_love_navier_square
+E = 1e6
+Thickness = 0.05
+PoissonRatio = 0.3
+Force = 1.0
+Length = 1.0
+Mapping = tangential
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-8
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-5
