@@ -17,6 +17,7 @@
 #include <variant>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/math.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/version.hh>
 #include <dune/common/parallel/indexset.hh>
@@ -948,8 +949,7 @@ private:
     void checkResult_(XVectorForSolver& x, Dune::InverseOperatorResult& result) const
     {
         flatVectorForEach(x, [&](auto&& entry, std::size_t){
-            using std::isnan, std::isinf;
-            if (isnan(entry) || isinf(entry))
+            if (Dune::isNaN(entry) || Dune::isInf(entry))
                 result.converged = false;
         });
     }
