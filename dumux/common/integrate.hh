@@ -16,6 +16,7 @@
 #include <type_traits>
 
 #include <dune/common/typetraits.hh>
+#include <dune/common/ftraits.hh>
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/common/concept.hh>
 
@@ -80,6 +81,20 @@ struct FieldTypeImpl<T, typename std::enable_if<(sizeof(std::declval<T>()[0]) > 
 template<class T>
 using FieldType = typename FieldTypeImpl<T>::type;
 
+// squared Euclidean norm, real-valued also for complex-valued entries
+template<class T>
+auto squaredNorm(const T& t)
+{
+    if constexpr (Dune::IsNumber<T>::value)
+    {
+        using std::abs;
+        const auto a = abs(t);
+        return a*a;
+    }
+    else
+        return t.two_norm2();
+}
+
 } // end namespace Detail
 #endif
 
@@ -103,7 +118,7 @@ auto integrateGridFunction(const GridGeometry& gg,
     {
         const auto elemSol = elementSolution(element, sol, gg);
         const auto geometry = element.geometry();
-        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
+        const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(geometry.type(), order);
         for (auto&& qp : quad)
         {
             auto value = evalSolution(element, geometry, gg, elemSol, geometry.global(qp.position()));
@@ -130,7 +145,7 @@ auto integrateL2Error(const GridGeometry& gg,
                       std::size_t order)
 {
     using GridView = typename GridGeometry::GridView;
-    using Scalar = typename Detail::FieldType< std::decay_t<decltype(sol1[0])> >;
+    using Scalar = typename Dune::FieldTraits<Detail::FieldType< std::decay_t<decltype(sol1[0])> >>::real_type;
 
     Scalar l2norm(0.0);
     for (const auto& element : elements(gg.gridView()))
@@ -139,14 +154,14 @@ auto integrateL2Error(const GridGeometry& gg,
         const auto elemSol2 = elementSolution(element, sol2, gg);
 
         const auto geometry = element.geometry();
-        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
+        const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(geometry.type(), order);
         for (auto&& qp : quad)
         {
             const auto& globalPos = geometry.global(qp.position());
             const auto value1 = evalSolution(element, geometry, gg, elemSol1, globalPos);
             const auto value2 = evalSolution(element, geometry, gg, elemSol2, globalPos);
             const auto error = (value1 - value2);
-            l2norm += (error*error)*qp.weight()*geometry.integrationElement(qp.position());
+            l2norm += Detail::squaredNorm(error)*qp.weight()*geometry.integrationElement(qp.position());
         }
     }
 
@@ -181,7 +196,7 @@ auto integrateGridFunction(const GridView& gv,
         fLocal.bind(element);
 
         const auto geometry = element.geometry();
-        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
+        const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(geometry.type(), order);
         for (auto&& qp : quad)
         {
             auto value = fLocal(qp.position());
@@ -215,7 +230,7 @@ auto integrateL2Error(const GridView& gv,
 
     using Element = typename GridView::template Codim<0>::Entity;
     using LocalPosition = typename Element::Geometry::LocalCoordinate;
-    using Scalar = typename Detail::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >;
+    using Scalar = typename Dune::FieldTraits<Detail::FieldType< std::decay_t<decltype(fLocal(std::declval<LocalPosition>()))> >>::real_type;
 
     Scalar l2norm(0.0);
     for (const auto& element : elements(gv))
@@ -224,11 +239,11 @@ auto integrateL2Error(const GridView& gv,
         gLocal.bind(element);
 
         const auto geometry = element.geometry();
-        const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
+        const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(geometry.type(), order);
         for (auto&& qp : quad)
         {
             const auto error = fLocal(qp.position()) - gLocal(qp.position());
-            l2norm += (error*error)*qp.weight()*geometry.integrationElement(qp.position());
+            l2norm += Detail::squaredNorm(error)*qp.weight()*geometry.integrationElement(qp.position());
         }
 
         gLocal.unbind();
