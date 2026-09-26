@@ -17,8 +17,11 @@
 #include <type_traits>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/common/exceptions.hh>
+#include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/geometry/geometricentityset.hh>
@@ -45,6 +48,7 @@ struct FactoryFillResult
 {
     std::vector<std::size_t> hostToFacetVertexInsertionIndex;
     std::vector<HostIntersectionRecords> facetInsertionToHostIntersections;
+    std::vector<Dune::GeometryType> facetInsertionToGeometryType;
 };
 
 template<typename Grid, typename HostGridView, typename HostGridVertexSet, typename Selector>
@@ -60,6 +64,7 @@ FactoryFillResult fillFactory(Dune::GridFactory<Grid>& factory,
     std::vector<unsigned int> localCornerStorage;
     std::vector<std::size_t> domainToFacetVertex(hostGridVertexSet.size(), undefinedIndex);
     std::vector<HostIntersectionRecords> facetToHostIntersections;
+    std::vector<Dune::GeometryType> facetToGeometryType;
 
     std::size_t vertexCount = 0;
     for (const auto& element : elements(hostGridView))
@@ -94,6 +99,7 @@ FactoryFillResult fillFactory(Dune::GridFactory<Grid>& factory,
             }
 
             factory.insertElement(isGeo.type(), localCornerStorage);
+            facetToGeometryType.push_back(isGeo.type());
 
             auto& hostIntersections = facetToHostIntersections.emplace_back();
             hostIntersections.push_back({elementMapper.index(element), static_cast<unsigned int>(is.indexInInside())});
@@ -102,7 +108,7 @@ FactoryFillResult fillFactory(Dune::GridFactory<Grid>& factory,
         }
     }
 
-    return {std::move(domainToFacetVertex), std::move(facetToHostIntersections)};
+    return {std::move(domainToFacetVertex), std::move(facetToHostIntersections), std::move(facetToGeometryType)};
 }
 
 }  // end namespace Detail::FacetGrid
@@ -146,23 +152,29 @@ public:
     using Vertex = typename Grid::template Codim<dim>::Entity;
 
     using HostGrid = HG;
+    using HostGridView = typename HostGrid::LeafGridView;
     using HostGridVertex = typename HostGrid::template Codim<dim+1>::Entity;
     using Element = typename Grid::template Codim<0>::Entity;
     using HostIntersectionRecord = Detail::FacetGrid::HostIntersectionRecord;
     using HostIntersectionRecords = Detail::FacetGrid::HostIntersectionRecords;
 
-    //! Make the grid using an externally created host grid.
+    //! Make the grid from the facets of an externally created host grid view.
     template<Concept::FacetSelector<HostElement, HostIntersection> Selector>
-    void init(const HostGrid& hostGrid, const Selector& selector)
+    void init(const HostGridView& hostGridView, const Selector& selector)
     {
-        hostVertexSet_ = std::make_unique<HostVertexSet>(hostGrid.leafGridView());
-        auto [hostToFacetVertexInsertionIndex, facetInsertionToHostIntersections] = Detail::FacetGrid::fillFactory(
-            facetGridFactory_,
-            hostGrid.leafGridView(),
-            *hostVertexSet_,
-            selector
-        );
+        hostVertexSet_ = std::make_unique<HostVertexSet>(hostGridView);
+        auto [hostToFacetVertexInsertionIndex, facetInsertionToHostIntersections, facetInsertionToGeometryType]
+            = Detail::FacetGrid::fillFactory(facetGridFactory_, hostGridView, *hostVertexSet_, selector);
         facetGrid_ = facetGridFactory_.createGrid();
+
+        // a factory restricted to some geometry types may build an element of another type
+        // from the leading corners without complaint
+        for (const auto& element : elements(facetGrid_->leafGridView()))
+            if (element.type() != facetInsertionToGeometryType.at(facetGridFactory_.insertionIndex(element)))
+                DUNE_THROW(Dune::GridError, "The facet grid cannot represent a host facet of type "
+                           << facetInsertionToGeometryType[facetGridFactory_.insertionIndex(element)]
+                           << ", it created an element of type " << element.type());
+
         loadBalance();
 
         facetInsertionToHostVertexIndex_.resize(facetGrid_->leafGridView().size(dim));
@@ -171,6 +183,11 @@ public:
                 facetInsertionToHostVertexIndex_[hostToFacetVertexInsertionIndex[hostVertexIndex]] = hostVertexIndex;
         facetInsertionToHostIntersections_ = std::move(facetInsertionToHostIntersections);
     }
+
+    //! Make the grid using an externally created host grid.
+    template<Concept::FacetSelector<HostElement, HostIntersection> Selector>
+    void init(const HostGrid& hostGrid, const Selector& selector)
+    { init(hostGrid.leafGridView(), selector); }
 
     //! Make the grid and create the host grid internally.
     template<Concept::FacetSelector<HostElement, HostIntersection> Selector>
