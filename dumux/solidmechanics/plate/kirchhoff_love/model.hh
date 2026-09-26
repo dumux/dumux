@@ -31,8 +31,8 @@
  * where \f$ \varphi \f$ is the gradient (irrotational) potential,
  * \f$ \psi \f$ is the curl (solenoidal) potential, and
  * \f$ \mathbf{J} = \begin{bmatrix}0&1\\-1&0\end{bmatrix} \f$
- * is the 90° rotation matrix (so that \f$\mathbf{J}\nabla\psi\f$ is the
- * 2D curl of \f$\psi\f$, i.e. \f$(-\partial_y\psi,\,\partial_x\psi)^T\f$).
+ * rotates clockwise by 90°, so that
+ * \f$ \mathbf{J}\nabla\psi = (\partial_y\psi,\,-\partial_x\psi)^T \f$.
  * Substituting into the equilibrium equation and the constraint
  * \f$ \nabla w - \boldsymbol{\theta} = \mathbf{0} \f$
  * (taking its divergence and curl respectively), the system reads
@@ -40,7 +40,7 @@
  * \f{align}{
  *   \nabla\cdot\nabla\varphi &= F,\\
  *   -\nabla\cdot(\nabla w - \boldsymbol{\theta}) &= 0,\\
- *   -\nabla\cdot(\mathbf{J}\boldsymbol{\theta}) &= 0,\\
+ *   \nabla\cdot(\mathbf{J}\boldsymbol{\theta}) &= 0,\\
  *   -\nabla\cdot(\mathbf{M}(\boldsymbol{\theta}) - \mathbf{I}\varphi - \mathbf{J}\psi) &= \mathbf{0}.
  * \f}
  * Equations (1)-(3) are the deformation-and-potentials sub-problem in the implemented order
@@ -50,13 +50,67 @@
  * Equation (4) is a vector second-order equation for the rotation field
  * \f$ \boldsymbol{\theta} \f$.
  *
+ * \par Boundary conditions
+ * The tensor \f$ \mathbf{T} = \mathbf{M}(\boldsymbol{\theta}) - \varphi\mathbf{I} - \psi\mathbf{J} \f$
+ * of equation (4) is divergence-free, and its boundary traction has the components
+ * \f[
+ *   \mathbf{n}\cdot\mathbf{T}\mathbf{n} = M_{nn} - \varphi,\qquad
+ *   \mathbf{s}\cdot\mathbf{T}\mathbf{n} = M_{ns} - \psi,\qquad
+ *   \mathbf{s} = \mathbf{J}\mathbf{n},
+ * \f]
+ * where \f$ \mathbf{n} \f$ is the outward unit normal. The decomposition gives
+ * \f$ \partial_n\varphi = q_n + \partial_s\psi \f$. The outward fluxes of equations
+ * (1)-(3), in their implemented order, are
+ * \f[
+ *   \left(\partial_n\varphi,\;
+ *   -\mathbf{n}\cdot(\nabla w-\boldsymbol{\theta}),\;
+ *   -\mathbf{s}\cdot\boldsymbol{\theta}\right).
+ * \f]
+ * The outward flux of equation (4) is \f$ -\mathbf{T}\mathbf{n} \f$.
+ *
+ * A **clamped** edge prescribes \f$ w = 0 \f$ and \f$ \boldsymbol{\theta} = \mathbf{0} \f$.
+ * Prescribing \f$ \varphi = 0 \f$ on one clamped boundary component fixes its gauge.
+ * The boundary values of \f$ w \f$ and \f$ \varphi \f$ replace equations (1) and (2),
+ * so the transverse flux is a support reaction. If there are several entirely clamped
+ * boundary components, \f$ \varphi \f$ on each additional component must be one unknown
+ * constant. Its equation is the vanishing sum of compatibility residuals over that
+ * component's nodes. This retains the net compatibility condition lost when equation
+ * (2) is replaced at those nodes.
+ *
+ * A straight **simply supported** edge prescribes \f$ w = 0 \f$ in place of equation (1)
+ * and \f$ \boldsymbol{\theta}\cdot\mathbf{s} = \partial_s w = 0 \f$.
+ * The normal traction \f$ \mathbf{n}\cdot\mathbf{T}\mathbf{n} = -\varphi \f$
+ * imposes \f$ M_{nn} = 0 \f$, while the tangential traction is a reaction.
+ * Prescribing \f$ \varphi = 0 \f$ in place of equation (2) fixes the gauge on the edge.
+ * Leaving the tangential rotation free and imposing the full free-edge traction instead
+ * would also impose \f$ \psi = M_{ns} \f$; at supported corners this can suppress the
+ * twisting-moment jump that supplies the corner reaction.
+ *
+ * A **free** edge prescribes the traction of the rotation sub-problem as
+ * \f$ \mathbf{T}\mathbf{n} = -\varphi\,\mathbf{n} \f$, which imposes \f$ M_{nn} = 0 \f$
+ * and identifies \f$ \psi \f$ with the twisting moment \f$ M_{ns} \f$.
+ * The rotation Neumann value is therefore \f$ +\varphi\mathbf{n} \f$.
+ * The flux of equation (1) is the Kirchhoff effective shear,
+ * \f$ \partial_n\varphi = q_n + \partial_s M_{ns} = V_n \f$, which vanishes on an unloaded
+ * edge. Equation (2) has zero boundary flux, while equation (3) retains its solution-dependent
+ * flux \f$ -\mathbf{s}\cdot\boldsymbol{\theta} \f$; setting this flux to zero would constrain
+ * the tangential rotation. At a convex corner where two free edges meet, continuity of
+ * \f$ \psi \f$ enforces matching twisting moments, the corner condition without a point load.
+ *
+ * If the tangential rotation is prescribed on the entire boundary, a constant shift of
+ * \f$ \psi \f$ leaves the equations unchanged, so one interior value must be fixed.
+ * A free edge fixes this constant through \f$ \psi = M_{ns} \f$, and no additional
+ * constraint on \f$ \psi \f$ is imposed. For an entirely free boundary, \f$ \varphi \f$
+ * instead needs one fixed value. This fixes the potential gauge; the affine rigid-body
+ * deflection modes remain and require compatible loads and separate constraints.
+ *
  * \par Primary variables
  * The deformation sub-problem has three primary variables per DOF:
  * - shear gradient potential \f$ \varphi \f$
  * - vertical deformation \f$ w \f$
  * - shear curl potential \f$ \psi \f$
  *
- * The current implementation solves only the static (equilibrium) problem.
+ * The model describes static equilibrium.
  *
  * The rotation sub-problem has two primary variables per DOF:
  * - rotation component \f$ \theta_x \f$

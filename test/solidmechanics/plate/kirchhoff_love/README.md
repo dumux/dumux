@@ -17,7 +17,7 @@ $$\nabla\cdot(\nabla\cdot(\mathbf{M}(w))) = F \quad \text{in } \Omega,$$
 where the moment tensor for an isotropic material is
 $\mathbf{M}(w) = -D(\mathbf{x})\left\{(1-\nu)\nabla\nabla w + \nu\,\Delta w\,\mathbf{I}\right\}$
 and $D(\mathbf{x}) = Et^3/(12(1-\nu^2))$ is the (potentially spatially varying) bending modulus.
-For uniform $D$ this simplifies to $D\,\nabla^4 w = F$.
+For uniform $D$ this simplifies to $-D\,\nabla^4 w = F$.
 The plate is clamped at the boundary:
 
 $$w = 0, \quad \nabla w \cdot \boldsymbol{n} = 0 \quad \text{on } \partial\Omega.$$
