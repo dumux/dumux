@@ -1,0 +1,40 @@
+[TimeLoop]
+TEnd = 8.64e8 # 10000 days [s]
+DtInitial = 1e3 # [s]
+MaxTimeStepSize = 8.64e5 # 10 days [s]
+NumOutputs = 4
+
+[Grid]
+LowerLeft = 0.1 0 # well radius and bottom of the aquifer [m]
+UpperRight = 2000 15 # outer radius and top of the aquifer [m]
+Cells = 400 30
+
+[Problem]
+Name = test_2pve_radialinjection_tpfa
+EnableGravity = true
+InjectionRate = 1.388888889e-3 # 120 m^3/day [m^3/s]
+InitialPressure = 3.15e7 # pressure of the resident fluid at the bottom of the aquifer [Pa]
+
+[SpatialParams]
+Permeability = 1.9738466e-14 # 20 mD [m^2]
+Porosity = 0.15
+Swr = 0.0
+Snr = 0.0
+BrooksCoreyPcEntry = 100 # capillary fringe of 100 Pa/(366 kg/m^3 * 9.81 m/s^2) = 0.028 m [Pa]
+BrooksCoreyLambda = 2.0
+
+[1.Component]
+Name = Brine
+LiquidDensity = 1099 # [kg/m^3]
+LiquidDynamicViscosity = 5.11e-4 # [Pa s]
+
+[2.Component]
+Name = CO2
+GasDensity = 733 # [kg/m^3]
+GasDynamicViscosity = 6.1e-5 # [Pa s]
+
+[Newton]
+MaxRelativeShift = 1e-10
+
+[Benchmark]
+MaxRelativeInterfaceError = 0.025 # mean deviation from the similarity solution for vanishing gravity, relative to the aquifer height
