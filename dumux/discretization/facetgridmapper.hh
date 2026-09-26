@@ -128,8 +128,11 @@ class FacetGridMapper
                         result.push_back(scvf.index());
         }
         else
-            for (const auto& scvf : scvfs(fvGeometry, faceOf_(fvGeometry, element)))
+        {
+            const auto face = faceOf_(fvGeometry, element);
+            for (const auto& scvf : scvfs(fvGeometry, face))
                 result.push_back(scvf.index());
+        }
         return result;
     }
 
@@ -143,8 +146,12 @@ class FacetGridMapper
         const auto fvGeometry = localView(*domainGridGeometry_).bindElement(domainElement);
         std::vector<std::size_t> result;
         if constexpr (requires { localDofs(fvGeometry, std::declval<const BoundaryFace&>()); })
-            for (const auto& localDof : localDofs(fvGeometry, faceOf_(fvGeometry, element)))
+        {
+            // the range of local dofs refers to the face, so the face has to outlive the loop
+            const auto face = faceOf_(fvGeometry, element);
+            for (const auto& localDof : localDofs(fvGeometry, face))
                 result.push_back(localDof.index());
+        }
         else
             for (const auto& scv : scvs(fvGeometry))
                 result.push_back(scv.dofIndex());
