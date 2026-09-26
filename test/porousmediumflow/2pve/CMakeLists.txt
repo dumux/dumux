@@ -1,3 +1,5 @@
+add_subdirectory(radialinjection)
+
 dune_symlink_to_source_files(FILES "params_2d.input" "params_3d.input")
 
 dumux_add_test(NAME test_2pve_columnmapping
