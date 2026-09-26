@@ -1,0 +1,22 @@
+[Grid]
+File = annulus.msh
+
+[Problem]
+Name = test_kirchhoff_love_plate_annulus
+E = 1e6
+Thickness = 0.05
+PoissonRatio = 0.3
+Force = 1.0
+InnerRadius = 0.5
+OuterRadius = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-8
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-5

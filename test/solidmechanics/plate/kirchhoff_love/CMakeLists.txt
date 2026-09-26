@@ -20,3 +20,5 @@ dumux_add_test(NAME test_kirchhoff_love_plate_quadrature
 
 set_tests_properties(test_kirchhoff_love_plate test_kirchhoff_love_plate_quadrature
                      PROPERTIES RESOURCE_LOCK kirchhoff_love_plate_mesh)
+
+add_subdirectory(annulus)

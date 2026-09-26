@@ -28,30 +28,33 @@ doc_images = os.path.join(plate_src, "..", "..", "..", "doc", "doxygen", "images
 doc_images = os.path.normpath(doc_images)
 
 tests = [
-    ("kirchhoff_love", "test_kirchhoff_love_plate"),
-    ("mindlin_reissner", "test_mindlin_reissner_plate"),
-    ("membrane", "test_membrane_plate"),
+    ("kirchhoff_love", "test_kirchhoff_love_plate", []),
+    ("mindlin_reissner", "test_mindlin_reissner_plate", []),
+    ("membrane", "test_membrane_plate", []),
+    ("kirchhoff_love/annulus", "test_kirchhoff_love_plate_annulus",
+     ["--geo", "../../annulus.geo", "--mesh", "annulus.msh",
+      "--clmax", "0.125", "0.0625", "0.03125", "0.015625"]),
 ]
 
-for subdir, testname in tests:
+for subdir, testname, extra in tests:
     exe = os.path.join(build_dir, "test", "solidmechanics", "plate", subdir, testname)
-    src_dir = os.path.join(plate_src, subdir)
+    run_dir = os.path.dirname(exe)
 
     print(f"\n{'='*60}")
     print(f"Running {testname}")
     print(f"{'='*60}")
 
     subprocess.check_call(
-        [sys.executable, os.path.join(plate_src, "plot_convergence.py"), exe],
-        cwd=src_dir,
+        [sys.executable, os.path.join(plate_src, "plot_convergence.py"), exe] + extra,
+        cwd=run_dir,
     )
 
-    prefix = f"plate_{subdir}"
+    prefix = "plate_" + subdir.replace("/", "_")
     for img, dest in [
         ("convergence.png", f"{prefix}_convergence.png"),
         ("deformation_3d.png", f"{prefix}_deformation_3d.png"),
     ]:
-        src = os.path.join(src_dir, img)
+        src = os.path.join(run_dir, img)
         dst = os.path.join(doc_images, dest)
         shutil.copy(src, dst)
         print(f"Copied {img} -> {os.path.relpath(dst, plate_src)}")
