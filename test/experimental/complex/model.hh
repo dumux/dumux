@@ -4,25 +4,31 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+/*!
+ * \file
+ * \brief A complex-valued Helmholtz model to test the infrastructure for complex-valued unknowns
+ *
+ * Solves \f$ -\nabla\cdot(\nabla u) - k^2 u = f \f$ with complex \f$ u, k^2, f \f$
+ * on control-volume finite element and cell-centered TPFA discretizations.
+ */
+#ifndef DUMUX_TEST_COMPLEX_HELMHOLTZ_MODEL_HH
+#define DUMUX_TEST_COMPLEX_HELMHOLTZ_MODEL_HH
 
-#ifndef DUMUX_EXAMPLES_COMPLEX_HELMHOLTZ_MODEL_HH
-#define DUMUX_EXAMPLES_COMPLEX_HELMHOLTZ_MODEL_HH
+#include <complex>
 
 #include <dune/common/fvector.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/volumevariables.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
-
-namespace Dumux::Properties::TTag {
-
-struct ComplexHelmholtzModel {};
-
-} // end namespace Dumux::Properties::TTag
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux {
+
 template<class TypeTag>
 class ComplexHelmholtzModelLocalResidual
 : public DiscretizationDefaultLocalOperator<TypeTag>
@@ -31,7 +37,9 @@ class ComplexHelmholtzModelLocalResidual
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using PrimaryVariable = typename PrimaryVariables::value_type;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
@@ -44,6 +52,7 @@ class ComplexHelmholtzModelLocalResidual
     using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using Extrusion = Extrusion_t<GridGeometry>;
 
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using Indices = typename ModelTraits::Indices;
@@ -66,22 +75,36 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        static_assert(DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>,
-            "This local residual is hard-coded to control-volume finite element schemes");
+        NumEqVector flux(0.0);
 
-        const auto& fluxVarCache = elemFluxVarsCache[scvf];
-        Dune::FieldVector<std::complex<double>, dimWorld> gradPhi(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
+        if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
         {
-            const auto& volVars = elemVolVars[localDof.index()];
-            gradPhi.axpy(
-                volVars.priVar(Indices::phiIdx),
-                fluxVarCache.gradN(localDof.index())
-            );
-        }
+            const auto& fluxVarCache = elemFluxVarsCache[scvf];
+            Dune::FieldVector<PrimaryVariable, dimWorld> gradU(0.0);
+            for (const auto& localDof : localDofs(fvGeometry))
+                gradU.axpy(elemVolVars[localDof.index()].priVar(Indices::uIdx), fluxVarCache.gradN(localDof.index()));
 
-        NumEqVector flux;
-        flux[Indices::balanceEqIdx] = (gradPhi*scvf.unitOuterNormal())*scvf.area();
+            flux[Indices::balanceEqIdx] = -(gradU*scvf.unitOuterNormal())*Extrusion::area(fvGeometry, scvf);
+        }
+        else if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa)
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const Scalar ti = computeTpfaTransmissibility(fvGeometry, scvf, insideScv, 1.0, 1.0);
+            Scalar tij = Extrusion::area(fvGeometry, scvf)*ti;
+            if (!scvf.boundary())
+            {
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const Scalar tj = -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, 1.0, 1.0);
+                tij = Extrusion::area(fvGeometry, scvf)*(ti*tj)/(ti + tj);
+            }
+
+            const auto uInside = elemVolVars[scvf.insideScvIdx()].priVar(Indices::uIdx);
+            const auto uOutside = elemVolVars[scvf.outsideScvIdx()].priVar(Indices::uIdx);
+            flux[Indices::balanceEqIdx] = tij*(uInside - uOutside);
+        }
+        else
+            static_assert(Dune::AlwaysFalse<TypeTag>::value, "Discretization method not supported");
+
         return flux;
     }
 
@@ -93,21 +116,37 @@ public:
     {
         NumEqVector source(0.0);
 
-        // add contribution from possible point sources
         if (!problem.pointSourceMap().empty())
             source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         source += problem.source(element, fvGeometry, elemVolVars, scv);
 
-        // add contribution from the time-derivative term (source term in the frequency domain)
+        // the time-derivative term appears as a reaction term in the frequency domain
         const auto& volVars = elemVolVars[scv];
-        source -= problem.waveNumberSquared()*volVars.priVar(Indices::phiIdx);
+        source[Indices::balanceEqIdx] += problem.waveNumberSquared()*volVars.priVar(Indices::uIdx);
 
         return source;
     }
 };
+
+struct ComplexHelmholtzModelTraits
+{
+    struct Indices
+    {
+        static constexpr int uIdx = 0;
+        static constexpr int balanceEqIdx = 0;
+    };
+
+    static constexpr int numEq() { return 1; }
+};
+
 } // end namespace Dumux
 
+namespace Dumux::Properties::TTag {
+
+struct ComplexHelmholtzModel { using InheritsFrom = std::tuple<ModelProperties>; };
+
+} // end namespace Dumux::Properties::TTag
 
 namespace Dumux::Properties {
 
@@ -116,29 +155,15 @@ struct LocalResidual<TypeTag, TTag::ComplexHelmholtzModel>
 { using type = ComplexHelmholtzModelLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct Scalar<TypeTag, TTag::ComplexHelmholtzModel>
-{ using type = double; };
-
-template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::ComplexHelmholtzModel>
-{
-    struct type
-    {
-        struct Indices
-        {
-            static constexpr int phiIdx = 0;
-            static constexpr int balanceEqIdx = 0;
-        };
+{ using type = ComplexHelmholtzModelTraits; };
 
-        static constexpr int numEq() { return 1; }
-    };
-};
-
+//! complex-valued unknowns, the scalar type stays real
 template<class TypeTag>
 struct PrimaryVariables<TypeTag, TTag::ComplexHelmholtzModel>
 {
     using type = Dune::FieldVector<
-        std::complex<double>,
+        std::complex<GetPropType<TypeTag, Properties::Scalar>>,
         GetPropType<TypeTag, Properties::ModelTraits>::numEq()
     >;
 };
@@ -148,21 +173,9 @@ struct VolumeVariables<TypeTag, TTag::ComplexHelmholtzModel>
 {
     struct Traits
     {
-        using PrimaryVariables
-            = GetPropType<TypeTag, Properties::PrimaryVariables>;
+        using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     };
     using type = BasicVolumeVariables<Traits>;
-};
-
-template<class TypeTag>
-struct JacobianMatrix<TypeTag, TTag::ComplexHelmholtzModel>
-{
-private:
-    using Scalar = std::complex<double>;
-    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-    using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
-public:
-    using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
 
 } // end namespace Dumux::Properties

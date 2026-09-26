@@ -4,3 +4,4 @@
 add_subdirectory(discretization)
 add_subdirectory(ode)
 add_subdirectory(timestepping)
+add_subdirectory(complex)
