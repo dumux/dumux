@@ -134,7 +134,16 @@ public:
         return 1.0 - this->asImp_().porosity(element, scv, elemSol);
     }
 
-    //! \copydoc inertVolumeFraction
+    /*!
+     * \brief Function for defining the solid volume fraction at an interpolation point, for
+     *        degrees of freedom that own no sub-control volume.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     * \param compIdx The solid component index
+     * \return the volume fraction of the inert solid component with index compIdx
+     */
     template<class SolidSystem, class IpData, class ElementSolution>
         requires (SolidSystem::isInert()
                   && SolidSystem::numInertComponents == 1
@@ -158,7 +167,16 @@ public:
         return 0.0;
     }
 
-    //! \copydoc inertVolumeFraction
+    /*!
+     * \brief Function for defining the solid volume fraction at an interpolation point, for
+     *        degrees of freedom that own no sub-control volume.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     * \param compIdx The solid component index
+     * \return the volume fraction of the inert solid component with index compIdx
+     */
     template<class SolidSystem, class IpData, class ElementSolution>
         requires (SolidSystem::numInertComponents == 0)
     Scalar inertVolumeFraction(const FVElementGeometry& fvGeometry,
@@ -200,7 +218,16 @@ public:
         return this->asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
 
-    //! \copydoc inertVolumeFraction
+    /*!
+     * \brief Function for defining the solid volume fraction at an interpolation point, for
+     *        degrees of freedom that own no sub-control volume.
+     *
+     * \param fvGeometry The finite-volume geometry
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     * \param compIdx The solid component index
+     * \return the volume fraction of the inert solid component with index compIdx
+     */
     template<class SolidSystem, class IpData, class ElementSolution>
         requires ((SolidSystem::numInertComponents > 1)
                   || ((SolidSystem::numInertComponents > 0)
