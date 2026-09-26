@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <utility>
+#include <dune/common/ftraits.hh>
 #include <dune/common/indices.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/bvector.hh>
@@ -30,7 +31,7 @@ namespace Dumux {
  * TODO: allow block sizes for BCRSMatrix other than 1x1 ?
  *
  */
-template <class MultiTypeBlockMatrix, class Scalar=double>
+template <class MultiTypeBlockMatrix, class Scalar = typename MultiTypeBlockMatrix::field_type>
 class MatrixConverter
 {
     using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
@@ -77,7 +78,8 @@ private:
         auto addIndices = [&](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
         {
             using std::abs;
-            static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
+            using Magnitude = typename Dune::FieldTraits<Scalar>::real_type;
+            static const Magnitude eps = getParam<Magnitude>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
 
             using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
             const auto blockSizeI = BlockType::rows;
@@ -128,7 +130,8 @@ private:
         auto copyValues = [&](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
         {
             using std::abs;
-            static const Scalar eps = getParam<Scalar>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
+            using Magnitude = typename Dune::FieldTraits<Scalar>::real_type;
+            static const Magnitude eps = getParam<Magnitude>("MatrixConverter.DeletePatternEntriesBelowAbsThreshold", -1.0);
 
             using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
             const auto blockSizeI = BlockType::rows;
@@ -187,7 +190,7 @@ private:
  * \ingroup Linear
  * \brief A helper class that converts a Dune::MultiTypeBlockVector into a plain Dune::BlockVector and transfers back values
  */
-template<class MultiTypeBlockVector, class Scalar=double>
+template<class MultiTypeBlockVector, class Scalar = typename MultiTypeBlockVector::field_type>
 class VectorConverter
 {
     using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
