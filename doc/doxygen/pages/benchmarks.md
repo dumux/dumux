@@ -23,6 +23,7 @@ for more information.
 | ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
 | ![mcwhorter-sunada](mcwhortersunada_lineplot_comparison.png) | @ref benchmark-mcwhorter-sunada "↗️ McWhorter-Sunada" | @ref TwoPModel, @ref CCTpfaDiscretization | Counter-current imbibition compared with Fučík's semi-analytical reference |
+| ![radial injection](2pve_radialinjection_profile.png) | @ref benchmark-2pve-radial-injection "↗️ Radial Injection into a Confined Aquifer" | CO<sub>2</sub> storage, vertical equilibrium, @ref TwoPVEModel, @ref CCTpfaDiscretization | Interface of a CO<sub>2</sub> plume injected into a confined aquifer; comparison with the similarity solution of Nordbotten and Celia (2006) @cite NordbottenCelia2006 |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
 
 ## Benchmarks in documented examples
