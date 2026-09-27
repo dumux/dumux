@@ -352,7 +352,7 @@ public:
             using namespace Dune::Hybrid;
             forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
             {
-                setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(curStage));
+                setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(0));
             });
 
             resetResidual_(); // residual resized and zero
@@ -577,18 +577,15 @@ private:
             );
     }
 
-    // TODO make this nicer with a is_detected trait in a common location
     template<class P>
     void setProblemTime_(const P& p, const Scalar t)
-    { setProblemTimeImpl_(p, t, 0); }
-
-    template<class P>
-    auto setProblemTimeImpl_(const P& p, const Scalar t, int) -> decltype(p.setTime(0))
-    { p.setTime(t); }
-
-    template<class P>
-    void setProblemTimeImpl_(const P& p, const Scalar t, long)
-    {}
+    {
+        if constexpr (requires { p.setTime(t); })
+            p.setTime(t);
+        else
+            static_assert(!requires (P& q) { q.setTime(Scalar{}); },
+                "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
+    }
 
     std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> timeSteppingMethod_;
     std::vector<ResidualType> spatialOperatorEvaluations_;
