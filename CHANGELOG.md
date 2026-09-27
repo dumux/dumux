@@ -29,6 +29,7 @@ primary variables and the evaluated solutions and gradients use the field type o
 step, L2 norms and the extrusion factor are real. A real step yields the derivative only for residuals that are holomorphic in the
 unknowns. Multidomain assembly supports complex-valued subdomains: all blocks of the multi-type Jacobian take the common field type
 of the subdomain Jacobians, and `MatrixConverter` and `VectorConverter` default to the field type of the converted multi-type object.
+The embedded 1D-3D coupling interpolates complex-valued primary variables at its integration points with real shape values.
 Complex-valued Helmholtz tests in `test/experimental/complex` demonstrate the feature, including a box facet-coupling test.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
