@@ -29,6 +29,7 @@
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/pq2/dofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/scvfnormal.hh>
 
 namespace Dumux {
 
@@ -146,28 +147,9 @@ public:
         return Dune::GeometryTypes::cube(dim-1);
     }
 
-    template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
     GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
     {
-        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
-        normal /= normal.two_norm();
-
-        GlobalPosition v = geo_.corner(scvPair[1]) - geo_.corner(scvPair[0]);
-
-        const auto s = v*normal;
-        if (std::signbit(s))
-            normal *= -1;
-
-        return normal;
-    }
-
-    template<int d = dimWorld, std::enable_if_t<(d==2), int> = 0>
-    GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
-    {
-        //! obtain normal vector by 90° counter-clockwise rotation of t
-        const auto t = p[1] - p[0];
-        GlobalPosition normal({-t[1], t[0]});
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, p);
 
         GlobalPosition v = geo_.corner(scvPair[1]) - geo_.corner(scvPair[0]);
 
