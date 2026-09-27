@@ -65,16 +65,16 @@ public:
     SincosTestProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization,
                                   std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(gridDiscretization, couplingManager)
-    , time_(0.0)
-    {
-        isStationary_ = getParam<bool>("Problem.IsStationary");
-        rho_ = getParam<Scalar>("Component.LiquidDensity");
-        const Scalar nu = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-        mu_ = rho_*nu;
-        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+    { init_(); }
 
-        updateConstraints_();
-    }
+    /*!
+     * \brief Constructor for the momentum problem without coupling to a mass problem
+     * \note Pressure, density and viscosity are then taken from the analytical solution
+     *       and the fluid parameters, see pressureAtPos() and densityAtPos().
+     */
+    explicit SincosTestProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization)
+    : ParentType(gridDiscretization)
+    { init_(); }
 
     /*!
      * \brief Return the sources within the domain.
@@ -277,15 +277,52 @@ public:
     }
 
     /*!
-     * \brief Updates the time and the time-dependent Dirichlet constraints
+     * \brief Set the time at which sources and boundary conditions are evaluated
+     * \note This is const because multi-stage assemblers set the stage time through a const problem.
      */
-    void updateTime(const Scalar time)
+    void setTime(const Scalar time) const
     {
         time_ = time;
         updateConstraints_();
     }
 
+    /*!
+     * \brief Updates the time and the time-dependent Dirichlet constraints
+     */
+    void updateTime(const Scalar time)
+    { setTime(time); }
+
+    /*!
+     * \brief The pressure acting on the momentum balance if not coupled to a mass problem
+     */
+    Scalar pressureAtPos(const GlobalPosition& globalPos) const
+    { return p_(globalPos[0], globalPos[1], time_); }
+
+    /*!
+     * \brief The density if not coupled to a mass problem
+     */
+    Scalar densityAtPos(const GlobalPosition&) const
+    { return rho_; }
+
+    /*!
+     * \brief The dynamic viscosity if not coupled to a mass problem
+     */
+    Scalar effectiveViscosityAtPos(const GlobalPosition&) const
+    { return mu_; }
+
 private:
+    void init_()
+    {
+        time_ = 0.0;
+        isStationary_ = getParam<bool>("Problem.IsStationary");
+        rho_ = getParam<Scalar>("Component.LiquidDensity");
+        const Scalar nu = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
+        mu_ = rho_*nu;
+        useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
+
+        updateConstraints_();
+    }
+
     bool isMomentumFluxBoundary_(const GlobalPosition& globalPos) const
     {
         if (!useNeumann_)
@@ -299,7 +336,7 @@ private:
             || globalPos[1] < bBoxMin[1] + eps;
     }
 
-    void updateConstraints_()
+    void updateConstraints_() const
     {
         constraints_.clear();
         if constexpr (ParentType::isMomentumProblem())
@@ -308,7 +345,7 @@ private:
             appendPressureConstraint_();
     }
 
-    void appendDirichletConstraints_()
+    void appendDirichletConstraints_() const
     {
         auto elemDisc = localView(this->gridDiscretization());
         for (const auto& element : elements(this->gridDiscretization().gridView()))
@@ -330,7 +367,7 @@ private:
         }
     }
 
-    void appendPressureConstraint_()
+    void appendPressureConstraint_() const
     {
         static_assert(GridDiscretization::discMethod == DiscretizationMethods::box,
                       "The pressure constraint is only implemented for the Box mass discretization.");
@@ -455,10 +492,10 @@ private:
 
     Scalar rho_;
     Scalar mu_;
-    Scalar time_;
+    mutable Scalar time_;
     bool isStationary_;
     bool useNeumann_;
-    std::vector<DirichletConstraintData> constraints_;
+    mutable std::vector<DirichletConstraintData> constraints_;
 };
 
 } // end namespace Dumux

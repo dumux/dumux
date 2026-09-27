@@ -60,6 +60,9 @@ struct SincosTestMass { using InheritsFrom = std::tuple<SincosTest, NavierStokes
 struct SincosTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<SincosTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct SincosTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<SincosTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
 struct SincosTestMassBox { using InheritsFrom = std::tuple<SincosTest, NavierStokesMassOneP, BoxModel>; };
+struct SincosTestMomentumOnly { using InheritsFrom = std::tuple<SincosTest>; };
+struct SincosTestMomentumOnlyPQ1BubbleHybrid { using InheritsFrom = std::tuple<SincosTestMomentumOnly, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
+struct SincosTestMomentumOnlyPQ2Hybrid { using InheritsFrom = std::tuple<SincosTestMomentumOnly, NavierStokesMomentumCVFE, PQ2HybridModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -126,6 +129,31 @@ public:
     using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 #endif
+
+// the momentum problem without coupling to a mass problem
+template<class TypeTag>
+struct Problem<TypeTag, TTag::SincosTestMomentumOnly>
+{ using type = SincosTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::SincosTestMomentumOnly>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMomentumCVFEVariables<Traits>;
+};
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::SincosTestMomentumOnly>
+{
+    struct EmptyCouplingManager {};
+    using type = EmptyCouplingManager;
+};
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::SincosTest> { static constexpr bool value = true; };
