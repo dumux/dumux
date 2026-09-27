@@ -25,6 +25,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/vtkoutputmodule.hh>
@@ -36,14 +37,36 @@
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
+#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "properties.hh"
+
+template<class MomentumProblem, class MassProblem,
+         class MomentumGridVariables, class MassGridVariables,
+         class MomentumSolution, class MassSolution>
+void printCVFEErrors(const MomentumProblem& momentumProblem,
+                     const MassProblem& massProblem,
+                     const MomentumGridVariables& momentumGridVariables,
+                     const MassGridVariables& massGridVariables,
+                     const MomentumSolution& xMomentum,
+                     const MassSolution& xMass,
+                     double time)
+{
+    const auto [volume, velocityErrors] = Dumux::calculateL2AndH1Errors(momentumProblem, momentumGridVariables, xMomentum);
+    const auto [massVolume, pressureErrors] = Dumux::calculateL2AndH1Errors(massProblem, massGridVariables, xMass);
+    std::cout << "[Errors] t = " << time
+              << " numDofsVelocity = " << Dumux::gridDiscretization(momentumProblem).numDofs()
+              << " numDofsPressure = " << Dumux::gridDiscretization(massProblem).numDofs()
+              << " velocity L2 = " << velocityErrors[0] << " H1 = " << velocityErrors[1]
+              << " pressure L2 = " << pressureErrors[0] << " H1 = " << pressureErrors[1] << std::endl;
+}
 
 template<class MomentumProblem>
 auto createSource(const MomentumProblem& momentumProblem)
@@ -51,7 +74,7 @@ auto createSource(const MomentumProblem& momentumProblem)
     using Scalar = double;
     using Indices = typename MomentumProblem::Indices;
 
-    const auto& gridGeometry = momentumProblem.gridGeometry();
+    const auto& gridGeometry = Dumux::gridDiscretization(momentumProblem);
     std::array<std::vector<Scalar>, 2> source;
 
     for (auto& component : source)
@@ -74,8 +97,8 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::SincosTestMomentum;
-    using MassTypeTag = Properties::TTag::SincosTestMass;
+    using MomentumTypeTag = Properties::TTag::TYPETAG_MOMENTUM;
+    using MassTypeTag = Properties::TTag::TYPETAG_MASS;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -166,7 +189,11 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
+#if NEW_PROBLEM_INTERFACE
+    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#else
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#endif
     auto assembler = isStationary ?
         std::make_shared<Assembler>(
             std::make_tuple(momentumProblem, massProblem),
@@ -192,9 +219,11 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+#if !NEW_PROBLEM_INTERFACE
     const bool printConvergenceTestFile = getParam<bool>("Problem.PrintConvergenceTestFile", false);
     NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
     NavierStokesTest::ErrorCSVWriter errorCSVWriter(momentumProblem, massProblem);
+#endif
 
     if (isStationary)
     {
@@ -203,6 +232,10 @@ int main(int argc, char** argv)
         nonLinearSolver.solve(x);
 
         // print discrete L2 and Linfity errors
+#if NEW_PROBLEM_INTERFACE
+        if (printErrors)
+            printCVFEErrors(*momentumProblem, *massProblem, *momentumGridVariables, *massGridVariables, x[momentumIdx], x[massIdx], 0.0);
+#else
         if (printErrors || printConvergenceTestFile)
         {
             errors.update(x);
@@ -211,6 +244,7 @@ int main(int argc, char** argv)
             if (printConvergenceTestFile)
                 convergenceTestAppendErrors(momentumProblem, massProblem, errors);
         }
+#endif
 
         // write vtk output
         analyticalSolVectors.update();
@@ -243,8 +277,13 @@ int main(int argc, char** argv)
             // print discrete L2 and Linfity errors
             if (printErrors)
             {
+#if NEW_PROBLEM_INTERFACE
+                printCVFEErrors(*momentumProblem, *massProblem, *momentumGridVariables, *massGridVariables,
+                                x[momentumIdx], x[massIdx], timeLoop->time() + timeLoop->timeStepSize());
+#else
                 errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
                 errorCSVWriter.printErrors(errors);
+#endif
             }
 
             // advance the time loop to the next step
