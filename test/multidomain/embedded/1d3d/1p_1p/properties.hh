@@ -25,6 +25,9 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/foamgrid/foamgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
@@ -50,11 +53,25 @@ namespace TTag {
 struct Tissue { using InheritsFrom = std::tuple<OneP>; };
 struct TissueCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
 struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
+#if HAVE_DUNE_ALUGRID
+// Unstructured bulk grid: ALUGrid is not Cartesian, so the kernel coupling manager falls back
+// to the bounding-box-tree lookup instead of the O(1) structured one. Same domain and same
+// exact solution as the Yasp variants, so only the point location changes. Box only, because
+// tpfa is not consistent on simplices.
+struct TissueALU { using InheritsFrom = std::tuple<Tissue>; };
+struct TissueALUBox { using InheritsFrom = std::tuple<TissueALU, BoxModel>; };
+#endif
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::Tissue> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
+
+#if HAVE_DUNE_ALUGRID
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TissueALU>
+{ using type = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>; };
+#endif
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::Tissue> { static constexpr bool value = true; };
