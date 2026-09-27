@@ -4,3 +4,5 @@
 file(GLOB DUMUX_MULTIDOMAIN_MORTAR_HEADERS *.hh *.inc)
 install(FILES ${DUMUX_MULTIDOMAIN_MORTAR_HEADERS}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/mortar)
+
+add_subdirectory(porousmediumflow)
