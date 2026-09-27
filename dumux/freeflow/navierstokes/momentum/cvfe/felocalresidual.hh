@@ -33,22 +33,20 @@ class NavierStokesMomentumFELocalResidualTerms
 
 public:
     /*!
-     * \brief Add storage residual contribution for non-CV local dofs
+     * \brief Add the storage of non-CV local dofs at one time level
      *
-     * \param residual The element residual vector to add to
+     * \param storage The element storage vector to add to
      * \param problem The problem to solve
      * \param elemDisc The finite-volume geometry of the element
-     * \param prevElemVars The variables for all local dofs of the element at the previous time level
-     * \param curElemVars The variables for all local dofs of the element at the current  time level
-     * \param timeStepSize The current time step size
+     * \param elemVars The variables for all local dofs of the element at the given time level
+     * \param isPreviousTimeLevel If the variables belong to the previous time level
      */
     template<class ResidualVector, class Problem, class ElementDiscretization, class ElementVariables>
-    static void addStorageTerms(ResidualVector& residual,
+    static void addStorageTerms(ResidualVector& storage,
                                 const Problem& problem,
                                 const ElementDiscretization& elemDisc,
-                                const ElementVariables& prevElemVars,
-                                const ElementVariables& curElemVars,
-                                const Scalar timeStepSize)
+                                const ElementVariables& elemVars,
+                                const bool isPreviousTimeLevel)
     {
         if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
@@ -80,16 +78,11 @@ public:
             {
                 const auto localDofIdx = localDof.index();
                 const auto& data = ipData(elemDisc, localDof);
-                const auto curDensity = problem.density(element, elemDisc, data, false);
-                const auto prevDensity = problem.density(element, elemDisc, data, true);
-                const auto curVelocity = curElemVars[localDofIdx].velocity();
-                const auto prevVelocity = prevElemVars[localDofIdx].velocity();
-                auto timeDeriv = (curDensity*curVelocity - prevDensity*prevVelocity);
-                timeDeriv /= timeStepSize;
+                const auto density = problem.density(element, elemDisc, data, isPreviousTimeLevel);
+                const auto momentum = density*elemVars[localDofIdx].velocity();
 
-                // add storage to residual
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    residual[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx]*timeDeriv[eqIdx];
+                    storage[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx]*momentum[eqIdx];
             }
         }
     }
@@ -206,16 +199,14 @@ public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
-    void addToElementStorageResidual(ElementResidualVector& residual,
-                                     const Problem& problem,
-                                     const Element& element,
-                                     const ElementDiscretization& elemDisc,
-                                     const ElementVariables& prevElemVars,
-                                     const ElementVariables& curElemVars) const
+    void addToElementStorage(ElementResidualVector& storage,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars,
+                             bool isPreviousTimeLevel) const
     {
-        FeResidual::addStorageTerms(
-            residual, problem, elemDisc, prevElemVars, curElemVars, this->timeLoop().timeStepSize()
-        );
+        FeResidual::addStorageTerms(storage, problem, elemDisc, elemVars, isPreviousTimeLevel);
     }
 
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
