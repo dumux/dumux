@@ -210,3 +210,14 @@ dumux_add_test(NAME test_1p_incompressible_box_numdiff_no_communicate
                COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::numeric GRIDTYPE=Dumux::NoCommunicateGrid<2>
                COMMAND ./test_1p_incompressible_box_numdiff_no_communicate
                CMD_ARGS -Grid.Overlap 0)
+
+# grid adaptation initialization indicator (marks the elements on the Dirichlet boundaries)
+foreach(_disc IN ITEMS Tpfa Box FCDiamond PQ1Bubble)
+    string(TOLOWER ${_disc} _name)
+    dumux_add_test(NAME test_1p_initializationindicator_${_name}
+                   LABELS porousmediumflow 1p unit
+                   SOURCES test_initializationindicator.cc
+                   COMPILE_DEFINITIONS TYPETAG=OnePIncompressible${_disc}
+                   COMMAND ./test_1p_initializationindicator_${_name}
+                   CMD_ARGS params.input -Adaptive.MinLevel 0 -Adaptive.MaxLevel 1)
+endforeach()
