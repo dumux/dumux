@@ -141,7 +141,6 @@ public:
             });
         };
 
-        const DefaultPartialReassembler* noReassembler = nullptr;
         ParentType::assembleJacobianAndResidual(
             jacRow[domainId], res, *std::get<domainId>(gridVariables),
             stageParams, temporal, spatial, constrainedDofs,

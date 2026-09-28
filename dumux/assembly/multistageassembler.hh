@@ -16,6 +16,7 @@
 #include <vector>
 #include <deque>
 #include <memory>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 
@@ -308,6 +309,15 @@ public:
 
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
+
+    //! The temporal and spatial weight of the current stage
+    std::pair<Scalar, Scalar> currentStageWeights() const
+    {
+        if (!stageParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No stage params set. Call prepareStage first.");
+        const auto k = stageParams_->size() - 1;
+        return {stageParams_->temporalWeight(k), stageParams_->spatialWeight(k)};
+    }
 
 private:
     /*!
