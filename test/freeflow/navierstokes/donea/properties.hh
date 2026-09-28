@@ -54,9 +54,8 @@
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
 #endif
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -256,7 +255,9 @@ public:
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
-#if HAVE_DUNE_ALUGRID
+#if defined(GRIDTYPE)
+{ using type = GRIDTYPE; };
+#elif HAVE_DUNE_ALUGRID
 { using type = Dune::ALUGrid<2, 2, Dune::ALUGRID_CELL_TYPE, Dune::nonconforming>; };
 #else
 { using type = Dune::YaspGrid<2>; };
