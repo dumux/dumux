@@ -27,8 +27,6 @@
 #include <dumux/common/multimapperview.hh>
 #include <dumux/common/parameters.hh>
 
-#include <cmath>
-#include <iostream>
 #include <string>
 #include <utility>
 
@@ -1345,22 +1343,12 @@ private:
                         const auto entity = element.template subEntity<codim>(i);
                         const auto pt = entity.partitionType();
 
-                        // Standard: codim 0 (element-attached DOFs, e.g. PQ1Bubble
-                        // bubble DOFs) are always registered unconditionally:
-                        // codim-0 entities are never BorderEntity (only Interior
-                        // or Ghost), so without this, a Border row's column entry
-                        // referencing a bubble DOF owned solely by the neighboring
-                        // rank would never be exchanged/summed. For codim > 0,
-                        // include BorderEntity DOFs (shared at the interface) and
-                        // InteriorEntity DOFs of elements that touch the border
-                        // (so a Border row's column entry referencing a uniquely-
-                        // owned neighbor-rank vertex is exchanged too).
+                        // elements are never border entities, and the interior dofs of an element at the
+                        // processor border can be columns of border rows on the neighbouring process
                         bool shouldProcess = (codim == 0) || (pt == Dune::BorderEntity)
                             || (pt == Dune::InteriorEntity && elementHasBorderSubEntity_(element));
 
-                        // Extended mode (for direct solvers): also include ghost entities
-                        // so that ghost row/column DOFs participate (via
-                        // InteriorBorder_All_Interface).
+                        // the extended mode for direct solvers also includes ghost dofs
                         if (!shouldProcess && includeGhostAndAdjacent_)
                             shouldProcess = (pt == Dune::GhostEntity);
 
