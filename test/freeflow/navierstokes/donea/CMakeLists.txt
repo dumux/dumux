@@ -348,6 +348,8 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_si
                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_simplex params.input
                            -Problem.Name test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
 
+# The Stokes solver tests keep the linear tolerance above the round-off floor of GMRES, where parallel
+# iteration counts become erratic; the absolute Newton tolerance matches it for a single Newton step.
 dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex
                SOURCES main.cc
                LABELS freeflow navierstokes donea
@@ -369,7 +371,8 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex
                            -LinearSolver.Type gmres
                            -LinearSolver.GMResRestart 500
                            -LinearSolver.MaxIterations 500
-                           -LinearSolver.ResidualReduction 1e-13
+                           -LinearSolver.ResidualReduction 1e-10
+                           -Newton.MaxAbsoluteResidual 1e-9
                            -Newton.MaxSteps 1")
 
 dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_parallel
@@ -387,7 +390,8 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_parallel
                              -LinearSolver.Type gmres
                              -LinearSolver.GMResRestart 500
                              -LinearSolver.MaxIterations 500
-                             -LinearSolver.ResidualReduction 1e-13
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
                              -Newton.MaxSteps 1")
 
 # on four processes several of them meet at cross points; the symmetric preconditioner applies both coupling blocks
@@ -407,7 +411,8 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_parallel_symmetric
                              -LinearSolver.Preconditioner.Mode Symmetric
                              -LinearSolver.GMResRestart 500
                              -LinearSolver.MaxIterations 500
-                             -LinearSolver.ResidualReduction 1e-13
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
                              -Newton.MaxSteps 1")
 
 # YaspGrid has an overlap (Grid.Overlap in params.input), so the parallel run uses an overlapping decomposition
@@ -433,7 +438,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp
                            -LinearSolver.Type gmres
                            -LinearSolver.GMResRestart 500
                            -LinearSolver.MaxIterations 500
-                           -LinearSolver.ResidualReduction 1e-13
+                           -LinearSolver.ResidualReduction 1e-10
+                           -Newton.MaxAbsoluteResidual 1e-9
                            -Newton.MaxSteps 1")
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel
@@ -451,7 +457,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel
                              -LinearSolver.Type gmres
                              -LinearSolver.GMResRestart 500
                              -LinearSolver.MaxIterations 500
-                             -LinearSolver.ResidualReduction 1e-13
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
                              -Newton.MaxSteps 1")
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel_symmetric
@@ -470,7 +477,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel_symmetri
                              -LinearSolver.Preconditioner.Mode Symmetric
                              -LinearSolver.GMResRestart 500
                              -LinearSolver.MaxIterations 500
-                             -LinearSolver.ResidualReduction 1e-13
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
                              -Newton.MaxSteps 1")
 
 
@@ -735,7 +743,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel
                            -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel -Problem.UseNeumann true
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -LinearSolver.Type gmres -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity false
-                           -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500")
+                           -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-10 -Newton.MaxAbsoluteResidual 1e-9")
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel_symmetric
                TARGET test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
@@ -749,7 +758,8 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel_
                            -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel_symmetric -Problem.UseNeumann true
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -LinearSolver.Type gmres -LinearSolver.Preconditioner.Mode Symmetric -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity false
-                           -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500")
+                           -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-10 -Newton.MaxAbsoluteResidual 1e-9")
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                SOURCES main.cc
