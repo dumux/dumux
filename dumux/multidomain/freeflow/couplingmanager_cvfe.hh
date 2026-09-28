@@ -35,7 +35,7 @@
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 
 #include <dumux/parallel/parallel_for.hh>
 #include <dumux/assembly/coloring.hh>

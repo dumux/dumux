@@ -39,13 +39,12 @@
 #include "subdomaincvfelocalassembler_.hh"
 #include "subdomainfclocalassembler.hh"
 #include "assemblerview.hh"
+#include "assemblytraits.hh"
 
 #include <dumux/discretization/method.hh>
 #if HAVE_DUMUX_OLD_STAGGERED
 #include <dumux/multidomain/subdomainstaggeredlocalassembler.hh>
 #endif
-
-#include "fvassembler.hh"
 
 namespace Dumux::Experimental {
 
@@ -126,11 +125,13 @@ private:
         using type = Dumux::Experimental::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
+#if HAVE_DUMUX_OLD_STAGGERED
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
     {
         using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
+#endif
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>

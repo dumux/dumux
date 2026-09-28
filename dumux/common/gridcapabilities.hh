@@ -12,6 +12,8 @@
 #ifndef DUMUX_COMMON_GRID_CAPABILITIES_HH
 #define DUMUX_COMMON_GRID_CAPABILITIES_HH
 
+#include <tuple>
+
 #include <dune/grid/common/capabilities.hh>
 
 namespace Dumux::Grid::Capabilities {
@@ -33,6 +35,17 @@ struct MultithreadingSupported
 template<class GridView>
 inline bool supportsMultithreading(const GridView& gridView)
 { return MultithreadingSupported<typename GridView::Grid>::eval(gridView); }
+
+/*!
+ * \brief Whether the grid views of all grid discretizations support multithreading
+ * \param gridDiscretizations A tuple of pointers to grid discretizations
+ */
+template<class... GridDiscretizations>
+inline bool allGridsSupportsMultithreading(const std::tuple<GridDiscretizations...>& gridDiscretizations)
+{
+    return std::apply([](const auto&... gridDiscretization)
+    { return (... && supportsMultithreading(gridDiscretization->gridView())); }, gridDiscretizations);
+}
 
 } // namespace Dumux::Grid::Capabilities
 

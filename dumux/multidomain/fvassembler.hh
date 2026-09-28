@@ -37,6 +37,7 @@
 #include "subdomaincvfelocalassembler.hh"
 #include "subdomainfclocalassembler.hh"
 #include "assemblerview.hh"
+#include "assemblytraits.hh"
 
 #include <dumux/discretization/method.hh>
 #if HAVE_DUMUX_OLD_STAGGERED
@@ -47,47 +48,6 @@ namespace Dumux {
 
 template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM, bool implicit>
 class SubDomainStaggeredLocalAssembler;
-
-namespace Grid::Capabilities {
-
-namespace Detail {
-// helper for multi-domain models
-template<class T, std::size_t... I>
-bool allGridsSupportsMultithreadingImpl(const T& gridGeometries, std::index_sequence<I...>)
-{
-    return (... && supportsMultithreading(std::get<I>(gridGeometries)->gridView()));
-}
-} // end namespace Detail
-
-// helper for multi-domain models (all grids have to support multithreading)
-template<class... GG>
-bool allGridsSupportsMultithreading(const std::tuple<GG...>& gridGeometries)
-{
-    return Detail::allGridsSupportsMultithreadingImpl<std::tuple<GG...>>(gridGeometries, std::make_index_sequence<sizeof...(GG)>());
-}
-
-} // end namespace Grid::Capabilities
-
-namespace Detail {
-
-//! helper struct detecting if sub-problem has a constraints() function
-template<class P>
-using SubProblemConstraintsDetector = decltype(std::declval<P>().constraints());
-
-template<class P>
-constexpr inline bool hasSubProblemGlobalConstraints()
-{ return Dune::Std::is_detected<SubProblemConstraintsDetector, P>::value; }
-
-} // end namespace Detail
-
-/*!
- * \ingroup MultiDomain
- * \ingroup Assembly
- * \brief trait that is specialized for coupling manager supporting multithreaded assembly
- */
-template<class CM>
-struct CouplingManagerSupportsMultithreadedAssembly : public std::false_type
-{};
 
 /*!
  * \ingroup MultiDomain

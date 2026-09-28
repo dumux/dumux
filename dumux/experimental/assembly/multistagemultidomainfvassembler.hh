@@ -36,6 +36,7 @@
 
 #include <dumux/multidomain/couplingjacobianpattern.hh>
 #include <dumux/multidomain/assemblerview.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 
 #include <dumux/experimental/assembly/subdomaincclocalassembler.hh>
 #include <dumux/experimental/assembly/subdomaincvfelocalassembler.hh>
@@ -43,41 +44,6 @@
 
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
-
-namespace Dumux::Grid::Capabilities {
-
-namespace Detail {
-// helper for multi-domain models
-template<class T, std::size_t... I>
-bool allGridsSupportsMultithreadingImpl(const T& gridGeometries, std::index_sequence<I...>)
-{
-    return (... && supportsMultithreading(std::get<I>(gridGeometries)->gridView()));
-}
-} // end namespace Detail
-
-// helper for multi-domain models (all grids have to support multithreading)
-template<class... GG>
-bool allGridsSupportsMultithreading(const std::tuple<GG...>& gridGeometries)
-{
-    return Detail::allGridsSupportsMultithreadingImpl<std::tuple<GG...>>(gridGeometries, std::make_index_sequence<sizeof...(GG)>());
-}
-
-} // end namespace Dumux::Grid::Capabilities
-
-namespace Dumux {
-
-/*!
- * \ingroup Experimental
- * \ingroup MultiDomain
- * \ingroup Assembly
- * \brief Type trait that is specialized for coupling manager supporting multithreaded assembly
- * \note A coupling manager implementation that wants to enable multithreaded assembly has to specialize this trait
- */
-template<class CM>
-struct CouplingManagerSupportsMultithreadedAssembly : public std::false_type
-{};
-
-} // end namespace Dumux
 
 namespace Dumux::Experimental {
 

@@ -44,12 +44,10 @@
 #include <dumux/multidomain/couplingjacobianpattern.hh>
 #include <dumux/multidomain/assemblerview.hh>
 #include <dumux/multidomain/subdomaincvfelocalassembler_.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
-
-// CouplingManagerSupportsMultithreadedAssembly and Detail::hasSubProblemGlobalConstraints
-#include <dumux/multidomain/fvassembler.hh>
 
 namespace Dumux::Experimental {
 

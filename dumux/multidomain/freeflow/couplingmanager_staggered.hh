@@ -29,7 +29,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
 #include <dumux/parallel/parallel_for.hh>
