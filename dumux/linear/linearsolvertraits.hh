@@ -216,6 +216,9 @@ struct LinearSolverTraitsImpl<GridGeometry, DiscretizationMethods::CCTpfa>
     static constexpr int dofCodim = 0;
     static constexpr bool canCommunicate = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
 
+    static const DofMapper& dofMapper(const GridGeometry& gg)
+    { return gg.elementMapper(); }
+
     template<class GridView>
     static bool isNonOverlapping(const GridView& gridView)
     { return false; }
