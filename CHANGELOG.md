@@ -16,6 +16,7 @@ times whenever multiple scvs were associated with the same localDof.
 - __Testing__: `dumux_run_test.py` is now installed as a script when installing DuMux (with `make install`).
 - __Multidomain FF-PNM__: The grid manager for the free-flow domain has been improved to allow for up- and downstream grading, even if no additional up- or downstream positions are specified in the input file.
 - __Shallow water equations__: Fixed a bug where the tangential component for the constant water depth boundary condition (fixedWaterDepthBoundary) was missing.
+- __Face-centered staggered__: Internal Dirichlet constraints (`enableInternalDirichletConstraints()`, `hasInternalDirichletConstraint`, `internalDirichlet`) are now supported for the momentum balance, also in the coupled free-flow system, where the constrained rows are decoupled from the mass balance. A constraint on a velocity dof on a periodic boundary also constrains its periodic partner.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 
