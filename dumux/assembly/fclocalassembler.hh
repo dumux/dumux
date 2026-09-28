@@ -13,6 +13,8 @@
 #ifndef DUMUX_FC_LOCAL_ASSEMBLER_HH
 #define DUMUX_FC_LOCAL_ASSEMBLER_HH
 
+#include <optional>
+
 #include <dune/grid/common/gridenums.hh>
 
 #include <dumux/common/properties.hh>
@@ -58,6 +60,8 @@ class FaceCenteredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using SubControlVolume = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView::SubControlVolume;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
@@ -80,9 +84,6 @@ public:
                                      const PartialReassembler* partialReassembler,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = CouplingFunction{})
     {
-        static_assert(!std::decay_t<decltype(this->asImp_().problem())>::enableInternalDirichletConstraints(),
-            "Internal Dirichlet constraints are currently not implemented for face-centered staggered models!");
-
         this->asImp_().bindLocalViews();
         const auto& gridGeometry = this->asImp_().problem().gridGeometry();
         const auto eIdxGlobal = gridGeometry.elementMapper().index(this->element());
@@ -148,19 +149,6 @@ public:
                 row[col.index()][eqIdx] = 0.0;
 
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-
-            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
-            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
-            {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
-
-                auto& rowP = jac[periodicDof];
-                for (auto col = rowP.begin(); col != rowP.end(); ++col)
-                    row[col.index()][eqIdx] = 0.0;
-
-                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
-            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -258,6 +246,58 @@ public:
                 }
             }
         }
+    }
+
+    /*!
+     * \brief Enforces Dirichlet constraints if enabled in the problem
+     */
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {
+        // enforce Dirichlet constraints strongly by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        for (const auto& scvI : scvs(this->fvGeometry()))
+        {
+            if (const auto dirichletValue = this->asImp_().internalDirichletValue(scvI))
+            {
+                // set the Dirichlet conditions in residual and jacobian
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                {
+                    static_assert(numEq == 1, "Not yet implemented for more than one vector-valued primary variable");
+                    const int pvIdx = eqIdx;
+                    applyDirichlet(scvI, std::array<Scalar,1>{{*dirichletValue}}, eqIdx, pvIdx);
+                }
+            }
+        }
+    }
+
+    template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
+    void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
+    {}
+
+    /*!
+     * \brief The value of the internal Dirichlet constraint on the velocity component of a sub-control volume, if it is constrained
+     * \note The two dofs of a periodic pair represent the same velocity, so a constraint on either one constrains both.
+     *       Each element enforces the constraint of its own dofs only, which keeps the result independent of the element order.
+     */
+    template<class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    std::optional<Scalar> internalDirichletValue(const SubControlVolume& scv) const
+    {
+        const auto& problem = this->asImp_().problem();
+        const auto axis = scv.dofAxis();
+        if (problem.hasInternalDirichletConstraint(this->element(), scv)[axis])
+            return problem.internalDirichlet(this->element(), scv)[axis];
+
+        const auto& gridGeometry = problem.gridGeometry();
+        if (gridGeometry.dofOnPeriodicBoundary(scv.dofIndex()))
+        {
+            const auto& periodicScv = this->fvGeometry().outsidePeriodicScv(scv);
+            const auto periodicElement = gridGeometry.element(periodicScv.elementIndex());
+            if (problem.hasInternalDirichletConstraint(periodicElement, periodicScv)[axis])
+                return problem.internalDirichlet(periodicElement, periodicScv)[axis];
+        }
+
+        return {};
     }
 
     /*!

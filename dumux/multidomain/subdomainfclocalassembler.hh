@@ -242,6 +242,7 @@ class SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::nu
 {
     using ThisType = SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
@@ -325,6 +326,13 @@ public:
 
         for (const auto& scv : scvs(fvGeometry))
         {
+            // the equation of a dof with an internal Dirichlet constraint does not depend on the other domain
+            if constexpr (Problem::enableInternalDirichletConstraints())
+            {
+                if (this->internalDirichletValue(scv))
+                    continue;
+            }
+
             const auto& stencil = this->couplingManager().couplingStencil(domainI, element, scv, domainJ);
 
             for (const auto globalJ : stencil)
@@ -365,7 +373,6 @@ public:
                     }
 
                     // handle Dirichlet boundary conditions
-                    // TODO internal constraints
                     if (scv.boundary() && this->elemBcTypes().hasDirichlet())
                     {
                         const auto bcTypes = this->elemBcTypes()[fvGeometry.frontalScvfOnBoundary(scv).localIndex()];
