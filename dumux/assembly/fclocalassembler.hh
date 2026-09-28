@@ -13,6 +13,8 @@
 #ifndef DUMUX_FC_LOCAL_ASSEMBLER_HH
 #define DUMUX_FC_LOCAL_ASSEMBLER_HH
 
+#include <optional>
+
 #include <dune/grid/common/gridenums.hh>
 
 #include <dumux/common/properties.hh>
@@ -59,6 +61,7 @@ class FaceCenteredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using SubControlVolume = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView::SubControlVolume;
 
     static constexpr auto numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
 
@@ -146,19 +149,6 @@ public:
                 row[col.index()][eqIdx] = 0.0;
 
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-
-            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
-            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
-            {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
-
-                auto& rowP = jac[periodicDof];
-                for (auto col = rowP.begin(); col != rowP.end(); ++col)
-                    rowP[col.index()][eqIdx] = 0.0;
-
-                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
-            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -183,18 +173,6 @@ public:
                 row[col.index()][eqIdx] = 0.0;
 
             jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-
-            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
-            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
-            {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-
-                auto& rowP = jac[periodicDof];
-                for (auto col = rowP.begin(); col != rowP.end(); ++col)
-                    rowP[col.index()][eqIdx] = 0.0;
-
-                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
-            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -218,13 +196,6 @@ public:
                                    const auto pvIdx)
         {
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
-
-            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
-            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvI.dofIndex()))
-            {
-                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvI.dofIndex());
-                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
-            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -287,18 +258,14 @@ public:
         // and set the residual to (privar - dirichletvalue)
         for (const auto& scvI : scvs(this->fvGeometry()))
         {
-            const auto internalDirichletConstraints = this->asImp_().problem().hasInternalDirichletConstraint(this->element(), scvI);
-            if (internalDirichletConstraints.any())
+            if (const auto dirichletValue = this->asImp_().internalDirichletValue(scvI))
             {
-                const auto dirichletValues = this->asImp_().problem().internalDirichlet(this->element(), scvI);
                 // set the Dirichlet conditions in residual and jacobian
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                 {
                     static_assert(numEq == 1, "Not yet implemented for more than one vector-valued primary variable");
                     const int pvIdx = eqIdx;
-                    const int componentIdx = scvI.dofAxis();
-                    if (internalDirichletConstraints[componentIdx])
-                        applyDirichlet(scvI, std::array<Scalar,1>{{dirichletValues[componentIdx]}}, eqIdx, pvIdx);
+                    applyDirichlet(scvI, std::array<Scalar,1>{{*dirichletValue}}, eqIdx, pvIdx);
                 }
             }
         }
@@ -307,6 +274,31 @@ public:
     template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<!P::enableInternalDirichletConstraints(), int> = 0>
     void enforceInternalDirichletConstraints(const ApplyFunction& applyDirichlet)
     {}
+
+    /*!
+     * \brief The value of the internal Dirichlet constraint on the velocity component of a sub-control volume, if it is constrained
+     * \note The two dofs of a periodic pair represent the same velocity, so a constraint on either one constrains both.
+     *       Each element enforces the constraint of its own dofs only, which keeps the result independent of the element order.
+     */
+    template<class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
+    std::optional<Scalar> internalDirichletValue(const SubControlVolume& scv) const
+    {
+        const auto& problem = this->asImp_().problem();
+        const auto axis = scv.dofAxis();
+        if (problem.hasInternalDirichletConstraint(this->element(), scv)[axis])
+            return problem.internalDirichlet(this->element(), scv)[axis];
+
+        const auto& gridGeometry = problem.gridGeometry();
+        if (gridGeometry.dofOnPeriodicBoundary(scv.dofIndex()))
+        {
+            const auto& periodicScv = this->fvGeometry().outsidePeriodicScv(scv);
+            const auto periodicElement = gridGeometry.element(periodicScv.elementIndex());
+            if (problem.hasInternalDirichletConstraint(periodicElement, periodicScv)[axis])
+                return problem.internalDirichlet(periodicElement, periodicScv)[axis];
+        }
+
+        return {};
+    }
 
     /*!
      * \brief Update the coupling context for coupled models.
