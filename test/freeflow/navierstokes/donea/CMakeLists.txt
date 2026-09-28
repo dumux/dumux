@@ -73,6 +73,73 @@ dumux_add_test(NAME test_ff_stokes_donea
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea params.input
                              -Problem.Name test_ff_stokes_donea -Problem.UseNeumann false")
 
+# The staggered grid needs an overlap (Grid.Overlap in params.input), which YaspGrid provides. The residual of the
+# staggered system is large in absolute terms, so Newton checks the residual reduction.
+dumux_add_test(NAME test_ff_stokes_donea_stokessolver_yasp
+              LABELS freeflow navierstokes donea
+              SOURCES main.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS ENABLECACHING=1
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+              COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_stokessolver_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_stokessolver_yasp-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_stokessolver_yasp params.input
+                             -Problem.Name test_ff_stokes_donea_stokessolver_yasp -Problem.UseNeumann false
+                             -LinearSolver.Type gmres -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.EnableAbsoluteResidualCriterion false -Newton.EnableResidualCriterion true
+                             -Newton.ResidualReduction 1e-6 -Newton.MaxSteps 1")
+
+dumux_add_test(NAME test_ff_stokes_donea_stokessolver_yasp_parallel
+              TARGET test_ff_stokes_donea_stokessolver_yasp
+              LABELS freeflow navierstokes donea
+              CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS       --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_stokessolver_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_stokessolver_yasp_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_stokessolver_yasp params.input
+                             -Problem.Name test_ff_stokes_donea_stokessolver_yasp_parallel -Problem.UseNeumann false
+                             -LinearSolver.Type gmres -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.EnableAbsoluteResidualCriterion false -Newton.EnableResidualCriterion true
+                             -Newton.ResidualReduction 1e-6 -Newton.MaxSteps 1")
+
+dumux_add_test(NAME test_ff_navierstokes_donea_stokessolver_yasp
+              TARGET test_ff_stokes_donea_stokessolver_yasp
+              LABELS freeflow navierstokes donea
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_donea_stokessolver_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_donea_stokessolver_yasp-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_stokessolver_yasp params.input
+                             -Problem.Name test_ff_navierstokes_donea_stokessolver_yasp -Problem.UseNeumann false
+                             -Problem.EnableInertiaTerms true
+                             -LinearSolver.Type gmres -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.EnableAbsoluteResidualCriterion false -Newton.EnableResidualCriterion true
+                             -Newton.ResidualReduction 1e-6")
+
+dumux_add_test(NAME test_ff_navierstokes_donea_stokessolver_yasp_parallel
+              TARGET test_ff_stokes_donea_stokessolver_yasp
+              LABELS freeflow navierstokes donea
+              CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS       --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_donea_stokessolver_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_navierstokes_donea_stokessolver_yasp_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_stokessolver_yasp params.input
+                             -Problem.Name test_ff_navierstokes_donea_stokessolver_yasp_parallel -Problem.UseNeumann false
+                             -Problem.EnableInertiaTerms true
+                             -LinearSolver.Type gmres -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.EnableAbsoluteResidualCriterion false -Newton.EnableResidualCriterion true
+                             -Newton.ResidualReduction 1e-6")
+
 dumux_add_test(NAME test_ff_stokes_donea_box_stabilized
                LABELS freeflow navierstokes donea
                SOURCES main.cc
