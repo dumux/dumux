@@ -4,8 +4,8 @@
 """The DuMux common module, containing classes and functions needed for most simulations
 
 DuMux is
-* short for Dune for Multi-{Phase, Component, Scale, Physics, …} flow and transport in porous media
-* a free and open-source simulator for flow and transport processes in porous media
+* short for Dune for Multi-{Phase, Component, Scale, Physics, Domain, …} flow, transport and deformation
+* a free and open-source simulation framework for coupled flow, transport and deformation processes
 * a research code written in C++
 * based on Dune (Distributed and Unified Numerics Environment)
 * a Dune user module in the Dune environment

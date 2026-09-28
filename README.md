@@ -2,9 +2,10 @@
 
 # What is DuMux?
 
-[DuMu<sup>x</sup>][a] is a simulation framework with a focus on
-finite volume discretization methods, model coupling for multi-physics applications,
-and flow and transport applications in porous media.
+[DuMu<sup>x</sup>][a] is a simulation framework for flow, transport and deformation processes
+with a focus on finite volume and control-volume finite element discretization methods
+and on model coupling for multi-physics and multi-domain applications.
+DuMu<sup>x</sup> originated in porous-media research, and porous-medium flow remains its largest family of models.
 
 DuMu<sup>x</sup> is based on the [DUNE][b] framework from which it uses
 the versatile [grid interface](https://gitlab.dune-project.org/core/dune-grid) [[2][], [3][]], [vector and matrix types](https://gitlab.dune-project.org/core/dune-common), [geometry](https://gitlab.dune-project.org/core/dune-geometry) and [local basis functions](https://gitlab.dune-project.org/core/dune-localfunctions), and [linear solvers](https://gitlab.dune-project.org/core/dune-istl).
@@ -13,7 +14,7 @@ DuMu<sup>x</sup> then provides
 * [Finite volume discretizations](https://dumux.org/docs/doxygen/master/group___c_c_discretization.html) ([Tpfa](https://dumux.org/docs/doxygen/master/group___c_c_tpfa_discretization.html), [Mpfa](https://dumux.org/docs/doxygen/master/group___c_c_mpfa_discretization.html), [Staggered](https://dumux.org/docs/doxygen/master/group___face_centered_staggered_discretization.html)) and [control-volume finite element (CVFE)](https://dumux.org/docs/doxygen/master/group___c_v_f_e_discretization.html) discretization schemes
 * A flexible [system matrix assembler](https://dumux.org/docs/doxygen/master/class_dumux_1_1_f_v_assembler.html) and approximation of the Jacobian matrix by [numeric differentiation](https://dumux.org/docs/doxygen/master/class_dumux_1_1_numeric_differentiation.html)
 * A [customizable implementation of Newton's method](https://dumux.org/docs/doxygen/master/group___newton.html), including line search and various stopping criteria
-* Many [pre-implemented models](https://dumux.org/docs/doxygen/master/group___models.html) ([Darcy-scale porous media flow](https://dumux.org/docs/doxygen/master/group___porousmediumflow_models.html), [Navier-Stokes](https://dumux.org/docs/doxygen/master/group___freeflow_models.html), [Solid mechanics](https://dumux.org/docs/doxygen/master/group___solid_mechanics_models.html) and [Poro-mechanics](https://dumux.org/docs/doxygen/master/group___poro_mechanics_models.html), [Pore network models](https://dumux.org/docs/doxygen/master/group___pore_network_models.html), [Shallow water equations](https://dumux.org/docs/doxygen/master/group___shallow_water_models.html)) and [constitutive models](https://dumux.org/docs/doxygen/master/group___material.html)
+* Many [pre-implemented models](https://dumux.org/docs/doxygen/master/group___models.html) ([Darcy-scale porous media flow](https://dumux.org/docs/doxygen/master/group___porousmediumflow_models.html), [Navier-Stokes](https://dumux.org/docs/doxygen/master/group___freeflow_models.html), [Solid mechanics](https://dumux.org/docs/doxygen/master/group___solid_mechanics_models.html), [Plate mechanics](https://dumux.org/docs/doxygen/master/group___plate.html) and [Poro-mechanics](https://dumux.org/docs/doxygen/master/group___poro_mechanics_models.html), [Pore network models](https://dumux.org/docs/doxygen/master/group___pore_network_models.html), [Shallow water equations](https://dumux.org/docs/doxygen/master/group___shallow_water_models.html)) and [constitutive models](https://dumux.org/docs/doxygen/master/group___material.html)
 * A [multi-domain framework](https://dumux.org/docs/doxygen/master/group___multi_domain.html) for model coupling suited to couple subproblems with different discretizations/domains/physics/dimensions/... and create monolithic solvers
 
 DuMu<sup>x</sup> has been applied to model complex and non-linear phenomena,

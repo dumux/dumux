@@ -1,8 +1,8 @@
 # Dumux and Dune
 
-DuMux aims to be a generic framework for the simulation of multiphase
-fluid flow and transport processes in porous media using continuum
-mechanical approaches.  At the same time, DuMux aims to deliver
+DuMux aims to be a generic framework for the simulation of coupled
+flow, transport and deformation processes, from multiphase flow in
+porous media to free flow and solid mechanics.  At the same time, DuMux aims to deliver
 top-notch computational performance, high flexibility, sound
 software architecture and the ability to run on anything from single
 processor systems to highly parallel supercomputers with specialized
@@ -63,7 +63,7 @@ DuMux comes in the form of an additional module `dumux`.
 It depends on the Dune core modules
 `dune-common`,`dune-geometry`, `dune-grid`, `dune-istl`, and `dune-localfunctions`.
 The main intention of DuMux is to provide a framework for easy and efficient
-implementation of new physical models for porous media flow problems,
+implementation of new physical models for flow, transport and deformation problems,
 ranging from problem formulation and the selection of
 spatial and temporal discretization schemes as well as nonlinear solvers,
 to general concepts for model coupling.

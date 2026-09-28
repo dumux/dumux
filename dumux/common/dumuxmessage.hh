@@ -137,7 +137,8 @@ public:
                 std::cout << "                 Component,                             " << std::endl;
                 std::cout << "                 Scale,                                 " << std::endl;
                 std::cout << "                 Physics,                               " << std::endl;
-                std::cout << "                 ...} flow and transport in porous media" << std::endl;
+                std::cout << "                 Domain,                                " << std::endl;
+                std::cout << "                 ...} flow, transport and deformation   " << std::endl;
             break;
             case 10:
                 if(firstCall)

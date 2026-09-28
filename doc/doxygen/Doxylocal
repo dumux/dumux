@@ -5,7 +5,7 @@
 # please us '+=' to add file/directories to the lists
 
 PROJECT_NAME          = "DuMux"
-PROJECT_BRIEF         = "Flow and transport in porous media"
+PROJECT_BRIEF         = "Flow, transport and deformation"
 PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_white.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
