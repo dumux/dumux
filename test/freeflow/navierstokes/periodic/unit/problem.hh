@@ -13,6 +13,8 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_PERIODIC_PROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_PERIODIC_PROBLEM_HH
 
+#include <cmath>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
@@ -54,6 +56,10 @@ public:
         usePressureDifference_ = getParam<bool>("Problem.UsePressureDifference", false);
         useMomentumInternalDirichlet_ = getParam<bool>("Problem.UseMomentumInternalDirichlet", false)
             && !usePressureDifference_;
+        momentumInternalDirichletPosY_ = getParam<Scalar>("Problem.MomentumInternalDirichletPosY", 0.5)
+            * this->gridGeometry().bBoxMax()[1];
+        velocity_ = getParam<Scalar>("Problem.Velocity", -1.0);
+        useVelocityProfile_ = getParam<bool>("Problem.UseVelocityProfile", true);
     }
 
     /*!
@@ -127,15 +133,16 @@ public:
     {
         std::bitset<DirichletValues::dimension> values;
 
-        if constexpr(!ParentType::isMomentumProblem())
+        if constexpr (ParentType::isMomentumProblem())
         {
+            if (useMomentumInternalDirichlet_ && std::abs(scv.dofPosition()[1] - momentumInternalDirichletPosY_) < eps_)
+                values.set(Indices::velocityYIdx);
+        }
+        else
+        {
+            // the pressure is only determined up to a constant
             if (scv.dofIndex() == 0)
                 values.set(0);
-        } else {
-            const static auto  pos_y = getParam<double>("Problem.MomentumInternalDirichletPosY", 0.5);
-            if (useMomentumInternalDirichlet_ &&
-                    std::abs(scv.dofPosition()[1] - this->gridGeometry().bBoxMax()[1]*pos_y) <  eps_)
-                values.set(1);
         }
 
         return values;
@@ -148,28 +155,28 @@ public:
      */
     DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
     {
-        if constexpr (!ParentType::isMomentumProblem())
+        if constexpr (ParentType::isMomentumProblem())
         {
-            return DirichletValues(1.0);
+            DirichletValues values(0.0);
+            values[Indices::velocityYIdx] = velocity_;
+            if (useVelocityProfile_)
+            {
+                const auto x = scv.dofPosition()[0];
+                values[Indices::velocityYIdx] *= 4.0*x*(1.0 - x);
+            }
+            return values;
         }
         else
-        {
-            const static auto velocity = getParam<Scalar>("Problem.Velocity", -1.0);
-            const static auto useVelocityProfile = getParam<bool>("Problem.UseVelocityProfile", true);
-            Scalar velY = velocity;
-            if (useVelocityProfile)
-            {
-                const auto posX = scv.center()[0];
-                velY *= 4.0 * posX * (1.0 - posX);
-            }
-            return DirichletValues{0.0, velY};
-        }
+            return DirichletValues(1.0);
     }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
     bool usePressureDifference_;
     bool useMomentumInternalDirichlet_;
+    Scalar momentumInternalDirichletPosY_;
+    Scalar velocity_;
+    bool useVelocityProfile_;
 };
 
 } // end namespace Dumux
