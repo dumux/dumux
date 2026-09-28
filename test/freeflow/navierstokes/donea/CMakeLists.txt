@@ -390,6 +390,50 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_parallel
                              -LinearSolver.ResidualReduction 1e-13
                              -Newton.MaxSteps 1")
 
+# YaspGrid has an overlap (Grid.Overlap in params.input), so the parallel run uses an overlapping decomposition
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_pq1bubble_yasp-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp-00001.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_yasp
+                           -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.Type gmres
+                           -LinearSolver.GMResRestart 500
+                           -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-13
+                           -Newton.MaxSteps 1")
+
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel
+               TARGET test_ff_stokes_donea_hybrid_pq1bubble_yasp
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_pq1bubble_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp params.input
+                             -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel
+                             -Problem.UseNeumann true
+                             -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                             -LinearSolver.Type gmres
+                             -LinearSolver.GMResRestart 500
+                             -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-13
+                             -Newton.MaxSteps 1")
+
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_cube
                SOURCES main.cc
