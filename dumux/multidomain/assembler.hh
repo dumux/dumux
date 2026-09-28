@@ -45,7 +45,7 @@
 #include <dumux/multidomain/subdomainstaggeredlocalassembler.hh>
 #endif
 
-#include "assembler.hh"
+#include "fvassembler.hh"
 
 namespace Dumux::Experimental {
 
