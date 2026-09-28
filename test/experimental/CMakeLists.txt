@@ -2,4 +2,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(discretization)
+add_subdirectory(ode)
 add_subdirectory(timestepping)
