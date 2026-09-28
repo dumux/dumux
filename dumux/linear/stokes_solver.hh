@@ -725,6 +725,7 @@ class StokesSolver
     using VTraits = LinearSolverTraits<VelocityGG>;
     using PTraits = LinearSolverTraits<PressureGG>;
     using Comm    = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+    static constexpr bool canCommunicate_ = VTraits::canCommunicate && PTraits::canCommunicate;
 #endif
 
 public:
@@ -763,13 +764,13 @@ public:
         weight_     = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.Preconditioner.MassMatrixWeight", 1.0);
         solverType_ = getParamFromGroup<std::string>(this->paramGroup(), "LinearSolver.Type", "gmres");
 
-#if HAVE_MPI
-        if (vGridGeometry_->gridView().comm().size() > 1)
-            initParallelInfrastructure_();
-        else
-            scalarProduct_ = std::make_shared<Dune::ScalarProduct<Vector>>();
-#else
         scalarProduct_ = std::make_shared<Dune::ScalarProduct<Vector>>();
+#if HAVE_MPI
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1)
+                initParallelInfrastructure_();
+        }
 #endif
     }
 
@@ -856,8 +857,11 @@ private:
         b[_1] *= -1.0/density_;
 
 #if HAVE_MPI
-        if (vGridGeometry_->gridView().comm().size() > 1)
-            return solveParallel_(A, x, b);
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1)
+                return solveParallel_(A, x, b);
+        }
 #endif
         return solveSequential_(A, x, b);
     }
