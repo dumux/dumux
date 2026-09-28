@@ -50,8 +50,8 @@
 namespace Dumux::Detail {
 
 #if HAVE_MPI
-//! Project a vector block to UNIQUE representation: owner entries keep their value,
-//! all non-owner entries (copy and overlap/ghost) are set to zero (Blatt & Bastian §2.5).
+//! Keep the entries of owned dofs and set those of all other shared dofs to zero,
+//! i.e. the unique representation (Blatt & Bastian §2.5)
 template<class Comm, class Block>
 void makeUnique(const Comm& comm, Block& v)
 {
@@ -61,7 +61,7 @@ void makeUnique(const Comm& comm, Block& v)
             v[pair.local().local()] = 0.0;
 }
 
-//! Zero the overlap/ghost entries of a vector block (leaving owner and copy untouched).
+//! Set the entries of overlap dofs to zero
 template<class Comm, class Block>
 void zeroOverlap(const Comm& comm, Block& v)
 {
@@ -71,14 +71,22 @@ void zeroOverlap(const Comm& comm, Block& v)
             v[pair.local().local()] = 0.0;
 }
 
-//! Complete an additive coupling mat-vec result y = M*x (x consistent, M an off-diagonal
-//! saddle-point block stored additively) to UNIQUE representation by summing the partial
-//! per-rank results across ranks. This is the same result-level completion the velocity
-//! NonoverlappingSchwarzOperator performs; it recovers coupling at partition-boundary rows
-//! whose stencil reaches DOFs assembled only on another rank.
+/*!
+ * \brief Complete the product y = M x of an off-diagonal block M with a consistent x to the unique representation
+ * \note On a non-overlapping decomposition M is stored additively. Summing the partial products of all processes
+ *       also completes the rows at the processor border whose stencil reaches dofs that only a neighbouring
+ *       process assembles.
+ */
 template<class Comm, class Block>
 void completeCouplingResult(const Comm& comm, Block& y)
 {
+    // on an overlapping decomposition the owned rows are complete already
+    if (comm.category() == Dune::SolverCategory::overlapping)
+    {
+        makeUnique(comm, y);
+        return;
+    }
+
     zeroOverlap(comm, y);
     comm.addOwnerCopyToOwnerCopy(y, y);
     makeUnique(comm, y);
@@ -156,7 +164,7 @@ public:
 
 #if HAVE_MPI
     /*!
-     * \brief Constructor (parallel) — uses a parallel operator for velocity AMG.
+     * \brief Constructor (parallel)
      * \param fullLinearOperator the Stokes linear operator
      * \param pressureLinearOperator the linear operator for the pressure space preconditioner
      * \param params a parameter tree for the preconditioner configuration
@@ -183,9 +191,7 @@ public:
 #endif
 
     /*!
-     * \brief Prepare the preconditioner.
-     * Delegates to the velocity and pressure sub-preconditioners (setting up
-     * any internal state, e.g. AMG hierarchy, that persists across apply() calls).
+     * \brief Prepare the preconditioners of the velocity and the pressure block
      */
     void pre(X& update, Y& currentDefect) override
     {
@@ -225,8 +231,7 @@ public:
     }
 
     /*!
-     * \brief Clean up.
-     * Delegates to the velocity and pressure sub-preconditioners.
+     * \brief Clean up the preconditioners of the velocity and the pressure block
      */
     void post(X& update) override
     {
@@ -248,7 +253,6 @@ private:
             paramGroup_, "LinearSolver.Preconditioner.Mode", "Diagonal"
         );
 
-        // case-insensitive comparison
         auto lower = mode;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
         if (lower == "symmetric")
@@ -273,13 +277,10 @@ private:
         auto dTmp0 = d[_0];
         auto vTmp = d; vTmp = 0.0;
 
-        // invert velocity block (apply to first block of d) -> vTmp[_0] consistent
+        // invert velocity block (apply to first block of d), the result is consistent
         applyPreconditionerForA_(vTmp[_0], dTmp0);
 
-        // then multiply with C (divergence, A10). In parallel the off-diagonal block is
-        // stored additively, so complete the partial mat-vec result across ranks to a
-        // UNIQUE representation (matching the unique d[_1] it is subtracted from). vTmp[_0]
-        // is consistent, so this recovers the coupling at partition-boundary rows.
+        // then multiply with C, in parallel completed to the unique representation of d[_1]
         matrix_[_1][_0].mv(vTmp[_0], vTmp[_1]);
 #if HAVE_MPI
         if (presComm_)
@@ -329,9 +330,7 @@ private:
         auto dTmp = d;
         auto vTmp = d; vTmp = 0.0;
 
-        // multiply with B (pressure gradient, A01). Complete the additive partial result
-        // across ranks to UNIQUE (dTmp[_1] is consistent) before applying the velocity
-        // preconditioner, which expects a unique defect.
+        // multiply with B, in parallel completed to the unique defect the velocity preconditioner expects
         matrix_[_0][_1].umv(dTmp[_1], vTmp[_0]);
 #if HAVE_MPI
         if (velComm_)
@@ -473,12 +472,10 @@ private:
 #if HAVE_MPI
 
 /*!
- * \brief Parallel linear operator for the Stokes saddle-point system.
+ * \brief Parallel linear operator for the Stokes saddle-point system
  *
- * Wraps a multi-type matrix adapter. For non-overlapping (ghost-partition grids),
- * ghost values propagate via identity rows — exactly like NonoverlappingSchwarzOperator.
- * For overlapping, no post-apply communication is needed either (the preconditioner
- * and scalar product handle consistency).
+ * The result is unique. On a non-overlapping decomposition ghost values propagate through
+ * identity rows as in the NonoverlappingSchwarzOperator.
  */
 template<class M, class X, class Y>
 class ParallelStokesLinearOperator : public Dune::LinearOperator<X, Y>
@@ -512,21 +509,21 @@ public:
             applyNonoverlapping_(x, y);
         }
         else
+        {
+            // on an overlapping decomposition only the rows of owned dofs are complete
             localOp_.apply(x, y);
+            makeUnique(*vComm_, y[_0]);
+            makeUnique(*pComm_, y[_1]);
+        }
     }
 
     void applyscaleadd(field_type alpha, const X& x, Y& y) const override
     {
         using namespace Dune::Indices;
-        if (nonOverlapping_)
-        {
-            Y Ax(y); Ax = 0;
-            applyNonoverlapping_(x, Ax);
-            y[_0].axpy(alpha, Ax[_0]);
-            y[_1].axpy(alpha, Ax[_1]);
-        }
-        else
-            localOp_.applyscaleadd(alpha, x, y);
+        Y Ax(y); Ax = 0;
+        apply(x, Ax);
+        y[_0].axpy(alpha, Ax[_0]);
+        y[_1].axpy(alpha, Ax[_1]);
     }
 
 private:
@@ -534,16 +531,9 @@ private:
     using Ut   = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
     using VelOp = Dune::NonoverlappingSchwarzOperator<A00t, Ut, Ut, Comm>;
 
-    //! Non-overlapping 2x2 saddle-point mat-vec. The diagonal velocity block A00 is
-    //! pre-summed (sumEntries) and applied via NonoverlappingSchwarzOperator (the exact
-    //! convention the velocity AMG was validated against in the momentum-only solver).
-    //! The off-diagonal coupling blocks B=A01 and C=A10 are kept ADDITIVE (raw per-rank
-    //! assembly) and completed by summing the partial mat-vec results across ranks via
-    //! addOwnerCopyToOwnerCopy. The additive treatment recovers coupling at partition-
-    //! boundary DOFs whose neighbouring elements are assembled only on another rank
-    //! (vertex-only-connected, outside this rank's face-based ghost layer) — which a
-    //! pre-summed off-diagonal block cannot represent because those column DOFs may not
-    //! exist locally. Result is masked to UNIQUE representation for the defect b - Ax.
+    //! The velocity block is summed over the processes and applied as NonoverlappingSchwarzOperator.
+    //! The off-diagonal blocks stay additive: the rows of border dofs can reach dofs that only a
+    //! neighbouring process assembles, so their partial products are summed instead.
     void applyNonoverlapping_(const X& x, Y& y) const
     {
         using namespace Dune::Indices;
@@ -552,33 +542,22 @@ private:
         vComm_->copyOwnerToAll(xc[_0], xc[_0]);
         pComm_->copyOwnerToAll(xc[_1], xc[_1]);
 
-        // Velocity-velocity block A00 (summed) via NonoverlappingSchwarzOperator
-        // -> y[_0] consistent.
         velOp_->apply(xc[_0], y[_0]);
 
-        // Off-diagonal coupling B = A01 (pressure gradient) into the velocity rows,
-        // additive + addOwnerCopyToOwnerCopy to complete, then add to y[_0].
         Ut bv(y[_0]); bv = 0.0;
         A_[_0][_1].umv(xc[_1], bv);
         zeroOverlap(*vComm_, bv);
         vComm_->addOwnerCopyToOwnerCopy(bv, bv);
         y[_0] += bv;
 
-        // Off-diagonal coupling C = A10 (divergence) plus the diagonal block A11 into
-        // the pressure rows, additive + addOwnerCopyToOwnerCopy to complete. A11 is
-        // structurally zero for the saddle-point system EXCEPT at internal Dirichlet
-        // constraint rows (e.g. the pressure pin that fixes the constant), where
-        // symmetrizeConstraints writes an identity entry A11[pin][pin]=1. Omitting A11
-        // drops the pin constraint in parallel -> the pressure constant floats free
-        // (off by a constant vs. sequential) and the pin equation is left unsatisfied.
+        // the pressure block is nonzero only in constrained rows, e.g. a pressure pin
         y[_1] = 0.0;
         A_[_1][_0].umv(xc[_0], y[_1]);
         A_[_1][_1].umv(xc[_1], y[_1]);
         zeroOverlap(*pComm_, y[_1]);
         pComm_->addOwnerCopyToOwnerCopy(y[_1], y[_1]);
 
-        // Mask to UNIQUE (owner=global, non-owner=0) for the defect fed to the
-        // preconditioner (Blatt & Bastian §4.3).
+        // the defect b - Ax the preconditioner receives has to be unique (Blatt & Bastian §4.3)
         makeUnique(*vComm_, y[_0]);
         makeUnique(*pComm_, y[_1]);
     }
@@ -600,14 +579,9 @@ private:
 };
 
 /*!
- * \brief Parallel preconditioner wrapper for the Stokes saddle-point preconditioner.
+ * \brief Parallel wrapper of the Stokes saddle-point preconditioner
  *
- * Applies the sequential StokesPreconditioner, then ensures consistent parallel
- * state of the result:
- *   - non-overlapping: velocity AMG's NonoverlappingBlockPreconditioner already
- *     calls addOwnerCopyToOwnerCopy; pressure ghost = owner's value via SeqJac
- *     + identity-row propagation. No extra communication needed.
- *   - overlapping: copyOwnerToAll() broadcasts owner values to ghost copies.
+ * Applies the StokesPreconditioner and makes its result consistent.
  */
 template<class SeqPrec, class X, class Y>
 class ParallelStokesPreconditioner : public Dune::Preconditioner<X, Y>
@@ -655,12 +629,8 @@ private:
     void communicateUpdate_(X& v)
     {
         using namespace Dune::Indices;
-        // Use copyOwnerToAll for both overlapping and non-overlapping so that
-        // the preconditioner output is always in consistent representation.
-        // The outer operator (ParallelStokesLinearOperator) also uses consistent
-        // x (copyOwnerToAll before mat-vec), so the whole GMRES works in
-        // consistent representation. Ghost DOFs in the index set get owner's
-        // value; bubble ghost DOFs (not in index set) remain zero.
+        // the Krylov solver works with consistent vectors; dofs that are not shared,
+        // such as bubble dofs, are not in the index set and need no communication
         vComm_->copyOwnerToAll(v[_0], v[_0]);
         pComm_->copyOwnerToAll(v[_1], v[_1]);
     }
@@ -671,12 +641,9 @@ private:
 };
 
 /*!
- * \brief Parallel scalar product for the Stokes saddle-point MultiType vector.
+ * \brief Parallel scalar product for the velocity-pressure vector of the Stokes system
  *
- * Computes the dot product by summing contributions from owned DOFs only in
- * both the velocity and pressure sub-blocks, then performs an MPI reduction.
- * Works for both overlapping and non-overlapping decompositions since both use
- * owner-only weighting via the OwnerOverlapCopy index set.
+ * Every dof contributes once, on the process that owns it.
  */
 template<class X>
 class ParallelStokesScalarProduct : public Dune::ScalarProduct<X>
@@ -699,11 +666,8 @@ public:
         using namespace Dune::Indices;
         using Attr = Dune::OwnerOverlapCopyAttributeSet;
 
-        // Sum over all local DOFs, then subtract non-owned shared DOFs (copy/overlap
-        // in the parallel index set) to avoid double-counting across ranks.
-        // Non-shared interior DOFs (e.g. PQ1Bubble bubble DOFs) are not in the
-        // index set and must be included explicitly via the "sum all – subtract
-        // non-owner" approach so the norm is globally consistent.
+        // dofs that are not shared, such as bubble dofs, are not in the index set,
+        // so sum all local entries and subtract those of shared dofs owned elsewhere
         field_type local = 0;
 
         for (std::size_t i = 0; i < x[_0].size(); ++i)
@@ -820,21 +784,22 @@ public:
     Scalar norm(const Vector& b) const
     {
 #if HAVE_MPI
-        // The Newton solver calls norm() on the assembled residual, which is in an
-        // ADDITIVE representation (each rank holds only its local partial contribution
-        // at shared DOFs). The scalar product sums over OWNED DOFs only and therefore
-        // expects owner = global value (consistent/unique). Summing the additive
-        // partials across ranks first (addOwnerCopyToOwnerCopy) makes owner = global,
-        // so the owner-only scalar product returns the correct global norm — exactly
-        // what the momentum-only solver does via makeNonOverlappingConsistent before
-        // its norm. Without this, the Newton residual norm is under-reported and the
-        // convergence check misbehaves (false "residual increased").
+        // on a non-overlapping decomposition an assembled residual is additive, so the owned entries
+        // are only complete after summing over the processes; on an overlapping one they are complete
         using namespace Dune::Indices;
         if (vComm_ && pComm_ && vGridGeometry_->gridView().comm().size() > 1)
         {
             Vector bc(b);
-            vComm_->addOwnerCopyToOwnerCopy(bc[_0], bc[_0]);
-            pComm_->addOwnerCopyToOwnerCopy(bc[_1], bc[_1]);
+            if (isNonOverlapping_)
+            {
+                vComm_->addOwnerCopyToOwnerCopy(bc[_0], bc[_0]);
+                pComm_->addOwnerCopyToOwnerCopy(bc[_1], bc[_1]);
+            }
+            else
+            {
+                Detail::makeUnique(*vComm_, bc[_0]);
+                Detail::makeUnique(*pComm_, bc[_1]);
+            }
             return scalarProduct_->norm(bc);
         }
 #endif
@@ -855,18 +820,18 @@ private:
 #if HAVE_MPI
     void initParallelInfrastructure_()
     {
-        // If either sub-problem is overlapping, use overlapping for both.
-        // If either sub-problem is overlapping, use overlapping for both.
+        // if either sub-problem is overlapping, use overlapping for both
         isNonOverlapping_ = VTraits::isNonOverlapping(vGridGeometry_->gridView())
                          && PTraits::isNonOverlapping(pGridGeometry_->gridView());
 
         const auto cat = isNonOverlapping_ ? Dune::SolverCategory::nonoverlapping
                                            : Dune::SolverCategory::overlapping;
 
-        vParallelHelper_ = std::make_shared<ParallelISTLHelper<VTraits>>(
-            vGridGeometry_->gridView(), VTraits::dofMapper(*vGridGeometry_));
-        pParallelHelper_ = std::make_shared<ParallelISTLHelper<PTraits>>(
-            pGridGeometry_->gridView(), PTraits::dofMapper(*pGridGeometry_));
+        // the helpers keep a reference to the dof mapper, which the traits may return by value
+        vDofMapper_ = std::make_shared<const typename VTraits::DofMapper>(VTraits::dofMapper(*vGridGeometry_));
+        pDofMapper_ = std::make_shared<const typename PTraits::DofMapper>(PTraits::dofMapper(*pGridGeometry_));
+        vParallelHelper_ = std::make_shared<ParallelISTLHelper<VTraits>>(vGridGeometry_->gridView(), *vDofMapper_);
+        pParallelHelper_ = std::make_shared<ParallelISTLHelper<PTraits>>(pGridGeometry_->gridView(), *pDofMapper_);
 
         vComm_ = std::make_shared<Comm>(vGridGeometry_->gridView().comm(), cat);
         vParallelHelper_->createParallelIndexSet(*vComm_);
@@ -912,10 +877,13 @@ private:
 
         if (isNonOverlapping_)
             prepareParallelLinearSystem_(A, b);
+        else
+        {
+            Detail::makeUnique(*vComm_, b[_0]);
+            Detail::makeUnique(*pComm_, b[_1]);
+        }
 
-        // innerOp is an AssembledLinearOperator (needed by StokesPreconditioner::getmat());
-        // op is the parallel saddle-point operator (completes the coupling and projects
-        // ghosts after the mat-vec for the non-overlapping case).
+        // the preconditioner needs the assembled operator, the Krylov solver the parallel one
         auto innerOp = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
         auto op = std::make_shared<Detail::ParallelStokesLinearOperator<Matrix, Vector, Vector>>(
             A, vComm_, pComm_, isNonOverlapping_);
@@ -941,29 +909,16 @@ private:
         static constexpr std::size_t numCodims = dim + 1;
 
         const auto& gv        = vGridGeometry_->gridView();
-        const auto& velMapper = VTraits::dofMapper(*vGridGeometry_);
         const auto velCodims  = activeCodimsBitset_<VTraits, numCodims>();
 
-        // --- 1. Velocity diagonal block A[_0][_0]: extendMatrix + sumEntries, exactly
-        // like the (working) momentum-only solver. The velocity AMG is built on a
-        // NonoverlappingSchwarzOperator(A00) which expects this summed form (complete
-        // diagonals -> well-conditioned smoother), and ParallelStokesLinearOperator
-        // uses the same operator for the A00 part of its mat-vec. ---
+        // the velocity block is summed over the processes: the smoother of the velocity AMG needs
+        // complete diagonal entries; the off-diagonal blocks stay additive (see ParallelStokesLinearOperator)
         using VelBlock = std::decay_t<decltype(A[_0][_0])>;
-        MultiCodimParallelMatrixHelper<VelBlock, GridView, std::decay_t<decltype(velMapper)>, numCodims>
-            velHelper(gv, velMapper, velCodims);
+        MultiCodimParallelMatrixHelper<VelBlock, GridView, typename VTraits::DofMapper, numCodims>
+            velHelper(gv, *vDofMapper_, velCodims);
         velHelper.extendMatrix(A[_0][_0], [](auto){ return false; });
         velHelper.sumEntries(A[_0][_0]);
 
-        // --- 2./3. Off-diagonal coupling blocks B = A[_0][_1] and C = A[_1][_0] are kept
-        // RAW (additive, NOT pre-summed). A pre-summed off-diagonal block cannot be made
-        // complete at partition-boundary rows because the required neighbour column DOFs
-        // (vertex-only-connected, outside this rank's face-based ghost layer) may not
-        // exist locally. Instead ParallelStokesLinearOperator completes the B/C coupling
-        // by summing the partial mat-vec RESULTS across ranks (addOwnerCopyToOwnerCopy),
-        // which needs no local column DOF for the far-side contribution. ---
-
-        // --- Make RHS consistent (additive assembly summed across ranks). ---
         using VelVec  = std::decay_t<decltype(b[_0])>;
         using PresVec = std::decay_t<decltype(b[_1])>;
         using VNonoverlapping  = typename VTraits::template ParallelNonoverlapping<VelBlock, VelVec>;
@@ -971,10 +926,7 @@ private:
             std::decay_t<decltype(A[_1][_1])>, PresVec>;
         prepareVectorParallel<VTraits, VNonoverlapping>(b[_0], *vParallelHelper_);
         prepareVectorParallel<PTraits, PNonoverlapping>(b[_1], *pParallelHelper_);
-        // makeNonOverlappingConsistent sums shared entries -> b CONSISTENT. The operator
-        // produces a UNIQUE Ax (complete owner rows, non-owner zeroed), so make b UNIQUE
-        // too -> the defect d = b - Ax is unique (the representation the preconditioner
-        // expects, Blatt & Bastian §4.3).
+        // the summed right-hand side is consistent; like the operator's result it has to be unique
         Detail::makeUnique(*vComm_, b[_0]);
         Detail::makeUnique(*pComm_, b[_1]);
     }
@@ -1089,8 +1041,7 @@ private:
             }
 
 #if HAVE_MPI
-            // For non-overlapping grids, border pressure DOFs accumulate contributions
-            // from elements on multiple ranks — sum them to get the globally correct mass.
+            // on a non-overlapping decomposition the mass of a border dof is summed over the processes
             if (pGridGeometry_->gridView().comm().size() > 1 && isNonOverlapping_ && pParallelHelper_)
             {
                 using PNonoverlapping = typename PTraits::template ParallelNonoverlapping<
@@ -1116,6 +1067,8 @@ private:
     std::shared_ptr<Dune::ScalarProduct<Vector>> scalarProduct_;
 
 #if HAVE_MPI
+    std::shared_ptr<const typename VTraits::DofMapper> vDofMapper_;
+    std::shared_ptr<const typename PTraits::DofMapper> pDofMapper_;
     std::shared_ptr<ParallelISTLHelper<VTraits>> vParallelHelper_;
     std::shared_ptr<ParallelISTLHelper<PTraits>> pParallelHelper_;
     std::shared_ptr<Comm> vComm_, pComm_;
