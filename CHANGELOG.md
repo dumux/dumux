@@ -13,6 +13,7 @@ It generalizes the concept of sub-control volumes and allows the implementation 
 - __Box Dfm__: By using the new localDof concept, a bug in the assembly has been fixed, where residual contributions were incorrectly added multiple
 times whenever multiple scvs were associated with the same localDof.
 - __Particles__: Added a basic particle and particle cloud implementation. This can be the basis for particle tracking modules as shown in a Fokker-Planck test.
+- __Stokes solver__: `StokesSolver` now also runs in parallel (MPI), on non-overlapping and on overlapping decompositions. The velocity AMG and the Jacobi iteration of the pressure block communicate across processes; tested with the donea problem on 2 and 4 processes for PQ1Bubble and Taylor-Hood (P2/P1) on simplices and for hybrid PQ1Bubble on a YaspGrid with overlap.
 - __Testing__: `dumux_run_test.py` is now installed as a script when installing DuMux (with `make install`).
 - __Multidomain FF-PNM__: The grid manager for the free-flow domain has been improved to allow for up- and downstream grading, even if no additional up- or downstream positions are specified in the input file.
 - __Shallow water equations__: Fixed a bug where the tangential component for the constant water depth boundary condition (fixedWaterDepthBoundary) was missing.
