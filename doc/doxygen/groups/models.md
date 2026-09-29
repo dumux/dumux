@@ -153,6 +153,21 @@
 @copydoc dumux/freeflow/shallowwater/model.hh
 @ingroup Models
 
+<!-- ShallowWaterModels subgroups -->
+
+@defgroup LongWaveModel Long-wave approximations
+@brief Diffusive, kinematic and inertia-corrected wave approximations of the shallow water equations
+@copydoc dumux/freeflow/shallowwater/longwave/model.hh
+@ingroup ShallowWaterModels
+
+@defgroup SurfaceRunoff Surface runoff
+@brief Infiltration, outlet control and channel cross-sections for rainfall-runoff models
+@ingroup ShallowWaterModels
+
+@defgroup Evapotranspiration Evapotranspiration
+@brief Partitioning of evapotranspiration between a canopy and the ground below it
+@ingroup ShallowWaterModels
+
 <!-- SolidMechanicsModels -->
 
 @defgroup SolidMechanicsModels Solid mechanics
