@@ -22,6 +22,7 @@ times whenever multiple scvs were associated with the same localDof.
 - __Shallow water equations__: Fixed a bug where the tangential component for the constant water depth boundary condition (fixedWaterDepthBoundary) was missing.
 - __Shallow water equations__: New boundary states `wallBoundary` (slip wall), `inflowBoundary` (supercritical inflow with prescribed water depth and speed) and `criticalDepthOutflowBoundary` (free overfall at the critical depth of the normal discharge). `fixedDischargeBoundary` now returns the wall state for a vanishing discharge instead of an uninitialized state, and `ShallowWaterIOFields::primaryVariableName` returns the correct names, which fixes restarting shallow water simulations.
 - __Face-centered staggered__: Internal Dirichlet constraints (`enableInternalDirichletConstraints()`, `hasInternalDirichletConstraint`, `internalDirichlet`) are now supported for the momentum balance, also in the coupled free-flow system, where the constrained rows are decoupled from the mass balance. A constraint on a velocity dof on a periodic boundary also constrains its periodic partner.
+- __Face-centered staggered__: The grid geometry accepts an overlap of one or more cells for parallel computations instead of exactly one.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 
