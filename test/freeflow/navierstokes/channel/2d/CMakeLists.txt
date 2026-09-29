@@ -87,6 +87,40 @@ dumux_add_test(NAME test_ff_stokes_channel_iterative
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_channel params.input -Problem.OutletCondition Outflow
                              -LinearSolver.UseIterativeSolver true -Problem.Name test_ff_stokes_channel_iterative")
 
+# A small time step, where the storage term dominates the velocity block: with the transient pressure operator
+# the Stokes solver needs fewer than 100 iterations per solve, with the default pressure mass matrix about 400,
+# so the iteration limit fails if the pressure operator is not used.
+dumux_add_test(NAME test_ff_stokes_channel_transient_stokessolver
+              SOURCES main_stokessolver.cc
+              LABELS freeflow navierstokes
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_transient_stokessolver-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_transient_stokessolver-00003.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_transient_stokessolver params.input
+                             -Problem.Name test_ff_stokes_channel_transient_stokessolver
+                             -TimeLoop.DtInitial 1e-3 -TimeLoop.TEnd 3e-3
+                             -LinearSolver.PressureOperator Transient -LinearSolver.Type fgmres
+                             -LinearSolver.Preconditioner.Mode Triangular -LinearSolver.Preconditioner.AMGForPressure true
+                             -LinearSolver.Preconditioner.SSORForVelocity true -LinearSolver.MaxIterations 150
+                             -LinearSolver.CheckKeptMatrix true")
+
+dumux_add_test(NAME test_ff_stokes_channel_transient_stokessolver_parallel
+              TARGET test_ff_stokes_channel_transient_stokessolver
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_MPI
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS       --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_transient_stokessolver-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_channel_transient_stokessolver_parallel-00003.pvtu
+                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_transient_stokessolver params.input
+                             -Problem.Name test_ff_stokes_channel_transient_stokessolver_parallel
+                             -TimeLoop.DtInitial 1e-3 -TimeLoop.TEnd 3e-3
+                             -LinearSolver.PressureOperator Transient -LinearSolver.Type fgmres
+                             -LinearSolver.Preconditioner.Mode Triangular -LinearSolver.Preconditioner.AMGForPressure true
+                             -LinearSolver.Preconditioner.SSORForVelocity true -LinearSolver.MaxIterations 150
+                             -LinearSolver.CheckKeptMatrix true")
+
 add_executable(test_ff_stokesni_channel EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_stokesni_channel PUBLIC "NONISOTHERMAL=1")
 
