@@ -323,8 +323,13 @@ public:
             }
         };
 
+        const bool interiorElement = element.partitionType() == Dune::InteriorEntity;
         for (const auto& scv : scvs(fvGeometry))
         {
+            // of an overlap element only the border dofs have assembled equations, the others have identity rows
+            if (!interiorElement && element.template subEntity<1>(scv.indexInElement()).partitionType() != Dune::BorderEntity)
+                continue;
+
             // the equation of a dof with an internal Dirichlet constraint does not depend on the other domain
             if constexpr (Problem::enableInternalDirichletConstraints())
             {
