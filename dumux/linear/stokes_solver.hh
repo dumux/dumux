@@ -312,6 +312,9 @@ private:
 
         // invert pressure block
         applyPreconditionerForP_(v[_1], dTmp[_1]);
+        if (pressureDiagonal_)
+            for (std::size_t i = 0; i < v[_1].size(); ++i)
+                v[_1][i] += (*pressureDiagonal_)[i]*d[_1][i];
 
         return v;
     }
@@ -362,6 +365,24 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
 #endif
         }
+        // a few smoothing sweeps suffice where the velocity block is dominated by its storage term
+        else if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.SSORForVelocity", false))
+        {
+            const auto sweeps = getParamFromGroup<int>(paramGroup_, "LinearSolver.Preconditioner.VelocitySweeps", 2);
+            const auto relaxation = getParamFromGroup<scalar_field_type>(paramGroup_, "LinearSolver.Preconditioner.VelocityRelaxation", 1.0);
+            auto ssor = std::make_shared<Dune::SeqSSOR<A,U,U>>(matrix_[_0][_0], sweeps, relaxation);
+#if HAVE_MPI
+            if (velComm_)
+            {
+                if (velComm_->category() == Dune::SolverCategory::nonoverlapping)
+                    preconditionerForA_ = std::make_shared<Dune::NonoverlappingBlockPreconditioner<Comm, Dune::SeqSSOR<A,U,U>>>(ssor, *velComm_);
+                else
+                    preconditionerForA_ = std::make_shared<Dune::BlockPreconditioner<U, U, Comm, Dune::SeqSSOR<A,U,U>>>(ssor, *velComm_);
+            }
+            else
+#endif
+                preconditionerForA_ = ssor;
+        }
         else
         {
 #if HAVE_MPI
@@ -407,6 +428,38 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Selected direct solver but UMFPack is not available.");
 #endif
         }
+        // a Poisson-type pressure operator, as for small time steps, needs more than a Jacobi iteration
+        else if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.Preconditioner.AMGForPressure", false))
+        {
+#if HAVE_MPI
+            if (presComm_)
+            {
+                if (presComm_->category() == Dune::SolverCategory::nonoverlapping)
+                {
+                    using PressOp = Dune::NonoverlappingSchwarzOperator<P, V, V, Comm>;
+                    using Smoother = Dune::NonoverlappingBlockPreconditioner<Comm, Dune::SeqSSOR<P,V,V>>;
+                    auto lopP = std::make_shared<PressOp>(pmatrix_, *presComm_);
+                    preconditionerForP_ = std::make_shared<
+                        Dune::Amg::AMG<PressOp, V, Smoother, Comm>>(lopP, params, *presComm_);
+                }
+                else
+                {
+                    using PressOp = Dune::OverlappingSchwarzOperator<P, V, V, Comm>;
+                    using Smoother = Dune::BlockPreconditioner<V, V, Comm, Dune::SeqSSOR<P,V,V>>;
+                    auto lopP = std::make_shared<PressOp>(pmatrix_, *presComm_);
+                    preconditionerForP_ = std::make_shared<
+                        Dune::Amg::AMG<PressOp, V, Smoother, Comm>>(lopP, params, *presComm_);
+                }
+            }
+            else
+#endif
+            {
+                auto lopP = std::make_shared<PressureLinearOperator>(pmatrix_);
+                preconditionerForP_ = std::make_shared<
+                    Dune::Amg::AMG<PressureLinearOperator, V, Dumux::ParMTSSOR<P,V,V>>
+                >(lopP, params);
+            }
+        }
         else
         {
             const std::size_t numIterations = pmatrix_.nonzeroes() == pmatrix_.N() ? 1 : 10;
@@ -447,6 +500,20 @@ private:
     {
         preconditionerForP_->apply(sol, rhs);
     }
+
+public:
+    /*!
+     * \brief Add a diagonal to the inverse of the pressure block
+     * \note For a transient problem the pressure operator approximates the Schur complement of the storage part
+     *       of the velocity block. The viscous part contributes a mass matrix scaled by the inverse viscosity,
+     *       whose inverse is this diagonal; both inverses are summed (Cahouet & Chabard,
+     *       Int. J. Numer. Meth. Fluids 8 (1988) 869-895).
+     */
+    void setPressureDiagonal(std::shared_ptr<const V> diagonal)
+    { pressureDiagonal_ = std::move(diagonal); }
+
+private:
+    std::shared_ptr<const V> pressureDiagonal_;
 
     //! \brief The matrix we operate on.
     const M& matrix_;
@@ -720,6 +787,7 @@ class StokesSolver
 : public LinearSolver
 {
     using Preconditioner = Detail::StokesPreconditioner<Matrix, Vector, Vector>;
+    using PressureVector = std::decay_t<decltype(std::declval<Vector>()[Dune::Indices::_1])>;
 
 #if HAVE_MPI
     using VTraits = LinearSolverTraits<VelocityGG>;
@@ -729,6 +797,9 @@ class StokesSolver
 #endif
 
 public:
+    //! The matrix type of the pressure operator of the preconditioner
+    using PressureMatrix = typename Preconditioner::PressureLinearOperator::matrix_type;
+
     /*!
      * \brief Constructor
      * \param vGridGeometry grid geometry of the velocity discretization
@@ -780,6 +851,123 @@ public:
         auto ATmp = A;
 
         return applyIterativeSolver_(ATmp, x, bTmp);
+    }
+
+    /*!
+     * \brief Keep a copy of the matrix, and the operator and preconditioner built on it, for solve(x, b)
+     * \note The preconditioner uses the pressure operator and diagonal set at the time of this call.
+     */
+    void setMatrix(const Matrix& A)
+    {
+        using namespace Dune::Indices;
+        // the operator and preconditioner refer to the kept matrix
+        keptComponents_ = {};
+        keptMatrix_ = std::make_shared<Matrix>(A);
+        eliminatedEntries_.reset();
+
+        if (symmetrizeDirichlet_())
+        {
+            // the symmetrization moves the known Dirichlet values to the right-hand side; the entries
+            // it eliminates are kept to do the same for every right-hand side passed to solve(x, b)
+            auto unusedRhs = dirichletDofs_;
+            symmetrizeConstraints(*keptMatrix_, unusedRhs, dirichletDofs_);
+            eliminatedEntries_ = std::make_shared<Matrix>(A);
+            *eliminatedEntries_ -= *keptMatrix_;
+        }
+
+        (*keptMatrix_)[_1] *= -1.0/density_;
+
+#if HAVE_MPI
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1 && isNonOverlapping_)
+                prepareParallelMatrix_(*keptMatrix_);
+        }
+#endif
+
+        keptComponents_ = makeSolverComponents_(*keptMatrix_);
+    }
+
+    //! \copydoc setMatrix(const Matrix&)
+    void setMatrix(std::shared_ptr<Matrix> A)
+    { setMatrix(*A); }
+
+    //! Solve with the matrix kept by setMatrix
+    bool solve(Vector& x, const Vector& b)
+    {
+        if (!keptMatrix_)
+            DUNE_THROW(Dune::InvalidStateException, "Called solve(x, b) but no matrix has been set");
+
+        using namespace Dune::Indices;
+        auto bTmp = b;
+        if (eliminatedEntries_)
+        {
+            auto dirichletValues = b;
+            Dune::Hybrid::forEach(std::make_index_sequence<Vector::size()>{}, [&](auto i)
+            {
+                for (std::size_t k = 0; k < dirichletValues[i].size(); ++k)
+                    for (std::size_t c = 0; c < dirichletValues[i][k].size(); ++c)
+                        dirichletValues[i][k][c] *= dirichletDofs_[i][k][c];
+            });
+            eliminatedEntries_->mmv(dirichletValues, bTmp);
+        }
+
+        bTmp[_1] *= -1.0/density_;
+
+#if HAVE_MPI
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1)
+            {
+                prepareParallelRhs_(bTmp);
+                const bool converged = runSolver_(keptComponents_.op, scalarProduct_, keptComponents_.preconditioner, x, bTmp);
+                makeConsistent(x);
+                return converged;
+            }
+        }
+#endif
+        return runSolver_(keptComponents_.op, scalarProduct_, keptComponents_.preconditioner, x, bTmp);
+    }
+
+    /*!
+     * \brief Use the given matrix in place of the pressure mass matrix in the preconditioner
+     * \note The matrix has to approximate the pressure Schur complement of the system. The viscosity-weighted
+     *       mass matrix does so for a Stokes problem dominated by viscosity; a transient problem with a small
+     *       time step is dominated by the storage term of the velocity block and calls for a Poisson-type
+     *       operator weighted by the time step size and the inverse density.
+     * \note On a non-overlapping decomposition the rows of border dofs have to be complete.
+     */
+    void setPressureMatrix(std::shared_ptr<const PressureMatrix> matrix)
+    { pressureMatrix_ = std::move(matrix); }
+
+    //! Set the diagonal added to the inverse of the pressure block (see StokesPreconditioner::setPressureDiagonal)
+    void setPressureDiagonal(std::shared_ptr<const PressureVector> diagonal)
+    { pressureDiagonal_ = std::move(diagonal); }
+
+    //! Give the copies of shared degrees of freedom the values of their owners
+    void makeConsistent(Vector& v) const
+    {
+#if HAVE_MPI
+        using namespace Dune::Indices;
+        if (vComm_ && pComm_)
+        {
+            vComm_->copyOwnerToAll(v[_0], v[_0]);
+            pComm_->copyOwnerToAll(v[_1], v[_1]);
+        }
+#endif
+    }
+
+    //! Set the entries of shared degrees of freedom this process does not own to zero
+    void makeUnique(Vector& v) const
+    {
+#if HAVE_MPI
+        using namespace Dune::Indices;
+        if (vComm_ && pComm_)
+        {
+            Detail::makeUnique(*vComm_, v[_0]);
+            Detail::makeUnique(*pComm_, v[_1]);
+        }
+#endif
     }
 
     Scalar norm(const Vector& b) const
@@ -845,10 +1033,13 @@ private:
     }
 #endif
 
+    bool symmetrizeDirichlet_() const
+    { return getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.SymmetrizeDirichlet", true); }
+
     bool applyIterativeSolver_(Matrix& A, Vector& x, Vector& b)
     {
         // make Dirichlet boundary conditions symmetric
-        if (getParamFromGroup<bool>(this->paramGroup(), "LinearSolver.SymmetrizeDirichlet", true))
+        if (symmetrizeDirichlet_())
             symmetrizeConstraints(A, b, dirichletDofs_);
 
         // make Matrix symmetric on the block-scale
@@ -860,52 +1051,63 @@ private:
         if constexpr (canCommunicate_)
         {
             if (vGridGeometry_->gridView().comm().size() > 1)
-                return solveParallel_(A, x, b);
+            {
+                if (isNonOverlapping_)
+                    prepareParallelMatrix_(A);
+                prepareParallelRhs_(b);
+                const auto components = makeSolverComponents_(A);
+                const bool converged = runSolver_(components.op, scalarProduct_, components.preconditioner, x, b);
+                makeConsistent(x);
+                return converged;
+            }
         }
 #endif
-        return solveSequential_(A, x, b);
+        const auto components = makeSolverComponents_(A);
+        return runSolver_(components.op, scalarProduct_, components.preconditioner, x, b);
     }
 
-    bool solveSequential_(Matrix& A, Vector& x, Vector& b)
+    //! What a solve needs besides the matrix
+    struct SolverComponents
     {
-        auto op  = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
-        auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
-        auto preconditioner = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
-        return runSolver_(op, scalarProduct_, preconditioner, x, b);
+        std::shared_ptr<Dune::LinearOperator<Vector, Vector>> op;
+        std::shared_ptr<Dune::Preconditioner<Vector, Vector>> preconditioner;
+        // the preconditioner refers to the matrix of the pressure operator
+        std::shared_ptr<typename Preconditioner::PressureLinearOperator> pressureOperator;
+    };
+
+    SolverComponents makeSolverComponents_(const Matrix& A)
+    {
+        SolverComponents components;
+        components.pressureOperator = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
+        auto assembledOperator = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
+
+#if HAVE_MPI
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1)
+            {
+                // the preconditioner needs the assembled operator, the Krylov solver the parallel one
+                components.op = std::make_shared<Detail::ParallelStokesLinearOperator<Matrix, Vector, Vector>>(
+                    A, vComm_, pComm_, isNonOverlapping_);
+                auto preconditioner = std::make_shared<Preconditioner>(
+                    assembledOperator, components.pressureOperator, params_.sub("preconditioner"), vComm_, pComm_);
+                preconditioner->setPressureDiagonal(pressureDiagonal_);
+                components.preconditioner = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
+                    preconditioner, vComm_, pComm_, isNonOverlapping_);
+                return components;
+            }
+        }
+#endif
+
+        auto preconditioner = std::make_shared<Preconditioner>(assembledOperator, components.pressureOperator, params_.sub("preconditioner"));
+        preconditioner->setPressureDiagonal(pressureDiagonal_);
+        components.op = assembledOperator;
+        components.preconditioner = preconditioner;
+        return components;
     }
 
 #if HAVE_MPI
-    bool solveParallel_(Matrix& A, Vector& x, Vector& b)
-    {
-        using namespace Dune::Indices;
-
-        if (isNonOverlapping_)
-            prepareParallelLinearSystem_(A, b);
-        else
-        {
-            Detail::makeUnique(*vComm_, b[_0]);
-            Detail::makeUnique(*pComm_, b[_1]);
-        }
-
-        // the preconditioner needs the assembled operator, the Krylov solver the parallel one
-        auto innerOp = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
-        auto op = std::make_shared<Detail::ParallelStokesLinearOperator<Matrix, Vector, Vector>>(
-            A, vComm_, pComm_, isNonOverlapping_);
-        auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
-        auto seqPrec = std::make_shared<Preconditioner>(innerOp, pop, params_.sub("preconditioner"), vComm_, pComm_);
-        auto prec = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
-            seqPrec, vComm_, pComm_, isNonOverlapping_);
-
-        const bool converged = runSolver_(op, scalarProduct_, prec, x, b);
-
-        // broadcast solution from owned to ghost DOFs
-        vComm_->copyOwnerToAll(x[_0], x[_0]);
-        pComm_->copyOwnerToAll(x[_1], x[_1]);
-
-        return converged;
-    }
-
-    void prepareParallelLinearSystem_(Matrix& A, Vector& b)
+    void prepareParallelMatrix_(Matrix& A)
     {
         using namespace Dune::Indices;
         using GridView = typename VelocityGG::GridView;
@@ -922,15 +1124,24 @@ private:
             velHelper(gv, *vDofMapper_, velCodims);
         velHelper.extendMatrix(A[_0][_0], [](auto){ return false; });
         velHelper.sumEntries(A[_0][_0]);
+    }
 
-        using VelVec  = std::decay_t<decltype(b[_0])>;
-        using PresVec = std::decay_t<decltype(b[_1])>;
-        using VNonoverlapping  = typename VTraits::template ParallelNonoverlapping<VelBlock, VelVec>;
-        using PNonoverlapping  = typename PTraits::template ParallelNonoverlapping<
-            std::decay_t<decltype(A[_1][_1])>, PresVec>;
-        prepareVectorParallel<VTraits, VNonoverlapping>(b[_0], *vParallelHelper_);
-        prepareVectorParallel<PTraits, PNonoverlapping>(b[_1], *pParallelHelper_);
-        // the summed right-hand side is consistent; like the operator's result it has to be unique
+    //! Bring the right-hand side into the unique representation the operator's result has
+    void prepareParallelRhs_(Vector& b)
+    {
+        using namespace Dune::Indices;
+        if (isNonOverlapping_)
+        {
+            using VelVec  = std::decay_t<decltype(b[_0])>;
+            using PresVec = std::decay_t<decltype(b[_1])>;
+            using VNonoverlapping = typename VTraits::template ParallelNonoverlapping<
+                std::decay_t<decltype(std::declval<Matrix>()[_0][_0])>, VelVec>;
+            using PNonoverlapping = typename PTraits::template ParallelNonoverlapping<
+                std::decay_t<decltype(std::declval<Matrix>()[_1][_1])>, PresVec>;
+            prepareVectorParallel<VTraits, VNonoverlapping>(b[_0], *vParallelHelper_);
+            prepareVectorParallel<PTraits, PNonoverlapping>(b[_1], *pParallelHelper_);
+        }
+
         Detail::makeUnique(*vComm_, b[_0]);
         Detail::makeUnique(*pComm_, b[_1]);
     }
@@ -963,6 +1174,8 @@ private:
             solver = std::make_unique<Dune::BiCGSTABSolver<Vector>>(op, sp, prec, params_);
         else if (solverType_ == "gmres")
             solver = std::make_unique<Dune::RestartedGMResSolver<Vector>>(op, sp, prec, params_);
+        else if (solverType_ == "fgmres")
+            solver = std::make_unique<Dune::RestartedFlexibleGMResSolver<Vector>>(op, sp, prec, params_);
         else
             DUNE_THROW(Dune::NotImplemented, "Solver choice " << solverType_ << " is not implemented");
 
@@ -973,6 +1186,9 @@ private:
     template<class LinearOperator>
     std::shared_ptr<LinearOperator> makePressureLinearOperator_()
     {
+        if (pressureMatrix_)
+            return std::make_shared<LinearOperator>(pressureMatrix_);
+
         using M = typename LinearOperator::matrix_type;
         auto massMatrix = createMassMatrix_<M>();
         return std::make_shared<LinearOperator>(massMatrix);
@@ -1069,6 +1285,12 @@ private:
     std::string solverType_;
 
     std::shared_ptr<Dune::ScalarProduct<Vector>> scalarProduct_;
+
+    std::shared_ptr<const PressureMatrix> pressureMatrix_;
+    std::shared_ptr<const PressureVector> pressureDiagonal_;
+    std::shared_ptr<Matrix> keptMatrix_;
+    std::shared_ptr<Matrix> eliminatedEntries_;
+    SolverComponents keptComponents_;
 
 #if HAVE_MPI
     std::shared_ptr<const typename VTraits::DofMapper> vDofMapper_;
