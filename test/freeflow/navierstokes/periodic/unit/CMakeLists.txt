@@ -71,6 +71,26 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet_top
                                         -Newton.EnableShiftCriterion false
                                         -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
 
+# without caching, the local views own their sub-control volumes
+dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching
+               SOURCES main.cc
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
+               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 ENABLECACHING=0
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_internaldirichlet_periodic-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching params.input
+                                        -Problem.Name test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching
+                                        -Problem.UseMomentumInternalDirichlet true
+                                        -Problem.MomentumInternalDirichletPosY 0.0
+                                        -Problem.UseVelocityProfile true
+                                        -Problem.EnableInertiaTerms false
+                                        -Newton.MinSteps 1 -Newton.MaxSteps 1
+                                        -Newton.EnableShiftCriterion false
+                                        -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
+
 add_executable(test_ff_navierstokes_periodic_subgrid EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_navierstokes_periodic_subgrid PUBLIC UPWINDSCHEMEORDER=1 USESUBGRID=1)
 

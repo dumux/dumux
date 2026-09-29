@@ -13,6 +13,9 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_PERIODIC_PROPERTIES_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_PERIODIC_PROPERTIES_HH
 
+#ifndef ENABLECACHING
+#define ENABLECACHING 1
+#endif
 
 #include <dune/grid/spgrid.hh>
 #if HAVE_DUNE_SUBGRID
@@ -78,11 +81,11 @@ struct Problem<TypeTag, TTag::PeriodicTestMass>
 { using type = PeriodicTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
 
 template<class TypeTag>
-struct EnableGridGeometryCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
+struct EnableGridGeometryCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridFluxVariablesCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
+struct EnableGridFluxVariablesCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = ENABLECACHING; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = true; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::PeriodicTest> { static constexpr bool value = ENABLECACHING; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::PeriodicTest>
