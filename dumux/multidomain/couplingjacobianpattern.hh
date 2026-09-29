@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <dune/common/indices.hh>
 #include <dune/istl/matrixindexset.hh>
+#include <dumux/common/typetraits/periodic.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
@@ -188,9 +189,16 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
             const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
             for (const auto& localDof : localDofs(fvGeometry))
             {
+                const auto globalI = localDof.dofIndex();
                 for (const auto globalJ : stencil)
-                    pattern.add(localDof.dofIndex(), globalJ);
+                {
+                    pattern.add(globalI, globalJ);
 
+                    // the periodic constraint adds the row of a periodic dof to its partner's row
+                    if constexpr (Detail::hasPeriodicDofMap<GridGeometryI>())
+                        if (gridGeometryI.isPeriodic() && gridGeometryI.dofOnPeriodicBoundary(globalI))
+                            pattern.add(gridGeometryI.periodicallyMappedDof(globalI), globalJ);
+                }
             }
         }
     }
