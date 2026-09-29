@@ -107,11 +107,17 @@ public:
 
     /*!
      * \brief Evaluates the complete local residual for the current element.
+     * \note With a multi-stage assembler this is the stage-weighted residual of the current stage.
      * \param elemVars The element variables
      */
     ElementResidualVector evalLocalResidual(const ElementVariables& elemVars) const
     {
-        if (!assembler().isStationaryProblem())
+        if constexpr (requires (const Assembler& a) { a.currentStageWeights(); })
+        {
+            const auto [temporalWeight, spatialWeight] = assembler().currentStageWeights();
+            return evalLocalResidualForStage(elemVars, temporalWeight, spatialWeight);
+        }
+        else if (!assembler().isStationaryProblem())
         {
             ElementResidualVector residual = evalLocalFluxAndSourceResidual(elemVars);
             residual += evalLocalStorageResidual();

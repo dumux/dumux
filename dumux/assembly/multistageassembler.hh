@@ -16,6 +16,7 @@
 #include <vector>
 #include <deque>
 #include <memory>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 
@@ -309,6 +310,15 @@ public:
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
 
+    //! The temporal and spatial weight of the current stage
+    std::pair<Scalar, Scalar> currentStageWeights() const
+    {
+        if (!stageParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No stage params set. Call prepareStage first.");
+        const auto k = stageParams_->size() - 1;
+        return {stageParams_->temporalWeight(k), stageParams_->spatialWeight(k)};
+    }
+
 private:
     /*!
      * \brief Resizes the jacobian and sets the jacobian's sparsity pattern.
@@ -452,18 +462,15 @@ private:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
-    // TODO make this nicer with a is_detected trait in a common location
     template<class P>
     void setProblemTime_(const P& p, const Scalar t)
-    { setProblemTimeImpl_(p, t, 0); }
-
-    template<class P>
-    auto setProblemTimeImpl_(const P& p, const Scalar t, int) -> decltype(p.setTime(0))
-    { p.setTime(t); }
-
-    template<class P>
-    void setProblemTimeImpl_(const P& p, const Scalar t, long)
-    {}
+    {
+        if constexpr (requires { p.setTime(t); })
+            p.setTime(t);
+        else
+            static_assert(!requires (P& q) { q.setTime(Scalar{}); },
+                "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
+    }
 
     std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> timeSteppingMethod_;
     std::vector<ResidualType> spatialOperatorEvaluations_;

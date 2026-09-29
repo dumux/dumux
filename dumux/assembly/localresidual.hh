@@ -74,22 +74,23 @@ public:
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param elemDisc The element discretization
-     * \param prevElemVars The variables for all local dofs of the element at the previous time level
-     * \param curElemVars The variables for all local dofs of the element at the current  time level
+     * \param elemVars The variables for all local dofs of the element
      */
     ElementResidualVector evalStorageCurrentLevel(const Element& element,
-                                                   const ElementDiscretization& fvGeometry,
+                                                   const ElementDiscretization& elemDisc,
                                                    const ElementVariables& elemVars) const
     {
-        ElementResidualVector storage(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+        checkStorageHook_();
+
+        ElementResidualVector storage(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
 
         if constexpr (Concepts::FVElementDiscretization<ElementDiscretization>)
-            for (const auto& scv : scvs(fvGeometry))
+            for (const auto& scv : scvs(elemDisc))
                 storage[scv.localDofIndex()] =
-                    this->asImp().storageIntegral(fvGeometry, elemVars, scv, /*isPreviousTimeLevel=*/false);
+                    this->asImp().storageIntegral(elemDisc, elemVars, scv, /*isPreviousTimeLevel=*/false);
 
         // allow models to contribute additional storage terms (e.g. hybrid CVFE/FE)
-        this->asImp().addToElementStorageResidual(storage, this->problem(), element, fvGeometry, elemVars, elemVars);
+        this->asImp().addToElementStorage(storage, this->problem(), element, elemDisc, elemVars, /*isPreviousTimeLevel=*/false);
 
         return storage;
     }
@@ -113,7 +114,15 @@ public:
         }
 
         // allow for additional contributions (e.g. hybrid CVFE / FE schemes)
-        this->asImp().addToElementStorageResidual(residual, this->problem(), element, elemDisc, prevElemVars, curElemVars);
+        // discretized in time in the same way as the scv storage terms
+        checkStorageHook_();
+        ElementResidualVector additionalStorage(residual.size());
+        ElementResidualVector additionalPrevStorage(residual.size());
+        this->asImp().addToElementStorage(additionalStorage, this->problem(), element, elemDisc, curElemVars, /*isPreviousTimeLevel=*/false);
+        this->asImp().addToElementStorage(additionalPrevStorage, this->problem(), element, elemDisc, prevElemVars, /*isPreviousTimeLevel=*/true);
+        additionalStorage -= additionalPrevStorage;
+        additionalStorage /= timeLoop_->timeStepSize();
+        residual += additionalStorage;
 
         return residual;
     }
@@ -156,13 +165,24 @@ public:
         return residual;
     }
 
-    //! add additional storage contributions (e.g. hybrid CVFE or FE schemes)
-    void addToElementStorageResidual(ElementResidualVector& residual,
-                                     const Problem& problem,
-                                     const Element& element,
-                                     const ElementDiscretization& elemDisc,
-                                     const ElementVariables& prevElemVars,
-                                     const ElementVariables& curElemVars) const
+    /*!
+     * \brief Add additional storage contributions at one time level (e.g. hybrid CVFE or FE schemes)
+     * \note This is the storage itself, not its time derivative. The time discretization is applied
+     *       by the caller, as for storageIntegral().
+     *
+     * \param storage The element storage vector to add to
+     * \param problem The problem
+     * \param element The element
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element at the given time level
+     * \param isPreviousTimeLevel If the variables belong to the previous time level
+     */
+    void addToElementStorage(ElementResidualVector& storage,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars,
+                             bool isPreviousTimeLevel) const
     {}
 
     //! add additional flux and source contributions (e.g. hybrid CVFE or FE schemes)
@@ -419,6 +439,13 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
+    static constexpr void checkStorageHook_()
+    {
+        static_assert(!requires { &Implementation::addToElementStorageResidual; },
+            "addToElementStorageResidual(prevElemVars, curElemVars) is not called anymore. "
+            "Implement addToElementStorage(..., elemVars, isPreviousTimeLevel) returning the storage at one time level.");
+    }
+
     const Problem* problem_; //!< the problem we are assembling this residual for
     const TimeLoop* timeLoop_; //!< the time loop for instationary problems
 };

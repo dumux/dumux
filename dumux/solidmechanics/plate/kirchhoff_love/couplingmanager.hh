@@ -29,6 +29,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 
 namespace Dumux {
 

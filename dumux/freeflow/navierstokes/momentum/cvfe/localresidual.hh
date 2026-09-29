@@ -300,16 +300,14 @@ public:
         return flux;
     }
 
-    void addToElementStorageResidual(ElementResidualVector& residual,
-                                     const Problem& problem,
-                                     const Element& element,
-                                     const ElementDiscretization& elemDisc,
-                                     const ElementVariables& prevElemVars,
-                                     const ElementVariables& curElemVars) const
+    void addToElementStorage(ElementResidualVector& storage,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars,
+                             bool isPreviousTimeLevel) const
     {
-        FeResidual::addStorageTerms(
-            residual, problem, elemDisc, prevElemVars, curElemVars, this->timeLoop().timeStepSize()
-        );
+        FeResidual::addStorageTerms(storage, problem, elemDisc, elemVars, isPreviousTimeLevel);
     }
 
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
