@@ -15,6 +15,9 @@
 #include <type_traits>
 #include <memory>
 #include <tuple>
+#include <map>
+#include <algorithm>
+#include <cmath>
 
 #include <dune/common/parametertree.hh>
 #include <dune/common/hybridutilities.hh>
@@ -25,6 +28,12 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/paamg/amg.hh>
+
+#if HAVE_MPI
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/schwarz.hh>
+#include <dune/istl/novlpschwarz.hh>
+#endif
 
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
@@ -39,6 +48,50 @@
 #include <dumux/assembly/jacobianpattern.hh>
 
 namespace Dumux::Detail {
+
+#if HAVE_MPI
+//! Keep the entries of owned dofs and set those of all other shared dofs to zero,
+//! i.e. the unique representation (Blatt & Bastian §2.5)
+template<class Comm, class Block>
+void makeUnique(const Comm& comm, Block& v)
+{
+    using Attr = Dune::OwnerOverlapCopyAttributeSet;
+    for (const auto& pair : comm.indexSet())
+        if (pair.local().attribute() != Attr::owner)
+            v[pair.local().local()] = 0.0;
+}
+
+//! Set the entries of overlap dofs to zero
+template<class Comm, class Block>
+void zeroOverlap(const Comm& comm, Block& v)
+{
+    using Attr = Dune::OwnerOverlapCopyAttributeSet;
+    for (const auto& pair : comm.indexSet())
+        if (pair.local().attribute() == Attr::overlap)
+            v[pair.local().local()] = 0.0;
+}
+
+/*!
+ * \brief Complete the product y = M x of an off-diagonal block M with a consistent x to the unique representation
+ * \note On a non-overlapping decomposition M is stored additively. Summing the partial products of all processes
+ *       also completes the rows at the processor border whose stencil reaches dofs that only a neighbouring
+ *       process assembles.
+ */
+template<class Comm, class Block>
+void completeCouplingResult(const Comm& comm, Block& y)
+{
+    // on an overlapping decomposition the owned rows are complete already
+    if (comm.category() == Dune::SolverCategory::overlapping)
+    {
+        makeUnique(comm, y);
+        return;
+    }
+
+    zeroOverlap(comm, y);
+    comm.addOwnerCopyToOwnerCopy(y, y);
+    makeUnique(comm, y);
+}
+#endif
 
 /*!
  * \ingroup Linear
@@ -71,6 +124,10 @@ class StokesPreconditioner : public Dune::Preconditioner<X,Y>
 
     enum class Mode { symmetric, triangular,  diagonal };
 
+#if HAVE_MPI
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+#endif
+
 public:
     //! \brief The matrix type the preconditioner is for.
     using matrix_type = M;
@@ -86,9 +143,9 @@ public:
     using PressureLinearOperator = Dune::MatrixAdapter<P,V,V>;
 
     /*!
-     * \brief Constructor
+     * \brief Constructor (sequential)
      * \param fullLinearOperator the Stokes linear operator
-     * \param pressureLinearOperator the linear operator to be used for the pressure space preconditioner
+     * \param pressureLinearOperator the linear operator for the pressure space preconditioner
      * \param params a parameter tree for the preconditioner configuration
      */
     StokesPreconditioner(
@@ -101,24 +158,47 @@ public:
     , verbosity_(params.get<int>("verbosity"))
     , paramGroup_(params.get<std::string>("ParameterGroup"))
     {
-        const auto mode = getParamFromGroup<std::string>(
-            paramGroup_, "LinearSolver.Preconditioner.Mode", "Diagonal"
-        );
-
-        if (mode == "Symmetric")
-            mode_ = Mode::symmetric;
-        else if (mode == "Triangular")
-            mode_ = Mode::triangular;
-        else
-            mode_ = Mode::diagonal;
-
+        initMode_(params);
         initPreconditioner_(params);
     }
 
+#if HAVE_MPI
     /*!
-     * \brief Prepare the preconditioner.
+     * \brief Constructor (parallel)
+     * \param fullLinearOperator the Stokes linear operator
+     * \param pressureLinearOperator the linear operator for the pressure space preconditioner
+     * \param params a parameter tree for the preconditioner configuration
+     * \param velComm OwnerOverlapCopy communication for the velocity DOFs
+     * \param presComm OwnerOverlapCopy communication for the pressure DOFs
      */
-    void pre(X& update, Y& currentDefect) override {}
+    StokesPreconditioner(
+        const std::shared_ptr<const Dune::AssembledLinearOperator<M,X,Y>>& fullLinearOperator,
+        const std::shared_ptr<const PressureLinearOperator>& pressureLinearOperator,
+        const Dune::ParameterTree& params,
+        std::shared_ptr<Comm> velComm,
+        std::shared_ptr<Comm> presComm = nullptr
+    )
+    : matrix_(fullLinearOperator->getmat())
+    , pmatrix_(pressureLinearOperator->getmat())
+    , verbosity_(params.get<int>("verbosity"))
+    , paramGroup_(params.get<std::string>("ParameterGroup"))
+    , velComm_(std::move(velComm))
+    , presComm_(std::move(presComm))
+    {
+        initMode_(params);
+        initPreconditioner_(params);
+    }
+#endif
+
+    /*!
+     * \brief Prepare the preconditioners of the velocity and the pressure block
+     */
+    void pre(X& update, Y& currentDefect) override
+    {
+        using namespace Dune::Indices;
+        preconditionerForA_->pre(update[_0], currentDefect[_0]);
+        preconditionerForP_->pre(update[_1], currentDefect[_1]);
+    }
 
     /*!
      * \brief Apply the preconditioner
@@ -151,9 +231,14 @@ public:
     }
 
     /*!
-     * \brief Clean up.
+     * \brief Clean up the preconditioners of the velocity and the pressure block
      */
-    void post(X& update) override {}
+    void post(X& update) override
+    {
+        using namespace Dune::Indices;
+        preconditionerForA_->post(update[_0]);
+        preconditionerForP_->post(update[_1]);
+    }
 
     //! Category of the preconditioner (see SolverCategory::Category)
     Dune::SolverCategory::Category category() const override
@@ -162,6 +247,22 @@ public:
     }
 
 private:
+    void initMode_(const Dune::ParameterTree& params)
+    {
+        const auto mode = getParamFromGroup<std::string>(
+            paramGroup_, "LinearSolver.Preconditioner.Mode", "Diagonal"
+        );
+
+        auto lower = mode;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        if (lower == "symmetric")
+            mode_ = Mode::symmetric;
+        else if (lower == "triangular")
+            mode_ = Mode::triangular;
+        else
+            mode_ = Mode::diagonal;
+    }
+
     X applyRightBlock_(const Y& d)
     {
         using namespace Dune::Indices;
@@ -176,11 +277,15 @@ private:
         auto dTmp0 = d[_0];
         auto vTmp = d; vTmp = 0.0;
 
-        // invert velocity block (apply to first block of d)
+        // invert velocity block (apply to first block of d), the result is consistent
         applyPreconditionerForA_(vTmp[_0], dTmp0);
 
-        // then multiply with C
+        // then multiply with C, in parallel completed to the unique representation of d[_1]
         matrix_[_1][_0].mv(vTmp[_0], vTmp[_1]);
+#if HAVE_MPI
+        if (presComm_)
+            completeCouplingResult(*presComm_, vTmp[_1]);
+#endif
 
         // and subtract from d
         auto v = d;
@@ -225,8 +330,12 @@ private:
         auto dTmp = d;
         auto vTmp = d; vTmp = 0.0;
 
-        // multiply with B
+        // multiply with B, in parallel completed to the unique defect the velocity preconditioner expects
         matrix_[_0][_1].umv(dTmp[_1], vTmp[_0]);
+#if HAVE_MPI
+        if (velComm_)
+            completeCouplingResult(*velComm_, vTmp[_0]);
+#endif
 
         // invert velocity block (apply to first block of d)
         auto vTmp0 = vTmp[_0]; vTmp0 = 0.0;
@@ -255,11 +364,37 @@ private:
         }
         else
         {
-            using VelLinearOperator = Dune::MatrixAdapter<A, U, U>;
-            auto lopV = std::make_shared<VelLinearOperator>(matrix_[_0][_0]);
-            preconditionerForA_ = std::make_shared<
-                Dune::Amg::AMG<VelLinearOperator, U, Dumux::ParMTSSOR<A,U,U>>
-            >(lopV, params);
+#if HAVE_MPI
+            if (velComm_)
+            {
+                const bool nonov = (velComm_->category()
+                                    == Dune::SolverCategory::nonoverlapping);
+                if (nonov)
+                {
+                    using VelOp = Dune::NonoverlappingSchwarzOperator<A, U, U, Comm>;
+                    using Smoother = Dune::NonoverlappingBlockPreconditioner<Comm, Dune::SeqSSOR<A,U,U>>;
+                    auto lopV = std::make_shared<VelOp>(matrix_[_0][_0], *velComm_);
+                    preconditionerForA_ = std::make_shared<
+                        Dune::Amg::AMG<VelOp, U, Smoother, Comm>>(lopV, params, *velComm_);
+                }
+                else
+                {
+                    using VelOp = Dune::OverlappingSchwarzOperator<A, U, U, Comm>;
+                    using Smoother = Dune::BlockPreconditioner<U, U, Comm, Dune::SeqSSOR<A,U,U>>;
+                    auto lopV = std::make_shared<VelOp>(matrix_[_0][_0], *velComm_);
+                    preconditionerForA_ = std::make_shared<
+                        Dune::Amg::AMG<VelOp, U, Smoother, Comm>>(lopV, params, *velComm_);
+                }
+            }
+            else
+#endif
+            {
+                using VelLinearOperator = Dune::MatrixAdapter<A, U, U>;
+                auto lopV = std::make_shared<VelLinearOperator>(matrix_[_0][_0]);
+                preconditionerForA_ = std::make_shared<
+                    Dune::Amg::AMG<VelLinearOperator, U, Dumux::ParMTSSOR<A,U,U>>
+                >(lopV, params);
+            }
         }
 
         if (getParamFromGroup<bool>(paramGroup_, "LinearSolver.DirectSolverForPressure", false))
@@ -274,26 +409,43 @@ private:
         }
         else
         {
-            using PressJacobi = Dumux::ParMTJac<P, V, V>;
-            std::size_t numIterations = pmatrix_.nonzeroes() == pmatrix_.N() ? 1 : 10;
-            preconditionerForP_ = std::make_shared<PressJacobi>(pmatrix_, numIterations, 1.0);
+            const std::size_t numIterations = pmatrix_.nonzeroes() == pmatrix_.N() ? 1 : 10;
+#if HAVE_MPI
+            if (presComm_)
+            {
+                const bool nonovP = (presComm_->category()
+                                      == Dune::SolverCategory::nonoverlapping);
+                auto seqJacP = std::make_shared<Dune::SeqJac<P,V,V>>(pmatrix_, numIterations, 1.0);
+                if (nonovP)
+                {
+                    using PressJacobi = Dune::NonoverlappingBlockPreconditioner<Comm, Dune::SeqJac<P,V,V>>;
+                    preconditionerForP_ = std::make_shared<PressJacobi>(seqJacP, *presComm_);
+                }
+                else
+                {
+                    using PressJacobi = Dune::BlockPreconditioner<V, V, Comm, Dune::SeqJac<P,V,V>>;
+                    preconditionerForP_ = std::make_shared<PressJacobi>(seqJacP, *presComm_);
+                }
+            }
+            else
+#endif
+            {
+                using PressJacobi = Dumux::ParMTJac<P, V, V>;
+                preconditionerForP_ = std::make_shared<PressJacobi>(pmatrix_, numIterations, 1.0);
+            }
         }
     }
 
     template<class Sol, class Rhs>
     void applyPreconditionerForA_(Sol& sol, Rhs& rhs) const
     {
-        preconditionerForA_->pre(sol, rhs);
         preconditionerForA_->apply(sol, rhs);
-        preconditionerForA_->post(sol);
     }
 
     template<class Sol, class Rhs>
     void applyPreconditionerForP_(Sol& sol, Rhs& rhs) const
     {
-        preconditionerForP_->pre(sol, rhs);
         preconditionerForP_->apply(sol, rhs);
-        preconditionerForP_->post(sol);
     }
 
     //! \brief The matrix we operate on.
@@ -310,9 +462,250 @@ private:
 
     const std::string paramGroup_;
     Mode mode_;
+
+#if HAVE_MPI
+    std::shared_ptr<Comm> velComm_;
+    std::shared_ptr<Comm> presComm_;
+#endif
 };
 
-} // end namespace Detail
+#if HAVE_MPI
+
+/*!
+ * \brief Parallel linear operator for the Stokes saddle-point system
+ *
+ * The result is unique. On a non-overlapping decomposition ghost values propagate through
+ * identity rows as in the NonoverlappingSchwarzOperator.
+ */
+template<class M, class X, class Y>
+class ParallelStokesLinearOperator : public Dune::LinearOperator<X, Y>
+{
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+public:
+    using matrix_type = M;
+    using domain_type = X;
+    using range_type  = Y;
+    using field_type  = typename X::field_type;
+
+    ParallelStokesLinearOperator(const M& A,
+                                  std::shared_ptr<Comm> vComm,
+                                  std::shared_ptr<Comm> pComm,
+                                  bool nonOverlapping)
+    : A_(A), localOp_(A), vComm_(std::move(vComm)), pComm_(std::move(pComm))
+    , nonOverlapping_(nonOverlapping)
+    {
+#if HAVE_MPI
+        using namespace Dune::Indices;
+        if (nonOverlapping_)
+            velOp_ = std::make_shared<VelOp>(A_[_0][_0], *vComm_);
+#endif
+    }
+
+    void apply(const X& x, Y& y) const override
+    {
+        using namespace Dune::Indices;
+        if (nonOverlapping_)
+        {
+            applyNonoverlapping_(x, y);
+        }
+        else
+        {
+            // on an overlapping decomposition only the rows of owned dofs are complete
+            localOp_.apply(x, y);
+            makeUnique(*vComm_, y[_0]);
+            makeUnique(*pComm_, y[_1]);
+        }
+    }
+
+    void applyscaleadd(field_type alpha, const X& x, Y& y) const override
+    {
+        using namespace Dune::Indices;
+        Y Ax(y); Ax = 0;
+        apply(x, Ax);
+        y[_0].axpy(alpha, Ax[_0]);
+        y[_1].axpy(alpha, Ax[_1]);
+    }
+
+private:
+    using A00t = std::decay_t<decltype(std::declval<M>()[Dune::Indices::_0][Dune::Indices::_0])>;
+    using Ut   = std::decay_t<decltype(std::declval<X>()[Dune::Indices::_0])>;
+    using VelOp = Dune::NonoverlappingSchwarzOperator<A00t, Ut, Ut, Comm>;
+
+    //! The velocity block is summed over the processes and applied as NonoverlappingSchwarzOperator.
+    //! The off-diagonal blocks stay additive: the rows of border dofs can reach dofs that only a
+    //! neighbouring process assembles, so their partial products are summed instead.
+    void applyNonoverlapping_(const X& x, Y& y) const
+    {
+        using namespace Dune::Indices;
+
+        X xc(x);
+        vComm_->copyOwnerToAll(xc[_0], xc[_0]);
+        pComm_->copyOwnerToAll(xc[_1], xc[_1]);
+
+        velOp_->apply(xc[_0], y[_0]);
+
+        Ut bv(y[_0]); bv = 0.0;
+        A_[_0][_1].umv(xc[_1], bv);
+        zeroOverlap(*vComm_, bv);
+        vComm_->addOwnerCopyToOwnerCopy(bv, bv);
+        y[_0] += bv;
+
+        // the pressure block is nonzero only in constrained rows, e.g. a pressure pin
+        y[_1] = 0.0;
+        A_[_1][_0].umv(xc[_0], y[_1]);
+        A_[_1][_1].umv(xc[_1], y[_1]);
+        zeroOverlap(*pComm_, y[_1]);
+        pComm_->addOwnerCopyToOwnerCopy(y[_1], y[_1]);
+
+        // the defect b - Ax the preconditioner receives has to be unique (Blatt & Bastian §4.3)
+        makeUnique(*vComm_, y[_0]);
+        makeUnique(*pComm_, y[_1]);
+    }
+
+public:
+
+    Dune::SolverCategory::Category category() const override
+    {
+        return nonOverlapping_ ? Dune::SolverCategory::nonoverlapping
+                               : Dune::SolverCategory::overlapping;
+    }
+
+private:
+    const M& A_;
+    Dumux::ParallelMultiTypeMatrixAdapter<M, X, Y> localOp_;
+    std::shared_ptr<Comm> vComm_, pComm_;
+    bool nonOverlapping_;
+    std::shared_ptr<VelOp> velOp_;
+};
+
+/*!
+ * \brief Parallel wrapper of the Stokes saddle-point preconditioner
+ *
+ * Applies the StokesPreconditioner and makes its result consistent.
+ */
+template<class SeqPrec, class X, class Y>
+class ParallelStokesPreconditioner : public Dune::Preconditioner<X, Y>
+{
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+public:
+    using domain_type = X;
+    using range_type  = Y;
+    using field_type  = typename X::field_type;
+
+    ParallelStokesPreconditioner(std::shared_ptr<SeqPrec> seqPrec,
+                                  std::shared_ptr<Comm> vComm,
+                                  std::shared_ptr<Comm> pComm,
+                                  bool nonOverlapping)
+    : seqPrec_(std::move(seqPrec))
+    , vComm_(std::move(vComm)), pComm_(std::move(pComm))
+    , nonOverlapping_(nonOverlapping)
+    {}
+
+    void pre(X& v, Y& d) override
+    {
+        seqPrec_->pre(v, d);
+        communicateUpdate_(v);
+    }
+
+    void apply(X& v, const Y& d) override
+    {
+        seqPrec_->apply(v, d);
+        communicateUpdate_(v);
+    }
+
+    void post(X& v) override
+    {
+        seqPrec_->post(v);
+        communicateUpdate_(v);
+    }
+
+    Dune::SolverCategory::Category category() const override
+    {
+        return nonOverlapping_ ? Dune::SolverCategory::nonoverlapping
+                               : Dune::SolverCategory::overlapping;
+    }
+
+private:
+    void communicateUpdate_(X& v)
+    {
+        using namespace Dune::Indices;
+        // the Krylov solver works with consistent vectors; dofs that are not shared,
+        // such as bubble dofs, are not in the index set and need no communication
+        vComm_->copyOwnerToAll(v[_0], v[_0]);
+        pComm_->copyOwnerToAll(v[_1], v[_1]);
+    }
+
+    std::shared_ptr<SeqPrec> seqPrec_;
+    std::shared_ptr<Comm> vComm_, pComm_;
+    bool nonOverlapping_;
+};
+
+/*!
+ * \brief Parallel scalar product for the velocity-pressure vector of the Stokes system
+ *
+ * Every dof contributes once, on the process that owns it.
+ */
+template<class X>
+class ParallelStokesScalarProduct : public Dune::ScalarProduct<X>
+{
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+public:
+    using domain_type  = X;
+    using field_type   = typename X::field_type;
+    using real_type    = typename Dune::FieldTraits<field_type>::real_type;
+
+    ParallelStokesScalarProduct(std::shared_ptr<Comm> vComm,
+                                 std::shared_ptr<Comm> pComm,
+                                 bool nonOverlapping)
+    : vComm_(std::move(vComm)), pComm_(std::move(pComm))
+    , nonOverlapping_(nonOverlapping)
+    {}
+
+    field_type dot(const X& x, const X& y) const override
+    {
+        using namespace Dune::Indices;
+        using Attr = Dune::OwnerOverlapCopyAttributeSet;
+
+        // dofs that are not shared, such as bubble dofs, are not in the index set,
+        // so sum all local entries and subtract those of shared dofs owned elsewhere
+        field_type local = 0;
+
+        for (std::size_t i = 0; i < x[_0].size(); ++i)
+            local += Dune::dot(x[_0][i], y[_0][i]);
+        for (const auto& pair : vComm_->indexSet())
+            if (pair.local().attribute() != Attr::owner)
+                local -= Dune::dot(x[_0][pair.local()], y[_0][pair.local()]);
+
+        for (std::size_t i = 0; i < x[_1].size(); ++i)
+            local += Dune::dot(x[_1][i], y[_1][i]);
+        for (const auto& pair : pComm_->indexSet())
+            if (pair.local().attribute() != Attr::owner)
+                local -= Dune::dot(x[_1][pair.local()], y[_1][pair.local()]);
+
+        return vComm_->communicator().sum(local);
+    }
+
+    real_type norm(const X& x) const override
+    {
+        using std::sqrt;
+        return sqrt(std::real(dot(x, x)));
+    }
+
+    Dune::SolverCategory::Category category() const override
+    {
+        return nonOverlapping_ ? Dune::SolverCategory::nonoverlapping
+                               : Dune::SolverCategory::overlapping;
+    }
+
+
+private:
+    std::shared_ptr<Comm> vComm_, pComm_;
+    bool nonOverlapping_;
+};
+
+#endif // HAVE_MPI
+
+} // end namespace Dumux::Detail
 
 namespace Dumux {
 
@@ -320,13 +713,21 @@ namespace Dumux {
  * \ingroup Linear
  * \brief Preconditioned iterative solver for the incompressible Stokes problem
  * \note Uses StokesPreconditioner as preconditioner (tailored to the incompressible Stokes problem)
- * \note No MPI parallelization implemented, some shared-memory parallelism is enabled
+ * \note Sequential and MPI-parallel (non-overlapping or overlapping decomposition)
  */
 template<class Matrix, class Vector, class VelocityGG, class PressureGG>
 class StokesSolver
 : public LinearSolver
 {
     using Preconditioner = Detail::StokesPreconditioner<Matrix, Vector, Vector>;
+
+#if HAVE_MPI
+    using VTraits = LinearSolverTraits<VelocityGG>;
+    using PTraits = LinearSolverTraits<PressureGG>;
+    using Comm    = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>, int>;
+    static constexpr bool canCommunicate_ = VTraits::canCommunicate && PTraits::canCommunicate;
+#endif
+
 public:
     /*!
      * \brief Constructor
@@ -360,9 +761,17 @@ public:
                            << " in parameter group [" << group << "]");
         }
 
-        weight_ = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.Preconditioner.MassMatrixWeight", 1.0);
+        weight_     = getParamFromGroup<double>(this->paramGroup(), "LinearSolver.Preconditioner.MassMatrixWeight", 1.0);
         solverType_ = getParamFromGroup<std::string>(this->paramGroup(), "LinearSolver.Type", "gmres");
+
         scalarProduct_ = std::make_shared<Dune::ScalarProduct<Vector>>();
+#if HAVE_MPI
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1)
+                initParallelInfrastructure_();
+        }
+#endif
     }
 
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -375,6 +784,26 @@ public:
 
     Scalar norm(const Vector& b) const
     {
+#if HAVE_MPI
+        // on a non-overlapping decomposition an assembled residual is additive, so the owned entries
+        // are only complete after summing over the processes; on an overlapping one they are complete
+        using namespace Dune::Indices;
+        if (vComm_ && pComm_ && vGridGeometry_->gridView().comm().size() > 1)
+        {
+            Vector bc(b);
+            if (isNonOverlapping_)
+            {
+                vComm_->addOwnerCopyToOwnerCopy(bc[_0], bc[_0]);
+                pComm_->addOwnerCopyToOwnerCopy(bc[_1], bc[_1]);
+            }
+            else
+            {
+                Detail::makeUnique(*vComm_, bc[_0]);
+                Detail::makeUnique(*pComm_, bc[_1]);
+            }
+            return scalarProduct_->norm(bc);
+        }
+#endif
         return scalarProduct_->norm(b);
     }
 
@@ -389,6 +818,33 @@ public:
     }
 
 private:
+#if HAVE_MPI
+    void initParallelInfrastructure_()
+    {
+        // if either sub-problem is overlapping, use overlapping for both
+        isNonOverlapping_ = VTraits::isNonOverlapping(vGridGeometry_->gridView())
+                         && PTraits::isNonOverlapping(pGridGeometry_->gridView());
+
+        const auto cat = isNonOverlapping_ ? Dune::SolverCategory::nonoverlapping
+                                           : Dune::SolverCategory::overlapping;
+
+        // the helpers keep a reference to the dof mapper, which the traits may return by value
+        vDofMapper_ = std::make_shared<const typename VTraits::DofMapper>(VTraits::dofMapper(*vGridGeometry_));
+        pDofMapper_ = std::make_shared<const typename PTraits::DofMapper>(PTraits::dofMapper(*pGridGeometry_));
+        vParallelHelper_ = std::make_shared<ParallelISTLHelper<VTraits>>(vGridGeometry_->gridView(), *vDofMapper_);
+        pParallelHelper_ = std::make_shared<ParallelISTLHelper<PTraits>>(pGridGeometry_->gridView(), *pDofMapper_);
+
+        vComm_ = std::make_shared<Comm>(vGridGeometry_->gridView().comm(), cat);
+        vParallelHelper_->createParallelIndexSet(*vComm_);
+
+        pComm_ = std::make_shared<Comm>(pGridGeometry_->gridView().comm(), cat);
+        pParallelHelper_->createParallelIndexSet(*pComm_);
+
+        scalarProduct_ = std::make_shared<Detail::ParallelStokesScalarProduct<Vector>>(
+            vComm_, pComm_, isNonOverlapping_);
+    }
+#endif
+
     bool applyIterativeSolver_(Matrix& A, Vector& x, Vector& b)
     {
         // make Dirichlet boundary conditions symmetric
@@ -400,24 +856,117 @@ private:
         A[_1] *= -1.0/density_;
         b[_1] *= -1.0/density_;
 
-        auto op = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
+#if HAVE_MPI
+        if constexpr (canCommunicate_)
+        {
+            if (vGridGeometry_->gridView().comm().size() > 1)
+                return solveParallel_(A, x, b);
+        }
+#endif
+        return solveSequential_(A, x, b);
+    }
+
+    bool solveSequential_(Matrix& A, Vector& x, Vector& b)
+    {
+        auto op  = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
         auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
         auto preconditioner = std::make_shared<Preconditioner>(op, pop, params_.sub("preconditioner"));
-        params_["verbose"] = pGridGeometry_->gridView().comm().rank() == 0 ? params_["verbose"] : "0";
+        return runSolver_(op, scalarProduct_, preconditioner, x, b);
+    }
 
-        // defaults to restarted GMRes
+#if HAVE_MPI
+    bool solveParallel_(Matrix& A, Vector& x, Vector& b)
+    {
+        using namespace Dune::Indices;
+
+        if (isNonOverlapping_)
+            prepareParallelLinearSystem_(A, b);
+        else
+        {
+            Detail::makeUnique(*vComm_, b[_0]);
+            Detail::makeUnique(*pComm_, b[_1]);
+        }
+
+        // the preconditioner needs the assembled operator, the Krylov solver the parallel one
+        auto innerOp = std::make_shared<Dumux::ParallelMultiTypeMatrixAdapter<Matrix, Vector, Vector>>(A);
+        auto op = std::make_shared<Detail::ParallelStokesLinearOperator<Matrix, Vector, Vector>>(
+            A, vComm_, pComm_, isNonOverlapping_);
+        auto pop = makePressureLinearOperator_<typename Preconditioner::PressureLinearOperator>();
+        auto seqPrec = std::make_shared<Preconditioner>(innerOp, pop, params_.sub("preconditioner"), vComm_, pComm_);
+        auto prec = std::make_shared<Detail::ParallelStokesPreconditioner<Preconditioner, Vector, Vector>>(
+            seqPrec, vComm_, pComm_, isNonOverlapping_);
+
+        const bool converged = runSolver_(op, scalarProduct_, prec, x, b);
+
+        // broadcast solution from owned to ghost DOFs
+        vComm_->copyOwnerToAll(x[_0], x[_0]);
+        pComm_->copyOwnerToAll(x[_1], x[_1]);
+
+        return converged;
+    }
+
+    void prepareParallelLinearSystem_(Matrix& A, Vector& b)
+    {
+        using namespace Dune::Indices;
+        using GridView = typename VelocityGG::GridView;
+        static constexpr int dim = GridView::dimension;
+        static constexpr std::size_t numCodims = dim + 1;
+
+        const auto& gv        = vGridGeometry_->gridView();
+        const auto velCodims  = activeCodimsBitset_<VTraits, numCodims>();
+
+        // the velocity block is summed over the processes: the smoother of the velocity AMG needs
+        // complete diagonal entries; the off-diagonal blocks stay additive (see ParallelStokesLinearOperator)
+        using VelBlock = std::decay_t<decltype(A[_0][_0])>;
+        MultiCodimParallelMatrixHelper<VelBlock, GridView, typename VTraits::DofMapper, numCodims>
+            velHelper(gv, *vDofMapper_, velCodims);
+        velHelper.extendMatrix(A[_0][_0], [](auto){ return false; });
+        velHelper.sumEntries(A[_0][_0]);
+
+        using VelVec  = std::decay_t<decltype(b[_0])>;
+        using PresVec = std::decay_t<decltype(b[_1])>;
+        using VNonoverlapping  = typename VTraits::template ParallelNonoverlapping<VelBlock, VelVec>;
+        using PNonoverlapping  = typename PTraits::template ParallelNonoverlapping<
+            std::decay_t<decltype(A[_1][_1])>, PresVec>;
+        prepareVectorParallel<VTraits, VNonoverlapping>(b[_0], *vParallelHelper_);
+        prepareVectorParallel<PTraits, PNonoverlapping>(b[_1], *pParallelHelper_);
+        // the summed right-hand side is consistent; like the operator's result it has to be unique
+        Detail::makeUnique(*vComm_, b[_0]);
+        Detail::makeUnique(*pComm_, b[_1]);
+    }
+
+    // Returns active codims as bitset<numCodims> from a LinearSolverTraits type.
+    template<class Traits, std::size_t numCodims>
+    static std::bitset<numCodims> activeCodimsBitset_()
+    {
+        if constexpr (requires { Traits::dofCodims; })
+            return Traits::dofCodims;
+        else
+        {
+            std::bitset<numCodims> bits;
+            bits.set(Traits::dofCodim);
+            return bits;
+        }
+    }
+#endif // HAVE_MPI
+
+    template<class LinearOperator, class SP, class Prec>
+    bool runSolver_(std::shared_ptr<LinearOperator> op,
+                    std::shared_ptr<SP> sp,
+                    std::shared_ptr<Prec> prec,
+                    Vector& x, Vector& b)
+    {
         std::unique_ptr<Dune::InverseOperator<Vector, Vector>> solver;
         if (solverType_ == "minres")
-            solver = std::make_unique<Dune::MINRESSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
+            solver = std::make_unique<Dune::MINRESSolver<Vector>>(op, sp, prec, params_);
         else if (solverType_ == "bicgstab")
-            solver = std::make_unique<Dune::BiCGSTABSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
+            solver = std::make_unique<Dune::BiCGSTABSolver<Vector>>(op, sp, prec, params_);
         else if (solverType_ == "gmres")
-            solver = std::make_unique<Dune::RestartedGMResSolver<Vector>>(op, scalarProduct_, preconditioner, params_);
+            solver = std::make_unique<Dune::RestartedGMResSolver<Vector>>(op, sp, prec, params_);
         else
             DUNE_THROW(Dune::NotImplemented, "Solver choice " << solverType_ << " is not implemented");
 
         solver->apply(x, b, result_);
-
         return result_.converged;
     }
 
@@ -495,6 +1044,16 @@ private:
                 }
             }
 
+#if HAVE_MPI
+            // on a non-overlapping decomposition the mass of a border dof is summed over the processes
+            if (pGridGeometry_->gridView().comm().size() > 1 && isNonOverlapping_ && pParallelHelper_)
+            {
+                using PNonoverlapping = typename PTraits::template ParallelNonoverlapping<
+                    M, std::decay_t<decltype((*massMatrix)[0])>>;
+                prepareMatrixParallel<PTraits, PNonoverlapping>(*massMatrix, *pParallelHelper_);
+            }
+#endif
+
             return massMatrix;
         }
 
@@ -510,6 +1069,15 @@ private:
     std::string solverType_;
 
     std::shared_ptr<Dune::ScalarProduct<Vector>> scalarProduct_;
+
+#if HAVE_MPI
+    std::shared_ptr<const typename VTraits::DofMapper> vDofMapper_;
+    std::shared_ptr<const typename PTraits::DofMapper> pDofMapper_;
+    std::shared_ptr<ParallelISTLHelper<VTraits>> vParallelHelper_;
+    std::shared_ptr<ParallelISTLHelper<PTraits>> pParallelHelper_;
+    std::shared_ptr<Comm> vComm_, pComm_;
+    bool isNonOverlapping_ = true;
+#endif
 };
 
 } // end namespace Dumux

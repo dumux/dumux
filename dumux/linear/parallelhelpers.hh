@@ -17,6 +17,7 @@
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/partitionset.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/bvector.hh>
@@ -242,7 +243,6 @@ class ParallelISTLHelperImpl<LinearSolverTraits, true>
         int rank_;
         std::set<int>& neighbours_;
     };
-
 
     /*!
      * \brief GatherScatter handle for finding out about neighbouring processor ranks.
@@ -515,7 +515,6 @@ using ParallelISTLHelper =
     Detail::ParallelISTLHelperImpl<
         LinearSolverTraits, LinearSolverTraits::canCommunicate
     >;
-
 
 template<class GridView, class DofMapper, int dofCodim>
 class ParallelVectorHelper
@@ -1344,23 +1343,14 @@ private:
                         const auto entity = element.template subEntity<codim>(i);
                         const auto pt = entity.partitionType();
 
-                        // Standard: always include BorderEntity DOFs.
-                        bool shouldProcess = (pt == Dune::BorderEntity);
+                        // elements are never border entities, and the interior dofs of an element at the
+                        // processor border can be columns of border rows on the neighbouring process
+                        bool shouldProcess = (codim == 0) || (pt == Dune::BorderEntity)
+                            || (pt == Dune::InteriorEntity && elementHasBorderSubEntity_(element));
 
-                        // Extended mode (for direct solvers): also include ghost entities
-                        // and interior entities adjacent to the partition boundary so that
-                        // element-interior DOF column entries in border rows are communicated.
-                        if (!shouldProcess && includeGhostAndAdjacent_) {
-                            if constexpr (codim == 0) {
-                                // Elements are never BorderEntity; include GhostEntity elements
-                                // AND InteriorEntity elements adjacent to a border sub-entity.
-                                shouldProcess = (pt == Dune::GhostEntity)
-                                             || (pt == Dune::InteriorEntity
-                                                 && elementHasBorderSubEntity_(entity));
-                            } else {
-                                shouldProcess = (pt == Dune::GhostEntity);
-                            }
-                        }
+                        // the extended mode for direct solvers also includes ghost dofs
+                        if (!shouldProcess && includeGhostAndAdjacent_)
+                            shouldProcess = (pt == Dune::GhostEntity);
 
                         if (shouldProcess)
                         {

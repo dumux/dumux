@@ -348,6 +348,8 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_si
                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_simplex params.input
                            -Problem.Name test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_simplex -Problem.UseNeumann false -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
 
+# The Stokes solver tests keep the linear tolerance above the round-off floor of GMRES, where parallel
+# iteration counts become erratic; the absolute Newton tolerance matches it for a single Newton step.
 dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex
                SOURCES main.cc
                LABELS freeflow navierstokes donea
@@ -358,13 +360,126 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
                            --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_pq1bubble_simplex-reference.vtu
                                    ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex-00001.vtu
                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex params.input
                            -Problem.Name test_ff_stokes_donea_pq1bubble_simplex -Problem.UseNeumann false
-                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false")
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.Type gmres
+                           -LinearSolver.GMResRestart 500
+                           -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-10
+                           -Newton.MaxAbsoluteResidual 1e-9
+                           -Newton.MaxSteps 1")
+
+dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_parallel
+               TARGET test_ff_stokes_donea_pq1bubble_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_pq1bubble_simplex-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_stokes_donea_pq1bubble_simplex_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex params.input
+                             -Problem.Name test_ff_stokes_donea_pq1bubble_simplex_parallel
+                             -Problem.UseNeumann false
+                             -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                             -LinearSolver.Type gmres
+                             -LinearSolver.GMResRestart 500
+                             -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
+                             -Newton.MaxSteps 1")
+
+# on four processes several of them meet at cross points; the symmetric preconditioner applies both coupling blocks
+dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_parallel_symmetric
+               TARGET test_ff_stokes_donea_pq1bubble_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_pq1bubble_simplex-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_pq1bubble_simplex_parallel_symmetric-00001.pvtu
+                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex params.input
+                             -Problem.Name test_ff_stokes_donea_pq1bubble_simplex_parallel_symmetric
+                             -Problem.UseNeumann false
+                             -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                             -LinearSolver.Type gmres
+                             -LinearSolver.Preconditioner.Mode Symmetric
+                             -LinearSolver.GMResRestart 500
+                             -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
+                             -Newton.MaxSteps 1")
+
+# YaspGrid has an overlap (Grid.Overlap in params.input), so the parallel run uses an overlapping decomposition
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_pq1bubble_yasp-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp-00001.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_yasp
+                           -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.Type gmres
+                           -LinearSolver.GMResRestart 500
+                           -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-10
+                           -Newton.MaxAbsoluteResidual 1e-9
+                           -Newton.MaxSteps 1")
+
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel
+               TARGET test_ff_stokes_donea_hybrid_pq1bubble_yasp
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_pq1bubble_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp params.input
+                             -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel
+                             -Problem.UseNeumann true
+                             -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                             -LinearSolver.Type gmres
+                             -LinearSolver.GMResRestart 500
+                             -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
+                             -Newton.MaxSteps 1")
+
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel_symmetric
+               TARGET test_ff_stokes_donea_hybrid_pq1bubble_yasp
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_pq1bubble_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel_symmetric-00001.pvtu
+                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp params.input
+                             -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_yasp_parallel_symmetric
+                             -Problem.UseNeumann true
+                             -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                             -LinearSolver.Type gmres
+                             -LinearSolver.Preconditioner.Mode Symmetric
+                             -LinearSolver.GMResRestart 500
+                             -LinearSolver.MaxIterations 500
+                             -LinearSolver.ResidualReduction 1e-10
+                             -Newton.MaxAbsoluteResidual 1e-9
+                             -Newton.MaxSteps 1")
 
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_cube
@@ -613,6 +728,38 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                            -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex -Problem.UseNeumann true
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -LinearSolver.Type gmres -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity true")
+
+# p2-p1 (Taylor-Hood) Stokes solver in parallel: iterative velocity AMG instead of the
+# sequential-only direct velocity solver used by the test above.
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel
+               TARGET test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy --ignore "process rank"
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_quadrature_pq2_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel-00001.pvtu
+                           --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_quadrature_pq2_simplex params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.Type gmres -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity false
+                           -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-10 -Newton.MaxAbsoluteResidual 1e-9")
+
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel_symmetric
+               TARGET test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI AND dune-alugrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy --ignore "process rank"
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_quadrature_pq2_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel_symmetric-00001.pvtu
+                           --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_quadrature_pq2_simplex params.input
+                           -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_parallel_symmetric -Problem.UseNeumann true
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -LinearSolver.Type gmres -LinearSolver.Preconditioner.Mode Symmetric -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity false
+                           -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
+                           -LinearSolver.ResidualReduction 1e-10 -Newton.MaxAbsoluteResidual 1e-9")
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                SOURCES main.cc
