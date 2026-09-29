@@ -16,7 +16,7 @@ Cells1 = 10 10
 Cells2 = 10
 Grading0 = -1.3 1.3
 Grading1 = -1.3 1.3
-Refinement = 2 # set to 2 to reproduce the resuts of the plot
+Refinement = 0 # set to 2 to reproduce the resuts of the plot
 
 [Voids.Problem]
 Name = 1d

@@ -28,11 +28,17 @@
 #include "spatialparams_soil.hh"
 #include "spatialparams_voids.hh"
 
+#ifndef BULKTYPETAG
+#define BULKTYPETAG SoilCC
+#endif
+
 namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct Soil { using InheritsFrom = std::tuple<OnePNI, CCTpfaModel>; };
+struct Soil { using InheritsFrom = std::tuple<OnePNI>; };
+struct SoilCC { using InheritsFrom = std::tuple<Soil, CCTpfaModel>; };
+struct SoilBox { using InheritsFrom = std::tuple<Soil, BoxModel>; };
 } // end namespace TTag
 
 // Set the grid type
@@ -134,14 +140,14 @@ template<class Traits>
 using TheCouplingManager = WellboreCouplingManager<Traits, Embedded1d3dCouplingMode::Surface>;
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Soil> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::Voids>>; };
+struct CouplingManager<TypeTag, TTag::BULKTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::Voids>>; };
 template<class TypeTag>
-struct PointSource<TypeTag, TTag::Soil> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
+struct PointSource<TypeTag, TTag::BULKTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<0>; };
 template<class TypeTag>
-struct PointSourceHelper<TypeTag, TTag::Soil> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
+struct PointSourceHelper<TypeTag, TTag::BULKTYPETAG> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSourceHelper<0>; };
 
 template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::Voids> { using type = TheCouplingManager<MultiDomainTraits<Properties::TTag::Soil, TypeTag>>; };
+struct CouplingManager<TypeTag, TTag::Voids> { using type = TheCouplingManager<MultiDomainTraits<Properties::TTag::BULKTYPETAG, TypeTag>>; };
 template<class TypeTag>
 struct PointSource<TypeTag, TTag::Voids> { using type = typename GetPropType<TypeTag, Properties::CouplingManager>::PointSourceTraits::template PointSource<1>; };
 template<class TypeTag>

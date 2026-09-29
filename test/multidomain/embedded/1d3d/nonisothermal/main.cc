@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // define the sub problem type tags
-    using BulkTypeTag = Properties::TTag::Soil;
+    using BulkTypeTag = Properties::TTag::BULKTYPETAG;
     using LowDimTypeTag = Properties::TTag::Voids;
 
     // initialize the grid for the 3D domain
