@@ -1,0 +1,52 @@
+# Wooding's V-catchment: 800 m wide planes with a cross slope of 0.05 drain into a 20 m wide
+# channel with a slope of 0.02. On the planes, the Vedernikov number of the equilibrium flow is
+# about 1.3, outside the range of validity of the long-wave approximations.
+
+[TimeLoop]
+DtInitial = 10
+TEnd = 11880 # 3.3 h
+MaxTimeStepSize = 35.8
+
+[Grid]
+Positions0 = 0 800 820 1620
+Positions1 = 0 1000
+Cells0 = 32 4 32
+Cells1 = 40
+
+[Problem]
+ChannelX = 810
+ChannelWidth = 20
+ChannelLength = 1000
+CrossSlope = 0.05
+ChannelSlope = 0.02
+PlaneAlongSlope = 0
+RiverDepth = 0.1
+RainFallRate = 3.0e-6 # 10.8 mm/h
+OutletMaxY = 1.0
+DepthProbeMinY = 0
+DepthProbeMaxY = 1
+InitialWaterDepth = 1e-5 # local-inertial model only
+WaterBalanceTolerance = 1e-5
+Name = wooding
+PlaneManningN = 0.015
+ChannelManningN = 0.15
+RainEventEnd = 5400 # 1.5 h
+
+[Assembly]
+NumericDifferenceMethod = 0
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-10
+PriVarMagnitude = 1
+
+[Newton]
+MinSteps = 1
+MaxSteps = 20
+TargetSteps = 15
+MaxRelativeShift = 1e-7
+UseLineSearch = true
+LineSearchMinRelaxationFactor = 0.125
+
+[LongWave.Regularization]
+GradHEpsilon = 1e-5
+RoughnessHeight = 1e-3

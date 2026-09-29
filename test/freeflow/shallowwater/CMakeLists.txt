@@ -4,9 +4,12 @@
 add_subdirectory(boundaryfluxes)
 add_subdirectory(bowl)
 add_subdirectory(dambreak)
+add_subdirectory(evapotranspiration)
 add_subdirectory(iofields)
 add_subdirectory(lakeatrest)
+add_subdirectory(longwave)
 add_subdirectory(poiseuilleflow)
 add_subdirectory(roughchannel)
+add_subdirectory(surfacerunoff)
 
 dune_symlink_to_source_files(FILES plotstyle.py)

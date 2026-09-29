@@ -3,9 +3,11 @@
 
 add_subdirectory(chrono)
 add_subdirectory(container)
+add_subdirectory(forcingseries)
 add_subdirectory(format)
 add_subdirectory(gnuplotinterface)
 add_subdirectory(grid)
 add_subdirectory(gridmanager)
 add_subdirectory(inputdata)
 add_subdirectory(json)
+add_subdirectory(timeserieswriter)
