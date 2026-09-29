@@ -10,8 +10,7 @@ Cold water is injected at the top of the pipe, is heated on its way down by the 
 warm rock, and leaves the pipe at the bottom. The quantity of interest is the fluid temperature
 along the pipe and, in particular, the outlet temperature as a function of time.
 
-The setup follows a wellbore/borehole-heat-exchanger benchmark of
-[OpenGeoSys (OGS)](https://www.opengeosys.org) and is verified against the classical
+The setup follows a [wellbore/borehole-heat-exchanger benchmark](https://ogs.ogs.xyz/ogs/docs/benchmarks/heat-transport-bhe/pipe_flow_ebhe/) of OpenGeoSys (OGS) and is verified against the classical
 analytical wellbore heat-transmission solution of Ramey (1962). The OGS results are shipped
 as reference data inside the plotting script, so that DuMux, OGS and the analytical solution
 can be compared in a single plot.
@@ -120,15 +119,23 @@ The wellbore is vertical and aligned with the $z$-axis: the inlet is at the surf
 $z = -30\ \mathrm{m}$. The depth along the borehole used in the plots and in the analytical
 solution is therefore $-z$.
 
-The 3D rock domain is discretized using cell-centered two point flux approximation on a YaspGrid
-with `TensorProductCoordinates` spanning $10\ \mathrm{m} \times 10\ \mathrm{m} \times 30\ \mathrm{m}$
-($[-5, 5] \times [-5, 5] \times [-30, 0]$), discretized with $80 \times 80 \times 40$ cells
-that are graded towards the borehole axis in the two lateral directions with a grading factor
-of $\pm 1.3$.
+The 3D rock domain is discretized on a YaspGrid with `TensorProductCoordinates` spanning
+$10\ \mathrm{m} \times 10\ \mathrm{m} \times 30\ \mathrm{m}$
+($[-5, 5] \times [-5, 5] \times [-30, 0]$) with $20 \times 20 \times 10$ cells that are graded
+towards the borehole axis in the two lateral directions with a grading factor of $\pm 1.3$.
+`Soil.Grid.Refinement = 2` refines this grid twice, so the simulation runs on
+$80 \times 80 \times 40$ cells.
 
-The 1D pipe uses the box method on a FoamGrid specified in `grids/pipe.dgf` with 100 elements of
-0.3 m length. The inner and outer radii are read per element from the DGF parameters. Both domains
-are assembled and solved monolithically with the AMG-preconditioned BiCGSTAB block-diagonal solver.
+Two discretizations of the rock domain are available. They are built as separate executables from
+the same `main.cc`, selected by the compile definition `BULKTYPETAG` (`properties.hh`):
+`test_wellbore_heat_transport_tpfa` uses cell-centered two point flux approximation and
+`test_wellbore_heat_transport_box` the box method. `convergence_test.py` runs both and draws them
+in one figure.
+
+The 1D pipe uses the box method on a FoamGrid specified in `grids/pipe.dgf` with 10 elements of
+3 m length, refined twice by `Voids.Grid.Refinement = 2` to 40 elements of 0.75 m. The inner and
+outer radii are read per element from the DGF parameters. Both domains are assembled and solved
+monolithically with the AMG-preconditioned BiCGSTAB block-diagonal solver.
 
 Boundary conditions:
 
@@ -148,42 +155,60 @@ The coupling manager (`wellborecouplingmanager.hh`) extends @ref Dumux::Embedded
 
 **Results**
 
-![Outlet temperature](wellbore_outlet_temperature.png)
+![Outlet temperature over time and temperature profile along the borehole](wellbore_temperatures.png)
 
-The first figure shows the outlet temperature at a depth of 30 m over the 5 days of simulated
-time for DuMux, OGS and Ramey's solution; the secondary axis carries the absolute error of the
-two numerical results with respect to Ramey. Starting from the initial fluid temperature of
-$T_i = 20\ ^\circ\mathrm{C}$, the outlet temperature rises steeply while the first cold water
-travels down the borehole, peaks at about 26.6 °C after roughly a third of a day and then decays
-again as the rock immediately around the borehole cools down and the temperature difference
-driving the heat exchange shrinks. During the first day both codes lie above Ramey by up to
-about 0.5 °C, because the line-source time function $f(t_D)$ is an early-time approximation and
-the analytical solution neglects the thermal capacity of the fluid in the borehole. From about
-2.5 days on the error of DuMux and OGS is below 0.05 °C, and the three curves are
-indistinguishable at the end of the simulation.
+The figure shows both discretizations of the rock domain at refinement 3, i.e. on
+$160 \times 160 \times 80$ rock cells and 80 pipe elements, together with Ramey's solution and the
+OGS reference. The left panel shows the outlet temperature at a depth of 30 m over the 5 days of
+simulated time, the right panel the fluid temperature along the borehole at the final time
+$t = 5$ days; the dashed curves on the secondary axes are the absolute errors with respect to
+Ramey. It is produced by `convergence_test.py --no-run --refinements 3` once the runs of that
+refinement are there.
 
-![Temperature distribution along the borehole](wellbore_temperature_distribution.png)
+Starting from the initial fluid temperature of $T_i = 20\ ^\circ\mathrm{C}$, the outlet temperature
+rises steeply while the first cold water travels down the borehole, peaks at about 26.6 °C within
+the first half day and then decays again as the rock immediately around the borehole cools down and
+the temperature difference driving the heat exchange shrinks. During the first day all results lie
+above Ramey, by up to 0.38 °C (tpfa), TODO °C (box) and 0.59 °C (OGS), because the line-source time
+function $f(t_D)$ is an early-time approximation and the analytical solution neglects the thermal
+capacity of the fluid in the borehole. From 2.5 days on the deviation stays below 0.05 °C.
 
-The second figure shows the fluid temperature along the borehole at the final time $t = 5$ days
-for the same three data sets, again with the absolute errors on the secondary axis. The profile
-is the expected exponential approach of the fluid temperature towards the undisturbed rock
-temperature; over the 30 m of this benchmark, with a characteristic length $X$ of about 200 m,
-it is still practically linear and rises from 20 °C at the inlet to about 24.7 °C at the outlet.
-DuMux deviates from Ramey by at most about 0.011 °C over the whole borehole, which is roughly a
-third of the deviation of the OGS reference solution.
+The temperature profile is the expected exponential approach of the fluid temperature towards the
+undisturbed rock temperature; over the 30 m of this benchmark, with a characteristic length $X$ of
+about 200 m, it is still practically linear and rises from 20 °C at the inlet to 24.69 °C (tpfa) and
+TODO °C (box) at the outlet, against 24.70 °C for Ramey and 24.67 °C for OGS. Over the whole
+borehole the deviation from Ramey is at most 0.011 °C for tpfa and TODO °C for box, against
+0.032 °C for OGS.
 
-To reproduce the results, build and run the executable, then run the plotting script in the same directory:
+<!-- TODO: fill in once box refinement 3 has finished, from
+     python3 convergence_test.py --no-run --refinements 3
+     (1) max deviation above Ramey during the first day, box
+     (2) outlet temperature at t = 5 d, box refinement 3
+     (3) max |deviation| from Ramey along the borehole, box
+     and add the figure as wellbore_temperatures.png -->
+
+
+To reproduce the results, build both executables and run the convergence test from the build
+directory:
 
 ```bash
 cd <build-dir>/test/multidomain/embedded/1d3d/nonisothermal
-make test_wellbore_heat_transport_surface
-./test_wellbore_heat_transport_surface params.input -Soil.Grid.Refinement 2 -Voids.Grid.Refinement 2
-python3 analytical_solution.py
+make test_wellbore_heat_transport_tpfa test_wellbore_heat_transport_box
+python3 convergence_test.py --refinements 0 1 2
 ```
 
+The script runs every discretization at every refinement, each in its own directory
+`convergence/<variant>_refinement_<refinement>`, and writes the figure to
+`convergence/convergence_temperatures.png`. It has to be started from the build directory, where
+`params.input` and the executables live. `--reuse` skips runs whose results are already there,
+`--no-run` only redraws the figure from existing results, and `python3 convergence_test.py --help`
+lists all options.
+
+A single run on the grid given in `params.input` is
+`./test_wellbore_heat_transport_tpfa params.input`.
 The 1D problem writes the outlet temperature at every checkpoint to
 `test_wellbore_heat_transport_1d.csv` (columns: time in days, temperature in °C) and the full
-solution to VTK files (`*_1d-*.vtp`, `*_3d-*.vtu`). 
+solution to VTK files (`*_1d-*.vtp`, `*_3d-*.vtu`).
 
 **References**
 
