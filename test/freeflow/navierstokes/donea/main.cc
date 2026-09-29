@@ -20,6 +20,7 @@
 #include <tuple>
 #include <type_traits>
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
@@ -87,6 +88,27 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     }
 
     return dirichletDofs;
+}
+
+//! Count the entries of a multidomain matrix that are not finite
+template<class Matrix>
+std::size_t numNonFiniteEntries(const Matrix& matrix)
+{
+    std::size_t count = 0;
+    Dune::Hybrid::forEach(std::make_index_sequence<Matrix::N()>{}, [&](auto i)
+    {
+        Dune::Hybrid::forEach(std::make_index_sequence<Matrix::M()>{}, [&](auto j)
+        {
+            const auto& block = matrix[i][j];
+            for (auto row = block.begin(); row != block.end(); ++row)
+                for (auto entry = row->begin(); entry != row->end(); ++entry)
+                    for (const auto& entryRow : *entry)
+                        for (const auto& value : entryRow)
+                            if (!std::isfinite(value))
+                                ++count;
+        });
+    });
+    return count;
 }
 
 namespace Dumux {
@@ -316,6 +338,14 @@ int main(int argc, char** argv)
 
     // linearize & solve
     nonLinearSolver.solve(x);
+
+    // a parallel solver may use the rows of non-owned dofs, so the entire local matrix has to be finite
+    if (getParam<bool>("Problem.CheckFiniteJacobian", false))
+    {
+        const auto numNonFinite = Dune::MPIHelper::getCommunication().sum(numNonFiniteEntries(assembler->jacobian()));
+        if (numNonFinite > 0)
+            DUNE_THROW(Dune::Exception, "The Jacobian has " << numNonFinite << " entries that are not finite");
+    }
 
     Dumux::printErrors(momentumProblem, massProblem, *momentumGridVariables, *massGridVariables, x, momentumIdx, massIdx);
 
