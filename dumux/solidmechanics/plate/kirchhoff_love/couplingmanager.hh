@@ -64,11 +64,22 @@ public:
 
     //! export traits
     using MultiDomainTraits = MDTraits;
+    using SolutionVectorStorage = typename ParentType::SolutionVectorStorage;
 
     KirchhoffLovePlateCouplingManager() = default;
 
     KirchhoffLovePlateCouplingManager(std::shared_ptr<GridGeometry<rotationIdx>> rotationsGG,
                                       std::shared_ptr<GridGeometry<deformationIdx>> deformationGG)
+    { computeStencils(rotationsGG, deformationGG); }
+
+    /*!
+     * \brief (Re-)compute the DOF stencils on the shared mesh of rotationsGG and deformationGG.
+     * \note Needed when the manager is default-constructed, e.g. as a sub-manager of a
+     *       composed multi-domain coupling manager that builds its members before the grid
+     *       geometries are known.
+     */
+    void computeStencils(std::shared_ptr<GridGeometry<rotationIdx>> rotationsGG,
+                         std::shared_ptr<GridGeometry<deformationIdx>> deformationGG)
     {
         const auto& rotationsGridGeometry = *rotationsGG;
         const auto& deformationGridGeometry = *deformationGG;
@@ -102,6 +113,19 @@ public:
               const SolutionVector& curSol)
     {
         this->updateSolution(curSol);
+        this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
+    }
+
+    /*!
+     * \brief Initialize as a sub-manager of a composed multi-domain coupling manager.
+     * \note The solution storage is shared with (and updated by) the composed manager,
+     *       which has to outlive this one.
+     */
+    void init(std::shared_ptr<Problem<rotationIdx>> momentumProblem,
+              std::shared_ptr<Problem<deformationIdx>> massProblem,
+              const SolutionVectorStorage& curSol)
+    {
+        this->attachSolution(curSol);
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
     }
 
@@ -202,9 +226,6 @@ public:
             });
         }
     }
-
-protected:
-    using ParentType::curSol;
 
 private:
     //! coloring for multithreaded assembly
