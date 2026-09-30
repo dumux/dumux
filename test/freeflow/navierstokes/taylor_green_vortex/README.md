@@ -35,14 +35,37 @@ $$
 
 with the temporal decay factor $F(t) = e^{-2 \nu k^2 t}$.
 
+### Three-dimensional case
+
+The original three-dimensional Taylor-Green vortex @cite Taylor1937 is only an initial condition;
+its temporal evolution has no closed-form solution. Instead, we use the tri-periodic,
+fully three-dimensional analytical solution by Antuono @cite Antuono2020 (reference solution of family 1),
+
+$$
+\begin{align*}
+u(x, y, z, t) &= \frac{4\sqrt{2}}{3\sqrt{3}} U_0 \left[ \sin\left(k x - \tfrac{5\pi}{6}\right) \cos\left(k y - \tfrac{\pi}{6}\right) \sin(k z)
+- \cos\left(k z - \tfrac{5\pi}{6}\right) \sin\left(k x - \tfrac{\pi}{6}\right) \sin(k y) \right] F(t), \\
+v(x, y, z, t) &= \frac{4\sqrt{2}}{3\sqrt{3}} U_0 \left[ \sin\left(k y - \tfrac{5\pi}{6}\right) \cos\left(k z - \tfrac{\pi}{6}\right) \sin(k x)
+- \cos\left(k x - \tfrac{5\pi}{6}\right) \sin\left(k y - \tfrac{\pi}{6}\right) \sin(k z) \right] F(t), \\
+w(x, y, z, t) &= \frac{4\sqrt{2}}{3\sqrt{3}} U_0 \left[ \sin\left(k z - \tfrac{5\pi}{6}\right) \cos\left(k x - \tfrac{\pi}{6}\right) \sin(k y)
+- \cos\left(k y - \tfrac{5\pi}{6}\right) \sin\left(k z - \tfrac{\pi}{6}\right) \sin(k x) \right] F(t), \\
+p(x, y, z, t) &= -\frac{\rho}{2} \|\mathbf{u}\|^2,
+\end{align*}
+$$
+
+with $F(t) = e^{-3 \nu k^2 t}$. The flow is a Beltrami flow, i.e. the vorticity is parallel to the
+velocity ($\nabla \times \mathbf{u} = \sqrt{3} k \mathbf{u}$), such that the convective term is a pure
+gradient balanced by the (Bernoulli) pressure.
+
 ### Stationary and instationary variants
 
-* **Instationary** (`Problem.IsStationary = false`): the solution above is an exact solution of the
+* **Instationary** (`Problem.IsStationary = false`): the solutions above are exact solutions of the
   Navier-Stokes equations without source term, $\mathbf{f} = \mathbf{0}$. The simulation is started from the
   analytical solution at $t = 0$ and the decay of the vortex is compared to the analytical one.
 * **Stationary** (`Problem.IsStationary = true`): the temporal decay factor is set to $F \equiv 1$,
   i.e. the solution is the vortex at $t = 0$. It is sustained by the manufactured source term
-  $\mathbf{f} = -\mu \Delta \mathbf{u} = 2 \mu k^2 \mathbf{u}$.
+  $\mathbf{f} = -\mu \Delta \mathbf{u}$, i.e. $\mathbf{f} = 2 \mu k^2 \mathbf{u}$ in 2D and
+  $\mathbf{f} = 3 \mu k^2 \mathbf{u}$ in 3D.
 
 The source term is implemented generically as
 $\mathbf{f} = \rho \partial_t \mathbf{u} + \rho (\mathbf{u} \cdot \nabla) \mathbf{u} - \mu \Delta \mathbf{u} + \nabla p$
@@ -52,7 +75,7 @@ can also be run as Stokes problems (`Problem.EnableInertiaTerms = false`).
 ### Boundary conditions
 
 The analytical solution is periodic with period $L = 2\pi/k$. By default, the domain is the unit
-square with $k = 2\pi$, i.e. exactly one period. Instead of periodic boundaries, the analytical
+square/cube with $k = 2\pi$, i.e. exactly one period. Instead of periodic boundaries, the analytical
 (time-dependent) velocity is prescribed as Dirichlet condition on the entire boundary and
 the pressure is fixed to the analytical value at the lower left corner of the domain.
 Optionally (`Problem.UseNeumann = true`), the analytical normal momentum flux
@@ -75,26 +98,29 @@ In time, the implicit Euler method with a constant time step size is used.
 
 ### Related setups
 
+* The stationary three-dimensional Stokes test of Schneider et al. (schneider2022a) uses the
+  Taylor-Green initial condition $\mathbf{u} = (-2\cos\sin\sin, \sin\cos\sin, \sin\sin\cos)$ (with
+  $A = -2$, $B = C = 1$ in the Wikipedia notation) together with a manufactured pressure and source.
 * The [OpenFOAM verification and validation case](https://gitlab.com/openfoam/community/verification-and-validation/-/tree/main/cases/Taylor-Green-vortex)
   simulates the two-dimensional vortex (with opposite sign convention) on a periodic domain
   $[0, 2\pi]^2$ with $k = 1$, $\nu = 1$, $\Delta t = 0.05$ until $t = 0.3$ and compares velocity and pressure profiles.
 
 ## Parameters
 
-| Parameter | Symbol | Value | Unit | Input parameter |
-|-----------|--------|-------|------|-----------------|
-| Domain | $\Omega$ | $[0, 1]^2$ | m | `Grid.UpperRight` |
-| Grid | | $32 \times 32$ | - | `Grid.Cells` |
-| Wave number | $k$ | $2\pi$ | 1/m | `Problem.WaveNumber` |
-| Reference velocity | $U_0$ | $1$ | m/s | `Problem.ReferenceVelocity` |
-| Density | $\rho$ | $1$ | kg/m³ | `Component.LiquidDensity` |
-| Kinematic viscosity | $\nu$ | $0.01$ | m²/s | `Component.LiquidKinematicViscosity` |
-| Reynolds number | $Re = U_0 L / \nu$ | $100$ | - | |
-| End time | $T$ | $1$ | s | `TimeLoop.TEnd` |
-| Time step size | $\Delta t$ | $0.05$ | s | `TimeLoop.DtInitial` |
-| Decay at end time | $F(T)$ | $0.45$ | - | |
+| Parameter | Symbol | Value (2D) | Value (3D) | Unit | Input parameter |
+|-----------|--------|------------|------------|------|-----------------|
+| Domain | $\Omega$ | $[0, 1]^2$ | $[0, 1]^3$ | m | `Grid.UpperRight` |
+| Grid | | $32 \times 32$ | $8 \times 8 \times 8$ | - | `Grid.Cells` |
+| Wave number | $k$ | $2\pi$ | $2\pi$ | 1/m | `Problem.WaveNumber` |
+| Reference velocity | $U_0$ | $1$ | $1$ | m/s | `Problem.ReferenceVelocity` |
+| Density | $\rho$ | $1$ | $1$ | kg/m³ | `Component.LiquidDensity` |
+| Kinematic viscosity | $\nu$ | $0.01$ | $0.01$ | m²/s | `Component.LiquidKinematicViscosity` |
+| Reynolds number | $Re = U_0 L / \nu$ | $100$ | $100$ | - | |
+| End time | $T$ | $1$ | $1$ | s | `TimeLoop.TEnd` |
+| Time step size | $\Delta t$ | $0.05$ | $0.05$ | s | `TimeLoop.DtInitial` |
+| Decay at end time | $F(T)$ | $0.45$ | $0.31$ | - | |
 
-The parameters are set in `params_2d.input`. A setup equivalent to the
+The parameters are set in `params_2d.input` and `params_3d.input`. A setup equivalent to the
 OpenFOAM case (up to the boundary conditions) is obtained with
 `-Grid.UpperRight "6.283185307179586 6.283185307179586" -Problem.WaveNumber 1 -Component.LiquidKinematicViscosity 1 -TimeLoop.TEnd 0.3`.
 
@@ -119,13 +145,15 @@ OpenFOAM case (up to the boundary conditions) is obtained with
 * **Temporal convergence** (instationary variant): the error $\|\mathbf{u} - \mathbf{u}_h\|_{L^2(\Omega)}$ at $t = T$ on a fine grid under
   refinement of the time step size. Expected order: 1 (implicit Euler).
 * **Kinetic energy decay** (instationary variant): $E(t) = \frac{1}{2} \int_\Omega \rho \|\mathbf{u}\|^2 \, \mathrm{d}x$
-  compared to the analytical $E(t) = E_0 F^2(t)$ with $E_0 = \rho U_0^2 |\Omega| / 4$, and the
-  dissipation rate $-\mathrm{d}E/\mathrm{d}t$ compared to $4 \nu k^2 E$.
+  compared to the analytical $E(t) = E_0 F^2(t)$ with $E_0 = \rho U_0^2 |\Omega| / 4$ (2D) and
+  $E_0 = \rho U_0^2 |\Omega| / 2$ (3D), and the dissipation rate $-\mathrm{d}E/\mathrm{d}t$ compared to
+  $4 \nu k^2 E$ (2D) and $6 \nu k^2 E$ (3D).
 * **Error history**: $L^2$ errors of velocity and pressure over time.
 
 ## How to reproduce results
 
-The executables are named `test_ff_navierstokes_taylorgreen_2d_<scheme>` with `<scheme>` in `pq1bubble`, `pq1bubblehybrid`, `pq2hybrid`. Each run writes
+The executables are named `test_ff_navierstokes_taylorgreen_<dim>_<scheme>` with
+`<dim>` in `2d`, `3d` and `<scheme>` in `pq1bubble`, `pq1bubblehybrid`, `pq2hybrid`. Each run writes
 the errors and the kinetic energy of every time step to `<Problem.Name>_errors.csv`.
 To build all executables and run the convergence studies, execute in the build directory
 of this test (`build-cmake/test/freeflow/navierstokes/taylor_green_vortex`):
@@ -137,6 +165,7 @@ python3 benchmark.py --study all
 
 Useful options of `benchmark.py`:
 
+* `--dim 2 3`: spatial dimensions to consider
 * `--schemes pq1bubble pq1bubblehybrid pq2hybrid`: momentum discretizations to consider
 * `--study spatial temporal energy all`: which study to run
 * `--levels N`: number of grid/time step refinements

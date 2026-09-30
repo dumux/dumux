@@ -19,8 +19,9 @@ set(TAYLORGREEN_GUARD_1 "( HAVE_UMFPACK AND dune-alugrid_FOUND )")
 
 # small grids for the regression tests
 set(TAYLORGREEN_CELLS_2 "16 16")
+set(TAYLORGREEN_CELLS_3 "4 4 4")
 
-foreach(dim 2)
+foreach(dim 2 3)
   foreach(scheme ${TAYLORGREEN_SCHEMES})
     set(name test_ff_navierstokes_taylorgreen_${dim}d_${scheme})
     set(simplex ${TAYLORGREEN_SIMPLEX_${scheme}})

@@ -8,7 +8,7 @@
  * \file
  * \ingroup NavierStokesTests
  * \brief Taylor-Green vortex test for the (hybrid) CVFE Navier-Stokes models
- *        (Taylor & Green 1937 \cite Taylor1937).
+ *        (Taylor & Green 1937 \cite Taylor1937 in 2D, Antuono 2020 \cite Antuono2020 in 3D).
  */
 #ifndef DUMUX_TAYLOR_GREEN_VORTEX_TEST_PROBLEM_HH
 #define DUMUX_TAYLOR_GREEN_VORTEX_TEST_PROBLEM_HH
@@ -35,9 +35,10 @@ namespace Dumux {
  * \ingroup NavierStokesTests
  * \brief Taylor-Green vortex test problem for the (hybrid) CVFE schemes.
  *
- * The classic two-dimensional Taylor-Green vortex \cite Taylor1937 is considered. It is an exact
- * solution of the incompressible Navier-Stokes equations which decays in time with the factor
- * \f$ F(t) = \exp(-2 \nu k^2 t) \f$. For the stationary variant, \f$ F \equiv 1 \f$ and the
+ * In 2D, the classic Taylor-Green vortex \cite Taylor1937 is considered, in 3D the tri-periodic
+ * Beltrami flow of Antuono \cite Antuono2020. Both are exact solutions of the incompressible
+ * Navier-Stokes equations which decay in time with the factor \f$ F(t) = \exp(-d \nu k^2 t) \f$,
+ * where \f$ d \f$ is the dimension. For the stationary variant, \f$ F \equiv 1 \f$ and the
  * vortex is sustained by a manufactured source term. The analytical velocity is prescribed
  * as Dirichlet boundary condition. See README.md for details.
  */
@@ -60,7 +61,7 @@ class TaylorGreenTestProblem : public BaseProblem
     using DirichletConstraintData = Dumux::DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
 
     static constexpr int dimWorld = GridDiscretization::GridView::dimensionworld;
-    static_assert(dimWorld == 2, "The Taylor-Green vortex test is only implemented in 2D");
+    static_assert(dimWorld == 2 || dimWorld == 3, "The Taylor-Green vortex test is only implemented in 2D and 3D");
 
     using Element = typename ElementDiscretization::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -396,12 +397,28 @@ private:
     Velocity velocityShape_(const GlobalPosition& globalPos) const
     {
         using std::sin; using std::cos;
-        const Scalar kx = k_*globalPos[0];
-        const Scalar ky = k_*globalPos[1];
-
         Velocity u(0.0);
-        u[0] = u0_*sin(kx)*cos(ky);
-        u[1] = -u0_*cos(kx)*sin(ky);
+
+        if constexpr (dimWorld == 2)
+        {
+            const Scalar kx = k_*globalPos[0];
+            const Scalar ky = k_*globalPos[1];
+            u[0] = u0_*sin(kx)*cos(ky);
+            u[1] = -u0_*cos(kx)*sin(ky);
+        }
+        else
+        {
+            // cyclic permutations (x, y, z) -> (y, z, x) -> (z, x, y)
+            for (int i = 0; i < 3; ++i)
+            {
+                const Scalar ka = k_*globalPos[i];
+                const Scalar kb = k_*globalPos[(i+1)%3];
+                const Scalar kc = k_*globalPos[(i+2)%3];
+                u[i] = antuonoScale_()*(sin(ka - alpha_)*cos(kb - beta_)*sin(kc)
+                                        - cos(kc - alpha_)*sin(ka - beta_)*sin(kb));
+            }
+        }
+
         return u;
     }
 
@@ -409,14 +426,35 @@ private:
     VelocityGradient velocityGradientShape_(const GlobalPosition& globalPos) const
     {
         using std::sin; using std::cos;
-        const Scalar kx = k_*globalPos[0];
-        const Scalar ky = k_*globalPos[1];
-
         VelocityGradient gradU(0.0);
-        gradU[0][0] = u0_*k_*cos(kx)*cos(ky);
-        gradU[0][1] = -u0_*k_*sin(kx)*sin(ky);
-        gradU[1][0] = u0_*k_*sin(kx)*sin(ky);
-        gradU[1][1] = -u0_*k_*cos(kx)*cos(ky);
+
+        if constexpr (dimWorld == 2)
+        {
+            const Scalar kx = k_*globalPos[0];
+            const Scalar ky = k_*globalPos[1];
+            gradU[0][0] = u0_*k_*cos(kx)*cos(ky);
+            gradU[0][1] = -u0_*k_*sin(kx)*sin(ky);
+            gradU[1][0] = u0_*k_*sin(kx)*sin(ky);
+            gradU[1][1] = -u0_*k_*cos(kx)*cos(ky);
+        }
+        else
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                const int a = i, b = (i+1)%3, c = (i+2)%3;
+                const Scalar ka = k_*globalPos[a];
+                const Scalar kb = k_*globalPos[b];
+                const Scalar kc = k_*globalPos[c];
+                const Scalar scale = antuonoScale_()*k_;
+                gradU[i][a] = scale*(cos(ka - alpha_)*cos(kb - beta_)*sin(kc)
+                                     - cos(kc - alpha_)*cos(ka - beta_)*sin(kb));
+                gradU[i][b] = scale*(-sin(ka - alpha_)*sin(kb - beta_)*sin(kc)
+                                     - cos(kc - alpha_)*sin(ka - beta_)*cos(kb));
+                gradU[i][c] = scale*(sin(ka - alpha_)*cos(kb - beta_)*cos(kc)
+                                     + sin(kc - alpha_)*sin(ka - beta_)*sin(kb));
+            }
+        }
+
         return gradU;
     }
 
@@ -430,18 +468,41 @@ private:
     {
         using std::cos;
         const Scalar f = decayFactor_(t);
-        return 0.25*rho_*u0_*u0_*(cos(2.0*k_*globalPos[0]) + cos(2.0*k_*globalPos[1]))*f*f;
+
+        if constexpr (dimWorld == 2)
+            return 0.25*rho_*u0_*u0_*(cos(2.0*k_*globalPos[0]) + cos(2.0*k_*globalPos[1]))*f*f;
+        else
+            // Bernoulli pressure p = -rho/2 |u|^2 of the Beltrami flow
+            return -0.5*rho_*velocity_(globalPos, t).two_norm2();
     }
 
     GlobalPosition pressureGradient_(const GlobalPosition& globalPos, const Scalar t) const
     {
         using std::sin;
-        const Scalar f = decayFactor_(t);
         GlobalPosition gradP(0.0);
-        for (int i = 0; i < 2; ++i)
-            gradP[i] = -0.5*rho_*u0_*u0_*k_*sin(2.0*k_*globalPos[i])*f*f;
+
+        if constexpr (dimWorld == 2)
+        {
+            const Scalar f = decayFactor_(t);
+            for (int i = 0; i < 2; ++i)
+                gradP[i] = -0.5*rho_*u0_*u0_*k_*sin(2.0*k_*globalPos[i])*f*f;
+        }
+        else
+        {
+            // grad p = -rho (grad u)^T u
+            velocityGradient_(globalPos, t).mtv(velocity_(globalPos, t), gradP);
+            gradP *= -rho_;
+        }
+
         return gradP;
     }
+
+    //! Normalization of the 3D solution (such that the mean kinetic energy is rho U_0^2/2)
+    static Scalar antuonoScale_()
+    { using std::sqrt; return 4.0*sqrt(2.0)/(3.0*sqrt(3.0)); }
+
+    static constexpr Scalar alpha_ = 5.0*M_PI/6.0;
+    static constexpr Scalar beta_ = M_PI/6.0;
 
     Scalar rho_;
     Scalar nu_;

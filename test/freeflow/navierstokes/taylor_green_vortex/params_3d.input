@@ -1,0 +1,45 @@
+[TimeLoop]
+DtInitial = 0.05 # [s]
+MaxTimeStepSize = 0.05 # [s]
+TEnd = 1.0 # [s]
+
+[Grid]
+LowerLeft = 0 0 0
+UpperRight = 1 1 1
+Cells = 8 8 8
+
+[Problem]
+Name = test_ff_navierstokes_taylorgreen_3d
+EnableGravity = false
+EnableInertiaTerms = true
+IsStationary = false
+UseNeumann = false
+PrintErrors = true
+# WaveNumber = 6.283185307179586 # [1/m] default: 2 pi
+# ReferenceVelocity = 1.0 # [m/s] default: 1
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 0.01
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+
+[Flux]
+UpwindWeight = 0.5 # central differences for the convective term (1 = full upwinding is only first-order accurate)
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+SatisfyResidualAndShiftCriterion = true
+
+[Vtk]
+AddProcessRank = false
+
+[SpatialParams]
+Temperature = 298.0

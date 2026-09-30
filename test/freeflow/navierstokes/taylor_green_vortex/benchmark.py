@@ -32,9 +32,9 @@ ORDER_TOLERANCE = 0.3
 
 # number of cells per direction on the coarsest grid (coarser grids do not resolve
 # the vortex well enough for the stationary Navier-Stokes problem to converge)
-BASE_CELLS = {2: 16}
+BASE_CELLS = {2: 16, 3: 6}
 # default number of refinement levels (full study, test mode)
-DEFAULT_LEVELS = {2: (4, 3)}
+DEFAULT_LEVELS = {2: (4, 3), 3: (3, 2)}
 ERROR_KEYS = ("velocityL2", "velocityH1", "pressureL2", "pressureH1")
 
 # plot labels (notation as in README.md)
@@ -392,7 +392,7 @@ def check_solution():
     """Verify symbolically that the analytical solutions solve the Navier-Stokes equations"""
     import sympy as sp
 
-    x, y, t, k, nu, rho, u0 = sp.symbols("x y t k nu rho U_0", positive=True)
+    x, y, z, t, k, nu, rho, u0 = sp.symbols("x y z t k nu rho U_0", positive=True)
 
     def residuals(velocity, pressure, coords):
         dim = len(coords)
@@ -415,9 +415,26 @@ def check_solution():
     ]
     pressure2d = rho * u0**2 / 4 * (sp.cos(2 * k * x) + sp.cos(2 * k * y)) * decay2d**2
 
+    decay3d = sp.exp(-3 * nu * k**2 * t)
+    scale = 4 * sp.sqrt(2) / (3 * sp.sqrt(3)) * u0
+
+    def component(a, b, c):
+        return (
+            scale
+            * (
+                sp.sin(k * a - 5 * sp.pi / 6) * sp.cos(k * b - sp.pi / 6) * sp.sin(k * c)
+                - sp.cos(k * c - 5 * sp.pi / 6) * sp.sin(k * a - sp.pi / 6) * sp.sin(k * b)
+            )
+            * decay3d
+        )
+
+    velocity3d = [component(x, y, z), component(y, z, x), component(z, x, y)]
+    pressure3d = -rho / 2 * sum(v**2 for v in velocity3d)
+
     success = True
     for label, velocity, pressure, coords in (
         ("2D", velocity2d, pressure2d, [x, y]),
+        ("3D", velocity3d, pressure3d, [x, y, z]),
     ):
         result = residuals(velocity, pressure, coords)
         print(f"{label}: divergence = {result[0]}, momentum residual = {result[1:]}")
@@ -429,7 +446,7 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--dim", type=int, nargs="+", choices=(2,), default=[2])
+    parser.add_argument("--dim", type=int, nargs="+", choices=(2, 3), default=[2, 3])
     parser.add_argument("--schemes", nargs="+", choices=SCHEMES, default=list(SCHEMES))
     parser.add_argument(
         "--study",

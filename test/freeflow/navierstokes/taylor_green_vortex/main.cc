@@ -8,7 +8,7 @@
  * \file
  * \ingroup NavierStokesTests
  * \brief Taylor-Green vortex test for the (hybrid) CVFE Navier-Stokes models
- *        (stationary and instationary), see README.md.
+ *        (stationary and instationary, 2D and 3D), see README.md.
  */
 
 #include <config.h>
