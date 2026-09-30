@@ -11,7 +11,10 @@ where the executables and parameter files are located.
 
 import argparse
 import csv
+import io
 import math
+from fractions import Fraction
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -35,7 +38,15 @@ ORDER_TOLERANCE = 0.3
 BASE_CELLS = {2: 16, 3: 6}
 # default number of refinement levels (full study, test mode)
 DEFAULT_LEVELS = {2: (4, 3), 3: (3, 2)}
+# default grid sequences of the spatial convergence study (full study, test mode);
+# in 3D, the direct linear solver limits the grid size
+DEFAULT_CELLS = {2: ([16, 32, 64, 128], [16, 32, 64]), 3: ([6, 9, 12], [6, 9])}
+# additional arguments of the stationary runs: on the coarse 3D grids, the Newton solver
+# does not converge for the stationary Navier-Stokes problem, so the Stokes problem is used
+SPATIAL_ARGS = {2: [], 3: ["-Problem.EnableInertiaTerms", "false"]}
 ERROR_KEYS = ("velocityL2", "velocityH1", "pressureL2", "pressureH1")
+# reuse existing error files instead of rerunning the simulations (option --reuse)
+REUSE_RESULTS = False
 
 # plot labels (notation as in README.md)
 SCHEME_LABELS = {
@@ -63,8 +74,13 @@ class Run:
     label: str
     h: float
     dt: float
+    numDofs: int  # total number of scalar unknowns (velocity components and pressure)
     errors: dict
     history: list
+
+    def meshSize(self, dim):
+        """Equivalent mesh size h_N = N^(-1/d), comparable across element types and schemes"""
+        return self.numDofs ** (-1.0 / dim)
 
 
 def executable(dim, scheme, multistage=False):
@@ -80,8 +96,11 @@ def run_simulation(exe, dim, name, args):
 
     command = [f"./{exe}", f"params_{dim}d.input", "-Problem.Name", name]
     command += ["-Problem.EnableVtkOutput", "false", "-Problem.EnableGravity", "false"] + args
-    print("+ " + " ".join(command), flush=True)
-    subprocess.run(command, check=True, stdout=subprocess.DEVNULL)
+    if REUSE_RESULTS and Path(f"{name}_errors.csv").is_file():
+        print(f"Reusing {name}_errors.csv", flush=True)
+    else:
+        print("+ " + " ".join(command), flush=True)
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL)
 
     with open(f"{name}_errors.csv", newline="") as errorFile:
         reader = csv.DictReader(errorFile)
@@ -91,13 +110,14 @@ def run_simulation(exe, dim, name, args):
     return rows
 
 
-def to_run(label, rows):
+def to_run(label, rows, dim):
     """Convert the rows of an error file to a run"""
     last = rows[-1]
     return Run(
         label=label,
         h=last["h"],
         dt=last["dt"],
+        numDofs=int(dim * last["numDofsVelocity"] + last["numDofsPressure"]),
         errors={key: last[key] for key in ERROR_KEYS},
         history=rows,
     )
@@ -113,13 +133,14 @@ def rates(runs, key, step):
     return result
 
 
-def write_table(fileName, title, runs, stepName, step):
-    """Write a Markdown table with errors and convergence rates"""
+def write_table(fileName, title, runs, stepName, step, display=None):
+    """Write a Markdown table with errors and convergence rates (EOC w.r.t. step)"""
+    display = display or (lambda run: f"{step(run):.4e}")
     rateTable = {key: [float("nan")] + rates(runs, key, step) for key in ERROR_KEYS}
     header = f"| {stepName} | " + " | ".join(f"{key} | EOC" for key in ERROR_KEYS) + " |"
     lines = [f"### {title}", "", header, "|" + "---|" * (1 + 2 * len(ERROR_KEYS))]
     for i, run in enumerate(runs):
-        cells = [f"{step(run):.4e}"]
+        cells = [display(run)]
         for key in ERROR_KEYS:
             cells += [f"{run.errors[key]:.4e}", f"{rateTable[key][i]:.2f}"]
         lines.append("| " + " | ".join(cells) + " |")
@@ -142,48 +163,79 @@ def import_pyplot():
         print("matplotlib not available, skipping plots")
         return None
 
-    plt.rcParams.update(
-        {
-            "font.family": "serif",
-            "font.serif": ["cmr10", "DejaVu Serif"],
-            "mathtext.fontset": "cm",
-            "axes.formatter.use_mathtext": True,
-            "font.size": 11,
-            "axes.labelsize": 12,
-            "legend.fontsize": 9,
-            "lines.markersize": 5,
-        }
-    )
+    style = {
+        "font.family": "serif",
+        "font.size": 11,
+        "axes.labelsize": 12,
+        "legend.fontsize": 9,
+        "lines.markersize": 5,
+    }
+    plt.rcParams.update(style)
+    if not latex_rendering_works(plt):
+        # LaTeX-like math rendering without (a complete) LaTeX installation
+        plt.rcParams.update(
+            {
+                "text.usetex": False,
+                "font.serif": ["Latin Modern Roman", "DejaVu Serif"],
+                "mathtext.fontset": "cm",
+                "axes.formatter.use_mathtext": True,
+            }
+        )
     return plt
 
 
-def format_order(order):
-    """Format a convergence order for a LaTeX exponent"""
-    return f"{order:g}"
+def latex_rendering_works(plt):
+    """Enable LaTeX text rendering if a sufficiently complete LaTeX installation is found"""
+    if not (shutil.which("latex") and shutil.which("dvipng")):
+        return False
+
+    plt.rcParams.update({"text.usetex": True, "text.latex.preamble": r"\usepackage{amsmath}"})
+    try:
+        fig, ax = plt.subplots()
+        ax.set_xlabel(r"$\|\mathbf{u} - \mathbf{u}_h\|_{L^2(\Omega)}$", fontsize=12)
+        fig.savefig(io.BytesIO(), format="png")
+        plt.close(fig)
+        return True
+    except (RuntimeError, OSError):
+        plt.close("all")
+        print("LaTeX rendering failed, using matplotlib's mathtext instead")
+        return False
 
 
-def add_reference_slope(ax, steps, errors, order, stepSymbol, color):
-    """Add a dashed line with the expected slope through the finest data point"""
-    stepRange = [min(steps), max(steps)]
-    finest = steps.index(min(steps))
-    reference = [errors[finest] * (h / steps[finest]) ** order for h in stepRange]
-    ax.loglog(stepRange, reference, "--", color=color, linewidth=1.0, alpha=0.8)
+def format_exponent(exponent):
+    """Format a (rational) exponent for LaTeX, e.g. -3/2"""
+    fraction = Fraction(exponent).limit_denominator(12)
+    return f"{fraction.numerator}" if fraction.denominator == 1 else f"{fraction}"
+
+
+def add_reference_slope(ax, xs, errors, exponent, symbol, color, annotate=True):
+    """Add a dashed line error ~ x^exponent through the finest data point (the last run)"""
+    xRange = [min(xs), max(xs)]
+    reference = [errors[-1] * (x / xs[-1]) ** exponent for x in xRange]
+    ax.loglog(xRange, reference, "--", color=color, linewidth=1.0, alpha=0.8)
+    if not annotate:
+        return
+
+    # label the line at the end of the coarsest data point
+    coarseEnd = 1 if xs[0] > xs[-1] else 0
     ax.annotate(
-        rf"$\mathcal{{O}}({stepSymbol}^{{{format_order(order)}}})$",
-        xy=(stepRange[1], reference[1]),
-        xytext=(4, 0),
+        rf"$\mathcal{{O}}({symbol}^{{{format_exponent(exponent)}}})$",
+        xy=(xRange[coarseEnd], reference[coarseEnd]),
+        xytext=(4, 0) if coarseEnd == 1 else (-4, 0),
         textcoords="offset points",
+        ha="left" if coarseEnd == 1 else "right",
         va="center",
         fontsize=9,
         color=color,
     )
 
 
-def plot_convergence(fileName, results, stepSymbol, stepUnit, step, title):
+def plot_convergence(fileName, results, x, xLabel, slope, title):
     """
-    Plot all error norms over the step size together with the expected slopes
+    Plot all error norms together with the expected slopes
 
-    results maps a label to a tuple (runs, expected orders)
+    results maps a label to a tuple (runs, expected orders), x(run) is the plotted
+    abscissa and slope(order) returns the exponent and symbol of the reference line
     """
     plt = import_pyplot()
     if plt is None:
@@ -192,13 +244,17 @@ def plot_convergence(fileName, results, stepSymbol, stepUnit, step, title):
     fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     for ax, key in zip(axes.flat, ERROR_KEYS):
+        labeledExponents = set()  # label each expected order only once per panel
         for (label, (runs, expected)), color in zip(results.items(), colors):
-            steps = [step(r) for r in runs]
+            xs = [x(r) for r in runs]
             errors = [r.errors[key] for r in runs]
-            ax.loglog(steps, errors, "o-", color=color, label=label)
+            ax.loglog(xs, errors, "o-", color=color, label=label)
             if key in expected:
-                add_reference_slope(ax, steps, errors, expected[key], stepSymbol, color)
-        ax.set_xlabel(rf"${stepSymbol}$ [{stepUnit}]")
+                exponent, symbol = slope(expected[key])
+                annotate = exponent not in labeledExponents
+                labeledExponents.add(exponent)
+                add_reference_slope(ax, xs, errors, exponent, symbol, color, annotate)
+        ax.set_xlabel(xLabel)
         ax.set_ylabel(ERROR_LABELS[key])
         ax.grid(True, which="both", alpha=0.3)
         ax.margins(x=0.15)
@@ -207,7 +263,7 @@ def plot_convergence(fileName, results, stepSymbol, stepUnit, step, title):
     handles, labels = axes.flat[0].get_legend_handles_labels()
     handles.append(plt.Line2D([], [], color="gray", linestyle="--", linewidth=1.0))
     labels.append("expected order")
-    axes.flat[0].legend(handles, labels, loc="lower right")
+    axes.flat[0].legend(handles, labels, loc="lower left")
     fig.suptitle(title)
     fig.savefig(fileName, dpi=200)
     plt.close(fig)
@@ -226,7 +282,7 @@ def check_rates(label, runs, expected, step):
     return success
 
 
-def spatial_study(dim, schemes, levels, test):
+def spatial_study(dim, schemes, cellSequence, test):
     """Stationary problem under uniform grid refinement"""
     results = {}
     success = True
@@ -234,31 +290,49 @@ def spatial_study(dim, schemes, levels, test):
     Path(tableFile).unlink(missing_ok=True)
     for scheme in schemes:
         runs = []
-        for level in range(levels):
-            cells = BASE_CELLS[dim] * 2**level
-            name = f"taylorgreen_spatial_{dim}d_{scheme}_{level}"
-            rows = run_simulation(
-                executable(dim, scheme),
-                dim,
-                name,
-                ["-Problem.IsStationary", "true", "-Grid.Cells", " ".join([str(cells)] * dim)],
-            )
-            runs.append(to_run(name, rows))
+        for cells in cellSequence:
+            name = f"taylorgreen_spatial_{dim}d_{scheme}_{cells}"
+            try:
+                rows = run_simulation(
+                    executable(dim, scheme),
+                    dim,
+                    name,
+                    ["-Problem.IsStationary", "true", "-Grid.Cells", " ".join([str(cells)] * dim)]
+                    + SPATIAL_ARGS[dim],
+                )
+            except subprocess.CalledProcessError:
+                print(f"FAILED: {dim}D {scheme} on {cells}^{dim} cells, skipping this scheme")
+                break
+            runs.append(to_run(name, rows, dim))
+
+        if len(runs) < len(cellSequence):
+            success = False
+            continue
 
         results[SCHEME_LABELS[scheme]] = (runs, EXPECTED_SPATIAL_ORDER[scheme])
-        write_table(tableFile, f"{dim}D {scheme} (stationary)", runs, "h", lambda r: r.h)
+        # convergence rates w.r.t. the equivalent mesh size h_N = N^(-1/d)
+        problem = "Stokes" if SPATIAL_ARGS[dim] else "Navier-Stokes"
+        write_table(
+            tableFile,
+            f"{dim}D {scheme} (stationary {problem}, EOC w.r.t. h_N = N^(-1/{dim}))",
+            runs,
+            "N",
+            lambda r: r.meshSize(dim),
+            display=lambda r: f"{r.numDofs}",
+        )
         if test:
             expected = EXPECTED_SPATIAL_ORDER[scheme]
-            success &= check_rates(f"{dim}D {scheme}", runs, expected, lambda r: r.h)
+            success &= check_rates(f"{dim}D {scheme}", runs, expected, lambda r: r.meshSize(dim))
 
-    if not test:
+    if results and not test:
         plot_convergence(
             f"taylorgreen_spatial_{dim}d.png",
             results,
-            "h",
-            "m",
-            lambda r: r.h,
-            f"{dim}D Taylor-Green vortex, stationary, spatial convergence",
+            lambda r: r.numDofs,
+            r"number of unknowns $N$ (velocity and pressure)",
+            lambda order: (-order / dim, "N"),
+            f"{dim}D Taylor-Green vortex, stationary "
+            f"{'Stokes' if SPATIAL_ARGS[dim] else 'Navier-Stokes'}, spatial convergence",
         )
     return success
 
@@ -301,7 +375,7 @@ def temporal_study(dim, schemes, levels, test):
                         "-TimeLoop.MaxTimeStepSize", str(dt),
                     ],
                 )
-                runs.append(to_run(name, rows))
+                runs.append(to_run(name, rows, dim))
 
             label = f"{scheme} {timeScheme}"
             expected = {"velocityL2": EXPECTED_TEMPORAL_ORDER[timeScheme]}
@@ -314,9 +388,9 @@ def temporal_study(dim, schemes, levels, test):
         plot_convergence(
             f"taylorgreen_temporal_{dim}d.png",
             results,
-            r"\Delta t",
-            "s",
             lambda r: r.dt,
+            r"time step size $\Delta t$ [s]",
+            lambda order: (order, r"\Delta t"),
             f"{dim}D Taylor-Green vortex, temporal convergence at $t = {tEnd}$ s",
         )
     return success
@@ -454,7 +528,16 @@ def main():
         choices=("spatial", "temporal", "energy", "all"),
         default=["all"],
     )
-    parser.add_argument("--levels", type=int, default=None, help="number of refinement levels")
+    parser.add_argument(
+        "--levels", type=int, default=None, help="number of time step refinements (temporal study)"
+    )
+    parser.add_argument(
+        "--cells",
+        type=int,
+        nargs="+",
+        default=None,
+        help="cells per direction of the grid sequence (spatial study)",
+    )
     parser.add_argument(
         "--test", action="store_true", help="short study checking the convergence rates"
     )
@@ -463,7 +546,15 @@ def main():
         action="store_true",
         help="verify the analytical solutions (requires sympy)",
     )
+    parser.add_argument(
+        "--reuse",
+        action="store_true",
+        help="reuse existing error files instead of rerunning the simulations (e.g. to replot)",
+    )
     args = parser.parse_args()
+
+    global REUSE_RESULTS
+    REUSE_RESULTS = args.reuse
 
     if args.check_solution:
         sys.exit(0 if check_solution() else 1)
@@ -471,12 +562,15 @@ def main():
     studies = {"spatial", "temporal", "energy"} if "all" in args.study else set(args.study)
     if args.levels is not None and args.levels < 2:
         parser.error("At least two refinement levels are needed to compute convergence rates")
+    if args.cells is not None and len(args.cells) < 2:
+        parser.error("At least two grids are needed to compute convergence rates")
 
     success = True
     for dim in args.dim:
         levels = args.levels if args.levels is not None else DEFAULT_LEVELS[dim][args.test]
         if "spatial" in studies:
-            success &= spatial_study(dim, args.schemes, levels, args.test)
+            cells = args.cells if args.cells is not None else DEFAULT_CELLS[dim][args.test]
+            success &= spatial_study(dim, args.schemes, cells, args.test)
         if "temporal" in studies:
             success &= temporal_study(dim, args.schemes, levels, args.test)
         if "energy" in studies:

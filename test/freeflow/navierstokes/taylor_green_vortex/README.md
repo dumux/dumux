@@ -132,6 +132,10 @@ OpenFOAM case (up to the boundary conditions) is obtained with
   $\|p - p_h\|_{L^2(\Omega)}$, $\|p - p_h\|_{H^1(\Omega)}$, with
   $\|v\|_{H^1(\Omega)}^2 = \|v\|_{L^2(\Omega)}^2 + \|\nabla v\|_{L^2(\Omega)}^2$ (computed by quadrature),
   and the corresponding experimental orders of convergence (EOC) under uniform grid refinement.
+  Since the schemes use different element types (quadrilaterals/hexahedra and triangles/tetrahedra)
+  and numbers of unknowns per element, the errors are plotted over the total number of unknowns $N$
+  (velocity components and pressure), and the EOC are computed with respect to the equivalent mesh
+  size $h_N = N^{-1/d}$, i.e. an order $q$ corresponds to the slope $\mathcal{O}(N^{-q/d})$.
   Expected orders:
 
   | Momentum scheme | $\|\mathbf{u} - \mathbf{u}_h\|_{L^2(\Omega)}$ | $\|\mathbf{u} - \mathbf{u}_h\|_{H^1(\Omega)}$ | $\|p - p_h\|_{L^2(\Omega)}$ (Box) | $\|p - p_h\|_{H^1(\Omega)}$ (Box) |
@@ -141,6 +145,9 @@ OpenFOAM case (up to the boundary conditions) is obtained with
   | hybrid PQ2 | 3 | 2 | 2 | 1 |
 
   The pressure $L^2$ order of 2 is observed on the uniform grids used here (in general, at least 1.5 is expected).
+  In 3D, the stationary study is run as Stokes problem (`Problem.EnableInertiaTerms = false`), since the
+  Newton solver does not converge for the stationary Navier-Stokes problem on the coarse 3D grids.
+  The hybrid PQ1Bubble scheme currently does not converge in 3D (the linear system appears to be singular).
 
 * **Temporal convergence** (instationary variant): the error $\|\mathbf{u} - \mathbf{u}_h\|_{L^2(\Omega)}$ at $t = T$ on a fine grid under
   refinement of the time step size. Expected order: 1 (implicit Euler).
@@ -149,6 +156,30 @@ OpenFOAM case (up to the boundary conditions) is obtained with
   $E_0 = \rho U_0^2 |\Omega| / 2$ (3D), and the dissipation rate $-\mathrm{d}E/\mathrm{d}t$ compared to
   $4 \nu k^2 E$ (2D) and $6 \nu k^2 E$ (3D).
 * **Error history**: $L^2$ errors of velocity and pressure over time.
+
+## Results
+
+The following results were obtained with `benchmark.py` using the default settings
+(`--study spatial` in 2D and 3D, `--study energy` in 2D).
+
+**Spatial convergence in 2D** (stationary Navier-Stokes problem, $Re = 100$, $16^2$ to $128^2$ cells).
+All schemes reach the expected orders, except for the velocity $L^2$ error of hybrid PQ2, which does
+not yet show the expected third order on these grids. At the same number of unknowns, hybrid
+PQ1Bubble is considerably more accurate than PQ1Bubble on simplices.
+
+![Spatial convergence in 2D](taylorgreen_spatial_2d.png)
+
+**Spatial convergence in 3D** (stationary Stokes problem, $6^3$ to $12^3$ cells). The velocity errors
+converge with the expected orders, whereas the pressure errors are not yet in the asymptotic regime
+on these coarse grids. Hybrid PQ1Bubble does not converge in 3D and is not shown.
+
+![Spatial convergence in 3D](taylorgreen_spatial_3d.png)
+
+**Kinetic energy decay in 2D** (instationary Navier-Stokes problem, $32^2$ cells, $\Delta t = 0.05$ s,
+implicit Euler). The relative deviation from the analytical energy of about 2-4 % at $t = 1$ s is
+dominated by the temporal error of the implicit Euler method, which alone predicts a deviation of 3.1 %.
+
+![Kinetic energy decay in 2D](taylorgreen_energy_2d.png)
 
 ## How to reproduce results
 
@@ -168,7 +199,10 @@ Useful options of `benchmark.py`:
 * `--dim 2 3`: spatial dimensions to consider
 * `--schemes pq1bubble pq1bubblehybrid pq2hybrid`: momentum discretizations to consider
 * `--study spatial temporal energy all`: which study to run
-* `--levels N`: number of grid/time step refinements
+* `--cells N1 N2 ...`: cells per direction of the grid sequence of the spatial study
+  (default: 16, 32, 64, 128 in 2D and 6, 9, 12 in 3D, where the direct linear solver limits the grid size)
+* `--levels N`: number of time step refinements of the temporal study
+* `--reuse`: reuse existing error files instead of rerunning the simulations (e.g. to regenerate the plots)
 * `--test`: run a short study with few refinements and check the convergence rates (used by CTest)
 * `--check-solution`: verify symbolically (requires `sympy`) that the analytical solutions solve
   the Navier-Stokes equations
