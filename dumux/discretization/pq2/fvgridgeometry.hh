@@ -507,7 +507,7 @@ private:
                         for (const auto& isOutside : intersections(this->gridView(), outside))
                         {
                             // only check periodic vertices of the periodic neighbor
-                            if (isOutside.boundary() && isOutside.neighbor())
+                            if (periodicGridTraits_.isPeriodic(isOutside))
                             {
                                 for (int localDofIdxOut = 0; localDofIdxOut < localCoefficientsOut.size(); ++localDofIdxOut)
                                 {
