@@ -11,6 +11,7 @@ Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
 - __Local dofs__: A new concept of local degrees of freedom (localDof) has been introduced and implemented for the assembly of CVFE schemes.
 It generalizes the concept of sub-control volumes and allows the implementation of hybrid (finite elements / finite volumes) schemes.
 - __Face-centered staggered__: Fixed `outsidePeriodicScv` without grid geometry caching, which returned a copy of a destroyed sub-control volume.
+- __Multi-stage assemblers__: The operators of the previous stages enter a stage's residual at the stage solutions, so methods with more than one stage are also correct with solvers that stop after an update or assemble only once (e.g. `LinearPDESolver`). `MultiStageAssembler` and the experimental `MultiStageMultiDomainFVAssembler` implement `assembleResidual`; the experimental `MultiStageFVAssembler` can skip the re-evaluation for time-independent operators (`setAutonomousSpatialOperator`).
 - __Box Dfm__: By using the new localDof concept, a bug in the assembly has been fixed, where residual contributions were incorrectly added multiple
 times whenever multiple scvs were associated with the same localDof.
 - __Parameters__: `Parameters::reset()` discards all parameters and the record of which parameters have been used, e.g. to run a model repeatedly in one process.
