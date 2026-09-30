@@ -11,8 +11,10 @@
  *
  * The momentum balance is solved with the analytical pressure of the instationary sincos
  * problem. The test checks that implicit Euler with the multi-stage assembler reproduces
- * implicit Euler with the standard assembler, and that the implicit multi-stage schemes
- * converge in time with their theoretical order (self-convergence on a fixed grid).
+ * implicit Euler with the standard assembler, that the residual assembled without the Jacobian
+ * equals the one assembled with it, that a single linear solve per stage reproduces Newton's
+ * method for this linear problem, and that the implicit multi-stage schemes converge in time
+ * with their theoretical order (self-convergence on a fixed grid).
  */
 
 #include <config.h>
@@ -22,6 +24,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -37,6 +40,7 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/pdesolver.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/assembler.hh>
@@ -101,6 +105,7 @@ Result solveWithAssembler(std::shared_ptr<const GridGeometry> gridGeometry, Scal
 }
 
 //! Time integration with the multi-stage assembler and a fixed time step size
+template<bool singleLinearSolve = false>
 Result solveWithMultiStageAssembler(std::shared_ptr<const GridGeometry> gridGeometry,
                                     std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> method,
                                     Scalar dt, Scalar tEnd)
@@ -118,10 +123,12 @@ Result solveWithMultiStageAssembler(std::shared_ptr<const GridGeometry> gridGeom
 
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
+    using PDESolver = std::conditional_t<singleLinearSolve,
+                                         LinearPDESolver<Assembler, LinearSolver>,
+                                         NewtonSolver<Assembler, LinearSolver>>;
+    auto pdeSolver = std::make_shared<PDESolver>(assembler, linearSolver);
 
-    Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, method);
+    Experimental::MultiStageTimeStepper<PDESolver> timeStepper(pdeSolver, method);
 
     const auto numSteps = static_cast<int>(std::round(tEnd/dt));
     for (int stepIdx = 0; stepIdx < numSteps; ++stepIdx)
@@ -133,6 +140,47 @@ Result solveWithMultiStageAssembler(std::shared_ptr<const GridGeometry> gridGeom
 
     problem->setTime(tEnd);
     return {x, problem, gridVariables};
+}
+
+/*!
+ * \brief Largest relative difference over the stages of one time step between the residual
+ *        assembled without and with the Jacobian, both at the solution the stage starts from
+ */
+Scalar residualAssemblyDifference(std::shared_ptr<const GridGeometry> gridGeometry,
+                                  std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> method,
+                                  Scalar dt)
+{
+    auto problem = std::make_shared<Problem>(gridGeometry);
+    SolutionVector x;
+    problem->applyInitialSolution(x);
+    auto xOld = x;
+
+    auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
+    gridVariables->init(x);
+
+    using Assembler = Experimental::MultiStageAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, method, xOld);
+
+    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, std::make_shared<LinearSolver>());
+
+    Scalar maxRelDiff = 0.0;
+    for (std::size_t stageIdx = 1; stageIdx <= method->numStages(); ++stageIdx)
+    {
+        assembler->prepareStage(x, std::make_shared<Experimental::MultiStageParams<Scalar>>(*method, stageIdx, 0.0, dt));
+
+        assembler->assembleJacobianAndResidual(x);
+        auto difference = assembler->residual();
+        assembler->assembleResidual(x);
+        difference -= assembler->residual();
+
+        using std::max;
+        maxRelDiff = max(maxRelDiff, difference.two_norm()/assembler->residual().two_norm());
+
+        nonLinearSolver.solve(x);
+    }
+
+    return maxRelDiff;
 }
 
 Scalar discreteL2Norm(const SolutionVector& x)
@@ -172,6 +220,7 @@ int main(int argc, char** argv)
     const auto numStepsCoarse = getParam<int>("MultiStageTest.NumStepsCoarse");
     const auto numRefinements = getParam<int>("MultiStageTest.NumTimeStepRefinements");
     const auto equivalenceTolerance = getParam<Scalar>("MultiStageTest.EquivalenceTolerance");
+    const auto singleSolveTolerance = getParam<Scalar>("MultiStageTest.SingleSolveTolerance");
     const auto rateTolerance = getParam<Scalar>("MultiStageTest.RateTolerance");
 
     bool passed = true;
@@ -190,7 +239,6 @@ int main(int argc, char** argv)
             passed = false;
     }
 
-    // temporal self-convergence of the implicit multi-stage schemes
     using Method = Experimental::MultiStageMethod<Scalar>;
     const std::vector<std::tuple<std::shared_ptr<const Method>, int>> methods = {
         {std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>(), 1},
@@ -199,6 +247,32 @@ int main(int argc, char** argv)
         {std::make_shared<Experimental::MultiStage::DIRKThirdOrderAlexander<Scalar>>(), 3}
     };
 
+    {
+        const auto method = std::make_shared<Experimental::MultiStage::DIRKThirdOrderAlexander<Scalar>>();
+        const auto relDiff = residualAssemblyDifference(gridGeometry, method, tEnd/numStepsCoarse);
+        std::cout << "[Equivalence] " << method->name() << ": largest relative difference between the residual"
+                  << " assembled without and with the Jacobian = " << relDiff << std::endl;
+        if (!(relDiff < 1e-12))
+            passed = false;
+    }
+
+    // The problem is linear, so a single linear solve per stage has to reproduce Newton's method,
+    // which requires the previous stages to enter the stage residual at their solutions. With a
+    // numerically differentiated Jacobian, a single solve is exact only up to the finite-difference
+    // error of the Jacobian, hence the separate tolerance.
+    for (const auto& [method, order] : methods)
+    {
+        const Scalar dt = tEnd/numStepsCoarse;
+        const auto newton = solveWithMultiStageAssembler(gridGeometry, method, dt, tEnd);
+        const auto linear = solveWithMultiStageAssembler<true>(gridGeometry, method, dt, tEnd);
+        const auto relDiff = discreteL2Difference(newton.x, linear.x)/discreteL2Norm(newton.x);
+        std::cout << "[Equivalence] " << method->name() << ": relative difference between a single linear solve"
+                  << " per stage and Newton's method = " << relDiff << " (tolerance " << singleSolveTolerance << ")" << std::endl;
+        if (!(relDiff < singleSolveTolerance))
+            passed = false;
+    }
+
+    // temporal self-convergence of the implicit multi-stage schemes
     for (const auto& [method, order] : methods)
     {
         std::vector<Result> results;
