@@ -10,6 +10,7 @@ Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
 
 - __Local dofs__: A new concept of local degrees of freedom (localDof) has been introduced and implemented for the assembly of CVFE schemes.
 It generalizes the concept of sub-control volumes and allows the implementation of hybrid (finite elements / finite volumes) schemes.
+- __Face-centered staggered__: Fixed `outsidePeriodicScv` without grid geometry caching, which returned a copy of a destroyed sub-control volume.
 - __Box Dfm__: By using the new localDof concept, a bug in the assembly has been fixed, where residual contributions were incorrectly added multiple
 times whenever multiple scvs were associated with the same localDof.
 - __Particles__: Added a basic particle and particle cloud implementation. This can be the basis for particle tracking modules as shown in a Fokker-Planck test.

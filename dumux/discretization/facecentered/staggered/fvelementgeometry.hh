@@ -92,9 +92,13 @@ typename SubControlVolumeFace::Traits::Geometry scvfGeometry(const FVElementGeom
     return {corners[0], corners[1], inPlaneAxes};
 }
 
-//! Get the scv on the outside side of a periodic boundary
+/*!
+ * \brief Get the scv on the outside side of a periodic boundary
+ * \note Binds outsidePeriodicFVGeometry to the outside element and returns one of its scvs
+ */
 template<class FVElementGeometry, class SubControlVolume>
 const SubControlVolume& outsidePeriodicScv(const FVElementGeometry& fvGeometry,
+                                           FVElementGeometry& outsidePeriodicFVGeometry,
                                            const SubControlVolume& selfScv)
 {
     assert(fvGeometry.gridGeometry().dofOnPeriodicBoundary(selfScv.dofIndex()));
@@ -106,7 +110,6 @@ const SubControlVolume& outsidePeriodicScv(const FVElementGeometry& fvGeometry,
     const auto& orthogonalScvf = fvGeometry.lateralOrthogonalScvf(*normalScvf);
     const auto orthogonalOutsideScv = fvGeometry.scv(orthogonalScvf.outsideScvIdx());
 
-    auto outsidePeriodicFVGeometry = localView(fvGeometry.gridGeometry());
     const auto& periodicElement = fvGeometry.gridGeometry().element(orthogonalOutsideScv.elementIndex());
     outsidePeriodicFVGeometry.bindElement(periodicElement);
 
@@ -306,7 +309,9 @@ public:
     //! Get the scv on the outside side of a periodic boundary
     const SubControlVolume& outsidePeriodicScv(const SubControlVolume& selfScv) const
     {
-        return Detail::FCStaggered::outsidePeriodicScv(*this, selfScv);
+        // the scvs of a cached local view are stored in the grid geometry, so the reference outlives the local view
+        auto outsidePeriodicFVGeometry = localView(gridGeometry());
+        return Detail::FCStaggered::outsidePeriodicScv(*this, outsidePeriodicFVGeometry, selfScv);
     }
 
     //! Create the geometry of a given sub control volume
@@ -533,10 +538,14 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "No outside scvf found");
     }
 
-    //! Get the scv on the outside side of a periodic boundary
+    /*!
+     * \brief Get the scv on the outside side of a periodic boundary
+     * \note Requires the local view to be bound with bind(), since the outside scv is found through a neighbor scv
+     */
     SubControlVolume outsidePeriodicScv(const SubControlVolume& selfScv) const
     {
-        return Detail::FCStaggered::outsidePeriodicScv(*this, selfScv);
+        auto outsidePeriodicFVGeometry = localView(gridGeometry());
+        return Detail::FCStaggered::outsidePeriodicScv(*this, outsidePeriodicFVGeometry, selfScv);
     }
 
     //! Create the geometry of a given sub control volume
