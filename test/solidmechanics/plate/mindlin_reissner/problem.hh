@@ -73,7 +73,10 @@ public:
         NumEqVector values(0.0);
         const auto vars = this->couplingManager().deformationAndPotentials(fvGeometry, scvf);
         const auto phi = vars[this->couplingManager().shearGradPotentialIdx()];
-        values.axpy(phi, scvf.unitOuterNormal());
+        const auto psi = vars[this->couplingManager().shearCurlPotentialIdx()];
+        const auto& n = scvf.unitOuterNormal();
+        values[0] += phi*n[0] + psi*n[1];
+        values[1] += -psi*n[0] + phi*n[1];
         return values;
     }
 
