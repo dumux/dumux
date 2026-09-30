@@ -1,0 +1,19 @@
+[Problem]
+Name = lakeatrest
+WaterLevel = 1.0 # [m] elevation of the undisturbed free surface
+HumpHeight = 0.8 # [m] amplitude of the smooth bed hump
+SillHeight = 0.6 # [m] height of the bed sill with discontinuous flanks
+MinWaterDepth = 0.0 # [m] thin film keeping the dry cells from degenerating
+Gravity = 9.81 # [m/s^2]
+
+[TimeLoop]
+TEnd = 100.0 # [s]
+DtInitial = 10.0 # [s]
+
+[Grid]
+LowerLeft = 0.0 0.0
+UpperRight = 2.0 1.0
+Cells = 100 50
+
+[Newton]
+EnableDynamicOutput = false
