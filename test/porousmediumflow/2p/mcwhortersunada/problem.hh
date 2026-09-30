@@ -29,16 +29,11 @@ class McWhorterSunadaProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-
-    static constexpr int wettingPhaseIdx = FluidSystem::phase0Idx;
-    static constexpr int nonwettingPhaseIdx = FluidSystem::phase1Idx;
 
 public:
     McWhorterSunadaProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -91,15 +86,6 @@ public:
     { return referencePressure_; }
 
 private:
-    Scalar density_(const GlobalPosition& globalPos, int phaseIdx) const
-    {
-        FluidState fluidState;
-        fluidState.setTemperature(this->spatialParams().temperatureAtPos(globalPos));
-        fluidState.setPressure(wettingPhaseIdx, referencePressure_);
-        fluidState.setPressure(nonwettingPhaseIdx, referencePressure_);
-        return FluidSystem::density(fluidState, phaseIdx);
-    }
-
     Scalar residualWettingSaturation_(const GlobalPosition& globalPos) const
     { return this->spatialParams().fluidMatrixInteractionAtPos(globalPos).pcSwCurve().effToAbsParams().swr(); }
 
@@ -108,9 +94,6 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition& globalPos) const
     { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_; }
-
-    bool onRightBoundary_(const GlobalPosition& globalPos) const
-    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
     Scalar referencePressure_, injectionPressureNw_;
 

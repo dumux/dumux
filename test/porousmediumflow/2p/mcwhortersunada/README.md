@@ -97,3 +97,5 @@ All resolutions use the same 4% error threshold. The default benchmark uses 400 
 ![Line plot](mcwhortersunada_lineplot_comparison.png)
 
 ![Saturation field](mcwhortersunada_sw.png){html: width=80%}
+
+At the end of each run, the test compares imbibed wetting-phase mass, its center of mass measured from the inlet, and the cell-center saturation L1 error with the semi-analytical reference. The mass and L1 errors are normalized by the reference imbibed mass. The residual saturation is subtracted before integration so it does not hide errors in the imbibed plume. `Problem.MaxRelError` applies the same 4% limit to all three checks.
