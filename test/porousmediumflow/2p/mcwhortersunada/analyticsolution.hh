@@ -28,9 +28,8 @@ namespace Dumux {
 /*!
  * \brief Saturation reference for the homogeneous, gravity-free, incompressible test.
  *
- * Implements method B of Fučík et al., Vadose Zone Journal 6 (2007), 93–104,
- * doi:10.2136/vzj2006.0024, specialized to R = 0 (closed right boundary).
- * All saturations and derivatives here are ABSOLUTE wetting saturations.
+ * Implements method B of Fučík et al. @cite Fucik2007, specialized to R = 0
+ * (closed right boundary).
  * The default benchmark end time is chosen before the semi-infinite reference front reaches the right boundary.
  * See README.md for equations, quadrature and benchmark assumptions.
  */
