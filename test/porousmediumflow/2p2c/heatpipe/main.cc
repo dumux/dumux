@@ -5,11 +5,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 #include "config.h"
+#include <algorithm>
 #include <ctime>
 #include <iostream>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 
 #include <dumux/discretization/method.hh>
@@ -142,6 +145,29 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // compare the dry-out front, i.e. the first vertex where only the gas phase is present,
+    // to the semi-analytical solution (see test_heatpipe_odesolver.cc)
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    Scalar dryOutPosition = fvGridGeometry->bBoxMax()[0];
+    for (const auto& vertex : vertices(leafGridView))
+    {
+        const auto dofIdx = fvGridGeometry->vertexMapper().index(vertex);
+        if (x[dofIdx].state() == Indices::secondPhaseOnly)
+            dryOutPosition = std::min(dryOutPosition, vertex.geometry().center()[0]);
+    }
+
+    // numerical diffusion smears the front towards the heat source, so the simulated
+    // front is expected to lie downstream of the semi-analytical one
+    const auto referenceDryOutPosition = getParam<Scalar>("Problem.ReferenceDryOutPosition");
+    const auto maxDeviation = getParam<Scalar>("Problem.MaxDryOutDeviation");
+    const auto deviation = dryOutPosition - referenceDryOutPosition;
+    std::cout << "Dry-out front at x = " << dryOutPosition << " m (semi-analytical: "
+              << referenceDryOutPosition << " m, deviation: " << deviation << " m)" << std::endl;
+    if (deviation < 0.0 || deviation > maxDeviation)
+        DUNE_THROW(Dune::InvalidStateException, "Dry-out front deviates by " << deviation
+                    << " m from the semi-analytical solution, which is outside the expected range [0, "
+                    << maxDeviation << "] m");
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
