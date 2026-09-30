@@ -1,0 +1,36 @@
+[TimeLoop]
+DtInitial = 1e3 # [s]
+TEnd = 5e6 # [s]
+# MaxTimeStepSize = 5e5 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 2 1 # [m]
+Cells = 20 1
+
+[Problem]
+Name = test_2p_mcwhortersunada_tpfa
+EnableGravity = false
+ReferencePressure = 1e5 # [Pa]
+InjectionPressure = 1e5 # [Pa]
+
+# TotalVelocity = 3e-7 # [m/s]
+# MaxRelError = 0.01 # [-]
+
+[SpatialParams]
+Permeability = 1.01936799e-13 # [m^2]
+Porosity = 0.2 # [-]
+BrooksCoreyLambda = 3.0 # [-]
+BrooksCoreyPcEntry = 8000 # [Pa]
+Swr = 0.2 # [-]
+Snr = 0.2 # [-]
+Temperature = 283.15 # [K]
+
+[2.Component]
+Name = nonwetting
+MolarMass = 0.018 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa*s]
+
+[Newton]
+EnablePartialReassembly = false
