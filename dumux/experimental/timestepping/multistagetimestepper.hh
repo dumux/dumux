@@ -50,6 +50,10 @@ public:
             using std::abs;
             p.skipTemporal = (abs(p.alpha) < 1e-6);
             p.skipSpatial = (abs(p.betaDt) < 1e-6);
+            // Note: comparing the weight times the step size drops the spatial terms for
+            // small step sizes (below ~6e-6 for explicit RK4). Deciding based on the
+            // method's weight only would avoid this:
+            // p.skipSpatial = (abs(m.spatialWeight(i, k)) < 1e-6);
         }
     }
 
