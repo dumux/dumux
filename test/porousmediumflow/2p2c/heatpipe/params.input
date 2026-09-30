@@ -14,6 +14,8 @@ Permeability = 1.e-12   # m^2
 HeatFlux = -100.0       # W/m^2
 Name = heatpipe
 EnableGravity = false
+ReferenceDryOutPosition = 2.1568 # m, semi-analytical solution (test_heatpipe_odesolver)
+MaxDryOutDeviation = 0.12 # m, allowed downstream deviation of the simulated dry-out front
 
 [Component]
 SolidHeatCapacity = 700
