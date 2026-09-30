@@ -142,6 +142,8 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_multistage_pq1bubble
                        -MultiStageTest.NumStepsCoarse 4
                        -MultiStageTest.NumTimeStepRefinements 4
                        -MultiStageTest.EquivalenceTolerance 1e-8
+                       -MultiStageTest.SingleSolveTolerance 1e-5
+                       -LinearPDESolver.Verbosity 0
                        -MultiStageTest.RateTolerance 0.2)
 
 dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_multistage_pq2
@@ -165,6 +167,8 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_multistage_pq2
                        -MultiStageTest.NumStepsCoarse 4
                        -MultiStageTest.NumTimeStepRefinements 4
                        -MultiStageTest.EquivalenceTolerance 1e-8
+                       -MultiStageTest.SingleSolveTolerance 1e-5
+                       -LinearPDESolver.Verbosity 0
                        -MultiStageTest.RateTolerance 0.2)
 
 dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq1bubble
@@ -190,6 +194,8 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq1bubble
                        -MultiStageTest.NumStepsCoarse 4
                        -MultiStageTest.NumTimeStepRefinements 4
                        -MultiStageTest.EquivalenceTolerance 1e-8
+                       -MultiStageTest.SingleSolveTolerance 1e-5
+                       -LinearPDESolver.Verbosity 0
                        -MultiStageTest.RateTolerance 0.2)
 
 dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq2
@@ -215,4 +221,6 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq2
                        -MultiStageTest.NumStepsCoarse 4
                        -MultiStageTest.NumTimeStepRefinements 4
                        -MultiStageTest.EquivalenceTolerance 1e-8
+                       -MultiStageTest.SingleSolveTolerance 1e-5
+                       -LinearPDESolver.Verbosity 0
                        -MultiStageTest.RateTolerance 0.2)

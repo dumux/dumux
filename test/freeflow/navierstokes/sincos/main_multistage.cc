@@ -11,7 +11,8 @@
  *        Navier-Stokes mass and momentum models.
  *
  * The test checks that implicit Euler with the multi-stage multi-domain assembler reproduces
- * implicit Euler with the standard multi-domain assembler, and that velocity and pressure
+ * implicit Euler with the standard multi-domain assembler, that a single linear solve per stage
+ * reproduces Newton's method for this linear problem, and that velocity and pressure
  * converge in time with the order of the scheme (self-convergence on a fixed grid).
  */
 
@@ -36,6 +37,7 @@
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/linear/pdesolver.hh>
 
 #include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/multistagemultidomainassembler.hh>
@@ -131,6 +133,7 @@ SolutionVector solveWithAssembler(std::shared_ptr<const MomentumGridGeometry> mo
 }
 
 //! Time integration with the multi-stage multi-domain assembler and a fixed time step size
+template<bool singleLinearSolve = false>
 SolutionVector solveWithMultiStageAssembler(std::shared_ptr<const MomentumGridGeometry> momentumGridGeometry,
                                             std::shared_ptr<const MassGridGeometry> massGridGeometry,
                                             std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> method,
@@ -148,10 +151,18 @@ SolutionVector solveWithMultiStageAssembler(std::shared_ptr<const MomentumGridGe
 
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, s->couplingManager);
+    auto pdeSolver = [&]
+    {
+        if constexpr (singleLinearSolve)
+            return std::make_shared<LinearPDESolver<Assembler, LinearSolver>>(assembler, linearSolver);
+        else
+            return std::make_shared<MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>>(
+                assembler, linearSolver, s->couplingManager
+            );
+    }();
 
-    Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, method);
+    using PDESolver = typename decltype(pdeSolver)::element_type;
+    Experimental::MultiStageTimeStepper<PDESolver> timeStepper(pdeSolver, method);
 
     const auto numSteps = static_cast<int>(std::round(tEnd/dt));
     for (int stepIdx = 0; stepIdx < numSteps; ++stepIdx)
@@ -207,6 +218,7 @@ int main(int argc, char** argv)
     const auto numStepsCoarse = getParam<int>("MultiStageTest.NumStepsCoarse");
     const auto numRefinements = getParam<int>("MultiStageTest.NumTimeStepRefinements");
     const auto equivalenceTolerance = getParam<Scalar>("MultiStageTest.EquivalenceTolerance");
+    const auto singleSolveTolerance = getParam<Scalar>("MultiStageTest.SingleSolveTolerance");
     const auto rateTolerance = getParam<Scalar>("MultiStageTest.RateTolerance");
 
     bool passed = true;
@@ -228,8 +240,35 @@ int main(int argc, char** argv)
             passed = false;
     }
 
-    // temporal self-convergence of velocity and pressure
     using Method = Experimental::MultiStageMethod<Scalar>;
+
+    // The problem is linear, so a single linear solve per stage has to reproduce Newton's method,
+    // which requires the previous stages to enter the stage residual at their solutions. With a
+    // numerically differentiated Jacobian, a single solve is exact only up to the finite-difference
+    // error of the Jacobian, hence the separate tolerance.
+    {
+        const std::vector<std::shared_ptr<const Method>> multiStageMethods = {
+            std::make_shared<Experimental::MultiStage::Theta<Scalar>>(0.5),
+            std::make_shared<Experimental::MultiStage::DIRKSecondOrderAlexander<Scalar>>(),
+            std::make_shared<Experimental::MultiStage::DIRKThirdOrderAlexander<Scalar>>()
+        };
+
+        const Scalar dt = tEnd/numStepsCoarse;
+        for (const auto& method : multiStageMethods)
+        {
+            const auto newton = solveWithMultiStageAssembler(momentumGridGeometry, massGridGeometry, method, dt, tEnd);
+            const auto linear = solveWithMultiStageAssembler<true>(momentumGridGeometry, massGridGeometry, method, dt, tEnd);
+            const auto relDiffVelocity = discreteL2Difference(newton[momentumIdx], linear[momentumIdx])/discreteL2Norm(newton[momentumIdx]);
+            const auto relDiffPressure = discreteL2Difference(newton[massIdx], linear[massIdx])/discreteL2Norm(newton[massIdx]);
+            std::cout << "[Equivalence] " << method->name() << ": relative difference between a single linear solve"
+                      << " per stage and Newton's method: velocity " << relDiffVelocity << ", pressure " << relDiffPressure
+                      << " (tolerance " << singleSolveTolerance << ")" << std::endl;
+            if (!(relDiffVelocity < singleSolveTolerance && relDiffPressure < singleSolveTolerance))
+                passed = false;
+        }
+    }
+
+    // temporal self-convergence of velocity and pressure
     const std::vector<std::tuple<std::shared_ptr<const Method>, int>> methods = {
         {std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>(), 1},
         {std::make_shared<Experimental::MultiStage::Theta<Scalar>>(0.5), 2}
