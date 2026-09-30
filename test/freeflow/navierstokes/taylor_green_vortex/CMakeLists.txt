@@ -71,9 +71,28 @@ foreach(scheme ${TAYLORGREEN_SCHEMES})
                  CMD_ARGS --dim 2 --schemes ${scheme} --study spatial --test)
 endforeach()
 
-# temporal convergence test (implicit Euler)
+# multi-stage time integration (implicit Euler, Crank-Nicolson, DIRK3)
+dumux_add_test(NAME test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage
+               SOURCES main.cc
+               LABELS freeflow navierstokes taylorgreen
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS TAYLORGREEN_DIM=2
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=TaylorGreenTestMomentumPQ2Hybrid
+               COMPILE_DEFINITIONS MULTISTAGE=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage-00004.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage params_2d.input
+                        -Problem.Name test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage
+                        -Problem.IsStationary false
+                        -Grid.Cells '${TAYLORGREEN_CELLS_2}'
+                        -TimeLoop.Scheme DIRK3
+                        -TimeLoop.TEnd 0.2")
+
+# temporal convergence test
 dumux_add_test(NAME test_ff_navierstokes_taylorgreen_2d_pq2hybrid_temporal_convergence
-               TARGET test_ff_navierstokes_taylorgreen_2d_pq2hybrid
+               TARGET test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage
                LABELS freeflow navierstokes taylorgreen
                CMAKE_GUARD HAVE_UMFPACK
                TIMEOUT 1200

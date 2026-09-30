@@ -94,7 +94,16 @@ structured simplex grid (`Dune::ALUGrid`, requires dune-alugrid). The new CVFE p
 (see also the tests `donea` and `sincos`). The convective term is discretized with central
 differences (`Flux.UpwindWeight = 0.5`); full upwinding (the default, `Flux.UpwindWeight = 1`)
 is only first-order accurate and adds numerical diffusion that visibly damps the vortex.
-In time, the implicit Euler method with a constant time step size is used.
+In time, the implicit Euler method with a constant time step size is used. For the temporal
+convergence study, the executable `test_ff_navierstokes_taylorgreen_2d_pq2hybrid_multistage`
+additionally provides the multi-stage methods Crank-Nicolson and DIRK3
+(`TimeLoop.Scheme`, see @ref benchmark-timestepping-methods).
+
+@note Work in progress: the multi-stage time stepping does not work yet with the hybrid schemes.
+Their finite-element storage term (`dumux/freeflow/navierstokes/momentum/cvfe/localresidual.hh`)
+requires a time loop (`this->timeLoop().timeStepSize()`), which the multi-stage assembler does not set,
+so the executable crashes in the first time step. Without a time loop, the finite-element part of the
+storage term would moreover not be evaluated correctly by the multi-stage assembler.
 
 ### Related setups
 
@@ -150,7 +159,7 @@ OpenFOAM case (up to the boundary conditions) is obtained with
   The hybrid PQ1Bubble scheme currently does not converge in 3D (the linear system appears to be singular).
 
 * **Temporal convergence** (instationary variant): the error $\|\mathbf{u} - \mathbf{u}_h\|_{L^2(\Omega)}$ at $t = T$ on a fine grid under
-  refinement of the time step size. Expected order: 1 (implicit Euler).
+  refinement of the time step size. Expected orders: 1 (implicit Euler), 2 (Crank-Nicolson), 3 (DIRK3).
 * **Kinetic energy decay** (instationary variant): $E(t) = \frac{1}{2} \int_\Omega \rho \|\mathbf{u}\|^2 \, \mathrm{d}x$
   compared to the analytical $E(t) = E_0 F^2(t)$ with $E_0 = \rho U_0^2 |\Omega| / 4$ (2D) and
   $E_0 = \rho U_0^2 |\Omega| / 2$ (3D), and the dissipation rate $-\mathrm{d}E/\mathrm{d}t$ compared to

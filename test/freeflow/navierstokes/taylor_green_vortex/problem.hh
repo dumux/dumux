@@ -305,6 +305,13 @@ public:
      * \brief Updates the time and the time-dependent Dirichlet constraints
      */
     void updateTime(const Scalar time)
+    { setTime(time); }
+
+    /*!
+     * \brief Updates the time and the time-dependent Dirichlet constraints
+     * \note This is called by the multi-stage assembler (on a const problem) for each stage.
+     */
+    void setTime(const Scalar time) const
     {
         time_ = time;
         updateConstraints_();
@@ -330,7 +337,7 @@ private:
         return false;
     }
 
-    void updateConstraints_()
+    void updateConstraints_() const
     {
         constraints_.clear();
         if constexpr (ParentType::isMomentumProblem())
@@ -339,7 +346,7 @@ private:
             appendPressureConstraint_();
     }
 
-    void appendDirichletConstraints_()
+    void appendDirichletConstraints_() const
     {
         auto elemDisc = localView(this->gridDiscretization());
         for (const auto& element : elements(this->gridDiscretization().gridView()))
@@ -362,7 +369,7 @@ private:
     }
 
     //! Without flux boundaries, the pressure is only determined up to a constant, so fix it at one dof
-    void appendPressureConstraint_()
+    void appendPressureConstraint_() const
     {
         static_assert(GridDiscretization::discMethod == DiscretizationMethods::box,
                       "The pressure constraint is only implemented for the Box mass discretization.");
@@ -509,11 +516,11 @@ private:
     Scalar mu_;
     Scalar k_;
     Scalar u0_;
-    Scalar time_;
+    mutable Scalar time_;
     bool isStationary_;
     bool useNeumann_;
     bool useUnsymmetrizedVelocityGradient_;
-    std::vector<DirichletConstraintData> constraints_;
+    mutable std::vector<DirichletConstraintData> constraints_;
 };
 
 } // end namespace Dumux

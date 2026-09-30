@@ -47,9 +47,19 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
+#ifndef MULTISTAGE
+#define MULTISTAGE 0
+#endif
+
+#if MULTISTAGE
+#include <dumux/multidomain/multistagemultidomainassembler.hh>
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
+#else
 // the new assembler relies on declarations of the old one
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/assembler.hh>
+#endif
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
@@ -225,7 +235,7 @@ int main(int argc, char** argv)
     using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
-    if (isStationary)
+    if (isStationary || MULTISTAGE)
         couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
     else
         couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
@@ -256,6 +266,31 @@ int main(int argc, char** argv)
     };
 
     // the assembler
+#if MULTISTAGE
+    const auto timeSteppingScheme = getParam<std::string>("TimeLoop.Scheme", "ImplicitEuler");
+    std::shared_ptr<Experimental::MultiStageMethod<Scalar>> timeSteppingMethod;
+    if (timeSteppingScheme == "ImplicitEuler")
+        timeSteppingMethod = std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>();
+    else if (timeSteppingScheme == "CrankNicolson")
+        timeSteppingMethod = std::make_shared<Experimental::MultiStage::Theta<Scalar>>(0.5);
+    else if (timeSteppingScheme == "DIRK3")
+        timeSteppingMethod = std::make_shared<Experimental::MultiStage::DIRKThirdOrderAlexander<Scalar>>();
+    else
+        DUNE_THROW(ParameterException, "Unknown TimeLoop.Scheme " << timeSteppingScheme
+                    << ". Use ImplicitEuler, CrankNicolson or DIRK3.");
+
+    if (isStationary)
+        DUNE_THROW(ParameterException, "The multi-stage executable only supports the instationary problem.");
+
+    using Assembler = Experimental::MultiStageMultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(
+        std::make_tuple(momentumProblem, massProblem),
+        std::make_tuple(momentumGridGeometry, massGridGeometry),
+        std::make_tuple(momentumGridVariables, massGridVariables),
+        couplingManager, timeSteppingMethod, xOld
+    );
+    assembler->setLinearSystem();
+#else
     using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = isStationary ?
         std::make_shared<Assembler>(
@@ -271,6 +306,7 @@ int main(int argc, char** argv)
             std::make_tuple(momentumGridVariables, massGridVariables),
             couplingManager, timeLoop, xOld
         );
+#endif
 
     // the linear solver
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -294,10 +330,23 @@ int main(int argc, char** argv)
     {
         writeErrors(0.0, dt);
 
+#if MULTISTAGE
+        using TimeStepper = Experimental::MultiStageTimeStepper<NewtonSolver>;
+        TimeStepper timeStepper(nonLinearSolver, timeSteppingMethod);
+#endif
+
         timeLoop->start(); do
         {
             const Scalar newTime = timeLoop->time() + timeLoop->timeStepSize();
 
+#if MULTISTAGE
+            // the assembler sets the problem time of each stage
+            xOld = x;
+            assembler->setPreviousSolution(xOld);
+            timeStepper.step(x, timeLoop->time(), timeLoop->timeStepSize());
+            momentumProblem->updateTime(newTime);
+            massProblem->updateTime(newTime);
+#else
             // set the correct time level for the problem's boundary conditions
             momentumProblem->updateTime(newTime);
             massProblem->updateTime(newTime);
@@ -305,6 +354,7 @@ int main(int argc, char** argv)
             // solve the non-linear system with time step control
             nonLinearSolver->solve(x, *timeLoop);
             xOld = x;
+#endif
 
             // make the new solution the old solution
             momentumGridVariables->advanceTimeStep();

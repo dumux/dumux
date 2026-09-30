@@ -2,6 +2,7 @@
 DtInitial = 0.05 # [s]
 MaxTimeStepSize = 0.05 # [s]
 TEnd = 1.0 # [s]
+Scheme = ImplicitEuler # only used by multi-stage executables: ImplicitEuler, CrankNicolson, DIRK3
 
 [Grid]
 LowerLeft = 0 0 0
