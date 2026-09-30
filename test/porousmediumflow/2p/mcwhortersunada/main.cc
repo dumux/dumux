@@ -71,6 +71,10 @@ int main(int argc, char** argv)
     gridVariables->init(sol);
 
     McWhorterAnalyticSolution<TypeTag> reference(problem);
+    if (reference.computeSaturation(gridGeometry->bBoxMax()[0], tEnd) > reference.initialSaturation())
+        DUNE_THROW(Dune::InvalidStateException,
+                   "McWhorter reference front reaches the closed right boundary at TEnd. "
+                   "Reduce TEnd or enlarge the domain.");
     reference.update(0.0);
     std::vector<Scalar> saturationError(gridGeometry->numDofs(), 0.0);
 
