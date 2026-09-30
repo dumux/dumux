@@ -1,12 +1,12 @@
 [TimeLoop]
 DtInitial = 1e3 # [s]
-TEnd = 5e6 # [s]
-# MaxTimeStepSize = 5e5 # [s]
+TEnd = 3e6 # [s], keeps the plume inside the domain on coarse grids
+MaxTimeStepSize = 5e4 # [s]
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 2 1 # [m]
-Cells = 20 1
+Cells = 400 1
 
 [Problem]
 Name = test_2p_mcwhortersunada_tpfa
@@ -14,11 +14,15 @@ EnableGravity = false
 ReferencePressure = 1e5 # [Pa]
 InjectionPressure = 1e5 # [Pa]
 
-# TotalVelocity = 3e-7 # [m/s]
-# MaxRelError = 0.01 # [-]
+MaxRelError = 0.04 # relative imbibed-mass, center-of-mass and saturation L1 errors
+
+[Reference]
+NumIntervals = 4000 # saturation intervals, independent of the spatial grid
+Tolerance = 1e-10 # relative change of the Fucik integrand
+MaxIterations = 10000
 
 [SpatialParams]
-Permeability = 1.01936799e-13 # [m^2]
+Permeability = 1e-13 # [m^2]
 Porosity = 0.2 # [-]
 BrooksCoreyLambda = 3.0 # [-]
 BrooksCoreyPcEntry = 8000 # [Pa]
