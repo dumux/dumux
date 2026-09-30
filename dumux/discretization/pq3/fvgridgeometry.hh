@@ -491,7 +491,7 @@ private:
                         const auto& localCoefficientsOut = this->feCache().get(outsideGeometry.type()).localCoefficients();
                         for (const auto& isOutside : intersections(this->gridView(), outside))
                         {
-                            if (isOutside.boundary() && isOutside.neighbor())
+                            if (periodicGridTraits_.isPeriodic(isOutside))
                             {
                                 for (int localDofIdxOut = 0; localDofIdxOut < localCoefficientsOut.size(); ++localDofIdxOut)
                                 {
