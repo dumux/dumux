@@ -205,9 +205,85 @@ public:
         });
     }
 
-    //! compute the residuals using the internal residual
+    /*!
+     * \brief Assembles the residual for the given solution without the Jacobian.
+     *
+     * Required by everything in the Newton solver that evaluates the residual somewhere
+     * other than the linearization point: a line search, and a residual-based convergence
+     * criterion. Without it neither can be used with a multi-stage method.
+     *
+     * The residual of a stage is the weighted sum of the spatial and temporal operator
+     * evaluations over all stages, the current one included. Only the current stage's
+     * evaluation depends on `curSol`; the earlier ones are the evaluations at the previous
+     * stage solutions, so this costs one operator evaluation rather than one per stage.
+     *
+     * The Dirichlet constraints of control-volume finite element subdomains are evaluated here
+     * rather than taken from the mask of a previous Jacobian assembly, which need not have
+     * happened in this stage. The residual of a constrained degree of freedom is the constraint
+     * itself and does not depend on the stage weights, so it overwrites the weighted sum.
+     */
     void assembleResidual(const SolutionVector& curSol)
-    { DUNE_THROW(Dune::NotImplemented, "residual"); }
+    {
+        if (!residual_)
+        {
+            residual_ = std::make_shared<ResidualType>();
+            setResidualSize_(*residual_);
+            setResidualSize_(constrainedDofs_);
+            constrainedDofs_ = 0.0;
+        }
+
+        (*residual_) = 0.0;
+        spatialOperatorEvaluations_.back() = 0.0;
+        temporalOperatorEvaluations_.back() = 0.0;
+
+        if (stageParams_->size() != spatialOperatorEvaluations_.size())
+            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
+
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
+        {
+            auto& spatial = spatialOperatorEvaluations_.back()[domainId];
+            auto& temporal = temporalOperatorEvaluations_.back()[domainId];
+
+            // unit weights, so that what is stored is the operator evaluation itself and
+            // the stage weights can be applied to it below
+            assemble_(domainId, [&](const auto& element)
+            {
+                MultiDomainAssemblerSubDomainView view{*this, domainId};
+                SubDomainAssembler<domainId()> subDomainAssembler(view, element, curSol, *couplingManager_);
+                subDomainAssembler.localResidual().spatialWeight(1.0);
+                subDomainAssembler.localResidual().temporalWeight(1.0);
+                subDomainAssembler.assembleCurrentResidual(spatial, temporal);
+            });
+
+            auto& stageResidual = (*residual_)[domainId];
+            for (std::size_t k = 0; k < stageParams_->size(); ++k)
+            {
+                if (!stageParams_->skipTemporal(k))
+                    stageResidual.axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_[k][domainId]);
+                if (!stageParams_->skipSpatial(k))
+                    stageResidual.axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_[k][domainId]);
+            }
+
+            constrainedDofs_[domainId] = 0.0;
+            if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry<domainId>::DiscretizationMethod>)
+            {
+                assemble_(domainId, [&](const auto& element)
+                {
+                    MultiDomainAssemblerSubDomainView view{*this, domainId};
+                    SubDomainAssembler<domainId()> subDomainAssembler(view, element, curSol, *couplingManager_);
+                    subDomainAssembler.bindLocalViews();
+                    subDomainAssembler.enforceDirichletConstraints(
+                        [&](const auto& scvI, const auto& dirichletValues, const auto eqIdx, const auto pvIdx)
+                        {
+                            stageResidual[scvI.dofIndex()][eqIdx]
+                                = subDomainAssembler.curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+                            constrainedDofs_[domainId][scvI.dofIndex()][eqIdx] = 1.0;
+                        });
+                });
+            }
+        });
+    }
 
     /*!
      * \brief The version without arguments uses the default constructor to create
@@ -331,6 +407,34 @@ public:
             {
                 auto& spatial = spatialOperatorEvaluations_.back()[domainId];
                 auto& temporal = temporalOperatorEvaluations_.back()[domainId];
+                assemble_(domainId, [&](const auto& element)
+                {
+                    MultiDomainAssemblerSubDomainView view{*this, domainId};
+                    SubDomainAssembler<domainId()> subDomainAssembler(view, element, x, *couplingManager_);
+                    subDomainAssembler.localResidual().spatialWeight(1.0);
+                    subDomainAssembler.localResidual().temporalWeight(1.0);
+                    subDomainAssembler.assembleCurrentResidual(spatial, temporal);
+                });
+            });
+        }
+
+        // The evaluations recorded while solving the previous stage belong to the last iterate
+        // the solver assembled, which is not the stage solution for a solver that stops after an
+        // update (e.g. Newton on the shift criterion) or assembles only once (a linear solver).
+        else
+        {
+            if (spatialOperatorEvaluations_.size() != curStage)
+                DUNE_THROW(Dune::InvalidStateException, "Invalid state. Maybe you forgot to call clearStages()");
+
+            using namespace Dune::Hybrid;
+            forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
+            {
+                setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(curStage-1));
+
+                auto& spatial = spatialOperatorEvaluations_.back()[domainId];
+                auto& temporal = temporalOperatorEvaluations_.back()[domainId];
+                spatial = 0.0;
+                temporal = 0.0;
                 assemble_(domainId, [&](const auto& element)
                 {
                     MultiDomainAssemblerSubDomainView view{*this, domainId};
