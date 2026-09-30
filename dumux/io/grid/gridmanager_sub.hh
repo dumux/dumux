@@ -572,8 +572,9 @@ class BoundaryFlag<Dune::SubGrid<dim, HostGrid>>
 public:
     BoundaryFlag() : flag_(invalidFlag_) {}
 
+    //! Flags a boundary intersection, without the segment index the sub-grid does not provide
     template<class Intersection>
-    BoundaryFlag(const Intersection& i) : flag_(invalidFlag_) {}
+    BoundaryFlag(const Intersection& i) : flag_(i.boundary() ? boundaryFlag_ : invalidFlag_) {}
 
     using value_type = int;
 
@@ -584,6 +585,7 @@ public:
 
 private:
     static constexpr value_type invalidFlag_ = -1;
+    static constexpr value_type boundaryFlag_ = 0;
     value_type flag_;
 };
 
