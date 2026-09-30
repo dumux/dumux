@@ -160,6 +160,15 @@ void Parameters::init(const std::string& parameterFileName,
     applyGlobalDefaults_(defaultParamTree_());
 }
 
+// discard all parameters and the record of their use
+void Parameters::reset()
+{
+    // the logging tree holds references to both trees, so clear them in place
+    paramTree_() = Dune::ParameterTree{};
+    defaultParamTree_() = Dune::ParameterTree{};
+    loggingTree_().clearUsageLog();
+}
+
 // prints all used and unused parameters
 void Parameters::print()
 {
@@ -209,6 +218,12 @@ Dune::ParameterTree Parameters::parseCommandLine(int argc, char **argv)
 
 // get the parameter tree singleton
 const LoggingParameterTree& Parameters::getTree()
+{
+    return loggingTree_();
+}
+
+// the logging parameter tree recording which parameters are used
+LoggingParameterTree& Parameters::loggingTree_()
 {
     static LoggingParameterTree tree(paramTree_(), defaultParamTree_());
     return tree;
