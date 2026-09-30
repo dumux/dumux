@@ -4,3 +4,6 @@
 dumux_add_test(SOURCES test_loggingparametertree.cc
               LABELS unit)
 dune_symlink_to_source_files(FILES "params.input")
+
+dumux_add_test(SOURCES test_parametersreset.cc
+              LABELS unit)
