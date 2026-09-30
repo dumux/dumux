@@ -13,12 +13,38 @@
 #ifndef DUMUX_RICHARDSEXTENDED_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_RICHARDSEXTENDED_PRIMARY_VARIABLE_SWITCH_HH
 
+#include <utility>
+
+#include <dune/common/std/type_traits.hh>
+
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux {
+
+namespace Detail::ExtendedRichards {
+
+template<class FluidSystem, class FluidState>
+using VaporPressureFromFluidState = decltype(FluidSystem::vaporPressure(std::declval<const FluidState&>(), 0));
+
+/*!
+ * \ingroup ExtendedRichardsModel
+ * \brief The vapor pressure of water in equilibrium with the liquid phase
+ * \note Uses the fluid-state dependent vapor pressure of the fluid system if it provides one,
+ *       e.g. to account for the capillary pressure by Kelvin's equation.
+ */
+template<class FluidSystem, class FluidState>
+auto equilibriumVaporPressure(const FluidState& fluidState)
+{
+    if constexpr (Dune::Std::is_detected_v<VaporPressureFromFluidState, FluidSystem, FluidState>)
+        return FluidSystem::vaporPressure(fluidState, FluidSystem::comp0Idx);
+    else
+        return FluidSystem::H2O::vaporPressure(fluidState.temperature(FluidSystem::liquidPhaseIdx));
+}
+
+} // end namespace Detail::ExtendedRichards
 
 /*!
  * \ingroup RichardsModel
@@ -63,7 +89,7 @@ protected:
             // if the mole fraction of water is larger than the one
             // predicted by a liquid-vapor equilibrium
             Scalar xnw = volVars.moleFraction(FluidSystem::gasPhaseIdx, liquidCompIdx);
-            Scalar xnwPredicted = FluidSystem::H2O::vaporPressure(volVars.temperature())
+            Scalar xnwPredicted = Detail::ExtendedRichards::equilibriumVaporPressure<FluidSystem>(volVars.fluidState())
                                   / volVars.pressure(FluidSystem::gasPhaseIdx);
 
             Scalar xwMax = 1.0;
