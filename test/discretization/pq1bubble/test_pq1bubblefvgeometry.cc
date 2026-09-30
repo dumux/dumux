@@ -11,8 +11,11 @@
  */
 #include <config.h>
 
+#include <cstddef>
 #include <iostream>
+#include <optional>
 #include <utility>
+#include <vector>
 
 #include <dune/common/test/iteratortest.hh>
 #include <dune/common/fvector.hh>
@@ -137,5 +140,44 @@ int main (int argc, char *argv[])
         if ((boundaryCount>0) != fvGeometry.hasBoundaryScvf())
             DUNE_THROW(Dune::InvalidStateException, "fvGeometry.hasBoundaryScvf() reports " << fvGeometry.hasBoundaryScvf()
                             << " but the number of boundary scvfs is " << boundaryCount);
+    }
+
+    // check that a copy of a bound local view stays valid and correct
+    // once the local view it was copied from has been destroyed
+    {
+        const auto element = *elements(leafGridView).begin();
+
+        std::size_t numLocalDofsBeforeCopy = 0;
+        std::vector<std::size_t> dofIndicesBeforeCopy;
+        const auto* feLocalBasisBeforeCopy = static_cast<const void*>(nullptr);
+
+        std::optional<FVElementGeometry> fvGeometryCopy;
+        {
+            auto fvGeometryOriginal = localView(gridGeometry);
+            fvGeometryOriginal.bind(element);
+
+            numLocalDofsBeforeCopy = fvGeometryOriginal.numLocalDofs();
+            feLocalBasisBeforeCopy = static_cast<const void*>(&fvGeometryOriginal.feLocalBasis());
+            for (const auto& localDof : localDofs(fvGeometryOriginal))
+                dofIndicesBeforeCopy.push_back(static_cast<std::size_t>(localDof.dofIndex()));
+
+            fvGeometryCopy = fvGeometryOriginal;
+        } // fvGeometryOriginal is destroyed here
+
+        if (!fvGeometryCopy->isBound())
+            DUNE_THROW(Dune::Exception, "Copied local view should still be bound after the original was destroyed");
+
+        if (fvGeometryCopy->numLocalDofs() != numLocalDofsBeforeCopy)
+            DUNE_THROW(Dune::Exception, "Copied local view reports a different numLocalDofs than the original");
+
+        if (static_cast<const void*>(&fvGeometryCopy->feLocalBasis()) != feLocalBasisBeforeCopy)
+            DUNE_THROW(Dune::Exception, "Copied local view refers to a different finite element than the original");
+
+        std::size_t i = 0;
+        for (const auto& localDof : localDofs(*fvGeometryCopy))
+        {
+            if (static_cast<std::size_t>(localDof.dofIndex()) != dofIndicesBeforeCopy.at(i++))
+                DUNE_THROW(Dune::Exception, "Copied local view has a stale dof index after the original was destroyed");
+        }
     }
 }
