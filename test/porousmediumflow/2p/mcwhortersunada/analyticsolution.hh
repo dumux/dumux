@@ -29,7 +29,7 @@ namespace Dumux {
  * \brief Saturation reference for the homogeneous, gravity-free, incompressible test.
  *
  * Implements method B of Fučík et al. @cite Fucik2007, specialized to R = 0
- * (closed right boundary).
+ * (closed right boundary). Here, the notation used in @cite Fucik2007 is adopted.
  * The default benchmark end time is chosen before the semi-infinite reference front reaches the right boundary.
  * See README.md for equations, quadrature and benchmark assumptions.
  */
@@ -57,15 +57,14 @@ public:
         const auto& spatialParams = problem_->spatialParams();
         const auto interaction = spatialParams.fluidMatrixInteractionAtPos(pos);
         const auto& residual = interaction.pcSwCurve().effToAbsParams();
-        swInitial_ = residual.swr();
-        swBoundary_ = 1.0 - residual.snr();
+        swInitial_ = residual.swr(); // paper notation: S_i
+        swBoundary_ = 1.0 - residual.snr(); // paper notation: S_0
         xMin_ = pos[0];
         porosity_ = spatialParams.porosityAtPos(pos);
         const Scalar permeability = spatialParams.permeabilityAtPos(pos);
         const Scalar tolerance = getParam<Scalar>("Reference.Tolerance", 1e-10);
         const int maxIterations = getParam<int>("Reference.MaxIterations", 10000);
-        if (intervals < 2 || !(tolerance > 0.0) || maxIterations < 1
-            || !(swBoundary_ > swInitial_) || !(porosity_ > 0.0) || !(permeability > 0.0))
+        if (intervals < 2 || !(tolerance > 0.0) || maxIterations < 1 || !(swBoundary_ > swInitial_) || !(porosity_ > 0.0) || !(permeability > 0.0))
             DUNE_THROW(Dune::InvalidStateException, "Invalid McWhorter reference parameters");
 
         FluidState fluidState;
@@ -80,53 +79,58 @@ public:
         const Scalar h = (swBoundary_ - swInitial_)/intervals;
         saturation_.resize(intervals + 1);
         xi_.resize(intervals + 1);
-        std::vector<Scalar> diffusion(intervals + 1), g(intervals + 1);
-        std::vector<Scalar> prefixMoment(intervals + 1), suffixIntegral(intervals + 1);
+        std::vector<Scalar> D(intervals + 1); // D(S): capillary diffusivity
+        std::vector<Scalar> G(intervals + 1); // G(S): integral-equation integrand
+        std::vector<Scalar> cumulativeWeightedIntegral(intervals + 1);
+        std::vector<Scalar> cumulativeTailIntegral(intervals + 1);
+        // Fill D(S)
         for (int i = 0; i <= intervals; ++i)
         {
             const Scalar sw = swInitial_ + i*h;
             saturation_[i] = sw;
             const Scalar lambdaW = interaction.krw(sw)/muW;
             const Scalar lambdaN = interaction.krn(sw)/muN;
-            diffusion[i] = -permeability*lambdaW*lambdaN/(lambdaW + lambdaN)*interaction.dpc_dsw(sw);
-            if (!std::isfinite(diffusion[i]) || diffusion[i] < 0.0)
+            D[i] = -permeability*lambdaW*lambdaN/(lambdaW + lambdaN)*interaction.dpc_dsw(sw);
+            if (!std::isfinite(D[i]) || D[i] < 0.0)
                 DUNE_THROW(Dune::InvalidStateException, "Invalid capillary diffusivity in McWhorter reference");
         }
         // Both mobilities vanish at their respective residual endpoints. The limit
-        // G(Swr) is zero for the regularized Brooks-Corey law used by this test.
-        diffusion.front() = diffusion.back() = 0.0;
-        g = diffusion; // F_0 = 1 and R = 0
+        // G(S_i) is zero for the regularized Brooks-Corey law used by this test.
+        D.front() = 0.0;
+        D.back() = 0.0;
+        G = D; // G_0 = D because F_0 = 1 for R = 0
 
-        // Integrate a piecewise-linear G exactly, including its first moment.
-        auto integrate = [&]
+        // Integrate the piecewise-linear G(S). The weighted integral is
+        // integral_{S_i}^{S} (s - S_i) G(s) ds and the tail integral is
+        // integral_{S}^{S_0} G(s) ds.
+        auto computeCumulativeIntegrals = [&]
         {
-            prefixMoment[0] = 0.0;
-            suffixIntegral[intervals] = 0.0;
+            cumulativeWeightedIntegral[0] = 0.0;
+            cumulativeTailIntegral[intervals] = 0.0;
             for (int i = 0; i < intervals; ++i)
-                prefixMoment[i+1] = prefixMoment[i]
-                    + h*h/6.0*((3*i + 1)*g[i] + (3*i + 2)*g[i+1]);
+                cumulativeWeightedIntegral[i+1] = cumulativeWeightedIntegral[i] + h*h/6.0*((3*i + 1)*G[i] + (3*i + 2)*G[i+1]);
             for (int i = intervals - 1; i >= 0; --i)
-                suffixIntegral[i] = suffixIntegral[i+1] + 0.5*h*(g[i] + g[i+1]);
+                cumulativeTailIntegral[i] = cumulativeTailIntegral[i+1] + 0.5*h*(G[i] + G[i+1]);
         };
 
         bool converged = false;
         for (int iteration = 0; iteration < maxIterations; ++iteration)
         {
-            integrate();
-            const Scalar integral = prefixMoment.back();
+            computeCumulativeIntegrals();
+            const Scalar integral = cumulativeWeightedIntegral.back(); // I(S_0), normalization integral
             if (!(integral > 0.0) || !std::isfinite(integral))
                 DUNE_THROW(Dune::InvalidStateException, "Degenerate McWhorter reference integral");
             Scalar change = 0.0, scale = 0.0;
             for (int i = 1; i < intervals; ++i)
             {
-                // F = 1 - I(S)/I(Swr), evaluated without cancellation near Swr.
-                const Scalar f = (prefixMoment[i] + i*h*suffixIntegral[i])/integral;
-                const Scalar next = diffusion[i]/f; // Fučík method B, R = 0
-                if (!(f > 0.0) || !std::isfinite(next))
+                // F(S): normalized profile function, evaluated without cancellation near S_i.
+                const Scalar F = (cumulativeWeightedIntegral[i] + i*h*cumulativeTailIntegral[i])/integral;
+                const Scalar next = D[i]/F; // G = D/F for Fučík's R = 0 specialization
+                if (!(F > 0.0) || !std::isfinite(next))
                     DUNE_THROW(Dune::InvalidStateException, "Invalid Fučík iteration");
-                change = std::max(change, std::abs(next - g[i]));
+                change = std::max(change, std::abs(next - G[i]));
                 scale = std::max(scale, std::abs(next));
-                g[i] = next;
+                G[i] = next;
             }
             if (change <= tolerance*scale)
             {
@@ -137,15 +141,14 @@ public:
         if (!converged)
             DUNE_THROW(Dune::InvalidStateException, "Fučík reference iteration did not converge");
 
-        integrate();
-        const Scalar integral = prefixMoment.back();
-        fluxCoefficient_ = std::sqrt(0.5*porosity_*integral);
+        computeCumulativeIntegrals();
+        const Scalar integral = cumulativeWeightedIntegral.back(); // I(S_0), normalization integral
+        A_ = std::sqrt(0.5*porosity_*integral); // A: amplitude in the inverted profile
         for (int i = 0; i <= intervals; ++i)
-            xi_[i] = 2.0*fluxCoefficient_/porosity_*suffixIntegral[i]/integral;
+            xi_[i] = 2.0*A_/porosity_*cumulativeTailIntegral[i]/integral;
         update(0.0);
     }
 
-    //! Absolute x coordinate; returns absolute wetting-phase saturation.
     Scalar computeSaturation(Scalar x, Scalar time) const
     {
         if (time <= 0.0)
@@ -164,34 +167,17 @@ public:
     void update(Scalar time)
     {
         for (const auto& element : elements(problem_->gridGeometry().gridView()))
-            values_[problem_->gridGeometry().elementMapper().index(element)]
-                = computeSaturation(element.geometry().center()[0], time);
+            values_[problem_->gridGeometry().elementMapper().index(element)] = computeSaturation(element.geometry().center()[0], time);
     }
 
     const std::vector<Scalar>& values() const { return values_; }
-    Scalar initialSaturation() const { return swInitial_; }
 
-    //! Integral of Sw-Swr, and its first moment about the inlet, per unit cross section.
-    std::array<Scalar, 2> excessMoments(Scalar time) const
-    {
-        std::array<Scalar, 2> result{0.0, 0.0};
-        const Scalar sqrtTime = std::sqrt(std::max(time, Scalar(0)));
-        for (std::size_t i = 0; i + 1 < xi_.size(); ++i)
-        {
-            const Scalar x = xi_[i+1]*sqrtTime;
-            const Scalar dx = (xi_[i] - xi_[i+1])*sqrtTime;
-            const Scalar left = saturation_[i+1] - swInitial_;
-            const Scalar right = saturation_[i] - swInitial_;
-            result[0] += dx*(left + right)/2.0;
-            result[1] += dx*(x*(left + right)/2.0 + dx*(left + 2.0*right)/6.0);
-        }
-        return result;
-    }
+    Scalar initialSaturation() const { return swInitial_; }
 
 private:
     std::shared_ptr<const Problem> problem_;
     std::vector<Scalar> values_, saturation_, xi_;
-    Scalar swInitial_, swBoundary_, porosity_, xMin_, fluxCoefficient_;
+    Scalar swInitial_, swBoundary_, porosity_, xMin_, A_;
 };
 
 } // namespace Dumux

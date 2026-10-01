@@ -98,7 +98,7 @@ def create_line_plot(results: list[Result], image_file: Path) -> None:
         mesh = pv.read(result.vtu)
         x, sw = cell_data(mesh, SATURATION_FIELD)
         reference_x, reference = cell_data(mesh, REFERENCE_FIELD)
-        ax.plot(x, sw, label=rf"$S_w$ numerical ({result.cells} cells)", linewidth=2)
+        ax.plot(x, sw, label=rf"$S_w$ numerical ({result.cells}x1 cells)", linewidth=2)
 
     ax.plot(reference_x, reference, label=r"$S_w$ Fučík reference", linewidth=2.4,
             color="black", linestyle="--")

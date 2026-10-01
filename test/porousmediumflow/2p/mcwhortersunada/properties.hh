@@ -22,7 +22,6 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include <dumux/porousmediumflow/2p/model.hh>
-#include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
 #include "problem.hh"
 #include "spatialparams.hh"
@@ -37,9 +36,6 @@ struct TwoPMcWhorterSunadaTpfa
 
     template<class TypeTag>
     using Problem = McWhorterSunadaProblem<TypeTag>;
-
-    template<class TypeTag>
-    using LocalResidual = TwoPIncompressibleLocalResidual<TypeTag>;
 
     using Scalar = double;
 

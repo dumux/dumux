@@ -35,6 +35,3 @@ Name = nonwetting
 MolarMass = 0.018 # [kg/mol]
 LiquidDensity = 1000 # [kg/m^3]
 LiquidDynamicViscosity = 1e-3 # [Pa*s]
-
-[Newton]
-EnablePartialReassembly = false

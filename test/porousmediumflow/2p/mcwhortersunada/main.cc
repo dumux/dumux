@@ -11,19 +11,18 @@
  */
 #include <config.h>
 
-#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/fvector.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/integrate.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/linear/istlsolvers.hh>
