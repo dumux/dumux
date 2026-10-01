@@ -23,6 +23,7 @@ for more information.
 | ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
+| ![1pni convection](1pni_1d_convection_benchmark_lineplot.png) | @ref benchmark-1pni-convection "↗️ 1D Heat Convection with a Retarded Thermal Front" | 1D, advective heat transport, @ref OnePModel, @ref NIModel, @ref CCTpfaDiscretization, @ref CCMpfaDiscretization, @ref BoxDiscretization | Retarded thermal front in a fully saturated porous medium; front position from the barycenter against the retarded step front, front shape by grid convergence against the advection-diffusion solution of Ogata and Banks (1961) @cite OgataBanks1961 |
 
 ## Benchmarks in documented examples
 
