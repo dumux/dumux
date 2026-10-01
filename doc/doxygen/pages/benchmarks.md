@@ -23,7 +23,7 @@ for more information.
 | ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
-
+| ![1pni conduction](1pni_1d_conduction_benchmark_lineplot.png) | @ref benchmark-1pni-conduction "↗️ Semi-Infinite 1D Heat Conduction" | 1D, heat conduction, @ref OnePModel, @ref NIModel, @ref CCTpfaDiscretization, @ref CCMpfaDiscretization, @ref BoxDiscretization | Transient heat conduction in a fully saturated porous medium; analytical error-function solution from Poirier and Geiger (2016) @cite Poirier2016 |
 ## Benchmarks in documented examples
 
 | Image |                                Benchmark description                                 | Topics | Comment |
