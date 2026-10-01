@@ -22,6 +22,7 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/freeflow/shallowwater/poiseuilleflow/README.md \
                          @top_srcdir@/test/freeflow/shallowwater/roughchannel/README.md \
                          @top_srcdir@/test/porousmediumflow/2pve/radialinjection/README.md \
+                         @top_srcdir@/test/porousmediumflow/1p/nonisothermal/README.md \
                          @top_srcdir@/test/porousmediumflow/richards/benchmarks/README.md \
                          @top_srcdir@/test/solidmechanics/plate/membrane/README.md \
                          @top_srcdir@/test/solidmechanics/plate/kirchhoff_love/README.md \
