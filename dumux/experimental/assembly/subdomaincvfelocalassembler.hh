@@ -163,7 +163,7 @@ public:
         // bind the caches
         couplingManager_.bindCouplingContext(domainId, element, this->assembler());
         fvGeometry.bind(element);
-        if (std::abs(this->localResidual().spatialWeight()) < 1e-6)
+        if (this->localResidual().skipSpatial())
             curElemVolVars.bindElement(element, fvGeometry, curSol);
         else
         {
