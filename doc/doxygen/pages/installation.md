@@ -21,6 +21,7 @@ The following software is recommended but optional:
 
 * MPI (either OpenMPI, lam, or mpich; only OpenMPI support is automatically tested)
 * SuiteSparse (for the direct solver UMFPack)
+* MUMPS (for the sequential and parallel direct solver `DirectSolverMumps`)
 * ParaView (to visualize the results)
 * A web browser (to access the GitLab instance and README files)
 * Python >= 3.7 with `numpy` (to execute a number of different scripts used for installation, testing, post-processing, etc.)

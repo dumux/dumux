@@ -1786,6 +1786,42 @@
             "int"
         ]
     },
+    "LinearSolver.MumpsOrdering": {
+        "defaultValue": [
+            "-1"
+        ],
+        "explanation": [
+            "Fill-reducing ordering of the MUMPS symbolic analysis (ICNTL(7)): 0 AMD, 2 AMF, 3 SCOTCH, 4 PORD, 5 METIS, 6 QAMD, 7 automatic; -1 keeps the MUMPS default"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
+        ]
+    },
+    "LinearSolver.MumpsParallelAnalysis": {
+        "defaultValue": [
+            "-1"
+        ],
+        "explanation": [
+            "MUMPS symbolic analysis mode (ICNTL(28)): 0 automatic, 1 sequential, 2 parallel (requires MUMPS built with PT-SCOTCH or ParMETIS); -1 keeps the MUMPS default"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
+        ]
+    },
+    "LinearSolver.MumpsParallelOrderingTool": {
+        "defaultValue": [
+            "-1"
+        ],
+        "explanation": [
+            "Ordering tool of the parallel MUMPS analysis (ICNTL(29)): 0 automatic, 1 PT-SCOTCH, 2 ParMETIS; -1 keeps the MUMPS default"
+        ],
+        "mode": "manual",
+        "type": [
+            "int"
+        ]
+    },
     "LinearSolver.Preconditioner.AmgAccumulationMode": {
         "defaultValue": [
             "-"
