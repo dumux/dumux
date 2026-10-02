@@ -31,6 +31,22 @@ using UpwindScheme = UpwindSchemeImpl<GridGeometry, typename GridGeometry::Discr
 
 namespace Detail {
 
+//! returns the upwind factor which is multiplied to the advective flux between the two given variables
+template<class Variables, class UpwindTermFunction, class Scalar>
+Scalar upwindSchemeMultiplier(const Variables& insideVars,
+                              const Variables& outsideVars,
+                              const UpwindTermFunction& upwindTerm,
+                              Scalar flux, int phaseIdx, Scalar upwindWeight)
+{
+    using std::signbit;
+    if (signbit(flux)) // if sign of flux is negative
+        return (upwindWeight*upwindTerm(outsideVars)
+                + (1.0 - upwindWeight)*upwindTerm(insideVars));
+    else
+        return (upwindWeight*upwindTerm(insideVars)
+                + (1.0 - upwindWeight)*upwindTerm(outsideVars));
+}
+
 //! returns the upwind factor which is multiplied to the advective flux across the given scvf
 template<class ElemVolVars, class SubControlVolumeFace, class UpwindTermFunction, class Scalar>
 Scalar upwindSchemeMultiplier(const ElemVolVars& elemVolVars,
@@ -38,19 +54,10 @@ Scalar upwindSchemeMultiplier(const ElemVolVars& elemVolVars,
                               const UpwindTermFunction& upwindTerm,
                               Scalar flux, int phaseIdx)
 {
-    // TODO: pass this from outside?
     static const Scalar upwindWeight = getParamFromGroup<Scalar>(elemVolVars.gridVolVars().problem().paramGroup(), "Flux.UpwindWeight");
 
-    const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-    const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
-    using std::signbit;
-    if (signbit(flux)) // if sign of flux is negative
-        return (upwindWeight*upwindTerm(outsideVolVars)
-                + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
-    else
-        return (upwindWeight*upwindTerm(insideVolVars)
-                + (1.0 - upwindWeight)*upwindTerm(outsideVolVars));
+    return upwindSchemeMultiplier(elemVolVars[scvf.insideScvIdx()], elemVolVars[scvf.outsideScvIdx()],
+                                  upwindTerm, flux, phaseIdx, upwindWeight);
 }
 
 } // end namespace Detail
