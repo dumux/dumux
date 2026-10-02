@@ -9,7 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-TARGET = "test_2p_buckleyleverett_tpfa"
+# scheme label -> (executable target, input file, line style in the line plot)
+SCHEMES = {
+    "fully implicit": ("test_2p_buckleyleverett_tpfa", "params.input", "-"),
+    "IMPES": ("test_2p_buckleyleverett_impes_tpfa", "params_impes.input", ":"),
+}
 BASE_NAME = "buckleyleverett"
 CELLS = (200, 400)
 SATURATION_FIELD = "S_aq"
@@ -17,6 +21,7 @@ EXACT_FIELD = "Sw_exact"
 
 @dataclass(frozen=True)
 class Result:
+    scheme: str
     cells: int
     name: str
     vtu: Path
@@ -50,19 +55,20 @@ def latest_vtu(name: str) -> Path:
 
 def build_and_run() -> list[Result]:
     build_dir = root_dir() / "build-cmake"
-    run(["make", TARGET], cwd=build_dir)
+    run(["make", *(target for target, _, _ in SCHEMES.values())], cwd=build_dir)
 
     results = []
-    for cells in CELLS:
-        name = f"{BASE_NAME}_{cells}x1"
-        remove_old_outputs(name)
-        run([
-            str(case_build_dir() / TARGET),
-            "params.input",
-            "-Problem.Name", name,
-            "-Grid.Cells", f"{cells} 1",
-        ], cwd=case_build_dir())
-        results.append(Result(cells=cells, name=name, vtu=latest_vtu(name)))
+    for scheme, (target, input_file, _) in SCHEMES.items():
+        for cells in CELLS:
+            name = f"{target.replace('test_2p_', '')}_{cells}x1"
+            remove_old_outputs(name)
+            run([
+                str(case_build_dir() / target),
+                input_file,
+                "-Problem.Name", name,
+                "-Grid.Cells", f"{cells} 1",
+            ], cwd=case_build_dir())
+            results.append(Result(scheme=scheme, cells=cells, name=name, vtu=latest_vtu(name)))
 
     return results
 
@@ -91,6 +97,8 @@ def create_line_plot(results: list[Result], image_file: Path) -> None:
 
     fig, ax = plt.subplots(figsize=(8.2, 4.8), constrained_layout=True)
     exact_x = exact = None
+    # same color for the same grid, line style distinguishes the schemes
+    colors = {cells: f"C{i}" for i, cells in enumerate(CELLS)}
 
     for result in results:
         mesh = pv.read(result.vtu)
@@ -98,7 +106,8 @@ def create_line_plot(results: list[Result], image_file: Path) -> None:
         # exact_x, exact = sorted_profile(mesh, EXACT_FIELD)
         x, sw = cell_data(mesh, SATURATION_FIELD)
         exact_x, exact = cell_data(mesh, EXACT_FIELD)
-        ax.plot(x, sw, label=rf"$S_w$ numerical ({result.cells}x1)", linewidth=2)
+        ax.plot(x, sw, label=rf"$S_w$ {result.scheme} ({result.cells}x1)", linewidth=2,
+                color=colors[result.cells], linestyle=SCHEMES[result.scheme][2])
 
     ax.plot(exact_x, exact, label=r"$S_w$ exact", linewidth=2.4, color="black", linestyle="--")
     ax.set_xlabel("x [m]")
@@ -140,7 +149,7 @@ def create_saturation_image(result: Result, image_file: Path) -> None:
 
 def main() -> None:
     results = build_and_run()
-    fine = max(results, key=lambda result: result.cells)
+    fine = max((r for r in results if r.scheme == "fully implicit"), key=lambda result: result.cells)
     out_dir = case_build_dir()
 
     print("Creating line plot...")

@@ -124,7 +124,7 @@ python3 compile_run_plot.py
 The script expects PyVista and Matplotlib to be available for post-processing.
 
 The script produces two figures in the `build-cmake` directory:
-- `buckleyleverett_lineplot_comparison.png`: 1D comparison of the analytical solution with numerical solutions along $y=y_\text{max}/2$ for two different discretizations in x-direction: $200$ and $400$ cells
+- `buckleyleverett_lineplot_comparison.png`: 1D comparison of the analytical solution with numerical solutions along $y=y_\text{max}/2$ for two different discretizations in x-direction ($200$ and $400$ cells) and two time-integration schemes: the fully implicit scheme (`main.cc`) and an IMPES scheme (implicit pressure, explicit saturation, CFL-restricted time step; `main_impes.cc`)
 - `buckleyleverett_sw.png`: numerical solution field for wetting-phase saturation
 
 ![Line plot](buckleyleverett_lineplot_comparison.png)

@@ -8,3 +8,10 @@ dumux_add_test(NAME test_2p_buckleyleverett_tpfa
                SOURCES main.cc
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_2p_buckleyleverett_tpfa
                CMD_ARGS params.input -Problem.Name test_2p_buckleyleverett_tpfa)
+
+dune_symlink_to_source_files(FILES "params_impes.input")
+dumux_add_test(NAME test_2p_buckleyleverett_impes_tpfa
+               LABELS porousmediumflow 2p
+               SOURCES main_impes.cc
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_2p_buckleyleverett_impes_tpfa
+               CMD_ARGS params_impes.input -Problem.Name test_2p_buckleyleverett_impes_tpfa)
