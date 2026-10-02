@@ -33,6 +33,7 @@ Download: https://gitlab.dune-project.org/extensions/dune-spgrid.git
 
 * `SuperLU`: External library for solving linear equations. SuperLU is a general purpose library for the direct solution of large, sparse, non-symmetric systems of linear equations. Download: http://crd.lbl.gov/~xiaoye/SuperLU
 * `UMFPack`: External library for solving linear equations. It is part of `SuiteSparse`. See: http://faculty.cse.tamu.edu/davis/suitesparse.html. On Debian/Ubuntu you can install the package `libsuitesparse-dev`.
+* `MUMPS`: External library for the direct solution of large sparse linear systems, sequentially and in parallel (MPI), used by the solver backend `DirectSolverMumps`. It requires MPI. See: https://mumps-solver.org. On Debian/Ubuntu, install the MPI build `libmumps-dev` (not the sequential `libmumps-seq-dev`). To build MUMPS from source, e.g. with the CMake build https://github.com/scivision/mumps, enable MPI and shared libraries (`-DMUMPS_parallel=on -DBUILD_SHARED_LIBS=on`) and set `MUMPS_ROOT` to the installation prefix. Static MUMPS libraries additionally need their dependencies (ScaLAPACK, BLAS/LAPACK, the Fortran runtime) in `MUMPS_EXTRA_LIBRARIES`. No Fortran compiler is needed to build DuMux against MUMPS.
 
 ## Parallel computing (distributed memory)
 
