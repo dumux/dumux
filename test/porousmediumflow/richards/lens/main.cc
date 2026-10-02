@@ -25,6 +25,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/linear/mumpssolver.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 
 #include <dumux/porousmediumflow/richards/newtonsolver.hh>
@@ -135,10 +136,17 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
+#if USE_MUMPS_SOLVER
+    using LinearSolver = DirectSolverMumps<LinearSolverTraits<GridGeometry>,
+                                           LinearAlgebraTraitsFromAssembler<Assembler>>;
+
+    auto linearSolver = std::make_shared<LinearSolver>(*gridGeometry, leafGridView, gridGeometry->dofMapper());
+#else
     using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
                                                   LinearAlgebraTraitsFromAssembler<Assembler>>;
 
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+#endif
 
     // the non-linear solver
     using NewtonSolver = Dumux::RichardsNewtonSolver<Assembler, LinearSolver>;

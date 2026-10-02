@@ -60,3 +60,23 @@ dumux_add_test(NAME test_md_facet_1p1p_threedomain_box
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box_edge-00001.vtp
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box params.input
                        -Vtk.OutputName test_md_facet_1p1p_threedomain_box")
+
+# the coupled system of the three subdomains (on three grids) solved with the direct solver MUMPS
+dumux_add_test(NAME test_md_facet_1p1p_threedomain_box_mumps
+              LABELS multidomain multidomain_facet 1p
+              COMPILE_DEFINITIONS BULKTYPETAG=Dumux::Properties::TTag::OnePBulkBox
+              COMPILE_DEFINITIONS FACETTYPETAG=Dumux::Properties::TTag::OnePFacetBox
+              COMPILE_DEFINITIONS EDGETYPETAG=Dumux::Properties::TTag::OnePEdgeBox
+              COMPILE_DEFINITIONS USE_MUMPS_SOLVER=1
+              SOURCES main.cc
+              CMAKE_GUARD "( MUMPS_FOUND AND dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_box_bulk-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box_mumps_bulk-00001.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_box_facet-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box_mumps_facet-00001.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_facet_1p1p_threedomain_box_edge-reference.vtp
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box_mumps_edge-00001.vtp
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_facet_1p1p_threedomain_box_mumps params.input
+                       -Vtk.OutputName test_md_facet_1p1p_threedomain_box_mumps")

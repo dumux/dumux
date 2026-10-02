@@ -881,3 +881,60 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                            -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_cube -Problem.UseNeumann true
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -LinearSolver.Type gmres -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity true")
+
+# the coupled system solved directly with MUMPS: sequentially, and in parallel on a non-overlapping
+# (ALUGrid) and an overlapping (YaspGrid) decomposition, where four processes meet at cross points
+dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_mumps
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD "( MUMPS_FOUND AND dune-alugrid_FOUND )"
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS USE_MUMPS_SOLVER=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS    --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_pq1bubble_simplex-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex_mumps-00001.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex_mumps params.input
+                           -Problem.Name test_ff_stokes_donea_pq1bubble_simplex_mumps -Problem.UseNeumann false
+                           -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                           -Newton.MaxAbsoluteResidual 1e-9 -Newton.MaxSteps 1")
+
+foreach(np 2 4)
+    dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_mumps_parallel_${np}
+                   TARGET test_ff_stokes_donea_pq1bubble_simplex_mumps
+                   LABELS freeflow navierstokes donea
+                   CMAKE_GUARD "( MUMPS_FOUND AND dune-alugrid_FOUND )"
+                   COMMAND ${DUMUX_RUNTEST}
+                   CMD_ARGS      --script fuzzy --ignore "process rank"
+                                 --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_pq1bubble_simplex-reference.vtu
+                                         ${CMAKE_CURRENT_BINARY_DIR}/s000${np}-test_ff_stokes_donea_pq1bubble_simplex_mumps_parallel_${np}-00001.pvtu
+                                 --command "${MPIEXEC} -np ${np} ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq1bubble_simplex_mumps params.input
+                                 -Problem.Name test_ff_stokes_donea_pq1bubble_simplex_mumps_parallel_${np} -Problem.UseNeumann false
+                                 -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                                 -Newton.MaxAbsoluteResidual 1e-9 -Newton.MaxSteps 1")
+endforeach()
+
+dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_mumps_parallel
+               SOURCES main.cc
+               LABELS freeflow navierstokes donea
+               CMAKE_GUARD MUMPS_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=1
+               COMPILE_DEFINITIONS USE_MUMPS_SOLVER=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --ignore "process rank"
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_hybrid_pq1bubble_yasp-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_ff_stokes_donea_hybrid_pq1bubble_yasp_mumps_parallel-00001.pvtu
+                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_hybrid_pq1bubble_yasp_mumps_parallel params.input
+                             -Problem.Name test_ff_stokes_donea_hybrid_pq1bubble_yasp_mumps_parallel -Problem.UseNeumann true
+                             -FreeFlow.EnableUnsymmetrizedVelocityGradient false
+                             -Newton.MaxAbsoluteResidual 1e-9 -Newton.MaxSteps 1")
