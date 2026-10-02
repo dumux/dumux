@@ -8,6 +8,7 @@ Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
 
 ### Improvements and Enhancements
 
+- __MUMPS__: New direct solver backend `DirectSolverMumps` (`dumux/linear/mumpssolver.hh`) calling MUMPS with distributed assembled input, for single-domain and multi-domain (`MultiTypeBlockMatrix`) systems, sequential and parallel (non-overlapping and overlapping decompositions). The symbolic analysis is reused while the matrix keeps its size and sparsity pattern and repeated otherwise; after the grid changed in a parallel run, call `updateAfterGridAdaption`. The backend is enabled if CMake finds MUMPS with MPI (`cmake/modules/FindMUMPS.cmake`, e.g. Ubuntu's `libmumps-dev`, or an installation prefix given by `MUMPS_ROOT`); no Fortran compiler is needed, and downstream modules find the same MUMPS through the exported configuration.
 - __Local dofs__: A new concept of local degrees of freedom (localDof) has been introduced and implemented for the assembly of CVFE schemes.
 It generalizes the concept of sub-control volumes and allows the implementation of hybrid (finite elements / finite volumes) schemes.
 - __Face-centered staggered__: Fixed `outsidePeriodicScv` without grid geometry caching, which returned a copy of a destroyed sub-control volume.
