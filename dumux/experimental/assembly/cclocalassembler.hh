@@ -193,7 +193,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, Implementation>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, NonVoidOr<ThisType, Implementation>>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -306,7 +306,7 @@ private:
         {
             partialDerivs = 0.0;
 
-            auto evalResiduals = [&](Scalar priVar)
+            auto evalResiduals = [&](PrimaryVariable priVar)
             {
                 Residuals partialDerivsTmp(numNeighbors + 1);
                 partialDerivsTmp = 0.0;
@@ -330,7 +330,7 @@ private:
             };
 
             // derive the residuals numerically
-            static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+            static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
             static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
             NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
                                                       eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
@@ -465,7 +465,7 @@ private:
             // reset derivatives of element dof with respect to itself
             partialDeriv = 0.0;
 
-            auto evalStorage = [&](Scalar priVar)
+            auto evalStorage = [&](PrimaryVariable priVar)
             {
                 // update the volume variables and calculate
                 // the residual with the deflected primary variables
@@ -477,7 +477,7 @@ private:
             // for non-ghosts compute the derivative numerically
             if (!this->elementIsGhost())
             {
-                static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, storageResidual,
                                                           eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);

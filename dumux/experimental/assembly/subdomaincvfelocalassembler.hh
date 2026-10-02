@@ -220,7 +220,6 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric>
 {
     using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric>;
     using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
@@ -319,7 +318,7 @@ public:
 
             for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
             {
-                auto evalCouplingResidual = [&](Scalar priVar)
+                auto evalCouplingResidual = [&](auto priVar)
                 {
                     priVarsJ[pvIdx] = priVar;
                     this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);

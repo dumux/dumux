@@ -150,8 +150,8 @@ public:
                 {
                     const auto& localBasis = fvGeometry.feLocalBasis();
                     const auto ipLocal = element.geometry().local(globalPos);
-                    using Scalar = std::decay_t<decltype(source.values()[0])>;
-                    std::vector<typename Dune::FieldVector<Scalar, 1>> shapeValues;
+                    using ShapeValue = typename std::decay_t<decltype(localBasis)>::Traits::RangeType;
+                    std::vector<ShapeValue> shapeValues;
                     localBasis.evaluateFunction(ipLocal, shapeValues);
                     for (const auto& scv : scvs(fvGeometry))
                     {

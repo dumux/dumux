@@ -243,7 +243,6 @@ class SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::nu
     using ThisType = SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -344,7 +343,7 @@ public:
 
                 for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
                 {
-                    auto evalCouplingResidual = [&](Scalar priVar)
+                    auto evalCouplingResidual = [&](auto priVar)
                     {
                         priVarsJ[pvIdx] = priVar;
                         this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);

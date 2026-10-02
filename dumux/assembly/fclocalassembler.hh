@@ -342,7 +342,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
 {
     using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true, Implementation>;
     using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::NonVoidOrDefault_t<Implementation, ThisType>, true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -422,7 +422,7 @@ public:
                 auto& curOtherVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
                 const VolumeVariables origOtherVolVars(curOtherVolVars);
 
-                auto evalResiduals = [&](Scalar priVar)
+                auto evalResiduals = [&](PrimaryVariable priVar)
                 {
                     // update the volume variables and compute element residual
                     otherElemSol[scvJ.localDofIndex()][pvIdx] = priVar;
@@ -444,7 +444,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalResiduals, otherElemSol[scvJ.localDofIndex()][pvIdx], partialDerivs, origResiduals,
                                                           eps_(otherElemSol[scvJ.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
@@ -517,7 +517,7 @@ class FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*impl
 {
     using ThisType = FaceCenteredLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false, Implementation>;
     using ParentType = FaceCenteredLocalAssemblerBase<TypeTag, Assembler, Detail::NonVoidOrDefault_t<Implementation, ThisType>, false>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
@@ -581,7 +581,7 @@ public:
             {
                 partialDerivs = 0.0;
 
-                auto evalStorage = [&](Scalar priVar)
+                auto evalStorage = [&](PrimaryVariable priVar)
                 {
                     // auto partialDerivsTmp = partialDerivs;
                     elemSol[scv.localDofIndex()][pvIdx] = priVar;
@@ -590,7 +590,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{problem.paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{problem.paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origStorageResiduals,
                                                           eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);

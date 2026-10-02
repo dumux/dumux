@@ -35,7 +35,6 @@ template<class CouplingManager>
 class PNMHeatExtendedSourceStencil
 {
     using MDTraits = typename CouplingManager::MultiDomainTraits;
-    using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
@@ -117,7 +116,7 @@ public:
                 // reset partial derivatives
                 partialDerivs = 0.0;
 
-                auto evalResiduals = [&](Scalar priVar)
+                auto evalResiduals = [&](auto priVar)
                 {
                     // update the coupling context (solution vector and recompute element residual)
                     auto priVars = origPriVars;

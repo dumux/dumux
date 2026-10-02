@@ -17,6 +17,8 @@
 #include <cassert>
 #include <limits>
 
+#include <dune/common/ftraits.hh>
+
 namespace Dumux {
 
 /*!
@@ -31,11 +33,15 @@ public:
      * \brief Computes the epsilon used for numeric differentiation
      * \param value The value of the variable with respect to which we are differentiating
      * \param baseEps The step width which we are using for differentiation
+     * \note The epsilon is real-valued also for complex-valued variables. A real step
+     *       yields the derivative of a complex-valued function only if the function is
+     *       holomorphic in the variable, i.e. it must not depend on the complex conjugate,
+     *       the real part or the modulus of the variable.
      */
-    template<class Scalar>
-    static Scalar epsilon(const Scalar value, const Scalar baseEps = 1e-10)
+    template<class Scalar, class Magnitude = typename Dune::FieldTraits<Scalar>::real_type>
+    static Magnitude epsilon(const Scalar value, const Magnitude baseEps = 1e-10)
     {
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
+        assert(std::numeric_limits<Magnitude>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
         using std::abs;
@@ -88,7 +94,7 @@ public:
         }
 
         // Forward, central, or backward differences
-        Scalar delta = 0.0;
+        EpsType delta = 0.0;
 
         // we are using forward or central differences, i.e. we need to calculate f(x + \epsilon)
         if (numericDifferenceMethod >= 0)

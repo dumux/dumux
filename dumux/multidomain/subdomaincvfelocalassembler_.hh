@@ -282,7 +282,6 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /
 {
     using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridDiscretization::GridView;
@@ -359,7 +358,7 @@ public:
 
             for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
             {
-                auto evalCouplingResidual = [&](Scalar priVar)
+                auto evalCouplingResidual = [&](auto priVar)
                 {
                     priVarsJ[pvIdx] = priVar;
                     this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
