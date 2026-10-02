@@ -40,7 +40,7 @@ public:
     ) const {
         ElementOperatorResultVector result(fvGeometry.numScv());
 
-        if (std::abs(temporalWeight_) > 1e-6)
+        if (!skipTemporal_)
         {
             for (const auto& scv : scvs(fvGeometry))
                 result[scv.localDofIndex()] +=
@@ -63,7 +63,7 @@ public:
         const ElemBCTypes& bcTypes
     ) const {
         ElementOperatorResultVector result(fvGeometry.numScv());
-        if (std::abs(spatialWeight_) > 1e-6)
+        if (!skipSpatial_)
         {
             result = op_.evalFluxAndSource(fvGeometry.element(), fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
             for (auto& r : result)
@@ -85,7 +85,7 @@ public:
     ) const {
         using NumEqVector = std::decay_t<decltype(op_.evalFlux(op_.problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf))>;
         NumEqVector result(0.0);
-        if (std::abs(spatialWeight_) > 1e-6)
+        if (!skipSpatial_)
         {
             result = op_.evalFlux(op_.problem(), element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
             result *= spatialWeight_;
@@ -93,11 +93,15 @@ public:
         return result;
     }
 
-    void spatialWeight(double w) { spatialWeight_ = w; }
+    //! set the weight of the spatial operator and whether it is structurally zero
+    void spatialWeight(double w, bool skip = false) { spatialWeight_ = w; skipSpatial_ = skip; }
     double spatialWeight() const { return spatialWeight_; }
+    bool skipSpatial() const { return skipSpatial_; }
 
-    void temporalWeight(double w) { temporalWeight_ = w; }
+    //! set the weight of the temporal operator and whether it is structurally zero
+    void temporalWeight(double w, bool skip = false) { temporalWeight_ = w; skipTemporal_ = skip; }
     double temporalWeight() const { return temporalWeight_; }
+    bool skipTemporal() const { return skipTemporal_; }
 
     const auto& problem() const
     { return op_.problem(); }
@@ -112,6 +116,7 @@ public:
 private:
     LocalOperator op_;
     double spatialWeight_, temporalWeight_; // TODO: get correct type
+    bool skipSpatial_ = false, skipTemporal_ = false;
 };
 
 } // end namespace Dumux::Experimental

@@ -81,8 +81,10 @@ public:
         res[globalI] = spatial[globalI]*stageParams.spatialWeight(stageParams.size()-1)
                        + temporal[globalI]*stageParams.temporalWeight(stageParams.size()-1);
 
-        this->localResidual().spatialWeight(stageParams.spatialWeight(stageParams.size()-1));
-        this->localResidual().temporalWeight(stageParams.temporalWeight(stageParams.size()-1));
+        this->localResidual().spatialWeight(stageParams.spatialWeight(stageParams.size()-1),
+                                            stageParams.skipSpatial(stageParams.size()-1));
+        this->localResidual().temporalWeight(stageParams.temporalWeight(stageParams.size()-1),
+                                             stageParams.skipTemporal(stageParams.size()-1));
 
 
         if (partialReassembler

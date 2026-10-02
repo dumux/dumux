@@ -171,7 +171,7 @@ public:
 
         // bind the caches
         fvGeometry.bind(element);
-        if (std::abs(this->localResidual().spatialWeight()) < 1e-6)
+        if (this->localResidual().skipSpatial())
             curElemVolVars.bindElement(element, fvGeometry, curSol);
         else
         {

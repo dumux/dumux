@@ -47,9 +47,11 @@ public:
             p.timeAtStage = t + m.timeStepWeight(k)*dt;
             p.dtFraction = m.timeStepWeight(k);
 
+            // decide on the dimensionless tableau coefficients; betaDt carries the
+            // time step and is small for an active stage when dt is small
             using std::abs;
-            p.skipTemporal = (abs(p.alpha) < 1e-6);
-            p.skipSpatial = (abs(p.betaDt) < 1e-6);
+            p.skipTemporal = (abs(m.temporalWeight(i, k)) < 1e-6);
+            p.skipSpatial = (abs(m.spatialWeight(i, k)) < 1e-6);
         }
     }
 
@@ -73,11 +75,11 @@ public:
     { return params_[k].dtFraction; }
 
     //! If \f$ \alpha_{ik} = 0\f$
-    Scalar skipTemporal (std::size_t k) const
+    bool skipTemporal (std::size_t k) const
     { return params_[k].skipTemporal; }
 
     //! If \f$ \beta_{ik} = 0\f$
-    Scalar skipSpatial (std::size_t k) const
+    bool skipSpatial (std::size_t k) const
     { return params_[k].skipSpatial; }
 
 private:
