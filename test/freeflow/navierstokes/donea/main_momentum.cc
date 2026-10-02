@@ -45,6 +45,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
+#include <dumux/linear/mumpssolver.hh>
 
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
@@ -323,8 +324,13 @@ int main(int argc, char** argv)
 #endif
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
+#if USE_MUMPS_SOLVER
+    using LinearSolver = DirectSolverMumps<LinearSolverTraits<GridGeometry>,
+                                           LinearAlgebraTraitsFromAssembler<Assembler>>;
+#else
     using LinearSolver = IstlSolverFactoryBackend<LinearSolverTraits<GridGeometry>,
                                                   LinearAlgebraTraitsFromAssembler<Assembler>>;
+#endif
     const auto& dofMapper = LinearSolverTraits<GridGeometry>::dofMapper(*gridGeometry);
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), dofMapper);
 

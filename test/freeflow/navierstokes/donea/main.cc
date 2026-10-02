@@ -38,6 +38,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/stokes_solver.hh>
+#include <dumux/linear/mumpssolver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/assembler.hh>
@@ -327,6 +328,9 @@ int main(int argc, char** argv)
     using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
     auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
     auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+#elif USE_MUMPS_SOLVER
+    using LinearSolver = DirectSolverMumps<LinearSolverTraits<MomentumGridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(std::make_tuple(momentumGridGeometry, massGridGeometry));
 #else
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();

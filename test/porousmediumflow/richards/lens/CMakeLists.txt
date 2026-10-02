@@ -13,6 +13,11 @@ target_compile_definitions(test_richards_lens_mpfa PUBLIC TYPETAG=RichardsLensCC
 add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
 
+if (MUMPS_FOUND)
+  add_executable(test_richards_lens_box_mumps EXCLUDE_FROM_ALL main.cc)
+  target_compile_definitions(test_richards_lens_box_mumps PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric PUBLIC USE_MUMPS_SOLVER=1)
+endif()
+
 dumux_add_test(TARGET test_richards_lens_box
               LABELS porousmediumflow richards
               COMMAND ${DUMUX_RUNTEST}
@@ -172,3 +177,28 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_alu
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_alu-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_alu params.input -Problem.Name test_richards_lens_tpfa_parallel_alu")
+
+# the direct solver MUMPS, sequentially and on a non-overlapping and an overlapping decomposition
+dumux_add_test(NAME test_richards_lens_box_mumps
+              TARGET test_richards_lens_box_mumps
+              LABELS porousmediumflow richards
+              CMAKE_GUARD MUMPS_FOUND
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_mumps-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_mumps params.input -Problem.Name test_richards_lens_box_mumps")
+
+foreach(overlap 0 2)
+  dumux_add_test(NAME test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap}
+                TARGET test_richards_lens_box_mumps
+                LABELS porousmediumflow richards parallel
+                CMAKE_GUARD MUMPS_FOUND
+                COMMAND ${DUMUX_RUNTEST}
+                CMD_ARGS --script fuzzy --ignore "process rank"
+                         --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
+                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap}-00007.vtu
+                                 ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
+                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap}-00007.pvtu
+                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_mumps params.input -Problem.Name test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap} -Grid.Overlap ${overlap}")
+endforeach()
