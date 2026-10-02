@@ -109,8 +109,8 @@ public:
             res[scv.dofIndex()] += origResidual[scv.localDofIndex()];
         }
 
-        this->localResidual().spatialWeight(sWeight);
-        this->localResidual().temporalWeight(tWeight);
+        this->localResidual().spatialWeight(sWeight, stageParams.skipSpatial(stageParams.size()-1));
+        this->localResidual().temporalWeight(tWeight, stageParams.skipTemporal(stageParams.size()-1));
 
         if (partialReassembler && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
