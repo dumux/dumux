@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+add_subdirectory(mumps)
 dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME test_linearsolver
                SOURCES test_linearsolver.cc
