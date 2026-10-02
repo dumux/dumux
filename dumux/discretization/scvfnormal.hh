@@ -40,7 +40,7 @@ inline auto scvfUnitNormal(const ElementGeometry& geo, const CornerStorage& corn
     const auto normalize = [](GlobalPosition n){ n /= n.two_norm(); return n; };
 
     if constexpr (dim == 2 && dimWorld == 2)
-        return normalize(Dumux::normal(GlobalPosition(corners[1] - corners[0])));
+        return Dumux::unitNormal(GlobalPosition(corners[1] - corners[0]));
 
     else if constexpr (dim == 2 && dimWorld == 3)
     {
