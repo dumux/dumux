@@ -118,6 +118,7 @@ dumux_add_test(NAME test_ff_stokes_donea_stokessolver_yasp_parallel
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_donea_stokessolver_yasp_parallel-00001.pvtu
                              --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_stokessolver_yasp params.input
                              -Problem.Name test_ff_stokes_donea_stokessolver_yasp_parallel -Problem.UseNeumann false
+                             -Problem.CheckFiniteJacobian true
                              -LinearSolver.Type gmres -LinearSolver.GMResRestart 500 -LinearSolver.MaxIterations 500
                              -LinearSolver.ResidualReduction 1e-10
                              -Newton.EnableAbsoluteResidualCriterion false -Newton.EnableResidualCriterion true
