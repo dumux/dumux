@@ -4,5 +4,6 @@
 add_subdirectory(analytical)
 add_subdirectory(annulus)
 add_subdirectory(benchmarks)
+add_subdirectory(extended)
 add_subdirectory(lens)
 add_subdirectory(nonisothermal)
