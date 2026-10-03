@@ -10,6 +10,11 @@ add_subdirectory(projection)
 add_subdirectory(rotationsymmetry)
 add_input_file_links()
 
+dumux_add_test(NAME test_scvfnormal_surface
+               LABELS unit discretization
+               SOURCES test_scvfnormal_surface.cc
+               CMAKE_GUARD dune-foamgrid_FOUND)
+
 dumux_add_test(NAME test_interpolate
                LABELS unit discretization
                SOURCES test_interpolate.cc)

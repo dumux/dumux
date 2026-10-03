@@ -40,7 +40,7 @@ class GridAdaptInitializationIndicator
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
 
-    static constexpr bool isBox = GetPropType<TypeTag, Properties::GridGeometry>::discMethod == DiscretizationMethods::box;
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>;
 
 public:
 
@@ -183,7 +183,7 @@ public:
                 && (refineAtDirichletBC_ || refineAtFluxBC_)) // proceed if boundary refinement is active
             {
                 // cell-centered schemes
-                if (!isBox)
+                if constexpr (!isCVFE)
                 {
                     for (const auto& scvf : scvfs(fvGeometry))
                     {
@@ -211,7 +211,7 @@ public:
                         }
                     }
                 }
-                // box-scheme
+                // control-volume finite element schemes
                 else
                 {
                     // container to store bcTypes
@@ -221,8 +221,8 @@ public:
                     // Get bcTypes and maybe mark for refinement on Dirichlet boundaries
                     for (const auto& scv : scvs(fvGeometry))
                     {
-                        bcTypes[scv.localDofIndex()] = problem_->boundaryTypes(element, scv);
-                        if (refineAtDirichletBC_ && bcTypes[scv.localDofIndex()].hasDirichlet())
+                        bcTypes[scv.indexInElement()] = problem_->boundaryTypes(element, scv);
+                        if (refineAtDirichletBC_ && bcTypes[scv.indexInElement()].hasDirichlet())
                         {
                             indicatorVector_[eIdx] = true;
                             break; // element is marked, escape scv loop

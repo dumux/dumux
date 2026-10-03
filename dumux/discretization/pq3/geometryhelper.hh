@@ -31,9 +31,9 @@
 #include <dumux/common/math.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
-// Reuse PQ2 corner storage traits (same structure, different order)
 #include <dumux/discretization/pq2/geometryhelper.hh>
 #include <dumux/discretization/pq3/dofhelper.hh>
+#include <dumux/discretization/scvfnormal.hh>
 
 namespace Dumux {
 
@@ -42,11 +42,8 @@ namespace Dumux {
  * \brief A class to create sub control volume and sub control volume face geometries per element
  *        for the order-3 hybrid CVFE scheme.
  *
- * Control volumes are defined only for vertex DOFs (same box dual mesh as PQ2).
+ * Control volumes are defined only for vertex DOFs.
  * Edge, face, and element interior DOFs are non-CV DOFs.
- * The key differences from PQ2:
- *  - dofIndex adds localKey.index() to handle multiple DOFs per edge/face/element entity
- *  - localDofPosition returns correct equidistant Lagrange node positions for order 3
  */
 template <class GridView, class ScvType, class ScvfType>
 class HybridPQ3GeometryHelper
@@ -137,27 +134,9 @@ public:
         return Dune::GeometryTypes::cube(dim-1);
     }
 
-    template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
     GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
     {
-        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
-        normal /= normal.two_norm();
-
-        GlobalPosition v = geo_.corner(scvPair[1]) - geo_.corner(scvPair[0]);
-
-        const auto s = v*normal;
-        if (std::signbit(s))
-            normal *= -1;
-
-        return normal;
-    }
-
-    template<int d = dimWorld, std::enable_if_t<(d==2), int> = 0>
-    GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
-    {
-        const auto t = p[1] - p[0];
-        GlobalPosition normal({-t[1], t[0]});
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, p);
 
         GlobalPosition v = geo_.corner(scvPair[1]) - geo_.corner(scvPair[0]);
 
