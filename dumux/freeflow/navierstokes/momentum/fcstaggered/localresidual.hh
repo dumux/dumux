@@ -113,11 +113,11 @@ public:
         {
             if (scv.dofAxis() == Extrusion::radialAxis)
             {
-                const auto r = scv.center()[scv.dofAxis()] - fvGeometry.gridGeometry().bBoxMin()[scv.dofAxis()];
+                const auto r = scv.center()[scv.dofAxis()];
                 const auto& scvf = (*scvfs(fvGeometry, scv).begin()); // the frontal scvf belonging to the scv
 
                 // Velocity term
-                source -= -2.0*problem.effectiveViscosity(element, fvGeometry, scvf) * elemVolVars[scv].velocity() / (r*r);
+                source -= 2.0*problem.effectiveViscosity(element, fvGeometry, scvf) * elemVolVars[scv].velocity() / (r*r);
 
                 // Pressure term (needed because we incorporate pressure in terms of a surface integral).
                  // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
