@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <type_traits>
 #include <span>
+#include <ranges>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/type.hh>
@@ -41,6 +42,7 @@
 #include <dumux/discretization/pq2/fvelementgeometry.hh>
 #include <dumux/discretization/boundaryface.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/periodicdofmap.hh>
 #include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
@@ -263,10 +265,14 @@ public:
     bool dofOnPeriodicBoundary(GridIndexType dofIdx) const
     { return periodicDofMap_.count(dofIdx); }
 
+    [[deprecated("Will be removed after release 3.11. Use periodicallyMappedDofs, returning a range of dofs")]]
     GridIndexType periodicallyMappedDof(GridIndexType dofIdx) const
-    { return periodicDofMap_.at(dofIdx); }
+    { return periodicDofMap_.at(dofIdx)[0]; }
 
-    const std::unordered_map<GridIndexType, GridIndexType>& periodicDofMap() const
+    const std::ranges::range auto periodicallyMappedDofs(GridIndexType dofIdx) const
+    { return std::views::all(periodicDofMap_.at(dofIdx)); }
+
+    const std::unordered_map<GridIndexType, std::vector<GridIndexType>>& periodicDofMap() const
     { return periodicDofMap_; }
 
     friend inline LocalView localView(const PQ3FVGridGeometry& gg)
@@ -351,6 +357,7 @@ private:
         cache_.hasBoundaryScvf_.resize(numElements, false);
 
         boundaryDofIndices_.assign(numDofs(), false);
+        periodicDofMap_.clear();
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -503,7 +510,7 @@ private:
                                     const auto dofPosOutside = DofHelper::dofPosition(outsideGeometry, localKeyOut);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
                                     if (std::abs((dofPosOutside-dofPos).two_norm() - shift) < eps)
-                                        periodicDofMap_[dofIdxGlobal] = dofIdxGlobalOut;
+                                        Dumux::Detail::addPeriodicallyMappedDof(periodicDofMap_, dofIdxGlobal, dofIdxGlobalOut);
                                 }
                             }
                         }
@@ -511,6 +518,8 @@ private:
                 }
             }
         }
+
+        Dumux::Detail::closePeriodicDofMap(periodicDofMap_);
 
         if (this->isPeriodic() && this->gridView().comm().size() > 1)
             DUNE_THROW(Dune::NotImplemented, "Periodic boundaries for pq3 method for parallel simulations!");
@@ -522,7 +531,7 @@ private:
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
     std::vector<bool> boundaryDofIndices_;
-    std::unordered_map<GridIndexType, GridIndexType> periodicDofMap_;
+    std::unordered_map<GridIndexType, std::vector<GridIndexType>> periodicDofMap_;
     Cache cache_;
     PeriodicGridTraits<typename GridView::Grid> periodicGridTraits_;
 };
