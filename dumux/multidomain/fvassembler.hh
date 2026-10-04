@@ -14,6 +14,7 @@
 #ifndef DUMUX_MULTIDOMAIN_FV_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_FV_ASSEMBLER_HH
 
+#include <algorithm>
 #include <type_traits>
 #include <tuple>
 
@@ -591,7 +592,7 @@ private:
             for (const auto& m : gridGeometry.periodicDofMap())
             {
                 const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
-                if (std::ranges::all_of(periodicallyMappedDofs, [=](auto second){ return m.first < second; }))
+                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
                 {
                     for (const auto& second : periodicallyMappedDofs)
                     {
@@ -705,13 +706,17 @@ private:
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
-                if (m.first < m.second)
+                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
+                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
                 {
-                    // add the second row to the first
-                    res[m.first] += res[m.second];
+                    for (const auto& second : periodicallyMappedDofs)
+                    {
+                        // add the second row to the first
+                        res[m.first] += res[second];
 
-                    // enforce the solution of the first periodic DOF to the second one
-                    res[m.second] = curSol[m.second] - curSol[m.first];
+                        // enforce the solution of the first periodic DOF to the second one
+                        res[second] = curSol[second] - curSol[m.first];
+                    }
                 }
             }
         }
