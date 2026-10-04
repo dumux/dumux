@@ -235,24 +235,6 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
                         if (globalI > globalIP)
                             pattern.add(globalIP, globalJ);
                     }
-
-//                    if (gridGeometry.isPeriodic())
-//                    {
-//                        if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
-//                        {
-//                            const auto& periodicallyMappedDofs =
-//                                Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(gridGeometry, globalI);
-//
-//                            for (const auto globalIP : periodicallyMappedDofs)
-//                            {
-//                                pattern.add(globalIP, globalI);
-//                                pattern.add(globalI, globalIP);
-//
-//                                if (globalI > globalIP)
-//                                    pattern.add(globalIP, globalJ);
-//                            }
-//                        }
-//                    }
                 }
             }
         }
