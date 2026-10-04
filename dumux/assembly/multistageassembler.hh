@@ -150,9 +150,40 @@ public:
         applyDirichletConstraints_(curSol);
     }
 
-    //! compute the residuals using the internal residual
+    /*!
+     * \brief Assembles the residual of the current stage for the given solution.
+     */
     void assembleResidual(const SolutionVector& curSol)
-    { DUNE_THROW(Dune::NotImplemented, "residual"); }
+    {
+        resetResidual_();
+        markConstrainedDofs_();
+
+        if (stageParams_->size() != spatialOperatorEvaluations_.size())
+            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
+
+        assembleOperatorEvaluations_(curSol);
+
+        const auto k = stageParams_->size() - 1;
+        (*residual_) = 0.0;
+        residual_->axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_.back());
+        residual_->axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_.back());
+
+        auto constantResidualComponent = (*residual_);
+        constantResidualComponent = 0.0;
+        for (std::size_t i = 0; i < k; ++i)
+        {
+            if (!stageParams_->skipTemporal(i))
+                constantResidualComponent.axpy(stageParams_->temporalWeight(i), temporalOperatorEvaluations_[i]);
+            if (!stageParams_->skipSpatial(i))
+                constantResidualComponent.axpy(stageParams_->spatialWeight(i), spatialOperatorEvaluations_[i]);
+        }
+
+        for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
+            for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
+                (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
+
+        applyDirichletResidual_(curSol);
+    }
 
     /*!
      * \brief The version without arguments uses the default constructor to create
@@ -267,13 +298,7 @@ public:
             {
                 spatialOperatorEvaluations_.push_back(*residual_);
                 temporalOperatorEvaluations_.push_back(*residual_);
-
-                // assemble stage 0 residuals (raw, unweighted)
-                assemble_([&](const auto& element)
-                {
-                    LocalAssembler localAssembler(*this, element, *prevSol_);
-                    localAssembler.assembleCurrentResidual(temporalOperatorEvaluations_.back(), spatialOperatorEvaluations_.back());
-                });
+                assembleOperatorEvaluations_(*prevSol_);
             }
 
             // we don't delete the first stage so it can be reused in a restarted
@@ -290,13 +315,22 @@ public:
             }
         }
 
-        setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
-
-        resetResidual_();
-
         if (spatialOperatorEvaluations_.size() != curStage)
             DUNE_THROW(Dune::InvalidStateException,
                 "Invalid state. Maybe you forgot to call clearStages()");
+
+        // The evaluations recorded while solving the previous stage belong to the last iterate
+        // the solver assembled, which is not the stage solution for a solver that stops after an
+        // update (e.g. Newton on the shift criterion) or assembles only once (a linear solver).
+        if (curStage > 1)
+        {
+            setProblemTime_(*problem_, stageParams_->timeAtStage(curStage-1));
+            assembleOperatorEvaluations_(x);
+        }
+
+        setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
+
+        resetResidual_();
 
         // allocate memory for this stage
         spatialOperatorEvaluations_.push_back(*residual_);
@@ -320,6 +354,19 @@ public:
     }
 
 private:
+    //! Assemble the unweighted temporal and spatial operators at sol into the last stored evaluations
+    void assembleOperatorEvaluations_(const SolutionVector& sol)
+    {
+        spatialOperatorEvaluations_.back() = 0.0;
+        temporalOperatorEvaluations_.back() = 0.0;
+        assemble_([&](const Element& element)
+        {
+            LocalAssembler localAssembler(*this, element, sol);
+            localAssembler.assembleCurrentResidual(temporalOperatorEvaluations_.back(),
+                                                   spatialOperatorEvaluations_.back());
+        });
+    }
+
     /*!
      * \brief Resizes the jacobian and sets the jacobian's sparsity pattern.
      */
@@ -411,6 +458,26 @@ private:
                         (*jacobian_)[dofIdx][dofIdx][eqIdx][pvIdx] = 1.0;
                     }
                 }
+            }
+        }
+    }
+
+    //! Set the residual of the Dirichlet constraint rows (problem.constraints()).
+    void applyDirichletResidual_(const SolutionVector& curSol)
+    {
+        if constexpr (Detail::hasGlobalConstraints<Problem>())
+        {
+            for (const auto& constraintData : problem_->constraints())
+            {
+                const auto& info = constraintData.constraintInfo();
+                const auto& values = constraintData.values();
+                const auto dofIdx = constraintData.dofIndex();
+                for (int eqIdx = 0; eqIdx < info.size(); ++eqIdx)
+                    if (info.isConstraintEquation(eqIdx))
+                    {
+                        const auto pvIdx = info.eqToPriVarIndex(eqIdx);
+                        (*residual_)[dofIdx][eqIdx] = curSol[dofIdx][pvIdx] - values[pvIdx];
+                    }
             }
         }
     }

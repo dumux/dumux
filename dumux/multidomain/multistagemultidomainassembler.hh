@@ -249,18 +249,23 @@ public:
             resetResidual_();
             spatialOperatorEvaluations_.push_back(*residual_);
             temporalOperatorEvaluations_.push_back(*residual_);
+            assembleOperatorEvaluations_(x);
+        }
 
+        // The evaluations recorded while solving the previous stage belong to the last iterate
+        // the solver assembled, which is not the stage solution for a solver that stops after an
+        // update (e.g. Newton on the shift criterion) or assembles only once (a linear solver).
+        else
+        {
+            if (spatialOperatorEvaluations_.size() != curStage)
+                DUNE_THROW(Dune::InvalidStateException, "Invalid state. Maybe you forgot to call clearStages()");
+
+            using namespace Dune::Hybrid;
             forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
             {
-                auto& spatial = spatialOperatorEvaluations_.back()[domainId];
-                auto& temporal = temporalOperatorEvaluations_.back()[domainId];
-                assemble_(domainId, [&](const auto& element)
-                {
-                    MultiDomainAssemblerSubDomainView view{*this, domainId};
-                    SubDomainAssembler<domainId()> subDomainAssembler(view, element, x, *couplingManager_);
-                    subDomainAssembler.assembleCurrentResidual(temporal, spatial);
-                });
+                setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(curStage-1));
             });
+            assembleOperatorEvaluations_(x);
         }
 
         using namespace Dune::Hybrid;
@@ -364,6 +369,24 @@ protected:
     std::shared_ptr<CouplingManager> couplingManager_;
 
 private:
+    //! Assemble the unweighted temporal and spatial operators at x into the last stored evaluations
+    void assembleOperatorEvaluations_(const SolutionVector& x)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
+        {
+            auto& spatial = spatialOperatorEvaluations_.back()[domainId];
+            auto& temporal = temporalOperatorEvaluations_.back()[domainId];
+            spatial = 0.0;
+            temporal = 0.0;
+            assemble_(domainId, [&](const auto& element)
+            {
+                MultiDomainAssemblerSubDomainView view{*this, domainId};
+                SubDomainAssembler<domainId()> subDomainAssembler(view, element, x, *couplingManager_);
+                subDomainAssembler.assembleCurrentResidual(temporal, spatial);
+            });
+        });
+    }
     void setJacobianBuildMode_(JacobianMatrix& jac) const
     {
         using namespace Dune::Hybrid;
