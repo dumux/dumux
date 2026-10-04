@@ -72,8 +72,6 @@ void updateVelocities(
         }
         else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcdiamond)
         {
-            const auto elemGeo = element.geometry();
-            const auto elemSol = elementSolution(element, x, gridGeometry);
             for (const auto& scv : scvs(fvGeometry))
                 faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
         }
@@ -234,17 +232,10 @@ int main(int argc, char** argv)
                     DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
                 if (isPeriodic)
                 {
-                    //const auto periodicScv = fvGeometry.outsidePeriodicScv(scv);
                     const auto periodicallyMappedDofs =
                         Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(*momentumGridGeometry, scv.dofIndex());
                     for (const auto periodicDof : periodicallyMappedDofs)
                     {
-                        //const auto distance = scv.dofPosition() - periodicScv.dofPosition();
-                        //if ((std::abs(distance[0]) > eps
-                        //        || std::abs(std::abs(distance[1]) - (bBoxMax[1]-bBoxMin[1]) ) > eps )
-                        //   && (!periodicInX || std::abs(distance[1]) > eps
-                        //        || std::abs(std::abs(distance[0]) - (bBoxMax[0]-bBoxMin[0]) ) > eps ))
-                        //    DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
                         for (int i = 0; i < x[momentumIdx][periodicDof].size(); ++i)
                             if (std::abs(x[momentumIdx][periodicDof][i] - x[momentumIdx][scv.dofIndex()][i]) > eps)
                                 DUNE_THROW(Dune::Exception, "Periodicity constraints not enforced");
