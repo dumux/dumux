@@ -453,7 +453,7 @@ private:
                                         const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
                                         const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
                                         const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                        if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
+                                        if ((vPosOutside - vPos + shift*intersection.centerUnitOuterNormal()).two_norm() < eps)
                                         {
                                             const auto periodicIdx = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
                                             if (!keepProcessing &&
@@ -732,7 +732,7 @@ private:
                                         const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
                                         const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
                                         const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                        if (std::abs((vPosOutside-vPos).two_norm() - shift) < eps)
+                                        if ((vPosOutside - vPos + shift*intersection.centerUnitOuterNormal()).two_norm() < eps)
                                         {
                                             const auto periodicIdx = this->vertexMapper().subIndex(outside, vIdxOutside, dim);
                                             if (!keepProcessing &&
