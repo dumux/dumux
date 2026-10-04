@@ -16,6 +16,7 @@
 #define DUMUX_FACETCOUPLING_BOX_GRID_FVGEOMETRY_HH
 
 #include <ranges>
+#include <span>
 #include <algorithm>
 #include <utility>
 
@@ -212,7 +213,7 @@ public:
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
 
     //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
-    const std::ranges::range auto& periodicallyMappedDofs(GridIndexType dofIdx) const
+    std::span<const GridIndexType> periodicallyMappedDofs(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box facet coupling scheme"); }
 
     //! local view of this object (constructed with the internal cache)
@@ -548,7 +549,7 @@ public:
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
 
     //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
-    const std::ranges::range auto& periodicallyMappedDofs(GridIndexType dofIdx) const
+    std::span<const GridIndexType> periodicallyMappedDofs(GridIndexType dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the facet coupling scheme"); }
 
     //! local view of this object (constructed with the internal cache)

@@ -519,7 +519,7 @@ private:
             for (const auto& m : gridGeometry.periodicDofMap())
             {
                 const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
-                if (std::all_of(periodicallyMappedDofs, [=](auto second) { return m.first < second; }))
+                if (std::ranges::all_of(periodicallyMappedDofs, [=](auto second) { return m.first < second; }))
                 {
                     for (const auto& second : periodicallyMappedDofs)
                     {
