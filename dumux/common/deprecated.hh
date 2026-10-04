@@ -15,6 +15,7 @@
 
 #include <utility>
 #include <ranges>
+#include <type_traits>
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/exceptions.hh>
@@ -51,17 +52,22 @@ concept hasRangeOfPeriodicallyMappedDofs = requires (GG gg, GI gi) {
 // helper function triggering deprecation warning if grid geometry does not implement new interface or program uses old interface.
 // Remove after release 3.11
 template<class Dof>
-[[deprecated("The periodicDofMap with values of single periodic dofs will not be supported after release 3.11. Use/define in custom grid geometry a periodicDofMap with a range of dofs as value type, as well as accessor periodicallyMappedDofs returing a std::views::all/single of the storage if possible")]]
+[[deprecated("The periodicDofMap with values of single periodic dofs will not be supported after release 3.11. Use/define in custom grid geometry a periodicDofMap with a range of dofs as value type, as well as accessor periodicallyMappedDofs returning a std::views::all/single of the storage if possible")]]
 inline const std::ranges::range auto wrapSinglePeriodicDof(const Dof& dof)
 {
     return std::ranges::views::single(dof);
 }
 
-// Helper function to access values from map of periodic dofs.
+// Helper function to access values from map of periodic dofs, viewing stored ranges instead of copying them.
 // Remove after release 3.11
-template<std::ranges::range T>
-inline const std::ranges::range auto ensureRangeOfPeriodicDofs(const T& range)
-{ return range; }
+template<class T> requires std::ranges::range<T>
+inline std::ranges::range auto ensureRangeOfPeriodicDofs(T&& range)
+{
+    if constexpr (std::is_lvalue_reference_v<T> || std::ranges::view<std::remove_cvref_t<T>>)
+        return std::views::all(std::forward<T>(range));
+    else
+        return std::remove_cvref_t<T>(std::forward<T>(range));
+}
 
 template<typename T> requires (!std::ranges::range<T>)
 inline const std::ranges::range auto ensureRangeOfPeriodicDofs(const T& entry)
