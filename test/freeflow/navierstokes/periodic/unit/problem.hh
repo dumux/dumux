@@ -54,6 +54,8 @@ public:
     : ParentType(gridGeometry, couplingManager)
     {
         usePressureDifference_ = getParam<bool>("Problem.UsePressureDifference", false);
+        pressureDifference_ = getParam<Scalar>("Problem.PressureDifference", 100.0);
+        periodicLength_ = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
         useMomentumInternalDirichlet_ = getParam<bool>("Problem.UseMomentumInternalDirichlet", false)
             && !usePressureDifference_;
         momentumInternalDirichletPosY_ = getParam<Scalar>("Problem.MomentumInternalDirichletPosY", 0.5)
@@ -96,13 +98,11 @@ public:
     {
         Sources source;
 
+        // a pressure drop over the periodic length acts as a uniform body force
         if constexpr (ParentType::isMomentumProblem())
         {
-            if (usePressureDifference_ && scv.dofPosition()[1] < this->gridGeometry().bBoxMin()[1] + eps_)
-            {
-                const auto& frontalScvf = (*scvfs(fvGeometry).begin());
-                source[Indices::momentumYBalanceIdx] = 100 * frontalScvf.area() / scv.volume();
-            }
+            if (usePressureDifference_)
+                source[Indices::momentumYBalanceIdx] = pressureDifference_/periodicLength_;
         }
 
         return source;
@@ -173,6 +173,8 @@ public:
 private:
     static constexpr Scalar eps_ = 1e-6;
     bool usePressureDifference_;
+    Scalar pressureDifference_;
+    Scalar periodicLength_;
     bool useMomentumInternalDirichlet_;
     Scalar momentumInternalDirichletPosY_;
     Scalar velocity_;
