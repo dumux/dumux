@@ -18,6 +18,7 @@
 #define DUMUX_POROUSMEDIUMFLOW_BOXDFM_GRID_FVGEOMETRY_HH
 
 #include <ranges>
+#include <span>
 #include <utility>
 #include <unordered_map>
 
@@ -191,7 +192,7 @@ public:
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
     //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
-    const std::ranges::range auto& periodicallyMappedDofs(std::size_t dofIdx) const
+    std::span<const std::size_t> periodicallyMappedDofs(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
     //! local view of this object (constructed with the internal cache)
@@ -562,7 +563,7 @@ public:
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
     //! The indices of the vertices / d.o.f.s on the other side of the periodic boundary
-    const std::ranges::range auto& periodicallyMappedDofs(std::size_t dofIdx) const
+    std::span<const std::size_t> periodicallyMappedDofs(std::size_t dofIdx) const
     { DUNE_THROW(Dune::InvalidStateException, "Periodic boundaries are not supported by the box-dfm scheme"); }
 
     //! local view of this object (constructed with the internal cache)
