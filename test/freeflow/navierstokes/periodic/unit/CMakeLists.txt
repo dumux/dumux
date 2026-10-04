@@ -92,6 +92,20 @@ dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet_bottom_nocac
                                         -Newton.EnableShiftCriterion false
                                         -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
 
+# a pressure drop over the periodic length drives plane Poiseuille flow between the walls
+dumux_add_test(NAME test_ff_navierstokes_periodic_pressuredifference
+               TARGET test_ff_navierstokes_periodic
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-9}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_pressuredifference-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_pressuredifference-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic params.input
+                                        -Problem.Name test_ff_navierstokes_periodic_pressuredifference
+                                        -Problem.UsePressureDifference true
+                                        -Problem.EnableGravity false")
+
 add_executable(test_ff_navierstokes_periodic_subgrid EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_navierstokes_periodic_subgrid PUBLIC UPWINDSCHEMEORDER=1 USESUBGRID=1)
 
