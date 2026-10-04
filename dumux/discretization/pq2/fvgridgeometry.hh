@@ -526,7 +526,7 @@ private:
                                     const auto dofIdxGlobalOut = DofHelper::dofIndex(this->dofMapper(), outside, localKeyOut);
                                     const auto dofPosOutside =  DofHelper::dofPosition(outsideGeometry, localKeyOut);
                                     const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                    if (std::abs((dofPosOutside-dofPos).two_norm() - shift) < eps)
+                                    if ((dofPosOutside - dofPos + shift*intersection.centerUnitOuterNormal()).two_norm() < eps)
                                         Dumux::Detail::addPeriodicallyMappedDof(periodicDofMap_, dofIdxGlobal, dofIdxGlobalOut);
                                 }
                             }
