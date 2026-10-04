@@ -59,9 +59,6 @@ inline const std::ranges::range auto wrapSinglePeriodicDof(const Dof& dof)
 
 // Helper function to access values from map of periodic dofs.
 // Remove after release 3.11
-template<typename T>
-inline const std::ranges::range auto ensureRangeOfPeriodicDofs(const T& t);
-
 template<std::ranges::range T>
 inline const std::ranges::range auto ensureRangeOfPeriodicDofs(const T& range)
 { return range; }
