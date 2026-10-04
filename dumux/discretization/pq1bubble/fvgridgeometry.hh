@@ -39,6 +39,7 @@
 #include <dumux/discretization/boundaryface.hh>
 #include <dumux/discretization/extrusion.hh>
 
+#include <dumux/discretization/periodicdofmap.hh>
 #include <dumux/io/grid/periodicgridtraits.hh>
 
 namespace Dumux {
@@ -360,6 +361,7 @@ private:
         cache_.hasBoundaryScvf_.resize(numElements, false);
 
         boundaryDofIndices_.assign(numDofs(), false);
+        periodicDofMap_.clear();
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -509,50 +511,31 @@ private:
                         const auto vIdxGlobal = this->dofMapper().subIndex(element, vIdx, dim);
                         const auto vPos = elementGeometry.corner(vIdx);
 
-                        // recursively process periodic intersections containing the periodic vertex
-                        const auto processIntersection =
-                                [vIdxGlobal, this, &refElement, eps]
-                                (auto& vPos, auto& intersection, auto& processFunc)
+                        const auto& outside = intersection.outside();
+                        const auto outsideGeometry = outside.geometry();
+                        for (const auto& isOutside : intersections(this->gridView(), outside))
                         {
-                            bool keepProcessing = false;
-                            const auto& outside = intersection.outside();
-                            const auto outsideGeometry = outside.geometry();
-                            for (const auto& isOutside : intersections(this->gridView(), outside))
+                            // only check periodic vertices of the periodic neighbor
+                            if (periodicGridTraits_.isPeriodic(isOutside))
                             {
-                                // only check periodic vertices of the periodic neighbor
-                                if (periodicGridTraits_.isPeriodic(isOutside))
+                                const auto fIdxOutside = isOutside.indexInInside();
+                                const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
+                                for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
                                 {
-                                    const auto fIdxOutside = isOutside.indexInInside();
-                                    const auto numFaceVertsOutside = refElement.size(fIdxOutside, 1, dim);
-                                    for (int localVIdxOutside = 0; localVIdxOutside < numFaceVertsOutside; ++localVIdxOutside)
-                                    {
-                                        const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
-                                        const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
-                                        const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
-                                        if ((vPosOutside - vPos + shift*intersection.centerUnitOuterNormal()).two_norm() < eps)
-                                        {
-                                            const auto periodicIdx = this->dofMapper().subIndex(outside, vIdxOutside, dim);
-                                            if (!keepProcessing &&
-                                                    (periodicIdx==vIdxGlobal || std::ranges::count(periodicDofMap_[vIdxGlobal], periodicIdx)))
-                                                return;
-                                            if (std::abs(intersection.centerUnitOuterNormal() *
-                                                    isOutside.centerUnitOuterNormal()) > 1.0 - 1e-6)
-                                            {
-                                                periodicDofMap_[vIdxGlobal].insert(periodicDofMap_[vIdxGlobal].begin(), periodicIdx);
-                                                keepProcessing = true;
-                                                break;
-                                            }
-                                            processFunc(vPosOutside, isOutside, processFunc);
-                                        }
-                                    }
+                                    const auto vIdxOutside = refElement.subEntity(fIdxOutside, 1, localVIdxOutside, dim);
+                                    const auto vPosOutside = outsideGeometry.corner(vIdxOutside);
+                                    const auto shift = std::abs((this->bBoxMax()-this->bBoxMin())*intersection.centerUnitOuterNormal());
+                                    if ((vPosOutside - vPos + shift*intersection.centerUnitOuterNormal()).two_norm() < eps)
+                                        Dumux::Detail::addPeriodicallyMappedDof(periodicDofMap_, vIdxGlobal, this->dofMapper().subIndex(outside, vIdxOutside, dim));
                                 }
                             }
-                        };
-                        processIntersection(vPos, intersection, processIntersection);
+                        }
                     }
                 }
             }
         }
+
+        Dumux::Detail::closePeriodicDofMap(periodicDofMap_);
 
         // error check: periodic boundaries currently don't work for pq1bubble in parallel
         if (this->isPeriodic() && this->gridView().comm().size() > 1)
