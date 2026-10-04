@@ -35,17 +35,27 @@ unknowns. Multidomain assembly supports complex-valued subdomains: all blocks of
 of the subdomain Jacobians, and `MatrixConverter` and `VectorConverter` default to the field type of the converted multi-type object.
 The embedded 1D-3D coupling interpolates complex-valued primary variables at its integration points with real shape values.
 Complex-valued Helmholtz tests in `test/experimental/complex` demonstrate the feature, including a box facet-coupling test.
+- __Periodic boundaries__: Degrees of freedom on edges and corners of domains that are periodic in several directions are now
+identified with all their periodic images, and all assemblers enforce the periodic constraints for each of them. The periodic
+partner detection of the box, pq1bubble, pq2, pq3 and finite-element discretizations compares the periodic shift instead of only
+the distance, which also accepted unrelated degrees of freedom at the distance of the domain length.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
 coordinate type for the quadrature rule instead of the field type of the integrated function, and `integrateL2Error` returns the
 real type of that field type. `evalGradients` for CVFE schemes returns gradient entries in the field type of the primary variables
 instead of the coordinate type. For real-valued unknowns with the same precision as the grid coordinates nothing changes.
+- __Periodic boundaries__: `periodicDofMap()` of the grid geometries maps each degree of freedom to a range of periodically
+identified degrees of freedom (`std::vector` for box, pq1bubble, pq2, pq3 and finite-element discretizations,
+`std::array` with one entry for face-centered schemes) instead of a single index.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 
 - __FreeFlow__: Headers in the `freeflow/navierstokes/momentum` that were only related to the `fcstaggered` discretization were moved into a new subdirectory `fcstaggered`. The old headers are deprecated and will be removed after `release/3.11`. Please also note that class names were partly adapted
 to the new subdirectory.
+- __Periodic boundaries__: `periodicallyMappedDof(dofIdx)` of the grid geometries is deprecated. Use `periodicallyMappedDofs(dofIdx)`,
+which returns a range of all periodically identified degrees of freedom. Grid geometries providing only `periodicallyMappedDof`
+or a single-index `periodicDofMap()` still work with the assemblers and trigger a deprecation warning.
 
 ### Removed
 - __FreeFlow__: The previous implementation of the staggered grid is moved to the new dumux-repository [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered). A newer implementation (introduced in DuMu<sup>x</sup> 3.5) of the staggered grid using the coupling manager is still available on [dumux](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux). While the newer implementation covers most of the models that were previously implemented for the old-staggered, turbulence models and higher order schemes are currently only available on [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered).
