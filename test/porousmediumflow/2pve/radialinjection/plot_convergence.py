@@ -82,6 +82,11 @@ ax.plot(chi_sqrt, similarity_interface_height(chi_sqrt**2, mobility_ratio), colo
         label=r"similarity solution, $\Gamma \to 0$")
 for factor, color in zip(profile_rate_factors, profile_colors):
     case_name = name if factor == 1 else f"{name}_rate{factor}"
+    print(f"Starting profile simulation {case_name}: "
+          f"grid={params['Grid']['Cells']} (radial, vertical cells), "
+          f"injection rate={BASE_RATE*factor:.6g} m^3/s, "
+          f"maximum time step={BASE_MAX_TIME_STEP/factor:.6g} s",
+          flush=True)
     output = subprocess.check_output([exe, "params.input",
                                       "-Problem.Name", case_name,
                                       "-Problem.InjectionRate", str(BASE_RATE*factor),
@@ -89,6 +94,7 @@ for factor, color in zip(profile_rate_factors, profile_colors):
                                       "-TimeLoop.MaxTimeStepSize", str(BASE_MAX_TIME_STEP/factor),
                                       "-TimeLoop.DtInitial", str(BASE_INITIAL_TIME_STEP/factor)], text=True)
     gravity_number = next(float(line.split()[-1]) for line in output.split("\n") if line.startswith("Mobility ratio: "))
+    print(f"Finished profile simulation {case_name}: gravity number={gravity_number:.6g}", flush=True)
     time, file_name = read_pvd(case_name + ".pvd")[-1]
     centers, cell_data = read_vtu(file_name)
     chi = 2.0*np.pi*height*porosity*(1.0 - residual_saturation)*centers[:, 0]**2/(injection_rate*factor*time)

@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Regenerate the images of the radial injection benchmark for the Doxygen documentation.
 
-Runs plot_schematic.py and plot_convergence.py in the build directory of the test and copies
-domain.svg, profile.png, plume.png and convergence.png into doc/doxygen/images/.
+Runs plot_convergence.py in the build directory of the test and copies
+profile.png, plume.png and convergence.png into doc/doxygen/images/.
+The domain schematic SVG is maintained by hand and is left untouched.
 
 Usage:
   python3 regenerate_doc_images.py <build_dir>
@@ -30,14 +31,13 @@ testname = "test_2pve_radialinjection_tpfa"
 image_prefix = "2pve_radialinjection"
 
 subprocess.check_call(["make", testname], cwd=test_build_dir)
-subprocess.check_call([sys.executable, os.path.join(script_dir, "plot_schematic.py")], cwd=test_build_dir)
 subprocess.check_call([sys.executable, os.path.join(script_dir, "plot_convergence.py"), testname], cwd=test_build_dir)
 
-for image in ("domain.svg", "profile.png", "plume.png", "convergence.png"):
+for image in ("profile.png", "plume.png", "convergence.png"):
     src = os.path.join(test_build_dir, image)
     dst = os.path.join(doc_images, f"{image_prefix}_{image}")
     shutil.copy(src, dst)
     os.remove(src)
     print(f"Copied {image} -> {os.path.relpath(dst, script_dir)}")
 
-print("\nDone. All images updated in doc/doxygen/images/.")
+print("\nDone. Numerical plots updated in doc/doxygen/images/.")

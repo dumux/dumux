@@ -47,6 +47,12 @@ def run_case(executable, name, rate_factor=1, radial_cells=400, entry_pressure=N
     if entry_pressure is not None:
         command += ["-SpatialParams.BrooksCoreyPcEntry", str(entry_pressure)]
 
+    print(f"Starting simulation {name}: "
+          f"grid={radial_cells} {VERTICAL_CELLS} (radial, vertical cells), "
+          f"radial cell size={RADIAL_EXTENT/radial_cells:.6g} m, "
+          f"maximum time step={BASE_MAX_TIME_STEP/rate_factor*time_step_factor:.6g} s, "
+          f"injection rate={BASE_RATE*rate_factor:.6g} m^3/s",
+          flush=True)
     output = subprocess.check_output(command, text=True)
     gravity_number, error = None, None
     for line in output.split("\n"):
@@ -54,6 +60,7 @@ def run_case(executable, name, rate_factor=1, radial_cells=400, entry_pressure=N
             gravity_number = float(line.split()[-1])
         if line.startswith("Relative interface error"):
             error = float(line.split()[-1])
+    print(f"Finished simulation {name}: gravity number={gravity_number}, interface error={error}", flush=True)
     return gravity_number, error
 
 
