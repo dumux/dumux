@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "plot_convergence.py")
 
 # injection rate of 120 m^3/day of Nordbotten and Celia (2006), gravity number 0.14
 dumux_add_test(NAME test_2pve_radialinjection_tpfa
