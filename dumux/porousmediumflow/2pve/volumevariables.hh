@@ -136,9 +136,10 @@ public:
         completeFluidStateCoarse(elemSol, problem, element, scv, fluidState_, solidState_, pcCoarse, columnState.gasPlumeDistance);
 
         // permeability-weighted column average, the denominator is the column integral of the fine-level permeability
-        const Scalar columnHeight = column.size()*deltaZ;
-        mobility_[phase0Idx] /= permeabilityCoarse*columnHeight;
-        mobility_[phase1Idx] /= permeabilityCoarse*columnHeight;
+        columnHeight_ = column.size()*deltaZ;
+        mobility_[phase0Idx] /= permeabilityCoarse;
+        mobility_[phase1Idx] /= permeabilityCoarse;
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
 
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
@@ -274,16 +275,27 @@ public:
     { return mobility_[phaseIdx]; }
 
     /*!
-     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
+     * \brief Returns the height-integrated porosity of the column in \f$[m]\f$.
      */
     Scalar porosity() const
-    { return solidState_.porosity(); }
+    { return porosity_; }
 
     /*!
-     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     * \brief Returns the height-integrated permeability of the column in \f$[m^3]\f$.
      */
     const PermeabilityType& permeability() const
     { return permeability_; }
+
+    /*!
+     * \brief Converts full-height coarse volumes and lateral face areas to horizontal measures
+     *
+     * Storage and Darcy fluxes use height-integrated coefficients. The inherited
+     * assembly multiplies geometric volumes and face areas by this factor,
+     * removing the column height while preserving any user extrusion factor.
+     * Sources and Neumann fluxes must consequently be height-integrated as well.
+     */
+    Scalar extrusionFactor() const
+    { return ParentType::extrusionFactor()/columnHeight_; }
 
     /*!
      * \brief Returns the wetting phase index
@@ -303,6 +315,8 @@ protected:
 
 private:
     Scalar pc_;
+    Scalar porosity_;
+    Scalar columnHeight_;
     PermeabilityType permeability_;
     Scalar mobility_[ModelTraits::numFluidPhases()];
 

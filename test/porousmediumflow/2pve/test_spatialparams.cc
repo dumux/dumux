@@ -58,6 +58,12 @@ public:
     using ParentType::ParentType;
 };
 
+struct SolidSystem
+{
+    static constexpr bool isInert() { return true; }
+    static constexpr int numInertComponents = 1;
+};
+
 struct FluidSystem
 {
     static constexpr int phase0Idx = 0;
@@ -107,13 +113,13 @@ int main(int argc, char** argv)
     const Scalar height = top - bottom;
     for (const auto& element : elements(coarseGridGeometry->gridView()))
     {
-        // vertical averages of the fine-level fields over the column
+        // vertical integrals of the fine-level fields over the column
         const Scalar x = element.geometry().center()[0];
-        const Scalar expectedPermeability = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom))/height;
-        const Scalar expectedPorosity = ((0.1 + 0.01*x)*height + 0.01*(top*top - bottom*bottom))/height;
+        const Scalar expectedPermeability = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom));
+        const Scalar expectedPorosity = ((0.1 + 0.01*x)*height + 0.01*(top*top - bottom*bottom));
 
-        TwoPVETest::checkClose(spatialParams.permeabilityAtElement(element), expectedPermeability, "column-averaged permeability");
-        TwoPVETest::checkClose(spatialParams.porosityAtElement(element), expectedPorosity, "column-averaged porosity");
+        TwoPVETest::checkClose(spatialParams.permeabilityAtElement(element), expectedPermeability, "column-integrated permeability");
+        TwoPVETest::checkClose(spatialParams.porosityAtElement(element), expectedPorosity, "column-integrated porosity");
 
         const auto fvGeometry = localView(*coarseGridGeometry).bindElement(element);
         for (const auto& scv : scvs(fvGeometry))
@@ -121,6 +127,10 @@ int main(int argc, char** argv)
             const int elemSol = 0;
             TwoPVETest::checkClose(spatialParams.permeability(element, scv, elemSol), expectedPermeability, "scv permeability");
             TwoPVETest::checkClose(spatialParams.porosity(element, scv, elemSol), expectedPorosity, "scv porosity");
+            TwoPVETest::checkClose(
+                spatialParams.template inertVolumeFraction<TwoPVETest::SolidSystem>(element, scv, elemSol, 0),
+                1.0 - expectedPorosity/height, "dimensionless inert solid fraction"
+            );
         }
     }
 

@@ -85,7 +85,7 @@ public:
     { return initialAtPos(globalPos); }
 
     /*!
-     * \brief The mass flux of the injected fluid through the well, distributed over the aquifer height
+     * \brief The height-integrated mass flux of the injected fluid through the well
      *
      * \param globalPos the center of the boundary face
      */
@@ -95,8 +95,7 @@ public:
         if (onWell_(globalPos))
         {
             const Scalar wellRadius = this->gridGeometry().bBoxMin()[0];
-            const Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
-            values[injectedPhaseEqIdx] = -injectedDensity_()*injectionRate_/(2.0*M_PI*wellRadius*height);
+            values[injectedPhaseEqIdx] = -injectedDensity_()*injectionRate_/(2.0*M_PI*wellRadius);
         }
         return values;
     }

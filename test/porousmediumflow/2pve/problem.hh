@@ -142,7 +142,7 @@ public:
         }
 
         // porosity-weighted average over the column
-        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element)*column.size()*deltaZ;
+        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element);
 
         return values;
     }
@@ -177,8 +177,7 @@ public:
                 values += fineProblem_->neumannAtPos(globalPosFineElement)*deltaZ;
             }
 
-            // average over the height of the coarse-level face
-            values /= column.size()*deltaZ;
+            // Height-integrated flux; assembly divides the full-height face area by H.
         }
 
         return values;
@@ -210,7 +209,7 @@ public:
         }
 
         // porosity-weighted average over the column
-        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element)*column.size()*deltaZ;
+        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element);
 
         return values;
     }

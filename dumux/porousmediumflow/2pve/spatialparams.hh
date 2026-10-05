@@ -28,8 +28,9 @@ namespace Dumux {
  * \ingroup TwoPVEModel
  * \brief The base class for the coarse-level spatial parameters of the two-phase VE model
  *
- * The coarse-level permeability and porosity of a column are the vertical averages of the
- * fine-level permeability and porosity over the column.
+ * The coarse-level permeability and porosity of a column are the vertical integrals of the
+ * fine-level permeability and porosity over the column: permeability has units of
+ * cubic metres and integrated porosity has units of metres.
  * The fine-level spatial parameters have to provide `permeabilityAtElement(fineElement)` and
  * `porosityAtElement(fineElement)`. The implementation has to provide
  * `fluidMatrixInteractionAtPos(globalPos)` returning a Brooks-Corey material law and
@@ -83,10 +84,6 @@ public:
                 permeability_[columnIdx] += spatialParamsFine_->permeabilityAtElement(fineElement)*fineCellHeight;
                 porosity_[columnIdx] += spatialParamsFine_->porosityAtElement(fineElement)*fineCellHeight;
             }
-
-            const Scalar columnHeight = column.size()*fineCellHeight;
-            permeability_[columnIdx] /= columnHeight;
-            porosity_[columnIdx] /= columnHeight;
         }
     }
 
@@ -97,7 +94,7 @@ public:
     { return *spatialParamsFine_; }
 
     /*!
-     * \brief Returns the coarse-level permeability \f$\mathrm{[m^2]}\f$ of a column
+     * \brief Returns the height-integrated permeability \f$\mathrm{[m^3]}\f$ of a column
      *
      * \param element coarse-level element
      * \param scv     sub-control volume of the element
@@ -110,7 +107,7 @@ public:
     { return permeabilityAtElement(element); }
 
     /*!
-     * \brief Returns the coarse-level permeability \f$\mathrm{[m^2]}\f$ of a column
+     * \brief Returns the height-integrated permeability \f$\mathrm{[m^3]}\f$ of a column
      *
      * \param element coarse-level element
      */
@@ -118,7 +115,7 @@ public:
     { return permeability_[this->gridGeometry().elementMapper().index(element)]; }
 
     /*!
-     * \brief Returns the coarse-level porosity \f$\mathrm{[-]}\f$ of a column
+     * \brief Returns the height-integrated porosity \f$\mathrm{[m]}\f$ of a column
      *
      * \param element coarse-level element
      * \param scv     sub-control volume of the element
@@ -131,12 +128,34 @@ public:
     { return porosityAtElement(element); }
 
     /*!
-     * \brief Returns the coarse-level porosity \f$\mathrm{[-]}\f$ of a column
+     * \brief Returns the height-integrated porosity \f$\mathrm{[m]}\f$ of a column
      *
      * \param element coarse-level element
      */
     Scalar porosityAtElement(const Element& element) const
     { return porosity_[this->gridGeometry().elementMapper().index(element)]; }
+
+    using ParentType::inertVolumeFraction;
+
+    /*!
+     * \brief Returns the dimensionless solid fraction for a single inert solid component
+     *
+     * The solid state needs the physical porosity, whereas porosity() returns
+     * its height integral. Other solid compositions use the parent interface.
+     */
+    template<class SolidSystem, class ElementSolution,
+             std::enable_if_t<SolidSystem::isInert() && SolidSystem::numInertComponents == 1
+                              && !decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(std::declval<Implementation>()))::value,
+                              int> = 0>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    {
+        constexpr int dim = GridView::dimension;
+        const Scalar height = this->gridGeometry().bBoxMax()[dim-1] - this->gridGeometry().bBoxMin()[dim-1];
+        return 1.0 - this->asImp_().porosity(element, scv, elemSol)/height;
+    }
 
     /*!
      * \brief Returns the index of the wetting phase, which the VE model requires to be the first phase

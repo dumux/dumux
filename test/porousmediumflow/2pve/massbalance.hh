@@ -90,7 +90,9 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
 
         for (const auto& scvVE : scvs(fvGeometryVE))
         {
-            massBalance.nonwettingMassCoarse += coarsePorosity * densityNw * satNwCoarse * scvVE.volume();
+            auto coarseElementVolume = scvVE.volume()/domainHeight;
+            // Integrated porosity multiplies the horizontal measure of the coarse cell.
+            massBalance.nonwettingMassCoarse += coarsePorosity * densityNw * satNwCoarse * coarseElementVolume;
         }
 
         // iteration over fine-level elements

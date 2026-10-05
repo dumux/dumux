@@ -20,21 +20,31 @@
  *
  * On the coarse level, the mass balance of each phase \f$\alpha \in \{ w, n \}\f$ reads
  \f[
- \frac{\partial (\bar\phi \varrho_\alpha \bar S_\alpha)}{\partial t}
+ \frac{\partial (\Phi \varrho_\alpha \bar S_\alpha)}{\partial t}
  -
- \nabla \cdot \left\{ \varrho_\alpha \bar\lambda_\alpha \bar K \nabla P_\alpha \right\} - q_\alpha = 0,
+ \nabla_h \cdot \left\{ \varrho_\alpha \bar\lambda_\alpha K \nabla_h P_\alpha \right\} - q_\alpha = 0,
  \f]
  * where:
  * * \f$ z \f$ is the height above the bottom of the formation,
- * * \f$ \bar\phi = \frac{1}{H} \int_0^H \phi \, \mathrm{d}z \f$ is the vertical average of the porosity \f$\phi\f$,
- * * \f$ \bar K = \frac{1}{H} \int_0^H k \, \mathrm{d}z \f$ is the vertical average of the scalar permeability \f$k\f$,
- * * \f$ \bar S_\alpha \f$ is the porosity-weighted vertical average of the saturation of phase \f$\alpha\f$,
+ * * \f$ \Phi = \int_0^H \phi \, \mathrm{d}z \f$ is the height-integrated porosity, with units of metres,
+ * * \f$ K = \int_0^H k \, \mathrm{d}z \f$ is the height-integrated scalar permeability, with units of cubic metres,
+ * * \f$ \bar S_\alpha = \int_0^H \phi S_\alpha \, \mathrm{d}z / \Phi \f$ is the
+ *   porosity-weighted vertical average of the saturation of phase \f$\alpha\f$,
  * * \f$ \bar\lambda_\alpha = \int_0^H k \lambda_\alpha \, \mathrm{d}z \big/ \int_0^H k \, \mathrm{d}z \f$ is the
  *   permeability-weighted vertical average of the mobility \f$ \lambda_\alpha = k_{r\alpha}/\mu_\alpha \f$ of phase \f$\alpha\f$,
  *   with the relative permeability \f$ k_{r\alpha} \f$ and the dynamic viscosity \f$ \mu_\alpha \f$,
  * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$\alpha\f$,
  * * \f$ P_\alpha \f$ is the pressure of phase \f$\alpha\f$ at the bottom of the column,
- * * \f$ q_\alpha \f$ is a source or sink term.
+ * * \f$ q_\alpha \f$ is a height-integrated mass source or sink per horizontal measure,
+ * * \f$ \nabla_h \f$ acts in the horizontal directions.
+ *
+ * The equations live on the horizontal domain, one dimension below the full formation.
+ * The computational coarse cells nevertheless span the full column height. To use
+ * the integrated coefficients, TwoPVEVolumeVariables::extrusionFactor divides the
+ * usual extrusion factor by H: storage uses the geometric cell volume divided by H,
+ * and horizontal fluxes use the lateral face area divided by H. Source terms and
+ * Neumann fluxes supplied by the coarse problem must be height integrals too.
+ * The solid-state porosity remains a dimensionless physical volume fraction.
  *
  * The centers of all coarse-level elements lie at the same height, so gravity only enters the
  * coarse level through the reconstruction. The primary variables are \f$ P_w \f$ and \f$ \bar S_n \f$.
@@ -100,6 +110,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/2pve/volumevariables.hh>
+#include <dumux/porousmediumflow/2pve/velocityoutput.hh>
 
 namespace Dumux::Properties {
 
@@ -113,7 +124,15 @@ struct TwoPVE
 
 } // namespace TTag
 
-//! Set the volume variables property, the only property in which the VE model differs from the two-phase model
+//! Output column-averaged velocities with the integrated VE coefficients
+template<class TypeTag>
+struct VelocityOutput<TypeTag, TTag::TwoPVE>
+{
+    using type = TwoPVEVelocityOutput<GetPropType<TypeTag, Properties::GridVariables>,
+                                     GetPropType<TypeTag, Properties::FluxVariables>>;
+};
+
+//! Set the volume variables property for the VE reconstruction
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::TwoPVE>
 {

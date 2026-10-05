@@ -4,10 +4,10 @@
     <Piece NumberOfCells="40" NumberOfPoints="82">
       <CellData Scalars="permeability" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="permeability" NumberOfComponents="1" format="ascii">
-          2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 1.66667e-12
-          1.66667e-12 1.66667e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12
-          2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12 2e-12
-          2e-12 2e-12 2e-12 2e-12
+          1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 9.16668e-11
+          9.16668e-11 9.16668e-11 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10
+          1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10 1.1e-10
+          1.1e-10 1.1e-10 1.1e-10 1.1e-10
         </DataArray>
         <DataArray type="Float32" Name="zp" NumberOfComponents="1" format="ascii">
           49.4065 49.4069 49.4078 49.4091 49.4107 49.4125 49.4144 49.4164 49.4182 49.4198 49.4209 49.4216
@@ -70,10 +70,10 @@
           -402756 -402756 -402756 -402756
         </DataArray>
         <DataArray type="Float32" Name="porosity" NumberOfComponents="1" format="ascii">
-          0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2
-          0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2
-          0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2
-          0.2 0.2 0.2 0.2
+          11 11 11 11 11 11 11 11 11 11 11 11
+          11 11 11 11 11 11 11 11 11 11 11 11
+          11 11 11 11 11 11 11 11 11 11 11 11
+          11 11 11 11
         </DataArray>
         <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
           -3.74987e-10 0 0 -1.10396e-09 0 0 -1.77113e-09 0 0 -2.33913e-09 0 0
