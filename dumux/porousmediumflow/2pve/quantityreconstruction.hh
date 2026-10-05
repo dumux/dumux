@@ -148,7 +148,7 @@ public:
         if (densityW <= densityNw)
             DUNE_THROW(Dune::InvalidStateException, "The two-phase VE reconstruction requires the wetting phase to be denser than the nonwetting phase. Got rho_w=" << densityW << " and rho_n=" << densityNw);
 
-        // water content of the column minus the coarse-level water content, monotonically increasing in the gas plume distance
+        // water content of the column minus the coarse-level water content, monotonically increasing in the gas plume distance. Computes the residual of the water content balance
         using std::max; using std::min;
         const auto massConservation = [&](const Scalar gasPlumeDist)
         {
@@ -166,6 +166,7 @@ public:
         if (saturationWCoarse <= swr)
             DUNE_THROW(NumericalProblem, "The coarse-level wetting-phase saturation " << saturationWCoarse << " does not exceed the residual saturation " << swr);
 
+        // find height at which mass residual becomes negative
         const Scalar fringeHeight = brooksCoreyParameters.entryPressure/((densityW - densityNw)*gravityNorm);
         Scalar lowerBound = 0.0;
         Scalar residualAtLowerBound = massConservation(lowerBound);
@@ -405,11 +406,47 @@ public:
 
 private:
     /*!
-     * \brief Integrates \f$ u^{-m} \f$ with \f$ u = 1 + \Delta\varrho g (z - z_p)/p_e \f$ over \f$ z \in [z_l, z_u] \f$ above the gas plume distance \f$ z_p \f$
+     * \brief Integrates a power of the normalized capillary pressure over a height interval above the gas plume distance in closed form
      *
-     * Above the gas plume distance, the Brooks-Corey effective wetting-phase saturation is \f$ u^{-\lambda} \f$,
-     * where \f$ \Delta\varrho \f$ is the density difference of the phases, \f$ g \f$ the norm of the gravity
-     * and \f$ p_e \f$ the entry pressure.
+     * Above the gas plume distance \f$ z_p \f$, the capillary pressure is
+     * \f$ p_c(z) = p_e + \Delta\varrho g (z-z_p) \f$, where
+     * \f$ \Delta\varrho = \varrho_w - \varrho_n > 0 \f$ is the phase density difference,
+     * \f$ g \f$ is the gravity norm and \f$ p_e > 0 \f$ is the entry pressure.
+     * Its dimensionless ratio \f$ u(z) = p_c(z)/p_e \f$ gives the Brooks-Corey
+     * effective wetting-phase saturation \f$ S_e(z) = u(z)^{-\lambda} \f$.
+     * This function computes \f$ I = \int_{z_l}^{z_u} u(z)^{-m}\,\mathrm{d}z \f$.
+     * The saturation reconstruction uses \f$ m = \lambda \f$.
+     *
+     * Define the length scale \f$ L = p_e/(\Delta\varrho g) \f$, here stored as lengthScale.
+     * The substitution and its transformed integration bounds are
+     * \f[
+     *   u = 1 + (z-z_p)/L, \qquad \mathrm{d}z = L\,\mathrm{d}u,
+     *   \qquad u_l = 1 + (z_l-z_p)/L, \qquad u_u = 1 + (z_u-z_p)/L.
+     * \f]
+     * Therefore,
+     * \f[
+     *   I = L\int_{u_l}^{u_u} u^{-m}\,\mathrm{d}u
+     *     = \begin{cases}
+     *         L(u_u^{1-m}-u_l^{1-m})/(1-m), & m \ne 1, \\
+     *         L\ln(u_u/u_l), & m = 1.
+     *       \end{cases}
+     * \f]
+     *
+     * The implementation stores \f$ u_l \f$ as uLower and represents the upper
+     * bound (\f$ u_u = u_l +\frac{z_u-z_l}{L}\f$) through logRatio rather than storing \f$ u_u \f$ explicitly:
+     * \f[
+     *   r = \ln(u_u/u_l)
+     *     = \ln\!\left(1 + \frac{z_u-z_l}{L u_l}\right).
+     * \f]
+     * log1p evaluates this logarithm accurately for thin height intervals.
+     * With \f$ k = 1-m \f$, the nonlogarithmic case is evaluated as
+     * \f[
+     *   I = L u_l^k\frac{\exp(kr)-1}{k}
+     *     = L\frac{u_u^k-u_l^k}{k}.
+     * \f]
+     * expm1 evaluates \f$ \exp(kr)-1 \f$ without subtracting nearly equal numbers,
+     * including when \f$ m \f$ is close to one. For \f$ k=0 \f$, the function
+     * returns the logarithmic limit \f$ I=Lr \f$ directly.
      *
      * \param exponent        the exponent \f$ m \f$
      * \param lowerBound      lower integration bound \f$ z_l \geq z_p \f$
@@ -418,6 +455,7 @@ private:
      * \param densities       contains the phase densities (here: 2 phases)
      * \param gravityNorm     norm of the gravity
      * \param entryPressureBC entry pressure of the Brooks-Corey model
+     * \return Height integral of the dimensionless power, with units of length (not a height average)
      */
     Scalar integratePowerAbovePlume_(Scalar exponent,
                                      Scalar lowerBound,
@@ -460,8 +498,7 @@ private:
     {
         const Scalar swr = residualSaturations.wetting;
         const Scalar snr = residualSaturations.nonwetting;
-        const Scalar integralEffectiveSaturation = integratePowerAbovePlume_(brooksCoreyParameters.lambda, lowerBound, upperBound, gasPlumeDist,
-                                                                             densities, gravityNorm, brooksCoreyParameters.entryPressure);
+        const Scalar integralEffectiveSaturation = integratePowerAbovePlume_(brooksCoreyParameters.lambda, lowerBound, upperBound, gasPlumeDist, densities, gravityNorm, brooksCoreyParameters.entryPressure);
         return swr*(upperBound - lowerBound) + (1.0 - swr - snr)*integralEffectiveSaturation;
     }
 };
