@@ -24,9 +24,15 @@
 #include <dumux/material/fluidmatrixinteractions/2p/brookscorey.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
-#include "properties.hh"
-
 namespace TwoPVE {
+
+// The reconstruction only needs phase indices and the number of phases.
+struct FluidSystem
+{
+    static constexpr int phase0Idx = 0;
+    static constexpr int phase1Idx = 1;
+    static constexpr int numPhases = 2;
+};
 
 template<class Scalar>
 void checkClose(const Scalar actual,
@@ -58,9 +64,8 @@ void expectThrow(F&& function, const std::string& description)
 
 int main()
 {
-    using TypeTag = Dumux::Properties::TTag::TwoPVEImmiscibleTpfa;
-    using Scalar = Dumux::GetPropType<TypeTag, Dumux::Properties::Scalar>;
-    using Reconstructor = Dumux::TwoPVEQuantityReconstruction<Scalar, Dumux::GetPropType<TypeTag, Dumux::Properties::FluidSystem>>;
+    using Scalar = double;
+    using Reconstructor = Dumux::TwoPVEQuantityReconstruction<Scalar, TwoPVE::FluidSystem>;
     using GasPlumeDistances = Dumux::TwoPVE::GasPlumeDistancesData<Scalar>;
     using PhaseDensities = Dumux::TwoPVE::PhaseDensitiesData<Scalar>;
     using PhaseViscosities = Dumux::TwoPVE::PhaseViscositiesData<Scalar>;
