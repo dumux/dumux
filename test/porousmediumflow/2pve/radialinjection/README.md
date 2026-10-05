@@ -152,7 +152,7 @@ the implicit Euler method.
 
 ![Convergence plot](2pve_radialinjection_convergence.png)
 
-The images in the documentation are regenerated with
+The numerical plots in the documentation are regenerated with
 
 ```bash
 python3 regenerate_doc_images.py <build_dir>

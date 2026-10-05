@@ -124,13 +124,13 @@ int main(int argc, char** argv)
     const Scalar densityDifference = FluidSystem::density(fluidState, FluidSystem::phase0Idx) - FluidSystem::density(fluidState, FluidSystem::phase1Idx);
     const Scalar aquiferHeight = gridGeometryCoarse->bBoxMax()[1] - gridGeometryCoarse->bBoxMin()[1];
     const Scalar permeability = getParam<Scalar>("SpatialParams.Permeability");
-    const TwoPVERadialInjectionSimilaritySolution<Scalar> similaritySolution(viscosityResident/viscosityInjected,
-                                                                            aquiferHeight,
-                                                                            getParam<Scalar>("SpatialParams.Porosity"),
-                                                                            getParam<Scalar>("SpatialParams.Swr"),
-                                                                            problem->injectionRate());
-    const Scalar gravityNumber = 2.0*M_PI*densityDifference*spatialParams->gravity(gridGeometryCoarse->bBoxMin()).two_norm()
-                                 *permeability/viscosityResident*aquiferHeight*aquiferHeight/problem->injectionRate();
+    const TwoPVERadialInjectionSimilaritySolution<Scalar> similaritySolution(
+            viscosityResident/viscosityInjected,
+            aquiferHeight,
+            getParam<Scalar>("SpatialParams.Porosity"),
+            getParam<Scalar>("SpatialParams.Swr"),
+            problem->injectionRate());
+    const Scalar gravityNumber = 2.0*M_PI*densityDifference*spatialParams->gravity(gridGeometryCoarse->bBoxMin()).two_norm()*permeability/viscosityResident*aquiferHeight*aquiferHeight/problem->injectionRate();
     std::cout << "Mobility ratio: " << viscosityResident/viscosityInjected << ", gravity number: " << gravityNumber << std::endl;
 
     // the effective interface height corresponds to a plume that contains the injected fluid at the saturation 1 - Swr
