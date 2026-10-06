@@ -5,7 +5,7 @@
 
 The similarity solution neglects buoyancy (gravity number Gamma -> 0) and assumes a sharp interface
 (capillary fringe -> 0). The script refines the radial cell size and the maximum time step size together
-at Gamma = 1.4e-4 and an entry pressure of 1 Pa, for which the interface error is dominated by the discretization.
+at Gamma = 1.4e-4 and an entry pressure of 1 Pa, for which the gas plume distance error is dominated by the discretization.
 
 Usage (run from the build directory of the test, which contains params.input):
   python3 convergencetest.py <executable>
@@ -32,7 +32,7 @@ EXPECTED_ORDER = 1.0
 
 
 def run_case(executable, name, rate_factor=1, radial_cells=400, entry_pressure=None, initial_time_step=None, time_step_factor=1.0):
-    """Run one case and return the gravity number and the final relative interface error."""
+    """Run one case and return the gravity number and the final relative gas plume distance error."""
     exe = executable if os.path.isabs(executable) else "./" + executable
     command = [
         exe, "params.input",
@@ -42,7 +42,7 @@ def run_case(executable, name, rate_factor=1, radial_cells=400, entry_pressure=N
         "-TimeLoop.MaxTimeStepSize", str(BASE_MAX_TIME_STEP/rate_factor*time_step_factor),
         "-TimeLoop.DtInitial", str(initial_time_step if initial_time_step else BASE_INITIAL_TIME_STEP/rate_factor),
         "-Grid.Cells", f"{radial_cells} {VERTICAL_CELLS}",
-        "-Benchmark.MaxRelativeInterfaceError", "1",
+        "-Benchmark.MaxRelativeGasPlumeDistanceError", "1",
     ]
     if entry_pressure is not None:
         command += ["-SpatialParams.BrooksCoreyPcEntry", str(entry_pressure)]
@@ -58,9 +58,9 @@ def run_case(executable, name, rate_factor=1, radial_cells=400, entry_pressure=N
     for line in output.split("\n"):
         if line.startswith("Mobility ratio: "):
             gravity_number = float(line.split()[-1])
-        if line.startswith("Relative interface error"):
+        if line.startswith("Relative gas plume distance error"):
             error = float(line.split()[-1])
-    print(f"Finished simulation {name}: gravity number={gravity_number}, interface error={error}", flush=True)
+    print(f"Finished simulation {name}: gravity number={gravity_number}, gas plume distance error={error}", flush=True)
     return gravity_number, error
 
 
@@ -71,7 +71,7 @@ def remove_outputs(name):
 
 
 def grid_study(executable):
-    """Return the radial cell sizes and the interface errors for a small gravity number and a thin capillary fringe.
+    """Return the radial cell sizes and the gas plume distance errors for a small gravity number and a thin capillary fringe.
 
     The maximum time step size is refined together with the radial cell size.
     """
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     cell_sizes, errors = grid_study(testname)
     rates = compute_rates(cell_sizes, errors)
-    print("\nInterface error for decreasing radial cell size and time step size (Gamma = 1.4e-4, entry pressure 1 Pa):")
+    print("\nGas plume distance error for decreasing radial cell size and time step size (Gamma = 1.4e-4, entry pressure 1 Pa):")
     print_table("dr [m]", cell_sizes, errors, rates)
 
     mean_rate = sum(rates)/len(rates)

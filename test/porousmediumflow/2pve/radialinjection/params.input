@@ -37,4 +37,4 @@ GasDynamicViscosity = 6.1e-5 # [Pa s]
 MaxRelativeShift = 1e-10
 
 [Benchmark]
-MaxRelativeInterfaceError = 0.025 # mean deviation from the similarity solution for vanishing gravity, relative to the aquifer height
+MaxRelativeGasPlumeDistanceError = 0.025 # mean deviation from the similarity solution for vanishing gravity, relative to the aquifer height

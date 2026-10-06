@@ -35,13 +35,15 @@ that the capillary fringe of height $p_e / ((\varrho_w - \varrho_n) g)$, with th
 acceleration $g$, is small compared to $H$, so that the reconstructed interface between the phases
 approximates the sharp interface of the similarity solution.
 
-The simulated interface height is the effective interface height
+The simulated gas plume distance is the effective gas plume distance
 
-$$z_i = H \left( 1 - \frac{\bar S_n}{1 - S_{wr}} \right),$$
+$$z_{p,\mathrm{eff}} = H \left( 1 - \frac{\bar S_n}{1 - S_{wr}} \right),$$
 
 which corresponds to a plume that contains the injected CO<sub>2</sub> at the saturation $1 - S_{wr}$,
 where $S_{wr}$ is the residual brine saturation. This is the definition that
-@cite NordbottenCelia2006 use for their numerical reference solutions.
+@cite NordbottenCelia2006 use for their numerical reference solutions. This effective gas plume distance equals the reconstructed
+`gasPlumeDistance` in the sharp-interface limit. With a finite capillary fringe,
+it can differ from the reconstructed mobile-gas boundary, which is output as `zp`.
 
 **Analytical Solution**
 
@@ -61,7 +63,7 @@ $$\frac{h}{H} =
 \end{cases}$$
 
 with the mobility ratio $\lambda = \mu_w / \mu_n$ of the CO<sub>2</sub> plume and the brine, where
-$\mu_\alpha$ is the dynamic viscosity of phase $\alpha$. The interface height is $H - h$. The
+$\mu_\alpha$ is the dynamic viscosity of phase $\alpha$. The gas plume distance is $H - h$. The
 solution is the limit of vanishing gravity number
 
 $$\Gamma = \frac{2 \pi (\varrho_w - \varrho_n) g k H^2}{\mu_w Q},$$
@@ -69,11 +71,11 @@ $$\Gamma = \frac{2 \pi (\varrho_w - \varrho_n) g k H^2}{\mu_w Q},$$
 where $k$ is the permeability. The simulation includes buoyancy, so its deviation from the
 similarity solution decreases with $\Gamma$.
 
-The deviation is measured by the relative interface error
+The deviation is measured by the relative gas plume distance error
 
-$$e = \frac{1}{H r_p} \int_{r_w}^{R} \left| z_i - (H - h) \right| \mathrm{d}r,$$
+$$e = \frac{1}{H r_p} \int_{r_w}^{R} \left| z_{p,\mathrm{eff}} - (H - h) \right| \mathrm{d}r,$$
 
-the mean deviation of the interface height over the plume extent $r_p = \sqrt{2 \lambda Q t / (2 \pi H \phi (1 - S_{wr}))}$,
+the mean deviation of the gas plume distance over the plume extent $r_p = \sqrt{2 \lambda Q t / (2 \pi H \phi (1 - S_{wr}))}$,
 relative to $H$.
 
 **Parameters**
@@ -108,7 +110,7 @@ The coarse grid consists of 400 radial cells and a single layer of cells, the fi
 discretized with the cell-centered two-point flux approximation (@ref CCTpfaDiscretization) and the
 implicit Euler method with a maximum time step size of 10 days.
 
-The test suite runs two cases and compares the relative interface error at the end of the simulation to a tolerance:
+The test suite runs two cases and compares the relative gas plume distance error at the end of the simulation to a tolerance:
 
 - `test_2pve_radialinjection_tpfa`: the parameters above, $\Gamma = 0.141$, tolerance $e \leq 0.025$,
 - `test_2pve_radialinjection_smallgravity_tpfa`: the same injected volume at a hundred times the
@@ -124,19 +126,19 @@ python3 plot_convergence.py test_2pve_radialinjection_tpfa
 
 The script produces three figures:
 
-- **`profile.png`**: interface height $1 - h/H$ over $\chi^{1/2}$ at the end of three simulations with
+- **`profile.png`**: gas plume distance $1 - h/H$ over $\chi^{1/2}$ at the end of three simulations with
   the injected volume of $1.2 \cdot 10^6$ m³ at the injection rate $Q$ above and at ten and a hundred
   times $Q$, that is for $\Gamma = 0.141$, $0.0141$ and $0.00141$, compared to the similarity solution,
   compare figure 2(a) in @cite NordbottenCelia2006;
 - **`plume.png`**: fine-level CO<sub>2</sub> saturation at the end of the simulation with $\Gamma = 0.141$;
-- **`convergence.png`**: relative interface error over the radial cell size for $\Gamma = 1.4 \cdot 10^{-4}$
+- **`convergence.png`**: relative gas plume distance error over the radial cell size for $\Gamma = 1.4 \cdot 10^{-4}$
   and $p_e = 1$ Pa, where the maximum time step size is refined together with the radial cell size.
 
 The similarity solution is the limit $\Gamma \to 0$ for a sharp interface. With 400 radial cells and
-$p_e = 100$ Pa, the relative interface error at the end of the simulation is 0.0201 for $\Gamma = 0.141$,
+$p_e = 100$ Pa, the relative gas plume distance error at the end of the simulation is 0.0201 for $\Gamma = 0.141$,
 0.0051 for $\Gamma = 0.0141$ and 0.0034 for $\Gamma = 0.00141$. For $\Gamma = 0.141$, the deviation is
 largest close to the well: with buoyancy, the CO<sub>2</sub> fills the aquifer down to its bottom only
-up to $\chi^{1/2} = 0.28$, the interface height being below $0.01 H$, compared to
+up to $\chi^{1/2} = 0.28$, the gas plume distance being below $0.01 H$, compared to
 $\chi^{1/2} = (2/\lambda)^{1/2} = 0.49$ in the similarity solution.
 
 ![Interface height](2pve_radialinjection_profile.png)
@@ -145,7 +147,7 @@ $\chi^{1/2} = (2/\lambda)^{1/2} = 0.49$ in the similarity solution.
 
 For $\Gamma = 1.4 \cdot 10^{-4}$ and $p_e = 1$ Pa, the capillary fringe is $2.8 \cdot 10^{-4}$ m high.
 Refining the radial cell size from 5 m to 2.5, 1.25 and 0.625 m together with the maximum time step size
-from 864 s to 432, 216 and 108 s decreases the relative interface error from $2.75 \cdot 10^{-3}$ to
+from 864 s to 432, 216 and 108 s decreases the relative gas plume distance error from $2.75 \cdot 10^{-3}$ to
 $1.43 \cdot 10^{-3}$, $7.41 \cdot 10^{-4}$ and $3.83 \cdot 10^{-4}$. The observed convergence rate is
 0.95 for each refinement, close to the first order of the upwind two-point flux approximation and of
 the implicit Euler method.
