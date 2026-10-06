@@ -1,6 +1,6 @@
 # Benchmark: Henry Saltwater Intrusion Problem {#benchmark-henry}
 
-**Problem Description**
+## Problem description {#henry-problem-description}
 
 The Henry problem (Henry 1964 @cite Henry1964) is a classic benchmark for
 density-driven groundwater flow and solute transport, describing seawater intrusion
@@ -9,15 +9,15 @@ along the left (inland) boundary; the right (seaward) boundary is in hydrostatic
 contact with seawater at fixed salinity. The resulting steady state is a saltwater
 wedge intruding along the bottom of the aquifer beneath an outflowing freshwater lens.
 
-Considered is the benchmark of Fahs et al. (2016) @cite Fahs2016, itself a
-re-derivation of Henry (1964) @cite Henry1964 with a much larger number of Fourier
-modes and an extension to velocity-dependent (Scheidegger) dispersion.
+We consider the benchmark of Fahs et al. (2016) @cite Fahs2016, a re-derivation of
+Henry (1964) @cite Henry1964 with higher accuracy and an extension to
+velocity-dependent dispersion.
 
-Implemented is one equation, solved for each component $\kappa\in\{\text{solvent},\,
-\text{solute}\}$ (two coupled PDEs in total), the component mass balance
+For each component $\kappa\in\{\text{solvent},\,\text{solute}\}$ we solve a mass balance,
+which gives two coupled equations:
 
-$$\frac{\partial(\phi\varrho X^\kappa)}{\partial t} -
-\nabla\cdot\left(\varrho X^\kappa \mathbf{v} + \varrho D^\kappa_\text{pm}\nabla
+$$\frac{\partial(\phi\varrho X^\kappa)}{\partial t} +
+\nabla\cdot\left(\varrho X^\kappa \mathbf{v} - \varrho D^\kappa_\text{pm}\nabla
 X^\kappa\right) = q, \qquad
 \mathbf{v}=-\frac{\mathbf{K}}{\mu}\left(\nabla p - \varrho\,\mathbf{g}\right)$$
 
@@ -49,14 +49,14 @@ $\varrho$ from both balances above ($\nabla\cdot\mathbf{v}=0$ and $\phi\,\partia
 c]=0$), keeping it only in the buoyancy term of $\mathbf{v}$. This implementation
 does not.
 
-**Model Assumptions**
+## Model assumptions {#henry-model-assumptions}
 
 - **Incompressible fluid**: $\varrho$ depends only on $X^\text{solute}$.
 - **Constant, salinity-independent viscosity**: $\mu=10^{-3}\,\mathrm{Pa\,s}$
 - **Homogeneous, isotropic aquifer**: $\mathbf{K}=k\mathbf{I}$ and $\phi$ are uniform
   scalars not tensors or spatially varying fields.
 
-**Boundary and Initial Conditions**
+## Boundary and initial conditions {#henry-boundary-and-initial-conditions}
 
 - **Left** (inland): specified freshwater inflow (Neumann), $c=0$.
 - **Right** (sea): Dirichlet, hydrostatic pressure using the seawater reference
@@ -64,7 +64,7 @@ does not.
 - **Top/bottom**: impermeable, no-flow.
 - **Initial**: domain filled with seawater, hydrostatic.
 
-**Test Cases**
+## Test cases {#henry-test-cases}
 
 Fahs et al. (2016) define three test cases, differing only in the dispersion
 coefficients (their Table 1); all other physical parameters (their Table 2) are
@@ -86,68 +86,64 @@ identical:
 | 2 (velocity-dependent dispersion) | implemented | $9.43\times10^{-8}$ | 0.1 | 0.01 |
 | 3 (velocity-dependent dispersion, narrow mixing zone) | **currently in the making** | $9.43\times10^{-8}$ | 0.001 | 0.0001 |
 
-Test Case 1 is purely diffusive: $\mathbf{D}=\mathbf{0}$, i.e. no dispersion tensor at
-all (dispersion is disabled entirely). Test Case 2 has $\mathbf{D}$ nonzero, enabling
-the Scheidegger dispersion tensor already built into DuMux
-(`Dumux::ScheideggersDispersionTensor`,`dumux/material/fluidmatrixinteractions/dispersiontensors/scheidegger.hh`)
-via `EnableCompositionalDispersion` and `spatialparams.hh`'s `dispersionAlphas()`.
-Test Case 3 uses the same machinery with smaller dispersivities.
+The molecular-diffusion part of $D^\text{solute}_\text{pm}$ is computed by DuMux's
+`EffectiveDiffusivityModel`. Its default for @ref OnePNCModel, Millington-Quirk, gives
+$\phi^{4/3}D_m$ in the fully saturated case, not the $\phi D_m$ of Fahs et al. (2016).
+`properties.hh` therefore uses `DiffusivityConstantTortuosity` ($\phi\,\tau D_m$) with
+`SpatialParams.Tortuosity = 1`, so that
+$D^\text{solute}_\text{pm}=\phi D_m\mathbf{I}+\mathbf{D}$ exactly as above. With the
+default, molecular diffusion would be about 30% too small
+($\phi^{4/3}/\phi=0.35^{1/3}\approx0.70$).
 
-**Setup**
+## Coarse Fixed-grid tests (CI Test) {#henry-fixed-grid-tests}
+
+### Setup {#henry-setup}
 
 The domain is discretized with a structured @ref Dune::YaspGrid, 120x40 cells for
-both Test Cases 1 and 2 (the paper uses a finer mesh for Test Case 2, not replicated
-here -- see `params_case2.input`). The @ref
-OnePNCModel with @ref BoxDiscretization is used. Time integration uses a fixed
-number of equally sized time steps, run well past the time the paper
-reports for each case to reach steady state (see `params_case1.input` / `params_case2.input`
-for the exact, and explicitly *not* empirically verified, margins chosen).
+both Test Cases 1 and 2. The @ref OnePNCModel with @ref BoxDiscretization is used. Time integration uses a fixed
+number of equally sized time steps to reach steady state (see `params_case1.input` / `params_case2.input`).
 
-DuMux's default `EffectiveDiffusivityModel` for @ref OnePNCModel is Millington-Quirk
-($D_\mathrm{eff}=D_m\phi^{1/3}$), which does not match the paper's transport
-equation above ($\phi D_m$, linear in porosity, no separate tortuosity
-reduction). `properties.hh` overrides this to `DiffusivityConstantTortuosity` with
-`SpatialParams.Tortuosity = 1`, giving $D_\mathrm{eff}=\phi D_m$ exactly. Left
-at the DuMux default ($\phi=0.35$), this would apply roughly $2\times$ too much
-molecular diffusion ($0.35^{1/3}/0.35\approx2.01$).
+### Validation {#henry-validation}
 
-**Validation**
-
-Each test case is checked two independent ways, but only **one** full simulation run is
-performed for each (the regression target below); the physics-validation target depends
-on it and reuses its VTU output rather than re-running the simulation a second time:
+Each test case is checked in two ways. The simulation runs only once per case; the
+second check reuses its output.
 
 1. **Regression check** (`test_1p2c_henry_fahs_case1_box_regression` /
-   `test_1p2c_henry_fahs_case2_box_regression`), following the standard DuMux
-   `dumux_runtest.py --script fuzzy` convention (see e.g. the `co2` or
-   `2pncmin/isothermal` tests): runs the simulation once, then a fuzzy mesh comparison
-   of the full VTU output against a stored, accepted reference
-   (`test/references/test_1p2c_henry_fahs_<case>-reference.vtu`), to catch unintended
-   changes to the solution that the isochlor-only table check below wouldn't notice.
-   This is not independent validation -- the reference is our own accepted output, not
-   an external source -- only the table comparison below establishes correctness.
-2. **Physics validation** (`test_1p2c_henry_fahs_case1_box` / `test_1p2c_henry_fahs_case2_box`),
-   a ctest `DEPENDS` on the regression target above. Fahs et al. (2016) digitized their
-   converged semianalytical isochlor positions (Appendix D, Tables D1/D2/D3).
-   `validate_fahs2016.py` extracts the simulated 10/50/90% isochlor ($c=0.1,0.5,0.9$)
-   $x$-positions at each tabulated depth $Z$ by linear interpolation of the
-   concentration field already produced by the regression target's run, and compares
-   them directly against those table values (max relative error, current 120x40/1 d
-   setup: 0.0228 for Test Case 1, 0.0417 for Test Case 2 -- Test Case 2's worst points
-   are concentrated at low $Z$, near the wedge toe, where velocity-dependent dispersion
-   is most active and hardest to resolve on this coarser grid; only 17% of headroom is
-   left below the 0.05 tolerance, well short of the roughly 2x margin
-   `validate_fahs2016.py`'s own default aims for).
+   `test_1p2c_henry_fahs_case2_box_regression`): runs the simulation and compares the
+   complete VTU output field by field with a stored reference result
+   (`test/references/test_1p2c_henry_fahs_case<N>_box-reference.vtu`). This detects any
+   unintended change of the solution. The reference is an earlier result of this code,
+   so the check guards against changes, not against errors.
+2. **Comparison with Fahs et al. (2016)** (`test_1p2c_henry_fahs_case1_box` /
+   `test_1p2c_henry_fahs_case2_box`): `validate_fahs2016.py` takes the output of the
+   regression run, extracts the $x$-positions of the 10/50/90% isochlors
+   ($c=0.1,0.5,0.9$) at each depth $Z$ listed in Tables D1/D2 of the paper, and compares
+   them with the table values. The test passes if the maximum relative error is below
+   0.05. This tolerance is deliberately generous, since the test runs on a coarse grid
+   to stay fast enough for CI.
 
-**Results**
+### Results {#henry-results}
 
-To run a test case (both the table-validation and the regression-check target) against
+To run a test case (both the regression-check and the table-validation target) against
 the corresponding table/reference:
 
 ```bash
 cd <build-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry
 ctest -R test_1p2c_henry_fahs_case1_box       # Test Case 1, vs. Table D1 + regression reference
-ctest -R test_1p2c_henry_fahs_case2_box # Test Case 2, vs. Table D2 + regression reference
+ctest -R test_1p2c_henry_fahs_case2_box       # Test Case 2, vs. Table D2 + regression reference
+```
+
+@note Both targets need Python packages: the regression checks compare the output with
+[`fieldcompare`](https://pypi.org/project/fieldcompare/) (through `dumux_runtest.py`),
+and `validate_fahs2016.py` reads it with `meshio`. Without them the tests fail. The
+easiest way is a Python virtual environment with the DuMux requirements (they include
+`fieldcompare[all]`, which also brings `meshio`), set up once in the `dumux` source
+directory and activated before running `ctest`:
+
+```bash
+python -m venv dumux_venv
+source dumux_venv/bin/activate
+pip install -r requirements.txt
 ```
 
 To reproduce an animated view of the transient approach to steady state, together
@@ -164,36 +160,37 @@ python3 <source-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry/post_proce
 
 This produces **`henry_combined.gif`**: Test Case 1
 (top) and Test Case 2 (bottom) stacked into a single animation, both sampled at the
-same simulated times over $t\in[0,1]$ d, i.e. the full run (`TimeLoop.TEnd` is 1 d for
-both cases; both are converged well before that). Rendering both cases into one image is
-deliberate: two separate GIF files would each start playing on their own
-load/decode schedule and drift out of sync in a browser regardless of matching
-frame timing, whereas a single combined image is in sync by construction. Each
-panel draws the simulated 10/50/90% isochlors as solid contour lines with the
-literature Table D1/D2 points overlaid as markers (the test case, and with it the
-reference table, is taken from the file name). An output name ending in `.png`, e.g.
+same simulated times over $t\in[0,1]$. Each panel draws the simulated 10/50/90% isochlors as solid contour lines with the
+literature Table D1/D2 points overlaid as markers. An output name ending in `.png`, e.g.
 `--out henry_combined_final.png`, gives a static image of just the final-time ($t=1$ d)
 isochlors against the tables instead.
 
 ![Henry problem, Test Cases 1 and 2](henry_combined.gif)
 
-**Adaptive benchmark**
+## Adaptive-grid benchmark (manual) {#henry-adaptive-benchmark}
 
-Separately from the two ctest targets above, `main_benchmark.cc` builds two manual (not
-ctest-registered, never run by any pipeline) executables -- `test_1p2c_henry_case1_benchmark` /
-`test_1p2c_henry_case2_benchmark` -- on a coarse base `ALUGrid` (`params_benchmark(_case2).input`,
-deliberately starting at the same 120x40 resolution as above) that is h-adaptively
-refined and coarsened as the saltwater/freshwater front develops and moves (see
-`adaptive/gridadaptindicator.hh`), using UMFPack (a direct, single-rank solver) throughout
-so this checks h-adaptivity alone, not any solver-specific convergence behavior.
-Unlike the rectangular `YaspGrid` above, this grid consists of
-triangles (each of the 120x40 rectangles split in two, 9600 cells initially), since
-conforming refinement by bisection avoids the hanging nodes that local refinement of
-rectangles would create and that the box scheme cannot handle.
-`post_processing.py` renders a run's `*.pvd` output the same way as above (same
-isochlor-line/reference-marker convention, no mesh, to see the fit unobstructed), or with
-`--grid` the mesh only, no fill, each edge colored by its concentration, to see the
-refinement itself track the front:
+In addition to the tests above, `main_benchmark.cc` provides two executables,
+`test_1p2c_henry_case1_benchmark` and `test_1p2c_henry_case2_benchmark`, that solve the
+same two test cases on an adaptive grid. They are not part of the test suite and are
+run by hand. They require `dune-alugrid` and are only built on request, e.g. with
+`make test_1p2c_henry_case1_benchmark`.
+
+@note The adaptive runs take much longer than the tests above. On a single core of a
+laptop (Intel i7-1260P, release build), Test Case 1 took about 2 minutes and Test
+Case 2 about 50 minutes, compared to about 20 s and 1 minute on the fixed grid.
+
+The grid starts at the same 120x40 resolution as above and is refined and coarsened
+during the run so that it follows the moving saltwater/freshwater front (see
+`adaptive/gridadaptindicator.hh`; the settings are in `params_benchmark_case1.input` /
+`params_benchmark_case2.input`). Unlike the rectangular `YaspGrid` above, it consists of
+triangles: each of the 120x40 rectangles is split in two, giving 9600 cells initially.
+Triangles can be refined locally without hanging nodes, which the box scheme cannot
+handle. The linear systems are solved with UMFPack, a direct solver for a single
+process, so that the results reflect the adaptive grid and not the linear solver.
+
+`post_processing.py` plots the output the same way as above. With `--grid`, it shows the
+mesh instead, with each edge colored by its concentration, so you can see the
+refinement follow the front:
 
 ```bash
 cd <build-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry
@@ -205,5 +202,18 @@ python3 <source-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry/post_proce
   adaptive_case1.pvd adaptive_case2.pvd --grid --out henry_adaptive_grid.gif
 ```
 
+On the adaptive grid, the results match the benchmark much better than on the fixed
+grid. The maximum relative error of the isochlor positions drops from 0.0228 to 0.0107
+for Test Case 1 and from 0.0417 to 0.0129 for Test Case 2 (same check as
+`validate_fahs2016.py` above). This is also visible in the plots: in the top right of
+the domain, the simulated $c=0.1$ isochlor of Test Case 2 now runs through the
+reference points instead of next to them.
+
 ![Henry problem, adaptive refinement, solution fit](henry_adaptive_solution.gif)
+
+The mesh plot shows whether the adaptivity works as intended: the grid is refined
+where the concentration changes quickly, along the mixing zone between fresh and salt
+water, and stays at the coarse starting resolution away from the front, most visibly in
+the freshwater region on the left. As the front moves, the fine region moves with it.
+
 ![Henry problem, adaptive refinement, mesh colored by concentration](henry_adaptive_grid.gif)

@@ -94,11 +94,12 @@ struct SpatialParams<TypeTag, TTag::HenryFahsTest>
 template<class TypeTag>
 struct UseMoles<TypeTag, TTag::HenryFahsTest> { static constexpr bool value = false; };
 
-// The default (Millington-Quirk, D_eff = Dm*phi^(1/3)) does not match Fahs et al.
-// (2016)'s transport equation, which scales molecular diffusion linearly by porosity
-// alone (their eq. 3: epsilon*Dm, no separate tortuosity reduction). Constant
-// tortuosity with tau=1 (set via SpatialParams.Tortuosity in params_case1.input) reproduces
-// that exactly: D_eff = phi*Sw*tau*Dm = phi*Dm.
+// The default (Millington-Quirk, D_eff = phi^(4/3)*Dm when fully saturated) does not
+// match Fahs et al. (2016)'s transport equation, which scales molecular diffusion
+// linearly by porosity alone (their eq. 3: epsilon*Dm, no separate tortuosity
+// reduction); at phi=0.35 it would give ~30% too little diffusion. Constant tortuosity
+// with tau=1 (set via SpatialParams.Tortuosity in params_case1.input) reproduces that
+// exactly: D_eff = phi*Sw*tau*Dm = phi*Dm.
 template<class TypeTag>
 struct EffectiveDiffusivityModel<TypeTag, TTag::HenryFahsTest>
 { using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
