@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for YaspGrid
+ * \anchor yasp_grid_manager
  */
 #ifndef DUMUX_IO_GRID_MANAGER_YASP_HH
 #define DUMUX_IO_GRID_MANAGER_YASP_HH
@@ -26,7 +27,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for YaspGrids
  *        from information in the input file
  *
@@ -42,6 +43,7 @@ namespace Dumux {
  * - KeepPyhsicalOverlap : whether to keep the physical overlap
  *     in physical size or in number of cells upon refinement
  * - Refinement : the number of global refines to apply initially.
+ * - Verbosity : whether the grid construction should output to standard out (only for reading from vti)
  *
  */
 template<class Coordinates, int dim>
@@ -59,7 +61,7 @@ public:
      */
     void init(const std::string& modelParamGroup = "")
     {
-        // First try to create it from a DGF file in GridParameterGroup.File
+        // First, try to create it from a DGF or vti file in GridParameterGroup.File
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             const auto filename = getParamFromGroup<std::string>(modelParamGroup, "Grid.File");
@@ -245,7 +247,7 @@ private:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for YaspGrids with different zones and grading
  *
  * All keys are expected to be in group GridParameterGroup.

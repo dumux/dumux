@@ -15,6 +15,8 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 namespace Dumux {
 /*!
@@ -24,7 +26,7 @@ namespace Dumux {
 template<class Problem, class Scalar = double>
 class NavierStokesAnalyticalSolutionVectors
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     static constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
     using Indices = typename Problem::Indices;
@@ -39,13 +41,15 @@ public:
      */
     void update(Scalar time = 0.0)
     {
-        analyticalPressure_.resize(problem_->gridGeometry().numCellCenterDofs());
-        analyticalVelocity_.resize(problem_->gridGeometry().numCellCenterDofs());
-        analyticalVelocityAtDofs_.resize(problem_->gridGeometry().numFaceDofs());
+        const auto& gridGeometry = Dumux::gridDiscretization(*problem_);
 
-        auto fvGeometry = localView(problem_->gridGeometry());
+        analyticalPressure_.resize(gridGeometry.numCellCenterDofs());
+        analyticalVelocity_.resize(gridGeometry.numCellCenterDofs());
+        analyticalVelocityAtDofs_.resize(gridGeometry.numFaceDofs());
 
-        for (const auto& element : elements(problem_->gridGeometry().gridView()))
+        auto fvGeometry = localView(gridGeometry);
+
+        for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
@@ -115,8 +119,8 @@ namespace NavierStokesTest {
 template<class MomentumProblem, class MassProblem, class Scalar = double>
 class AnalyticalSolutionVectors
 {
-    using MassGridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
-    using MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
+    using MassGridGeometry = typename ProblemTraits<MassProblem>::GridGeometry;
+    using MomentumGridGeometry = typename ProblemTraits<MomentumProblem>::GridGeometry;
     static constexpr int dimWorld = MassGridGeometry::GridView::dimensionworld;
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -135,35 +139,38 @@ public:
      */
     void update(Scalar time = 0.0)
     {
-        analyticalPressure_.resize(massProblem_->gridGeometry().numDofs());
-        analyticalVelocity_.resize(massProblem_->gridGeometry().gridView().size(0));
-        analyticalVelocityAtDofs_.resize(momentumProblem_->gridGeometry().numDofs());
+        const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem_);
+
+        const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem_);
+
+        analyticalPressure_.resize(massGridGeometry.numDofs());
+        analyticalVelocity_.resize(massGridGeometry.gridView().size(0));
+        analyticalVelocityAtDofs_.resize(momentumGridGeometry.numDofs());
 
         // cell-centers (pressure + velocity)
         {
-            auto fvGeometry = localView(massProblem_->gridGeometry());
-            const auto gridView = massProblem_->gridGeometry().gridView();
+            auto fvGeometry = localView(massGridGeometry);
+            const auto gridView = massGridGeometry.gridView();
             for (const auto& element : elements(gridView))
             {
                 // output velocity always on elements
-                const auto eIdx = massProblem_->gridGeometry().elementMapper().index(element);
+                const auto eIdx = massGridGeometry.elementMapper().index(element);
                 const auto center = element.geometry().center();
                 for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
                         analyticalVelocity_[eIdx][dirIdx]
                             = momentumProblem_->analyticalSolution(center, time)[MomIndices::velocity(dirIdx)];
 
-                // this works for box and cc methods
                 fvGeometry.bindElement(element);
-                for (const auto& scv : scvs(fvGeometry))
-                    analyticalPressure_[scv.dofIndex()]
-                        = massProblem_->analyticalSolution(scv.dofPosition(), time)[MassIndices::pressureIdx];
+                for (const auto& localDof : localDofs(fvGeometry))
+                    analyticalPressure_[localDof.dofIndex()]
+                        = massProblem_->analyticalSolution(ipData(fvGeometry, localDof).global(), time)[MassIndices::pressureIdx];
             }
         }
 
         // dof positions (velocity)
         {
-            auto fvGeometry = localView(momentumProblem_->gridGeometry());
-            const auto gridView = momentumProblem_->gridGeometry().gridView();
+            auto fvGeometry = localView(momentumGridGeometry);
+            const auto gridView = momentumGridGeometry.gridView();
             for (const auto& element : elements(gridView))
             {
                 fvGeometry.bindElement(element);
@@ -173,14 +180,11 @@ public:
                         analyticalVelocityAtDofs_[scv.dofIndex()][scv.dofAxis()]
                             = momentumProblem_->analyticalSolution(scv.center(), time)[MomIndices::velocity(scv.dofAxis())];
 
-                else if constexpr (DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>)
-                    for (const auto& scv : scvs(fvGeometry))
-                        for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
-                            analyticalVelocityAtDofs_[scv.dofIndex()][dirIdx]
-                                = momentumProblem_->analyticalSolution(scv.dofPosition(), time)[MomIndices::velocity(dirIdx)];
-
                 else
-                    DUNE_THROW(Dune::Exception, "Unknown discretization method: " << MomentumGridGeometry::discMethod);
+                    for (const auto& localDof : localDofs(fvGeometry))
+                        for (int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
+                            analyticalVelocityAtDofs_[localDof.dofIndex()][dirIdx]
+                                = momentumProblem_->analyticalSolution(ipData(fvGeometry, localDof).global(), time)[MomIndices::velocity(dirIdx)];
             }
         }
     }

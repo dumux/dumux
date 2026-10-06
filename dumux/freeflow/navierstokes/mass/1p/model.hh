@@ -45,7 +45,11 @@
 
 #include <dumux/flux/fourierslaw.hh>
 
+#include <dumux/common/spatialparams.hh>
+
 #include "localresidual.hh"
+#include "felocalresidual.hh"
+#include "variables.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "indices.hh"
@@ -118,6 +122,8 @@ namespace TTag {
 //! The type tag for the single-phase, isothermal Navier-Stokes model
 struct NavierStokesMassOneP{ using InheritsFrom = std::tuple<ModelProperties>; };
 struct NavierStokesMassOnePNI{ using InheritsFrom = std::tuple<NavierStokesMassOneP>; };
+//! Assembles the continuity equation in weak form instead of as a control volume flux balance
+struct NavierStokesMassOnePFE{ using InheritsFrom = std::tuple<NavierStokesMassOneP>; };
 } // end namespace TTag
 
 
@@ -146,6 +152,11 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::NavierStokesMassOneP>
 { using type = NavierStokesMassOnePLocalResidual<TypeTag>; };
 
+//! The local residual of the finite element variant
+template<class TypeTag>
+struct LocalResidual<TypeTag, TTag::NavierStokesMassOnePFE>
+{ using type = NavierStokesMassOnePFELocalResidual<TypeTag>; };
+
 //! Set the volume variables property
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::NavierStokesMassOneP>
@@ -163,6 +174,45 @@ private:
     using Traits = NavierStokesMassOnePVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
     using type = NavierStokesMassOnePVolumeVariables<Traits>;
+};
+
+// Set the default spatial parameters for the finite element variant, which are
+// evaluated at interpolation points rather than at sub-control volumes
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::NavierStokesMassOnePFE>
+{
+    template<class GG, class S>
+    struct DefaultSpatialParams
+    : public Dumux::Experimental::SpatialParams<GG, S, DefaultSpatialParams<GG, S>>
+    {
+    private:
+        using ParentType = Dumux::Experimental::SpatialParams<GG, S, DefaultSpatialParams<GG, S>>;
+    public:
+        using ParentType::ParentType;
+    };
+
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = Dumux::Experimental::SpatialParams<GridGeometry, Scalar, DefaultSpatialParams<GridGeometry, Scalar>>;
+};
+
+//! The variables of the finite element variant, which are defined per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::NavierStokesMassOnePFE>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using Traits = NavierStokesMassOnePVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMassOnePVariables<Traits>;
 };
 
 //! The flux variables

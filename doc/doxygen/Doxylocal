@@ -6,15 +6,19 @@
 
 PROJECT_NAME          = "DuMux"
 PROJECT_BRIEF         = "Flow and transport in porous media"
-PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
+PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_white.png
 PROJECT_NUMBER        = @DUNE_MOD_VERSION@
 
 INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/examples/README.md \
+                         @top_srcdir@/test/porousmediumflow/2p/buckleyleverett/README.md \
+                         @top_srcdir@/test/porousmediumflow/2p/mcwhortersunada/README.md \
                          @top_srcdir@/test/porousmediumflow/richards/benchmarks/README.md \
                          @top_srcdir@/test/solidmechanics/plate/membrane/README.md \
                          @top_srcdir@/test/solidmechanics/plate/kirchhoff_love/README.md \
                          @top_srcdir@/test/solidmechanics/plate/mindlin_reissner/README.md \
+                         @top_srcdir@/test/experimental/timestepping/README.md \
+                         @top_srcdir@/test/solidmechanics/turek_hron/README.md \
                          @top_srcdir@/test/porousmediumflow/1pnc/1p2c/isothermal/henry/README.md \
                          @top_srcdir@/CONTRIBUTING.md \
                          @srcdir@/pages \
@@ -70,7 +74,7 @@ HTML_FILE_EXTENSION    = .html
 HTML_INDEX_NUM_ENTRIES = 1
 
 USE_MATHJAX            = YES
-MATHJAX_VERSION        = MathJax_3
+MATHJAX_VERSION        = MathJax_4
 
 EXCLUDE_PATTERNS       = *_.hh
 
@@ -86,6 +90,14 @@ CITE_BIB_FILES         = @top_srcdir@/doc/doxygen/dumux.bib
 # enable macro expansion only for specified macros
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
+PREDEFINED            += HAVE_DUNE_ALUGRID
+PREDEFINED            += HAVE_DUNE_FOAMGRID
+PREDEFINED            += HAVE_DUNE_MMESH
+PREDEFINED            += HAVE_DUNE_SPGRID
+PREDEFINED            += HAVE_DUNE_SUBGRID
+PREDEFINED            += HAVE_DUNE_UGGRID
+PREDEFINED            += HAVE_ECL_INPUT
+PREDEFINED            += HAVE_OPM_GRID
 
 DOT_GRAPH_MAX_NODES    = 100
 
@@ -93,12 +105,14 @@ DOT_IMAGE_FORMAT       = svg
 
 SHORT_NAMES           = NO
 
-# Settings required for doxygen-awesome theme
+# Settings required for doxygen-awesome theme v2.4.2
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 320
+PAGE_OUTLINE_PANEL     = NO # required for interactive toc from Doxygen >= 1.14.0
+TREEVIEW_WIDTH         = 335
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
+HTML_COPY_CLIPBOARD    = NO # for doxygen-awesome-fragment-copy-button.js and Doxygen >= 1.10.0
 
 # Do no repeat in the description
 REPEAT_BRIEF = NO

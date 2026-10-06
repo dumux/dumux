@@ -11,7 +11,7 @@ For some libraries, such as BLAS or MPI, multiple versions can be installed on t
 Make sure that it uses the same library as DUNE when configuring the external library.
 
 Some of the libraries are then compiled within that directory and are not installed in a different place,
-but DUNE may need to know their location. See [installation instructions](#install-external-dependencies-via-script)
+but DUNE may need to know their location. See [installation instructions](#external-dependencies)
 for tips on how to install external libraries.
 
 In the following grouped lists, you can find some external modules and external libraries.

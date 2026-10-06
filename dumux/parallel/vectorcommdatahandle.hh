@@ -17,6 +17,8 @@
 
 #include <dune/grid/common/datahandleif.hh>
 
+#include <dumux/common/multimapperview.hh>
+
 namespace Dumux {
 
 namespace Detail {
@@ -77,33 +79,48 @@ public:
   bool contains(int, int codim) const
   { return (codim == entityCodim); }
 
-  //! returns true if size per entity of given dim and codim is a constant
-  bool fixedSize(int, int) const
-  { return true; }
+  //! returns true if size per entity of given dim and codim is a constant.
+  //! For mappers where all entities of the same codim have the same DOF count, this is true.
+  //! For mixed meshes with variable-DOF geometry types (e.g. simplex+cube) it may be false.
+  bool fixedSize(int /*gridDim*/, int codim) const
+  {
+      if (codim != entityCodim) return true;
+      const auto& gtypes = mapper_.types(codim);
+      if (gtypes.empty()) return true;
+      const auto nDofs = mapper_.size(gtypes[0]);
+      for (const auto& gt : gtypes)
+          if (mapper_.size(gt) != nDofs) return false;
+      return true;
+  }
 
   /*!
-   * \brief how many objects of type DataType have to be sent for a given entity
-   * \note Only the sender side needs to know this size.
+   * \brief how many objects of type DataType have to be sent for a given entity.
+   * Returns the number of DOFs associated with this entity (may be >1 for multi-DOF schemes).
    */
   template<class Entity>
   std::size_t size(Entity& entity) const
-  { return 1; }
+    { return asMultiMapper(mapper_).indices(entity).size(); }
 
-  //! pack data from user to message buffer
+  //! pack data from user to message buffer (all DOFs of entity)
   template<class MessageBuffer, class Entity>
   void gather(MessageBuffer& buff, const Entity& entity) const
-  { buff.write(vector_[mapper_.index(entity)]); }
+  {
+      for (auto i : asMultiMapper(mapper_).indices(entity))
+          buff.write(vector_[i]);
+  }
 
   /*!
-   * \brief unpack data from message buffer to user
+   * \brief unpack data from message buffer to user (all DOFs of entity)
    * \note n is the number of objects sent by the sender
    */
   template<class MessageBuffer, class Entity>
   void scatter(MessageBuffer& buff, const Entity& entity, std::size_t n)
   {
-      DataType x;
-      buff.read(x);
-      ScatterOperator::apply(vector_[mapper_.index(entity)], x);
+      for (auto i : asMultiMapper(mapper_).indices(entity)) {
+          DataType x;
+          buff.read(x);
+          ScatterOperator::apply(vector_[i], x);
+      }
   }
 
 protected:
@@ -139,9 +156,20 @@ public:
              && activeCodims_.test(codim);
   }
 
-  //! returns true if size per entity of given dim and codim is a constant
-  bool fixedSize(int, int codim) const
-  { return true; }
+  //! returns true if size per entity of given dim and codim is a constant.
+  //! For mappers where all entities of the same codim have the same DOF count, this is true.
+  //! For mixed meshes with variable-DOF geometry types (e.g. simplex+cube) it may be false.
+  bool fixedSize(int /*gridDim*/, int codim) const
+  {
+      if (codim < 0 || codim > dim || !activeCodims_.test(codim))
+          return true;
+      const auto& gtypes = mapper_.types(codim);
+      if (gtypes.empty()) return true;
+      const auto nDofs = mapper_.size(gtypes[0]);
+      for (const auto& gt : gtypes)
+          if (mapper_.size(gt) != nDofs) return false;
+      return true;
+  }
 
   /*!
    * \brief how many objects of type DataType have to be sent for a given entity
@@ -149,23 +177,28 @@ public:
    */
   template<class Entity>
   std::size_t size(Entity& entity) const
-  { return 1; }
+    { return asMultiMapper(mapper_).indices(entity).size(); }
 
-  //! pack data from user to message buffer
+  //! pack data from user to message buffer (all DOFs of entity)
   template<class MessageBuffer, class Entity>
   void gather(MessageBuffer& buff, const Entity& entity) const
-  { buff.write(vector_[mapper_.index(entity)]); }
+  {
+      for (auto i : asMultiMapper(mapper_).indices(entity))
+          buff.write(vector_[i]);
+  }
 
   /*!
-   * \brief unpack data from message buffer to user
+   * \brief unpack data from message buffer to user (all DOFs of entity)
    * \note n is the number of objects sent by the sender
    */
   template<class MessageBuffer, class Entity>
   void scatter(MessageBuffer& buff, const Entity& entity, std::size_t n)
   {
-      DataType x;
-      buff.read(x);
-      ScatterOperator::apply(vector_[mapper_.index(entity)], x);
+      for (auto i : asMultiMapper(mapper_).indices(entity)) {
+          DataType x;
+          buff.read(x);
+          ScatterOperator::apply(vector_[i], x);
+      }
   }
 
 protected:

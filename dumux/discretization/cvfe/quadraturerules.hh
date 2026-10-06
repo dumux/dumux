@@ -188,11 +188,11 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 
     auto scvGeo = fvGeometry.geometry(scv);
     const auto& elementGeo = fvGeometry.elementGeometry();
-    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(scvGeo.type(), order);
+    const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(scvGeo.type(), order);
     const auto localDofIdx = scv.localDofIndex();
 
     return std::views::iota(0u, quad.size())
-         | std::views::transform([quad = std::move(quad), scvGeo = std::move(scvGeo), &elementGeo, localDofIdx](const auto idx) {
+         | std::views::transform([&quad, scvGeo = std::move(scvGeo), &elementGeo, localDofIdx](const auto idx) {
             const auto& qp = quad[idx];
             const auto ipGlobal = scvGeo.global(qp.position());
             const auto ipLocal = elementGeo.local(ipGlobal);
@@ -239,12 +239,12 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 
     auto scvfGeo = fvGeometry.geometry(scvf);
     const auto& elementGeo = fvGeometry.elementGeometry();
-    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(scvfGeo.type(), order);
+    const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(scvfGeo.type(), order);
     auto normal = scvf.unitOuterNormal();
     const auto scvfIndex = scvf.index();
 
     return std::views::iota(0u, quad.size())
-         | std::views::transform([quad = std::move(quad), scvfGeo = std::move(scvfGeo), &elementGeo, normal = std::move(normal), scvfIndex](const auto idx) {
+         | std::views::transform([&quad, scvfGeo = std::move(scvfGeo), &elementGeo, normal = std::move(normal), scvfIndex](const auto idx) {
             const auto& qp = quad[idx];
             const auto ipGlobal = scvfGeo.global(qp.position());
             const auto ipLocal = elementGeo.local(ipGlobal);
@@ -288,10 +288,10 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     using Extrusion = Extrusion_t<GridGeometry>;
 
     const auto& elementGeo = fvGeometry.elementGeometry();
-    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(elementGeo.type(), order);
+    const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension>::rule(elementGeo.type(), order);
 
     return std::views::iota(0u, quad.size())
-         | std::views::transform([quad = std::move(quad), &elementGeo](const auto idx) {
+         | std::views::transform([&quad, &elementGeo](const auto idx) {
             const auto& qp = quad[idx];
             const auto ipGlobal = elementGeo.global(qp.position());
             const auto ipLocal = qp.position();
@@ -348,14 +348,14 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 
     const auto& elementGeo = fvGeometry.elementGeometry();
     auto isGeometry = is.geometry();
-    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(isGeometry.type(), order);
+    const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(isGeometry.type(), order);
     auto normal = is.centerUnitOuterNormal();
     auto bFlag = BFlag{ is };
     auto index = is.indexInInside();
 
     return std::views::iota(0u, quad.size())
          | std::views::transform(
-            [quad = std::move(quad), isGeometry = std::move(isGeometry), &elementGeo, normal = std::move(normal),
+            [&quad, isGeometry = std::move(isGeometry), &elementGeo, normal = std::move(normal),
              bFlag = std::move(bFlag), index](const auto idx) {
             const auto& qp = quad[idx];
             const auto ipGlobal = isGeometry.global(qp.position());
@@ -405,12 +405,12 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 
     auto bfGeo = fvGeometry.geometry(boundaryFace);
     const auto& elementGeo = fvGeometry.elementGeometry();
-    auto quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(bfGeo.type(), order);
+    const auto& quad = Dune::QuadratureRules<typename GridView::ctype, GridView::dimension-1>::rule(bfGeo.type(), order);
     auto normal = boundaryFace.unitOuterNormal();
     const auto bfIdx = boundaryFace.index();
 
     return std::views::iota(0u, quad.size())
-         | std::views::transform([quad = std::move(quad), bfGeo = std::move(bfGeo), &elementGeo, normal = std::move(normal), bfIdx](const auto idx) {
+         | std::views::transform([&quad, bfGeo = std::move(bfGeo), &elementGeo, normal = std::move(normal), bfIdx](const auto idx) {
             const auto& qp = quad[idx];
             const auto ipGlobal = bfGeo.global(qp.position());
             const auto ipLocal = elementGeo.local(ipGlobal);

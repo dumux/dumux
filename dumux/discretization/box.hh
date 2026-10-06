@@ -13,147 +13,20 @@
 #ifndef DUMUX_DISCRETIZTAION_BOX_HH
 #define DUMUX_DISCRETIZTAION_BOX_HH
 
-#include <concepts>
-#include <type_traits>
+#include <dumux/discretization/pq1.hh>
 
-#include <dune/common/fvector.hh>
-#include <dune/geometry/multilineargeometry.hh>
+namespace Dumux::Properties::TTag {
 
-#include <dumux/common/properties.hh>
-#include <dumux/common/boundaryflag.hh>
-#include <dumux/common/concepts/variables_.hh>
-#include <dumux/common/typetraits/problem.hh>
-#include <dumux/common/typetraits/boundary_.hh>
+//! Alias for Box model
+using BoxModel = PQ1FVModel;
 
-#include <dumux/assembly/cvfelocalresidual.hh>
-#include <dumux/assembly/cvfelocalresidual_.hh>
-
-#include <dumux/discretization/method.hh>
-#include <dumux/discretization/fvproperties.hh>
-#include <dumux/discretization/defaultlocaloperator.hh>
-#include <dumux/discretization/elementboundarytypes.hh>
-
-#include <dumux/discretization/cvfe/elementboundarytypes.hh>
-#include <dumux/discretization/cvfe/gridfluxvariablescache.hh>
-#include <dumux/discretization/cvfe/gridvolumevariables.hh>
-#include <dumux/discretization/cvfe/fluxvariablescache.hh>
-#include <dumux/discretization/cvfe/elementsolution.hh>
-#include <dumux/discretization/box/fvgridgeometry.hh>
-
-#include <dumux/flux/fluxvariablescaching.hh>
-
-namespace Dumux::Properties {
-
-//! Type tag for the box scheme.
-// Create new type tags
-namespace TTag {
-struct BoxModel { using InheritsFrom = std::tuple<FiniteVolumeModel>; };
-} // end namespace TTag
-
-//! Set the default for the grid geometry
-template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::BoxModel>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
-    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
-};
-
-//! The grid volume variables vector class
-template<class TypeTag>
-struct GridVolumeVariables<TypeTag, TTag::BoxModel>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using Traits = CVFEDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
-public:
-    using type = CVFEGridVolumeVariables<Traits, enableCache>;
-};
-
-//! The grid flux variables cache vector class
-template<class TypeTag>
-struct GridFluxVariablesCache<TypeTag, TTag::BoxModel>
-{
-private:
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridFluxVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluxVariablesCache = GetPropTypeOr<TypeTag,
-        Properties::FluxVariablesCache, FluxVariablesCaching::EmptyCache<Scalar>
-    >;
-public:
-    using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
-};
-
-//! The flux variables cache type
-template<class TypeTag>
-struct FluxVariablesCache<TypeTag, TTag::BoxModel>
-{
-private:
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = CVFEFluxVariablesCache<Scalar, GridGeometry>;
-};
-
-//! Set the default for the ElementBoundaryTypes
-template<class TypeTag>
-struct ElementBoundaryTypes<TypeTag, TTag::BoxModel>
-{
-private:
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
-    using BoundaryTypes = typename ProblemTraits<Problem>::BoundaryTypes;
-public:
-    // Check if problem has new boundaryTypes interface
-    // then use ElementIntersectionBoundaryTypes
-    using type = std::conditional_t<
-        Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<Problem, typename GG::LocalView>(),
-        Dumux::ElementIntersectionBoundaryTypes<BoundaryTypes>,
-        Dumux::CVFEElementBoundaryTypes<BoundaryTypes>
-    >;
-};
-
-} // namespace Dumux::Properties
+} // end namespace Dumux::Properties::TTag
 
 namespace Dumux::Detail {
 
-template<class Problem>
-struct ProblemTraits<Problem, DiscretizationMethods::Box>
-{
-private:
-    using GG = Dumux::Detail::ProblemGridGeometry<Problem>;
-public:
-    using GridGeometry = GG;
-    // Determine BoundaryTypes dependent on the used problem interface, either boundaryTypes(element, scv) or  boundaryTypes(element, boundaryFace)
-    using BoundaryTypes = Detail::BoundaryTypes<Problem, typename GG::LocalView>::type;
-};
-
 template<class TypeTag>
-concept BoxModel = std::is_same_v<
-    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
-    DiscretizationMethods::Box
->;
+concept BoxModel = PQ1FVModel<TypeTag>;
 
-template<BoxModel TypeTag>
-struct DiscretizationDefaultLocalOperator<TypeTag>
-{
-private:
-    using GV = GetPropType<TypeTag, Properties::GridVariables>;
-    static constexpr bool usesGeneralGridVariables =
-        Dumux::Concept::GridVariables<GV> && !Dumux::Concept::FVGridVariables<GV>;
-public:
-    using type = std::conditional_t<usesGeneralGridVariables,
-                                    Dumux::Experimental::CVFELocalResidual<TypeTag>,
-                                    Dumux::CVFELocalResidual<TypeTag>>;
-};
-
-} // end namespace Dumux:Detail
+} // end namespace Dumux::Detail
 
 #endif

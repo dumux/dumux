@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 260" width="100%" style="background-color: #ffffff; border: 1px solid #e1e4e8; border-radius: 6px;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#444444"/>
+    </marker>
+  </defs>
+
+  <text x="30" y="35" font-family="-apple-system, sans-serif" font-size="16" font-weight="600" fill="#1f2328">CSM Structural Domain &amp; Boundaries</text>
+  
+  <g transform="translate(580, 25)" font-family="-apple-system, sans-serif" font-size="12" font-weight="500">
+    <rect x="0" y="0" width="12" height="12" fill="#d93f0b" rx="2"/>
+    <text x="18" y="11" font-family="serif" font-style="italic" font-size="14" font-weight="bold" fill="#d93f0b">Γ</text>
+    <text x="28" y="15" font-family="serif" font-style="italic" font-size="10" font-weight="bold" fill="#d93f0b">D</text>
+    
+    <rect x="90" y="0" width="12" height="12" fill="#0969da" rx="2"/>
+    <text x="108" y="11" font-family="serif" font-style="italic" font-size="14" font-weight="bold" fill="#0969da">Γ</text>
+    <text x="118" y="15" font-family="serif" font-style="italic" font-size="10" font-weight="bold" fill="#0969da">N</text>
+  </g>
+
+  <g transform="translate(40, 200)">
+    <line x1="0" y1="0" x2="45" y2="0" stroke="#444444" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="0" y1="0" x2="0" y2="-45" stroke="#444444" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="52" y="4" font-family="monospace" font-size="12" fill="#444444">x</text>
+    <text x="-4" y="-52" font-family="monospace" font-size="12" fill="#444444">y</text>
+    <circle cx="0" cy="0" r="2.5" fill="#444444"/>
+  </g>
+
+  <g transform="translate(110, 30)">
+    
+    <circle cx="50" cy="90" r="50" fill="#f6f8fa" stroke="#afb8c1" stroke-width="1" stroke-dasharray="3,3"/>
+    
+    <circle cx="50" cy="90" r="4" fill="#1f2328"/>
+    <text x="45" y="80" font-family="-apple-system, sans-serif" font-size="12" font-weight="bold" fill="#1f2328">C</text>
+
+    <circle cx="0" cy="90" r="4" fill="#1f2328"/>
+    <text x="-15" y="85" font-family="-apple-system, sans-serif" font-size="12" font-weight="bold" fill="#1f2328">B</text>
+
+    <line x1="100" y1="80" x2="450" y2="80" stroke="#0969da" stroke-width="2.5"/>
+    <line x1="100" y1="100" x2="450" y2="100" stroke="#0969da" stroke-width="2.5"/>
+    <line x1="450" y1="80" x2="450" y2="100" stroke="#0969da" stroke-width="2.5"/>
+    <line x1="100" y1="80" x2="100" y2="100" stroke="#d93f0b" stroke-width="3.5"/>
+
+    <rect x="100" y="81" width="350" height="18" fill="#ddf4ff" opacity="0.4"/>
+
+    <text x="80" y="86" font-family="serif" font-style="italic" font-size="14" font-weight="bold" fill="#d93f0b">Γ</text>
+    <text x="91" y="91" font-family="serif" font-style="italic" font-size="10" font-weight="bold" fill="#d93f0b">D</text>
+    
+    <text x="260" y="70" font-family="serif" font-style="italic" font-size="14" font-weight="bold" fill="#0969da">Γ</text>
+    <text x="271" y="75" font-family="serif" font-style="italic" font-size="10" font-weight="bold" fill="#0969da">N</text>
+    
+    <text x="260" y="118" font-family="serif" font-style="italic" font-size="14" font-weight="bold" fill="#0969da">Γ</text>
+    <text x="271" y="123" font-family="serif" font-style="italic" font-size="10" font-weight="bold" fill="#0969da">N</text>
+    
+    <text x="458" y="75" font-family="serif" font-style="italic" font-size="14" font-weight="bold" fill="#0969da">Γ</text>
+    <text x="469" y="80" font-family="serif" font-style="italic" font-size="10" font-weight="bold" fill="#0969da">N</text>
+
+    <circle cx="450" cy="90" r="4.5" fill="#d93f0b"/>
+    <text x="462" y="96" font-family="-apple-system, sans-serif" font-size="12" font-weight="bold" fill="#d93f0b">A</text>
+
+    <line x1="100" y1="145" x2="450" y2="145" stroke="#8c95a0" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+    <text x="275" y="140" font-family="-apple-system, sans-serif" font-size="12" font-style="italic" fill="#1f2328" text-anchor="middle">L</text>
+    
+    <line x1="500" y1="80" x2="500" y2="100" stroke="#8c95a0" stroke-width="1" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+    <text x="510" y="94" font-family="-apple-system, sans-serif" font-size="12" font-style="italic" fill="#1f2328">H</text>
+
+    <g transform="translate(260, 15)">
+      <line x1="0" y1="0" x2="0" y2="25" stroke="#bf4b00" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="10" y="16" font-family="-apple-system, sans-serif" font-size="12" font-weight="bold" font-style="italic" fill="#bf4b00">g</text>
+    </g>
+  </g>
+</svg>

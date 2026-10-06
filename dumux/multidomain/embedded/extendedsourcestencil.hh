@@ -35,7 +35,6 @@ template<class CouplingManager>
 class ExtendedSourceStencil
 {
     using MDTraits = typename CouplingManager::MultiDomainTraits;
-    using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
@@ -93,6 +92,7 @@ public:
     {
         const auto& curSolI = couplingManager.curSol(domainI);
         constexpr auto numEq = std::decay_t<decltype(curSolI[0])>::size();
+        using PrimaryVariable = typename std::decay_t<decltype(curSolI[0])>::value_type;
         const auto& elementI = localAssemblerI.element();
 
         // only do something if we have an extended stencil
@@ -115,7 +115,7 @@ public:
                 // reset partial derivatives
                 partialDerivs = 0.0;
 
-                const auto evalResiduals = [&](const Scalar priVar)
+                const auto evalResiduals = [&](const PrimaryVariable priVar)
                 {
                     // update the coupling context (solution vector and recompute element residual)
                     priVars[pvIdx] = priVar;
@@ -124,7 +124,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{localAssemblerI.problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{localAssemblerI.problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(localAssemblerI.problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(
                     evalResiduals, priVars[pvIdx], partialDerivs, origResidual, eps_(priVars[pvIdx], pvIdx), numDiffMethod

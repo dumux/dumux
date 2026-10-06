@@ -179,6 +179,7 @@ select tests:
 
 doxygen:
   stage: build
+  allow_failure: true # temporily disable until Dune upstream is fixed
   rules:
   - if: $DUMUX_ENABLE_DOXYGEN_BUILD == "true"
     when: always

@@ -77,6 +77,8 @@ public:
         height_ = getParam<Scalar>("Problem.Height");
         if(dim == 3 && !Dune::FloatCmp::eq(height_, this->gridGeometry().bBoxMax()[2]))
             DUNE_THROW(Dune::InvalidStateException, "z-dimension must equal height");
+
+        refPressure_ = getParam<Scalar>("Problem.RefPressure", 1e5);
     }
 
     /*!
@@ -167,7 +169,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            const auto p = isInlet_(globalPos) ? 1e5 + deltaP_ : 1e5;
+            const auto p = isInlet_(globalPos) ? refPressure_ + deltaP_ : refPressure_;
             values = NavierStokesMomentumBoundaryFlux<typename GridGeometry::DiscretizationMethod>::fixedPressureMomentumFlux(
                 *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache, p
             );
@@ -183,6 +185,16 @@ public:
     }
 
     // \}
+
+    /*!
+     * \brief Returns a reference pressure at a given sub control volume face.
+     *        This pressure is subtracted from the actual pressure for the momentum balance
+     *        which potentially helps to improve numerical accuracy by avoiding issues related do floating point arithmetic.
+     */
+    Scalar referencePressure(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const SubControlVolumeFace& scvf) const
+    { return refPressure_; }
 
     //! Returns the analytical solution for the flux through the rectangular channel
     Scalar analyticalFlux() const
@@ -209,6 +221,7 @@ private:
     Scalar height_;
     Scalar rho_;
     Scalar nu_;
+    Scalar refPressure_;
 };
 
 } // end namespace Dumux

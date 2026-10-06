@@ -87,6 +87,7 @@ public:
     /*!
      * \brief Returns the normal velocity at a given sub control volume face.
      */
+    template<class SubControlVolumeFace>
     VelocityVector faceVelocity(const Element& element,
                                 const FVElementGeometry& fvGeometry,
                                 const SubControlVolumeFace& scvf) const
@@ -107,6 +108,18 @@ public:
             return couplingManager_->velocity(fvGeometry, ipData);
         else
             return asImp_().velocityAtPos(ipData.global());
+    }
+
+    /*!
+     * \brief Returns the velocity divergence at a given interpolation point.
+     */
+    template<class IpData>
+    Scalar velocityDivergence(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocityDivergence(fvGeometry, ipData);
+        else
+            return 0.0;
     }
 
     /*!
@@ -159,9 +172,8 @@ class CVFENavierStokesMassProblem : public Experimental::ProblemWithSpatialParam
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using VelocityVector = GlobalPosition;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
@@ -185,7 +197,6 @@ public:
 
     //! this problem is used for the mass balance model
     static constexpr bool isMomentumProblem() { return false; }
-    static constexpr bool providesIntegralInterface() { return true; }
 
     /*!
      * \brief The constructor
@@ -211,27 +222,9 @@ public:
     {}
 
     /*!
-     * \brief Evaluates the boundary flux related to a localDof at a given interpolation point.
-     *
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVars All variables for the element
-     * \param elemFluxVarsCache The element flux variables cache
-     * \param faceIpData Face interpolation point data
-     */
-    template<class ElementVariables, class ElementFluxVariablesCache, class FaceIpData>
-    [[deprecated("This function is deprecated and will be removed after release 3.11. "
-                 "Use boundaryFlux(fvGeometry, elemVars, scvf) instead.")]]
-    BoundaryFluxes boundaryFlux(const FVElementGeometry& fvGeometry,
-                                const ElementVariables& elemVars,
-                                const ElementFluxVariablesCache& elemFluxVarsCache,
-                                const FaceIpData& faceIpData) const
-    {
-        return asImp_().boundaryFlux(fvGeometry, elemVars, faceIpData);
-    }
-
-    /*!
      * \brief Returns the normal velocity at a given sub control volume face.
      */
+    template<class SubControlVolumeFace>
     VelocityVector faceVelocity(const Element& element,
                                 const FVElementGeometry& fvGeometry,
                                 const SubControlVolumeFace& scvf) const
@@ -252,6 +245,18 @@ public:
             return couplingManager_->velocity(fvGeometry, ipData);
         else
             return asImp_().velocityAtPos(ipData.global());
+    }
+
+    /*!
+     * \brief Returns the velocity divergence at a given interpolation point.
+     */
+    template<class IpData>
+    Scalar velocityDivergence(const FVElementGeometry& fvGeometry, const IpData& ipData) const
+    {
+        if constexpr (isCoupled_)
+            return couplingManager_->velocityDivergence(fvGeometry, ipData);
+        else
+            return 0.0;
     }
 
     /*!

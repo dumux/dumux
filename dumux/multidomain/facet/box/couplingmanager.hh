@@ -788,6 +788,14 @@ private:
         }
     }
 
+protected:
+    //! Return const references to the coupling contexts
+    const BulkCouplingContext& bulkCouplingContext() const { return bulkContext_; }
+    const LowDimCouplingContext& lowDimCouplingContext() const { return lowDimContext_; }
+
+    //! Return the mapper between bulk and lower-dimensional grid entities
+    const CouplingMapper& couplingMapper() const { return *couplingMapperPtr_; }
+
     //! evaluates the bulk-facet exchange fluxes for a given facet element
     template<class BulkScvfIndices>
     NumEqVector<bulkId> evalBulkFluxes_(const Element<bulkId>& elementI,
@@ -811,6 +819,7 @@ private:
         return coupledFluxes;
     }
 
+private:
     std::shared_ptr<CouplingMapper> couplingMapperPtr_;
 
     //! store bools for all bulk elements that indicate if they

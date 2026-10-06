@@ -286,7 +286,7 @@ public:
                                   const std::string& paramGroup) const
     {
         constexpr auto numEq = PrimaryVariables<i>::dimension;
-        return NumericEpsilon<typename Traits::Scalar, numEq>(paramGroup);
+        return NumericEpsilon<typename PrimaryVariables<i>::value_type, numEq>(paramGroup);
     }
 
     /*!

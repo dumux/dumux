@@ -84,7 +84,7 @@ void addFEBoundaryFluxIntegral(ResidualVector& residual,
         for (const auto& localDof : nonCVLocalDofs(elemDisc))
             for (int eqIdx = 0; eqIdx < BoundaryFluxes::dimension; ++eqIdx)
                 if (bcTypes.isFluxBoundary(eqIdx))
-                    residual[localDof.index()][eqIdx] += shapeValues[localDof.index()] * boundaryFlux[eqIdx];
+                    residual[localDof.index()][eqIdx] += shapeValues[localDof.index()][0] * boundaryFlux[eqIdx];
     }
 }
 

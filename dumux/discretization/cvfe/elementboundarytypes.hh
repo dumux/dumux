@@ -15,6 +15,7 @@
 #include <cassert>
 #include <vector>
 
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -47,12 +48,14 @@ public:
         hasDirichlet_ = false;
         hasNeumann_ = false;
 
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
+
         for (const auto& scv : scvs(fvGeometry))
         {
             const auto scvIdxLocal = scv.localDofIndex();
             bcTypes_[scvIdxLocal].reset();
 
-            if (fvGeometry.gridGeometry().dofOnBoundary(scv.dofIndex()))
+            if (gridDiscretization.dofOnBoundary(scv.dofIndex()))
             {
                 bcTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
                 hasDirichlet_ = hasDirichlet_ || bcTypes_[scvIdxLocal].hasDirichlet();

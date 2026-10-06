@@ -242,7 +242,7 @@ class SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::nu
 {
     using ThisType = SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainFaceCenteredLocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -323,8 +323,20 @@ public:
             }
         };
 
+        const bool interiorElement = element.partitionType() == Dune::InteriorEntity;
         for (const auto& scv : scvs(fvGeometry))
         {
+            // of an overlap element only the border dofs have assembled equations, the others have identity rows
+            if (!interiorElement && element.template subEntity<1>(scv.indexInElement()).partitionType() != Dune::BorderEntity)
+                continue;
+
+            // the equation of a dof with an internal Dirichlet constraint does not depend on the other domain
+            if constexpr (Problem::enableInternalDirichletConstraints())
+            {
+                if (this->internalDirichletValue(scv))
+                    continue;
+            }
+
             const auto& stencil = this->couplingManager().couplingStencil(domainI, element, scv, domainJ);
 
             for (const auto globalJ : stencil)
@@ -336,7 +348,7 @@ public:
 
                 for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
                 {
-                    auto evalCouplingResidual = [&](Scalar priVar)
+                    auto evalCouplingResidual = [&](auto priVar)
                     {
                         priVarsJ[pvIdx] = priVar;
                         this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
@@ -365,7 +377,6 @@ public:
                     }
 
                     // handle Dirichlet boundary conditions
-                    // TODO internal constraints
                     if (scv.boundary() && this->elemBcTypes().hasDirichlet())
                     {
                         const auto bcTypes = this->elemBcTypes()[fvGeometry.frontalScvfOnBoundary(scv).localIndex()];

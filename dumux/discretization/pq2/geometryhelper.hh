@@ -14,6 +14,7 @@
 #define DUMUX_DISCRETIZATION_PQ2_GEOMETRY_HELPER_HH
 
 #include <array>
+#include <ranges>
 
 #include <dune/common/exceptions.hh>
 
@@ -23,8 +24,12 @@
 #include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/geometry/volume.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
+#include <dumux/discretization/pq2/dofhelper.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/scvfnormal.hh>
 
 namespace Dumux {
 
@@ -63,6 +68,7 @@ class HybridPQ2GeometryHelper
 
     using BoxHelper = Dumux::BoxGeometryHelper<GridView, dim, ScvType, ScvfType>;
 public:
+    using DofHelper = Dumux::PQ2LagrangeDofHelper<GridView>;
 
     HybridPQ2GeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -141,28 +147,9 @@ public:
         return Dune::GeometryTypes::cube(dim-1);
     }
 
-    template<int d = dimWorld, std::enable_if_t<(d==3), int> = 0>
     GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
     {
-        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
-        normal /= normal.two_norm();
-
-        GlobalPosition v = geo_.corner(scvPair[1]) - geo_.corner(scvPair[0]);
-
-        const auto s = v*normal;
-        if (std::signbit(s))
-            normal *= -1;
-
-        return normal;
-    }
-
-    template<int d = dimWorld, std::enable_if_t<(d==2), int> = 0>
-    GlobalPosition normal(const ScvfCornerStorage& p, const std::array<LocalIndexType, 2>& scvPair)
-    {
-        //! obtain normal vector by 90° counter-clockwise rotation of t
-        const auto t = p[1] - p[0];
-        GlobalPosition normal({-t[1], t[0]});
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, p);
 
         GlobalPosition v = geo_.corner(scvPair[1]) - geo_.corner(scvPair[0]);
 
@@ -204,51 +191,6 @@ public:
             scvType,
             [&](unsigned int i){ return p[i]; }
         );
-    }
-
-    //! Local dof index related to a localDof, with index ilocalDofIdx, on an intersection with index iIdx
-    template<class LocalKey>
-    static auto localDofOnIntersection(Dune::GeometryType type, unsigned int iIdx, const LocalKey& localKey)
-    {
-        const auto& refElement = Dune::referenceElement<Scalar, dim>(type);
-
-        const auto numEntitiesIntersection = refElement.size(iIdx, 1, localKey.codim());
-        for(std::size_t idx=0; idx < numEntitiesIntersection; idx++)
-            if(localKey.subEntity() == refElement.subEntity(iIdx, 1, idx, localKey.codim()))
-                return true;
-
-        return false;
-    }
-
-    template<class DofMapper, class LocalKey>
-    static auto dofIndex(const DofMapper& dofMapper, const Element& element, const LocalKey& localKey)
-    {
-        // All dofs are directly related to grid entities, i.e localKey.index() is always zero
-        return dofMapper.subIndex(element, localKey.subEntity(), localKey.codim());
-    }
-
-    template<class Geometry, class LocalKey>
-    static GlobalPosition dofPosition(const Geometry& geo, const LocalKey& localKey)
-    {
-        if(localKey.codim() == dim)
-            return geo.corner(localKey.subEntity());
-        else if(localKey.codim() == 0) // should only be called for cubes
-            return geo.center();
-        else
-            return geo.global(localDofPosition(geo.type(), localKey));
-    }
-
-    template<class LocalKey>
-    GlobalPosition dofPosition(const LocalKey& localKey) const
-    {
-        return dofPosition(geo_, localKey);
-    }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
     }
 
     std::array<LocalIndexType, 2> getScvPairForScvf(unsigned int localScvfIndex) const

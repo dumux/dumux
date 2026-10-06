@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid factory adapter for reading grid data
  */
 #ifndef DUMUX_IO_GRID_GRID_FACTORY__HH

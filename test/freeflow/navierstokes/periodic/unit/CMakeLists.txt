@@ -14,6 +14,83 @@ dumux_add_test(NAME test_ff_navierstokes_periodic
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic params.input
                                         -Problem.Name test_ff_navierstokes_periodic")
 
+# Stokes flow driven by an internal Dirichlet constraint on the vertical velocity. The problem is linear,
+# so with an exact Jacobian a single Newton step reduces the residual to round-off.
+dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet
+               TARGET test_ff_navierstokes_periodic
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_internaldirichlet-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic params.input
+                                        -Problem.Name test_ff_navierstokes_periodic_internaldirichlet
+                                        -Problem.UseMomentumInternalDirichlet true
+                                        -Problem.MomentumInternalDirichletPosY 0.5
+                                        -Problem.UseVelocityProfile true
+                                        -Problem.EnableInertiaTerms false
+                                        -Newton.MinSteps 1 -Newton.MaxSteps 1
+                                        -Newton.EnableShiftCriterion false
+                                        -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
+
+# the constrained faces lie on the periodic boundary: y = 0 and y = 1 are the same plane and share the reference
+dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet_bottom
+               TARGET test_ff_navierstokes_periodic
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_internaldirichlet_periodic-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet_bottom-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic params.input
+                                        -Problem.Name test_ff_navierstokes_periodic_internaldirichlet_bottom
+                                        -Problem.UseMomentumInternalDirichlet true
+                                        -Problem.MomentumInternalDirichletPosY 0.0
+                                        -Problem.UseVelocityProfile true
+                                        -Problem.EnableInertiaTerms false
+                                        -Newton.MinSteps 1 -Newton.MaxSteps 1
+                                        -Newton.EnableShiftCriterion false
+                                        -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
+
+dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet_top
+               TARGET test_ff_navierstokes_periodic
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_internaldirichlet_periodic-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet_top-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic params.input
+                                        -Problem.Name test_ff_navierstokes_periodic_internaldirichlet_top
+                                        -Problem.UseMomentumInternalDirichlet true
+                                        -Problem.MomentumInternalDirichletPosY 1.0
+                                        -Problem.UseVelocityProfile true
+                                        -Problem.EnableInertiaTerms false
+                                        -Newton.MinSteps 1 -Newton.MaxSteps 1
+                                        -Newton.EnableShiftCriterion false
+                                        -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
+
+# without caching, the local views own their sub-control volumes
+dumux_add_test(NAME test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching
+               SOURCES main.cc
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-spgrid_FOUND )"
+               COMPILE_DEFINITIONS UPWINDSCHEMEORDER=1 ENABLECACHING=0
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy --zeroThreshold {"velocity_liq \(m/s\)":1e-12}
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_periodic_internaldirichlet_periodic-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching-00000.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching params.input
+                                        -Problem.Name test_ff_navierstokes_periodic_internaldirichlet_bottom_nocaching
+                                        -Problem.UseMomentumInternalDirichlet true
+                                        -Problem.MomentumInternalDirichletPosY 0.0
+                                        -Problem.UseVelocityProfile true
+                                        -Problem.EnableInertiaTerms false
+                                        -Newton.MinSteps 1 -Newton.MaxSteps 1
+                                        -Newton.EnableShiftCriterion false
+                                        -Newton.EnableResidualCriterion true -Newton.ResidualReduction 1e-10")
+
 add_executable(test_ff_navierstokes_periodic_subgrid EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_ff_navierstokes_periodic_subgrid PUBLIC UPWINDSCHEMEORDER=1 USESUBGRID=1)
 

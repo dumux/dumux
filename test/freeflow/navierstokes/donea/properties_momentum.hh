@@ -20,6 +20,10 @@
 #define ENABLEFLUXVARSCACHING ENABLECACHING
 #endif
 
+#ifndef ENABLEGRIDVARSCACHING
+#define ENABLEGRIDVARSCACHING ENABLECACHING
+#endif
+
 #ifndef GRIDTYPE
 #define GRIDTYPE Dune::YaspGrid<2>
 #endif
@@ -44,6 +48,10 @@
 #define NEW_VARIABLES_INTERFACE 0
 #endif
 
+#ifndef KEEP_DEFAULT_GRIDVARIABLES
+#define KEEP_DEFAULT_GRIDVARIABLES 0
+#endif
+
 #include <type_traits>
 
 #include <dune/common/std/type_traits.hh>
@@ -66,6 +74,7 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
 #include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/pq3.hh>
 #include <dumux/discretization/cvfe/gridvariablescache_.hh>
 #include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
@@ -84,6 +93,7 @@ struct DoneaTestMomentumBox { using InheritsFrom = std::tuple<DoneaTest, NavierS
 struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
+struct DoneaTestMomentumPQ3Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ3HybridModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -97,7 +107,7 @@ struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 #endif
 };
 
-#if NEW_PROBLEM_INTERFACE
+#if NEW_PROBLEM_INTERFACE && !KEEP_DEFAULT_GRIDVARIABLES
 //! The grid variables
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
@@ -216,7 +226,7 @@ struct EnableGridGeometryCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constex
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLEFLUXVARSCACHING; };
 template<class TypeTag>
-struct EnableGridVolumeVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLECACHING; };
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = ENABLEGRIDVARSCACHING; };
 
 } // end namespace Dumux::Properties
 

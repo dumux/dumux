@@ -286,18 +286,14 @@ public:
 
         // The pressure force needs to take the extruded scvf area into account.
         const auto pressure = this->problem().pressure(this->element(), this->fvGeometry(), scvf);
-        result = pressure*Extrusion::area(this->fvGeometry(), scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
 
         // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
-        // This may lead to numerical inaccuracies due to loss of significance (cancellantion) for the final residual value.
-        // In the end, we are only interested in a pressure difference between the two relevant faces so we can
-        // subtract a reference value from the actual pressure contribution. Assuming an axisparallel cartesian grid,
-        // scvf.area() will have the same value at both opposing faces such that the reference pressure contribution
-        // cancels out in the final residual which combines the pressure contribution of two adjacent elements
-        // We explicitly do extrude the area here because that might yield different results in both elements.
-        // The multiplication by scvf.area() aims at having a reference value of the same order of magnitude as the actual pressure contribution.
+        // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
+        // In the end, we are only interested in a pressure gradient between the two relevant faces so we can
+        // subtract a constant reference value from the actual pressure contribution.
         const auto referencePressure = this->problem().referencePressure(this->element(), this->fvGeometry(), scvf);
-        result -= referencePressure*scvf.area();
+
+        result = (pressure-referencePressure)*Extrusion::area(this->fvGeometry(), scvf)*this->elemVolVars()[scvf.insideScvIdx()].extrusionFactor();
 
         // Account for the orientation of the face.
         result *= scvf.directionSign();

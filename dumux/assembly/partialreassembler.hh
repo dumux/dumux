@@ -336,12 +336,10 @@ public:
         }
 
         // mark the neighbors also red
+        // (tested on the distance instead of the color, so the marking does not propagate further)
         const auto& connectivityMap = gridGeometry.connectivityMap();
         for (unsigned eIdx = 0; eIdx < elementColor_.size(); ++eIdx)
         {
-            if (elementColor_[eIdx] == EntityColor::red)
-                continue; // element is red already!
-
             if (distanceFromLastLinearization[eIdx] > threshold)
             {
                 for (const auto& connectedDof : connectivityMap[eIdx])

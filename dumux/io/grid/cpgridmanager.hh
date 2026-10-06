@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
+ * \anchor cp_grid_manager
  */
 #ifndef DUMUX_IO_GRID_CPGRIDMANAGER_HH
 #define DUMUX_IO_GRID_CPGRIDMANAGER_HH
@@ -39,8 +40,13 @@
 namespace Dumux {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
+ *
+ * All keys are expected to be in group GridParameterGroup.
+ *
+ * The following keys are recognized:
+ * - File : Petrel file to load from
  */
 class CpGridManager
 {

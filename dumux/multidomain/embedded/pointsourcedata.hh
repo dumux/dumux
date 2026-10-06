@@ -86,7 +86,7 @@ public:
         {
             for (int i = 0; i < bulkCornerIndices_.size(); ++i)
                 for (int priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
-                    bulkPriVars[priVarIdx] += sol[bulkCornerIndices_[i]][priVarIdx]*bulkShapeValues_[i];
+                    bulkPriVars[priVarIdx] += sol[bulkCornerIndices_[i]][priVarIdx]*bulkShapeValues_[i][0];
         }
         else
         {
@@ -102,7 +102,7 @@ public:
         {
             for (int i = 0; i < lowDimCornerIndices_.size(); ++i)
                 for (int priVarIdx = 0; priVarIdx < lowDimPriVars.size(); ++priVarIdx)
-                    lowDimPriVars[priVarIdx] += sol[lowDimCornerIndices_[i]][priVarIdx]*lowDimShapeValues_[i];
+                    lowDimPriVars[priVarIdx] += sol[lowDimCornerIndices_[i]][priVarIdx]*lowDimShapeValues_[i][0];
         }
         else
         {
@@ -184,7 +184,7 @@ public:
                         const auto& localSol = sol[cornerIndices[i]];
                         const auto& shapeValue = shapeValues[i];
                         for (int priVarIdx = 0; priVarIdx < PrimaryVariables<bulkIdx>::size(); ++priVarIdx)
-                            priVars[priVarIdx] += localSol[priVarIdx]*shapeValue;
+                            priVars[priVarIdx] += localSol[priVarIdx]*shapeValue[0];
                     }
                     // multiply with weight and add
                     priVars *= circleIpWeight_[j];

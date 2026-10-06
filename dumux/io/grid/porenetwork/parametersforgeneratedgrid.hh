@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Helper class to assign parameters to a generated grid
  */
 #ifndef DUMUX_IO_PARAMETERS_FOR_GENERATED_GRID
@@ -33,7 +33,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Helper class to assign parameters to a generated grid
  */
 template <class Grid, class Scalar>

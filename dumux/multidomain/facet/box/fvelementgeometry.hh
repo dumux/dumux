@@ -149,6 +149,7 @@ public:
     void bindElement(const Element& element) &
     {
         element_ = element;
+        elementGeometry_.emplace(element.geometry());
         eIdx_ = gridGeometry().elementMapper().index(element);
     }
 
@@ -163,6 +164,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The geometry of the bound element
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
@@ -198,6 +203,7 @@ private:
 
     GridIndexType eIdx_;
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 };
 
 //! specialization in case the geometries are not stored grid-wide
@@ -314,6 +320,7 @@ public:
     void bindElement(const Element& element) &
     {
         element_ = element;
+        elementGeometry_.emplace(element.geometry());
         eIdx_ = gridGeometry().elementMapper().index(element);
         makeElementGeometries_();
     }
@@ -329,6 +336,10 @@ public:
     //! The bound element
     const Element& element() const
     { return *element_; }
+
+    //! The geometry of the bound element
+    const typename Element::Geometry& elementGeometry() const
+    { return *elementGeometry_; }
 
     //! Create the geometry of a given sub control volume
     typename SubControlVolume::Traits::Geometry geometry(const SubControlVolume& scv) const
@@ -454,6 +465,7 @@ private:
     //! The bound element
     GridIndexType eIdx_;
     std::optional<Element> element_;
+    std::optional<typename Element::Geometry> elementGeometry_;
 
     //! The global geometry cache
     const GGCache* ggCache_;

@@ -26,5 +26,33 @@ dumux_add_test(NAME test_3d3d_grid_intersection
               SOURCES test_3d3d_grid_intersection.cc
               LABELS unit)
 
+dumux_add_test(NAME test_distributedbboxtree_dim2
+              SOURCES test_distributedbboxtree.cc
+              COMPILE_DEFINITIONS WORLD_DIMENSION=2
+              LABELS unit parallel
+              MPI_RANKS 1 2 4
+              TIMEOUT 1200)
+
+dumux_add_test(NAME test_distributedbboxtree_dim3
+              SOURCES test_distributedbboxtree.cc
+              COMPILE_DEFINITIONS WORLD_DIMENSION=3
+              LABELS unit parallel
+              MPI_RANKS 1 2 4
+              TIMEOUT 1200)
+
+dumux_add_test(NAME test_distributedglue_dim2
+              SOURCES test_distributedglue.cc
+              COMPILE_DEFINITIONS WORLD_DIMENSION=2
+              LABELS unit parallel
+              MPI_RANKS 1 2 4
+              TIMEOUT 1200)
+
+dumux_add_test(NAME test_distributedglue_dim3
+              SOURCES test_distributedglue.cc
+              COMPILE_DEFINITIONS WORLD_DIMENSION=3
+              LABELS unit parallel
+              MPI_RANKS 1 2 4
+              TIMEOUT 1200)
+
 # symlink the input file in the build directory
 dune_symlink_to_source_files(FILES "network1d.msh" "network2d.msh" "fracture.msh")

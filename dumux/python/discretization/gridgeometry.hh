@@ -120,13 +120,14 @@ void registerGridGeometry(pybind11::handle scope, pybind11::class_<GG, Options..
 
     using GridView = typename GG::GridView;
 
+    // the grid geometry only stores a grid-view handle, so keep the view alive with it
     cls.def(pybind11::init([](const GridView& gridView){
         return std::make_shared<GG>(gridView);
-    }), "gridView"_a);
+    }), "gridView"_a, pybind11::keep_alive<1, 2>());
 
     cls.def("update", [](GG& self, const GridView& gridView){
         return self.update(gridView);
-    }, "gridView"_a);
+    }, "gridView"_a, pybind11::keep_alive<1, 2>());
 
     cls.def_property_readonly("numDofs", &GG::numDofs);
     cls.def_property_readonly("numScv", &GG::numScv);

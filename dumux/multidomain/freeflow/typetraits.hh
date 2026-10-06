@@ -12,11 +12,17 @@
 #ifndef DUMUX_MULTIDOMAIN_FREEFLOW_TYPETRAITS_HH
 #define DUMUX_MULTIDOMAIN_FREEFLOW_TYPETRAITS_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux::Detail {
 
 template<class Traits>
 struct MomentumDiscretizationMethod
-{ using type = typename Traits::template SubDomain<0>::GridGeometry::DiscretizationMethod; };
+{
+    using type = typename GetPropType<
+        typename Traits::template SubDomainTypeTag<0>, Properties::GridGeometry
+    >::DiscretizationMethod;
+};
 
 } // end namespace Dumux::Detail
 

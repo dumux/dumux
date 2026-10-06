@@ -72,3 +72,23 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq2_simplex
                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_pq2 params.input
                                -Problem.Name test_ff_stokes_channel_3d_nonuniform_pq2_simplex
                                -Grid.File channel.msh")
+
+# P3-P1 is inf-sup stable but does not converge optimally for the veloctiy
+# However, here we only want to check higher-order elements work and output correctly
+dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq3_simplex
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=ThreeDChannelTestMomentumPQ3
+               COMPILE_DEFINITIONS TYPETAG_MASS=ThreeDChannelTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
+               COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
+               LABELS freeflow navierstokes
+               TIMEOUT 1200
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_3d_nonuniform_pq3_simplex-reference.vtu
+                                       ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_pq3_simplex-00001.vtu
+                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_3d_nonuniform_pq3_simplex params.input
+                               -Problem.Name test_ff_stokes_channel_3d_nonuniform_pq3_simplex
+                               -Grid.File channel.msh")

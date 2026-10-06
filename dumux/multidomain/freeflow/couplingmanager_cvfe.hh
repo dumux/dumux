@@ -24,17 +24,21 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/concepts/localdofs_.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/concepts/variables_.hh>
+#include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 
 #include <dumux/parallel/parallel_for.hh>
 #include <dumux/assembly/coloring.hh>
@@ -68,8 +72,6 @@ private:
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using ElementSeed = typename GridView<id>::Grid::template Codim<0>::EntitySeed;
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
-    template<std::size_t id> using SubControlVolume = typename FVElementGeometry<id>::SubControlVolume;
-    template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
     template<std::size_t id> using GridVariables = typename Traits::template SubDomain<id>::GridVariables;
     template<std::size_t id> using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables<id>>;
     template<std::size_t id> using ElementVariables = typename GridVariablesCache<id>::LocalView;
@@ -85,11 +87,11 @@ private:
 
     using FluidSystem = typename Variables<freeFlowMassIndex>::FluidSystem;
 
-    using GlobalPosition = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
+    using GlobalPosition = typename GridGeometry<freeFlowMassIndex>::GlobalCoordinate;
     using VelocityVector = GlobalPosition;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
 
-    static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
+    static_assert(std::is_same_v<VelocityVector, typename GridGeometry<freeFlowMomentumIndex>::GlobalCoordinate>);
 
     template<class ElementSolution>
     struct MomentumCouplingContextNoCaching
@@ -97,15 +99,21 @@ private:
         MomentumCouplingContextNoCaching(ElementSolution&& elemSol)
         : elemSol_(std::move(elemSol)) {}
 
-        template<class GridVarsCache, class FvElementGeometry, class SubControlVolume>
-        auto vars(const GridVarsCache& gridVarsCache, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
+        template<class GridVarsCache, class FvElementGeometry, class ScvOrLocalDof>
+        auto vars(const GridVarsCache& gridVarsCache, const FvElementGeometry& fvGeometry, const ScvOrLocalDof& scvOrLocalDof) const
         {
             const auto& problem = gridVarsCache.problem();
             Variables<freeFlowMassIndex> variables;
             if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
-                variables.update(elemSol_, problem, fvGeometry.element(), scv);
+            {
+                // the variables are still updated per sub-control volume
+                if constexpr (Concept::LocalDof<ScvOrLocalDof>)
+                    variables.update(elemSol_, problem, fvGeometry.element(), fvGeometry.scv(scvOrLocalDof.index()));
+                else
+                    variables.update(elemSol_, problem, fvGeometry.element(), scvOrLocalDof);
+            }
             else
-                variables.update(elemSol_, problem, fvGeometry, ipData(fvGeometry, scv));
+                variables.update(elemSol_, problem, fvGeometry, ipData(fvGeometry, scvOrLocalDof));
             return variables;
         }
 
@@ -114,13 +122,13 @@ private:
 
     struct MomentumCouplingContextGlobalCaching
     {
-        template<class GridVarsCache, class FvElementGeometry, class SubControlVolume>
-        const auto& vars(const GridVarsCache& gridVarsCache, const FvElementGeometry& fvGeometry, const SubControlVolume& scv) const
+        template<class GridVarsCache, class FvElementGeometry, class ScvOrLocalDof>
+        const auto& vars(const GridVarsCache& gridVarsCache, const FvElementGeometry& fvGeometry, const ScvOrLocalDof& scvOrLocalDof) const
         {
-            if constexpr (requires { gridVarsCache.volVars(scv); })
-                return gridVarsCache.volVars(scv);
+            if constexpr (requires { gridVarsCache.volVars(scvOrLocalDof); })
+                return gridVarsCache.volVars(scvOrLocalDof);
             else
-                return gridVarsCache.variables(scv);
+                return gridVarsCache.variables(scvOrLocalDof);
         }
     };
 
@@ -149,6 +157,7 @@ public:
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->updateSolution(curSol);
+        prevSol_ = nullptr;
 
         computeCouplingStencils_();
     }
@@ -162,7 +171,6 @@ public:
     {
         init(momentumProblem, massProblem, std::forward<GridVariablesTuple>(gridVariables), curSol);
         prevSol_ = &prevSol;
-        isTransient_ = true;
     }
 
     //! use as binary coupling manager in multi model context
@@ -174,6 +182,7 @@ public:
         this->setSubProblems(std::make_tuple(momentumProblem, massProblem));
         gridVariables_ = gridVariables;
         this->attachSolution(curSol);
+        prevSol_ = nullptr;
 
         computeCouplingStencils_();
     }
@@ -188,40 +197,42 @@ public:
     /*!
      * \brief Returns the pressure at a given sub control volume face
      */
+    template<class ElementDiscretization>
     [[deprecated("This method will be removed after release (3.11). Use pressure(..., ipData) instead!")]]
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
-                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                    const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                    const ElementDiscretization& elemDisc,
+                    const typename ElementDiscretization::SubControlVolumeFace& scvf,
                     const bool considerPreviousTimeStep = false) const
     {
         const auto& globalPos = scvf.ipGlobal();
         const auto& localPos = element.geometry().local(globalPos);
-        return this->pressure(element, fvGeometry, IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
+        return this->pressure(element, elemDisc, IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the pressure at a given sub control volume
      */
+    template<class ElementDiscretization>
     [[deprecated("This method will be removed after release (3.11). Use pressure(..., ipData) instead!")]]
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
-                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                    const SubControlVolume<freeFlowMomentumIndex>& scv,
+                    const ElementDiscretization& elemDisc,
+                    const typename ElementDiscretization::SubControlVolume& scv,
                     const bool considerPreviousTimeStep = false) const
     {
-        return this->pressure(element, fvGeometry, ipData(fvGeometry, scv), considerPreviousTimeStep);
+        return this->pressure(element, elemDisc, ipData(elemDisc, scv), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the pressure at a given interpolation point
      */
-    template <class IpData>
+    template<Concept::IpData IpData>
     Scalar pressure(const Element<freeFlowMomentumIndex>& element,
                     const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                     const IpData& ipData,
                     const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
-        const auto& gg = this->problem(freeFlowMassIndex).gridGeometry();
+        assert(!(considerPreviousTimeStep && !isTransient_()));
+        const auto& gg = Dumux::gridDiscretization(this->problem(freeFlowMassIndex));
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
         const auto elemSol = elementSolution(element, sol, gg);
@@ -231,44 +242,46 @@ public:
     /*!
      * \brief Returns the density at a given sub control volume face.
      */
+    template<class ElementDiscretization>
     [[deprecated("This method will be removed after release (3.11). Use density(..., ipData) instead!")]]
     Scalar density(const Element<freeFlowMomentumIndex>& element,
-                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                   const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                   const ElementDiscretization& elemDisc,
+                   const typename ElementDiscretization::SubControlVolumeFace& scvf,
                    const bool considerPreviousTimeStep = false) const
     {
         const auto& globalPos = scvf.ipGlobal();
         const auto& localPos = element.geometry().local(globalPos);
-        return this->density(element, fvGeometry,  IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
+        return this->density(element, elemDisc,  IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the density at a given sub control volume.
      */
+    template<class ElementDiscretization>
     [[deprecated("This method will be removed after release (3.11). Use density(..., ipData) instead!")]]
     Scalar density(const Element<freeFlowMomentumIndex>& element,
-                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                   const SubControlVolume<freeFlowMomentumIndex>& scv,
+                   const ElementDiscretization& elemDisc,
+                   const typename ElementDiscretization::SubControlVolume& scv,
                    const bool considerPreviousTimeStep = false) const
     {
-        return this->density(element, fvGeometry, ipData(fvGeometry, scv), considerPreviousTimeStep);
+        return this->density(element, elemDisc, ipData(elemDisc, scv), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the density at a given position.
      */
-    template <class IpData>
+    template<Concept::IpData IpData>
     Scalar density(const Element<freeFlowMomentumIndex>& element,
                    const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                    const IpData& ipData,
                    const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
 
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
 
-        auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+        auto massFvGeometry = localView(Dumux::gridDiscretization(this->problem(freeFlowMassIndex)));
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
         const auto& gridVarsCache = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
@@ -282,8 +295,7 @@ public:
 
             return variables.density();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
-                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
+        else
         {
             // TODO: cache the shape values
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -292,61 +304,59 @@ public:
             localBasis.evaluateFunction(ipData.local(), shapeValues);
 
             Scalar rho = 0.0;
-            for (const auto& scv : scvs(massFvGeometry))
+            for (const auto& localDof : localDofs(massFvGeometry))
             {
-                const auto& variables = context.vars(gridVarsCache, massFvGeometry, scv);
-                rho += variables.density()*shapeValues[scv.localDofIndex()][0];
+                const auto& variables = context.vars(gridVarsCache, massFvGeometry, localDof);
+                rho += variables.density()*shapeValues[localDof.index()][0];
             }
 
             return rho;
         }
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                "Density interpolation for discretization scheme " << MassDiscretizationMethod{}
-            );
     }
 
     /*!
      * \brief Returns the effective viscosity at a given sub control volume face.
      */
+    template<class ElementDiscretization>
     [[deprecated("This method will be removed after release (3.11). Use effectiveViscosity(..., ipData) instead!")]]
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
-                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                              const SubControlVolumeFace<freeFlowMomentumIndex>& scvf,
+                              const ElementDiscretization& elemDisc,
+                              const typename ElementDiscretization::SubControlVolumeFace& scvf,
                               const bool considerPreviousTimeStep = false) const
     {
         const auto& globalPos = scvf.ipGlobal();
         const auto& localPos = element.geometry().local(globalPos);
-        return this->effectiveViscosity(element, fvGeometry, IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
+        return this->effectiveViscosity(element, elemDisc, IpData<freeFlowMassIndex>(localPos, globalPos), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the effective viscosity at a given sub control volume.
      */
+    template<class ElementDiscretization>
     [[deprecated("This method will be removed after release (3.11). Use effectiveViscosity(..., ipData) instead!")]]
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
-                              const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
-                              const SubControlVolume<freeFlowMomentumIndex>& scv,
+                              const ElementDiscretization& elemDisc,
+                              const typename ElementDiscretization::SubControlVolume& scv,
                               const bool considerPreviousTimeStep = false) const
     {
-        return this->effectiveViscosity(element, fvGeometry, ipData(fvGeometry, scv), considerPreviousTimeStep);
+        return this->effectiveViscosity(element, elemDisc, ipData(elemDisc, scv), considerPreviousTimeStep);
     }
 
     /*!
      * \brief Returns the effective viscosity at a given position.
      */
-    template <class IpData>
+    template<Concept::IpData IpData>
     Scalar effectiveViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
                               const IpData& ipData,
                               const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
 
         const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMassIndex]
                                                    :  this->curSol(freeFlowMassIndex);
 
-        auto massFvGeometry = localView(this->problem(freeFlowMassIndex).gridGeometry());
+        auto massFvGeometry = localView(Dumux::gridDiscretization(this->problem(freeFlowMassIndex)));
         massFvGeometry.bind(element);
         const auto context = makeMomentumCouplingContext_(massFvGeometry, sol);
         const auto& gridVarsCache = subDomainGridVars_(Dune::index_constant<freeFlowMassIndex>{}, considerPreviousTimeStep);
@@ -360,8 +370,7 @@ public:
 
             return variables.viscosity();
         }
-        else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
-                           || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
+        else
         {
             // TODO: cache the shape values
             using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
@@ -370,28 +379,25 @@ public:
             localBasis.evaluateFunction(ipData.local(), shapeValues);
 
             Scalar mu = 0.0;
-            for (const auto& scv : scvs(massFvGeometry))
+            for (const auto& localDof : localDofs(massFvGeometry))
             {
-                const auto& variables = context.vars(gridVarsCache, massFvGeometry, scv);
-                mu += variables.viscosity()*shapeValues[scv.localDofIndex()][0];
+                const auto& variables = context.vars(gridVarsCache, massFvGeometry, localDof);
+                mu += variables.viscosity()*shapeValues[localDof.index()][0];
             }
 
             return mu;
         }
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                "Viscosity interpolation for discretization scheme " << MassDiscretizationMethod{}
-            );
     }
 
      /*!
      * \brief Returns the velocity at a given sub control volume face.
      */
+    template<class SubControlVolumeFace>
     VelocityVector faceVelocity(const Element<freeFlowMassIndex>& element,
-                                const SubControlVolumeFace<freeFlowMassIndex>& scvf) const
+                                const SubControlVolumeFace& scvf) const
     {
         // TODO: optimize this function for tpfa where the scvf ip coincides with the dof location
-        auto fvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+        auto fvGeometry = localView(Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex)));
         fvGeometry.bindElement(element);
 
         const auto& localBasis = fvGeometry.feLocalBasis();
@@ -413,7 +419,7 @@ public:
      */
     VelocityVector elementVelocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry) const
     {
-        auto momentumFvGeometry = localView(this->problem(freeFlowMomentumIndex).gridGeometry());
+        auto momentumFvGeometry = localView(Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex)));
         momentumFvGeometry.bindElement(fvGeometry.element());
 
         const auto& localBasis = momentumFvGeometry.feLocalBasis();
@@ -432,15 +438,15 @@ public:
     /*!
      * \brief Returns the velocity at an interpolation point.
      */
-    template <class IpData>
+    template<Concept::IpData IpData>
     VelocityVector velocity(const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
                             const IpData& ipData,
                             const bool considerPreviousTimeStep = false) const
     {
-        assert(!(considerPreviousTimeStep && !this->isTransient_));
+        assert(!(considerPreviousTimeStep && !isTransient_()));
 
         const auto& element = fvGeometry.element();
-        const auto& gg = this->problem(freeFlowMomentumIndex).gridGeometry();
+        const auto& gg = Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex));
         auto momentumFvGeometry = localView(gg);
         momentumFvGeometry.bindElement(fvGeometry.element());
 
@@ -452,13 +458,41 @@ public:
     }
 
     /*!
+     * \brief Returns the divergence of the velocity at an interpolation point.
+     * \note This is what the mass subdomain needs when it assembles the continuity equation
+     *       in weak form instead of as a control volume flux balance.
+     */
+    template<Concept::IpData IpData>
+    Scalar velocityDivergence(const FVElementGeometry<freeFlowMassIndex>& fvGeometry,
+                              const IpData& ipData,
+                              const bool considerPreviousTimeStep = false) const
+    {
+        assert(!(considerPreviousTimeStep && !isTransient_()));
+
+        const auto& element = fvGeometry.element();
+        const auto& gg = Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex));
+
+        const auto& sol = considerPreviousTimeStep ? (*prevSol_)[freeFlowMomentumIndex]
+                                                   :  this->curSol(freeFlowMomentumIndex);
+
+        const auto elemSol = elementSolution(element, sol, gg);
+        const auto gradV = evalGradientsAtLocalPos(element, element.geometry(), gg, elemSol, ipData.local());
+
+        Scalar divV = 0.0;
+        for (int dirIdx = 0; dirIdx < GridView<freeFlowMomentumIndex>::dimension; ++dirIdx)
+            divV += gradV[dirIdx][dirIdx];
+
+        return divV;
+    }
+
+    /*!
      * \brief The coupling stencil of domain I, i.e. which domain J DOFs
      *        the given domain I element's residual depends on.
      */
-    template<std::size_t j>
+    template<std::size_t j, class SubControlVolume>
     const CouplingStencilType& couplingStencil(Dune::index_constant<freeFlowMomentumIndex> domainI,
                                                const Element<freeFlowMomentumIndex>& elementI,
-                                               const SubControlVolume<freeFlowMomentumIndex>& scvI,
+                                               const SubControlVolume& scvI,
                                                Dune::index_constant<j> domainJ) const
     { return emptyStencil_; }
 
@@ -480,7 +514,7 @@ public:
                                               const Element<freeFlowMassIndex>& elementI,
                                               Dune::index_constant<freeFlowMomentumIndex> domainJ) const
     {
-        const auto eIdx = this->problem(freeFlowMassIndex).gridGeometry().elementMapper().index(elementI);
+        const auto eIdx = Dumux::gridDiscretization(this->problem(freeFlowMassIndex)).elementMapper().index(elementI);
         return massAndEnergyToMomentumStencils_[eIdx];
     }
 
@@ -496,7 +530,7 @@ public:
                                                const Element<freeFlowMomentumIndex>& elementI,
                                                Dune::index_constant<freeFlowMassIndex> domainJ) const
     {
-        const auto eIdx = this->problem(freeFlowMomentumIndex).gridGeometry().elementMapper().index(elementI);
+        const auto eIdx = Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex)).elementMapper().index(elementI);
         return momentumToMassAndEnergyStencils_[eIdx];
     }
 
@@ -543,9 +577,9 @@ public:
                 if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
                 {
                     const auto& problem = this->problem(domainJ);
-                    const auto& deflectedElement = problem.gridGeometry().element(dofIdxGlobalJ);
-                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
-                    auto fvGeometry = localView(problem.gridGeometry());
+                    const auto& deflectedElement = Dumux::gridDiscretization(problem).element(dofIdxGlobalJ);
+                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), Dumux::gridDiscretization(problem));
+                    auto fvGeometry = localView(Dumux::gridDiscretization(problem));
                     fvGeometry.bind(deflectedElement);
                     const auto& scv = fvGeometry.scv(dofIdxGlobalJ);
 
@@ -555,16 +589,37 @@ public:
                         subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, ipData(fvGeometry, scv)).update(std::move(elemSol), problem, deflectedElement, scv);
                 }
             }
-            else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
-                            || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
+            // finite element discretizations have local dofs but no sub-control volumes
+            else if constexpr (!requires (FVElementGeometry<freeFlowMassIndex>& lv) { scvs(lv); })
             {
                 if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
                 {
                     const auto& problem = this->problem(domainJ);
-                    const auto deflectedElementIdx = problem.gridGeometry().elementMapper().index(localAssemblerI.element());
-                    const auto& deflectedElement = problem.gridGeometry().element(deflectedElementIdx);
-                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), problem.gridGeometry());
-                    auto fvGeometry = localView(problem.gridGeometry());
+                    const auto deflectedElementIdx = Dumux::gridDiscretization(problem).elementMapper().index(localAssemblerI.element());
+                    const auto& deflectedElement = Dumux::gridDiscretization(problem).element(deflectedElementIdx);
+                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), Dumux::gridDiscretization(problem));
+                    auto fvGeometry = localView(Dumux::gridDiscretization(problem));
+                    fvGeometry.bind(deflectedElement);
+
+                    for (const auto& localDof : localDofs(fvGeometry))
+                    {
+                        if (localDof.dofIndex() == dofIdxGlobalJ)
+                            this->subDomainVariables_(
+                                Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, localDof
+                            ).update(std::move(elemSol), problem, fvGeometry, ipData(fvGeometry, localDof));
+                    }
+                }
+            }
+            else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
+                               || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
+            {
+                if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
+                {
+                    const auto& problem = this->problem(domainJ);
+                    const auto deflectedElementIdx = Dumux::gridDiscretization(problem).elementMapper().index(localAssemblerI.element());
+                    const auto& deflectedElement = Dumux::gridDiscretization(problem).element(deflectedElementIdx);
+                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), Dumux::gridDiscretization(problem));
+                    auto fvGeometry = localView(Dumux::gridDiscretization(problem));
                     fvGeometry.bind(deflectedElement);
 
                     // ToDo: Replace once all mass models are also working with local dofs
@@ -598,12 +653,12 @@ public:
         {
             // use coloring of the mass discretization for both domains
             // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
-            elementSets_ = computeColoring(this->problem(freeFlowMassIndex).gridGeometry()).sets;
+            elementSets_ = computeColoring(Dumux::gridDiscretization(this->problem(freeFlowMassIndex))).sets;
         }
         else
         {
             // use coloring of the momentum discretization for both domains
-            elementSets_ = computeColoring(this->problem(freeFlowMomentumIndex).gridGeometry()).sets;
+            elementSets_ = computeColoring(Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex))).sets;
         }
     }
 
@@ -623,7 +678,7 @@ public:
         // for this we have to color the elements so that we don't get
         // race conditions when writing into the global matrix
         // each color can be assembled using multiple threads
-        const auto& grid = this->problem(freeFlowMassIndex).gridGeometry().gridView().grid();
+        const auto& grid = Dumux::gridDiscretization(this->problem(freeFlowMassIndex)).gridView().grid();
         for (const auto& elements : elementSets_)
         {
             Dumux::parallelFor(elements.size(), [&](const std::size_t eIdx)
@@ -682,7 +737,7 @@ private:
         if constexpr (GridVariablesCache<freeFlowMassIndex>::cachingEnabled)
             return MomentumCouplingContextGlobalCaching{};
         else
-            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, fvGeometry.gridGeometry())};
+            return MomentumCouplingContextNoCaching{elementSolution(fvGeometry.element(), sol, Dumux::gridDiscretization(fvGeometry))};
     }
 
     /*!
@@ -713,8 +768,8 @@ private:
 
     void computeCouplingStencils_()
     {
-        const auto& momentumGridGeometry = this->problem(freeFlowMomentumIndex).gridGeometry();
-        const auto& massGridGeometry = this->problem(freeFlowMassIndex).gridGeometry();
+        const auto& momentumGridGeometry = Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex));
+        const auto& massGridGeometry = Dumux::gridDiscretization(this->problem(freeFlowMassIndex));
         auto momentumFvGeometry = localView(momentumGridGeometry);
         auto massFvGeometry = localView(massGridGeometry);
 
@@ -739,9 +794,8 @@ private:
             for (const auto& localDof : localDofs(momentumFvGeometry))
                 massAndEnergyToMomentumStencils_[eIdx].push_back(localDof.dofIndex());
 
-            // ToDo: Replace once all mass models are also working with local dofs
-            for (const auto& scv : scvs(massFvGeometry))
-                momentumToMassAndEnergyStencils_[eIdx].push_back(scv.dofIndex());
+            for (const auto& localDof : localDofs(massFvGeometry))
+                momentumToMassAndEnergyStencils_[eIdx].push_back(localDof.dofIndex());
         }
 
         // Print warning for pq1bubble scheme on cube elements if not using the hybrid variant
@@ -763,8 +817,11 @@ private:
     //! A tuple of std::shared_ptrs to the grid variables of the sub problems
     GridVariablesTuple gridVariables_;
 
-    const SolutionVector* prevSol_;
-    bool isTransient_;
+    //! we are in a transient setting if a previous solution has been set
+    bool isTransient_() const
+    { return prevSol_ != nullptr; }
+
+    const SolutionVector* prevSol_ = nullptr;
 
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
 };

@@ -35,7 +35,7 @@
 #include <dumux/multidomain/glue.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 
 namespace Dumux {
 

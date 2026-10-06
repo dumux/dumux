@@ -16,6 +16,8 @@
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/std/type_traits.hh>
 
+#include <dumux/common/typetraits/griddiscretization.hh>
+
 namespace Dumux {
 
 /*!
@@ -53,9 +55,15 @@ public:
     const auto& problem(Dune::index_constant<i> id) const { return assembler_.problem(id); }
     const auto& problem() const { return assembler_.problem(myId); }
 
+    //! the grid discretization of domain i
     template<std::size_t i>
-    const auto& gridGeometry(Dune::index_constant<i> id) const { return assembler_.gridGeometry(id); }
-    const auto& gridGeometry() const { return assembler_.gridGeometry(myId); }
+    const auto& gridDiscretization(Dune::index_constant<i> id) const
+    { return Dumux::gridDiscretization(assembler_, id); }
+    const auto& gridDiscretization() const { return gridDiscretization(myId); }
+
+    template<std::size_t i>
+    const auto& gridGeometry(Dune::index_constant<i> id) const { return gridDiscretization(id); }
+    const auto& gridGeometry() const { return gridDiscretization(myId); }
 
     template<std::size_t i>
     const auto& gridVariables(Dune::index_constant<i> id) const { return assembler_.gridVariables(id); }
@@ -63,6 +71,11 @@ public:
 
     const auto& prevSol() const { return assembler_.prevSol(); }
     bool isStationaryProblem() const { return assembler_.isStationaryProblem(); }
+
+    //! The temporal and spatial weight of the current stage (only for multi-stage assemblers)
+    auto currentStageWeights() const
+    requires requires (const MDAssembler& a) { a.currentStageWeights(); }
+    { return assembler_.currentStageWeights(); }
 
     template<class A = MDAssembler, typename std::enable_if_t<hasStaticIsImplicit<A>, int> = 0>
     static constexpr bool isImplicit() { return MDAssembler::isImplicit(); }

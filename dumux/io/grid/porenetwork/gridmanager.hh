@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Provides a grid manager for pore-network models
+ * \anchor porenetwork_grid_manager
  */
 #ifndef DUMUX_PORE_NETWORK_GRID_MANAGER_HH
 #define DUMUX_PORE_NETWORK_GRID_MANAGER_HH
@@ -35,7 +36,7 @@
 namespace Dumux::PoreNetwork {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief A grid manager for pore-network models
  */
 template<int dimWorld, class GData = Dumux::PoreNetwork::GridData<Dune::FoamGrid<1, dimWorld>>>

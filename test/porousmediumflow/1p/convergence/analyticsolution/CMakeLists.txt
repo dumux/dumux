@@ -73,3 +73,26 @@ else()
                    CMAKE_GUARD dune-uggrid_FOUND
                    LABELS porousmediumflow 1p)
 endif()
+
+# the schemes assembled with the new interfaces
+dumux_add_test(NAME test_1p_convergence_analytic_pq3
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG=OnePConvergencePQ3
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_pq3 pq3_structured
+                        --expected-rate 4
+                        params.input)
+
+# PQ1Bubble is defined on simplices, so it needs a simplex grid
+dumux_add_test(NAME test_1p_convergence_analytic_pq1bubble
+               SOURCES main.cc
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS TYPETAG=OnePConvergencePQ1Bubble
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_pq1bubble pq1bubble_structured
+                        --expected-rate 2
+                        params.input)

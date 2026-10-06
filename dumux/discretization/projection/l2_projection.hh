@@ -27,6 +27,7 @@
 #ifdef HAVE_DUNE_FUNCTIONS
 #include <dune/functions/gridfunctions/gridviewfunction.hh>
 #endif
+#include <dumux/io/format.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -219,7 +220,7 @@ public:
             auto solver = solver_;
             Dune::ParameterTree solverParams;
             solverParams["maxit"] = std::to_string(params.maxIterations);
-            solverParams["reduction"] = std::to_string(params.residualReduction);
+            solverParams["reduction"] = Fmt::format("{}", params.residualReduction);
             solverParams["verbose"] = std::to_string(params.verbosity);
             solver.setParams(solverParams);
 

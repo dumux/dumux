@@ -153,12 +153,13 @@ public:
             completeFluidState_(elemSol, problem, element, scv, fluidState_, solidState_);
 
             // we want to account for diffusion in the air phase
-            // use Raoult to compute the water mole fraction in air
+            // the water vapor in the air is in equilibrium with the liquid phase
             molarDensity_[liquidPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(liquidPhaseIdx))/FluidSystem::H2O::molarMass();
             molarDensity_[gasPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonwettingReferencePressure());
             moleFraction_[liquidPhaseIdx] = 1.0;
 
-            moleFraction_[gasPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonwettingReferencePressure();
+            moleFraction_[gasPhaseIdx] = Detail::ExtendedRichards::equilibriumVaporPressure<FluidSystem>(fluidState_)
+                                         / problem.nonwettingReferencePressure();
 
             const auto averageMolarMassGasPhase = (moleFraction_[gasPhaseIdx]*FluidSystem::molarMass(liquidPhaseIdx)) +
             ((1-moleFraction_[gasPhaseIdx])*FluidSystem::molarMass(gasPhaseIdx));

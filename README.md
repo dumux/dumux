@@ -104,7 +104,7 @@ our publications:
     journal = {Advances in Water Resources}}
 ```
 
-# Automated Testing / Test suite
+# Automated Testing
 
 * ![GitLab Release](https://img.shields.io/gitlab/v/release/dumux-repositories%2Fdumux?gitlab_url=https%3A%2F%2Fgit.iws.uni-stuttgart.de&label=latest%20DuMux%20release&color=72b09f): [![release build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/releases/3.10/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=releases/3.10)
 * ![Master branch (development / unstable)](https://img.shields.io/badge/DuMux_branch-master-72b09f): [![master build badge](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/badges/master/pipeline.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/pipelines?page=1&scope=all&ref=master)
@@ -140,7 +140,7 @@ cmake --build --target build_2p_tests -- -j8
 ctest -j8 -L ^2p$
 ```
 
-## Running individual tests
+## Individual tests
 
 To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder.
 
@@ -173,14 +173,14 @@ only a few lines of code are never instantiated in the comprehensive test suite.
 Contributions are highly welcome. Please ask questions over the DuMu<sup>x</sup> support channel on Matrix or the DuMu<sup>x</sup> mailing list. Please review the [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md)
 before opening issues and merge requests.
 
-# Bug/issue reports or vulnerabilities
+# Bug reports
 
 For bug reports or to report any detected security vulnerabilities, contact us
 over the mailing list, or file an [issue](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/issues). For bug fixes,
 feature implementations open a [merge request](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/merge_requests)
 or send us formatted patches.
 
-# Releases and backward compatibility policy
+# Compatibility
 
 For a detailed description of the backward compatibility policy,
 please see [contribution guidelines](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/CONTRIBUTING.md).

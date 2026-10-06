@@ -23,6 +23,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/multimapperview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 
 #include <dumux/assembly/numericepsilon.hh>
@@ -68,19 +69,20 @@ class CVFELocalAssemblerBase : public LocalAssemblerBase<TypeTag, Assembler, Imp
     using ParentType = LocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
-    using GridGeometry =  GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridDiscretization =  GetPropType<TypeTag, Properties::GridGeometry>;
 
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
-    static constexpr int dim = GridGeometry::GridView::dimension;
+    static constexpr int dim = GridDiscretization::GridView::dimension;
 
 public:
 
     using ParentType::ParentType;
+    using LocalResidual = typename ParentType::LocalResidual;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     void bindLocalViews()
     {
         ParentType::bindLocalViews();
-        this->elemBcTypes().update(this->asImp_().problem(), this->element(), this->fvGeometry());
     }
 
     /*!
@@ -93,13 +95,13 @@ public:
                                      const CouplingFunction& maybeAssembleCouplingBlocks = {})
     {
         this->asImp_().bindLocalViews();
-        const auto eIdxGlobal = this->asImp_().problem().gridGeometry().elementMapper().index(this->element());
+        const auto eIdxGlobal = this->asImp_().problem().gridDiscretization().elementMapper().index(this->element());
         if (partialReassembler
             && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
 
-            for (const auto& localDof : localDofs(this->fvGeometry()))
+            for (const auto& localDof : localDofs(this->elemDisc()))
                 res[localDof.dofIndex()] += residual[localDof.index()];
 
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
@@ -109,7 +111,7 @@ public:
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
 
-            for (const auto& localDof : localDofs(this->fvGeometry()))
+            for (const auto& localDof : localDofs(this->elemDisc()))
                 res[localDof.dofIndex()] += residual[localDof.index()];
 
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
@@ -121,11 +123,11 @@ public:
             assert(this->elementIsGhost());
 
             // handle dofs per codimension
-            const auto& gridGeometry = this->asImp_().problem().gridGeometry();
+            const auto& gridDiscretization = this->asImp_().problem().gridDiscretization();
             Dune::Hybrid::forEach(std::make_integer_sequence<int, dim+1>{}, [&](auto d)
             {
                 constexpr int codim = dim - d;
-                const auto& localCoeffs = gridGeometry.feCache().get(this->element().type()).localCoefficients();
+                const auto& localCoeffs = gridDiscretization.feCache().get(this->element().type()).localCoefficients();
                 for (int idx = 0; idx < localCoeffs.size(); ++idx)
                 {
                     const auto& localKey = localCoeffs.localKey(idx);
@@ -139,22 +141,94 @@ public:
                     if (entity.partitionType() == Dune::InteriorEntity || entity.partitionType() == Dune::BorderEntity)
                         continue;
 
-                    // WARNING: this only works if the mapping from codim+subEntity to
-                    // global dofIndex is unique (one dof per entity of this codim).
-                    // For more general mappings, we should use a proper local-global mapping here.
-                    // For example through dune-functions.
-                    const auto dofIndex = gridGeometry.dofMapper().index(entity);
-
-                    // this might be a vector-valued dof
+                    // Set identity rows for ALL DOFs of this ghost entity.
+                    // Entities with multiple DOFs (e.g. PQ3 edge interior DOFs with 2 per edge)
+                    // require iterating over all DOF indices via asMultiMapper(dofMapper()).indices(entity).
                     using BlockType = typename JacobianMatrix::block_type;
-                    BlockType &J = jac[dofIndex][dofIndex];
-                    for (int j = 0; j < BlockType::rows; ++j)
-                        J[j][j] = 1.0;
-
-                    // set residual for the ghost dof
-                    res[dofIndex] = 0;
+                    for (const auto dofIndex : asMultiMapper(gridDiscretization.dofMapper()).indices(entity))
+                    {
+                        BlockType &J = jac[dofIndex][dofIndex];
+                        for (int j = 0; j < BlockType::rows; ++j)
+                            J[j][j] = 1.0;
+                        res[dofIndex] = 0;
+                    }
                 }
             });
+        }
+    }
+
+    /*!
+     * \brief Multi-stage assembly: assembles Jacobian and residual while separately
+     *        accumulating the current stage's temporal and spatial operator evaluations.
+     *
+     * \param jac            The Jacobian matrix to add to
+     * \param res            The residual to add the stage-weighted contribution to
+     * \param gridVariables  The grid variables for this subdomain
+     * \param stageParams    Multi-stage parameters (Butcher tableau weights for this stage)
+     * \param temporal       Accumulator for the temporal (storage) operator at this stage
+     * \param spatial        Accumulator for the spatial (flux+source) operator at this stage
+     * \param constrainedDofs Vector tracking which dofs have Dirichlet constraints
+     * \param maybeAssembleCouplingBlocks Optional functor for coupling Jacobian blocks
+     */
+    template<class ResidualVector, class StageParams, class CouplingFunction = Detail::CVFE::NoOperator>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
+                                     const StageParams& stageParams,
+                                     ResidualVector& temporal, ResidualVector& spatial,
+                                     ResidualVector& constrainedDofs,
+                                     const CouplingFunction& maybeAssembleCouplingBlocks = {})
+    {
+        this->asImp_().bindLocalViews();
+
+        const auto sWeight = stageParams.spatialWeight(stageParams.size()-1);
+        const auto tWeight = stageParams.temporalWeight(stageParams.size()-1);
+
+        if (!this->elementIsGhost())
+        {
+            // evaluate current stage spatial and temporal contributions separately
+            const auto spatialResidual = this->evalLocalFluxAndSourceResidual(this->curElemVars());
+            const auto storageResidual = this->localResidual().evalStorageCurrentLevel(
+                this->element(), this->elemDisc(), this->curElemVars());
+
+            // accumulate into stage vectors and form weighted stage residual
+            ElementResidualVector origResidual(spatialResidual.size());
+            origResidual = 0.0;
+            for (const auto& localDof : localDofs(this->elemDisc()))
+            {
+                const auto li = localDof.index();
+                const auto di = localDof.dofIndex();
+                spatial[di] += spatialResidual[li];
+                temporal[di] += storageResidual[li];
+                origResidual[li] += spatialResidual[li]*sWeight + storageResidual[li]*tWeight;
+                res[di] += origResidual[li];
+            }
+
+            // assemble the Jacobian differentiated w.r.t. the stage-weighted residual
+            this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, tWeight, sWeight);
+
+            maybeAssembleCouplingBlocks(origResidual);
+        }
+    }
+
+    /*!
+     * \brief Convenience method for assembling only the current residual (no Jacobian)
+     *        used during stage 0 preparation in multi-stage assembly.
+     */
+    template<class ResidualVector>
+    void assembleCurrentResidual(ResidualVector& temporal, ResidualVector& spatial)
+    {
+        this->asImp_().bindLocalViews();
+
+        if (!this->elementIsGhost())
+        {
+            const auto spatialResidual = this->evalLocalFluxAndSourceResidual(this->curElemVars());
+            const auto storageResidual = this->localResidual().evalStorageCurrentLevel(
+                this->element(), this->elemDisc(), this->curElemVars());
+
+            for (const auto& localDof : localDofs(this->elemDisc()))
+            {
+                spatial[localDof.dofIndex()] += spatialResidual[localDof.index()];
+                temporal[localDof.dofIndex()] += storageResidual[localDof.index()];
+            }
         }
     }
 
@@ -177,7 +251,7 @@ public:
         this->asImp_().bindLocalViews();
         const auto residual = this->evalLocalResidual();
 
-        for (const auto& localDof : localDofs(this->fvGeometry()))
+        for (const auto& localDof : localDofs(this->elemDisc()))
             res[localDof.dofIndex()] += residual[localDof.index()];
     }
 
@@ -247,7 +321,7 @@ public:
     {
         // get some aliases for convenience
         const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
+        const auto& elemDisc = this->elemDisc();
         const auto& curSol = this->asImp_().curSol();
 
         auto&& curElemVars = this->curElemVars();
@@ -270,15 +344,16 @@ public:
         );
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = elemDisc.gridDiscretization();
+        auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
-        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
 
         auto deflectionPolicy = Dumux::Detail::CVFE::makeVariablesDeflectionPolicy(
             gridVariables.curGridVars(),
             curElemVars,
-            fvGeometry,
+            elemDisc,
             updateAllVars
         );
 
@@ -310,7 +385,7 @@ public:
                                                           eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
-                for (const auto& localDofJ : localDofs(fvGeometry))
+                for (const auto& localDofJ : localDofs(elemDisc))
                 {
                     // don't add derivatives for green dofs
                     if (!partialReassembler
@@ -337,10 +412,80 @@ public:
         };
 
         // calculation of the derivatives
-        for (const auto& localDof : localDofs(fvGeometry))
+        for (const auto& localDof : localDofs(elemDisc))
             assembleDerivative(localDof);
 
         // evaluate additional derivatives that might arise from the coupling (no-op if not coupled)
+        this->asImp_().maybeEvalAdditionalDomainDerivatives(origResiduals, A, gridVariables);
+
+        return origResiduals;
+    }
+
+    /*!
+     * \brief Multi-stage variant: computes the Jacobian of the stage-weighted residual.
+     *
+     * Differentiates `tWeight * storage(u) + sWeight * (flux+source)(u)` w.r.t. dof values.
+     * Used by the multi-stage overload of `assembleJacobianAndResidual`.
+     */
+    template<class Scalar>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                           Scalar tWeight, Scalar sWeight)
+    {
+        const auto& element = this->element();
+        const auto& elemDisc = this->elemDisc();
+        const auto& curSol = this->asImp_().curSol();
+
+        auto&& curElemVars = this->curElemVars();
+
+        const auto origResiduals = this->evalLocalResidualForStage(curElemVars, tWeight, sWeight);
+
+        static const bool updateAllVars = getParamFromGroup<bool>(
+            this->asImp_().problem().paramGroup(), "Assembly.VarsDependOnAllElementDofs", false
+        );
+
+        auto elemSol = elementSolution(element, curSol, elemDisc.gridDiscretization());
+        ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
+
+        auto deflectionPolicy = Dumux::Detail::CVFE::makeVariablesDeflectionPolicy(
+            gridVariables.curGridVars(), curElemVars, elemDisc, updateAllVars
+        );
+
+        auto assembleDerivative = [&, this](const auto& localDof)
+        {
+            const auto dofIdx = localDof.dofIndex();
+            const auto localIdx = localDof.index();
+            deflectionPolicy.store(localDof);
+
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                partialDerivs = 0.0;
+
+                auto evalResiduals = [&](PrimaryVariable priVar)
+                {
+                    elemSol[localIdx][pvIdx] = priVar;
+                    deflectionPolicy.update(elemSol, localDof, this->asImp_().problem());
+                    this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
+                    return this->evalLocalResidualForStage(curElemVars, tWeight, sWeight);
+                };
+
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[localIdx][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);
+
+                for (const auto& localDofJ : localDofs(elemDisc))
+                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        A[localDofJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[localDofJ.index()][eqIdx];
+
+                deflectionPolicy.restore(localDof);
+                elemSol[localIdx][pvIdx] = curSol[localDof.dofIndex()][pvIdx];
+                this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
+            }
+        };
+
+        for (const auto& localDof : localDofs(elemDisc))
+            assembleDerivative(localDof);
+
         this->asImp_().maybeEvalAdditionalDomainDerivatives(origResiduals, A, gridVariables);
 
         return origResiduals;

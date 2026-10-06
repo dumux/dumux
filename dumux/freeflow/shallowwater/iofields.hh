@@ -46,9 +46,9 @@ public:
         std::string name;
 
         switch(pvIdx){
-            case 0 : name = "waterDepth";
-            case 1 : name = "velocityX";
-            case 2 : name = "velocityY";
+            case 0 : name = "waterDepth"; break;
+            case 1 : name = "velocityX"; break;
+            case 2 : name = "velocityY"; break;
         }
 
         return name;

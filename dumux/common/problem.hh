@@ -142,9 +142,7 @@ public:
                                    const typename ElementDiscretization::BoundaryFace& boundaryFace,
                                    const BoundaryTypes& bcTypes) const
     {
-        if constexpr (Concepts::HybridElementDiscretization<ElementDiscretization>
-                   || Concepts::FEElementDiscretization<ElementDiscretization>)
-            Dumux::Experimental::addFEBoundaryFluxIntegral(residual, asImp_(), elemDisc, elemVars, boundaryFace, bcTypes);
+        Dumux::Experimental::addFEBoundaryFluxIntegral(residual, asImp_(), elemDisc, elemVars, boundaryFace, bcTypes);
     }
 
     /*!
@@ -156,15 +154,14 @@ public:
      * \param scvf The scvf for which the boundary flux integral is evaluated
      * \param bcTypes The boundary types
      */
-    template<class ResidualVector, class ElementVariables, class BoundaryTypes>
+    template<class ResidualVector, class ElementVariables, class SubControlVolumeFace, class BoundaryTypes>
     void addFVBoundaryFluxIntegral(ResidualVector& residual,
                                    const ElementDiscretization& elemDisc,
                                    const ElementVariables& elemVars,
-                                   const typename ElementDiscretization::SubControlVolumeFace& scvf,
+                                   const SubControlVolumeFace& scvf,
                                    const BoundaryTypes& bcTypes) const
     {
-        if constexpr (Concepts::FVElementDiscretization<ElementDiscretization>)
-            Dumux::Experimental::addFVBoundaryFluxIntegral(residual, asImp_(), elemDisc, elemVars, scvf, bcTypes);
+        Dumux::Experimental::addFVBoundaryFluxIntegral(residual, asImp_(), elemDisc, elemVars, scvf, bcTypes);
     }
 
 
@@ -254,7 +251,7 @@ public:
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const ElementDiscretization& elemDisc,
-                              const Variables& volVars,
+                              const Variables& vars,
                               const IpData& ipData) const {}
 
     /*!

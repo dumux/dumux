@@ -97,6 +97,23 @@ public:
     }
 
     /*!
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$ at an
+     *        interpolation point, for degrees of freedom that own no sub-control volume.
+     * \param fvGeometry The finite-volume geometry
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the intrinsic permeability
+     */
+    template<class IpData, class ElementSolution>
+    decltype(auto) permeability(const FVElementGeometry& fvGeometry,
+                                const IpData& ipData,
+                                const ElementSolution& elemSol) const
+    {
+        // forward to generic interface
+        return this->asImp_().permeabilityAtPos(ipData.global());
+    }
+
+    /*!
      * \brief If the permeability should be evaluated directly at the scvf integration point
      *        (for convergence tests with analytical and continuous perm functions) or is evaluated
      *        at the scvs (for permeability fields with discontinuities) -> default

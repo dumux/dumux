@@ -10,14 +10,37 @@ Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
 
 - __Local dofs__: A new concept of local degrees of freedom (localDof) has been introduced and implemented for the assembly of CVFE schemes.
 It generalizes the concept of sub-control volumes and allows the implementation of hybrid (finite elements / finite volumes) schemes.
+- __Face-centered staggered__: Fixed `outsidePeriodicScv` without grid geometry caching, which returned a copy of a destroyed sub-control volume.
+- __Multi-stage assemblers__: The operators of the previous stages enter a stage's residual at the stage solutions, so methods with more than one stage are also correct with solvers that stop after an update or assemble only once (e.g. `LinearPDESolver`). `MultiStageAssembler` and the experimental `MultiStageMultiDomainFVAssembler` implement `assembleResidual`; the experimental `MultiStageFVAssembler` can skip the re-evaluation for time-independent operators (`setAutonomousSpatialOperator`).
 - __Box Dfm__: By using the new localDof concept, a bug in the assembly has been fixed, where residual contributions were incorrectly added multiple
 times whenever multiple scvs were associated with the same localDof.
+- __Parameters__: `Parameters::reset()` discards all parameters and the record of which parameters have been used, e.g. to run a model repeatedly in one process.
 - __Particles__: Added a basic particle and particle cloud implementation. This can be the basis for particle tracking modules as shown in a Fokker-Planck test.
+- __Stokes solver__: `StokesSolver` now also runs in parallel (MPI), on non-overlapping and on overlapping decompositions. The velocity AMG and the Jacobi iteration of the pressure block communicate across processes; tested with the donea problem on 2 and 4 processes for PQ1Bubble and Taylor-Hood (P2/P1) on simplices and for hybrid PQ1Bubble on a YaspGrid with overlap.
+- __Free flow__: The coupled face-centered staggered Navier-Stokes system runs in parallel (MPI) with the `StokesSolver`. On a distributed grid the staggered coupling manager matches the faces of the mass balance with the momentum degrees of freedom by their orientation, and `LinearSolverTraits` for cctpfa provide the `dofMapper`.
+- __Stokes solver__: For transient problems the `StokesSolver` accepts a user pressure operator in place of the pressure mass matrix (`setPressureMatrix`), for example a Poisson operator scaled by the time step size, and a diagonal added to its inverse (`setPressureDiagonal`, Cahouet & Chabard). New options: `LinearSolver.Preconditioner.AMGForPressure` and `LinearSolver.Preconditioner.SSORForVelocity`. `setMatrix` and `solve(x, b)` keep the matrix and the preconditioner for several solves, also with symmetrized Dirichlet constraints, which makes the solver usable with `LinearPDESolver::reuseMatrix`.
 - __Testing__: `dumux_run_test.py` is now installed as a script when installing DuMux (with `make install`).
+- __Face-centered staggered__: Fixed the axisymmetric source terms of the momentum balance: the viscous hoop stress had the wrong sign, and both source terms took the distance to the domain boundary as the radius instead of the distance to the rotation axis.
+- __Extended Richards__: The equilibrium vapor pressure is the fluid system's fluid-state dependent vapor pressure if the fluid system provides one, e.g. Kelvin's equation with `FluidSystems::H2OAir<..., useKelvinVaporPressure = true>`.
 - __Multidomain FF-PNM__: The grid manager for the free-flow domain has been improved to allow for up- and downstream grading, even if no additional up- or downstream positions are specified in the input file.
 - __Shallow water equations__: Fixed a bug where the tangential component for the constant water depth boundary condition (fixedWaterDepthBoundary) was missing.
+- __Shallow water equations__: New boundary states `wallBoundary` (slip wall), `inflowBoundary` (supercritical inflow with prescribed water depth and speed) and `criticalDepthOutflowBoundary` (free overfall at the critical depth of the normal discharge). `fixedDischargeBoundary` now returns the wall state for a vanishing discharge instead of an uninitialized state, and `ShallowWaterIOFields::primaryVariableName` returns the correct names, which fixes restarting shallow water simulations.
+- __Face-centered staggered__: Internal Dirichlet constraints (`enableInternalDirichletConstraints()`, `hasInternalDirichletConstraint`, `internalDirichlet`) are now supported for the momentum balance, also in the coupled free-flow system, where the constrained rows are decoupled from the mass balance. A constraint on a velocity dof on a periodic boundary also constrains its periodic partner.
+- __Face-centered staggered__: The grid geometry accepts an overlap of one or more cells for parallel computations instead of exactly one.
+- __Complex-valued primary variables__: The core infrastructure now supports models whose primary variables are complex-valued
+(e.g. `Dune::FieldVector<std::complex<double>, numEq>`) while the property `Scalar` stays real. The Jacobian blocks, the deflected
+primary variables and the evaluated solutions and gradients use the field type of the primary variables. The numeric differentiation
+step, L2 norms and the extrusion factor are real. A real step yields the derivative only for residuals that are holomorphic in the
+unknowns. Multidomain assembly supports complex-valued subdomains: all blocks of the multi-type Jacobian take the common field type
+of the subdomain Jacobians, and `MatrixConverter` and `VectorConverter` default to the field type of the converted multi-type object.
+The embedded 1D-3D coupling interpolates complex-valued primary variables at its integration points with real shape values.
+Complex-valued Helmholtz tests in `test/experimental/complex` demonstrate the feature, including a box facet-coupling test.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
+- __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
+coordinate type for the quadrature rule instead of the field type of the integrated function, and `integrateL2Error` returns the
+real type of that field type. `evalGradients` for CVFE schemes returns gradient entries in the field type of the primary variables
+instead of the coordinate type. For real-valued unknowns with the same precision as the grid coordinates nothing changes.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 

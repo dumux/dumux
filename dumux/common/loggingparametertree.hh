@@ -501,6 +501,15 @@ public:
         return unusedParams;
     }
 
+    /** \brief Forget which parameters have been used
+     */
+    void clearUsageLog()
+    {
+        std::scoped_lock lock{ usedRuntimeMutex_, usedDefaultMutex_ };
+        *usedRuntimeParams_ = Dune::ParameterTree{};
+        *usedDefaultParams_ = Dune::ParameterTree{};
+    }
+
 private:
     /** \brief Find the keys that haven't been used yet recursively
      *

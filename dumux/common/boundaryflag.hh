@@ -31,12 +31,17 @@ public:
     : flag_(invalidFlag_) {}
 
     template<class Intersection>
+        requires requires(const Intersection& i) { i.boundary(); i.boundarySegmentIndex(); }
     BoundarySegmentIndexFlag(const Intersection& i)
     : flag_(invalidFlag_)
     {
         if (i.boundary())
             flag_ = i.boundarySegmentIndex();
     }
+
+    //! Construct from a flag value, for faces derived from other faces rather than from an intersection
+    explicit BoundarySegmentIndexFlag(value_type flag)
+    : flag_(flag) {}
 
     value_type get() const { return flag_; }
 

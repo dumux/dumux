@@ -1,31 +1,11 @@
-/* SPDX-FileCopyrightText: Copyright (c) 2021 - 2023 jothepro */
+/* SPDX-FileCopyrightText: Copyright (c) 2021 - 2025 jothepro */
 /* SPDX-License-Identifier: MIT */
 /**
 
 Doxygen Awesome
 https://github.com/jothepro/doxygen-awesome-css
 
-MIT License
-
-Copyright (c) 2021 - 2023 jothepro
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Copyright (c) 2021 - 2025 jothepro
 
  */
 
@@ -33,7 +13,7 @@ html {
     /* side nav width. MUST be = `TREEVIEW_WIDTH`.
      * Make sure it is wide enough to contain the page title (logo + title + version)
      */
-    --side-nav-fixed-width: 320px;
+    --side-nav-fixed-width: 335px;
     --menu-display: none;
 
     --top-height: 120px;
@@ -44,6 +24,7 @@ html {
 #projectname {
     white-space: nowrap;
 }
+
 
 @media screen and (min-width: 768px) {
     html {
@@ -59,10 +40,6 @@ html {
 
     #nav-tree, #side-nav {
         height: calc(100vh - var(--top-height)) !important;
-    }
-
-    #nav-tree {
-        padding: 0;
     }
 
     #top {
@@ -81,15 +58,17 @@ html {
     }
 
     .ui-resizable-handle {
-        cursor: default;
-        width: 1px !important;
-        box-shadow: 0 calc(-2 * var(--top-height)) 0 0 var(--separator-color);
+        display: none;
+    }
+
+    .ui-resizable-e {
+        width: 0;
     }
 
     #nav-path {
         position: fixed;
         right: 0;
-        left: var(--side-nav-fixed-width);
+        left: calc(var(--side-nav-fixed-width) + 1px);
         bottom: 0;
         width: auto;
     }
@@ -115,20 +94,13 @@ html {
         right: auto;
     }
 
-    #sidebar-resize-handle {
-        position: absolute;
-        top: 0;
-        right: -10px;
-        width: 20px;
-        height: 100%;
-        cursor: ew-resize;
-        z-index: 1000;
+    #nav-sync {
+        bottom: 4px;
+        right: auto;
+        left: 300px;
+        width: 35px;
+        top: auto !important;
         user-select: none;
-        touch-action: none;
-    }
-
-    body.sidebar-resizing {
-        cursor: ew-resize;
-        user-select: none;
+        position: fixed
     }
 }

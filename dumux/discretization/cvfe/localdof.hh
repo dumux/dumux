@@ -52,14 +52,17 @@ inline auto localDofs(const FVElementGeometry& fvGeometry)
     using LocalIndexType = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::LocalIndex;
     using GridIndexType = typename IndexTraits<typename FVElementGeometry::GridGeometry::GridView>::GridIndex;
 
-    return scvs(fvGeometry)
-        | std::views::transform([](const auto& scv) {
+    auto scvRange = scvs(fvGeometry);
+    return std::ranges::transform_view(
+        std::ranges::subrange(scvRange.begin(), scvRange.end()),
+        [](const auto& scv) {
             return CVFE::LocalDof<LocalIndexType, GridIndexType>{
                 static_cast<LocalIndexType>(scv.localDofIndex()),
                 static_cast<GridIndexType>(scv.dofIndex()),
                 static_cast<GridIndexType>(scv.elementIndex())
             };
-        });
+        }
+    );
 }
 
 //! range over control-volume local dofs

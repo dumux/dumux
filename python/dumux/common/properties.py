@@ -154,7 +154,11 @@ def listTypeTags():
 def propertiesHeaderPath():
     """Find the path to the properties.hh C++ header"""
 
-    path, _ = os.path.split(dumux.__file__)
+    # dumux.__file__ is None for a namespace package, so search the package paths
+    path = next(
+        (p for p in dumux.__path__ if os.path.exists(os.path.join(p, "data/dumux.cmake"))),
+        dumux.__path__[0],
+    )
     metaDataFile = os.path.join(path, "data/dumux.cmake")
     if os.path.exists(metaDataFile):
         data = {}
@@ -394,3 +398,39 @@ class Model(TypeTag):
 
         # set the scalar type
         self.__setitem__("Scalar", Property.fromCppType(scalar))
+
+        # frozen on first use so all consumers of one model see the same name
+        self._finalizedName = None
+
+    def _finalizeName(self):
+        """Derive the TypeTag name from the full configuration.
+
+        The generic name from the constructor only depends on inheritsFrom, the grid
+        geometry and the scalar type. Properties (SpatialParams, Problem, FluidSystem,
+        ...) are set afterwards, so two models differing only in those would otherwise
+        share a TypeTag name. That is not merely a JIT-cache aliasing issue: the two
+        generated modules would each define a ``TTag::<name>`` struct with the same name
+        but different property specializations, and loading both in one process is an ODR
+        violation — the dynamic linker merges the identically-named symbols and one model
+        silently uses the other's configuration.
+
+        The name is hashed from the header generated with a fixed placeholder name, which
+        captures exactly what makes the compiled code (and the include guard) differ. It is
+        computed once (properties are expected to be complete before a model is used to
+        build anything) and then frozen so every consumer sees the same name.
+        """
+        if self._finalizedName is None:
+            placeholder = "DumuxGeneratedModel"
+            self.name = placeholder
+            self._finalizedName = "TypeTag" + hashIt(TypeTag.cppHeader.fget(self))
+        self.name = self._finalizedName
+
+    @property
+    def cppType(self):
+        self._finalizeName()
+        return "Dumux::Properties::TTag::" + self.name
+
+    @property
+    def cppHeader(self):
+        self._finalizeName()
+        return TypeTag.cppHeader.fget(self)

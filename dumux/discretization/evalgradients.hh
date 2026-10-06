@@ -55,6 +55,7 @@ auto evalCVFEGradientsAtLocalPos(const Element& element,
     if (allStatesEqual)
     {
         using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+        using Gradient = Dune::FieldVector<typename CVFEElemSol::PrimaryVariables::value_type, GlobalPosition::dimension>;
 
         // evaluate gradients using the local finite element basis
         const auto& localBasis = gridGeometry.feCache().get(geometry.type()).localBasis();
@@ -68,7 +69,7 @@ auto evalCVFEGradientsAtLocalPos(const Element& element,
         const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
 
         // interpolate the gradients
-        Dune::FieldVector<GlobalPosition, CVFEElemSol::PrimaryVariables::dimension> result( GlobalPosition(0.0) );
+        Dune::FieldVector<Gradient, CVFEElemSol::PrimaryVariables::dimension> result( Gradient(0.0) );
         for (int i = 0; i < shapeJacobian.size(); ++i)
         {
             // the global shape function gradient
@@ -77,11 +78,7 @@ auto evalCVFEGradientsAtLocalPos(const Element& element,
 
             // add gradient to global privar gradients
             for (unsigned int pvIdx = 0; pvIdx < CVFEElemSol::PrimaryVariables::dimension; ++pvIdx)
-            {
-                GlobalPosition tmp(gradN);
-                tmp *= elemSol[i][pvIdx];
-                result[pvIdx] += tmp;
-            }
+                result[pvIdx].axpy(elemSol[i][pvIdx], gradN);
         }
 
         return result;

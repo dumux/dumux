@@ -46,11 +46,20 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolverfactorybackend.hh>
 
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
+
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include <test/freeflow/navierstokes/errors_cvfe.hh>
 #include "properties_momentum.hh"
+
+#if DUMUX_HAVE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#include <dumux/io/cvfegridfunction.hh>
+#include <dumux/io/cvfelagrangegrid.hh>
+#endif
 
 namespace Dumux {
 
@@ -66,9 +75,11 @@ void printErrors(std::shared_ptr<Problem> problem,
                  const GridVariables& gridVariables,
                  const SolutionVector& x)
 {
-    using GridGeometry = std::decay_t<decltype(std::declval<Problem>().gridGeometry())>;
+    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
     static constexpr int dim = GridGeometry::GridView::dimension;
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+
+    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
 
     if (printErrors)
     {
@@ -78,7 +89,7 @@ void printErrors(std::shared_ptr<Problem> problem,
             const auto [totalVolume, errors] = calculateL2AndH1Errors(*problem, gridVariables, x);
 
             std::ofstream logFile(problem->name() + ".csv", std::ios::app);
-            auto numDofs = problem->gridGeometry().numDofs();
+            auto numDofs = gridGeometry.numDofs();
             logFile << numDofs << ", ";
             logFile << std::pow(totalVolume / numDofs, 1.0/dim);
 
@@ -147,11 +158,12 @@ void updateVelocities(
             const auto elemGeo = element.geometry();
             const auto elemSol = elementSolution(element, x, gridGeometry);
             velocity[eIdx] = evalSolution(element, elemGeo, gridGeometry, elemSol, elemGeo.center());
-            for (const auto& scv : scvs(fvGeometry))
-                faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
+            for (const auto& localDof : localDofs(fvGeometry))
+                faceVelocity[localDof.dofIndex()] = elemVolVars[localDof].velocity();
         }
         else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::pq1bubble
                           || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq2
+                          || GridGeometry::discMethod == Dumux::DiscretizationMethods::pq3
                           || GridGeometry::discMethod == Dumux::DiscretizationMethods::box)
         {
             const auto elemGeo = element.geometry();
@@ -173,6 +185,56 @@ void updateRank(
         const auto eIdxGlobal = gridGeometry.elementMapper().index(element);
         rank[eIdxGlobal] = gridGeometry.gridView().comm().rank();
     }
+}
+
+// Higher-order VTK output using CVFEGridFunction (no Dune::Functions needed).
+// The Lagrange VTK order matches the FE polynomial degree so ParaView shows
+// the full high-order solution:
+//   pq1bubble  → order 2  (P1 + cubic bubble; order 2 shows vertex+edge DOFs)
+//   pq2        → order 2  (P2/Q2 elements)
+//   pq3        → order 3  (P3/Q3 elements)
+//   others     → order 1  (e.g. box/fcdiamond)
+template<class GridGeometry, class SolutionVector>
+void writeHigherOrderVTK(
+    const GridGeometry& gridGeometry,
+    const SolutionVector& x,
+    const std::string& fileName
+){
+#if DUMUX_HAVE_GRIDFORMAT
+    if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
+    {
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq2)
+        {
+            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry.gridView(), IO::order<2>};
+            hoWriter.setPointField("velocity", x);
+            hoWriter.write(fileName);
+        }
+        else if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq3)
+        {
+            IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry.gridView(), IO::order<3>};
+            hoWriter.setPointField("velocity", x);
+            hoWriter.write(fileName);
+        }
+        else
+        {
+            // Other CVFE methods (box, pq1bubble, fcdiamond): use the generic
+            // GridWriter with CVFEGridFunction and matching Lagrange order.
+            const auto hoFunc = IO::cvfeGridFunction(gridGeometry, x);
+            if constexpr (GridGeometry::discMethod == DiscretizationMethods::pq1bubble)
+            {
+                IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry.gridView(), IO::order<2>};
+                hoWriter.setPointField("velocity", hoFunc);
+                hoWriter.write(fileName);
+            }
+            else
+            {
+                IO::GridWriter hoWriter{IO::Format::vtu, gridGeometry.gridView(), IO::order<1>};
+                hoWriter.setPointField("velocity", hoFunc);
+                hoWriter.write(fileName);
+            }
+        }
+    }
+#endif
 }
 
 } // end namespace Dumux
@@ -242,6 +304,7 @@ int main(int argc, char** argv)
     // face quantities have no special significance for the PQ1Bubble scheme
     if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
                   && GridGeometry::discMethod != DiscretizationMethods::pq2
+                  && GridGeometry::discMethod != DiscretizationMethods::pq3
                   && GridGeometry::discMethod != DiscretizationMethods::box)
     {
         faceVtk.addField(dofIdx, "dofIdx");
@@ -277,8 +340,11 @@ int main(int argc, char** argv)
 
     if constexpr (GridGeometry::discMethod != DiscretizationMethods::pq1bubble
                   && GridGeometry::discMethod != DiscretizationMethods::pq2
+                  && GridGeometry::discMethod != DiscretizationMethods::pq3
                   && GridGeometry::discMethod != DiscretizationMethods::box)
         faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_1", Dune::VTK::ascii);
+
+    Dumux::writeHigherOrderVTK(*gridGeometry, x, baseName + "_ho" + discSuffix);
 
     Dumux::printErrors(problem, *gridVariables, x);
 

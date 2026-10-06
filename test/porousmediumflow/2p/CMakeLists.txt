@@ -3,8 +3,10 @@
 
 add_subdirectory(adaptive)
 add_subdirectory(boxdfm)
+add_subdirectory(buckleyleverett)
 add_subdirectory(cornerpoint)
 add_subdirectory(fracture)
 add_subdirectory(incompressible)
+add_subdirectory(mcwhortersunada)
 add_subdirectory(nonisothermal)
 add_subdirectory(rotationsymmetry)

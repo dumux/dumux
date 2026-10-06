@@ -36,8 +36,7 @@ class LocalAssemblerBase
     using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using SolutionVector = typename Assembler::SolutionVector;
-    using ElementBoundaryTypes = GetPropType<TypeTag, Properties::ElementBoundaryTypes>;
-    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using ElementDiscretization = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using GridVariablesCache = typename GridVariables::GridVariablesCache;
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -55,7 +54,7 @@ public:
     : LocalAssemblerBase(assembler,
                          element,
                          curSol,
-                         localView(assembler.gridGeometry()),
+                         localView(assembler.gridDiscretization()),
                          localView(assembler.gridVariables().curGridVars()),
                          localView(assembler.gridVariables().prevGridVars()),
                          assembler.localResidual(),
@@ -68,7 +67,7 @@ public:
     explicit LocalAssemblerBase(const Assembler& assembler,
                                 const Element& element,
                                 const SolutionVector& curSol,
-                                const FVElementGeometry& fvGeometry,
+                                const ElementDiscretization& elemDisc,
                                 const ElementVariables& curElemVars,
                                 const ElementVariables& prevElemVars,
                                 const LocalResidual& localResidual,
@@ -76,7 +75,7 @@ public:
     : assembler_(assembler)
     , element_(element)
     , curSol_(curSol)
-    , fvGeometry_(fvGeometry)
+    , elemDisc_(elemDisc)
     , curElemVars_(curElemVars)
     , prevElemVars_(prevElemVars)
     , localResidual_(localResidual)
@@ -108,11 +107,17 @@ public:
 
     /*!
      * \brief Evaluates the complete local residual for the current element.
+     * \note With a multi-stage assembler this is the stage-weighted residual of the current stage.
      * \param elemVars The element variables
      */
     ElementResidualVector evalLocalResidual(const ElementVariables& elemVars) const
     {
-        if (!assembler().isStationaryProblem())
+        if constexpr (requires (const Assembler& a) { a.currentStageWeights(); })
+        {
+            const auto [temporalWeight, spatialWeight] = assembler().currentStageWeights();
+            return evalLocalResidualForStage(elemVars, temporalWeight, spatialWeight);
+        }
+        else if (!assembler().isStationaryProblem())
         {
             ElementResidualVector residual = evalLocalFluxAndSourceResidual(elemVars);
             residual += evalLocalStorageResidual();
@@ -120,6 +125,30 @@ public:
         }
         else
             return evalLocalFluxAndSourceResidual(elemVars);
+    }
+
+    /*!
+     * \brief Evaluate the stage-weighted residual for multi-stage (e.g. Runge-Kutta) assembly.
+     *
+     * Returns `temporalWeight * raw_storage(elemVars) + spatialWeight * (flux + source)(elemVars)`
+     *
+     * \param elemVars Element variables bound to the current stage's solution
+     * \param temporalWeight Butcher tableau weight for the storage term at this stage
+     * \param spatialWeight  Butcher tableau weight for the spatial term at this stage
+     */
+    template<class Scalar>
+    ElementResidualVector evalLocalResidualForStage(const ElementVariables& elemVars,
+                                                     Scalar temporalWeight,
+                                                     Scalar spatialWeight) const
+    {
+        auto spatial = evalLocalFluxAndSourceResidual(elemVars);
+        for (auto& r : spatial) r *= spatialWeight;
+
+        auto temporal = localResidual_.evalStorageCurrentLevel(element_, elemDisc_, elemVars);
+        for (auto& r : temporal) r *= temporalWeight;
+
+        spatial += temporal;
+        return spatial;
     }
 
     /*!
@@ -141,7 +170,7 @@ public:
      */
     ElementResidualVector evalLocalFluxAndSourceResidual(const ElementVariables& elemVars) const
     {
-        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVars, elemBcTypes_);
+        return localResidual_.evalFluxAndSource(element_, elemDisc_, elemVars);
     }
 
     /*!
@@ -150,7 +179,7 @@ public:
      */
     ElementResidualVector evalLocalStorageResidual() const
     {
-        return localResidual_.evalStorage(element_, fvGeometry_, prevElemVars_, curElemVars_);
+        return localResidual_.evalStorage(element_, elemDisc_, prevElemVars_, curElemVars_);
     }
 
     /*!
@@ -163,23 +192,23 @@ public:
         const auto& element = this->element();
         const auto& curSol = this->curSol();
         const auto& prevSol = this->assembler().prevSol();
-        auto&& fvGeometry = this->fvGeometry();
+        auto&& elemDisc = this->elemDisc();
         auto&& curElemVars = this->curElemVars();
         auto&& prevElemVars = this->prevElemVars();
 
         // bind the caches
-        fvGeometry.bind(element);
+        elemDisc.bind(element);
 
         if (isImplicit())
         {
-            curElemVars.bind(element, fvGeometry, curSol);
+            curElemVars.bind(element, elemDisc, curSol);
             if (!this->assembler().isStationaryProblem())
-                prevElemVars.bindElement(element, fvGeometry, this->assembler().prevSol());
+                prevElemVars.bindElement(element, elemDisc, this->assembler().prevSol());
         }
         else
         {
-            curElemVars.bindElement(element, fvGeometry, curSol);
-            prevElemVars.bind(element, fvGeometry, prevSol);
+            curElemVars.bindElement(element, elemDisc, curSol);
+            prevElemVars.bind(element, elemDisc, prevSol);
         }
     }
 
@@ -204,8 +233,8 @@ public:
     { return curSol_; }
 
     //! The element discretization
-    FVElementGeometry& fvGeometry()
-    { return fvGeometry_; }
+    ElementDiscretization& elemDisc()
+    { return elemDisc_; }
 
     //! The current element variables
     ElementVariables& curElemVars()
@@ -219,13 +248,9 @@ public:
     LocalResidual& localResidual()
     { return localResidual_; }
 
-    //! The element's boundary types
-    ElementBoundaryTypes& elemBcTypes()
-    { return elemBcTypes_; }
-
-    //! The finite volume geometry
-    const FVElementGeometry& fvGeometry() const
-    { return fvGeometry_; }
+    //! The element discretization
+    const ElementDiscretization& elemDisc() const
+    { return elemDisc_; }
 
     //! The current element variables
     const ElementVariables& curElemVars() const
@@ -234,10 +259,6 @@ public:
     //! The element variables of the previous time step
     const ElementVariables& prevElemVars() const
     { return prevElemVars_; }
-
-    //! The element's boundary types
-    const ElementBoundaryTypes& elemBcTypes() const
-    { return elemBcTypes_; }
 
     //! The local residual for the current element
     const LocalResidual& localResidual() const
@@ -256,10 +277,9 @@ private:
     const Element& element_; //!< the element whose residual is assembled
     const SolutionVector& curSol_; //!< the current solution
 
-    FVElementGeometry fvGeometry_;
+    ElementDiscretization elemDisc_;
     ElementVariables curElemVars_;
     ElementVariables prevElemVars_;
-    ElementBoundaryTypes elemBcTypes_;
 
     LocalResidual localResidual_; //!< the local residual evaluating the equations per element
     bool elementIsGhost_; //!< whether the element's partitionType is ghost

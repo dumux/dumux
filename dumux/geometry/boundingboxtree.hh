@@ -29,20 +29,58 @@
 #include <iostream>
 
 #include <dune/common/promotiontraits.hh>
-#include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 
-namespace Dumux {
-
-
 #ifndef DOXYGEN
-namespace Detail {
+namespace Dumux::Detail {
 
 template<typename ctype>
 inline constexpr ctype minimumBaseEpsilon = 10.0*std::numeric_limits<ctype>::epsilon();
 
-}  // namespace Detail
+}  // namespace Dumux::Detail
 #endif  // DOXYGEN
+
+namespace Dumux {
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the bounding box of a geometry
+ */
+template <int dimworld, class ctype, class Geometry>
+  requires requires(const Geometry& g) { g.corner(0); g.corners(); }
+inline void computeGeometryBoundingBox(ctype* b, const Geometry& geometry)
+{
+    // get the bounding box coordinates
+    ctype* xMin = b;
+    ctype* xMax = b + dimworld;
+
+    // Get coordinates of first vertex
+    auto corner = geometry.corner(0);
+    for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
+        xMin[dimIdx] = xMax[dimIdx] = corner[dimIdx];
+
+    // Compute the min and max over the remaining vertices
+    for (std::size_t cornerIdx = 1; cornerIdx < geometry.corners(); ++cornerIdx)
+    {
+        corner = geometry.corner(cornerIdx);
+        for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
+        {
+            using std::max;
+            using std::min;
+            xMin[dimIdx] = min(xMin[dimIdx], corner[dimIdx]);
+            xMax[dimIdx] = max(xMax[dimIdx], corner[dimIdx]);
+        }
+    }
+}
+
+/*!
+ * \ingroup Geometry
+ * \brief Compute the bounding box of a geometric entity
+ */
+template <int dimworld, class ctype, class Entity>
+  requires requires(const Entity& e) { e.geometry(); }
+inline void computeEntityBoundingBox(ctype* b, const Entity& entity)
+{ computeGeometryBoundingBox<dimworld>(b, entity.geometry()); }
 
 /*!
  * \ingroup Geometry
@@ -65,7 +103,7 @@ inline constexpr ctype minimumBaseEpsilon = 10.0*std::numeric_limits<ctype>::eps
 template <class GeometricEntitySet>
 class BoundingBoxTree
 {
-    enum { dimworld = GeometricEntitySet::dimensionworld };
+    static constexpr int dimworld = GeometricEntitySet::dimensionworld;
     using ctype = typename GeometricEntitySet::ctype;
 
     /*!
@@ -100,9 +138,6 @@ public:
         boundingBoxNodes_.clear();
         boundingBoxCoordinates_.clear();
 
-        // start the timer
-        Dune::Timer timer;
-
         // Create bounding boxes for all elements
         const auto numLeaves = set->size();
 
@@ -115,7 +150,7 @@ public:
         std::vector<ctype> leafBoxes(2*dimworld*numLeaves);
 
         for (const auto& geometricEntity : *set)
-            computeEntityBoundingBox_(leafBoxes.data() + 2*dimworld*set->index(geometricEntity), geometricEntity);
+            computeEntityBoundingBox<dimworld>(leafBoxes.data() + 2*dimworld*set->index(geometricEntity), geometricEntity);
 
         // create the leaf partition, the set of available indices (to be sorted)
         std::vector<std::size_t> leafPartition(numLeaves);
@@ -123,11 +158,6 @@ public:
 
         // Recursively build the bounding box tree
         build_(leafBoxes, leafPartition.begin(), leafPartition.end());
-
-        // We are done, log output
-        std::cout << "Computed bounding box tree with " << numBoundingBoxes()
-                  << " nodes for " << numLeaves << " grid entities in "
-                  << timer.stop() << " seconds." << std::endl;
     }
 
     //! the entity set this tree was built with
@@ -165,36 +195,6 @@ private:
 
     //! a pointer to the entity set
     std::shared_ptr<const EntitySet> entitySet_;
-
-    //! Compute the bounding box of a grid entity
-    template <class Entity>
-    void computeEntityBoundingBox_(ctype* b, const Entity& entity) const
-    {
-        // get the bounding box coordinates
-        ctype* xMin = b;
-        ctype* xMax = b + dimworld;
-
-        // get mesh entity data
-        auto geometry = entity.geometry();
-
-        // Get coordinates of first vertex
-        auto corner = geometry.corner(0);
-        for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
-            xMin[dimIdx] = xMax[dimIdx] = corner[dimIdx];
-
-        // Compute the min and max over the remaining vertices
-        for (std::size_t cornerIdx = 1; cornerIdx < geometry.corners(); ++cornerIdx)
-        {
-            corner = geometry.corner(cornerIdx);
-            for (std::size_t dimIdx = 0; dimIdx < dimworld; ++dimIdx)
-            {
-                using std::max;
-                using std::min;
-                xMin[dimIdx] = min(xMin[dimIdx], corner[dimIdx]);
-                xMax[dimIdx] = max(xMax[dimIdx], corner[dimIdx]);
-            }
-        }
-    }
 
     //! Build bounding box tree for all entities recursively
     std::size_t build_(const std::vector<ctype>& leafBoxes,

@@ -13,6 +13,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -25,12 +26,12 @@ std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Pr
                                                                         const SolutionVector& x,
                                                                         int order = 5)
 {
-    using GridGeometry = typename GridVariables::GridGeometry;
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
     using Extrusion = Extrusion_t<GridGeometry>;
     double totalVolume = 0.0;
     Dune::FieldVector<double, 2> errors(0.0);
-    const auto& gg = problem.gridGeometry();
-    auto fvGeometry = localView(gg);
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    auto fvGeometry = localView(gridDiscretization);
 
     auto curGridVars = [&]() -> decltype(auto)
     {
@@ -41,7 +42,7 @@ std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Pr
     };
 
     auto elemVolVars = localView(curGridVars());
-    for (const auto& element : elements(gg.gridView()))
+    for (const auto& element : elements(gridDiscretization.gridView()))
     {
         fvGeometry.bind(element);
         const auto geometry = fvGeometry.elementGeometry();
@@ -57,12 +58,12 @@ std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Pr
 
             const auto& globalPos = geometry.global(localPos);
             const auto analyticalSolution = problem.analyticalSolution(globalPos);
-            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gg, elemSol, localPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
             const auto solDiff = numericalSolution - analyticalSolution;
             errors[0] += (solDiff * solDiff) * qpVolumeWeight;
 
             const auto gradAnalyticalSolution = problem.gradAnalyticalSolution(globalPos);
-            const auto gradNumericalSolution = evalGradientsAtLocalPos(element, geometry, gg, elemSol, localPos);
+            const auto gradNumericalSolution = evalGradientsAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
             const auto gradDiff = gradNumericalSolution - gradAnalyticalSolution;
             double gradDiffNorm = 0.0;
             for (int i = 0; i < gradDiff.size(); ++i)

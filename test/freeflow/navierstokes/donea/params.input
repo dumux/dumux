@@ -2,7 +2,6 @@
 UpperRight = 1 1
 Cells = 40 40
 Overlap = 1
-# when refining grid make sure overlap stays 1 (only 1 currently works)
 KeepPhysicalOverlap = true
 Refinement = 0
 

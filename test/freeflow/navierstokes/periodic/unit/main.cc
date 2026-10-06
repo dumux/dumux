@@ -163,7 +163,7 @@ int main(int argc, char** argv)
         fvGeometry.bind(element);
 
         auto elemVolVars = localView(momentumGridVariables->curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, x);
+        elemVolVars.bind(element, fvGeometry, x[momentumIdx]);
 
         for (const auto& scv : scvs(fvGeometry))
             faceVelocityVector[scv.dofIndex()][scv.dofAxis()] = elemVolVars[scv].velocity();
@@ -184,7 +184,7 @@ int main(int argc, char** argv)
         auto fvGeometry = localView(*momentumGridGeometry);
         for (const auto& element : elements(momentumGridGeometry->gridView()))
         {
-            fvGeometry.bindElement(element);
+            fvGeometry.bind(element);
             for (const auto& scv : scvs(fvGeometry))
             {
                 const bool isPeriodic = std::min(scv.dofPosition()[1]-bBoxMin[1],

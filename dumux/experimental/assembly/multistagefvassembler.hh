@@ -163,6 +163,19 @@ public:
             );
         });
 
+        // Autonomous spatial operator: finalize the previous stage's stored evaluation for
+        // free. On the first assembly of this stage, curSol is the converged previous-stage
+        // solution and the value just assembled into the current slot equals R/M at that
+        // solution; time-independence makes the stage time irrelevant, so a copy suffices
+        // (no extra evaluation, no dependence on the solver re-assembling at convergence).
+        const auto curStage = stageParams_->size() - 1;
+        if (curStage > 1 && autonomousSpatialOperator_ && firstStageAssembly_)
+        {
+            spatialOperatorEvaluations_[curStage-1] = spatialOperatorEvaluations_.back();
+            temporalOperatorEvaluations_[curStage-1] = temporalOperatorEvaluations_.back();
+        }
+        firstStageAssembly_ = false;
+
         // assemble the full residual for the time integration stage
         auto constantResidualComponent = (*residual_);
         constantResidualComponent = 0.0;
@@ -277,6 +290,7 @@ public:
     {
         stageParams_ = std::move(params);
         const auto curStage = stageParams_->size() - 1;
+        firstStageAssembly_ = true;
 
         // in the first stage, also assemble the residual
         // at the previous time level (stage 0 residual)
@@ -317,6 +331,29 @@ public:
             }
         }
 
+        // Non-autonomous spatial operator: the constant residual component reuses each previous
+        // stage's operators at its *converged* solution. During the stage solve the residual
+        // assembly stored them at the solver's last iterate — correct for solvers that re-assemble
+        // at the converged solution (e.g. NewtonSolver), but stale for single-assembly solvers
+        // (e.g. LinearPDESolver). So we re-evaluate here at the converged solution and the previous
+        // stage's time level (which matters for time-dependent operators), making multi-stage
+        // schemes correct for any solver. This is one extra residual (no Jacobian) evaluation per
+        // stage; it is skipped entirely for an autonomous operator, where the value is instead
+        // reused for free in assembleJacobianAndResidual (see setAutonomousSpatialOperator).
+        if (curStage > 1 && !autonomousSpatialOperator_)
+        {
+            setProblemTime_(*problem_, stageParams_->timeAtStage(curStage-1));
+            spatialOperatorEvaluations_.back() = 0.0;
+            temporalOperatorEvaluations_.back() = 0.0;
+            assemble_([&](const auto& element)
+            {
+                LocalAssembler localAssembler(*this, element, x);
+                localAssembler.localResidual().spatialWeight(1.0);
+                localAssembler.localResidual().temporalWeight(1.0);
+                localAssembler.assembleCurrentResidual(spatialOperatorEvaluations_.back(), temporalOperatorEvaluations_.back());
+            });
+        }
+
         // update time in variables?
         setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
 
@@ -337,6 +374,17 @@ public:
 
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
+
+    //! Declare the spatial operator (flux + source) time-independent (autonomous). Then the
+    //! per-stage operator reuse in the constant residual component is exact via a cheap copy in
+    //! assembleJacobianAndResidual, with no extra evaluation and independent of the solver — so
+    //! multi-stage schemes are correct with any solver (e.g. LinearPDESolver) at no added cost.
+    //! Otherwise (default) the previous stage's operators are re-evaluated at their converged
+    //! solution in prepareStage, which is correct for any solver but costs one residual evaluation
+    //! per stage (redundant when the solver already re-assembles at convergence, e.g. Newton).
+    //! Only set true if flux and source do not depend on time explicitly.
+    void setAutonomousSpatialOperator(bool a)
+    { autonomousSpatialOperator_ = a; }
 
 private:
     /*!
@@ -454,18 +502,15 @@ private:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
-    // TODO make this nicer with a is_detected trait in a common location
     template<class P>
     void setProblemTime_(const P& p, const Scalar t)
-    { setProblemTimeImpl_(p, t, 0); }
-
-    template<class P>
-    auto setProblemTimeImpl_(const P& p, const Scalar t, int) -> decltype(p.setTime(0))
-    { p.setTime(t); }
-
-    template<class P>
-    void setProblemTimeImpl_(const P& p, const Scalar t, long)
-    {}
+    {
+        if constexpr (requires { p.setTime(t); })
+            p.setTime(t);
+        else
+            static_assert(!requires (P& q) { q.setTime(Scalar{}); },
+                "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
+    }
 
     std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> timeSteppingMethod_;
     std::vector<ResidualType> spatialOperatorEvaluations_;
@@ -488,6 +533,12 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<ResidualType> residual_;
+
+    //! whether the spatial operator is time-independent (enables free per-stage reuse)
+    bool autonomousSpatialOperator_ = false;
+
+    //! true only for the first residual assembly of the current stage
+    bool firstStageAssembly_ = false;
 
     //! element sets for parallel assembly
     bool enableMultithreading_ = false;

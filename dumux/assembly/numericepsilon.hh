@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include <dune/common/fvector.hh>
+#include <dune/common/ftraits.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 
@@ -30,14 +31,14 @@ namespace Dumux {
 template<class Scalar, int numEq>
 class NumericEpsilon
 {
-    using Magnitude = std::decay_t<decltype(abs(std::declval<Scalar>()))>;
+    using Magnitude = typename Dune::FieldTraits<Scalar>::real_type;
     using NumEqVector = Dune::FieldVector<Magnitude, numEq>;
 
 public:
     explicit NumericEpsilon(const std::string& paramGroup = "")
     {
         // get epsilons from input file with invalid default
-        baseEps_ = getParamFromGroup<Scalar>(paramGroup, "Assembly.NumericDifference.BaseEpsilon", 1e-10);
+        baseEps_ = getParamFromGroup<Magnitude>(paramGroup, "Assembly.NumericDifference.BaseEpsilon", 1e-10);
         magnitude_ = getParamFromGroup<NumEqVector>(paramGroup, "Assembly.NumericDifference.PriVarMagnitude", NumEqVector(-1));
     }
 
@@ -45,15 +46,16 @@ public:
      * \brief get the epsilon
      * \note If no user input was specified -> try to estimate magnitude from primary variable value
      *       else -> use given magnitude for the primary variable times the base epsilon (default 1e-10)
+     * \note The epsilon is real-valued also for complex-valued primary variables
      */
-    Scalar operator() (Scalar priVar, int priVarIdx) const noexcept
+    Magnitude operator() (Scalar priVar, int priVarIdx) const noexcept
     {
-        return magnitude_[priVarIdx] > 0.0 ? Scalar(baseEps_*magnitude_[priVarIdx])
-                                           : Scalar(NumericDifferentiation::epsilon(priVar, baseEps_));
+        return magnitude_[priVarIdx] > 0.0 ? baseEps_*magnitude_[priVarIdx]
+                                           : NumericDifferentiation::epsilon(priVar, baseEps_);
     }
 
 private:
-    Scalar baseEps_;
+    Magnitude baseEps_;
     NumEqVector magnitude_;
 };
 

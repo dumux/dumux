@@ -41,6 +41,9 @@ class createMultiTypeBlockMatrixType
 {
     static_assert(std::conjunction_v<isBCRSMatrix<JacobianBlocks>...>, "Jacobian blocks have to be BCRSMatrices!");
 
+    // all blocks are complex-valued if any subdomain has complex-valued unknowns
+    using Field = std::common_type_t<Scalar, typename JacobianBlocks::field_type...>;
+
     template<std::size_t id>
     using JacobianDiagBlock = typename std::tuple_element_t<id, std::tuple<JacobianBlocks...>>;
 
@@ -53,7 +56,7 @@ class createMultiTypeBlockMatrixType
     template <std::size_t id, std::size_t... Is>
     struct makeRow<id, std::index_sequence<Is...>>
     {
-        using type = Dune::MultiTypeBlockVector<Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, numEq<id>(), numEq<Is>()>>...>;
+        using type = Dune::MultiTypeBlockVector<Dune::BCRSMatrix<Dune::FieldMatrix<Field, numEq<id>(), numEq<Is>()>>...>;
     };
 
     template <class I> struct makeMatrix;
@@ -135,11 +138,21 @@ struct MultiDomainTraits
     //! the number of subdomains
     static constexpr std::size_t numSubDomains = sizeof...(SubDomainTypeTags);
 
-private:
-
-    //! the type tag of a sub domain problem
+    /*!
+     * \brief The type tag of the sub domain with the given index.
+     *
+     * Prefer this over `SubDomain<id>::TypeTag` wherever the tag alone suffices,
+     * in particular in default template arguments and other contexts evaluated at
+     * definition time: naming `SubDomain<id>` instantiates that struct and with it
+     * every property query of the sub domain's tag, which pins those properties at
+     * the point of first use and silently bypasses any property specialization
+     * declared later in the same translation unit. This alias is plain tuple access
+     * and triggers no property resolution.
+     */
     template<std::size_t id>
     using SubDomainTypeTag = typename std::tuple_element_t<id, std::tuple<SubDomainTypeTags...>>;
+
+private:
 
     //! helper alias to construct derived multidomain types like tuples
     using Indices = std::make_index_sequence<numSubDomains>;

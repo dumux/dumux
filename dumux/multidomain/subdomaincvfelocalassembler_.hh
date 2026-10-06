@@ -59,9 +59,9 @@ class SubDomainCVFELocalAssemblerBase : public CVFELocalAssembler<TypeTag, Assem
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
-    using GridGeometry = typename GridVariables::GridGeometry;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using GridView = typename GridGeometry::GridView;
+    using GridDiscretization = typename GridVariables::GridDiscretization;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
+    using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CouplingManager = typename Assembler::CouplingManager;
@@ -73,8 +73,10 @@ public:
     static constexpr auto domainId = typename Dune::index_constant<id>();
     //! pull up constructor of parent class
     using ParentType::ParentType;
+    //! re-export LocalResidual so derived classes and code using ParentType:: can find it
+    using LocalResidual = typename ParentType::LocalResidual;
     //! export element residual vector type
-    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     // the constructor
     explicit SubDomainCVFELocalAssemblerBase(
@@ -86,7 +88,7 @@ public:
     : ParentType(assembler,
                  element,
                  curSol,
-                 localView(assembler.gridGeometry(domainId)),
+                 localView(assembler.gridDiscretization(domainId)),
                  localView(assembler.gridVariables(domainId).curGridVars()),
                  localView(assembler.gridVariables(domainId).prevGridVars()),
                  assembler.localResidual(domainId),
@@ -118,6 +120,46 @@ public:
     }
 
     /*!
+     * \brief Multi-stage assembly: assembles the Jacobian and stage-weighted residual while
+     *        separately accumulating temporal and spatial operator evaluations for this domain.
+     *
+     * Called by the multi-stage multi-domain assembler for each element during stage assembly.
+     */
+    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple, class StageParams>
+    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidualVector& res, GridVariablesTuple& gridVariables,
+                                     const StageParams& stageParams,
+                                     SubResidualVector& temporal, SubResidualVector& spatial,
+                                     SubResidualVector& constrainedDofs)
+    {
+        auto assembleCouplingBlocks = [&](const auto& residual)
+        {
+            using namespace Dune::Hybrid;
+            forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+            {
+                if constexpr (std::decay_t<decltype(i)>{} != id)
+                    this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
+            });
+        };
+
+        ParentType::assembleJacobianAndResidual(
+            jacRow[domainId], res, *std::get<domainId>(gridVariables),
+            stageParams, temporal, spatial, constrainedDofs,
+            assembleCouplingBlocks
+        );
+    }
+
+    /*!
+     * \brief Assemble only the current-stage residual contributions (no Jacobian).
+     *        Used during stage 0 preparation where only the previous-time-level
+     *        temporal and spatial operators need to be stored.
+     */
+    template<class SubResidualVector>
+    void assembleCurrentResidual(SubResidualVector& temporal, SubResidualVector& spatial)
+    {
+        ParentType::assembleCurrentResidual(temporal, spatial);
+    }
+
+    /*!
      * \brief Assemble the entries in a coupling block of the jacobian.
      *        There is no coupling block between a domain and itself.
      */
@@ -143,16 +185,16 @@ public:
      */
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVariables& elemVars) const
     {
-        static_assert(!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>(), "Separate source calculation not implemented for hybrid schemes.");
+        static_assert(!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>(), "Separate source calculation not implemented for hybrid schemes.");
 
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(this->fvGeometry()));
+        ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(this->elemDisc()));
 
         // evaluate the source term
         // forward to the local residual specialized for the discretization methods
-        for (const auto& scv : scvs(this->fvGeometry()))
+        for (const auto& scv : scvs(this->elemDisc()))
         {
-            residual[scv.localDofIndex()] = this->localResidual().sourceIntegral(this->fvGeometry(), elemVars, scv);
+            residual[scv.localDofIndex()] = this->localResidual().sourceIntegral(this->elemDisc(), elemVars, scv);
         }
 
         return residual;
@@ -172,29 +214,27 @@ public:
         // get some references for convenience
         const auto& element = this->element();
         const auto& curSol = this->curSol(domainId);
-        auto&& fvGeometry = this->fvGeometry();
+        auto&& elemDisc = this->elemDisc();
         auto&& curElemVars = this->curElemVars();
 
         // bind the caches
         couplingManager_.bindCouplingContext(domainId, element, this->assembler());
-        fvGeometry.bind(element);
+        elemDisc.bind(element);
 
         if constexpr (implicit)
         {
-            curElemVars.bind(element, fvGeometry, curSol);
+            curElemVars.bind(element, elemDisc, curSol);
             if (!this->assembler().isStationaryProblem())
-                this->prevElemVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+                this->prevElemVars().bindElement(element, elemDisc, this->assembler().prevSol()[domainId]);
         }
         else
         {
             auto& prevElemVars = this->prevElemVars();
             const auto& prevSol = this->assembler().prevSol()[domainId];
 
-            curElemVars.bindElement(element, fvGeometry, curSol);
-            prevElemVars.bind(element, fvGeometry, prevSol);
+            curElemVars.bindElement(element, elemDisc, curSol);
+            prevElemVars.bind(element, elemDisc, prevSol);
         }
-
-        this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
     }
 
     //! return reference to the underlying problem
@@ -242,11 +282,10 @@ class SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /
 {
     using ThisType = SubDomainCVFELocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainCVFELocalAssemblerBase<id, TypeTag, Assembler, ThisType, DiffMethod::numeric, /*implicit=*/true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GridGeometry::GridView;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridView = typename GridDiscretization::GridView;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
@@ -291,7 +330,7 @@ public:
 
         // get some aliases for convenience
         const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
+        const auto& elemDisc = this->elemDisc();
         auto&& curElemVars = this->curElemVars();
 
         // convenience lambda for call to update self
@@ -319,7 +358,7 @@ public:
 
             for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
             {
-                auto evalCouplingResidual = [&](Scalar priVar)
+                auto evalCouplingResidual = [&](auto priVar)
                 {
                     priVarsJ[pvIdx] = priVar;
                     this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
@@ -328,7 +367,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
+                ElementResidualVector partialDerivs(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
 
                 const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
                 static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
@@ -339,7 +378,7 @@ public:
 
                 // update the global stiffness matrix with the current partial derivatives
                 // Note: For the new interface Dirichlet constraints are incorporated later
-                for (const auto& localDof : localDofs(fvGeometry))
+                for (const auto& localDof : localDofs(elemDisc))
                 {
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     {

@@ -1,0 +1,23 @@
+[Grid]
+Positions0 = 1.0 2.0
+Positions1 = 0.0 0.25
+Cells0 = 40
+Cells1 = 10
+
+[Problem]
+Name = test_ff_navierstokes_channel_annulus
+SourceStrength = 1.0
+ReferencePressure = 1.0
+EnableGravity = false
+EnableInertiaTerms = true
+MaxPressureError = 0.03
+
+[Component]
+LiquidKinematicViscosity = 1.0
+LiquidDensity = 1.0
+
+[Newton]
+MaxRelativeShift = 1e-10
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-4

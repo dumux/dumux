@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Creates a network grid from a structured lattice. Connections can be randomly deleted.
  */
 #ifndef DUMUX_IO_STRUCTURED_LATTICE_GRID_CREATOR_HH
@@ -38,7 +38,7 @@ namespace Dumux::PoreNetwork {
 namespace Concept {
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief The element selector concept
  */
 template<class GlobalPosition>
@@ -52,7 +52,7 @@ struct LowDimElementSelector
 } // end namespace Concept
 
 /*!
- * \ingroup PoreNetworkModels
+ * \ingroup PoreNetworkModelGrids
  * \brief Creates a network grid from a structured lattice. Connections can be randomly deleted.
  */
 template<int dimWorld>

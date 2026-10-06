@@ -220,6 +220,7 @@ private:
     public:
         //! export the geometry helper type
         using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
+        using DofHelper = typename GeometryHelper::DofHelper;
 
         explicit BoxFacetCouplingGridGeometryCache(const BoxFacetCouplingFVGridGeometry& gg)
         : gridGeometry_(&gg)
@@ -551,6 +552,7 @@ private:
     public:
         //! export the geometry helper type
         using GeometryHelper = Detail::BoxFacetCouplingGeometryHelper_t<GV, Traits>;
+        using DofHelper = typename GeometryHelper::DofHelper;
 
         explicit BoxFacetCouplingGridGeometryCache(const BoxFacetCouplingFVGridGeometry& gg)
         : gridGeometry_(&gg)

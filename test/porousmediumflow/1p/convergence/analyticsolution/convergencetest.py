@@ -13,12 +13,22 @@ if len(sys.argv) < 3:
     sys.stderr.write("Please provide the following arguments:\n"  \
                      "   - the name of the executable\n" \
                      "   - the name to be used for generated output files\n" \
+                     "   - (optional) --expected-rate <rate>, defaults to 2\n" \
                      "   - (optional) runtime arguments to be passed to the executable\n")
     sys.exit(1)
 
-executableName = sys.argv[1]
-testName = sys.argv[2]
-testArgs = [str(i) for i in sys.argv][3:] if len(sys.argv) > 3 else ['params.input']
+args = [str(i) for i in sys.argv][1:]
+
+# the order of a scheme is a property of the scheme, so the rate to expect is passed in
+expectedRate = 2.0
+if "--expected-rate" in args:
+    i = args.index("--expected-rate")
+    expectedRate = float(args[i+1])
+    del args[i:i+2]
+
+executableName = args[0]
+testName = args[1]
+testArgs = args[2:] if len(args) > 2 else ['params.input']
 
 # remove the old log files
 if os.path.exists(testName + '.log'):
@@ -73,7 +83,9 @@ rates = computeRates()
 def mean(numbers):
     return float(sum(numbers)) / len(numbers)
 
-# check the rates, we expect rates around 2
-if mean(rates["p"]) < 1.8:
-    sys.stderr.write("*"*70 + "\n" + "The convergence rates for pressure were not close enough to 2! Test failed.\n" + "*"*70 + "\n")
+# check the rates against the order of the scheme, allowing for the usual preasymptotic slack
+if mean(rates["p"]) < 0.9*expectedRate:
+    sys.stderr.write("*"*70 + "\n"
+                     + "The convergence rates for pressure were not close enough to {}! Test failed.\n".format(expectedRate)
+                     + "*"*70 + "\n")
     sys.exit(1)

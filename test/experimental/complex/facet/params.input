@@ -1,0 +1,25 @@
+[Grid]
+NumElemsPerSide = 25
+File = ./grids/hybridgrid.msh
+
+[LowDim.SpatialParams]
+Aperture = 1e-3
+Permeability = 1e-4
+
+[Problem]
+Amplitude = 1.0 0.0
+WaveNumberSquared = 0.0 0.0
+OutputFileName = test_complex_facet_helmholtz.log
+
+[L2Error]
+QuadratureOrder = 1
+
+[LinearSolver]
+Verbosity = 0
+
+[Newton]
+Verbosity = 1
+MaxRelativeShift = 1e-12
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1

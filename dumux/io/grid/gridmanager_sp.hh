@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for SPGrid
+ * \anchor sp_grid_manager
  */
 #ifndef DUMUX_IO_GRID_MANAGER_SP_HH
 #define DUMUX_IO_GRID_MANAGER_SP_HH
@@ -30,12 +31,17 @@ namespace Dumux {
 #if HAVE_DUNE_SPGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for SPGrid
  *
  * The following keys are recognized:
- * - File : A DGF or gmsh file to load from, type detection by file extension
- *
+ * - File : A dgf file to load from
+ * - LowerLeft : lower left corner of the domain
+ * - UpperRight : upper right corner of the domain
+ * - Cells : the number of cells in each direction
+ * - Refinement : the number of global refines to perform
+ * - Periodic : true or false for each direction
+ * - Overlap : overlap size in cells
  */
 template<class ct, int dim, template< int > class Ref, class Comm>
 class GridManager<Dune::SPGrid<ct, dim, Ref, Comm>>
@@ -54,7 +60,7 @@ public:
         if (overlap == 0)
             DUNE_THROW(Dune::NotImplemented, "dune-spgrid does currently not support zero overlap!");
 
-        // try to create it from file
+        // First, try to create it from file
         if (hasParamInGroup(paramGroup, "Grid.File"))
         {
             ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(paramGroup, "Grid.File"));
@@ -62,7 +68,8 @@ public:
             ParentType::loadBalance();
             return;
         }
-        // Didn't find a way to construct the grid
+
+        // Then look for the necessary keys to construct a structured grid from the input file
         else if (hasParamInGroup(paramGroup, "Grid.UpperRight"))
         {
             using GlobalPosition = Dune::FieldVector<ct, dim>;
@@ -76,6 +83,8 @@ public:
             const auto periodic = getParamFromGroup<std::bitset<dim>>(paramGroup, "Grid.Periodic", std::bitset<dim>{});
             init(lowerLeft, upperRight, cells, paramGroup, overlap, periodic);
         }
+
+        // Didn't find a way to construct the grid
         else
         {
             const auto prefix = paramGroup.empty() ? paramGroup : paramGroup + ".";

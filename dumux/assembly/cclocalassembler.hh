@@ -135,7 +135,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -238,7 +238,7 @@ public:
         {
             partialDerivs = 0.0;
 
-            auto evalResiduals = [&](Scalar priVar)
+            auto evalResiduals = [&](PrimaryVariable priVar)
             {
                 Residuals partialDerivsTmp(numNeighbors + 1);
                 partialDerivsTmp = 0.0;
@@ -261,7 +261,7 @@ public:
             };
 
             // derive the residuals numerically
-            static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+            static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->problem().paramGroup()};
             static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
             NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
                                                       eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
@@ -361,7 +361,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -422,7 +422,7 @@ public:
             // reset derivatives of element dof with respect to itself
             partialDeriv = 0.0;
 
-            auto evalStorage = [&](Scalar priVar)
+            auto evalStorage = [&](PrimaryVariable priVar)
             {
                 // update the volume variables and calculate
                 // the residual with the deflected primary variables
@@ -434,7 +434,7 @@ public:
             // for non-ghosts compute the derivative numerically
             if (!this->elementIsGhost())
             {
-                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, storageResidual,
                                                           eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);

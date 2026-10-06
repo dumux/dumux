@@ -13,9 +13,11 @@
 #define DUMUX_LINEAR_ISTL_SOLVERS_HH
 
 #include <memory>
+#include <type_traits>
 #include <variant>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/math.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/version.hh>
 #include <dune/common/parallel/indexset.hh>
@@ -28,6 +30,7 @@
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 
+#include <dumux/io/format.hh>
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -218,27 +221,7 @@ public:
                               const ParameterInitializer& params = "")
     {
         initializeParameters_(params, gridView.comm());
-#if HAVE_MPI
-        solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
-        if constexpr (LinearSolverTraits::canCommunicate)
-        {
-
-            if (solverCategory_ != Dune::SolverCategory::sequential)
-            {
-                parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
-                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
-                parallelHelper_->createParallelIndexSet(*communication_);
-            }
-            else
-                scalarProduct_ = std::make_shared<ScalarProduct>();
-        }
-        else
-            scalarProduct_ = std::make_shared<ScalarProduct>();
-#else
-        solverCategory_ = Dune::SolverCategory::sequential;
-        scalarProduct_ = std::make_shared<ScalarProduct>();
-#endif
+        configureCommunication_(gridView, dofMapper);
     }
 
 #if HAVE_MPI
@@ -259,13 +242,22 @@ public:
         if constexpr (LinearSolverTraits::canCommunicate)
         {
             if (solverCategory_ != Dune::SolverCategory::sequential)
-            {
-                parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
-                parallelHelper_->createParallelIndexSet(communication);
-            }
+                buildParallelHelper_(gridView, dofMapper, *communication_);
         }
     }
 #endif
+
+    /*!
+     * \brief Update the solver after the grid and its dof distribution changed,
+     *        e.g. after grid adaption or dynamic load balancing
+     * \note Rebuilds the parallel index sets and communication in place, so holders of a
+     *       pointer to this solver (e.g. a NewtonSolver, which keeps its own shared_ptr copy)
+     *       automatically use the updated structures
+     * \note A matrix set via setMatrix has to be set again after this call
+     */
+    template <class GridView, class DofMapper>
+    void updateAfterGridAdaption(const GridView& gridView, const DofMapper& dofMapper)
+    { configureCommunication_(gridView, dofMapper); }
 
     /*!
      * \brief Solve the linear system Ax = b
@@ -313,11 +305,16 @@ public:
                 auto y(x); // make a copy because the vector needs to be made consistent
                 using GV = typename LinearSolverTraits::GridView;
                 using DM = typename LinearSolverTraits::DofMapper;
-                ParallelVectorHelper<GV, DM, LinearSolverTraits::dofCodim> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
                 if constexpr (requires { LinearSolverTraits::dofCodims; })
+                {
+                    MultiCodimParallelVectorHelper<GV, DM> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
                     vectorHelper.makeNonOverlappingConsistent(y, LinearSolverTraits::dofCodims);
+                }
                 else
+                {
+                    ParallelVectorHelper<GV, DM, LinearSolverTraits::dofCodim> vectorHelper(parallelHelper_->gridView(), parallelHelper_->dofMapper());
                     vectorHelper.makeNonOverlappingConsistent(y);
+                }
                 return scalarProduct_->norm(y);
             }
         }
@@ -344,7 +341,7 @@ public:
      */
     void setResidualReduction(double residReduction)
     {
-        params_["reduction"] = std::to_string(residReduction);
+        params_["reduction"] = Fmt::format("{}", residReduction);
 
         // reconstruct the solver with new parameters
         if (solver_)
@@ -403,6 +400,48 @@ private:
         if (comm.rank() != 0)
             Dumux::LinearSolverParameters<LinearSolverTraits>::disableVerbosity(params_);
     }
+
+    /*!
+     * \brief Establish solverCategory_, communication_, parallelHelper_ and scalarProduct_ for a gridView/dofMapper,
+     *        discarding any cached operator/solver that referred to a previous communication and dof layout
+     * \note Used both on construction (where the cache is already empty) and to rebuild these
+     *       members after grid adaption or dynamic load balancing
+     */
+    template <class GridView, class DofMapper>
+    void configureCommunication_(const GridView& gridView, const DofMapper& dofMapper)
+    {
+#if HAVE_MPI
+        solverCategory_ = Detail::solverCategory<LinearSolverTraits>(gridView);
+        if constexpr (LinearSolverTraits::canCommunicate)
+        {
+            if (solverCategory_ == Dune::SolverCategory::sequential)
+                scalarProduct_ = std::make_shared<ScalarProduct>();
+            else
+            {
+                communication_ = std::make_shared<Comm>(gridView.comm(), solverCategory_);
+                scalarProduct_ = Dune::createScalarProduct<XVector>(*communication_, solverCategory_);
+                buildParallelHelper_(gridView, dofMapper, *communication_);
+            }
+        }
+        else
+            scalarProduct_ = std::make_shared<ScalarProduct>();
+#else
+        solverCategory_ = Dune::SolverCategory::sequential;
+        scalarProduct_ = std::make_shared<ScalarProduct>();
+#endif
+        linearOperator_ = MatrixOperatorHolder{};
+        solver_ = nullptr;
+    }
+
+#if HAVE_MPI
+    //! Build parallelHelper_ and set up its parallel index set for the given communication
+    template <class GridView, class DofMapper>
+    void buildParallelHelper_(const GridView& gridView, const DofMapper& dofMapper, Comm& comm)
+    {
+        parallelHelper_ = std::make_shared<ParallelISTLHelper<LinearSolverTraits>>(gridView, dofMapper);
+        parallelHelper_->createParallelIndexSet(comm);
+    }
+#endif
 
     MatrixOperatorHolder makeSequentialLinearOperator_(std::shared_ptr<Matrix> A)
     {
@@ -753,6 +792,30 @@ using AMGCGIstlSolver =
 
 /*!
  * \ingroup Linear
+ * \brief An AMG preconditioned GMRes solver using dune-istl
+ *
+ * Solver: The GMRes (generalized minimal residual) method is an iterative
+ * method for the numerical solution of a nonsymmetric system of linear
+ * equations. Unlike BiCGSTAB it cannot break down (no near-zero inner
+ * products in its recurrence), at the cost of storing a Krylov basis of
+ * size LinearSolver.GMResRestart between restarts.\n
+ * See: Saad, Y., Schultz, M. H. (1986). "GMRES: A generalized minimal residual
+ * algorithm for solving nonsymmetric linear systems". SIAM J. Sci. and Stat.
+ * Comput. 7 (3): 856–869. doi:10.1137/0907058.
+ *
+ * Preconditioner: AMG (algebraic multigrid)
+ */
+template<class LSTraits, class LATraits>
+using AMGRestartedGMResIstlSolver =
+    Detail::IstlIterativeLinearSolver<LSTraits, LATraits,
+        Dune::RestartedGMResSolver<typename LATraits::SingleTypeVector>,
+        Detail::IstlSolvers::IstlAmgPreconditionerFactory,
+        // the AMG preconditioner doesn't accept multi-type matrices
+        /*convert multi-type istl types?*/ true
+    >;
+
+/*!
+ * \ingroup Linear
  * \brief An Uzawa preconditioned BiCGSTAB solver using dune-istl
  *
  * Solver: The BiCGSTAB (stabilized biconjugate gradients method) solver has
@@ -886,8 +949,7 @@ private:
     void checkResult_(XVectorForSolver& x, Dune::InverseOperatorResult& result) const
     {
         flatVectorForEach(x, [&](auto&& entry, std::size_t){
-            using std::isnan, std::isinf;
-            if (isnan(entry) || isinf(entry))
+            if (Dune::isNaN(entry) || Dune::isInf(entry))
                 result.converged = false;
         });
     }

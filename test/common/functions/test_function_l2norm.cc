@@ -73,8 +73,8 @@ int main (int argc, char *argv[])
 
     // test Dumux::integrateL2Error
     SolutionVector solCoarse, solFine;
-    interpolate(makeBasis(gvCoarse, power<2>(lagrange<2>())), solCoarse, f);
-    interpolate(makeBasis(gvFine, power<2>(lagrange<2>())), solFine, f);
+    interpolate(makeBasis(gvCoarse, power<2>(lagrange<2>(), blockedInterleaved())), solCoarse, f);
+    interpolate(makeBasis(gvFine, power<2>(lagrange<2>(), blockedInterleaved())), solFine, f);
 
     P2 basisCoarse(gvCoarse), basisFine(gvFine);
     auto gfCoarse = makeDiscreteGlobalBasisFunction<R>(basisCoarse, solCoarse);
@@ -101,8 +101,8 @@ int main (int argc, char *argv[])
     Dumux::BoxFVGridGeometry<double, GridView> ggBoxCoarse(gvCoarse), ggBoxFine(gvFine);
     auto f2 = [&] (const auto& pos) -> R { return {pos[0] + pos[1], pos[0]*pos[1]}; };
 
-    interpolate(makeBasis(gvFine, power<2>(lagrange<1>())), solFine, f2);
-    interpolate(makeBasis(gvCoarse, power<2>(lagrange<1>())), solCoarse, f2);
+    interpolate(makeBasis(gvFine, power<2>(lagrange<1>(), blockedInterleaved())), solFine, f2);
+    interpolate(makeBasis(gvCoarse, power<2>(lagrange<1>(), blockedInterleaved())), solCoarse, f2);
 
     // project fine discrete function onto coarse grid
     auto p1BasisCoarse = Dumux::getFunctionSpaceBasis(ggBoxCoarse);

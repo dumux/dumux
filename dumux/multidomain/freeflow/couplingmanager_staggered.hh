@@ -29,7 +29,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/multidomain/couplingmanager.hh>
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 #include <dumux/discretization/facecentered/staggered/consistentlyorientedgrid.hh>
 
 #include <dumux/parallel/parallel_for.hh>
@@ -644,25 +644,30 @@ private:
     }
 
     std::size_t massScvfToMomentumScvIdx_(const SubControlVolumeFace<freeFlowMassIndex>& massScvf,
-                                          [[maybe_unused]] const FVElementGeometry<freeFlowMomentumIndex>& momentumFVGeometry) const
+                                          const FVElementGeometry<freeFlowMomentumIndex>& momentumFVGeometry) const
     {
-        if constexpr (ConsistentlyOrientedGrid<typename GridView<freeFlowMomentumIndex>::Grid>{})
-            return massScvf.index();
-        else
+        // the faces of the mass balance and the sub-control volumes of the momentum balance are numbered alike,
+        // except on a distributed grid, where the mass balance has no faces at the processor boundary
+        if (momentumFVGeometry.gridGeometry().gridView().comm().size() == 1)
         {
-            static const bool makeConsistentlyOriented = getParam<bool>("Grid.MakeConsistentlyOriented", true);
-            if (!makeConsistentlyOriented)
+            if constexpr (ConsistentlyOrientedGrid<typename GridView<freeFlowMomentumIndex>::Grid>{})
                 return massScvf.index();
-
-            for (const auto& momentumScv : scvs(momentumFVGeometry))
+            else
             {
-                typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition momentumUnitOuterNormal(0.0);
-                momentumUnitOuterNormal[momentumScv.dofAxis()] = momentumScv.directionSign();
-                if (Dune::FloatCmp::eq<typename GridView<freeFlowMomentumIndex>::ctype>(massScvf.unitOuterNormal()*momentumUnitOuterNormal, 1.0))
-                    return momentumScv.index();
+                static const bool makeConsistentlyOriented = getParam<bool>("Grid.MakeConsistentlyOriented", true);
+                if (!makeConsistentlyOriented)
+                    return massScvf.index();
             }
-            DUNE_THROW(Dune::InvalidStateException, "No Momentum SCV found");
         }
+
+        for (const auto& momentumScv : scvs(momentumFVGeometry))
+        {
+            typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition momentumUnitOuterNormal(0.0);
+            momentumUnitOuterNormal[momentumScv.dofAxis()] = momentumScv.directionSign();
+            if (Dune::FloatCmp::eq<typename GridView<freeFlowMomentumIndex>::ctype>(massScvf.unitOuterNormal()*momentumUnitOuterNormal, 1.0))
+                return momentumScv.index();
+        }
+        DUNE_THROW(Dune::InvalidStateException, "No Momentum SCV found");
     }
 
     CouplingStencilType emptyStencil_;

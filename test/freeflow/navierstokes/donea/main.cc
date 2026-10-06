@@ -13,10 +13,14 @@
 #include <config.h>
 
 #include <cmath>
-#include <ctime>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <type_traits>
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
@@ -26,6 +30,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
+#include <dumux/io/cvfegridfunction.hh>
+#include <dumux/io/gridwriter.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/linear/istlsolvers.hh>
@@ -39,6 +45,8 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 #include <test/freeflow/navierstokes/errors_cvfe.hh>
@@ -82,6 +90,27 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     return dirichletDofs;
 }
 
+//! Count the entries of a multidomain matrix that are not finite
+template<class Matrix>
+std::size_t numNonFiniteEntries(const Matrix& matrix)
+{
+    std::size_t count = 0;
+    Dune::Hybrid::forEach(std::make_index_sequence<Matrix::N()>{}, [&](auto i)
+    {
+        Dune::Hybrid::forEach(std::make_index_sequence<Matrix::M()>{}, [&](auto j)
+        {
+            const auto& block = matrix[i][j];
+            for (auto row = block.begin(); row != block.end(); ++row)
+                for (auto entry = row->begin(); entry != row->end(); ++entry)
+                    for (const auto& entryRow : *entry)
+                        for (const auto& value : entryRow)
+                            if (!std::isfinite(value))
+                                ++count;
+        });
+    });
+    return count;
+}
+
 namespace Dumux {
 
 template<class Error>
@@ -89,6 +118,26 @@ void writeError_(std::ofstream& logFile, const Error& error)
 {
     for (const auto& e : error)
         logFile << ", " << e;
+}
+
+template<class MomentumGridGeometry, class MassGridGeometry,
+         class SolutionVector, class MomentumIdx, class MassIdx>
+void writeHigherOrderVTK(const MomentumGridGeometry& momentumGridGeometry,
+                         const MassGridGeometry& massGridGeometry,
+                         const SolutionVector& x,
+                         MomentumIdx momentumIdx,
+                         MassIdx massIdx,
+                         const std::string& fileName)
+{
+#if DUMUX_HAVE_GRIDFORMAT
+    if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::pq2)
+    {
+        IO::GridWriter writer{IO::Format::vtu, momentumGridGeometry.gridView(), IO::order<2>};
+        writer.setPointField("velocity", IO::cvfeGridFunction(momentumGridGeometry, x[momentumIdx]));
+        writer.setPointField("pressure", IO::cvfeGridFunction(massGridGeometry, x[massIdx]));
+        writer.write(fileName + "_ho");
+    }
+#endif
 }
 
 template<class MomentumProblem, class MassProblem,
@@ -102,9 +151,13 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
                  const MomentumIdx momentumIdx,
                  const MassIdx massIdx)
 {
-    using MomentumGridGeometry = std::decay_t<decltype(std::declval<MomentumProblem>().gridGeometry())>;
-    using MassGridGeometry = std::decay_t<decltype(std::declval<MassProblem>().gridGeometry())>;
+    using MomentumGridGeometry = typename ProblemTraits<MomentumProblem>::GridGeometry;
+    using MassGridGeometry = typename ProblemTraits<MassProblem>::GridGeometry;
     static constexpr int dim = MomentumGridGeometry::GridView::dimension;
+
+    const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
+
+    const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
 
     // print discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
@@ -113,8 +166,10 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
     if (!printErrors && !printConvergenceTestFile)
         return;
 
-    if constexpr (DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
-                  && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>)
+    constexpr bool quadratureErrors
+        = DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
+          && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>;
+    if constexpr (quadratureErrors)
     {
         // first print momentum
         {
@@ -126,7 +181,7 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         if (printConvergenceTestFile)
         {
             std::ofstream logFile(momentumProblem->name() + "_errors_velocity.csv", std::ios::app);
-            auto numDofs = momentumProblem->gridGeometry().numDofs();
+            auto numDofs = momentumGridGeometry.numDofs();
             logFile << numDofs << ", ";
             logFile << std::pow(totalVolume / numDofs, 1.0/dim);
             writeError_(logFile, errors);
@@ -144,7 +199,7 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         if (printConvergenceTestFile)
         {
             std::ofstream logFile(massProblem->name() + "_errors_pressure.csv", std::ios::app);
-            auto numDofs = massProblem->gridGeometry().numDofs();
+            auto numDofs = massGridGeometry.numDofs();
             logFile << numDofs << ", ";
             logFile << std::pow(totalVolume / numDofs, 1.0/dim);
             writeError_(logFile, errors);
@@ -240,6 +295,7 @@ int main(int argc, char** argv)
     momentumGridVariables->init(x[momentumIdx]);
     massGridVariables->init(x[massIdx]);
 
+#if !TAYLORHOOD_FE
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
@@ -251,6 +307,7 @@ int main(int argc, char** argv)
     vtkWriter.addField(analyticalSolVectors.analyticalVelocitySolution(), "velocityExact");
     //vtkWriter.addFaceField(analyticalSolVectors.analyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
+#endif
 
     // use the multidomain FV assembler
 #if NEW_PROBLEM_INTERFACE
@@ -282,10 +339,23 @@ int main(int argc, char** argv)
     // linearize & solve
     nonLinearSolver.solve(x);
 
+    // a parallel solver may use the rows of non-owned dofs, so the entire local matrix has to be finite
+    if (getParam<bool>("Problem.CheckFiniteJacobian", false))
+    {
+        const auto numNonFinite = Dune::MPIHelper::getCommunication().sum(numNonFiniteEntries(assembler->jacobian()));
+        if (numNonFinite > 0)
+            DUNE_THROW(Dune::Exception, "The Jacobian has " << numNonFinite << " entries that are not finite");
+    }
+
     Dumux::printErrors(momentumProblem, massProblem, *momentumGridVariables, *massGridVariables, x, momentumIdx, massIdx);
 
     // write vtk output
+#if TAYLORHOOD_FE
+    Dumux::writeHigherOrderVTK(*momentumGridGeometry, *massGridGeometry, x,
+                               momentumIdx, massIdx, massProblem->name());
+#else
     vtkWriter.write(1.0);
+#endif
 
     timer.stop();
 

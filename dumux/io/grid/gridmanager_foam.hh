@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for FoamGrid
+ * \anchor foam_grid_manager
  */
 #ifndef DUMUX_IO_GRID_MANAGER_FOAM_HH
 #define DUMUX_IO_GRID_MANAGER_FOAM_HH
@@ -29,19 +30,23 @@ namespace Dumux {
 #if HAVE_DUNE_FOAMGRID
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for FoamGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
-
+ *
  * The following keys are recognized:
- * - File : A DGF or gmsh file to load from, type detection by file extension
- * - Verbosity : whether the grid construction should output to standard out
+ * - File : A dgf/msh/vtp/vtu file to load from, type detection by file extension
  * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
+ * - Refinement : the number of global refines to perform
+ * - Verbosity : whether the grid construction should output to standard out
  *
+ * Additionally if reading from a msh file:
+ * - BoundarySegments : whether to insert boundary segments into the grid
+ * - DomainMarkers : weather domain marker information should be read from the grid file
  */
 template<int dim, int dimworld>
 class GridManager<Dune::FoamGrid<dim, dimworld>>
@@ -56,7 +61,7 @@ public:
      */
     void init(const std::string& modelParamGroup = "")
     {
-        // try to create it from file
+        // First, try to create it from file
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
@@ -86,19 +91,23 @@ public:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for FoamGrids of dim 1
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
 
  * The following keys are recognized:
- * - File : A DGF or gmsh file to load from, type detection by file extension
- * - Verbosity : whether the grid construction should output to standard out
+ * - File : A dgf/msh/vtp/vtu file to load from, type detection by file extension
  * - LowerLeft : lowerLeft corner of a structured grid
  * - UpperRight : upperright corner of a structured grid
  * - Cells : number of elements in a structured grid
+ * - Refinement : the number of global refines to perform
+ * - Verbosity : whether the grid construction should output to standard out
  *
+ * Additionally if reading from a msh file:
+ * - BoundarySegments : whether to insert boundary segments into the grid
+ * - DomainMarkers : weather domain marker information should be read from the grid file
  */
 template<int dimworld>
 class GridManager<Dune::FoamGrid<1, dimworld>>
@@ -113,7 +122,7 @@ public:
      */
     void init(const std::string& modelParamGroup = "")
     {
-        // try to create it from file
+        // Try to create it from file
         if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);

@@ -79,7 +79,7 @@ template< class MDTraits,
           class CouplingMapper,
           std::size_t bulkDomainId = 0,
           std::size_t lowDimDomainId = 1,
-          class DiscretizationMethod = typename GetPropType<typename MDTraits::template SubDomain<bulkDomainId>::TypeTag, Properties::GridGeometry>::DiscretizationMethod >
+          class DiscretizationMethod = typename GetPropType<typename MDTraits::template SubDomainTypeTag<bulkDomainId>, Properties::GridGeometry>::DiscretizationMethod >
 class FacetCouplingManager;
 
 /*!
@@ -115,7 +115,7 @@ class FacetCouplingThreeDomainManager
     static constexpr auto edgeId = EdgeIdType();
 
     // the sub-domain type tags
-    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
     // further types specific to the sub-problems
     template<std::size_t id> using PrimaryVariables = GetPropType<SubDomainTypeTag<id>, Properties::PrimaryVariables>;

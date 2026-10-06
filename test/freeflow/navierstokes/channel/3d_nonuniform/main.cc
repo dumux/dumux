@@ -27,6 +27,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
@@ -54,6 +55,10 @@
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 #include "properties.hh"
+
+#if DUMUX_HAVE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#endif
 
 #ifndef USE_STOKES_SOLVER
 #define USE_STOKES_SOLVER 0
@@ -104,14 +109,15 @@ void computeWallShearStress(
             return gridVariables.curGridVolVars();
     }();
     const auto& problem = curVariables.problem();
-    const auto& gg = problem.gridGeometry();
+    const auto& gg = Dumux::gridDiscretization(problem);
     const auto& gv = gg.gridView();
 
-    using GridView = typename GridVariables::GridGeometry::GridView;
+    using GridDiscretization = Dumux::GridDiscretization_t<GridVariables>;
+    using GridView = typename GridDiscretization::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = typename GridVariables::GridGeometry::GlobalCoordinate;
+    using GlobalPosition = typename GridDiscretization::GlobalCoordinate;
 
     using Grid = Dune::FoamGrid<dim-1, dimWorld>;
     Dune::GridFactory<Grid> factory;
@@ -365,6 +371,22 @@ int main(int argc, char** argv)
 
     // write vtk output
     vtkWriter.write(1.0);
+
+    // higher-order VTK output for PQ2/PQ3 momentum
+#if DUMUX_HAVE_GRIDFORMAT
+    if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::pq2)
+    {
+        IO::GridWriter hoWriter{IO::Format::vtu, momentumGridGeometry->gridView(), IO::order<2>};
+        hoWriter.setPointField("velocity", x[momentumIdx]);
+        hoWriter.write(massProblem->name() + "_ho_momentum");
+    }
+    else if constexpr (MomentumGridGeometry::discMethod == DiscretizationMethods::pq3)
+    {
+        IO::GridWriter hoWriter{IO::Format::vtu, momentumGridGeometry->gridView(), IO::order<3>};
+        hoWriter.setPointField("velocity", x[momentumIdx]);
+        hoWriter.write(massProblem->name() + "_ho_momentum");
+    }
+#endif
 
     // compute influx and outflux
     couplingManager->updateSolution(x);

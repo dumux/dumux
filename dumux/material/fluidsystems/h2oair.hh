@@ -58,9 +58,9 @@ template <class Scalar,
           class Policy = H2OAirDefaultPolicy<>,
           bool useKelvinVaporPressure = false>
 class H2OAir
-: public Base<Scalar, H2OAir<Scalar, H2Otype, Policy> >
+: public Base<Scalar, H2OAir<Scalar, H2Otype, Policy, useKelvinVaporPressure> >
 {
-    using ThisType = H2OAir<Scalar,H2Otype, Policy>;
+    using ThisType = H2OAir<Scalar, H2Otype, Policy, useKelvinVaporPressure>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
@@ -278,7 +278,7 @@ public:
                                  ? fluidState.pressure(AirIdx)-fluidState.pressure(H2OIdx)
                                  : fluidState.pressure(H2OIdx)-fluidState.pressure(AirIdx);
                 return H2O::vaporPressure(t)*exp( -pc * molarMass(H2OIdx)
-                                                      / density(fluidState, H2OIdx)
+                                                      / H2O::liquidDensity(t, fluidState.pressure(H2OIdx))
                                                       / (Dumux::Constants<Scalar>::R*t) );
             }
         }

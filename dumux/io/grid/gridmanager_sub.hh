@@ -6,8 +6,9 @@
 //
 /*!
  * \file
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Grid manager specialization for SubGrid
+ * \anchor sub_grid_manager
  */
 #ifndef DUMUX_IO_GRID_MANAGER_SUB_HH
 #define DUMUX_IO_GRID_MANAGER_SUB_HH
@@ -45,7 +46,7 @@ namespace Dumux {
 namespace Concept {
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief The element selector concept
  */
 template<class Element>
@@ -59,7 +60,7 @@ struct ElementSelector
 } // end namespace Concept
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief The base class for grid managers for dune-subgrid.
  */
 template <class HostGrid, class HostGridManager = GridManager<HostGrid>>
@@ -182,7 +183,7 @@ protected:
 };
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for SubGrids
  *        from information in the input file
  *
@@ -195,14 +196,22 @@ class GridManager<Dune::SubGrid<dim, HostGrid>>
 {};
 
 /*!
- * \ingroup InputOutput
+ * \ingroup Grids
  * \brief Provides a grid manager for SubGrids
  *        from information in the input file
  *
- * The following keys are recognized:
- * - All parameters that the host grid knows
- * - Image: the image file if the sub grid is constructed from a raster image
- *          (in that case the host grid has to be any 2D YaspGrid)
+ * All keys are expected to be in group GridParameterGroup.
+ *
+ * For constructing a subgrid without provided hostgrid, the following keys are recognized:
+ * - LowerLeft : lowerLeft corner of a structured grid
+ * - UpperRight : upperright corner of a structured grid
+ * - Cells : number of elements in a structured grid
+ * - Image : the image file to construct element selector from
+ * - Overlap : overlap size in cells
+ * - Periodic : true or false for each direction
+ * - BinaryMask : whether binary mask file should be read for constructing element selector
+ * - PixelDimensions : cell length in each direction
+ * - Marker : customize marker for creating element selector, by default marker is set to 0
  */
 template<int dim, class Coordinates>
 class GridManager<Dune::SubGrid<dim, Dune::YaspGrid<dim, Coordinates>>>

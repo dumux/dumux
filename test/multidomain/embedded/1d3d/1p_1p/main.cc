@@ -28,6 +28,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
@@ -35,6 +36,49 @@
 
 #include "properties.hh"
 #include "l2norm.hh"
+
+/*!
+ * \brief Integrate the coupling kernel against unity.
+ *
+ *        Summing every source weight over all bulk elements (and, for box, all sub-control
+ *        volumes) must reproduce the total vessel length, because the kernel is normalised to
+ *        integrate to one per unit length. The check is independent of the physics and of the
+ *        discretisation, so it isolates the distribution itself: if the weights do not sum
+ *        correctly the coupling is losing or inventing exchange, however plausible the
+ *        resulting pressure field looks.
+ *
+ *        Templated so that the branch is discarded for coupling modes that carry no kernel
+ *        weights at all -- `if constexpr` in a non-template context would still require the
+ *        member to exist.
+ */
+template<class CouplingManager, class BulkGG, class LowDimGG>
+void checkKernelConservation(const CouplingManager& couplingManager,
+                             const BulkGG& bulkGG, const LowDimGG& lowDimGG)
+{
+    using namespace Dumux;
+    if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
+    {
+        constexpr int nScv = (BulkGG::discMethod == DiscretizationMethods::box)
+                           ? (1 << int(BulkGG::GridView::dimension)) : 1;
+        double total = 0.0;
+        for (std::size_t eIdx = 0; eIdx < bulkGG.gridView().size(0); ++eIdx)
+            for (int s = 0; s < nScv; ++s)
+                for (const auto w : couplingManager.bulkSourceWeights(eIdx, s))
+                    total += w;
+
+        double length = 0.0;
+        for (const auto& element : elements(lowDimGG.gridView()))
+            length += element.geometry().volume();
+
+        const auto relErr = std::abs(total - length)/length;
+        std::cout << "[conservation] integral of the kernel against unity = " << total
+                  << ", vessel length = " << length
+                  << ", rel. error = " << relErr << std::endl;
+        if (relErr > 1e-10)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Kernel distribution is not conservative, rel. error = " << relErr);
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -105,6 +149,8 @@ int main(int argc, char** argv)
     couplingManager->init(bulkProblem, lowDimProblem, sol);
     bulkProblem->computePointSourceMap();
     lowDimProblem->computePointSourceMap();
+
+    checkKernelConservation(*couplingManager, *bulkFvGridGeometry, *lowDimFvGridGeometry);
 
     // the grid variables
     using BulkGridVariables = GetPropType<BulkTypeTag, Properties::GridVariables>;

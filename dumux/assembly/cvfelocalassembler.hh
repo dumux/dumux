@@ -22,7 +22,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/multimapperview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/typetraits/boundary_.hh>
 
@@ -147,20 +149,17 @@ public:
                     if (entity.partitionType() == Dune::InteriorEntity || entity.partitionType() == Dune::BorderEntity)
                         continue;
 
-                    // WARNING: this only works if the mapping from codim+subEntity to
-                    // global dofIndex is unique (on dof per entity of this codim).
-                    // For more general mappings, we should use a proper local-global mapping here.
-                    // For example through dune-functions.
-                    const auto dofIndex = gridGeometry.dofMapper().index(entity);
-
-                    // this might be a vector-valued dof
+                    // Set identity rows for ALL DOFs of this ghost entity.
+                    // Entities with multiple DOFs (e.g. PQ3 edge interior DOFs with 2 per edge)
+                    // require iterating over all DOF indices via asMultiMapper(dofMapper()).indices(entity).
                     using BlockType = typename JacobianMatrix::block_type;
-                    BlockType &J = jac[dofIndex][dofIndex];
-                    for (int j = 0; j < BlockType::rows; ++j)
-                        J[j][j] = 1.0;
-
-                    // set residual for the ghost dof
-                    res[dofIndex] = 0;
+                    for (const auto dofIndex : asMultiMapper(gridGeometry.dofMapper()).indices(entity))
+                    {
+                        BlockType &J = jac[dofIndex][dofIndex];
+                        for (int j = 0; j < BlockType::rows; ++j)
+                            J[j][j] = 1.0;
+                        res[dofIndex] = 0;
+                    }
                 }
             });
         }
@@ -214,6 +213,18 @@ public:
                 row[col.index()][eqIdx] = 0.0;
 
             jac[scvOrLocalDofI.dofIndex()][scvOrLocalDofI.dofIndex()][eqIdx][pvIdx] = 1.0;
+
+            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
+            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvOrLocalDofI.dofIndex()))
+            {
+                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvOrLocalDofI.dofIndex());
+
+                auto& rowP = jac[periodicDof];
+                for (auto col = rowP.begin(); col != rowP.end(); ++col)
+                    rowP[col.index()][eqIdx] = 0.0;
+
+                rowP[periodicDof][eqIdx][pvIdx] = 1.0;
+            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -237,6 +248,13 @@ public:
                                    const auto pvIdx)
         {
             res[scvOrLocalDofI.dofIndex()][eqIdx] = this->curElemVolVars()[scvOrLocalDofI].priVars()[pvIdx] - dirichletValues[pvIdx];
+
+            // if a periodic dof has Dirichlet values also apply the same Dirichlet values to the other dof
+            if (this->asImp_().problem().gridGeometry().dofOnPeriodicBoundary(scvOrLocalDofI.dofIndex()))
+            {
+                const auto periodicDof = this->asImp_().problem().gridGeometry().periodicallyMappedDof(scvOrLocalDofI.dofIndex());
+                res[periodicDof][eqIdx] = this->asImp_().curSol()[periodicDof][pvIdx] - dirichletValues[pvIdx];
+            }
         };
 
         this->asImp_().enforceDirichletConstraints(applyDirichlet);
@@ -386,7 +404,8 @@ public:
         );
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
+        auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));
@@ -488,7 +507,7 @@ class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/f
 {
     using ThisType = CVFELocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false, Implementation>;
     using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, Detail::CVFE::Impl<Implementation, ThisType>, false>;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using PrimaryVariable = typename GetPropType<TypeTag, Properties::PrimaryVariables>::value_type;
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
@@ -534,7 +553,8 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        auto elemSol = elementSolution(element, curSol, fvGeometry.gridGeometry());
+        const auto& gridDiscretization = Dumux::gridDiscretization(fvGeometry);
+        auto elemSol = elementSolution(element, curSol, gridDiscretization);
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(Detail::LocalDofs::numLocalDofs(fvGeometry));
@@ -553,7 +573,7 @@ public:
             {
                 partialDerivs = 0.0;
 
-                auto evalStorage = [&](Scalar priVar)
+                auto evalStorage = [&](PrimaryVariable priVar)
                 {
                     // auto partialDerivsTmp = partialDerivs;
                     elemSol[localIdx][pvIdx] = priVar;
@@ -562,7 +582,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const NumericEpsilon<Scalar, numEq> eps_{this->asImp_().problem().paramGroup()};
+                static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};
                 static const int numDiffMethod = getParamFromGroup<int>(this->asImp_().problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[localIdx][pvIdx], partialDerivs, origStorageResiduals,
                                                           eps_(elemSol[localIdx][pvIdx], pvIdx), numDiffMethod);

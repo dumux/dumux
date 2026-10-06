@@ -202,6 +202,8 @@ private:
     public:
         //! export the geometry helper type
         using GeometryHelper = Detail::FaceCenteredDiamondGeometryHelper_t<GV, Traits>;
+        //! export the dof helper type
+        using DofHelper = typename GeometryHelper::DofHelper;
 
         explicit FCDiamondGridGeometryCache(const FaceCenteredDiamondFVGridGeometry& gg)
         : gridGeometry_(&gg)

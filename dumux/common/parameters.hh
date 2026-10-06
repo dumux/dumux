@@ -98,6 +98,19 @@ public:
                      bool inputFileOverwritesParams = true,
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {});
 
+    /*!
+     * \brief Discard all parameters and the record of which parameters have been used
+     *
+     * The parameter tree is a singleton and init merges into it rather than replacing it,
+     * so parameters set by one init are still visible after the next one. A program that
+     * initializes repeatedly, e.g. a Python binding running a model many times, otherwise
+     * inherits every parameter ever set, including ones the current run leaves out.
+     * Call this before init to start from an empty parameter tree.
+     *
+     * \note Parameter values that were read into static variables keep their values.
+     */
+    static void reset();
+
     //! prints all used and unused parameters
     static void print();
 
@@ -112,6 +125,9 @@ public:
     static const LoggingParameterTree& getTree();
 
 private:
+    //! the logging parameter tree recording which parameters are used
+    static LoggingParameterTree& loggingTree_();
+
     //! the actual internal parameter tree storing all user-specfied runtime parameters
     static Dune::ParameterTree& paramTree_();
 

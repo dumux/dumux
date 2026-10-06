@@ -29,6 +29,8 @@
 #include <dune/common/timer.hh>
 
 #include <dumux/io/format.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
+#include <dumux/io/cvfelagrangegrid.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/method.hh>
 
@@ -100,24 +102,28 @@ inline constexpr auto order = Order<o>{};
 /*!
  * \ingroup InputOutput
  * \brief Generic writer for a variety of grid file formats.
- *        Supports higher-order output of fields provided as Dune::Function objects.
- *        To create a writer for higher-order output, you may write
- *        \code
- *            GridWriter writer{gridView, order<2>};
- *        \endcode
+ *
+ * For `order == 1` (default) the writer maps directly to the grid vertices.
+ * For `order > 1` the writer uses a `CVFELagrangeGrid<GridView, order>`.
+ *
+ * \code
+ *   GridWriter writer{Format::vtu, gridView, order<2>};
+ *   writer.setPointField("u", x); // x must be indexed by the order-2 Lagrange DOFs
+ *   // or use a Dune::Function that is evaluated at each Lagrange node:
+ *   writer.setPointField("u", cvfeGridFunction(gridGeometry, x));
+ * \endcode
  */
 template<GridFormat::Concepts::Grid GridView, int order = 1>
 class GridWriter
 {
     using Grid = std::conditional_t<
         (order > 1),
-        GridFormat::Dune::LagrangePolynomialGrid<GridView>,
+        CVFELagrangeGrid<GridView, order>,
         GridView
     >;
     using Cell = GridFormat::Cell<Grid>;
     using Vertex = typename GridView::template Codim<GridView::dimension>::Entity;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Coordinate = typename Element::Geometry::GlobalCoordinate;
     using Writer = GridFormat::Writer<Grid>;
 
  public:
@@ -185,21 +191,34 @@ class GridWriter
     void setCellField(const std::string& name, F&& f, const GridFormat::Precision<T>& prec)
     { GridFormat::Dune::set_cell_function(std::forward<F>(f), writer_, name, prec); }
 
-    //! Set a point field via a lambda invoked with grid vertices
+    //! Set a point field via a lambda invoked with grid vertices (order == 1 only).
     template<GridFormat::Concepts::PointFunction<GridView> F,
              GridFormat::Concepts::Scalar T = GridFormat::FieldScalar<std::invoke_result_t<F, Vertex>>>
     void setPointField(const std::string& name, F&& f, const GridFormat::Precision<T>& prec = {})
+        requires (order == 1)
+    { writer_.set_point_field(name, std::move(f), prec); }
+
+    //! Set a DOF-indexed container as a point field (order > 1).
+    //! The container must be indexed by the Lagrange DOF indices of this writer's order.
+    template<Detail::Container C,
+             GridFormat::Concepts::Scalar T = GridFormat::MDRangeScalar<C>>
+    void setPointField(const std::string& name, const C& values,
+                       const GridFormat::Precision<T>& prec = {})
+        requires (order > 1)
     {
-        static_assert(order == 1, "Point lambdas can only be used for order == 1. Use Dune::Functions instead.");
-        writer_.set_point_field(name, std::move(f), prec);
+        using Point = typename Grid::Point;
+        writer_.set_point_field(name, [&values](const Point& p) -> std::ranges::range_value_t<C> {
+            return values[p.dofIndex];
+        }, prec);
     }
 
-    //! Set a Dune::Function as point field
+    //! Set a Dune::Function as point field (any order).
+    //! For order > 1, the function is evaluated at each Lagrange node.
     template<GridFormat::Dune::Concepts::Function<GridView> F>
     void setPointField(const std::string& name, F&& f)
     { GridFormat::Dune::set_point_function(std::forward<F>(f), writer_, name); }
 
-    //! Set a Dune::Function as point data with custom precision
+    //! Set a Dune::Function as point field with custom precision (any order).
     template<GridFormat::Dune::Concepts::Function<GridView> F, GridFormat::Concepts::Scalar T>
     void setPointField(const std::string& name, F&& f, const GridFormat::Precision<T>& prec)
     { GridFormat::Dune::set_point_function(std::forward<F>(f), writer_, name, prec); }
@@ -219,7 +238,7 @@ class GridWriter
     Grid makeGrid_(const GridView& gv) const
     {
         if constexpr (order > 1)
-            return Grid{gv, order};
+            return Grid{gv};
         else
             return gv;
     }
@@ -234,12 +253,12 @@ class GridWriter
  * \brief Generic output module for entity & volume variable fields. Supports a variety of grid file formats.
  */
 template<typename GridVariables, typename SolutionVector>
-class OutputModule : private GridWriter<typename GridVariables::GridGeometry::GridView, 1> {
-    using ParentType = GridWriter<typename GridVariables::GridGeometry::GridView, 1>;
-    using GridView = typename GridVariables::GridGeometry::GridView;
+class OutputModule : private GridWriter<typename Dumux::GridDiscretization_t<GridVariables>::GridView, 1> {
+    using ParentType = GridWriter<typename Dumux::GridDiscretization_t<GridVariables>::GridView, 1>;
+    using GridView = typename Dumux::GridDiscretization_t<GridVariables>::GridView;
 
-    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridVariables::GridGeometry::DiscretizationMethod>;
-    static constexpr int dimWorld = GridVariables::GridGeometry::GridView::dimensionworld;
+    static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename Dumux::GridDiscretization_t<GridVariables>::DiscretizationMethod>;
+    static constexpr int dimWorld = Dumux::GridDiscretization_t<GridVariables>::GridView::dimensionworld;
     using Scalar = typename GridVariables::Scalar;
     using Vector = Dune::FieldVector<Scalar, dimWorld>;
     using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
@@ -266,7 +285,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     explicit OutputModule(const GridVariables& gridVariables,
                           const SolutionVector& sol,
                           const std::string& filename)
-    : ParentType{defaultFileFormat, gridVariables.gridGeometry().gridView(), filename, order<1>}
+    : ParentType{defaultFileFormat, Dumux::gridDiscretization(gridVariables).gridView(), filename, order<1>}
     , gridVariables_{gridVariables}
     , solutionVector_{sol}
     {
@@ -281,7 +300,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     explicit OutputModule(const Format& fmt,
                           const GridVariables& gridVariables,
                           const SolutionVector& sol)
-    : ParentType{fmt, gridVariables.gridGeometry().gridView(), order<1>}
+    : ParentType{fmt, Dumux::gridDiscretization(gridVariables).gridView(), order<1>}
     , gridVariables_{gridVariables}
     , solutionVector_{sol}
     {
@@ -297,7 +316,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
                           const GridVariables& gridVariables,
                           const SolutionVector& sol,
                           const std::string& filename)
-    : ParentType{fmt, gridVariables.gridGeometry().gridView(), filename, order<1>}
+    : ParentType{fmt, Dumux::gridDiscretization(gridVariables).gridView(), filename, order<1>}
     , gridVariables_{gridVariables}
     , solutionVector_{sol}
     {
@@ -347,8 +366,8 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     template<Detail::Container C, GridFormat::Concepts::Scalar T>
     void addField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
-        const bool hasCellSize = values.size() == gridVariables_.gridGeometry().elementMapper().size();
-        const bool hasPointSize = values.size() == gridVariables_.gridGeometry().vertexMapper().size();
+        const bool hasCellSize = values.size() == gridDisc_().elementMapper().size();
+        const bool hasPointSize = values.size() == gridDisc_().vertexMapper().size();
         if (hasCellSize && hasPointSize)
             DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of field type failed. Please use addCellField or addPointField instead.");
         if (!hasCellSize && !hasPointSize)
@@ -380,7 +399,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     template<Detail::Container C, GridFormat::Concepts::Scalar T>
     void addPointField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
-        if (values.size() != gridVariables_.gridGeometry().vertexMapper().size())
+        if (values.size() != gridDisc_().vertexMapper().size())
             DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of points in the grid");
 
         addPointField_(values, name, prec);
@@ -406,7 +425,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
     template<Detail::Container C, GridFormat::Concepts::Scalar T>
     void addCellField(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
-        if (values.size() != gridVariables_.gridGeometry().elementMapper().size())
+        if (values.size() != gridDisc_().elementMapper().size())
             DUNE_THROW(Dune::InvalidStateException, "Given container does not match the number of cells in the grid");
 
         addCellField_(values, name, prec);
@@ -463,7 +482,7 @@ class OutputModule : private GridWriter<typename GridVariables::GridGeometry::Gr
 
     void setVerbosity(int verbosity)
     {
-        if (gridVariables_.gridGeometry().gridView().comm().rank() == 0)
+        if (gridDisc_().gridView().comm().rank() == 0)
             verbosity_ = verbosity;
     }
 
@@ -474,7 +493,7 @@ private:
     void addPointField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
         this->setPointField(name, [&] (const auto& vertex) -> T {
-            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)][0];
+            return values[gridDisc_().vertexMapper().index(vertex)][0];
         }, prec);
     }
 
@@ -482,7 +501,7 @@ private:
     void addPointField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
         this->setPointField(name, [&] (const auto& vertex) -> std::ranges::range_value_t<C> {
-            return values[gridVariables_.gridGeometry().vertexMapper().index(vertex)];
+            return values[gridDisc_().vertexMapper().index(vertex)];
         }, prec);
     }
 
@@ -492,7 +511,7 @@ private:
     void addCellField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
         this->setCellField(name, [&] (const auto& element) -> T {
-            return values[gridVariables_.gridGeometry().elementMapper().index(element)][0];
+            return values[gridDisc_().elementMapper().index(element)][0];
         }, prec);
     }
 
@@ -500,7 +519,7 @@ private:
     void addCellField_(const C& values, const std::string& name, const GridFormat::Precision<T>& prec)
     {
         this->setCellField(name, [&] (const auto& element) -> std::ranges::range_value_t<C> {
-            return values[gridVariables_.gridGeometry().elementMapper().index(element)];
+            return values[gridDisc_().elementMapper().index(element)];
         }, prec);
     }
 
@@ -508,13 +527,16 @@ private:
     void setVolVarField_(const std::string& name, Id&& volVarFieldId)
     {
         auto dofEntityField = [&, _id=std::move(volVarFieldId)] (const auto& entity) {
-            return volVarFields_.getValue(_id, gridVariables_.gridGeometry().dofMapper().index(entity));
+            return volVarFields_.getValue(_id, gridDisc_().dofMapper().index(entity));
         };
         if constexpr (isCVFE)
             this->setPointField(name, std::move(dofEntityField), GridFormat::Precision<ResultType>{});
         else
             this->setCellField(name, std::move(dofEntityField), GridFormat::Precision<ResultType>{});
     }
+
+    const auto& gridDisc_() const
+    { return Dumux::gridDiscretization(gridVariables_); }
 
     const GridVariables& gridVariables_;
     const SolutionVector& solutionVector_;
@@ -587,8 +609,9 @@ public:
 
     void updateFieldData(const GridVariables& gridVars, const SolutionVector& x)
     {
-        resizeFieldData_(gridVars.gridGeometry().numDofs());
-        const auto range = GridFormat::cells(gridVars.gridGeometry().gridView());
+        const auto& gridDisc = Dumux::gridDiscretization(gridVars);
+        resizeFieldData_(gridDisc.numDofs());
+        const auto range = GridFormat::cells(gridDisc.gridView());
         std::for_each(
 #if __cpp_lib_parallel_algorithm >= 201603L
             std::execution::par_unseq,
@@ -596,7 +619,7 @@ public:
             std::ranges::begin(range),
             std::ranges::end(range),
             [&] (const auto& element) {
-                auto fvGeometry = localView(gridVars.gridGeometry()).bindElement(element);
+                auto fvGeometry = localView(gridDisc).bindElement(element);
                 auto elemVolVars = localView(gridVars.curGridVolVars()).bindElement(element, fvGeometry, x);
                 for (const auto& scv : scvs(fvGeometry))
                 {

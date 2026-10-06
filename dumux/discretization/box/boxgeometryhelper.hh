@@ -22,8 +22,13 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
+#include <dune/common/rangeutilities.hh>
+
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/math.hh>
 #include <dumux/geometry/center.hh>
+#include <dumux/discretization/pq1/dofhelper.hh>
+#include <dumux/discretization/scvfnormal.hh>
 
 namespace Dumux {
 
@@ -274,6 +279,7 @@ private:
 
     static constexpr int dim = 1;
 public:
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -363,13 +369,6 @@ public:
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
 
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
-
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
     {
@@ -402,6 +401,7 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
 public:
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
 
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
@@ -486,38 +486,11 @@ public:
         return Detail::Box::subEntityKeyToCornerStorage<ScvfCornerStorage>(ref, trans, localFacetIndex, facetCodim, Corners::keys[indexInFacet]);
     }
 
-    //! get scvf normal vector for dim == 2, dimworld == 3
-    template <int w = dimWorld>
-    typename std::enable_if<w == 3, GlobalPosition>::type
-    normal(const ScvfCornerStorage& scvfCorners,
-           const std::array<LocalIndexType, 2>& scvIndices) const
+    //! get scvf normal vector
+    GlobalPosition normal(const ScvfCornerStorage& scvfCorners,
+                          const std::array<LocalIndexType, 2>& scvIndices) const
     {
-        const auto v1 = geo_.corner(1) - geo_.corner(0);
-        const auto v2 = geo_.corner(2) - geo_.corner(0);
-        const auto v3 = Dumux::crossProduct(v1, v2);
-        const auto t = scvfCorners[1] - scvfCorners[0];
-        GlobalPosition normal = Dumux::crossProduct(v3, t);
-        normal /= normal.two_norm();
-
-        //! ensure the right direction of the normal
-        const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
-        const auto s = v*normal;
-        if (std::signbit(s))
-            normal *= -1;
-
-        return normal;
-    }
-
-    //! get scvf normal vector for dim == 2, dimworld == 2
-    template <int w = dimWorld>
-    typename std::enable_if<w == 2, GlobalPosition>::type
-    normal(const ScvfCornerStorage& scvfCorners,
-           const std::array<LocalIndexType, 2>& scvIndices) const
-    {
-        //! obtain normal vector by 90° counter-clockwise rotation of t
-        const auto t = scvfCorners[1] - scvfCorners[0];
-        GlobalPosition normal({-t[1], t[0]});
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, scvfCorners);
 
         //! ensure the right direction of the normal
         const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
@@ -549,13 +522,6 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
 
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
@@ -590,6 +556,8 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
     static constexpr auto dimWorld = GridView::dimensionworld;
 
 public:
+    using DofHelper = PQ1LagrangeDofHelper<GridView>;
+
     explicit BoxGeometryHelper(const typename Element::Geometry& geometry)
     : geo_(geometry)
     {}
@@ -700,8 +668,7 @@ public:
     GlobalPosition normal(const ScvfCornerStorage& p,
                           const std::array<LocalIndexType, 2>& scvIndices) const
     {
-        auto normal = Dumux::crossProduct(p[1]-p[0], p[2]-p[0]);
-        normal /= normal.two_norm();
+        auto normal = Detail::scvfUnitNormal(geo_, p);
 
         const auto v = geo_.corner(scvIndices[1]) - geo_.corner(scvIndices[0]);
         const auto s = v*normal;
@@ -732,13 +699,6 @@ public:
     //! the wrapped element geometry
     const typename Element::Geometry& elementGeometry() const
     { return geo_; }
-
-    //! local dof position
-    template<class LocalKey>
-    static Element::Geometry::LocalCoordinate localDofPosition(Dune::GeometryType type, const LocalKey& localKey)
-    {
-        return Dune::referenceElement<Scalar, dim>(type).position(localKey.subEntity(), localKey.codim());
-    }
 
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)

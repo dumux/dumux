@@ -18,6 +18,7 @@
 #include <span>
 #include <utility>
 #include <dune/common/exceptions.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -52,9 +53,11 @@ class PQ1BubbleFVElementGeometry<GG, true>
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using LocalIndexType = typename IndexTraits<GridView>::LocalIndex;
     using CoordScalar = typename GridView::ctype;
-    using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FiniteElement = typename GG::FeCache::FiniteElementType;
+    using FeLocalBasis = typename FiniteElement::Traits::LocalBasisType;
     using GGCache = typename GG::Cache;
     using GeometryHelper = typename GGCache::GeometryHelper;
+    using DofHelper = typename GGCache::DofHelper;
 
     using BaseIpData = CVFE::InterpolationPointData<
                         typename GridView::template Codim<0>::Entity::Geometry::LocalCoordinate,
@@ -123,8 +126,7 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
+                fvGeometry.dofIndices_[i],
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -139,8 +141,7 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
+                fvGeometry.dofIndices_[i],
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -154,8 +155,7 @@ public:
             [&](const auto i) { return CVFE::LocalDof
             {
                 static_cast<LocalIndexType>(i),
-                static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                    fvGeometry.feLocalCoefficients().localKey(i))),
+                fvGeometry.dofIndices_[i],
                 static_cast<GridIndexType>(fvGeometry.elementIndex())
             }; }
         );
@@ -163,22 +163,7 @@ public:
 
     //! an iterator over all local dofs related to a boundary face
     friend inline auto localDofs(const PQ1BubbleFVElementGeometry& fvGeometry, const BoundaryFace& boundaryFace)
-    {
-        return Dune::transformedRangeView(
-            Dune::range(GeometryHelper::numLocalDofsIntersection(fvGeometry.element().type(), boundaryFace.intersectionIndex())),
-            [&](const auto i)
-            {
-                auto localDofIdx = GeometryHelper::localDofIndexIntersection(fvGeometry.element().type(), boundaryFace.intersectionIndex(), i);
-                return CVFE::LocalDof
-                {
-                    static_cast<LocalIndexType>(localDofIdx),
-                    static_cast<GridIndexType>(GeometryHelper::dofIndex(fvGeometry.gridGeometry().dofMapper(), fvGeometry.element(),
-                                                                        fvGeometry.feLocalCoefficients().localKey(localDofIdx))),
-                    static_cast<GridIndexType>(fvGeometry.elementIndex())
-                };
-                }
-        );
-    }
+    { return DofHelper::localDofsOnBoundaryFace(fvGeometry, boundaryFace); }
 
     //! iterator range for sub control volumes faces. Iterates over
     //! all scvfs of the bound element.
@@ -216,19 +201,19 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return gridGeometry().feCache().get(element_->type()).localBasis();
+        return fe_->localBasis();
     }
 
     //! Get the local finite element coefficients
     const auto& feLocalCoefficients() const
     {
-        return gridGeometry().feCache().get(element_->type()).localCoefficients();
+        return fe_->localCoefficients();
     }
 
     //! The total number of element-local dofs
     std::size_t numLocalDofs() const
     {
-        return GeometryHelper::numElementDofs(element().type());
+        return dofIndices_.size();
     }
 
     //! The total number of sub control volumes
@@ -278,8 +263,19 @@ public:
     {
         element_ = element;
         // cache element index
-        eIdx_ = gridGeometry().elementMapper().index(element);
+        eIdx_ = gridDiscretization().elementMapper().index(element);
         elementGeometry_.emplace(element.geometry());
+
+        // the local dofs are iterated many times per bind (every quadrature point of every face,
+        // every perturbation of a numerical derivative); look up the finite element and the dof
+        // indices once here instead of on every iteration
+        fe_ = &gridDiscretization().feCache().get(element.type());
+        const auto& localCoefficients = fe_->localCoefficients();
+        dofIndices_.clear();
+        for (std::size_t i = 0; i < DofHelper::numElementDofs(element.type()); ++i)
+            dofIndices_.push_back(static_cast<GridIndexType>(
+                DofHelper::dofIndex(gridDiscretization().dofMapper(), element, localCoefficients.localKey(i))
+            ));
     }
 
     //! Returns true if bind/bindElement has already been called
@@ -295,7 +291,12 @@ public:
     { return *elementGeometry_; }
 
     //! The grid geometry we are a restriction of
+    [[deprecated("Use gridDiscretization() instead")]]
     const GridGeometry& gridGeometry() const
+    { return ggCache_->gridGeometry(); }
+
+    //! The grid discretization we are a restriction of
+    const GridGeometry& gridDiscretization() const
     { return ggCache_->gridGeometry(); }
 
     //! Returns whether one of the geometry's scvfs lies on a boundary
@@ -376,9 +377,9 @@ public:
     friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const SubControlVolume& scv)
     {
         const auto type = fvGeometry.element().type();
-        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(scv.localDofIndex());
+        const auto& localKey = fvGeometry.feLocalCoefficients().localKey(scv.localDofIndex());
 
-        return CVFE::LocalDofInterpolationPointData{ GeometryHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
+        return CVFE::LocalDofInterpolationPointData{ DofHelper::localDofPosition(type, localKey), scv.dofPosition(), scv.localDofIndex() };
     }
 
     //! Interpolation point data for a localDof
@@ -386,8 +387,8 @@ public:
     friend inline auto ipData(const PQ1BubbleFVElementGeometry& fvGeometry, const LocalDof& localDof)
     {
         const auto type = fvGeometry.element().type();
-        const auto& localKey = fvGeometry.gridGeometry().feCache().get(type).localCoefficients().localKey(localDof.index());
-        const auto& localPos = GeometryHelper::localDofPosition(type, localKey);
+        const auto& localKey = fvGeometry.feLocalCoefficients().localKey(localDof.index());
+        const auto& localPos = DofHelper::localDofPosition(type, localKey);
 
         return CVFE::LocalDofInterpolationPointData{ localPos, fvGeometry.elementGeometry().global(localPos), localDof.index() };
     }
@@ -415,6 +416,8 @@ private:
 
     std::optional<Element> element_;
     std::optional<typename Element::Geometry> elementGeometry_;
+    const FiniteElement* fe_ = nullptr;
+    Dune::ReservedVector<GridIndexType, maxNumElementDofs> dofIndices_;
 };
 
 } // end namespace Dumux

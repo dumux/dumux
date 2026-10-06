@@ -20,7 +20,17 @@ for more information.
 | ![membrane plate](plate_membrane_deformation_3d.png) | @ref benchmark-membrane-plate "↗️ Clamped Circular Membrane" | plate mechanics, @ref MembranePlate, @ref BoxDiscretization | Clamped circular membrane under uniform load; convergence against analytical solution |
 | ![kirchhoff-love plate](plate_kirchhoff_love_deformation_3d.png) | @ref benchmark-kirchhoff-love-plate "↗️ Clamped Circular Plate (Kirchhoff-Love)" | plate mechanics, @ref KirchhoffLovePlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load; convergence against analytical solution |
 | ![mindlin-reissner plate](plate_mindlin_reissner_deformation_3d.png) | @ref benchmark-mindlin-reissner-plate "↗️ Clamped Circular Plate (Mindlin-Reissner)" | plate mechanics, @ref MindlinReissnerPlate, @ref BoxDiscretization, @ref PQ1BubbleDiscretization, @ref MultiDomain | Clamped circular plate under uniform load with shear correction; convergence against analytical solution |
+| ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
+| ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
+| ![mcwhorter-sunada](mcwhortersunada_lineplot_comparison.png) | @ref benchmark-mcwhorter-sunada "↗️ McWhorter-Sunada" | @ref TwoPModel, @ref CCTpfaDiscretization | Counter-current imbibition compared with Fučík's semi-analytical reference |
+| ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
 | ![henry](henry_case1_final.png) | @ref benchmark-henry "↗️ Henry Saltwater Intrusion Problem" | density-driven flow, seawater intrusion, @ref OnePNCModel, @ref BoxDiscretization | Fahs et al. (2016) @cite Fahs2016 semianalytical validation cases (Test Cases 1 and 2 implemented, Test Case 3 in progress); validated against their digitized isochlor position tables |
+
+## Benchmarks in documented examples
+
+| Image |                                Benchmark description                                 | Topics | Comment |
+|:------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:---------|:---------|
+| [![lid-driven cavity](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/liddrivencavity/img/result.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | [↗️ Shear-Driven Cavity Flow](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | 2D, free flow, @ref NavierStokesModel, @ref FaceCenteredStaggeredDiscretization | Velocity profiles at Re = 1 and Re = 1000 compared against reference data from Ghia et al. (1982) and Jurjević (1999) |
 
 ## Benchmarks in external modules
 

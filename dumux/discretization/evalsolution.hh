@@ -72,13 +72,13 @@ auto minDistDofSol(const Element& element,
                    const typename Element::Geometry::LocalCoordinate& localPos,
                    const ElementSolution& elemSol)
 {
-    using GeometryHelper = GridGeometry::Cache::GeometryHelper;
+    using DofHelper = GridGeometry::Cache::DofHelper;
     const auto& localCoeffs = gridGeometry.feCache().get(element.type()).localCoefficients();
     // calculate the distances from the evaluation point to the local positions of dofs
     std::vector<typename Element::Geometry::ctype> distances(localCoeffs.size());
     for (int idx = 0; idx < localCoeffs.size(); ++idx)
     {
-        const auto& localDofPos = GeometryHelper::localDofPosition(element.type(), localCoeffs.localKey(idx));
+        const auto& localDofPos = DofHelper::localDofPosition(element.type(), localCoeffs.localKey(idx));
         distances[idx] = (localPos - localDofPos).two_norm2();
     }
 
@@ -115,13 +115,12 @@ evalCVFESolutionAtLocalPos(const Element& element,
 
     if (allStatesEqual)
     {
-        using Scalar = typename CVFEElemSol::PrimaryVariables::value_type;
-
         // interpolate the solution
         const auto& localBasis = gridGeometry.feCache().get(geometry.type()).localBasis();
 
         // evaluate the shape functions at the scv center
-        std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
+        using ShapeValue = typename std::decay_t<decltype(localBasis)>::Traits::RangeType;
+        std::vector<ShapeValue> shapeValues;
         localBasis.evaluateFunction(localPos, shapeValues);
 
         typename CVFEElemSol::PrimaryVariables result(0.0);
@@ -235,12 +234,11 @@ PrimaryVariables evalSolution(const Element& element,
 
     if (allStatesEqual)
     {
-        using Scalar = typename PrimaryVariables::value_type;
         using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
         static constexpr int dim = Element::Geometry::mydimension;
 
-        // The box scheme always uses linear Ansatz functions
-        using FEFactory = Dune::PQkLocalFiniteElementFactory<CoordScalar, Scalar, dim, 1>;
+        // The box scheme always uses linear Ansatz functions (real-valued also for complex-valued solutions)
+        using FEFactory = Dune::PQkLocalFiniteElementFactory<CoordScalar, CoordScalar, dim, 1>;
         using FiniteElement = typename FEFactory::FiniteElementType;
         std::unique_ptr<FiniteElement> fe(FEFactory::create(geometry.type()));
         const auto& localBasis = fe->localBasis();

@@ -23,6 +23,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dumux/common/entitymap.hh>
+#include <dumux/geometry/boundingboxgeometry.hh>
 
 namespace Dumux {
 
@@ -60,7 +61,7 @@ public:
     /*!
      * \brief The world dimension of the entity set
      */
-    enum { dimensionworld = GridView::dimensionworld };
+    static constexpr int dimensionworld = GridView::dimensionworld;
 
     /*!
      * \brief the coordinate type
@@ -72,6 +73,13 @@ public:
      */
     decltype(auto) size() const
     { return gridView_.size(codim); }
+
+    /*!
+     * \brief the communicator of the underlying grid view
+     * \note this enables building distributed bounding box trees on this set
+     */
+    decltype(auto) comm() const
+    { return gridView_.comm(); }
 
     /*!
      * \brief begin iterator to enable range-based for iteration
@@ -144,6 +152,36 @@ private:
     std::size_t index_;
 };
 
+/*!
+* \brief A process partition bounding box that carries its owning rank
+*/
+template<class ct, int dimworld>
+class ProcessEntity
+{
+public:
+    using Geometry = BoundingBoxGeometry<ct, dimworld>;
+
+    ProcessEntity(const Geometry& geo, std::size_t index, int rank)
+    : geo_(geo), index_(index), rank_(rank) {}
+
+    //! Returns the box geometry of the process partition
+    const Geometry& geometry() const
+    { return geo_; }
+
+    //! Returns the consecutive index of the entity in its set
+    std::size_t index() const
+    { return index_; }
+
+    //! Returns the rank owning the process partition
+    int rank() const
+    { return rank_; }
+
+private:
+    Geometry geo_;
+    std::size_t index_;
+    int rank_;
+};
+
 } // end namespace Dumux::Detail::GeometricEntity
 #endif // DOXYGEN
 
@@ -197,7 +235,7 @@ public:
     /*!
      * \brief The world dimension of the entity set
      */
-    enum { dimensionworld = Entity::Geometry::coorddimension };
+    static constexpr int dimensionworld = Entity::Geometry::coorddimension;
 
     /*!
      * \brief the coordinate type
@@ -321,6 +359,77 @@ class SingleGeometryEntitySet
     using ParentType = FixedSizeGeometriesEntitySet<GeoType, 1>;
 public:
     using ParentType::ParentType;
+};
+
+/*!
+ * \ingroup Geometry
+ * \brief A set of axis-aligned bounding boxes each owned by a process rank
+ *
+ * Used as the entity set of the replicated "process tree" of a
+ * Dumux::DistributedBoundingBoxTree: each entity is the partition bounding box
+ * of a process and carries the owning rank, so that the index-to-rank mapping
+ * lives with the entity set itself.
+ */
+template<class ct, int dimworld>
+class ProcessGeometricEntitySet
+{
+public:
+    using Entity = Detail::GeometricEntity::ProcessEntity<ct, dimworld>;
+
+    /*!
+     * \brief The world dimension of the entity set
+     */
+    static constexpr int dimensionworld = dimworld;
+
+    /*!
+     * \brief the coordinate type
+     */
+    using ctype = ct;
+
+    /*!
+     * \brief Constructor from a vector of process partition entities
+     */
+    explicit ProcessGeometricEntitySet(std::vector<Entity>&& entities)
+    : entities_(std::move(entities)) {}
+
+    /*!
+     * \brief the number of entities in this set
+     */
+    std::size_t size() const
+    { return entities_.size(); }
+
+    /*!
+     * \brief begin iterator to enable range-based for iteration
+     */
+    decltype(auto) begin() const
+    { return entities_.begin(); }
+
+    /*!
+     * \brief end iterator to enable range-based for iteration
+     */
+    decltype(auto) end() const
+    { return entities_.end(); }
+
+    /*!
+     * \brief get an entities index
+     */
+    std::size_t index(const Entity& e) const
+    { return e.index(); }
+
+    /*!
+     * \brief get an entity from an index
+     */
+    const Entity& entity(std::size_t index) const
+    { assert(index < entities_.size()); return entities_[index]; }
+
+    /*!
+     * \brief get the rank owning the entity with the given index
+     */
+    int rank(std::size_t index) const
+    { assert(index < entities_.size()); return entities_[index].rank(); }
+
+private:
+    std::vector<Entity> entities_;
 };
 
 } // end namespace Dumux

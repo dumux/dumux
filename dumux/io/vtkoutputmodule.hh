@@ -30,9 +30,13 @@
 #include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/concepts/variables_.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/concepts.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/io/vtk/function.hh>
 #include <dumux/io/vtk/fieldtype.hh>
@@ -340,10 +344,10 @@ private:
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
 template<class GridVariables, class SolutionVector>
-class VtkOutputModule : public VtkOutputModuleBase<typename GridVariables::GridGeometry>
+class VtkOutputModule : public VtkOutputModuleBase<Dumux::GridDiscretization_t<GridVariables>>
 {
-    using ParentType = VtkOutputModuleBase<typename GridVariables::GridGeometry>;
-    using GridGeometry = typename GridVariables::GridGeometry;
+    using ParentType = VtkOutputModuleBase<Dumux::GridDiscretization_t<GridVariables>>;
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
 
     using VV = Concept::Variables_t<GridVariables>;
     using Scalar = typename GridVariables::Scalar;
@@ -380,7 +384,7 @@ public:
                     const std::string& paramGroup = "",
                     Dune::VTK::DataMode dm = Dune::VTK::conforming,
                     bool verbose = true)
-    : ParentType(gridVariables.gridGeometry(), name, paramGroup, dm, verbose)
+    : ParentType(Dumux::gridDiscretization(gridVariables), name, paramGroup, dm, verbose)
     , gridVariables_(gridVariables)
     , sol_(sol)
     , velocityOutput_(std::make_shared<VelocityOutputType>())
@@ -461,7 +465,7 @@ protected:
     // some return functions for differing implementations to use
     const auto& problem() const { return curGridVariables_().problem(); }
     const GridVariables& gridVariables() const { return gridVariables_; }
-    const GridGeometry& gridGeometry() const { return gridVariables_.gridGeometry(); }
+    const GridGeometry& gridGeometry() const { return Dumux::gridDiscretization(gridVariables_); }
     const SolutionVector& sol() const { return sol_; }
 
     const std::vector<VolVarScalarDataInfo>& volVarScalarDataInfo() const { return volVarScalarDataInfo_; }
@@ -582,18 +586,39 @@ private:
 
                 if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
-                    for (const auto& scv : scvs(fvGeometry))
+                    using ElementDisc = typename GridGeometry::LocalView;
+                    if constexpr (Dumux::Experimental::Concepts::FVElementDiscretization<ElementDisc>)
                     {
-                        const auto dofIdxGlobal = scv.dofIndex();
-                        const auto& volVars = elemVolVars[scv];
+                        for (const auto& scv : scvs(fvGeometry))
+                        {
+                            const auto dofIdxGlobal = scv.dofIndex();
+                            const auto& volVars = elemVolVars[scv];
 
-                        // get the scalar-valued data
-                        for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                            volVarScalarData[i][dofIdxGlobal] = volVarScalarDataInfo_[i].get(volVars);
+                            // get the scalar-valued data
+                            for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                                volVarScalarData[i][dofIdxGlobal] = volVarScalarDataInfo_[i].get(volVars);
 
-                        // get the vector-valued data
-                        for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                            volVarVectorData[i][dofIdxGlobal] = volVarVectorDataInfo_[i].get(volVars);
+                            // get the vector-valued data
+                            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                                volVarVectorData[i][dofIdxGlobal] = volVarVectorDataInfo_[i].get(volVars);
+                        }
+                    }
+                    if constexpr (Dumux::Experimental::Concepts::HybridElementDiscretization<ElementDisc>
+                               || Dumux::Experimental::Concepts::FEElementDiscretization<ElementDisc>)
+                    {
+                        for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                        {
+                            const auto dofIdxGlobal = localDof.dofIndex();
+                            const auto& volVars = elemVolVars[localDof];
+
+                            // get the scalar-valued data
+                            for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                                volVarScalarData[i][dofIdxGlobal] = volVarScalarDataInfo_[i].get(volVars);
+
+                            // get the vector-valued data
+                            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                                volVarVectorData[i][dofIdxGlobal] = volVarVectorDataInfo_[i].get(volVars);
+                        }
                     }
                 }
 
@@ -775,7 +800,7 @@ private:
                     elemVolVars.bindElement(element, fvGeometry, sol_);
                 }
 
-                const auto numLocalDofs = fvGeometry.numScv();
+                const auto numLocalDofs = Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry);
                 // resize element-local data containers
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                     volVarScalarData[i][eIdxGlobal].resize(numLocalDofs);
@@ -804,17 +829,37 @@ private:
 
                 if (!volVarScalarDataInfo_.empty() || !volVarVectorDataInfo_.empty())
                 {
-                    for (const auto& scv : scvs(fvGeometry))
+                    using ElementDisc = typename GridGeometry::LocalView;
+                    if constexpr (Dumux::Experimental::Concepts::FVElementDiscretization<ElementDisc>)
                     {
-                        const auto& volVars = elemVolVars[scv];
+                        for (const auto& scv : scvs(fvGeometry))
+                        {
+                            const auto& volVars = elemVolVars[scv];
 
-                        // get the scalar-valued data
-                        for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                            volVarScalarData[i][eIdxGlobal][scv.localDofIndex()] = volVarScalarDataInfo_[i].get(volVars);
+                            // get the scalar-valued data
+                            for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                                volVarScalarData[i][eIdxGlobal][scv.localDofIndex()] = volVarScalarDataInfo_[i].get(volVars);
 
-                        // get the vector-valued data
-                        for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                            volVarVectorData[i][eIdxGlobal][scv.localDofIndex()] = volVarVectorDataInfo_[i].get(volVars);
+                            // get the vector-valued data
+                            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                                volVarVectorData[i][eIdxGlobal][scv.localDofIndex()] = volVarVectorDataInfo_[i].get(volVars);
+                        }
+                    }
+                    if constexpr (Dumux::Experimental::Concepts::HybridElementDiscretization<ElementDisc>
+                               || Dumux::Experimental::Concepts::FEElementDiscretization<ElementDisc>)
+                    {
+                        for (const auto& localDof : nonCVLocalDofs(fvGeometry))
+                        {
+                            const auto& volVars = elemVolVars[localDof];
+
+                            // get the scalar-valued data
+                            for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                                volVarScalarData[i][eIdxGlobal][localDof.index()] = volVarScalarDataInfo_[i].get(volVars);
+
+                            // get the vector-valued data
+                            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                                volVarVectorData[i][eIdxGlobal][localDof.index()] = volVarVectorDataInfo_[i].get(volVars);
+                        }
                     }
                 }
 

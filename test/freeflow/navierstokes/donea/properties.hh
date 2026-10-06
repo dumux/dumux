@@ -36,6 +36,10 @@
 #define TYPETAG_MASS DoneaTestMass
 #endif
 
+#ifndef NAVIER_STOKES_MASS_MODEL
+#define NAVIER_STOKES_MASS_MODEL NavierStokesMassOneP
+#endif
+
 #ifndef MASS_DISCRETIZATION_MODEL
 #define MASS_DISCRETIZATION_MODEL CCTpfaModel
 #endif
@@ -54,9 +58,8 @@
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
 #endif
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -79,6 +82,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include <dumux/discretization/pq1.hh>
 #include "problem.hh"
 #include "problem_newinterface.hh"
 
@@ -91,7 +95,8 @@ struct DoneaTestMomentum { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STO
 struct DoneaTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct DoneaTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct DoneaTestMomentumPQ2Hybrid { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, PQ2HybridModel>; };
-struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, MASS_DISCRETIZATION_MODEL>; };
+struct DoneaTestMomentumBox { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMomentumCVFE, BoxModel>; };
+struct DoneaTestMass { using InheritsFrom = std::tuple<DoneaTest, NAVIER_STOKES_MASS_MODEL, MASS_DISCRETIZATION_MODEL>; };
 struct DoneaTestMassBox { using InheritsFrom = std::tuple<DoneaTest, NavierStokesMassOneP, BoxModel>; };
 } // end namespace TTag
 
@@ -136,7 +141,7 @@ public:
 
 //! The grid variables
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1BubbleHybrid>
+struct GridVariables<TypeTag, TTag::DoneaTestMomentumBox>
 {
 private:
     using GG = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -145,25 +150,8 @@ private:
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
     using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! The grid variables
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ2Hybrid>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    // ToDo: Do not determine enableCache by EnableGridVolumeVariablesCache
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
+    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
+    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
 public:
     using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
@@ -272,7 +260,9 @@ public:
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::DoneaTest>
-#if HAVE_DUNE_ALUGRID
+#if defined(GRIDTYPE)
+{ using type = GRIDTYPE; };
+#elif HAVE_DUNE_ALUGRID
 { using type = Dune::ALUGrid<2, 2, Dune::ALUGRID_CELL_TYPE, Dune::nonconforming>; };
 #else
 { using type = Dune::YaspGrid<2>; };

@@ -1,0 +1,24 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 16 16
+Refinements = 3
+
+[Problem]
+Name = test_complex_helmholtz
+WaveNumberSquaredReal = 10.0
+WaveNumberSquaredImag = -3.0
+MaxL2Error = 2e-3
+
+[LinearSolver]
+Verbosity = 0
+MaxIterations = 5000
+ResidualReduction = 1e-13
+
+[Newton]
+Verbosity = 1
+MaxRelativeShift = 1e-10
+
+[Assembly.NumericDifference]
+# the residual is linear in the unknowns so a larger epsilon only reduces roundoff
+BaseEpsilon = 1e-8
