@@ -41,14 +41,14 @@
 namespace Dumux {
 
 /*!
- * \brief The mean deviation of the interface height from the similarity solution over the plume extent, relative to the aquifer height
+ * \brief The mean deviation of the gas plume distance from the similarity solution over the plume extent, relative to the aquifer height
  */
 template<class GridGeometry, class Scalar>
-Scalar interfaceError(const GridGeometry& gridGeometry,
-                      const std::vector<Scalar>& interfaceHeight,
-                      const std::vector<Scalar>& exactInterfaceHeight,
-                      Scalar aquiferHeight,
-                      Scalar plumeExtent)
+Scalar gasPlumeDistanceError(const GridGeometry& gridGeometry,
+                             const std::vector<Scalar>& gasPlumeDistance,
+                             const std::vector<Scalar>& exactGasPlumeDistance,
+                             Scalar aquiferHeight,
+                             Scalar plumeExtent)
 {
     using std::abs;
     Scalar error = 0.0;
@@ -57,7 +57,7 @@ Scalar interfaceError(const GridGeometry& gridGeometry,
         const auto elementIdx = gridGeometry.elementMapper().index(element);
         const auto& geometry = element.geometry();
         const Scalar radialExtent = geometry.corner(1)[0] - geometry.corner(0)[0];
-        error += abs(interfaceHeight[elementIdx] - exactInterfaceHeight[elementIdx])*radialExtent;
+        error += abs(gasPlumeDistance[elementIdx] - exactGasPlumeDistance[elementIdx])*radialExtent;
     }
     return error/(aquiferHeight*plumeExtent);
 }
@@ -133,19 +133,20 @@ int main(int argc, char** argv)
     const Scalar gravityNumber = 2.0*M_PI*densityDifference*spatialParams->gravity(gridGeometryCoarse->bBoxMin()).two_norm()*permeability/viscosityResident*aquiferHeight*aquiferHeight/problem->injectionRate();
     std::cout << "Mobility ratio: " << viscosityResident/viscosityInjected << ", gravity number: " << gravityNumber << std::endl;
 
-    // the effective interface height corresponds to a plume that contains the injected fluid at the saturation 1 - Swr
+    // The effective gas plume distance corresponds to a sharp-interface plume at saturation 1 - Swr.
+    // With a finite capillary fringe it can differ from the reconstructed mobile-gas boundary (zp).
     const Scalar residualSaturation = getParam<Scalar>("SpatialParams.Swr");
-    std::vector<Scalar> exactInterfaceHeight(gridGeometryCoarse->gridView().size(0));
-    std::vector<Scalar> interfaceHeight(gridGeometryCoarse->gridView().size(0));
-    const auto updateInterfaceHeights = [&](Scalar time)
+    std::vector<Scalar> exactGasPlumeDistance(gridGeometryCoarse->gridView().size(0));
+    std::vector<Scalar> gasPlumeDistance(gridGeometryCoarse->gridView().size(0));
+    const auto updateGasPlumeDistances = [&](Scalar time)
     {
         for (const auto& element : elements(gridGeometryCoarse->gridView()))
         {
             const auto elementIdx = gridGeometryCoarse->elementMapper().index(element);
             const Scalar radius = element.geometry().center()[0];
-            exactInterfaceHeight[elementIdx] = time > 0.0 ? similaritySolution.interfaceHeight(radius, time) : aquiferHeight;
+            exactGasPlumeDistance[elementIdx] = time > 0.0 ? similaritySolution.gasPlumeDistance(radius, time) : aquiferHeight;
             const Scalar saturationInjected = gridVariables->curGridVolVars().volVars(elementIdx).saturation(FluidSystem::phase1Idx);
-            interfaceHeight[elementIdx] = aquiferHeight*(1.0 - saturationInjected/(1.0 - residualSaturation));
+            gasPlumeDistance[elementIdx] = aquiferHeight*(1.0 - saturationInjected/(1.0 - residualSaturation));
         }
     };
 
@@ -153,9 +154,9 @@ int main(int argc, char** argv)
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::initOutputModule(vtkWriter);
     vtkWriter.addVolumeVariable([](const auto& v){ return v.gasPlumeDist(); }, "zp");
-    vtkWriter.addField(interfaceHeight, "interfaceHeight");
-    vtkWriter.addField(exactInterfaceHeight, "interfaceHeightExact");
-    updateInterfaceHeights(0.0);
+    vtkWriter.addField(gasPlumeDistance, "gasPlumeDistance");
+    vtkWriter.addField(exactGasPlumeDistance, "gasPlumeDistanceExact");
+    updateGasPlumeDistances(0.0);
     vtkWriter.write(0.0);
 
     using GridView = typename GridGeometry::GridView;
@@ -189,9 +190,9 @@ int main(int argc, char** argv)
 
         if (timeLoop->isCheckPoint() || timeLoop->finished())
         {
-            updateInterfaceHeights(timeLoop->time());
-            error = interfaceError(*gridGeometryCoarse, interfaceHeight, exactInterfaceHeight, aquiferHeight, similaritySolution.plumeExtent(timeLoop->time()));
-            std::cout << "Relative interface error at t = " << timeLoop->time() << " s: " << error << std::endl;
+            updateGasPlumeDistances(timeLoop->time());
+            error = gasPlumeDistanceError(*gridGeometryCoarse, gasPlumeDistance, exactGasPlumeDistance, aquiferHeight, similaritySolution.plumeExtent(timeLoop->time()));
+            std::cout << "Relative gas plume distance error at t = " << timeLoop->time() << " s: " << error << std::endl;
             vtkWriter.write(timeLoop->time());
             vtkWriterFine.write(timeLoop->time());
         }
@@ -203,9 +204,9 @@ int main(int argc, char** argv)
     nonLinearSolver.report();
     timeLoop->finalize(gridGeometryCoarse->gridView().comm());
 
-    const Scalar maxError = getParam<Scalar>("Benchmark.MaxRelativeInterfaceError");
+    const Scalar maxError = getParam<Scalar>("Benchmark.MaxRelativeGasPlumeDistanceError");
     if (error > maxError)
-        DUNE_THROW(Dune::Exception, "Relative interface error " << error << " exceeds " << maxError);
+        DUNE_THROW(Dune::Exception, "Relative gas plume distance error " << error << " exceeds " << maxError);
 
     if (mpiHelper.rank() == 0)
     {

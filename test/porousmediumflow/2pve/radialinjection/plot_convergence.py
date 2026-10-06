@@ -6,16 +6,19 @@
 Usage (run from the build directory of the test, which contains params.input):
   python3 plot_convergence.py <executable>
 
+Rebuilds the selected executable in its CMake build tree before starting simulations.
+
 Produces
-- profile.png: interface height over the similarity variable at the end of the case of params.input and of
+- profile.png: gas plume distance over the similarity variable at the end of the case of params.input and of
   two cases with the same injected volume at ten and a hundred times the injection rate,
 - plume.png: fine-level saturation of the injected fluid at the end of the case of params.input,
-- convergence.png: interface error over the radial cell size, refined together with the time step size.
+- convergence.png: gas plume distance error over the radial cell size, refined together with the time step size.
 """
 
 import configparser
 import glob
 import os
+from pathlib import Path
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -52,7 +55,7 @@ def read_pvd(file_name):
     return [(float(d.get("timestep")), d.get("file")) for d in datasets]
 
 
-def similarity_interface_height(chi, mobility_ratio):
+def similarityGasPlumeDistance(chi, mobility_ratio):
     """Height of the interface above the bottom relative to the aquifer height, eq. (14) of Nordbotten and Celia (2006)."""
     thickness = (np.sqrt(2.0*mobility_ratio/chi) - 1.0)/(mobility_ratio - 1.0)
     return 1.0 - np.clip(thickness, 0.0, 1.0)
@@ -64,6 +67,17 @@ if len(sys.argv) < 2:
 
 testname = str(sys.argv[1])
 exe = testname if os.path.isabs(testname) else "./" + testname
+# Parameter and VTK field names can change when the benchmark sources are updated.
+# Rebuild before running so the executable agrees with the current input and parsers.
+executable_path = Path(exe).resolve()
+build_dir = next((directory for directory in executable_path.parents
+                  if (directory / "CMakeCache.txt").is_file()), None)
+if build_dir is None:
+    sys.exit(f"Cannot locate the CMake build tree for {executable_path}. "
+             "Run this script with the benchmark executable in its CMake build directory.")
+print(f"Building {executable_path.name} in {build_dir} before running simulations...", flush=True)
+subprocess.check_call(["cmake", "--build", str(build_dir), "--target", executable_path.name])
+
 params = read_parameters("params.input")
 name = params["Problem"]["Name"]
 
@@ -78,7 +92,7 @@ profile_rate_factors = [1, 10, 100]
 profile_colors = ["#86b6ef", "#2a78d6", "#104281"]
 fig, ax = plt.subplots(figsize=(6, 4))
 chi_sqrt = np.linspace(1e-3, 5.0, 1000)
-ax.plot(chi_sqrt, similarity_interface_height(chi_sqrt**2, mobility_ratio), color="black", lw=1.5,
+ax.plot(chi_sqrt, similarityGasPlumeDistance(chi_sqrt**2, mobility_ratio), color="black", lw=1.5,
         label=r"similarity solution, $\Gamma \to 0$")
 for factor, color in zip(profile_rate_factors, profile_colors):
     case_name = name if factor == 1 else f"{name}_rate{factor}"
@@ -98,14 +112,14 @@ for factor, color in zip(profile_rate_factors, profile_colors):
     time, file_name = read_pvd(case_name + ".pvd")[-1]
     centers, cell_data = read_vtu(file_name)
     chi = 2.0*np.pi*height*porosity*(1.0 - residual_saturation)*centers[:, 0]**2/(injection_rate*factor*time)
-    ax.plot(np.sqrt(chi), cell_data["interfaceHeight"]/height, color=color, lw=1.5,
+    ax.plot(np.sqrt(chi), cell_data["gasPlumeDistance"]/height, color=color, lw=1.5,
             label=rf"VE model, $\Gamma = {gravity_number:.2g}$")
     if factor != 1:
         remove_outputs(case_name)
 ax.set_xlim(0.0, 5.0)
 ax.set_ylim(0.0, 1.05)
 ax.set_xlabel(r"dimensionless distance $\chi^{1/2}$")
-ax.set_ylabel("dimensionless interface height")
+ax.set_ylabel("dimensionless gas plume distance")
 ax.legend(loc="lower right")
 ax.grid(True, alpha=0.3)
 fig.tight_layout()
@@ -132,7 +146,7 @@ for f in glob.glob(name + "*.vtu") + glob.glob("fine_" + name + "*.vtu") + [name
     if os.path.exists(f):
         os.remove(f)
 
-# interface error for decreasing radial cell size and time step size at a negligible gravity number and capillary fringe
+# gas plume distance error for decreasing radial cell size and time step size at a negligible gravity number and capillary fringe
 cell_sizes, errors = grid_study(testname)
 print_table("dr [m]", cell_sizes, errors, compute_rates(cell_sizes, errors))
 
@@ -141,7 +155,7 @@ ax.loglog(cell_sizes, errors, "o-", color="#2a78d6", lw=1.5, label="VE model")
 reference = errors[0]*np.array(cell_sizes)/cell_sizes[0]
 ax.loglog(cell_sizes, reference, "k--", lw=1.0, label=r"$\mathcal{O}(\Delta r)$")
 ax.set_xlabel(r"radial cell size $\Delta r$ [m]")
-ax.set_ylabel("relative interface error")
+ax.set_ylabel("relative gas plume distance error")
 ax.set_title(r"$\Gamma = 1.4 \cdot 10^{-4}$, $p_e = 1$ Pa, $\Delta t_{max} \propto \Delta r$")
 ax.legend()
 ax.grid(True, which="both", alpha=0.3)
