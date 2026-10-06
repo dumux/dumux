@@ -20,4 +20,4 @@ dumux_add_test(NAME test_2pve_radialinjection_smallgravity_tpfa
                         -Problem.InjectionRate 1.388888889e-1
                         -TimeLoop.TEnd 8.64e6
                         -TimeLoop.MaxTimeStepSize 8.64e3
-                        -Benchmark.MaxRelativeInterfaceError 0.005)
+                        -Benchmark.MaxRelativeGasPlumeDistanceError 0.005)

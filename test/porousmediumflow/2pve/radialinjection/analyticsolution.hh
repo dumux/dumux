@@ -83,8 +83,8 @@ public:
             return (sqrt(2.0*mobilityRatio_/chi) - 1.0)/(mobilityRatio_ - 1.0);
     }
 
-    //! The height of the interface above the bottom of the aquifer at radius r and time t
-    Scalar interfaceHeight(Scalar radius, Scalar time) const
+    //! The gas plume distance above the bottom of the aquifer at radius r and time t
+    Scalar gasPlumeDistance(Scalar radius, Scalar time) const
     {
         return aquiferHeight_*(1.0 - dimensionlessPlumeThickness(similarityVariable(radius, time)));
     }
