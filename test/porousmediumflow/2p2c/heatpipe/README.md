@@ -6,7 +6,7 @@
 
 This benchmark models heat transport in a horizontal porous column containing liquid water and a gas mixture of water vapor and air. Heating the right boundary evaporates water. Vapor flows toward the cooler left end, condenses, and releases latent heat. Capillary forces return liquid water toward the hot end, creating countercurrent flow. At steady state, a two-phase heat-pipe region can coexist with a dry region near the heater.
 
-The transient DuMux simulation uses the BOX discretization of the non-isothermal two-phase two-component model (`TwoPTwoCNI`). Its final profiles are compared with a modified semi-analytical reference based on the heat-pipe formulation of Udell and Fitch @cite Udell:1985, as presented by Huang, Kolditz and Shao @cite Huang:2015 (see also @cite ogs:heatpipe). The reference and the numerical model share selected material properties, but solve different equations and treat dry-out differently. Their profiles are therefore expected to be close, rather than identical.
+The transient DuMux simulation uses the BOX discretization of the non-isothermal two-phase two-component model (`TwoPTwoCNI`). Its final profiles are compared with a modified semi-analytical reference based on the heat-pipe formulation of Udell and Fitch @cite Udell1985, as presented by Huang, Kolditz and Shao @cite Huang2015 (see also @cite Meng2022). The reference and the numerical model share selected material properties, but solve different equations and treat dry-out differently. Their profiles are therefore expected to be close, rather than identical.
 
 ![Schematic description](heatpipe_schematic_description.png){html: width=80%}
 
@@ -49,13 +49,13 @@ Both models use `HeatPipeLaw`, with effective liquid saturation
 S_e = \frac{S_w-S_{wr}}{1-S_{wr}}.
 ```
 
-The Fatt–Klikoff relative permeabilities @cite Fatt:1959 are
+The Fatt–Klikoff relative permeabilities @cite Fatt1959 are
 
 ```math
 k_{rw}=S_e^3, \qquad k_{rg}=(1-S_e)^3.
 ```
 
-`HeatPipeLaw` bounds these functions between zero and one and replaces the cubic relation with a spline when its argument exceeds 0.95. The Leverett capillary-pressure relation @cite lev1 is
+`HeatPipeLaw` bounds these functions between zero and one and replaces the cubic relation with a spline when its argument exceeds 0.95. The Leverett capillary-pressure relation @cite Leverett1941 is
 
 ```math
 p_c = \gamma\sqrt{\frac{\phi}{K}}
