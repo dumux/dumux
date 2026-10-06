@@ -11,7 +11,7 @@
 
 #include <dumux/discretization/box.hh>
 
-#include <dumux/material/fluidsystems/h2oair.hh>
+#include "referencefluidsystem.hh"
 
 #include <dumux/porousmediumflow/2p2c/model.hh>
 
@@ -35,7 +35,7 @@ struct Problem<TypeTag, TTag::HeatPipeTypeTag> { using type = HeatPipeProblem<Ty
 
 // Set the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::HeatPipeTypeTag> { using type = FluidSystems::H2OAir<GetPropType<TypeTag, Properties::Scalar>>; };
+struct FluidSystem<TypeTag, TTag::HeatPipeTypeTag> { using type = FluidSystems::HeatPipeReferenceFluidSystem<GetPropType<TypeTag, Properties::Scalar>>; };
 
 // pn-sw formulation
 template<class TypeTag>
