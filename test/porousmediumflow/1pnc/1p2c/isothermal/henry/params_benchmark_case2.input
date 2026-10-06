@@ -1,0 +1,43 @@
+[TimeLoop]
+DtInitial = 43    # [s], same as params_benchmark_case1.input
+MaxTimeStepSize = 86 # [s], same as params_benchmark_case1.input
+TEnd = 86400        # [s], 1 d, same physical endpoint as params_case2.input
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 3 1    # same domain as params_benchmark_case1.input (aspect ratio 3)
+Cells = 120 40      # deliberately coarse base resolution, see params_benchmark_case1.input --
+                    # same reasoning applies here (a like-for-like scaling comparison
+                    # between the two test cases)
+CellType = Simplex  # see params_benchmark_case1.input
+
+[Adaptive]
+MinLevel = 0
+MaxLevel = 6        # see params_benchmark_case1.input
+RefineTolerance = 0.01
+CoarsenTolerance = 0.001
+
+[Problem]
+Name = test_1p2c_henry_case2_benchmark
+EnableGravity = true
+InflowRate = 5.7024   # [m^3/d], same as params_benchmark_case1.input/params_case2.input
+MolecularDiffusion = 9.43e-8 # [m^2/s], Fahs et al. 2016 Table 2, Test Cases 2 and 3
+AlphaL = 0.1  # [m], longitudinal dispersivity, Test Case 2
+AlphaT = 0.01 # [m], transverse dispersivity, Test Case 2
+
+[SpatialParams]
+Tortuosity = 1 # [-], see params_case2.input
+
+[Vtk]
+AddVelocity = true
+
+[LinearSolver]
+Verbosity = 1 # see params_benchmark_case1.input
+
+[Newton]
+UseLineSearch = true # damps/rejects Newton updates that don't actually reduce the
+                      # residual, instead of accepting them outright -- Test Case 2's
+                      # anisotropic dispersion tensor let Newton take an overshooting,
+                      # unphysical step (a suspiciously trivial 1-iteration linear solve
+                      # immediately followed by a shift jumping to ~1.8), which then
+                      # made the next Jacobian ill-conditioned regardless of solver

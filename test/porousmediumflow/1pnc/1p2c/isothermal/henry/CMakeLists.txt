@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params_case1.input params_case2.input)
+dune_symlink_to_source_files(FILES params_case1.input params_case2.input
+                                    params_benchmark_case1.input params_benchmark_case2.input)
 
 # The Henry problem benchmark of Fahs et al. (2016, WRR, doi:10.1002/2016WR019288),
 # "Test Case 1": the classic (purely diffusive) Henry (1964) configuration. Built here
@@ -80,3 +81,24 @@ dumux_add_test(NAME test_1p2c_henry_fahs_case2_box_regression
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-00100.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")
 set_tests_properties(test_1p2c_henry_fahs_case2_box PROPERTIES DEPENDS test_1p2c_henry_fahs_case2_box_regression)
+
+# Manual, single-rank, h-adaptive benchmark (UMFPack, ALUGrid -- see main_benchmark.cc
+# for the full rationale and how to run it). Deliberately *not* a dumux_add_test/ctest
+# target -- it is never registered with ctest at all, so it cannot be picked up by any
+# test selection or pipeline, which all operate on ctest entries. Requires dune-alugrid
+# (see properties.hh's HenryFahsBenchmarkTest/HenryFahsCase2BenchmarkTest type tags). It
+# only builds on request:
+#   cmake --build <build-dir> --target test_1p2c_henry_case1_benchmark
+#   cmake --build <build-dir> --target test_1p2c_henry_case2_benchmark
+# then run manually, e.g. ./test_1p2c_henry_case1_benchmark params_benchmark_case1.input
+if(dune-alugrid_FOUND)
+  add_executable(test_1p2c_henry_case1_benchmark EXCLUDE_FROM_ALL main_benchmark.cc)
+  target_compile_definitions(test_1p2c_henry_case1_benchmark PRIVATE TYPETAG=HenryFahsBenchmarkTest)
+  target_link_libraries(test_1p2c_henry_case1_benchmark PRIVATE Dumux::Dumux)
+  dune_target_enable_all_packages(test_1p2c_henry_case1_benchmark)
+
+  add_executable(test_1p2c_henry_case2_benchmark EXCLUDE_FROM_ALL main_benchmark.cc)
+  target_compile_definitions(test_1p2c_henry_case2_benchmark PRIVATE TYPETAG=HenryFahsCase2BenchmarkTest)
+  target_link_libraries(test_1p2c_henry_case2_benchmark PRIVATE Dumux::Dumux)
+  dune_target_enable_all_packages(test_1p2c_henry_case2_benchmark)
+endif()

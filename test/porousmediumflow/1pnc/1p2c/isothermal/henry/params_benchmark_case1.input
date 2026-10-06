@@ -1,0 +1,55 @@
+[TimeLoop]
+DtInitial = 86      # [s], small: eases the steepest-front Newton solves at the start of
+                    # the transient (see main_benchmark.cc); grows adaptively up to
+                    # MaxTimeStepSize.
+MaxTimeStepSize = 864 # [s], same as the validated 120x40 setup's fixed DtInitial
+                    # (params_case1.input) -- also the vtk output cadence (see
+                    # main_benchmark.cc's periodic check point), so output lands on the
+                    # same time grid as the fixed-dt validated runs.
+TEnd = 86400        # [s], 1 d -- same physical endpoint as the validated setup
+                    # (params_case1.input), so this benchmark also runs to the same steady
+                    # state at 4x the resolution, not just a timing-only truncated run.
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 3 1    # same domain as params_case1.input (aspect ratio 3)
+Cells = 120 40      # deliberately coarse -- matches the validated params_case1.input base
+                    # resolution exactly. This is an *adaptive* benchmark: the point is to
+                    # start cheap everywhere and let [Adaptive] below refine only where the
+                    # front actually needs it, not to already resolve the whole domain
+                    # up front (that was the old, pre-adaptivity design: a static 960x320
+                    # grid, 16x the cells everywhere for the entire run regardless of the
+                    # front's location -- also, at that resolution, RefineTolerance below
+                    # never triggered at all: the neighbor-jump indicator scales with
+                    # local dx, and dx there was already ~24x finer than here, so the same
+                    # relative threshold needed a proportionally steeper -- and for a
+                    # smoothing diffusive front, decreasingly likely -- gradient to fire).
+                    # Override with -Grid.Cells "<nx> <ny>" for a weak-scaling sweep.
+CellType = Simplex  # ALUGrid<2,2,simplex,conforming> (see properties.hh)
+
+[Adaptive]
+MinLevel = 0
+MaxLevel = 6       # 120x40 * 2^8 = 30720x10240 at the front once fully refined
+# RefineTolerance/CoarsenTolerance: relative thresholds (fractions of the current global
+# range of X^solute) for HenryGridAdaptIndicator's max-neighbor-jump criterion -- see
+# adaptive/gridadaptindicator.hh. Defaults match the indicator's own; verified to trigger
+# properly at this (coarse) base resolution.
+RefineTolerance = 0.01
+CoarsenTolerance = 0.001
+
+[Problem]
+Name = test_1p2c_henry_case1_benchmark
+EnableGravity = true
+InflowRate = 5.7024 # [m^3/d], same as params_case1.input
+MolecularDiffusion = 18.86e-6 # [m^2/s], Test Case 1 (purely diffusive)
+AlphaL = 0 # [m]
+AlphaT = 0 # [m]
+
+[SpatialParams]
+Tortuosity = 1 # [-], see params_case1.input
+
+[Vtk]
+AddVelocity = true
+
+[LinearSolver]
+Verbosity = 1 # print iteration counts/residuals per solve

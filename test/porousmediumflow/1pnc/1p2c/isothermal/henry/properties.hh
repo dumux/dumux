@@ -16,6 +16,10 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+
 #include <dumux/discretization/box.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
@@ -35,11 +39,38 @@ struct HenryFahsTest { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
 // CompositionalDispersionModel for the whole PorousMediumFlow property tree, so no
 // need to set it explicitly here.
 struct HenryFahsCase2Test { using InheritsFrom = std::tuple<HenryFahsTest>; };
+
+// Adaptive benchmark variants of the two test cases above (see main_benchmark.cc): same
+// problem/fluid/spatialparams, only the grid differs (ALUGrid instead of YaspGrid, needed
+// for h-adaptive refinement/coarsening). Kept as separate type tags rather than
+// overriding HenryFahsTest/HenryFahsCase2Test's own
+// Grid property directly, so the validated, ctest-registered YaspGrid targets (main.cc)
+// are completely unaffected.
+struct HenryFahsBenchmarkTest { using InheritsFrom = std::tuple<HenryFahsTest>; };
+struct HenryFahsCase2BenchmarkTest { using InheritsFrom = std::tuple<HenryFahsCase2Test>; };
 } // end namespace TTag
 
 // Use a structured yasp grid
 template<class TypeTag>
 struct Grid<TypeTag, TTag::HenryFahsTest> { using type = Dune::YaspGrid<2>; };
+
+// Benchmark variants: ALUGrid simplex/conforming, the h-adaptive backend (see
+// adaptive/gridadaptindicator.hh). YaspGrid fallback only to keep this header compilable
+// without dune-alugrid; the CMake targets that use these type tags are themselves guarded
+// by dune-alugrid_FOUND (see CMakeLists.txt).
+#if HAVE_DUNE_ALUGRID
+template<class TypeTag>
+struct Grid<TypeTag, TTag::HenryFahsBenchmarkTest>
+{ using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
+template<class TypeTag>
+struct Grid<TypeTag, TTag::HenryFahsCase2BenchmarkTest>
+{ using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
+#else
+template<class TypeTag>
+struct Grid<TypeTag, TTag::HenryFahsBenchmarkTest> { using type = Dune::YaspGrid<2>; };
+template<class TypeTag>
+struct Grid<TypeTag, TTag::HenryFahsCase2BenchmarkTest> { using type = Dune::YaspGrid<2>; };
+#endif
 
 // Set the problem property
 template<class TypeTag>
