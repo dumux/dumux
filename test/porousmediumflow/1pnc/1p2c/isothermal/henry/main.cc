@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // initialize the vtk output module
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+    VtkOutputModule vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
