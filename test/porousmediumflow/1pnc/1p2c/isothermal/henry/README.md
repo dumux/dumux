@@ -95,12 +95,12 @@ Test Case 3 uses the same machinery with smaller dispersivities.
 
 **Setup**
 
-The domain is discretized with a structured @ref Dune::YaspGrid, 240x80 cells for
+The domain is discretized with a structured @ref Dune::YaspGrid, 120x40 cells for
 both Test Cases 1 and 2 (the paper uses a finer mesh for Test Case 2, not replicated
 here -- see `params_case2.input`). The @ref
 OnePNCModel with @ref BoxDiscretization is used. Time integration uses a fixed
 number of equally sized time steps, run well past the time the paper
-reports for each case to reach steady state (see `params.input` / `params_case2.input`
+reports for each case to reach steady state (see `params_case1.input` / `params_case2.input`
 for the exact, and explicitly *not* empirically verified, margins chosen).
 
 DuMux's default `EffectiveDiffusivityModel` for @ref OnePNCModel is Millington-Quirk
@@ -117,7 +117,7 @@ Each test case is checked two independent ways, but only **one** full simulation
 performed for each (the regression target below); the physics-validation target depends
 on it and reuses its VTU output rather than re-running the simulation a second time:
 
-1. **Regression check** (`test_1p2c_henry_fahs_box_regression` /
+1. **Regression check** (`test_1p2c_henry_fahs_case1_box_regression` /
    `test_1p2c_henry_fahs_case2_box_regression`), following the standard DuMux
    `dumux_runtest.py --script fuzzy` convention (see e.g. the `co2` or
    `2pncmin/isothermal` tests): runs the simulation once, then a fuzzy mesh comparison
@@ -126,14 +126,18 @@ on it and reuses its VTU output rather than re-running the simulation a second t
    changes to the solution that the isochlor-only table check below wouldn't notice.
    This is not independent validation -- the reference is our own accepted output, not
    an external source -- only the table comparison below establishes correctness.
-2. **Physics validation** (`test_1p2c_henry_fahs_box` / `test_1p2c_henry_fahs_case2_box`),
+2. **Physics validation** (`test_1p2c_henry_fahs_case1_box` / `test_1p2c_henry_fahs_case2_box`),
    a ctest `DEPENDS` on the regression target above. Fahs et al. (2016) digitized their
    converged semianalytical isochlor positions (Appendix D, Tables D1/D2/D3).
    `validate_fahs2016.py` extracts the simulated 10/50/90% isochlor ($c=0.1,0.5,0.9$)
    $x$-positions at each tabulated depth $Z$ by linear interpolation of the
    concentration field already produced by the regression target's run, and compares
-   them directly against those table values (max relative error, current 240x80/1 d
-   setup: 0.0186 for Test Case 1, 0.0223 for Test Case 2).
+   them directly against those table values (max relative error, current 120x40/1 d
+   setup: 0.0228 for Test Case 1, 0.0417 for Test Case 2 -- Test Case 2's worst points
+   are concentrated at low $Z$, near the wedge toe, where velocity-dependent dispersion
+   is most active and hardest to resolve on this coarser grid; only 17% of headroom is
+   left below the 0.05 tolerance, well short of the roughly 2x margin
+   `validate_fahs2016.py`'s own default aims for).
 
 **Results**
 
@@ -142,7 +146,7 @@ the corresponding table/reference:
 
 ```bash
 cd <build-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry
-ctest -R test_1p2c_henry_fahs_box       # Test Case 1, vs. Table D1 + regression reference
+ctest -R test_1p2c_henry_fahs_case1_box       # Test Case 1, vs. Table D1 + regression reference
 ctest -R test_1p2c_henry_fahs_case2_box # Test Case 2, vs. Table D2 + regression reference
 ```
 
@@ -154,7 +158,8 @@ requires `pyvista`, installable via `pip install pyvista` into the `dumux_venv` 
 for the fuzzy/validation tooling):
 
 ```bash
-python3 <source-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry/make_gif.py --combined --skip-run
+python3 <source-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry/post_processing.py \
+  test_1p2c_henry_fahs_case1_box.pvd test_1p2c_henry_fahs_case2_box.pvd --out henry_combined.gif
 ```
 
 This produces **`henry_combined.gif`**: Test Case 1
@@ -165,11 +170,40 @@ deliberate: two separate GIF files would each start playing on their own
 load/decode schedule and drift out of sync in a browser regardless of matching
 frame timing, whereas a single combined image is in sync by construction. Each
 panel draws the simulated 10/50/90% isochlors as solid contour lines with the
-literature Table D1/D2 points overlaid as markers. A static
-**`henry_combined_final.png`** comparing the final-time ($t=1$ d) isochlors against
-the tables is saved the same way.
-
-`--case 1`/`--case 2` remain available for quick single-case iteration, producing
-their own separate `henry_case<N>.gif`/`henry_case<N>_final.png`.
+literature Table D1/D2 points overlaid as markers (the test case, and with it the
+reference table, is taken from the file name). An output name ending in `.png`, e.g.
+`--out henry_combined_final.png`, gives a static image of just the final-time ($t=1$ d)
+isochlors against the tables instead.
 
 ![Henry problem, Test Cases 1 and 2](henry_combined.gif)
+
+**Adaptive benchmark**
+
+Separately from the two ctest targets above, `main_benchmark.cc` builds two manual (not
+ctest-registered, never run by any pipeline) executables -- `test_1p2c_henry_case1_benchmark` /
+`test_1p2c_henry_case2_benchmark` -- on a coarse base `ALUGrid` (`params_benchmark(_case2).input`,
+deliberately starting at the same 120x40 resolution as above) that is h-adaptively
+refined and coarsened as the saltwater/freshwater front develops and moves (see
+`adaptive/gridadaptindicator.hh`), using UMFPack (a direct, single-rank solver) throughout
+so this checks h-adaptivity alone, not any solver-specific convergence behavior.
+Unlike the rectangular `YaspGrid` above, this grid consists of
+triangles (each of the 120x40 rectangles split in two, 9600 cells initially), since
+conforming refinement by bisection avoids the hanging nodes that local refinement of
+rectangles would create and that the box scheme cannot handle.
+`post_processing.py` renders a run's `*.pvd` output the same way as above (same
+isochlor-line/reference-marker convention, no mesh, to see the fit unobstructed), or with
+`--grid` the mesh only, no fill, each edge colored by its concentration, to see the
+refinement itself track the front:
+
+```bash
+cd <build-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry
+./test_1p2c_henry_case1_benchmark params_benchmark_case1.input -Problem.Name adaptive_case1
+./test_1p2c_henry_case2_benchmark params_benchmark_case2.input -Problem.Name adaptive_case2
+python3 <source-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry/post_processing.py \
+  adaptive_case1.pvd adaptive_case2.pvd --out henry_adaptive_solution.gif
+python3 <source-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry/post_processing.py \
+  adaptive_case1.pvd adaptive_case2.pvd --grid --out henry_adaptive_grid.gif
+```
+
+![Henry problem, adaptive refinement, solution fit](henry_adaptive_solution.gif)
+![Henry problem, adaptive refinement, mesh colored by concentration](henry_adaptive_grid.gif)
