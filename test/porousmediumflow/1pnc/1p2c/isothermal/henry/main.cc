@@ -11,7 +11,7 @@
  *        doi:10.1002/2016WR019288) for the 1pnc model.
  *
  * Fixed, equally sized time steps rather than adaptive time stepping (see
- * params.input).
+ * params_case1.input).
  */
 
 #include <config.h>
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.write(0.0);
 
-    // fixed, equally sized time steps (see params.input)
+    // fixed, equally sized time steps (see params_case1.input)
     const auto tEnd = getParam<double>("TimeLoop.TEnd");
     const auto dt = getParam<double>("TimeLoop.DtInitial");
     auto timeLoop = std::make_shared<TimeLoop<double>>(0.0, dt, tEnd);

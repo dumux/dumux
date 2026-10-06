@@ -10,7 +10,7 @@ Cells = 120 40     # dx = dy = 0.0125, so the Table D1 Z-values (multiples of 0.
                    # land exactly on grid nodes
 
 [Problem]
-Name = test_1p2c_henry_fahs_box
+Name = test_1p2c_henry_fahs_case1_box
 EnableGravity = true
 InflowRate = 5.7024 # [m^3/d] = q_d * d = 6.6e-5 m^2/s * 1 m * 86400 s/d, matching
                      # Fahs et al. (2016) Table 2 exactly

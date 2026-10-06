@@ -66,7 +66,7 @@ struct UseMoles<TypeTag, TTag::HenryFahsTest> { static constexpr bool value = fa
 // The default (Millington-Quirk, D_eff = Dm*phi^(1/3)) does not match Fahs et al.
 // (2016)'s transport equation, which scales molecular diffusion linearly by porosity
 // alone (their eq. 3: epsilon*Dm, no separate tortuosity reduction). Constant
-// tortuosity with tau=1 (set via SpatialParams.Tortuosity in params.input) reproduces
+// tortuosity with tau=1 (set via SpatialParams.Tortuosity in params_case1.input) reproduces
 // that exactly: D_eff = phi*Sw*tau*Dm = phi*Dm.
 template<class TypeTag>
 struct EffectiveDiffusivityModel<TypeTag, TTag::HenryFahsTest>

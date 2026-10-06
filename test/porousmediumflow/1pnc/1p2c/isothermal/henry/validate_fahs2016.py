@@ -17,9 +17,13 @@ just a re-run of our own code) -- not a byte-for-byte regression test (see CMake
 for that, a separate ctest target following the standard DuMux dumux_runtest.py/
 `--script fuzzy` convention against a stored reference VTU). The default --tolerance
 was empirically tightened (this repository's convention, see e.g. the lockexchange
-test) after observing max relative errors of 0.0186 (Test Case 1) and 0.0223 (Test
-Case 2) at the current 240x80 grid/1 d TEnd (see params.input, params_case2.input);
-the default leaves roughly 2x headroom above the worse of the two.
+test) after observing max relative errors of 0.0228 (Test Case 1) and 0.0417 (Test
+Case 2) at the current 120x40 grid/1 d TEnd (see params_case1.input, params_case2.input).
+Test Case 2's worst points sit at low Z (near the wedge toe, where
+velocity-dependent dispersion is hardest to resolve on this grid) and leave only
+~17% headroom below this default -- not the ~2x margin the coarser-grid numbers
+above might suggest; a solver or discretization change that shifts Test Case 2's
+isochlors even slightly could flip this test red.
 """
 
 import argparse

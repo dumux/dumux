@@ -29,7 +29,7 @@ AlphaL = 0.1  # [m], longitudinal dispersivity, Test Case 2
 AlphaT = 0.01 # [m], transverse dispersivity, Test Case 2
 
 [SpatialParams]
-Tortuosity = 1 # [-]; see params.input -- makes the molecular diffusion term match
+Tortuosity = 1 # [-]; see params_case1.input -- makes the molecular diffusion term match
                 # Fahs et al. (2016)'s epsilon*Dm exactly. Does not affect the
                 # (separate) Scheidegger dispersion tensor, which already has no
                 # porosity/tortuosity factor in either the paper or this
