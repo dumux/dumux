@@ -2,131 +2,187 @@
 
 ## One-dimensional non-isothermal two-phase two-component flow
 
-**Problem Description**
+### Problem description
 
-The Heatpipe Effect can be observed in a nonisothermal water-gas system in a porous medium, in which the heat transfer processes convection, conduction, and diffusion, as well as capillary forces, play an essential role. Udell and Fitch @cite Udell:1985 provide a semi-analytical solution for this system, which is practical for comparing with numerical results (e.g., see @cite emmertpromo).
+This benchmark models heat transport in a horizontal porous column containing liquid water and a gas mixture of water vapor and air. Heating the right boundary evaporates water. Vapor flows toward the cooler left end, condenses, and releases latent heat. Capillary forces return liquid water toward the hot end, creating countercurrent flow. At steady state, a two-phase heat-pipe region can coexist with a dry region near the heater.
 
-A one-dimensional horizontal porous column is considered. A constant heat flux is applied at the right boundary. Due to the heat flux, the system is heated until boiling temperature is reached and steam is produced at the right-hand boundary. This causes a pressure gradient in the gas phase and the steam flows away from the heat source. After reaching cooler regions of the column, the steam condenses and sets free its latent heat of vaporization. After a while, a non-uniform saturation profile is obtained with a gradient from the cooler to the hot end of the heatpipe.
-
-According to the capillary pressure–saturation relationship a gradient of the capillary pressure into the same direction is produced. Hence, the pressure gradients of the phases have opposite directions and a circulation flow is created. After a stationary system state has been reached, three regions can be distinguished, each of them associated with a dominant heat-transport process.
+The transient DuMux simulation uses the BOX discretization of the non-isothermal two-phase two-component model (`TwoPTwoCNI`). Its final profiles are compared with a modified semi-analytical reference based on the heat-pipe formulation of Udell and Fitch @cite Udell:1985, as presented by Huang, Kolditz and Shao @cite Huang:2015 (see also @cite ogs:heatpipe). The reference and the numerical model share selected material properties, but solve different equations and treat dry-out differently. Their profiles are therefore expected to be close, rather than identical.
 
 ![Schematic description](heatpipe_schematic_description.png){html: width=80%}
 
+### Geometry and boundary conditions
 
-**Semi-analytical Reference Solution**
+The column is 2.4 m long. Although the computational grid is two-dimensional, the geometry, material properties and boundary conditions produce flow along the horizontal coordinate $x$. Gravity is disabled.
 
-Udell and Fitch @cite Udell:1985 derive four coupled first-order differential equations for pressure, saturation, temperature and gas-phase mole fraction. These equations are solved by numerical integration by means of a fourth-order Runge–Kutta method. The numerical simulation of the heatpipe system was carried out with the BOX discretization method. Note that the choice of BOX or CVFE makes no difference in the present one-dimensional case.
+- **Left boundary:** gas pressure $p_g = 101300\ \mathrm{Pa}$, liquid saturation $S_w = 0.99$ and temperature $T = 341.75\ \mathrm{K}$ ($68.6^\circ\mathrm{C}$). The gas-phase air mole fraction follows from phase equilibrium. Neglecting dissolved air, $x_g^a \approx 1-p_\mathrm{vap}(T)/p_g \approx 0.71$.
+- **Right boundary:** an inward heat flux of $100\ \mathrm{W/m^2}$ and zero flux of both mass components. The input parameter is `Problem.HeatFlux = -100`, since negative Neumann flux denotes injection.
+- **Other boundaries:** zero component and heat fluxes.
+- **Initial state:** $p_g = 101300\ \mathrm{Pa}$, $S_w = 0.5$ and $T = 343.15\ \mathrm{K}$ ($70^\circ\mathrm{C}$), with both phases present.
 
-Here, the formulation given by Huang, Kolditz and Shao @cite Huang:2015 (see also @cite ogs:heatpipe) is used. The system is integrated from the left (Dirichlet) boundary towards the heat source, using the effective wetting-phase saturation $S_e = (S_w - S_{wr})/(1-S_{wr})$ (see the $p_c$, $k_{rw}$, $k_{rg}$ relations given below in **Setup**) as the integrated state variable, together with the gas-phase pressure $p_g$, the gas-phase air mole fraction $x_g^a$ and the temperature $T$. With the gas-phase density $\rho_g = \rho_g^a + \rho_g^w$, the gas-phase viscosity $\mu_g$ (mixture of $\mu_g^a$ and $\mu_g^w$ according to Wilke's rule), the kinematic viscosities $\nu_g = \mu_g/\rho_g$ and $\nu_w = \mu_w/\rho_w$, the mobility ratio $\beta = \nu_w/\nu_g$, the saturation-dependent heat conductivity $\lambda(S_w) = \lambda_{pm}^{S_w=0} + \sqrt{S_w}(\lambda_{pm}^{S_w=1}-\lambda_{pm}^{S_w=0})$ and the diffusive pore conductance $D_{pm}$ (both matched to the numerical model's actual effective-property laws, see **Setup**), the following auxiliary quantities are introduced:
+The left-boundary saturation is slightly below full saturation so that both phases are present. The initial state determines the transient evolution. The reference describes only steady state.
+
+### Material properties
+
+| Parameter | Symbol | Value | Unit |
+|-----------|--------|-------|------|
+| Intrinsic permeability | $K$ | $10^{-12}$ | m² |
+| Porosity | $\phi$ | 0.4 | – |
+| Residual liquid saturation | $S_{wr}$ | 0.15 | – |
+| Solid thermal conductivity | $\lambda_s$ | 2.8 | W/(m·K) |
+| Solid density | $\rho_s$ | 2600 | kg/m³ |
+| Solid specific heat capacity | $c_s$ | 700 | J/(kg·K) |
+
+The test uses `HeatPipeReferenceFluidSystem` (`referencefluidsystem.hh`), an adapter of `FluidSystems::H2OAir`. It aligns selected properties with the current reference:
+
+- Gas density follows the ideal-gas mixture law. Liquid density is that of pure water at the local temperature and liquid pressure.
+- A finite Henry constant of $10^{20}\ \mathrm{Pa}$ makes dissolved air negligible.
+- All components have the common sensible enthalpy $4187(T-273.15)\ \mathrm{J/kg}$. Water vapor has an additional $2.258\cdot10^6\ \mathrm{J/kg}$, giving a fixed latent heat. The common heat capacity preserves heat storage during the transient simulation.
+- Local water and air viscosities, Wilke's gas-mixture viscosity rule, thermal conductivities and binary diffusion coefficients are retained from `H2OAir`.
+
+These are benchmark-specific approximations. They do not reproduce the full thermophysical behavior of water and air or the original constant-property Udell–Fitch setup.
+
+#### Capillary pressure and relative permeability
+
+Both models use `HeatPipeLaw`, with effective liquid saturation
+
 ```math
-\alpha = 1 + \frac{p_c}{\rho_w h_v^w}, \qquad
-\xi = \frac{1}{k_{rg}}\left(1 + \frac{\rho_w R T}{p_g M^w}\frac{1}{1-x_g^a}\right) + \frac{\beta}{k_{rw}},
+S_e = \frac{S_w-S_{wr}}{1-S_{wr}}.
 ```
+
+The Fatt–Klikoff relative permeabilities @cite Fatt:1959 are
+
 ```math
-\delta = \frac{\rho_w (h_v^w)^2 K \alpha}{\lambda \nu_g T}, \qquad
-\zeta = \frac{K \rho_w R T}{M^w \rho_g \nu_g D_{pm}}\frac{x_g^a}{1-x_g^a}\left(\frac{p_g M^w}{\rho_w R T} + \frac{1}{1-x_g^a}\right),
+k_{rw}=S_e^3, \qquad k_{rg}=(1-S_e)^3.
 ```
+
+`HeatPipeLaw` bounds these functions between zero and one and replaces the cubic relation with a spline when its argument exceeds 0.95. The Leverett capillary-pressure relation @cite lev1 is
+
 ```math
-\eta = \frac{\delta}{\delta + \xi + \zeta} \, ,
+p_c = \gamma\sqrt{\frac{\phi}{K}}
+\left[1.417(1-S_e)-2.120(1-S_e)^2+1.263(1-S_e)^3\right],
 ```
-where $\eta \in [0,1]$ partitions the imposed heat flux $q$ between the phase-change-driven heat-pipe processes (saturation, pressure and composition gradients) and direct conduction. The state vector $(S_e, p_g, x_g^a, T)$ then evolves according to
+
+with constant surface tension $\gamma=0.0588\ \mathrm{N/m}$. The implementation extends capillary pressure linearly outside the effective-saturation interval $[0,1]$.
+
+#### Heat conduction and gas diffusion
+
+Both models use the Somerton effective thermal conductivity:
+
 ```math
-\frac{\mathrm{d}S_e}{\mathrm{d}x} = -\left(\frac{1}{1-x_g^a} + \beta\frac{k_{rg}}{k_{rw}}\right)\frac{\eta\, q\, \nu_g}{K\, h_v^w\, k_{rg}} \Big/ \frac{\mathrm{d}p_c}{\mathrm{d}S_e},
+\lambda(S_w)=\lambda_\mathrm{dry}
++\sqrt{S_w}\left(\lambda_\mathrm{wet}-\lambda_\mathrm{dry}\right),
+```
+
+```math
+\lambda_\mathrm{wet}=\lambda_s^{1-\phi}(\lambda_w^\mathrm{fluid})^\phi,
 \qquad
-\frac{\mathrm{d}p_g}{\mathrm{d}x} = -\frac{\eta\, q\, \nu_g}{K\, h_v^w\, k_{rg}}\frac{1}{1-x_g^a},
+\lambda_\mathrm{dry}=\lambda_s^{1-\phi}(\lambda_g^\mathrm{fluid})^\phi.
 ```
+
+Liquid-water conductivity is evaluated at the local state. Gas conductivity uses the constant air value $0.0255535\ \mathrm{W/(m\,K)}$. The resulting endpoints are approximately $1.57$–$1.59$ and $0.428\ \mathrm{W/(m\,K)}$ for the wet and dry medium, respectively.
+
+Gas diffusion uses `DiffusivityMillingtonQuirk` @cite MILLINGTON1961, with $S_g=1-S_w$:
+
 ```math
-\frac{\mathrm{d}x_g^a}{\mathrm{d}x} = \frac{\eta\, q\, x_g^a}{h_v^w\, D_{pm}\, \rho_g\, (1-x_g^a)},
+D_{pm}=\phi S_g^3\sqrt[3]{\phi S_g}\,D_g^{aw}(T,p_g),
+```
+
+```math
+D_g^{aw}(T,p_g)=2.13\cdot10^{-5}\ \mathrm{m^2/s}
+\frac{10^5\ \mathrm{Pa}}{p_g}
+\left(\frac{T}{273.15\ \mathrm{K}}\right)^{1.8}.
+```
+
+### Semi-analytical reference
+
+`test_heatpipe_odesolver.cc` integrates four coupled spatial ODEs for $(S_e,p_g,x_g^a,T)$ from the left boundary using explicit fourth-order Runge–Kutta integration. The ODE structure follows the literature formulation, but the material properties are adapted to this DuMux test. Liquid density and component viscosities are evaluated with local `H2OAir` properties, gas viscosity uses Wilke's mixing rule, and heat conductivity and gas diffusivity use the Somerton and Millington–Quirk laws described above.
+
+These choices are intended to use the same material-property laws in the reference and numerical test. They are not fitted to the numerical profiles. However, they change the reference problem. The plotted curve is computed from these adapted ODEs, rather than taken from the published Udell–Fitch results. The comparison therefore assesses agreement with a literature-based, DuMux-specific reference. It is not an exact reproduction of the original Udell–Fitch solution, which assigned constant values to these properties.
+
+The reference uses pure liquid water, ideal-gas mixture density and fixed latent heat $h_v^w=2.258\cdot10^6\ \mathrm{J/kg}$. Define the kinematic viscosities $\nu_g=\mu_g/\rho_g$, $\nu_w=\mu_w/\rho_w$ and their ratio $\beta=\nu_w/\nu_g$. The auxiliary quantities implemented in the reference are
+
+```math
+\alpha=1+\frac{p_c}{\rho_w h_v^w}, \qquad
+\xi=\frac{1}{k_{rg}}\left(1+\frac{\rho_wRT}{p_gM^w(1-x_g^a)}\right)
++\frac{\beta}{k_{rw}},
+```
+
+```math
+\delta=\frac{\rho_w(h_v^w)^2K\alpha}{\lambda\nu_gT}, \qquad
+\zeta=\frac{K\rho_wRT}{M^w\rho_g\nu_gD_{pm}}
+\frac{x_g^a}{1-x_g^a}
+\left(\frac{p_gM^w}{\rho_wRT}+\frac{1}{1-x_g^a}\right),
 \qquad
-\frac{\mathrm{d}T}{\mathrm{d}x} = -\frac{q\,(1-\eta)}{\lambda} \, .
+\eta=\frac{\delta}{\delta+\xi+\zeta}.
 ```
-Integration stops once the wetting phase dries out ($S_e \to 0$), after which the temperature is continued analytically assuming pure conduction through the dry medium ($\mathrm{d}T/\mathrm{d}x = q/\lambda_{pm}^{S_w=0}$) to cover the remainder of the domain. The fluid properties are evaluated at the local state along the column with `FluidSystems::H2OAir`, whose local transport properties are retained by the numerical model’s test-local adapter: $\rho_w$ and $\mu_w$ at the liquid pressure $p_g - p_c$ from the IAPWS formulations of `Components::H2O`, and $\mu_g$ from `Components::H2O` and `Components::Air` combined with Wilke's mixing rule. As the ODE system is derived for an ideal gas, $\rho_g$ follows from the ideal gas law. Likewise, $p_c$, $k_{rw}$ and $k_{rg}$ are evaluated with `HeatPipeLaw`, and $\lambda(S_w)$ and $D_{pm}$ with the effective-property laws of the numerical model, `ThermalConductivitySomertonTwoP` and `DiffusivityMillingtonQuirk` (see **Setup**). Only the latent heat of vaporization $h_v^w = 2.258\cdot 10^{6}\ \text{J/kg}$ (at the normal boiling point) is a fixed value of a reference state.
 
+Here $R$ is the universal gas constant, $M^w$ is the molar mass of water and $\eta$ partitions the heat flux between heat-pipe transport and conduction. With the signed flux $q=-100\ \mathrm{W/m^2}$, the ODEs are
 
-**Setup**
-
-A one-dimensional horizontal porous column is considered:
-
-A constant heat flux of $q = 100\ \mathrm{W/m^2}$ is imposed at the right boundary of the horizontal column. Zero-flux (Neumann) boundary conditions are prescribed for all mass components. The initial conditions in the entire domain are $p_g = 101300$ Pa, $S_w = 0.5$ and $T = 70^\circ$C.
-
-At the left boundary, Dirichlet boundary conditions are applied for the gas-phase pressure $p_g = 101300\ \mathrm{Pa}$, the water saturation $S_w = 0.99$ (i.e. $S_e \approx 0.988$; slightly below full saturation, so that both phases are present, which improves the convergence behavior) and the temperature $T = 68.6^\circ\mathrm{C}$. Assuming local thermodynamic equilibrium, the air mole fraction in the gas phase follows from the vapor pressure of water, $x_g^a \approx 1 - p_\text{vap}(T)/p_g \approx 0.71$ (neglecting the small amount of air dissolved in the liquid phase).
-
-The following model parameters were used for the simulation run:
-
-| Parameter                                    | Symbol    | Value                   | Unit  |
-|----------------------------------------------|-----------|-------------------------|-------|
-| Permeability                                 | $K$       | $1.0\text{e-}12$        | m²    |
-| Porosity                                     | $\phi$    | $0.4$                   | -     |
-| Residual wetting-phase saturation            | $S_{wr}$  | $0.15$                   | -     |
-| Solid (grain) thermal conductivity           | $\lambda_s$ | $2.8$                 | W/(m*K) |
-| Soil grain density                           | $\varrho_s$   | $2600$              | kg/m³  |
-| Specific heat capacity of the soil grains    | $c_s$     | $700$                   | J/(kg*K) |
-
-The numerical test uses `HeatPipeReferenceFluidSystem`, a test-local adapter of `FluidSystems::H2OAir`, to align its properties with the current semi-analytical reference. It uses ideal-gas density, pure-water liquid density and negligible air dissolution (a finite Henry constant of $10^{20}$ Pa). The local viscosities, Wilke mixing rule, thermal conductivities and diffusion coefficients remain those of `H2OAir`. Both phases and components share a sensible enthalpy of $4187(T-273.15)$ J/kg, with an additional $2.258\cdot10^6$ J/kg for water vapor. This keeps the latent heat fixed and retains positive transient heat capacity. These are benchmark assumptions, rather than a general-purpose water–air fluid model.
-
-This matches selected assumptions of the modified reference, not the original constant-property Udell–Fitch solution. The reference still uses an approximate equilibrium reduction and appends a dry conduction region at $S_e\to0$, whereas the numerical model resolves evaporation below residual saturation and phase disappearance. Exact agreement is therefore not guaranteed.
-
-The effective heat conductivity $\lambda(S_w)$ is not an independent input but computed by DuMux's `ThermalConductivitySomertonTwoP` (the default for `TwoPTwoCNI`) as a porosity-weighted geometric mean of $\lambda_s$ and the phase heat conductivities, interpolated between the dry and fully saturated endpoints with $\sqrt{S_w}$:
 ```math
-\lambda_{pm}^{S_w=1} = \lambda_s^{1-\phi}\left(\lambda_w^\text{fluid}\right)^\phi \approx 1.57\text{--}1.59\ \text{W/(m*K)}, \qquad
-\lambda_{pm}^{S_w=0} = \lambda_s^{1-\phi}\left(\lambda_g^\text{fluid}\right)^\phi \approx 0.428\ \text{W/(m*K)}.
+\frac{\mathrm{d}S_e}{\mathrm{d}x}
+=-\left(\frac{1}{1-x_g^a}+\beta\frac{k_{rg}}{k_{rw}}\right)
+\frac{\eta q\nu_g}{K h_v^w k_{rg}}
+\Big/\frac{\mathrm{d}p_c}{\mathrm{d}S_e},
+\qquad
+\frac{\mathrm{d}p_g}{\mathrm{d}x}
+=-\frac{\eta q\nu_g}{K h_v^w k_{rg}(1-x_g^a)},
 ```
-Here, the IAPWS liquid water heat conductivity $\lambda_w^\text{fluid}(T, p_w)\approx 0.66\text{--}0.68\ \text{W/(m*K)}$ of `Components::H2O`, evaluated at the local state in both models, and the constant air heat conductivity $\lambda_g^\text{fluid} = 0.0255535\ \text{W/(m*K)}$ of `Components::Air` are used. These endpoints differ noticeably from the values historically quoted for this benchmark (1.13 and 0.582 W/(m*K), for a different solid conductivity); with the historical values, the semi-analytical dry-out front would lie about $0.16\ \text{m}$ closer to the left boundary.
 
-A function according to Fatt and Klikoff @cite Fatt:1959 is chosen for the relative permeability-saturation relationship:
 ```math
-k_{rg} = (1 - S_e)^3 \quad \text{for steam (gas phase)} \nonumber 
+\frac{\mathrm{d}x_g^a}{\mathrm{d}x}
+=\frac{\eta qx_g^a}{h_v^wD_{pm}\rho_g(1-x_g^a)},
+\qquad
+\frac{\mathrm{d}T}{\mathrm{d}x}=-\frac{q(1-\eta)}{\lambda}.
 ```
+
+Integration approaches $S_e=0$. Steps crossing that limit or producing an invalid state are rejected and retried with a smaller step. The final accepted wet position is used as the reference front. Beyond it, the output sets $S_w=0$ and $x_g^a=0$, keeps gas pressure constant, and continues temperature by dry-medium conduction:
+
 ```math
-k_{rw} = S_e^3 \quad \text{for water} \, 
-```
-where `HeatPipeLaw` regularizes both functions with a spline for arguments above $0.95$.
-with the effective water-phase saturation
-```math
-S_e = \frac{S_w - S_{wr}}{1-S_{wr}}\; .
-```
-For the capillary pressure-saturation relationship, the following function of Leverett @cite lev1 is used:
-```math
-p_c = p_0 \, \gamma \left[ 1.417(1-S_e) - 2.120(1-S_e)^2 + 1.263(1-S_e)^3 \right] .
+T(x)=T_\mathrm{front}-\frac{q}{\lambda_\mathrm{dry}}(x-x_\mathrm{front}).
 ```
 
-The surface tension is $\gamma = 0.0588\ \text{N/m}$, based on the literature value of $0.05878\ \text{N/m}$ at $T = 100.5^\circ\text{C}$, which is close to the temperature in the heat-pipe zone. It is constant in both models, and $p_0 = \sqrt{\phi/K}$ applies for the scaling pressure.
+This continuation is appended to the two-phase ODE solution without resolving liquid disappearance.
 
-The diffusive pore conductance $D_{pm}$ is likewise not a constant but computed with DuMux's default effective diffusivity model for `TwoPTwoC`, `DiffusivityMillingtonQuirk` @cite MILLINGTON1961, given by
-```math
-D_{pm} = \phi\, S_g^3 \sqrt[3]{\phi\, S_g}\; D_g^{aw}(T, p_g),
-```
-using the binary diffusion coefficient of the (unoverridden) `H2OAir` fluid system, `BinaryCoeff::H2O_Air::gasDiffCoeff`:
-```math
-D_g^{aw}(T, p_g) = 2.13\cdot 10^{-5}\ \text{m}^2\text{/s} \cdot \frac{10^5\ \text{Pa}}{p_g} \left(\frac{T}{273.15\ \text{K}}\right)^{1.8} .
-```
+### Differences between the numerical model and the reference
 
-The dimension of the model domain in $x$-direction is chosen at 2.4 m. However, this is not important for the length of the heatpipe after the stationary state has been reached as long as the domain is sufficiently large for the heatpipe to be built. The domain is discretized with 120, 240 and 480 cells, i.e. $\Delta x = 0.02$ m, $0.01$ m and $0.005$ m (see **Grid Resolution**).
+Matching material properties does not make the reference an exact solution of the transient `TwoPTwoCNI` equations.
 
+| Aspect | Semi-analytical reference | Numerical test |
+|--------|-------------------------|----------------|
+| Governing equations | Four reduced steady-state spatial ODEs | Transient component and energy balances, evaluated near steady state |
+| Phase equilibrium | Temperature and gas composition evolve through the reduced ODE relations. IAPWS vapor pressure initializes the boundary composition | Local compositional equilibrium uses fugacity coefficients and IAPWS vapor pressure throughout the domain |
+| Dissolved air | Exactly zero in the liquid state used for property evaluation | Negligible, but finite, with the large Henry constant |
+| Heat storage | Absent from the steady-state equations | Fluid and solid energy storage affect the transient approach to steady state |
+| Dry-out criterion | $S_e\to0$, corresponding to $S_w\to S_{wr}=0.15$ | Liquid can evaporate below residual saturation before its phase disappears |
+| Dry region | Saturation jumps from approximately 0.15 to zero. The dry region has constant pressure and a linear temperature profile | Gas-only states and their profiles follow from the discretized balances and phase switching |
 
-**Result**
+The reference uses a reduced closure for heat transport and composition gradients, while the numerical model assembles advective and diffusive component fluxes and the energy balance. Agreement of their property functions alone does not establish equivalence of those balances. No complete equivalence of the reference's thermodynamic reduction with the numerical phase-equilibrium model is assumed here.
 
-To run the test and produce the plots below, execute:
+Consequently, the discrepancy can contain both discretization error and differences between the two models. Refinement may move a numerical profile across the reference, and a persistent difference does not by itself indicate a solver error. Exact convergence of every field to this reference is not guaranteed.
+
+### Running the benchmark
+
+From the heatpipe source directory, run
+
 ```bash
 python3 compile_run_plot.py
 ```
-The script builds once, then runs the simulation at three grid resolutions (120, 240 and 480 cells in $x$-direction; see **Grid Resolution** below), computes the semi-analytical solution described above, and produces four figures in the `build-cmake` directory:
-- `heatpipe_lineplot_comparison.svg`: comparison of the finest-resolution (480 cells) numerical solution against the semi-analytical solution for wetting-phase saturation $S_w$, temperature $T$, gas-phase pressure $p_g$, and gas-phase air mole fraction $x_g^a$, all plotted along $x$
-- `heatpipe_saturation_comparison.svg`: the wetting-phase saturation panel alone (finest resolution), used as the thumbnail on the benchmarks overview page
-- `heatpipe_sw.png`: numerical wetting-phase saturation field (finest resolution)
-- `heatpipe_grid_convergence.svg`: wetting-phase saturation and temperature at all three resolutions, zoomed to the dry-out front (see **Grid Resolution**)
 
-The script expects PyVista, Matplotlib and NumPy to be available for post-processing.
+The script expects a configured `build-cmake` directory and requires NumPy, Matplotlib and PyVista. It builds `test_heatpipe_box` and `test_heatpipe_odesolver`, writes the reference to `heatpipe_reference.csv`, and runs the numerical test with 120, 240 and 480 cells along $x$ ($\Delta x=0.02$, $0.01$ and $0.005\ \mathrm{m}$).
+
+The following figures are written to `build-cmake/test/porousmediumflow/2p2c/heatpipe`:
+
+- `heatpipe_lineplot_comparison.svg`: saturation, temperature, gas pressure and gas-phase air mole fraction at 480 cells, compared with the reference.
+- `heatpipe_saturation_comparison.svg`: the saturation comparison alone.
+- `heatpipe_sw.png`: the numerical saturation field at 480 cells.
+- `heatpipe_grid_convergence.svg`: saturation and temperature at all three resolutions, zoomed to the reference front.
+
+### Results and grid refinement
 
 ![Line plot](heatpipe_lineplot_comparison.svg)
 
 ![Saturation field](heatpipe_sw.png){html: width=80%}
 
-
-**Grid Resolution**
-
-The comparison above uses the finest of three grid resolutions (120, 240 and 480 cells in $x$-direction) that `compile_run_plot.py` runs for a grid-convergence study. The default test runs at the coarsest, 120-cell resolution (`grids/heatpipe.dgf`), in order to reduce runtime. It fails if the simulated dry-out front does not lie between the semi-analytical position and $0.12\ \text{m}$ downstream of it, as numerical diffusion shifts the front towards the heat source (see below).
+The default CTest simulation uses 120 cells. Its regression check identifies the numerical front as the first vertex containing only gas and requires its position to be between the configured reference position and 0.12 m downstream. This one-sided tolerance reflects the observed behavior of the default benchmark. Other grids or parameter choices may produce errors in either direction.
 
 ![Grid convergence](heatpipe_grid_convergence.svg)
-
-The dry-out front position, where the wetting phase becomes immobile ($k_{rw}\to 0$) and fully evaporates, is $2.260\ \text{m}$, $2.200\ \text{m}$ and $2.175\ \text{m}$ at 120, 240 and 480 cells, respectively, versus the semi-analytical value of $2.157\ \text{m}$. With the reference-aligned fluid-system adapter, the corresponding deviations are $0.103\ \text{m}$, $0.043\ \text{m}$ and $0.018\ \text{m}$. Refinement reduces the front-position error over these grids; this does not imply that all fields converge exactly to the approximate reference.
