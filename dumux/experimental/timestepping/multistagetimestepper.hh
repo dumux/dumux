@@ -49,7 +49,7 @@ public:
 
             using std::abs;
             p.skipTemporal = (abs(p.alpha) < 1e-6);
-            p.skipSpatial = (abs(p.betaDt) < 1e-6);
+            p.skipSpatial = (abs(m.spatialWeight(i, k)) < 1e-6);
         }
     }
 
