@@ -37,6 +37,7 @@ public:
         : gridGeometry_(gridGeometry),
           permeability_ (getParam<Scalar>("SpatialParams.Permeability")),
           porosity_ (getParam<Scalar>("SpatialParams.Porosity")),
+          enableLens_(getParam<bool>("SpatialParams.EnableLens", true)),
           gravity_(0.0)
     {
         if (getParam<bool>("Problem.EnableGravity"))
@@ -50,6 +51,9 @@ public:
      */
     decltype(auto) permeabilityAtElement(const Element& element) const
     {
+        if (!enableLens_)
+            return permeability_;
+
         if constexpr (dimWorld == 2)
         {
             const auto pos = element.geometry().center();
@@ -105,6 +109,7 @@ private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
     PermeabilityType permeability_;
     Scalar porosity_;
+    bool enableLens_;
     GravityVector gravity_;
 };
 
