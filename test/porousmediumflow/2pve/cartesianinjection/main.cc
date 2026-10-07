@@ -238,6 +238,17 @@ int main(int argc, char** argv)
         timeLoopCoarse->setTimeStepSize(nonLinearSolverCoarse.suggestTimeStepSize(timeLoopCoarse->timeStepSize()));
     } while (!timeLoopCoarse->finished());
 
+    const auto finalMassBalance = Dumux::VETest::computeMassBalance<TypeTag>(*gridGeometryCoarse, *gridGeometryFine, *xCoarse, *problemCoarse, *timeLoopCoarse);
+    const auto minimumTrappedFraction = getParam<Scalar>("MassBalance.MinTrappedGasFraction", 0.0);
+    const Scalar trappedFraction = finalMassBalance.trappedGasMass/finalMassBalance.expectedInjectedMass;
+    if (mpiHelper.rank() == 0)
+        std::cout << "Final residually trapped gas mass: " << finalMassBalance.trappedGasMass
+                  << (GridView::dimension == 2 ? " kg per metre out-of-plane" : " kg")
+                  << " (" << 100*trappedFraction << "% of injected gas)\n";
+    if (trappedFraction < minimumTrappedFraction)
+        DUNE_THROW(Dune::Exception, "Trapped gas fraction " << trappedFraction
+                   << " is below the required minimum " << minimumTrappedFraction);
+
     // output some Newton statistics
     nonLinearSolverCoarse.report();
 

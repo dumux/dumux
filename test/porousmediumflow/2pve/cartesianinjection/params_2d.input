@@ -16,6 +16,7 @@ EnableGravity = true
 InjectionRate = -5.835e-4 #[kg/(m^2 s)]
 
 [SpatialParams]
+EnableLens = true # disable for a homogeneous residual-trapping experiment
 Swr = 0.0
 Snr = 0.0
 BrooksCoreyPcEntry = 1e5

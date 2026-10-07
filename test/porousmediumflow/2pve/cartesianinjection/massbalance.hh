@@ -34,6 +34,7 @@ struct VEMassBalance
     Scalar nonwettingMassCoarse{};
     Scalar nonwettingMassFine{};
     Scalar expectedInjectedMass{};
+    Scalar trappedGasMass{};
 
     Scalar relativeErrorCoarse() const
     { return (expectedInjectedMass - nonwettingMassCoarse)/expectedInjectedMass; }
@@ -95,6 +96,10 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
             massBalance.nonwettingMassCoarse += coarsePorosity * densityNw * satNwCoarse * coarseElementVolume;
         }
 
+        const auto state = problemVE.fineLevelView().makeColumnState(element, solution[elementIdx], spatialParamsCoarse);
+        const Scalar trappedBottom = std::clamp(state.minimumGasPlumeDistance, 0.0, domainHeight);
+        const Scalar trappedTop = std::clamp(state.gasPlumeDistance, 0.0, domainHeight);
+
         // iteration over fine-level elements
         auto column = problemVE.fineLevelView().columnMap().column(elementIdx);
         for (const auto& fineElement : column)
@@ -109,6 +114,12 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
             for (const auto& scv : scvs(fvGeometryVEFine))
             {
                 massBalance.nonwettingMassFine += finePorosity * densityNwFine * satNwFine * scv.volume();
+                // Integrate the residual region exactly, including partially intersected cells.
+                const Scalar dz = problemVE.fineLevelView().fineCellHeight();
+                const Scalar bottom = fineElement.geometry().center()[dim-1] - lowerLeft[dim-1] - dz/2;
+                const Scalar overlap = std::max(Scalar(0), std::min(bottom + dz, trappedTop) - std::max(bottom, trappedBottom));
+                const Scalar overlapVolume = overlap/dz * scv.volume();
+                massBalance.trappedGasMass += finePorosity * state.densityNw * state.snr * overlapVolume;
             }
         }
     }
