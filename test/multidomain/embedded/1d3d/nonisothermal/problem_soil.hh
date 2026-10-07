@@ -180,6 +180,59 @@ public:
     }
 
     /*!
+     * \brief Evaluates the source term for all phases within a given sub control volume.
+     *
+     * The kernel coupling method does not place point sources in the bulk domain. Instead
+     * the exchange flux of a wellbore segment is smeared over the bulk elements that overlap
+     * with the kernel support around that segment, with the weights precomputed by the
+     * coupling manager.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
+     */
+    template<class ElementVolumeVariables>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    {
+        NumEqVector source(0.0);
+
+        if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
+        {
+            const auto eIdx = this->gridGeometry().elementMapper().index(element);
+            const auto& sourceIds = this->couplingManager().bulkSourceIds(eIdx, scv.indexInElement());
+            const auto& sourceWeights = this->couplingManager().bulkSourceWeights(eIdx, scv.indexInElement());
+
+            for (std::size_t i = 0; i < sourceIds.size(); ++i)
+            {
+                const auto id = sourceIds[i];
+                const auto weight = sourceWeights[i];
+                const NumEqVector sourceValue = exchangeFluxCalculator_->computeSourceValues(id);
+                source[energyEqIdx] += sourceValue[energyEqIdx]
+                                       *exchangeFluxCalculator_->energyFluxScalingFactor(id)*weight;
+            }
+
+            source /= scv.volume()*elemVolVars[scv].extrusionFactor();
+        }
+
+        return source;
+    }
+
+    /*!
+     * \brief The flux scaling factor precomputed by the kernel coupling manager.
+     *
+     * The correction of the exchange flux depends on the heat transfer coefficient at the
+     * well wall, which is a function of the solution and of the inner pipe radius. Neither
+     * is available here, so the correction is applied per source in source() instead and
+     * the factor stored by the coupling manager is left at one.
+     */
+    Scalar fluxScalingFactor(const Scalar /*avgDistance*/, const Scalar /*radius*/, const Scalar /*kernelWidth*/) const
+    { return 1.0; }
+
+    /*!
      * \brief Evaluates the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated

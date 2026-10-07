@@ -129,7 +129,7 @@ int main(int argc, char** argv)
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
     bulkProblem->addVtkOutputFields(bulkVtkWriter);
-    bulkVtkWriter.write(0.0, Dune::VTK::base64);
+    // bulkVtkWriter.write(0.0, Dune::VTK::base64);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 
             lowDimProblem->updateNusseltNumbers();
 
-            bulkVtkWriter.write(timeLoop->time(), Dune::VTK::base64);
+            // bulkVtkWriter.write(timeLoop->time(), Dune::VTK::base64);
             lowDimVtkWriter.write(timeLoop->time(), Dune::VTK::base64);
 
             lowDimProblem->writeOutput(lowDimGridVariables,timeLoop, sol[lowDimIdx]);

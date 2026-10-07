@@ -23,6 +23,7 @@ for more information.
 | ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
 | ![buckley-leverett](buckleyleverett_lineplot_comparison.png) | @ref benchmark-buckley-leverett "↗️ Buckley-Leverett" | @ref TwoPModel, @ref CCTpfaDiscretization | Two-phase fluid displacement |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
+| ![wellbore](wellbore.png) | @ref benchmark-wellbore-heat-transport "↗️ Wellbore Heat Transport" | 1D-3D, @ref OnePModel, @ref NIModel, @ref EmbeddedCoupling, @ref MultiDomain, @ref CCTpfaDiscretization, @ref BoxDiscretization | Cold water injected into a wellbore embedded in warm rock; comparison against the analytical solution from @cite Ramey1962 and OpenGeoSys results |
 
 ## Benchmarks in documented examples
 

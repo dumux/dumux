@@ -295,6 +295,13 @@ public:
     Scalar fluxScalingFactor(std::size_t id) const
     { return fluxScalingFactor_[id]; }
 
+    //! The kernel width factor (kernel width divided by radius) for a source with id
+    Scalar kernelWidthFactor(std::size_t id) const
+    {
+        const auto lowDimElementIdx = this->pointSourceData()[id].lowDimElementIdx();
+        return kernelWidthFactor_(this->problem(lowDimIdx).spatialParams(), lowDimElementIdx);
+    }
+
     // \}
 
     /*!
@@ -560,7 +567,7 @@ private:
      * \brief Get the kernel width factor from the spatial params (if possible)
      */
     template<class SpatialParams>
-    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx)
+    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx) const
     -> std::enable_if_t<hasKernelWidthFactor<SpatialParams, unsigned int>(), Scalar>
     { return spatialParams.kernelWidthFactor(eIdx); }
 
@@ -568,7 +575,7 @@ private:
      * \brief Get the kernel width factor (constant) from the input file (if possible)
      */
     template<class SpatialParams>
-    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx)
+    auto kernelWidthFactor_(const SpatialParams& spatialParams, unsigned int eIdx) const
     -> std::enable_if_t<!hasKernelWidthFactor<SpatialParams, unsigned int>(), Scalar>
     {
         static const Scalar kernelWidthFactor = getParam<Scalar>("MixedDimension.KernelWidthFactor");

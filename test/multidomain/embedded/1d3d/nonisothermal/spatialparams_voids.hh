@@ -78,7 +78,7 @@ public:
     }
 
         /*!
-     * \brief Returns the innter radius of the circular pipe for the current sub-control volume in [m].
+     * \brief Returns the outer radius of the circular pipe for the current sub-control volume in [m].
      *
      * \param eIdxGlobal the index of the element
      */

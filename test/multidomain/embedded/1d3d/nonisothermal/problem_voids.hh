@@ -253,11 +253,9 @@ public:
     {
         NumEqVector sourceValue = -exchangeFluxCalculator_->computeSourceValues(source.id()); //negative values because positive flux in exchangefluxcalculator is defined from 1D to 3D
 
+        // there is no mass exchange in this test, so only the energy flux has to be rescaled
         if constexpr(CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
-        {
-            sourceValue[conti0EqIdx] *= exchangeFluxCalculator_->massFluxScalingFactor(source.id());
             sourceValue[energyEqIdx] *= exchangeFluxCalculator_->energyFluxScalingFactor(source.id());
-        }
 
         source  = sourceValue*source.quadratureWeight()*source.integrationElement();
     }

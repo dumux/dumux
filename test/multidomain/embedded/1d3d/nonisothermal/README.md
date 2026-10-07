@@ -214,4 +214,4 @@ solution to VTK files (`*_1d-*.vtp`, `*_3d-*.vtu`).
 
 - Ramey, H. J. (1962): *Wellbore Heat Transmission*. Journal of Petroleum Technology 14(4),
   427–435. [doi:10.2118/96-PA](https://doi.org/10.2118/96-PA)
-- Reference data: OpenGeoSys benchmark documentation, <https://www.opengeosys.org>
+- Reference data: OpenGeoSys benchmark documentation, <https://www.opengeosys.org/6.5.9/docs/benchmarks/heat-transport-bhe/pipe_flow_ebhe/>

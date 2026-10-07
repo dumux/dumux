@@ -31,7 +31,7 @@ from ogs_reference import OGS_DEPTH, OGS_LENGTH, OGS_OUTLET, OGS_PROFILE, OGS_T_
 from ramey import RameySolution
 
 # ── Soil grid at refinement 0 ─────────────────────────────────────────────────
-BASE_CELLS = ("10 10", "10 10", "10")
+BASE_CELLS = ("10 10", "10 10", "1")
 GRADING = ("-1.3 1.3", "-1.3 1.3", "1")
 
 # ── Simulation variants (different discretizations of the 3D domain) ──────────

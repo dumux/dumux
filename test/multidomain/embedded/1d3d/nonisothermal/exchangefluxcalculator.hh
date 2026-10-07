@@ -75,6 +75,37 @@ class ExchangeFluxCalculator
         return NusseltNumber_(Re, Pr, D);
     }
 
+    /*!
+     * \brief The flux scaling factor of the energy exchange for the kernel coupling method.
+     *
+     * With the kernel method the bulk temperature entering the exchange term is an average
+     * over the kernel support around the wellbore instead of the temperature at the well
+     * wall. This factor rescales the exchange flux such that it matches the flux of the
+     * radially symmetric analytical solution around the well, see Koch et al. (2020),
+     * https://doi.org/10.1016/j.jcp.2020.109370.
+     *
+     * \param id The id of the point source.
+     */
+    Scalar energyFluxScalingFactor(const std::size_t id) const
+    {
+        const Scalar radius = this->couplingManager().radius(id);
+        const Scalar avgDist = this->couplingManager().averageDistance(id);
+        const Scalar kernelWidth = this->couplingManager().kernelWidthFactor(id)*radius;
+
+        // The soil porosity is zero in this test, hence the effective thermal conductivity
+        // of the bulk domain equals the thermal conductivity of the solid.
+        static const Scalar lambdaBulk = getParam<Scalar>("Component.SolidThermalConductivity");
+
+        // the dimensionless ratio of wall heat transfer coefficient to bulk conductivity
+        const Scalar theta = radius*convectionCoeff_(id)/lambdaBulk;
+
+        using std::log;
+        if (avgDist <= kernelWidth)
+            return 1.0/(1.0 + theta*(avgDist*avgDist/(2*kernelWidth*kernelWidth) + log(kernelWidth/radius) - 0.5));
+        else
+            return 1.0/(1.0 + theta*log(avgDist/radius));
+    }
+
 private:
 
     /*!

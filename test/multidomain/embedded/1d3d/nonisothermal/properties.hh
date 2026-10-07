@@ -32,6 +32,17 @@
 #define BULKTYPETAG SoilCC
 #endif
 
+#ifndef COUPLINGMODE
+#define COUPLINGMODE Embedded1d3dCouplingMode::Surface
+#endif
+
+// The kernel coupling method locates the bulk element containing an integration point
+// by index arithmetic, which requires equidistant cells. The other coupling methods can
+// use the graded tensor-product grid that resolves the near-field around the wellbore.
+#ifndef COORDINATETYPE
+#define COORDINATETYPE TensorProductCoordinates
+#endif
+
 namespace Dumux::Properties {
 
 // Create new type tags
@@ -44,7 +55,7 @@ struct SoilBox { using InheritsFrom = std::tuple<Soil, BoxModel>; };
 // Set the grid type
 template<class TypeTag>
 
-struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::TensorProductCoordinates<double, 3>>; };
+struct Grid<TypeTag, TTag::Soil> { using type = Dune::YaspGrid<3, Dune::COORDINATETYPE<double, 3>>; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::Soil> { static constexpr bool value = false; };
@@ -137,7 +148,7 @@ struct SpatialParams<TypeTag, TTag::Voids>
 };
 
 template<class Traits>
-using TheCouplingManager = WellboreCouplingManager<Traits, Embedded1d3dCouplingMode::Surface>;
+using TheCouplingManager = WellboreCouplingManager<Traits, COUPLINGMODE>;
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::BULKTYPETAG> { using type = TheCouplingManager<MultiDomainTraits<TypeTag, Properties::TTag::Voids>>; };

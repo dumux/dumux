@@ -1,11 +1,10 @@
 [TimeLoop]
-DtInitial = 7200      # [s] = 2 hours
-EpisodeLength = 7200  # [s] = 2 hours
+DtInitial = 14400     # [s] = 4 hours
+EpisodeLength = 14400 # [s] = 4 hours
 TEnd = 432000         # [s] = 5 days
 
 [Voids.Grid]
 File = ./grids/pipe.dgf
-Refinement = 2 # set to 2 to reproduce the resuts of the plot
 
 [Soil.Grid]
 Positions0 = -5 0 5
@@ -38,7 +37,7 @@ AddVelocity = true
 AddProcessRank = false
 
 [MixedDimension]
-NumCircleSegments = 200
+NumCircleSegments = 400
 PipeWallThermalConductivity = 0.962 # [W/(m·K)], combined conductivity of pipe wall and grout
 
 [Component]
