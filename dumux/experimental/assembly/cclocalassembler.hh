@@ -78,8 +78,11 @@ public:
 
         spatial[globalI] = this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0];
         temporal[globalI] = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars())[0];
-        res[globalI] = spatial[globalI]*stageParams.spatialWeight(stageParams.size()-1)
-                       + temporal[globalI]*stageParams.temporalWeight(stageParams.size()-1);
+        res[globalI] = 0.0;
+        if (!stageParams.skipSpatial(stageParams.size()-1))
+            res[globalI] += spatial[globalI]*stageParams.spatialWeight(stageParams.size()-1);
+        if (!stageParams.skipTemporal(stageParams.size()-1))
+            res[globalI] += temporal[globalI]*stageParams.temporalWeight(stageParams.size()-1);
 
         this->localResidual().spatialWeight(stageParams.spatialWeight(stageParams.size()-1),
                                             stageParams.skipSpatial(stageParams.size()-1));
