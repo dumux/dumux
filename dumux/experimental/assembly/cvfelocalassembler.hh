@@ -106,7 +106,10 @@ public:
         {
             spatial[scv.dofIndex()] += flux[scv.localDofIndex()];
             temporal[scv.dofIndex()] += storage[scv.localDofIndex()];
-            origResidual[scv.localDofIndex()] += flux[scv.localDofIndex()]*sWeight + storage[scv.localDofIndex()]*tWeight;
+            if (!stageParams.skipSpatial(stageParams.size()-1))
+                origResidual[scv.localDofIndex()] += flux[scv.localDofIndex()]*sWeight;
+            if (!stageParams.skipTemporal(stageParams.size()-1))
+                origResidual[scv.localDofIndex()] += storage[scv.localDofIndex()]*tWeight;
             res[scv.dofIndex()] += origResidual[scv.localDofIndex()];
         }
 
