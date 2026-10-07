@@ -1,0 +1,58 @@
+# Parameters for the kernel coupling method.
+# The kernel method locates the bulk element containing an integration point by index
+# arithmetic, so the soil grid has to be equidistant. The near-field around the wellbore
+# is therefore not refined by grading but resolved by the kernel width instead.
+
+[TimeLoop]
+DtInitial = 7200      # [s] = 2 hours
+EpisodeLength = 7200  # [s] = 2 hours
+TEnd = 432000         # [s] = 5 days
+
+[Voids.Grid]
+File = ./grids/pipe.dgf
+Refinement = 3 #2
+
+[Soil.Grid]
+LowerLeft = -5 -5 -30
+UpperRight = 5 5 0
+Cells = 80 80 40 #40 40 20 # cell size 0.25 x 0.25 x 1.5 m
+Refinement = 0 # the kernel coupling manager does not support refined bulk grids
+
+[Voids.Problem]
+Name = 1d
+InjectionRate = 0.0002 # [m³/s]
+InjectionTemperature = 293.15 # [K] = 20° C
+
+[Soil.Problem]
+Name = 3d
+
+[Problem]
+EnableGravity = false
+
+[SpatialParams]
+Permeability = 1e-20
+
+[Vtk]
+OutputName = test_wellbore_heat_transport_kernel
+AddVelocity = true
+AddProcessRank = false
+
+[MixedDimension]
+PipeWallThermalConductivity = 0.962 # [W/(m·K)], combined conductivity of pipe wall and grout
+# Kernel width divided by the wellbore radius. The kernel has to span several bulk cells for
+# the source distribution to be resolved: 5*0.14 m = 0.7 m is about three cells wide here.
+# Beyond this value the exchanged energy is insensitive to the kernel width, which is what
+# the flux scaling factor in the exchange flux calculator is there to achieve.
+KernelWidthFactor = 5
+KernelIntegrationCRL = 0.1 # characteristic relative length of the cylinder integration
+
+[Component]
+SolidDensity = 1800
+SolidThermalConductivity = 2.78018
+SolidHeatCapacity = 1778
+
+[PointSource]
+EnableBoxLumping = false
+
+[Flux]
+UpwindWeight = 0.5
