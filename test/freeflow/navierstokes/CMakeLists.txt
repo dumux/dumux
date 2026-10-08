@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(angeli)
+add_subdirectory(axisymmetric)
 add_subdirectory(channel)
 add_subdirectory(donea)
 add_subdirectory(periodic)

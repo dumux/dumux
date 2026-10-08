@@ -25,6 +25,12 @@ times whenever multiple scvs were associated with the same localDof.
 - __Shallow water equations__: New boundary states `wallBoundary` (slip wall), `inflowBoundary` (supercritical inflow with prescribed water depth and speed) and `criticalDepthOutflowBoundary` (free overfall at the critical depth of the normal discharge). `fixedDischargeBoundary` now returns the wall state for a vanishing discharge instead of an uninitialized state, and `ShallowWaterIOFields::primaryVariableName` returns the correct names, which fixes restarting shallow water simulations.
 - __Face-centered staggered__: Internal Dirichlet constraints (`enableInternalDirichletConstraints()`, `hasInternalDirichletConstraint`, `internalDirichlet`) are now supported for the momentum balance, also in the coupled free-flow system, where the constrained rows are decoupled from the mass balance. A constraint on a velocity dof on a periodic boundary also constrains its periodic partner.
 - __Face-centered staggered__: The grid geometry accepts an overlap of one or more cells for parallel computations instead of exactly one.
+- __Free flow__: The CVFE momentum residual supports rotational extrusion (axisymmetric flow without swirl) also with the integral interface
+of the general grid variables and with the hybrid schemes (`PQ1BubbleHybridModel`, `PQ2HybridModel`): the source integral of the control
+volumes and the finite-element terms of the hybrid dofs contain the hoop stress and the pressure term of cylindrical coordinates. For the
+classic interface, the radius in these terms is now the coordinate of the rotational extrusion, which fixes domains that do not touch the
+rotation axis, and the hoop stress is `mu u_r/r` instead of `2 mu u_r/r` with `FreeFlow.EnableUnsymmetrizedVelocityGradient`. The new test
+`test/freeflow/navierstokes/axisymmetric` checks the convergence for a manufactured solution with nonzero radial velocity.
 - __Complex-valued primary variables__: The core infrastructure now supports models whose primary variables are complex-valued
 (e.g. `Dune::FieldVector<std::complex<double>, numEq>`) while the property `Scalar` stays real. The Jacobian blocks, the deflected
 primary variables and the evaluated solutions and gradients use the field type of the primary variables. The numeric differentiation

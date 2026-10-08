@@ -19,6 +19,7 @@
 #include <dumux/discretization/fem/interpolationpointdata.hh>
 
 #include "flux.hh"
+#include "axisymmetricsource.hh"
 
 namespace Dumux {
 
@@ -133,6 +134,14 @@ public:
                 // get density from the problem
                 const Scalar density = problem.density(element, elemDisc, ipData);
 
+                // Axisymmetric problems in 2D feature an extra source term arising from the transformation to cylindrical coordinates.
+                Scalar axisymmetricRadialSource = 0.0;
+                if constexpr (NumEqVector::dimension == 2 && isRotationalExtrusion<Extrusion>)
+                    axisymmetricRadialSource = Detail::axisymmetricRadialMomentumSource(
+                        ipData.global()[Extrusion::radialAxis], v[Extrusion::radialAxis], mu,
+                        problem.pressure(element, elemDisc, ipData), enableUnsymmetrizedVelocityGradient
+                    );
+
                 for (const auto& localDof : nonCVLocalDofs(elemDisc))
                 {
                     const auto localDofIdx = localDof.index();
@@ -153,6 +162,8 @@ public:
                     auto sourceAtIp = problem.source(elemDisc, elemVars, ipData);
                     // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
                     sourceAtIp += density * problem.gravity();
+                    if constexpr (NumEqVector::dimension == 2 && isRotationalExtrusion<Extrusion>)
+                        sourceAtIp[Extrusion::radialAxis] += axisymmetricRadialSource;
 
                     const auto& shapeValues = ipCache.shapeValues();
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)

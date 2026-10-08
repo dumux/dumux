@@ -1,0 +1,23 @@
+[Grid]
+LowerLeft = "0 0"
+UpperRight = "1 1"
+Cells = "8 8"
+CellType = Cube
+
+[Problem]
+Name = test_ff_stokes_axisymmetric
+EnableGravity = false
+EnableInertiaTerms = false
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+
+[Newton]
+MaxSteps = 2
+EnableResidualCriterion = true
+ResidualReduction = 1e-10
+EnableShiftCriterion = false

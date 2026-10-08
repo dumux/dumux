@@ -12,15 +12,17 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_LOCAL_RESIDUAL_HH
 
+#include <vector>
+
 #include <dune/common/hybridutilities.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
-#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -31,6 +33,7 @@
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/flux.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/felocalresidual.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/axisymmetricsource.hh>
 
 namespace Dumux {
 
@@ -176,24 +179,18 @@ public:
         source +=  problem.density(element, elemDisc, data) * problem.gravity();
 
         // Axisymmetric problems in 2D feature an extra source term arising from the transformation to cylindrical coordinates.
-        // See Ferziger/Peric: Computational methods for Fluid Dynamics (2020)
-        // https://doi.org/10.1007/978-3-319-99693-6
-        // Chapter 9.9 and Eq. (9.81) and comment on finite volume methods
         if constexpr (dim == 2 && isRotationalExtrusion<Extrusion>)
         {
-            // the radius with respect to the rotation axis
-            const auto& gridDiscretization = Dumux::gridDiscretization(elemDisc);
-            const auto r = scv.center()[Extrusion::radialAxis] - gridDiscretization.bBoxMin()[Extrusion::radialAxis];
+            static const bool enableUnsymmetrizedVelocityGradient
+                = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
-            // The velocity term is new with respect to Cartesian coordinates and handled below as a source term
-            // It only enters the balance of the momentum balance in radial direction
-            source[Extrusion::radialAxis] += -2.0*problem.effectiveViscosity(element, elemDisc, data)
-                * elemVars[scv].velocity(Extrusion::radialAxis) / (r*r);
-
-            // Pressure term (needed because we incorporate pressure in terms of a surface integral).
-            // grad(p) becomes div(pI) + (p/r)*n_r in cylindrical coordinates. The second term
-            // is new with respect to Cartesian coordinates and handled below as a source term.
-            source[Extrusion::radialAxis] += problem.pressure(element, elemDisc, data)/r;
+            // the radius as defined by the rotational extrusion
+            const auto r = scv.center()[Extrusion::radialAxis];
+            source[Extrusion::radialAxis] += Detail::axisymmetricRadialMomentumSource(
+                r, elemVars[scv].velocity(Extrusion::radialAxis),
+                problem.effectiveViscosity(element, elemDisc, data), problem.pressure(element, elemDisc, data),
+                enableUnsymmetrizedVelocityGradient
+            );
         }
 
         return source;
@@ -211,15 +208,20 @@ public:
                                const ElementVariables& elemVars,
                                const SubControlVolume& scv) const
     {
-        static_assert(!(dim == 2 && isRotationalExtrusion<Extrusion>), "Rotational extrusion source terms are not implemented for integral interface.");
-
         const auto& problem = this->asImp().problem();
 
         NumEqVector source(0.0);
         for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv))
         {
-            source += qpData.weight() * (problem.source(elemDisc, elemVars, qpData.ipData())
-                                        + problem.density(elemDisc.element(), elemDisc, qpData.ipData()) * problem.gravity());
+            const auto& ipData = qpData.ipData();
+            NumEqVector sourceAtIp = problem.source(elemDisc, elemVars, ipData)
+                                     + problem.density(elemDisc.element(), elemDisc, ipData) * problem.gravity();
+
+            // Axisymmetric problems in 2D feature an extra source term arising from the transformation to cylindrical coordinates.
+            if constexpr (dim == 2 && isRotationalExtrusion<Extrusion>)
+                sourceAtIp[Extrusion::radialAxis] += axisymmetricRadialMomentumSource_(problem, elemDisc, elemVars, ipData);
+
+            source += qpData.weight() * sourceAtIp;
         }
 
         source *= elemVars[scv].extrusionFactor();
@@ -321,6 +323,30 @@ public:
         );
     }
 
+private:
+    //! The axisymmetric source term of the radial momentum balance with the velocity interpolated at an integration point
+    template<class IpData>
+    Scalar axisymmetricRadialMomentumSource_(const Problem& problem,
+                                             const ElementDiscretization& elemDisc,
+                                             const ElementVariables& elemVars,
+                                             const IpData& ipData) const
+    {
+        static const bool enableUnsymmetrizedVelocityGradient
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+
+        std::vector<typename LocalBasis::Traits::RangeType> shapeValues;
+        elemDisc.feLocalBasis().evaluateFunction(ipData.local(), shapeValues);
+        Scalar radialVelocity = 0.0;
+        for (const auto& localDof : localDofs(elemDisc))
+            radialVelocity += shapeValues[localDof.index()][0]*elemVars[localDof.index()].velocity(Extrusion::radialAxis);
+
+        const auto& element = elemDisc.element();
+        return Detail::axisymmetricRadialMomentumSource(
+            ipData.global()[Extrusion::radialAxis], radialVelocity,
+            problem.effectiveViscosity(element, elemDisc, ipData), problem.pressure(element, elemDisc, ipData),
+            enableUnsymmetrizedVelocityGradient
+        );
+    }
 };
 
 } // end namespace Dumux
