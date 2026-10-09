@@ -14,7 +14,7 @@
 #define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/solidmechanics/elastic/lameparams.hh>
-#include <dumux/solidmechanics/elastic/fvspatialparams.hh>
+#include <dumux/solidmechanics/elastic/spatialparams.hh>
 
 namespace Dumux {
 
@@ -23,14 +23,12 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
 template<class Scalar, class GridGeometry>
-class ElasticSpatialParams : public FVElasticSpatialParams< GridGeometry,
-                                                            Scalar,
-                                                            ElasticSpatialParams<Scalar, GridGeometry> >
+class ElasticManufacturedSolutionSpatialParams
+: public Experimental::ElasticSpatialParams<GridGeometry, Scalar, ElasticManufacturedSolutionSpatialParams<Scalar, GridGeometry>>
 {
-    using ThisType = ElasticSpatialParams<Scalar, GridGeometry>;
-    using ParentType = FVElasticSpatialParams<GridGeometry, Scalar, ThisType>;
+    using ThisType = ElasticManufacturedSolutionSpatialParams<Scalar, GridGeometry>;
+    using ParentType = Experimental::ElasticSpatialParams<GridGeometry, Scalar, ThisType>;
 
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -39,7 +37,7 @@ public:
     //! Export the type of the lame parameters
     using LameParams = Dumux::LameParams<Scalar>;
 
-    ElasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
+    ElasticManufacturedSolutionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         lameParams_.setLambda(3e9);
