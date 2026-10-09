@@ -219,6 +219,42 @@ public:
     }
 };
 
+/*!
+ * \ingroup PoreNetwork
+ * \ingroup PoreNetworkModels
+ * \brief Single-phase flow throat transmissibility of the pore-scale finite volume method for
+ *        sphere packings, Chareyre et al. (2012) https://doi.org/10.1007/s11242-011-9915-6
+ *
+ * The transmissibility is A R_h^2/(2 L) with the fluid area A and length L of the throat and the
+ * hydraulic radius R_h, which the spatial parameters provide through
+ * throatHydraulicRadius(element, elemVolVars).
+ */
+template<class Scalar>
+class TransmissibilityChareyre
+{
+public:
+
+    using SinglePhaseCache = EmptyCache;
+
+    template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
+    static Scalar singlePhaseTransmissibility(const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                              const ElementVolumeVariables& elemVolVars,
+                                              const FluxVariablesCache& fluxVarsCache,
+                                              const int phaseIdx)
+    {
+        const Scalar hydraulicRadius = problem.spatialParams().throatHydraulicRadius(element, elemVolVars);
+        return singlePhaseTransmissibility(fluxVarsCache.throatCrossSectionalArea(), hydraulicRadius, fluxVarsCache.throatLength());
+    }
+
+    static Scalar singlePhaseTransmissibility(const Scalar area,
+                                              const Scalar hydraulicRadius,
+                                              const Scalar length)
+    { return 0.5*area*hydraulicRadius*hydraulicRadius/length; }
+};
+
 } // end namespace Dumux::Porenetwork
 
 #endif
