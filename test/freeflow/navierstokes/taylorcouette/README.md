@@ -47,18 +47,28 @@ where $C$ is fixed by a reference pressure condition.
 
 **Setup**
 
-The implementation uses the DuMux free-flow Navier-Stokes model. The annular domain is discretized using DuMux's [`CakeGridManager`](https://dumux.org/docs/doxygen/master/class_dumux_1_1_cake_grid_manager.html), which constructs a structured quadrilateral grid directly in polar coordinates: 80 radial cells per zone with mirrored grading toward both cylinder walls, and 320 uniform angular cells over the full $360°$.
+The implementation uses the DuMux free-flow Navier-Stokes model. The annular domain is discretized using DuMux's [`CakeGridManager`](https://dumux.org/docs/doxygen/master/class_dumux_1_1_cake_grid_manager.html), which constructs a structured quadrilateral grid directly in polar coordinates: 80 radial cells per zone with mirrored grading toward both cylinder walls, and 320 uniform angular cells over the full $360°$ (`params.input`, used by the regression test). For the comparison, a second run with one global refinement of this grid (`-Grid.Refinement 1`, 320 × 640 cells) is performed.
 
 **Result**
 
-To run the test and produce the plot below, execute:
+To run the benchmark and produce the plot and table below, execute:
 ```bash
-./test_ff_navierstokes_taylorcouette params.input
-pvpython plot_results.py
+python3 compile_run_plot.py
 ```
-The script expects ParaView's `pvpython` and Matplotlib to be available for post-processing.
+With `--update-readme`, the error table below and `images/analytical_comparison.png` are updated automatically.
+The script builds the test, runs it on two grids and compares both with the analytical solution.
+It expects PyVista and Matplotlib to be available for post-processing.
+The coarse grid is the one used by the regression test (`params.input`), the finer grid is the same grid with one global refinement (`-Grid.Refinement 1`, every cell is split into four).
 
-The comparison of the analytical solution with the numerical solution obtained with DuMux closely agrees across the entire gap $r \in [1, 2]$ m:
+The script produces two files in the build directory of the test:
+- `analytical_comparison.png`: radial velocity and pressure profiles of both numerical solutions and the analytical solution
+- `l2_errors.md`: relative L2 errors of both runs
 
-![Analytical solution comparison](images/analytical_comparison.png)
-*Comparison of the analytical Taylor-Couette solution with the numerical solution for tangential velocity $u_\theta(r)$ and pressure $p(r)$ across the gap $r \in [1, 2]$ m.*
+![Analytical comparison](images/analytical_comparison.png)
+
+<!-- L2-ERRORS-START -->
+| Grid (radial × angular cells) | Total cells | Rel. L2 error pressure | Rel. L2 error velocity |
+|:--|--:|--:|--:|
+| 160 × 320 | 51200 | 2.111e-03 | 9.079e-03 |
+| 320 × 640 | 204800 | (copy from l2_errors.md) | (copy from l2_errors.md) |
+<!-- L2-ERRORS-END -->

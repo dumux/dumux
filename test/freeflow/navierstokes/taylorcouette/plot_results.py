@@ -1,497 +1,337 @@
-#!/usr/bin/env pvpython
+#!/usr/bin/env python3
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-plot_results.py
-================
+compile_run_plot.py
+===================
 
-Post-processing for a single Taylor-Couette benchmark run.
-Always generates an analytical comparison plot using the
-pressureExact and velocityExact fields already written to the
-VTK output; optionally also renders 2D field maps.
+Builds the Taylor-Couette benchmark, runs it on two grids and compares both
+numerical solutions with the analytical solution:
 
-Features
---------
-1. Analytical comparison plot (always generated)
-2. Optional 2D field rendering (pressure, velocity)
+  coarse grid   params.input (the grid used by the regression test)
+  refined grid  params.input with one global refinement (-Grid.Refinement 1),
+                i.e. every cell is split into four
 
-Examples
---------
-# Point at the directory containing test_ff_taylorcouette.pvd
-# (e.g. your build output directory)
-pvpython plot_results.py /path/to/build-cmake/test/freeflow/navierstokes/taylorcouette
+Output, written to the build directory of the test:
 
-# Also generate 2D field maps
-pvpython plot_results.py /path/to/build-cmake/test/freeflow/navierstokes/taylorcouette --fields
+  analytical_comparison.png   radial velocity and pressure profiles
+  l2_errors.md                table with the relative L2 errors of both runs
+
+The analytical solution is read from the pressureExact and velocityExact
+fields of the VTK output, i.e. it is evaluated by the problem class in C++.
+
+With --update-readme, the table in README.md (between the markers
+<!-- L2-ERRORS-START --> and <!-- L2-ERRORS-END -->) is replaced by the new one
+and the figure is copied to images/analytical_comparison.png.
+
+Requires PyVista and Matplotlib.
+
+Usage:
+  python3 compile_run_plot.py [--build-dir BUILD_DIR] [--skip-build] [--update-readme]
 """
 
 from __future__ import annotations
 
 import argparse
-import re
+import json
 import shutil
-import tempfile
+import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista as pv
 
-# ParaView
-from paraview import servermanager
-from paraview.simple import OpenDataFile, Delete
+SCRIPT_DIR = Path(__file__).resolve().parent
+TARGET = "test_ff_navierstokes_taylorcouette"
+TEST_SUBDIR = Path("test") / "freeflow" / "navierstokes" / "taylorcouette"
+
+PARAMS_FILE = "params.input"
+
+# (Problem.Name, number of global refinements) -- the first entry is the coarse grid
+CASES = [
+    ("test_ff_taylorcouette", 0),
+    ("test_ff_taylorcouette_refined", 1),
+]
+
+R1, R2 = 1.0, 2.0  # inner and outer radius
+N_BINS = 80        # radial bins used to average the numerical solution
+
+# plot colors: analytical solution in ink, the two grids in categorical slots 1 and 2
+INK = "#0b0b0b"
+INK_SECONDARY = "#52514e"
+SURFACE = "#fcfcfb"
+# coarse grid: open ring, refined grid: small filled square on top, so both
+# stay visible where the two solutions (nearly) coincide
+MARKER_STYLES = [
+    {"marker": "o", "ms": 7, "mfc": "none", "mec": "#2a78d6", "mew": 1.4},
+    {"marker": "s", "ms": 4, "mfc": "#eb6834", "mec": SURFACE, "mew": 0.8},
+]
+
+
+@dataclass
+class Result:
+    n_radial: int
+    n_angular: int
+    n_cells: int
+    metrics: dict
+    data: dict
+
 
 # =============================================================================
-# Configuration
-# =============================================================================
-
-ROOT_DIR = Path(__file__).resolve().parent
-DEFAULT_RESULTS_DIR = ROOT_DIR / "results"
-
-DPI = 150
-VIEW_SIZE = [2000, 1600]
-
-# =============================================================================
-# Case Discovery
+# Build / run
 # =============================================================================
 
 
-def find_case(results_dir: Path):
-    """
-    Look for the DuMux VTK output in the given directory.
-    """
+def find_build_dir(explicit: Path | None) -> Path:
+    """Locate the build directory (a `build-cmake` folder in the DuMux root)."""
 
-    pvd_file = results_dir / "test_ff_taylorcouette.pvd"
+    if explicit is not None:
+        return explicit.resolve()
 
-    if not pvd_file.exists():
-        raise RuntimeError(
-            f"No test_ff_taylorcouette.pvd found in: {results_dir}"
-        )
+    for parent in SCRIPT_DIR.parents:
+        candidate = parent / "build-cmake"
+        if candidate.is_dir():
+            return candidate
 
-    return {"path": results_dir, "pvd": pvd_file}
-
-
-# =============================================================================
-# Extraction Utilities
-# =============================================================================
-
-
-def prepare_pvd_for_paraview(case_dir: Path, tmpdir: Path):
-    """
-    Copy the PVD and its referenced VTU files into a working directory
-    and clean the paths inside the PVD, so ParaView can open it
-    regardless of where the original run wrote its output.
-    """
-
-    pvd_src = case_dir / "test_ff_taylorcouette.pvd"
-
-    if not pvd_src.exists():
-        raise RuntimeError(f"No PVD file found in: {case_dir}")
-
-    for vtu_src in case_dir.glob("test_ff_taylorcouette*.vtu"):
-        shutil.copy(vtu_src, tmpdir / vtu_src.name)
-
-    pvd_path = tmpdir / pvd_src.name
-    shutil.copy(pvd_src, pvd_path)
-
-    pvd_content = pvd_path.read_text()
-
-    cleaned_content = re.sub(
-        r'file="[^"]*/([^"]+\.vtu)"',
-        r'file="\1"',
-        pvd_content,
+    raise RuntimeError(
+        "Could not find a build-cmake directory automatically. "
+        "Pass it with --build-dir."
     )
 
-    pvd_path.write_text(cleaned_content)
 
-    return pvd_path
-
-
-# =============================================================================
-# Data Extraction
-# =============================================================================
-
-
-def parse_data_via_vtk(pvd_filepath: Path):
-    """
-    Extract pressure, velocity, and cell centers using ParaView.
-    """
-
-    data_reader = OpenDataFile(str(pvd_filepath))
-    data_reader.UpdatePipeline(1.0)
-
-    client_data = servermanager.Fetch(data_reader)
-
-    vtk_p_array = client_data.GetCellData().GetArray("p")
-    vtk_v_array = client_data.GetCellData().GetArray("velocity_liq (m/s)")
-    vtk_p_exact_array = client_data.GetCellData().GetArray("pressureExact")
-    vtk_v_exact_array = client_data.GetCellData().GetArray("velocityExact")
-
-    num_cells = client_data.GetNumberOfCells()
-
-    pressure = np.array([
-        vtk_p_array.GetValue(i)
-        for i in range(num_cells)
-    ])
-
-    velocity = np.array([
-        vtk_v_array.GetTuple(i)
-        for i in range(num_cells)
-    ])
-
-    pressure_exact = np.array([
-        vtk_p_exact_array.GetValue(i)
-        for i in range(num_cells)
-    ])
-
-    velocity_exact = np.array([
-        vtk_v_exact_array.GetTuple(i)
-        for i in range(num_cells)
-    ])
-
-    cell_centers = []
-
-    for i in range(num_cells):
-
-        cell = client_data.GetCell(i)
-        pts = cell.GetPoints()
-
-        num_pts = pts.GetNumberOfPoints()
-
-        coords = np.array([
-            pts.GetPoint(j)
-            for j in range(num_pts)
-        ])
-
-        cell_centers.append(coords.mean(axis=0))
-
-    cell_centers = np.array(cell_centers)
-
-    x = cell_centers[:, 0]
-    y = cell_centers[:, 1]
-
-    Delete(data_reader)
-
-    num_nan_p_exact = int(np.isnan(pressure_exact).sum())
-    num_nan_v_exact = int(np.isnan(velocity_exact).any(axis=1).sum())
-    print(f"  Diagnostic: {num_nan_p_exact} / {num_cells} cells have NaN pressureExact")
-    print(f"  Diagnostic: {num_nan_v_exact} / {num_cells} cells have NaN velocityExact")
-
-    return x, y, pressure, velocity, pressure_exact, velocity_exact
-
-
-# =============================================================================
-# Radial Profiles
-# =============================================================================
-
-
-def _bin_radially(r_filtered, values_filtered, bins, n_bins):
-    """
-    Helper: average a per-cell scalar field into radial bins.
-    """
-
-    idx = np.clip(
-        np.digitize(r_filtered, bins) - 1,
-        0,
-        n_bins - 1,
+def build(build_dir: Path) -> None:
+    print(f"Building {TARGET} in {build_dir} ...")
+    subprocess.run(
+        ["cmake", "--build", str(build_dir), "--target", TARGET],
+        check=True,
     )
 
+
+def grid_resolution(params_path: Path) -> tuple[int, int]:
+    """Radial (summed over all zones) and angular number of cells from a parameter file."""
+
+    values = {}
+
+    for line in params_path.read_text().splitlines():
+        key, sep, value = line.split("#", 1)[0].partition("=")
+        if sep and key.strip() in ("Cells0", "Cells1"):
+            values[key.strip()] = [int(token) for token in value.split()]
+
+    return sum(values["Cells0"]), sum(values["Cells1"])
+
+
+def run_case(exe_dir: Path, params_path: Path, problem_name: str, refinement: int):
+    """
+    Run the benchmark with the given parameter file and number of global
+    refinements. Returns the path of the
+    final VTU file and the relative L2 errors written by the program.
+    """
+
+    exe = exe_dir / TARGET
+    if not exe.exists():
+        raise RuntimeError(f"Executable not found: {exe}")
+
+    # every run overwrites solution_metrics.json, so read it right after the run
+    metrics_file = exe_dir / "solution_metrics.json"
+    metrics_file.unlink(missing_ok=True)
+
+    print(f"Running {TARGET} with {params_path.name}, {refinement} global refinement(s) ...")
+    subprocess.run(
+        [
+            str(exe), str(params_path),
+            "-Problem.Name", problem_name,
+            "-Grid.Refinement", str(refinement),
+        ],
+        cwd=exe_dir,
+        check=True,
+    )
+
+    metrics = json.loads(metrics_file.read_text())
+
+    return exe_dir / f"{problem_name}-00001.vtu", metrics
+
+
+# =============================================================================
+# Data extraction
+# =============================================================================
+
+
+def load(vtu_path: Path) -> dict:
+    """Read the cell data of a VTU file."""
+
+    mesh = pv.read(vtu_path)
+
+    def field(name):
+        if name not in mesh.cell_data:
+            raise KeyError(
+                f"Field '{name}' not found in {vtu_path.name}, "
+                f"available: {list(mesh.cell_data.keys())}"
+            )
+        return np.asarray(mesh.cell_data[name])
+
+    centers = mesh.cell_centers().points
+
+    return {
+        "n_cells": mesh.n_cells,
+        "cx": centers[:, 0],
+        "cy": centers[:, 1],
+        "p": field("p"),
+        "u": field("velocity_liq (m/s)"),
+        "p_exact": field("pressureExact"),
+        "u_exact": field("velocityExact"),
+    }
+
+
+# =============================================================================
+# Radial profiles
+# =============================================================================
+
+
+def _bin_radially(r, values, bins):
+    idx = np.clip(np.digitize(r, bins) - 1, 0, len(bins) - 2)
     return np.array([
-        values_filtered[idx == i].mean()
-        if (idx == i).any()
-        else np.nan
-        for i in range(n_bins)
+        values[idx == i].mean() if (idx == i).any() else np.nan
+        for i in range(len(bins) - 1)
     ])
 
 
-def sorted_exact_profile(cx, cy, pressure_exact, velocity_exact, r1=1.0, r2=2.0):
+def numerical_profile(data: dict):
     """
-    Return the analytical fields directly from the per-cell VTK data,
-    sorted by radius (no binning). The analytical field is smooth by
-    construction, so unlike the numerical solution it doesn't need
-    binning to average out angular scatter -- and binning it onto a
-    fixed-width grid can leave bins empty wherever the underlying mesh
-    is coarser than the bin width, producing spurious gaps.
+    Radial profile of the numerical solution: cell values averaged in radial
+    bins (the flow is axisymmetric, so this only averages out the angular
+    direction). Pressure is shifted to zero at the inner cylinder.
     """
 
-    r_cells = np.sqrt(cx**2 + cy**2)
-    mask = (r_cells >= r1) & (r_cells <= r2)
+    r = np.hypot(data["cx"], data["cy"])
+    inside = (r >= R1) & (r <= R2)
 
-    r_filtered = r_cells[mask]
-    p_exact_filtered = pressure_exact[mask]
+    speed = np.linalg.norm(data["u"][inside][:, :2], axis=1)
 
-    vx_exact = velocity_exact[:, 0]
-    vy_exact = velocity_exact[:, 1]
-    speed_exact = np.sqrt(vx_exact**2 + vy_exact**2)
-    s_exact_filtered = speed_exact[mask]
+    bins = np.linspace(R1, R2, N_BINS + 1)
+    centers = 0.5 * (bins[:-1] + bins[1:])
 
-    order = np.argsort(r_filtered)
-    r_sorted = r_filtered[order]
-    p_exact_sorted = p_exact_filtered[order]
-    s_exact_sorted = s_exact_filtered[order]
+    u_bin = _bin_radially(r[inside], speed, bins)
+    p_bin = _bin_radially(r[inside], data["p"][inside], bins)
+    p_bin -= p_bin[~np.isnan(p_bin)][0]
 
-    p_exact_sorted = p_exact_sorted - p_exact_sorted[0]
-
-    return r_sorted, s_exact_sorted, p_exact_sorted
+    return centers, u_bin, p_bin
 
 
-def compute_radial_profiles(
-    cx,
-    cy,
-    pressure,
-    velocity,
-    r1=1.0,
-    r2=2.0,
-    n_bins=80,
-):
+def analytical_profile(data: dict):
     """
-    Compute radial averages for the numerical solution, binning to
-    average out angular scatter at each radius.
+    Analytical solution from the VTK fields, sorted by radius. It is smooth, so
+    it is not binned (binning would leave gaps where the mesh is coarser than
+    the bin width). Pressure is shifted to zero at the inner cylinder.
     """
 
-    vx = velocity[:, 0]
-    vy = velocity[:, 1]
+    r = np.hypot(data["cx"], data["cy"])
+    inside = (r >= R1) & (r <= R2)
 
-    speed = np.sqrt(vx**2 + vy**2)
+    speed = np.linalg.norm(data["u_exact"][inside][:, :2], axis=1)
 
-    r_cells = np.sqrt(cx**2 + cy**2)
+    order = np.argsort(r[inside])
+    p = data["p_exact"][inside][order]
 
-    mask = (r_cells >= r1) & (r_cells <= r2)
-
-    r_filtered = r_cells[mask]
-    p_filtered = pressure[mask]
-    s_filtered = speed[mask]
-
-    bins = np.linspace(r1, r2, n_bins + 1)
-
-    bc = 0.5 * (bins[:-1] + bins[1:])
-
-    p_bin = _bin_radially(r_filtered, p_filtered, bins, n_bins)
-    s_bin = _bin_radially(r_filtered, s_filtered, bins, n_bins)
-
-    if not np.isnan(p_bin).all():
-        p_bin -= p_bin[~np.isnan(p_bin)][0]
-
-    return bc, s_bin, p_bin
+    return r[inside][order], speed[order], p - p[0]
 
 
 # =============================================================================
-# Analytical Comparison Plot
+# Plot and table
 # =============================================================================
 
 
-def generate_analytical_plot(case, r_num, u_num, p_num, r_ref, u_ref, p_ref):
-    """
-    Generate analytical comparison plot. u_ref/p_ref are the raw
-    per-cell analytical fields from the VTK output, sorted by radius
-    r_ref (unbinned, so the line is smooth regardless of local mesh
-    coarseness). u_num/p_num are the binned numerical solution at
-    radii r_num.
-    """
+def label(result: Result) -> str:
+    return f"DuMux, {result.n_radial} × {result.n_angular} cells"
 
-    fig, (ax1, ax2) = plt.subplots(
-        1,
-        2,
-        figsize=(12, 5),
-        dpi=DPI,
-    )
 
-    # Velocity
-    ax1.plot(
-        r_ref,
-        u_ref,
-        lw=2,
-        color="black",
-        label="Analytical",
-    )
+def generate_plot(results: list[Result], out_path: Path) -> None:
 
-    ax1.plot(
-        r_num,
-        u_num,
-        "o",
-        ms=4,
-        mfc="none",
-        color="red",
-        label="DuMux",
-    )
+    fig, (ax_u, ax_p) = plt.subplots(1, 2, figsize=(12, 5), dpi=150, facecolor=SURFACE)
 
-    ax1.set_title("Velocity Profile")
-    ax1.set_xlabel("r")
-    ax1.set_ylabel("u_theta")
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
+    r_ref, u_ref, p_ref = analytical_profile(results[0].data)
 
-    # Pressure
-    ax2.plot(
-        r_ref,
-        p_ref,
-        lw=2,
-        color="black",
-        label="Analytical",
-    )
+    for ax, ref, quantity, ylabel in (
+        (ax_u, u_ref, 1, r"tangential velocity $u_\theta$ (m/s)"),
+        (ax_p, p_ref, 2, "pressure $p$ (Pa)"),
+    ):
+        ax.set_facecolor(SURFACE)
+        ax.plot(r_ref, ref, lw=1.8, color=INK, label="Analytical", zorder=1)
 
-    ax2.plot(
-        r_num,
-        p_num,
-        "s",
-        ms=4,
-        mfc="none",
-        color="tab:blue",
-        label="DuMux",
-    )
+        for result, style in zip(results, MARKER_STYLES):
+            r, u, p = numerical_profile(result.data)
+            ax.plot(
+                r, u if quantity == 1 else p, ls="none",
+                label=label(result), zorder=2, **style,
+            )
 
-    ax2.set_title("Pressure Profile")
-    ax2.set_xlabel("r")
-    ax2.set_ylabel("p")
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
+        ax.set_xlabel("radius $r$ (m)", color=INK_SECONDARY)
+        ax.set_ylabel(ylabel, color=INK_SECONDARY)
+        ax.tick_params(colors=INK_SECONDARY)
+        ax.grid(True, color=INK, alpha=0.12, lw=0.6)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        for side in ("left", "bottom"):
+            ax.spines[side].set_color(INK_SECONDARY)
+        ax.legend(frameon=False, labelcolor=INK)
 
-    plt.tight_layout()
+    ax_u.set_title("Velocity profile", color=INK)
+    ax_p.set_title("Pressure profile", color=INK)
 
-    outpath = case["path"] / "analytical_comparison.png"
-
-    fig.savefig(outpath, bbox_inches="tight")
-
+    fig.tight_layout()
+    fig.savefig(out_path, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
-    print(f"  Saved analytical comparison: {outpath}")
+    print(f"Saved: {out_path}")
 
 
-# =============================================================================
-# ParaView Rendering
-# =============================================================================
+README_START = "<!-- L2-ERRORS-START -->"
+README_END = "<!-- L2-ERRORS-END -->"
 
 
-import matplotlib.tri as mtri
+def update_readme(table: str, figure: Path) -> None:
+    """Insert the error table into README.md and copy the figure to images/."""
+
+    readme = SCRIPT_DIR / "README.md"
+    text = readme.read_text()
+
+    if README_START not in text or README_END not in text:
+        raise RuntimeError(f"Markers {README_START} / {README_END} not found in {readme}")
+
+    head, rest = text.split(README_START, 1)
+    _, tail = rest.split(README_END, 1)
+    readme.write_text(f"{head}{README_START}\n{table}{README_END}{tail}")
+
+    images = SCRIPT_DIR / "images"
+    images.mkdir(exist_ok=True)
+    shutil.copy(figure, images / figure.name)
+
+    print(f"Updated: {readme} and {images / figure.name}")
 
 
-def render_matplotlib_fields(
-    cx,
-    cy,
-    pressure,
-    velocity,
-    outdir: Path,
-    r1=1.0,
-    r2=2.0,
-):
-    """
-    Generate pressure_field.png and velocity_field.png
-    using pure matplotlib triangulation.
-    """
+def write_error_table(results: list[Result], out_path: Path) -> str:
 
-    vx = velocity[:, 0]
-    vy = velocity[:, 1]
-
-    speed = np.sqrt(vx**2 + vy**2)
-
-    triang = mtri.Triangulation(cx, cy)
-
-    # Mask triangles inside inner cylinder
-    tri_cx = cx[triang.triangles].mean(axis=1)
-    tri_cy = cy[triang.triangles].mean(axis=1)
-
-    tri_r = np.sqrt(tri_cx**2 + tri_cy**2)
-
-    triang.set_mask(tri_r < r1)
-
-    theta = np.linspace(0, 2*np.pi, 400)
-
-    fields = [
-        (
-            pressure,
-            "p",
-            "coolwarm",
-            "pressure_field.png",
-        ),
-        (
-            speed,
-            "|u|",
-            "viridis",
-            "velocity_field.png",
-        ),
+    lines = [
+        "| Grid (radial × angular cells) | Total cells | Rel. L2 error pressure | Rel. L2 error velocity |",
+        "|:--|--:|--:|--:|",
     ]
 
-    for field_vals, label, cmap, filename in fields:
-
-        fig, ax = plt.subplots(
-            figsize=(7, 6),
-            dpi=DPI,
+    for result in results:
+        lines.append(
+            f"| {result.n_radial} × {result.n_angular} | {result.n_cells} "
+            f"| {result.metrics['l2_error_pressure_rel']:.3e} "
+            f"| {result.metrics['l2_error_velocity_rel']:.3e} |"
         )
 
-        tc = ax.tricontourf(
-            triang,
-            field_vals,
-            levels=64,
-            cmap=cmap,
-        )
+    table = "\n".join(lines) + "\n"
+    out_path.write_text(table)
 
-        fig.colorbar(
-            tc,
-            ax=ax,
-            label=label,
-            fraction=0.046,
-            pad=0.04,
-        )
+    print(f"\n{table}")
+    print(f"Saved: {out_path}")
 
-        # Inner cylinder
-        ax.plot(
-            r1*np.cos(theta),
-            r1*np.sin(theta),
-            "k-",
-            lw=1.2,
-        )
+    return table
 
-        # Outer cylinder
-        ax.plot(
-            r2*np.cos(theta),
-            r2*np.sin(theta),
-            "k-",
-            lw=1.2,
-        )
-
-        # White fill inside hole
-        from matplotlib.patches import Circle
-
-        ax.add_patch(
-            Circle(
-                (0, 0),
-                r1,
-                color="white",
-                zorder=3,
-            )
-        )
-
-        ax.plot(
-            r1*np.cos(theta),
-            r1*np.sin(theta),
-            "k-",
-            lw=1.2,
-            zorder=4,
-        )
-
-        ax.set_aspect("equal")
-
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-
-        ax.set_title(label)
-
-        ax.tick_params(
-            which="both",
-            direction="in",
-        )
-
-        plt.tight_layout()
-
-        outpath = outdir / filename
-
-        fig.savefig(
-            outpath,
-            bbox_inches="tight",
-        )
-
-        plt.close(fig)
-
-        print(f"  Saved: {outpath}")
 
 # =============================================================================
 # Main
@@ -501,107 +341,51 @@ def render_matplotlib_fields(
 def main():
 
     parser = argparse.ArgumentParser(
-        description="Unified Taylor-Couette post-processing suite"
+        description="Build, run (coarse and refined grid) and plot the Taylor-Couette benchmark."
     )
-
     parser.add_argument(
-        "results_dir",
-        nargs="?",
-        default=DEFAULT_RESULTS_DIR,
+        "--build-dir",
         type=Path,
-        help="Path to results directory",
+        default=None,
+        help="DuMux build directory (default: build-cmake in the DuMux root)",
     )
-
     parser.add_argument(
-        "--fields",
+        "--skip-build",
         action="store_true",
-        help="Generate pressure and velocity field maps",
+        help="do not build the executable before running it",
     )
-
+    parser.add_argument(
+        "--update-readme",
+        action="store_true",
+        help="write the error table into README.md and copy the figure to images/",
+    )
     args = parser.parse_args()
 
-    results_dir = args.results_dir.resolve()
+    build_dir = find_build_dir(args.build_dir)
+    if not args.skip_build:
+        build(build_dir)
 
-    if not results_dir.exists():
-        raise RuntimeError(
-            f"Results directory not found: {results_dir}"
-        )
+    exe_dir = build_dir / TEST_SUBDIR
 
-    case = find_case(results_dir)
+    results = []
+    params_path = SCRIPT_DIR / PARAMS_FILE
+    base_radial, base_angular = grid_resolution(params_path)
 
-    print("=" * 80)
-    print(f"Results directory: {results_dir}")
-    print("=" * 80)
+    for problem_name, refinement in CASES:
+        vtu_path, metrics = run_case(exe_dir, params_path, problem_name, refinement)
+        data = load(vtu_path)
+        # every global refinement halves the cell size in both directions
+        n_radial = base_radial * 2**refinement
+        n_angular = base_angular * 2**refinement
+        results.append(Result(n_radial, n_angular, data["n_cells"], metrics, data))
 
-    with tempfile.TemporaryDirectory() as tmp:
+    figure = exe_dir / "analytical_comparison.png"
+    generate_plot(results, figure)
+    table = write_error_table(results, exe_dir / "l2_errors.md")
 
-        tmpdir = Path(tmp)
+    if args.update_readme:
+        update_readme(table, figure)
 
-        pvd_path = prepare_pvd_for_paraview(
-            case["path"],
-            tmpdir,
-        )
-
-        # -----------------------------------------------------------------
-        # Extract data
-        # -----------------------------------------------------------------
-
-        cx, cy, pressure, velocity, pressure_exact, velocity_exact = parse_data_via_vtk(
-            pvd_path
-        )
-
-        # -----------------------------------------------------------------
-        # Radial profiles
-        # -----------------------------------------------------------------
-
-        r_num, u_num, p_num = compute_radial_profiles(
-            cx,
-            cy,
-            pressure,
-            velocity,
-        )
-
-        r_ref, u_ref, p_ref = sorted_exact_profile(
-            cx,
-            cy,
-            pressure_exact,
-            velocity_exact,
-        )
-
-        # -----------------------------------------------------------------
-        # Analytical comparison
-        # -----------------------------------------------------------------
-
-        generate_analytical_plot(
-            case,
-            r_num,
-            u_num,
-            p_num,
-            r_ref,
-            u_ref,
-            p_ref,
-        )
-
-        # -----------------------------------------------------------------
-        # ParaView field rendering
-        # -----------------------------------------------------------------
-
-        if args.fields:
-
-            print("  Rendering pressure field...")
-
-            render_matplotlib_fields(
-                cx,
-                cy,
-                pressure,
-                velocity,
-                case["path"],
-            )
-
-
-# =============================================================================
-# Entry Point
-# =============================================================================
 
 if __name__ == "__main__":
     main()

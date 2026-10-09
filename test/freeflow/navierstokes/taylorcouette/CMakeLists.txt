@@ -12,4 +12,4 @@ dumux_add_test(NAME test_ff_navierstokes_taylorcouette
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_taylorcouette-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_taylorcouette params.input
                              -Problem.Name test_ff_taylorcouette -Problem.EnableInertiaTerms true")
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "compile_run_plot.py")

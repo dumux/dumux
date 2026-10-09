@@ -95,6 +95,11 @@ int main(int argc, char** argv)
     GridManager gridManager;
     gridManager.init();
 
+    // optionally refine the grid globally (each refinement splits every cell into four)
+    const auto refinement = getParam<int>("Grid.Refinement", 0);
+    if (refinement > 0)
+        gridManager.grid().globalRefine(refinement);
+
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
