@@ -4,22 +4,28 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-#ifndef DUMUX_COOKS_MEMBRANE_SPATIAL_PARAMS_HH
-#define DUMUX_COOKS_MEMBRANE_SPATIAL_PARAMS_HH
+/*!
+ * \file
+ * \ingroup GeomechanicsTests
+ * \brief Spatial parameters of Cook's membrane: a homogeneous isotropic material given by Young's
+ *        modulus and Poisson's ratio
+ */
+#ifndef DUMUX_TEST_ELASTIC_COOKS_MEMBRANE_SPATIAL_PARAMS_HH
+#define DUMUX_TEST_ELASTIC_COOKS_MEMBRANE_SPATIAL_PARAMS_HH
 
 #include <dumux/common/parameters.hh>
 #include <dumux/solidmechanics/elastic/lameparams.hh>
-#include <dumux/solidmechanics/elastic/fvspatialparams.hh>
+#include <dumux/solidmechanics/elastic/spatialparams.hh>
 
 namespace Dumux {
 
-template<class Scalar, class GridGeometry>
+template<class GridGeometry, class Scalar>
 class CooksMembraneSpatialParams
-: public FVElasticSpatialParams<GridGeometry, Scalar, CooksMembraneSpatialParams<Scalar, GridGeometry>>
+: public Experimental::ElasticSpatialParams<GridGeometry, Scalar, CooksMembraneSpatialParams<GridGeometry, Scalar>>
 {
-    using ThisType = CooksMembraneSpatialParams<Scalar, GridGeometry>;
-    using ParentType = FVElasticSpatialParams<GridGeometry, Scalar, ThisType>;
-    using GlobalPosition = typename GridGeometry::LocalView::SubControlVolume::GlobalPosition;
+    using ThisType = CooksMembraneSpatialParams<GridGeometry, Scalar>;
+    using ParentType = Experimental::ElasticSpatialParams<GridGeometry, Scalar, ThisType>;
+    using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
 
 public:
     using LameParams = Dumux::LameParams<Scalar>;

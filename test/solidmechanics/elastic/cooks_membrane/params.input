@@ -2,21 +2,13 @@
 File = cooksmembrane.msh
 
 [Problem]
-Name = test_cooksmembrane_box
-EnableGravity = false
+Name = test_cooks_membrane_box
+# total vertical load 100 on the right edge of length 16
 ShearTraction = 6.25
 
 [SpatialParams]
-YoungsModulus = 70
+YoungsModulus = 250
 PoissonRatio = 0.4999
 
-[Vtk]
-Precision = Float64
-CoordPrecision = Float64
-
-[Component]
-SolidDensity = 1.0
-
 [Newton]
-EnableDynamicOutput = false
-MaxRelativeShift = 1e-6
+MaxRelativeShift = 1e-8
