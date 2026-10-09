@@ -7,132 +7,107 @@
 /*!
  * \file
  * \ingroup GeomechanicsTests
- * \brief Test for the linear elastic model.
+ * \brief Test for the linear elastic model with a manufactured solution
  */
 #include <config.h>
 
-#include <ctime>
+#include <cmath>
 #include <iostream>
+#include <memory>
 
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/vtk.hh>
-
-#include "properties.hh"
+#include <dune/common/fvector.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/initialize.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/dumuxmessage.hh>
-
+#include <dumux/common/properties.hh>
+#include <dumux/assembly/assembler.hh>
+#include <dumux/discretization/fem/interpolationpointdata.hh>
+#include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
+#if DUMUX_HAVE_GRIDFORMAT
+#include <dumux/io/gridwriter.hh>
+#include <dumux/io/cvfegridfunction.hh>
+#endif
 
-#include <dumux/discretization/method.hh>
-#include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/gridmanager_yasp.hh>
+#include "properties.hh"
 
-// main function
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-
-    // define the type tag for this problem
     using TypeTag = Properties::TTag::TestElastic;
 
-    // stop time for the entire computation
-    Dune::Timer timer;
-
-    // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
-    const auto& mpiHelper = Dune::MPIHelper::instance();
-
-    // print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
-
-    // parse command line arguments and input file
     Parameters::init(argc, argv);
 
-    // try to create a grid (from the given grid file or the input file)
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
     gridManager.init();
-
-    ////////////////////////////////////////////////////////////
-    // run non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
-    // we compute on the leaf grid view
     const auto& leafGridView = gridManager.grid().leafGridView();
 
-    // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView);
 
-    // the problem (initial and boundary conditions)
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    // the solution vector
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs());
-    problem->applyInitialSolution(x);
+    x = 0.0;
 
-    // the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
 
-    // initialize the vtk output module and add displacement
-    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    vtkWriter.addField(x, "u");
-
-    // also, add exact solution to the output
-    SolutionVector xExact(gridGeometry->numDofs());
-    for (const auto& v : vertices(leafGridView))
-        xExact[ gridGeometry->vertexMapper().index(v) ] = problem->exactSolution(v.geometry().center());
-    vtkWriter.addField(xExact, "u_exact");
-
-    // write initial solution
-    vtkWriter.write(0.0);
-
-    // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = Experimental::Assembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    // the linear solver
     using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
-
-    // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
-
-    // linearize & solve
+    NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver);
     nonLinearSolver.solve(x);
 
-    // the grid variables need to be up to date for subsequent output
-    gridVariables->update(x);
+    // L2 error of the displacement
+    double l2Error = 0.0;
+    auto elemDisc = localView(*gridGeometry);
+    for (const auto& element : elements(leafGridView))
+    {
+        elemDisc.bind(element);
+        const auto geometry = element.geometry();
+        const auto& localBasis = elemDisc.feLocalBasis();
+        using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
+        for (const auto& qp : Dune::QuadratureRules<double, 2>::rule(geometry.type(), 6))
+        {
+            const auto global = geometry.global(qp.position());
+            const FEInterpolationPointData<GlobalPosition, std::decay_t<decltype(localBasis)>>
+                shapeData(geometry, qp.position(), global, localBasis);
+            Dune::FieldVector<double, 2> u(0.0);
+            for (const auto& localDof : localDofs(elemDisc))
+                u.axpy(shapeData.shapeValues()[localDof.index()][0], x[localDof.dofIndex()]);
+            u -= problem->exactSolution(global);
+            l2Error += u.two_norm2()*qp.weight()*geometry.integrationElement(qp.position());
+        }
+    }
+    std::cout << "L2 error displacement: " << std::sqrt(l2Error) << std::endl;
 
-    // write vtk output
-    vtkWriter.write(1.0);
+#if DUMUX_HAVE_GRIDFORMAT
+    SolutionVector xExact(x.size());
+    for (const auto& element : elements(leafGridView))
+    {
+        elemDisc.bind(element);
+        for (const auto& localDof : localDofs(elemDisc))
+            xExact[localDof.dofIndex()] = problem->exactSolution(ipData(elemDisc, localDof).global());
+    }
 
-    // print time and say goodbye
-    const auto& comm = Dune::MPIHelper::getCommunication();
-    if (mpiHelper.rank() == 0)
-        std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-                  << comm.size() << " processes.\n"
-                  << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
-
-    // print parameters
-    if (mpiHelper.rank() == 0)
-        Parameters::print();
+    IO::GridWriter writer{IO::Format::vtu, leafGridView, IO::order<1>};
+    writer.setPointField("u", IO::cvfeGridFunction(*gridGeometry, x));
+    writer.setPointField("u_exact", IO::cvfeGridFunction(*gridGeometry, xExact));
+    writer.write(problem->name());
+#endif
 
     return 0;
-} // end main
+}
