@@ -496,6 +496,7 @@ public:
             std::vector<bool> colorUsed; colorUsed.reserve(200);
 
             auto& elementSets = std::get<i>(elementSets_);
+            elementSets.clear();
             const auto& connectedElements = std::get<i>(std::tie(connectedElementsBulk, connectedElementsLowDim));
 
             for (const auto& element : elements(gg.gridView()))
