@@ -127,7 +127,7 @@ int main(int argc, char** argv)
     // the bulk output is large on fine grids, the convergence test switches it off
     const bool enableBulkOutput = getParam<bool>("Vtk.EnableBulkOutput", true);
     if (enableBulkOutput)
-        bulkVtkWriter.write(0.0, Dune::VTK::base64);
+        bulkVtkWriter.write(0.0);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     using LowDimVelocityOutput = GetPropType<LowDimTypeTag, Properties::VelocityOutput>;
     lowDimVtkWriter.addVelocityOutput(std::make_shared<LowDimVelocityOutput>(*lowDimGridVariables));
     lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
-    lowDimVtkWriter.write(0.0, Dune::VTK::base64);
+    lowDimVtkWriter.write(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
@@ -184,8 +184,8 @@ int main(int argc, char** argv)
             lowDimProblem->updateNusseltNumbers();
 
             if (enableBulkOutput)
-                bulkVtkWriter.write(timeLoop->time(), Dune::VTK::base64);
-            lowDimVtkWriter.write(timeLoop->time(), Dune::VTK::base64);
+                bulkVtkWriter.write(timeLoop->time());
+            lowDimVtkWriter.write(timeLoop->time());
 
             lowDimProblem->writeOutput(lowDimGridVariables,timeLoop, sol[lowDimIdx]);
         }
