@@ -1,0 +1,14 @@
+DGF
+% SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+% SPDX-License-Identifier: CC-BY-4.0
+Vertex
+0.0 0.0 0.0
+0.0 0.0 -30.0
+#
+SIMPLEX
+parameters 2
+0 1 0.12913 0.14
+#
+BOUNDARYDOMAIN
+default 1
+#
