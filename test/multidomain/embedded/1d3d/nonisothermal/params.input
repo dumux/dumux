@@ -1,0 +1,61 @@
+[TimeLoop]
+DtInitial = 14400     # [s] = 4 hours
+EpisodeLength = 14400 # [s] = 4 hours
+TEnd = 432000         # [s] = 5 days
+
+[Well.Grid]
+File = ./grids/pipe.dgf
+
+[Rock.Grid] # for surface coupling
+Positions0 = -5 0 5
+Positions1 = -5 0 5
+Positions2 = -30 0
+Cells0 = 34 34
+Cells1 = 34 34
+Cells2 = 1
+Grading0 = -1.2 1.2
+Grading1 = -1.2 1.2
+
+[Rock.Grid] # for kernel coupling
+LowerLeft = -5 -5 -30
+UpperRight = 5 5 0
+Cells = 68 68 1
+
+[Well.Problem]
+Name = 1d
+InjectionRate = 0.0002 # [m³/s]
+InjectionTemperature = 293.15 # [K] = 20° C
+
+[Rock.Problem]
+Name = 3d
+InitialTemperature = 328.15 # [K] = 55° C, undisturbed rock temperature
+
+[Problem]
+EnableGravity = false
+
+[Vtk]
+OutputName = test_wellbore_heat_transport
+AddVelocity = true
+AddProcessRank = false
+EnableBulkOutput = true # write the 3D bulk (rock) solution
+
+[MixedDimension]
+PipeWallThermalConductivity = 0.962 # [W/(m·K)], combined conductivity of pipe wall and grout
+NumCircleSegments = 400
+KernelWidthFactor = 2
+KernelIntegrationCRL = 0.001
+
+[Component]
+LiquidDensity = 1000
+LiquidDynamicViscosity = 1.14e-3
+LiquidHeatCapacity = 4190
+LiquidThermalConductivity = 0.59
+SolidDensity = 1800
+SolidThermalConductivity = 2.78018
+SolidHeatCapacity = 1778
+
+[PointSource]
+EnableBoxLumping = false
+
+[Flux]
+UpwindWeight = 0.5

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfLines="1" NumberOfPoints="2">
+      <PointData Scalars="p">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="binary">
+          CAAAAA==CFDDRwBQw0d=
+        </DataArray>
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="binary">
+          CAAAAA==e5KSQw3XlEP=
+        </DataArray>
+        <DataArray type="Float32" Name="energy sources" NumberOfComponents="1" format="binary">
+          CAAAAA==8PrsRPD67ET=
+        </DataArray>
+      </PointData>
+      <CellData Scalars="outer radius" Vectors="velocity_liq (m/s)">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="binary">
+          DAAAAA==AAAAAAAAAADsNXq7
+        </DataArray>
+        <DataArray type="Float32" Name="outer radius" NumberOfComponents="1" format="binary">
+          BAAAAA==KVwPPl==
+        </DataArray>
+        <DataArray type="Float32" Name="inner radius" NumberOfComponents="1" format="binary">
+          BAAAAA==qDoEPj==
+        </DataArray>
+        <DataArray type="Float32" Name="Nu" NumberOfComponents="1" format="binary">
+          BAAAAA==46WLQK==
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="binary">
+          GAAAAA==AAAAAAAAAAAAAAAAAAAAAAAAAAAAAPDB
+        </DataArray>
+      </Points>
+      <Lines>
+        <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="binary">
+          CAAAAA==AAAAAAEAAAA=
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="binary">
+          BAAAAA==AgAAAA==
+        </DataArray>
+      </Lines>
+    </Piece>
+  </PolyData>
+</VTKFile>
