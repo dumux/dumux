@@ -12,12 +12,15 @@
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_TAYLORCOUETTE_PROBLEM_HH
 #define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_TAYLORCOUETTE_PROBLEM_HH
 
-#include <bitset>
 #include <cmath>
 #include <vector>
 
+#include <dumux/common/constraintinfo.hh>
+#include <dumux/common/indextraits.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/discretization/dirichletconstraints.hh>
 
 namespace Dumux {
 
@@ -40,7 +43,6 @@ class TaylorCouetteProblem : public BaseProblem
     using ParentType = BaseProblem;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
@@ -50,6 +52,9 @@ class TaylorCouetteProblem : public BaseProblem
     using BoundaryFluxes = typename ParentType::BoundaryFluxes;
     using BoundaryTypes = typename ParentType::BoundaryTypes;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
+    using ConstraintInfo = DirichletConstraintInfo<ModelTraits::numEq()>;
+    using GridIndexType = typename IndexTraits<typename GridGeometry::GridView>::GridIndex;
+    using Constraint = DirichletConstraintData<ConstraintInfo, DirichletValues, GridIndexType>;
 
 public:
     using Indices = typename ModelTraits::Indices;
@@ -65,22 +70,20 @@ public:
         a_ = (omega2*r2*r2 - omega1*r1*r1)/(r2*r2 - r1*r1);
         b_ = (omega1 - omega2)*r1*r1*r2*r2/(r2*r2 - r1*r1);
         density_ = getParam<Scalar>("Component.LiquidDensity");
+
+        if constexpr (ParentType::isMomentumProblem())
+            setVelocityOnCylinders_(*gridGeometry);
+        else
+            fixPressureInOneCell_(*gridGeometry);
     }
 
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-
-        if constexpr (ParentType::isMomentumProblem())
-            values.setAllDirichlet();
-        else
+        if constexpr (!ParentType::isMomentumProblem())
             values.setAllNeumann();
-
         return values;
     }
-
-    DirichletValues dirichletAtPos(const GlobalPosition& globalPos) const
-    { return analyticalSolution(globalPos); }
 
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     BoundaryFluxes neumann(const Element& element,
@@ -97,6 +100,9 @@ public:
 
         return values;
     }
+
+    const std::vector<Constraint>& constraints() const
+    { return constraints_; }
 
     DirichletValues analyticalSolution(const GlobalPosition& globalPos, Scalar time = 0.0) const
     {
@@ -118,24 +124,43 @@ public:
         return values;
     }
 
-    //! The pressure is only defined up to a constant, it is fixed in one cell
-    static constexpr bool enableInternalDirichletConstraints()
-    { return !ParentType::isMomentumProblem(); }
-
-    std::bitset<DirichletValues::dimension> hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
+private:
+    void setVelocityOnCylinders_(const GridGeometry& gridGeometry)
     {
-        std::bitset<DirichletValues::dimension> values;
-        if (scv.dofIndex() == 0)
-            values.set(Indices::pressureIdx);
-        return values;
+        auto fvGeometry = localView(gridGeometry);
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+            {
+                for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                {
+                    ConstraintInfo info;
+                    info.setAll();
+                    constraints_.push_back(Constraint{std::move(info),
+                                                      analyticalSolution(ipData(fvGeometry, localDof).global()),
+                                                      localDof.dofIndex()});
+                }
+            }
+        }
     }
 
-    DirichletValues internalDirichlet(const Element& element, const SubControlVolume& scv) const
-    { return analyticalSolution(scv.dofPosition()); }
+    // the pressure is only defined up to a constant
+    void fixPressureInOneCell_(const GridGeometry& gridGeometry)
+    {
+        auto fvGeometry = localView(gridGeometry);
+        fvGeometry.bindElement(*elements(gridGeometry.gridView()).begin());
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            ConstraintInfo info;
+            info.setAll();
+            constraints_.push_back(Constraint{std::move(info), analyticalSolution(scv.dofPosition()), scv.dofIndex()});
+        }
+    }
 
-private:
     Scalar a_, b_;
     Scalar density_;
+    std::vector<Constraint> constraints_;
 };
 
 } // end namespace Dumux
