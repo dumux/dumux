@@ -24,6 +24,8 @@
 #include <string>
 #include <array>
 
+#include <dumux/experimental/timestepping/timeintegrationmethod.hh>
+
 namespace Dumux::Experimental {
 
 /*!
@@ -39,7 +41,7 @@ namespace Dumux::Experimental {
  *
  * \f[
  * \begin{equation}
- *   \frac{\partial M(x, t)}{\partial t} - R(x, t) = 0,
+ *   \frac{\partial M(x, t)}{\partial t} + R(x, t) = 0,
  * \end{equation}
  * \f]
  *
@@ -71,11 +73,9 @@ namespace Dumux::Experimental {
  * the current stage \f$ k \f$ contribute to the derivatives.
  */
 template<class Scalar>
-class MultiStageMethod
+class MultiStageMethod : public TimeIntegrationMethod<Scalar>
 {
 public:
-    virtual bool implicit () const = 0;
-
     virtual std::size_t numStages () const = 0;
 
     //! weights of the temporal operator residual (\f$ \alpha_{ik} \f$)
@@ -86,10 +86,6 @@ public:
 
     //! time step weights for each stage (\f$ d_k \f$)
     virtual Scalar timeStepWeight (std::size_t k) const = 0;
-
-    virtual std::string name () const = 0;
-
-    virtual ~MultiStageMethod() = default;
 };
 
 //! Multi-stage time stepping scheme implementations

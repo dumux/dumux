@@ -16,6 +16,7 @@
 #include <cmath>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -31,6 +32,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/common/variablesbackend.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
@@ -563,7 +566,7 @@ public:
     using ResidualType = typename ODESystem::ResidualType;
     using JacobianMatrix = typename ODESystem::JacobianMatrix;
     using Variables = Detail::ODE::Variables<ODESystem>;
-    using StageParams = MultiStageParams<Scalar>;
+    using SolveParams = ImplicitSolveParams<Scalar, ResidualType>;
 
     /*!
      * \brief Constructs an assembler that shares ownership of an ODE system
@@ -623,109 +626,113 @@ public:
     { return residual_; }
 
     /*!
-     * \brief Assemble the weighted residual for the currently prepared stage.
+     * \brief Assemble the residual of the current implicit solve
      *
-     * \param vars variables at which to evaluate the current-stage terms
+     * The spatial operator of the ODE system is \f$ -f \f$, so the residual reads
+     * \f$ w_M M(u,\xi) - w_R f(u,\xi) + c \f$.
+     *
+     * \param vars variables at which to evaluate the residual
      */
     void assembleResidual(const Variables& vars)
     {
-        if (!stageParams_)
-            DUNE_THROW(Dune::InvalidStateException, "No ODE stage prepared before residual assembly");
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set before residual assembly");
 
-        if (stageParams_->size() != rhsTerms_.size() || stageParams_->size() != accumulationValues_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of ODE stage residuals");
-
-        evaluateTerms_(vars, accumulationValues_.back(), rhsTerms_.back());
-
+        const auto& weights = solveParams_->weights;
         residual_ = zeroResidualLike_(vars);
-        for (std::size_t k = 0; k < stageParams_->size(); ++k)
+        if (weights.storage != 0.0)
         {
-            if (!stageParams_->skipTemporal(k))
-                Detail::ODE::addScaled(stageParams_->temporalWeight(k), accumulationValues_[k], residual_);
-            if (!stageParams_->skipSpatial(k))
-                Detail::ODE::addScaled(-stageParams_->spatialWeight(k), rhsTerms_[k], residual_);
+            auto accumulation = zeroResidualLike_(vars);
+            Detail::ODE::evaluateAccumulation(*odeSystem_, vars, accumulation);
+            Detail::ODE::addScaled(weights.storage, accumulation, residual_);
         }
+        if (weights.spatial != 0.0)
+        {
+            auto rhs = zeroResidualLike_(vars);
+            Detail::ODE::evaluateRhs(*odeSystem_, vars, rhs);
+            Detail::ODE::addScaled(-weights.spatial, rhs, residual_);
+        }
+        if (solveParams_->constant)
+            Detail::ODE::addScaled(1.0, *solveParams_->constant, residual_);
     }
 
     /*!
-     * \brief Assemble the residual and its Jacobian for the current stage.
+     * \brief Assemble the residual and its Jacobian for the current implicit solve
      *
-     * \param vars variables at which to evaluate the current-stage terms
+     * \param vars variables at which to evaluate the residual and the Jacobian
      */
     void assembleJacobianAndResidual(const Variables& vars)
     {
         assembleResidual(vars);
 
-        const auto curStage = stageParams_->size() - 1;
+        const auto& weights = solveParams_->weights;
         Detail::ODE::evaluateAccumulationJacobian<ODESystem, Variables, ResidualType>(*odeSystem_, vars, jacobian_);
-        Detail::ODE::scaleMatrix(jacobian_, stageParams_->temporalWeight(curStage));
+        Detail::ODE::scaleMatrix(jacobian_, weights.storage);
 
-        if (!stageParams_->skipSpatial(curStage))
+        if (weights.spatial != 0.0)
         {
             auto rhsJacobian = jacobian_;
             Detail::ODE::setZero(rhsJacobian);
             Detail::ODE::evaluateRhsJacobian(*odeSystem_, vars, rhsJacobian);
-            Detail::ODE::addScaledMatrix(-stageParams_->spatialWeight(curStage), rhsJacobian, jacobian_);
+            Detail::ODE::addScaledMatrix(-weights.spatial, rhsJacobian, jacobian_);
         }
     }
 
     /*!
-     * \brief Prepare the next consecutive stage and update its independent-variable information.
+     * \brief Set the weights, the level of the independent variable and the contribution of
+     *        known states for the next implicit solve
      *
-     * \param vars   variables whose independent-variable level is advanced to the stage coordinate
-     * \param params coefficients and coordinate data for the stage to prepare
+     * \param vars   variables whose independent-variable level is set to the given time level
+     * \param params the parameters of the implicit solve
      */
-    void prepareStage(Variables& vars,
-                      std::shared_ptr<const StageParams> params)
+    void setImplicitSolve(Variables& vars, const SolveParams& params)
     {
-        const auto curStage = params->size() - 1;
-        const auto prevStage = stageParams_ ? stageParams_->size() - 1 : 0;
-        if (curStage != prevStage + 1)
-            DUNE_THROW(Dune::InvalidStateException,
-                "Can only prepare ODE stages consecutively (current stage: " << curStage
-                << ", previous stage: " << prevStage << ")");
+        if (params.weights.inertia != 0.0)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the ODE assembler");
 
-        stageParams_ = std::move(params);
-
-        if (curStage == 1)
+        Detail::ODE::updateIndependentVariable(vars, level_(params.timeLevel));
+        if (!stepBegin_ || *stepBegin_ != params.timeLevel.previous())
         {
             previousSolution_ = Dumux::VariablesBackend<Variables>::dofs(vars);
-
-            const auto coordinate = stageParams_->timeAtStage(0); // uses existing backend for time integration
-            Detail::ODE::updateIndependentVariable(
-                vars,
-                IndependentVariableLevel<Scalar>{coordinate, coordinate, stageParams_->timeStepFraction(0)}
-            );
-
-            accumulationValues_.push_back(zeroResidualLike_(vars));
-            rhsTerms_.push_back(zeroResidualLike_(vars));
-            evaluateTerms_(vars, accumulationValues_.back(), rhsTerms_.back());
+            stepBegin_ = params.timeLevel.previous();
         }
 
-        const auto coordinate = stageParams_->timeAtStage(curStage); // uses existing backend for time integration
-        const auto previousCoordinate = stageParams_->timeAtStage(0); // uses existing backend for time integration
-        const auto stepFraction = stageParams_->timeStepFraction(curStage);
-        Detail::ODE::updateIndependentVariable(
-            vars,
-            IndependentVariableLevel<Scalar>{coordinate, previousCoordinate, stepFraction}
-        );
-
-        accumulationValues_.push_back(zeroResidualLike_(vars));
-        rhsTerms_.push_back(zeroResidualLike_(vars));
+        solveParams_ = params;
     }
 
     /*!
-     * \brief Discards all cached stage terms and the active stage parameters
+     * \brief Evaluate the unweighted accumulation \f$ M \f$ and spatial operator \f$ -f \f$
+     *
+     * \param vars        variables at which to evaluate, their level is set to the given time level
+     * \param timeLevel   the level of the independent variable
+     * \param evaluations output vectors for the requested evaluations
      */
-    void clearStages()
+    void assembleOperators(Variables& vars,
+                           const TimeLevel<Scalar>& timeLevel,
+                           OperatorEvaluations<ResidualType> evaluations)
     {
-        accumulationValues_.clear();
-        rhsTerms_.clear();
-        stageParams_.reset();
+        if (evaluations.inertia)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the ODE assembler");
+
+        Detail::ODE::updateIndependentVariable(vars, level_(timeLevel));
+
+        if (evaluations.storage)
+        {
+            *evaluations.storage = zeroResidualLike_(vars);
+            Detail::ODE::evaluateAccumulation(*odeSystem_, vars, *evaluations.storage);
+        }
+
+        if (evaluations.spatial)
+        {
+            auto rhs = zeroResidualLike_(vars);
+            Detail::ODE::evaluateRhs(*odeSystem_, vars, rhs);
+            *evaluations.spatial = zeroResidualLike_(vars);
+            Detail::ODE::addScaled(-1.0, rhs, *evaluations.spatial);
+        }
     }
 
     /*!
-     * \brief Returns the solution saved at the beginning of the current integration step
+     * \brief Returns the solution at the beginning of the current integration step
      *
      * \return solution at the beginning of the current integration step
      */
@@ -733,12 +740,12 @@ public:
     { return previousSolution_; }
 
     /*!
-     * \brief Resets stage-local state before repeating or starting an integration step
+     * \brief Satisfies the integration-driver interface
      *
-     * The solution argument required by the integration-driver interface is not needed.
+     * The assembler holds no state of the integration step that would have to be reset.
      */
     void resetTimeStep(const SolutionVector&)
-    { clearStages(); }
+    {}
 
     /*!
      * \brief Returns the ODE system assembled by this object
@@ -751,6 +758,9 @@ public:
 private:
     using Backend = Dumux::VariablesBackend<Variables>;
     using ResidualBackend = Dumux::DofBackend<ResidualType>;
+
+    static IndependentVariableLevel<Scalar> level_(const TimeLevel<Scalar>& timeLevel)
+    { return {timeLevel.current(), timeLevel.previous(), timeLevel.timeStepFraction()}; }
 
     /*!
      * \brief Creates a zero residual with a size compatible with the given variables
@@ -765,30 +775,12 @@ private:
         return result;
     }
 
-    /*!
-     * \brief Evaluates the accumulation and right-hand-side values at the given variables
-     *
-     * \param vars         variables at which to evaluate the values
-     * \param accumulation resulting accumulation value \f$M(u,\xi)\f$
-     * \param rhs          resulting right-hand-side value \f$f(u,\xi)\f$
-     */
-    void evaluateTerms_(const Variables& vars,
-                        ResidualType& accumulation,
-                        ResidualType& rhs) const
-    {
-        Detail::ODE::setZero(accumulation);
-        Detail::ODE::setZero(rhs);
-        Detail::ODE::evaluateAccumulation(*odeSystem_, vars, accumulation);
-        Detail::ODE::evaluateRhs(*odeSystem_, vars, rhs);
-    }
-
     std::shared_ptr<const ODESystem> odeSystem_;
     ResidualType residual_;
     JacobianMatrix jacobian_;
     SolutionVector previousSolution_;
-    std::vector<ResidualType> accumulationValues_;
-    std::vector<ResidualType> rhsTerms_;
-    std::shared_ptr<const StageParams> stageParams_;
+    std::optional<Scalar> stepBegin_;
+    std::optional<SolveParams> solveParams_;
 };
 
 /*!

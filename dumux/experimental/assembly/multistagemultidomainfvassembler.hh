@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <tuple>
 #include <memory>
+#include <optional>
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/istl/matrixindexset.hh>
@@ -42,8 +43,9 @@
 #include <dumux/experimental/assembly/subdomaincvfelocalassembler.hh>
 #include <dumux/experimental/assembly/multistagefvlocaloperator.hh>
 
-#include <dumux/experimental/timestepping/multistagemethods.hh>
-#include <dumux/experimental/timestepping/multistagetimestepper.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/timeintegrationmethod.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 
 namespace Dumux::Experimental {
 
@@ -66,7 +68,6 @@ public:
     using Traits = MDTraits;
 
     using Scalar = typename MDTraits::Scalar;
-    using StageParams = Experimental::MultiStageParams<Scalar>;
 
     //! TODO get rid of this GetPropType
     template<std::size_t id>
@@ -84,6 +85,7 @@ public:
     using JacobianMatrix = typename MDTraits::JacobianMatrix;
     using SolutionVector = typename MDTraits::SolutionVector;
     using ResidualType = typename MDTraits::ResidualVector;
+    using SolveParams = Experimental::ImplicitSolveParams<Scalar, ResidualType>;
 
     using CouplingManager = CMType;
 
@@ -125,6 +127,8 @@ private:
 public:
     /*!
      * \brief The constructor for instationary problems
+     * \param method The time integration method, which determines the Jacobian pattern
+     * \param prevSol The solution at the beginning of the time step (used by solvers that reset a time step)
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
@@ -132,10 +136,10 @@ public:
                                      GridGeometryTuple gridGeometry,
                                      GridVariablesTuple gridVariables,
                                      std::shared_ptr<CouplingManager> couplingManager,
-                                     std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> msMethod,
+                                     std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> method,
                                      const SolutionVector& prevSol)
     : couplingManager_(couplingManager)
-    , timeSteppingMethod_(msMethod)
+    , timeSteppingMethod_(method)
     , problemTuple_(std::move(problem))
     , gridGeometryTuple_(std::move(gridGeometry))
     , gridVariablesTuple_(std::move(gridVariables))
@@ -157,24 +161,16 @@ public:
      */
     void assembleJacobianAndResidual(const SolutionVector& curSol)
     {
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set. Call setImplicitSolve first.");
+
         resetJacobian_();
-
         resetResidual_();
-        spatialOperatorEvaluations_.back() = 0.0;
-        temporalOperatorEvaluations_.back() = 0.0;
-
-        if (stageParams_->size() != spatialOperatorEvaluations_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
 
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
         {
-            // assemble the spatial and temporal residual of the current time step and the Jacobian
-            // w.r.t to the current solution (the current solution on the current stage)
             auto& jacRow = (*jacobian_)[domainId];
-            auto& spatial = spatialOperatorEvaluations_.back()[domainId];
-            auto& temporal = temporalOperatorEvaluations_.back()[domainId];
-
             assemble_(domainId, [&](const auto& element)
             {
                 MultiDomainAssemblerSubDomainView view{*this, domainId};
@@ -182,26 +178,19 @@ public:
                 subDomainAssembler.assembleJacobianAndResidual(
                     jacRow, (*residual_)[domainId],
                     gridVariablesTuple_,
-                    *stageParams_, temporal, spatial,
+                    solveParams_->weights,
                     constrainedDofs_[domainId]
                 );
             });
 
-            // assemble the full residual for the time integration stage
-            auto constantResidualComponent = (*residual_)[domainId];
-            constantResidualComponent = 0.0;
-            for (std::size_t k = 0; k < stageParams_->size()-1; ++k)
+            // the contribution of known states does not enter the constraint equations
+            if (solveParams_->constant)
             {
-                if (!stageParams_->skipTemporal(k))
-                    constantResidualComponent.axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_[k][domainId]);
-                if (!stageParams_->skipSpatial(k))
-                    constantResidualComponent.axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_[k][domainId]);
+                const auto& constant = (*solveParams_->constant)[domainId];
+                for (std::size_t i = 0; i < constant.size(); ++i)
+                    for (std::size_t ii = 0; ii < constant[i].size(); ++ii)
+                        (*residual_)[domainId][i][ii] += constrainedDofs_[domainId][i][ii] > 0.5 ? 0.0 : constant[i][ii];
             }
-
-            // masked summation of constant residual component onto this stage's resiudal component
-            for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
-                for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
-                    (*residual_)[domainId][i][ii] += constrainedDofs_[domainId][i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
         });
     }
 
@@ -212,10 +201,8 @@ public:
      * other than the linearization point: a line search, and a residual-based convergence
      * criterion. Without it neither can be used with a multi-stage method.
      *
-     * The residual of a stage is the weighted sum of the spatial and temporal operator
-     * evaluations over all stages, the current one included. Only the current stage's
-     * evaluation depends on `curSol`; the earlier ones are the evaluations at the previous
-     * stage solutions, so this costs one operator evaluation rather than one per stage.
+     * The residual is the weighted sum of the storage and spatial operators at `curSol`
+     * plus the contribution of known states set with setImplicitSolve.
      *
      * The Dirichlet constraints of control-volume finite element subdomains are evaluated here
      * rather than taken from the mask of a previous Jacobian assembly, which need not have
@@ -224,6 +211,9 @@ public:
      */
     void assembleResidual(const SolutionVector& curSol)
     {
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set. Call setImplicitSolve first.");
+
         if (!residual_)
         {
             residual_ = std::make_shared<ResidualType>();
@@ -232,38 +222,21 @@ public:
             constrainedDofs_ = 0.0;
         }
 
+        const auto& weights = solveParams_->weights;
+        ResidualType storage, spatial;
+        assembleOperators_(curSol, {.storage = &storage, .spatial = &spatial});
+
         (*residual_) = 0.0;
-        spatialOperatorEvaluations_.back() = 0.0;
-        temporalOperatorEvaluations_.back() = 0.0;
-
-        if (stageParams_->size() != spatialOperatorEvaluations_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
-
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
         {
-            auto& spatial = spatialOperatorEvaluations_.back()[domainId];
-            auto& temporal = temporalOperatorEvaluations_.back()[domainId];
-
-            // unit weights, so that what is stored is the operator evaluation itself and
-            // the stage weights can be applied to it below
-            assemble_(domainId, [&](const auto& element)
-            {
-                MultiDomainAssemblerSubDomainView view{*this, domainId};
-                SubDomainAssembler<domainId()> subDomainAssembler(view, element, curSol, *couplingManager_);
-                subDomainAssembler.localResidual().spatialWeight(1.0);
-                subDomainAssembler.localResidual().temporalWeight(1.0);
-                subDomainAssembler.assembleCurrentResidual(spatial, temporal);
-            });
-
-            auto& stageResidual = (*residual_)[domainId];
-            for (std::size_t k = 0; k < stageParams_->size(); ++k)
-            {
-                if (!stageParams_->skipTemporal(k))
-                    stageResidual.axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_[k][domainId]);
-                if (!stageParams_->skipSpatial(k))
-                    stageResidual.axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_[k][domainId]);
-            }
+            auto& residual = (*residual_)[domainId];
+            if (weights.storage != 0.0)
+                residual.axpy(weights.storage, storage[domainId]);
+            if (weights.spatial != 0.0)
+                residual.axpy(weights.spatial, spatial[domainId]);
+            if (solveParams_->constant)
+                residual += (*solveParams_->constant)[domainId];
 
             constrainedDofs_[domainId] = 0.0;
             if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry<domainId>::DiscretizationMethod>)
@@ -276,7 +249,7 @@ public:
                     subDomainAssembler.enforceDirichletConstraints(
                         [&](const auto& scvI, const auto& dirichletValues, const auto eqIdx, const auto pvIdx)
                         {
-                            stageResidual[scvI.dofIndex()][eqIdx]
+                            residual[scvI.dofIndex()][eqIdx]
                                 = subDomainAssembler.curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
                             constrainedDofs_[domainId][scvI.dofIndex()][eqIdx] = 1.0;
                         });
@@ -317,8 +290,6 @@ public:
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(gridVariablesTuple_)), [&](const auto domainId)
         { this->gridVariables(domainId).resetTimeStep(curSol[domainId]); });
-
-        this->clearStages();
     }
 
     //! the number of dof locations of domain i
@@ -374,88 +345,31 @@ public:
     MultiStageFVLocalOperator<LocalResidual<i>> localResidual(Dune::index_constant<i> domainId) const
     { return { LocalResidual<i>{std::get<domainId>(problemTuple_).get(), nullptr} }; }
 
-    void clearStages()
+    /*!
+     * \brief Set the weights, the time level and the contribution of known states for the next implicit solve
+     */
+    void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        spatialOperatorEvaluations_.clear();
-        temporalOperatorEvaluations_.clear();
-        stageParams_.reset();
+        if (params.weights.inertia != 0.0)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage multi-domain assembler");
+
+        setProblemTimes_(params.timeLevel.current());
+        solveParams_ = params;
     }
 
-    template<class StageParams>
-    void prepareStage(SolutionVector& x, StageParams params)
+    /*!
+     * \brief Evaluate the unweighted operators at the given solution and time level
+     * \note The grid variables and the coupling manager have to be updated to the given solution.
+     */
+    void assembleOperators(const SolutionVector& sol,
+                           const Experimental::TimeLevel<Scalar>& timeLevel,
+                           Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        stageParams_ = std::move(params);
-        const auto curStage = stageParams_->size() - 1;
+        if (evaluations.inertia)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage multi-domain assembler");
 
-        // in the first stage, also assemble the old residual
-        if (curStage == 1)
-        {
-            // update time in variables?
-            using namespace Dune::Hybrid;
-            forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
-            {
-                setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(0));
-            });
-
-            resetResidual_(); // residual resized and zero
-            spatialOperatorEvaluations_.push_back(*residual_);
-            temporalOperatorEvaluations_.push_back(*residual_);
-
-            // assemble stage 0 residuals
-            using namespace Dune::Hybrid;
-            forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
-            {
-                auto& spatial = spatialOperatorEvaluations_.back()[domainId];
-                auto& temporal = temporalOperatorEvaluations_.back()[domainId];
-                assemble_(domainId, [&](const auto& element)
-                {
-                    MultiDomainAssemblerSubDomainView view{*this, domainId};
-                    SubDomainAssembler<domainId()> subDomainAssembler(view, element, x, *couplingManager_);
-                    subDomainAssembler.localResidual().spatialWeight(1.0);
-                    subDomainAssembler.localResidual().temporalWeight(1.0);
-                    subDomainAssembler.assembleCurrentResidual(spatial, temporal);
-                });
-            });
-        }
-
-        // The evaluations recorded while solving the previous stage belong to the last iterate
-        // the solver assembled, which is not the stage solution for a solver that stops after an
-        // update (e.g. Newton on the shift criterion) or assembles only once (a linear solver).
-        else
-        {
-            if (spatialOperatorEvaluations_.size() != curStage)
-                DUNE_THROW(Dune::InvalidStateException, "Invalid state. Maybe you forgot to call clearStages()");
-
-            using namespace Dune::Hybrid;
-            forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
-            {
-                setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(curStage-1));
-
-                auto& spatial = spatialOperatorEvaluations_.back()[domainId];
-                auto& temporal = temporalOperatorEvaluations_.back()[domainId];
-                spatial = 0.0;
-                temporal = 0.0;
-                assemble_(domainId, [&](const auto& element)
-                {
-                    MultiDomainAssemblerSubDomainView view{*this, domainId};
-                    SubDomainAssembler<domainId()> subDomainAssembler(view, element, x, *couplingManager_);
-                    subDomainAssembler.localResidual().spatialWeight(1.0);
-                    subDomainAssembler.localResidual().temporalWeight(1.0);
-                    subDomainAssembler.assembleCurrentResidual(spatial, temporal);
-                });
-            });
-        }
-
-        // update time in variables?
-        using namespace Dune::Hybrid;
-        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
-        {
-            setProblemTime_(*std::get<domainId>(problemTuple_), stageParams_->timeAtStage(curStage));
-        });
-
-        resetResidual_(); // residual resized and zero
-        spatialOperatorEvaluations_.push_back(*residual_);
-        temporalOperatorEvaluations_.push_back(*residual_);
+        setProblemTimes_(timeLevel.current());
+        assembleOperators_(sol, evaluations);
     }
 
     //! TODO get rid of this (called by Newton but shouldn't be necessary)
@@ -647,6 +561,39 @@ private:
             );
     }
 
+    //! Evaluate the unweighted operators at the given solution at the current problem time
+    void assembleOperators_(const SolutionVector& sol, Experimental::OperatorEvaluations<ResidualType> evaluations)
+    {
+        ResidualType unused;
+        auto& storage = evaluations.storage ? *evaluations.storage : unused;
+        auto& spatial = evaluations.spatial ? *evaluations.spatial : unused;
+        for (auto* r : {&storage, &spatial})
+        {
+            setResidualSize_(*r);
+            (*r) = 0.0;
+        }
+
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
+        {
+            assemble_(domainId, [&](const auto& element)
+            {
+                MultiDomainAssemblerSubDomainView view{*this, domainId};
+                SubDomainAssembler<domainId()> subDomainAssembler(view, element, sol, *couplingManager_);
+                subDomainAssembler.localResidual().spatialWeight(1.0, !evaluations.spatial);
+                subDomainAssembler.localResidual().temporalWeight(1.0, !evaluations.storage);
+                subDomainAssembler.assembleCurrentResidual(spatial[domainId], storage[domainId]);
+            });
+        });
+    }
+
+    void setProblemTimes_(const Scalar t)
+    {
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
+        { setProblemTime_(*std::get<domainId>(problemTuple_), t); });
+    }
+
     template<class P>
     void setProblemTime_(const P& p, const Scalar t)
     {
@@ -657,11 +604,9 @@ private:
                 "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
     }
 
-    std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> timeSteppingMethod_;
-    std::vector<ResidualType> spatialOperatorEvaluations_;
-    std::vector<ResidualType> temporalOperatorEvaluations_;
+    std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> timeSteppingMethod_;
     ResidualType constrainedDofs_;
-    std::shared_ptr<const StageParams> stageParams_;
+    std::optional<SolveParams> solveParams_;
 
     //! pointer to the problem to be solved
     ProblemTuple problemTuple_;

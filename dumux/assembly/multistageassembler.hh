@@ -16,6 +16,7 @@
 #include <vector>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include <dune/common/exceptions.hh>
@@ -35,8 +36,9 @@
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
 
-#include <dumux/experimental/timestepping/multistagemethods.hh>
-#include <dumux/experimental/timestepping/multistagetimestepper.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/timeintegrationmethod.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 
 namespace Dumux::Experimental {
 
@@ -64,10 +66,10 @@ class MultiStageAssembler
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using StageParams = Experimental::MultiStageParams<Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ResidualType = typename Dumux::Detail::NativeDuneVectorType<SolutionVector>::type;
+    using SolveParams = Experimental::ImplicitSolveParams<Scalar, ResidualType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -76,15 +78,17 @@ public:
 
     /*!
      * \brief The constructor for instationary problems
+     * \param method The time integration method (only implicit methods are supported)
+     * \param prevSol The solution at the beginning of the time step (used by solvers that reset a time step)
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     MultiStageAssembler(std::shared_ptr<const Problem> problem,
                         std::shared_ptr<const GridGeometry> gridGeometry,
                         std::shared_ptr<GridVariables> gridVariables,
-                        std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> msMethod,
+                        std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> method,
                         const SolutionVector& prevSol)
-    : timeSteppingMethod_(msMethod)
+    : timeSteppingMethod_(method)
     , problem_(problem)
     , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
@@ -109,79 +113,45 @@ public:
      */
     void assembleJacobianAndResidual(const SolutionVector& curSol)
     {
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set. Call setImplicitSolve first.");
+
         resetJacobian_();
         resetResidual_();
         markConstrainedDofs_();
-
-        spatialOperatorEvaluations_.back() = 0.0;
-        temporalOperatorEvaluations_.back() = 0.0;
-
-        if (stageParams_->size() != spatialOperatorEvaluations_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
 
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleJacobianAndResidual(
                 *jacobian_, *residual_, *gridVariables_,
-                *stageParams_,
-                temporalOperatorEvaluations_.back(),
-                spatialOperatorEvaluations_.back(),
+                solveParams_->weights,
                 constrainedDofs_
             );
         });
 
-        // assemble the full residual for the time integration stage
-        auto constantResidualComponent = (*residual_);
-        constantResidualComponent = 0.0;
-        for (std::size_t k = 0; k < stageParams_->size()-1; ++k)
-        {
-            if (!stageParams_->skipTemporal(k))
-                constantResidualComponent.axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_[k]);
-            if (!stageParams_->skipSpatial(k))
-                constantResidualComponent.axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_[k]);
-        }
-
-        // masked summation of constant residual component onto this stage's residual component
-        for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
-            for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
-                (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
-
+        addConstant_();
         applyDirichletConstraints_(curSol);
     }
 
     /*!
-     * \brief Assembles the residual of the current stage for the given solution.
+     * \brief Assembles the residual of the implicit solve for the given solution.
      */
     void assembleResidual(const SolutionVector& curSol)
     {
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set. Call setImplicitSolve first.");
+
         resetResidual_();
         markConstrainedDofs_();
 
-        if (stageParams_->size() != spatialOperatorEvaluations_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
-
-        assembleOperatorEvaluations_(curSol);
-
-        const auto k = stageParams_->size() - 1;
+        ResidualType storage, spatial;
+        assembleOperators_(curSol, {.storage = &storage, .spatial = &spatial});
         (*residual_) = 0.0;
-        residual_->axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_.back());
-        residual_->axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_.back());
+        residual_->axpy(solveParams_->weights.storage, storage);
+        residual_->axpy(solveParams_->weights.spatial, spatial);
 
-        auto constantResidualComponent = (*residual_);
-        constantResidualComponent = 0.0;
-        for (std::size_t i = 0; i < k; ++i)
-        {
-            if (!stageParams_->skipTemporal(i))
-                constantResidualComponent.axpy(stageParams_->temporalWeight(i), temporalOperatorEvaluations_[i]);
-            if (!stageParams_->skipSpatial(i))
-                constantResidualComponent.axpy(stageParams_->spatialWeight(i), spatialOperatorEvaluations_[i]);
-        }
-
-        for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
-            for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
-                (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
-
+        addConstant_();
         applyDirichletResidual_(curSol);
     }
 
@@ -251,8 +221,8 @@ public:
 
     /*!
      * \brief Create a local residual object (used by the local assembler)
-     * \note unweighted (plain) construction; the multi-stage local assembler evaluates raw
-     *       storage/flux terms and the Butcher-tableau weighting happens in this class.
+     * \note unweighted (plain) construction; the local assembler evaluates the raw
+     *       storage/flux terms and applies the operator weights of the implicit solve.
      */
     LocalResidual localResidual() const
     { return LocalResidual(problem_.get(), nullptr); }
@@ -267,74 +237,33 @@ public:
      * \brief Reset the gridVariables
      */
     void resetTimeStep(const SolutionVector &cursol)
+    { gridVariables().resetTimeStep(cursol); }
+
+    /*!
+     * \brief Set the weights, the time level and the contribution of known states for the next implicit solve
+     */
+    void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        gridVariables().resetTimeStep(cursol);
-        this->clearStages();
+        if (params.weights.inertia != 0.0)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage assembler");
+
+        setProblemTime_(*problem_, params.timeLevel.current());
+        solveParams_ = params;
     }
 
-    void clearStages()
+    /*!
+     * \brief Evaluate the unweighted operators at the given solution and time level
+     * \note The grid variables have to be updated to the given solution.
+     */
+    void assembleOperators(const SolutionVector& sol,
+                           const Experimental::TimeLevel<Scalar>& timeLevel,
+                           Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        spatialOperatorEvaluations_.clear();
-        temporalOperatorEvaluations_.clear();
-        stageParams_.reset();
-    }
+        if (evaluations.inertia)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage assembler");
 
-    template<class StageParamsArg>
-    void prepareStage(SolutionVector& x, StageParamsArg params)
-    {
-        stageParams_ = std::move(params);
-        const auto curStage = stageParams_->size() - 1;
-
-        // in the first stage, also assemble the residual
-        // at the previous time level (stage 0 residual)
-        if (curStage == 1)
-        {
-            setProblemTime_(*problem_, stageParams_->timeAtStage(0));
-
-            resetResidual_();
-
-            assert(spatialOperatorEvaluations_.size() >= 0);
-            if (spatialOperatorEvaluations_.size() == 0)
-            {
-                spatialOperatorEvaluations_.push_back(*residual_);
-                temporalOperatorEvaluations_.push_back(*residual_);
-                assembleOperatorEvaluations_(*prevSol_);
-            }
-
-            // we don't delete the first stage so it can be reused in a restarted
-            // time integration step. The evaluations are only deleted
-            // when explicitly requested by calling clearStages().
-            // So if here the vector is non-empty, we don't need to evaluate again
-            // (this should only occur if we are restarting time integration, e.g.
-            // with a different time step size)
-            else if (spatialOperatorEvaluations_.size() > 0)
-            {
-                updateGridVariables(x);
-                spatialOperatorEvaluations_.resize(1);
-                temporalOperatorEvaluations_.resize(1);
-            }
-        }
-
-        if (spatialOperatorEvaluations_.size() != curStage)
-            DUNE_THROW(Dune::InvalidStateException,
-                "Invalid state. Maybe you forgot to call clearStages()");
-
-        // The evaluations recorded while solving the previous stage belong to the last iterate
-        // the solver assembled, which is not the stage solution for a solver that stops after an
-        // update (e.g. Newton on the shift criterion) or assembles only once (a linear solver).
-        if (curStage > 1)
-        {
-            setProblemTime_(*problem_, stageParams_->timeAtStage(curStage-1));
-            assembleOperatorEvaluations_(x);
-        }
-
-        setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
-
-        resetResidual_();
-
-        // allocate memory for this stage
-        spatialOperatorEvaluations_.push_back(*residual_);
-        temporalOperatorEvaluations_.push_back(*residual_);
+        setProblemTime_(*problem_, timeLevel.current());
+        assembleOperators_(sol, evaluations);
     }
 
     //! TODO get rid of this (called by Newton but shouldn't be necessary)
@@ -344,27 +273,44 @@ public:
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
 
-    //! The temporal and spatial weight of the current stage
-    std::pair<Scalar, Scalar> currentStageWeights() const
+    //! The operator weights of the current implicit solve
+    const Experimental::OperatorWeights<Scalar>& currentOperatorWeights() const
     {
-        if (!stageParams_)
-            DUNE_THROW(Dune::InvalidStateException, "No stage params set. Call prepareStage first.");
-        const auto k = stageParams_->size() - 1;
-        return {stageParams_->temporalWeight(k), stageParams_->spatialWeight(k)};
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set. Call setImplicitSolve first.");
+        return solveParams_->weights;
     }
 
 private:
-    //! Assemble the unweighted temporal and spatial operators at sol into the last stored evaluations
-    void assembleOperatorEvaluations_(const SolutionVector& sol)
+    //! Assemble the unweighted operators at the given solution at the current problem time
+    void assembleOperators_(const SolutionVector& sol, Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        spatialOperatorEvaluations_.back() = 0.0;
-        temporalOperatorEvaluations_.back() = 0.0;
+        ResidualType unused;
+        auto& storage = evaluations.storage ? *evaluations.storage : unused;
+        auto& spatial = evaluations.spatial ? *evaluations.spatial : unused;
+        for (auto* r : {&storage, &spatial})
+        {
+            setResidualSize_(*r);
+            (*r) = 0.0;
+        }
+
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, sol);
-            localAssembler.assembleCurrentResidual(temporalOperatorEvaluations_.back(),
-                                                   spatialOperatorEvaluations_.back());
+            localAssembler.assembleCurrentResidual(storage, spatial);
         });
+    }
+
+    //! Add the contribution of known states to all equations except the constraint equations
+    void addConstant_()
+    {
+        if (!solveParams_->constant)
+            return;
+
+        const auto& constant = *solveParams_->constant;
+        for (std::size_t i = 0; i < constant.size(); ++i)
+            for (std::size_t ii = 0; ii < constant[i].size(); ++ii)
+                (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constant[i][ii];
     }
 
     /*!
@@ -416,9 +362,7 @@ private:
         *jacobian_ = 0.0;
     }
 
-    //! Mark the dofs constrained via problem.constraints() so the multi-stage residual
-    //! combination step (assembleJacobianAndResidual) excludes them from the accumulated
-    //! historical-stage residual before the Dirichlet rows are stamped in below.
+    //! Mark the dofs constrained via problem.constraints(), which do not receive the contribution of known states
     void markConstrainedDofs_()
     {
         if constexpr (Detail::hasGlobalConstraints<Problem>())
@@ -539,11 +483,9 @@ private:
                 "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
     }
 
-    std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> timeSteppingMethod_;
-    std::vector<ResidualType> spatialOperatorEvaluations_;
-    std::vector<ResidualType> temporalOperatorEvaluations_;
+    std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> timeSteppingMethod_;
     ResidualType constrainedDofs_;
-    std::shared_ptr<const StageParams> stageParams_;
+    std::optional<SolveParams> solveParams_;
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;

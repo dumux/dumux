@@ -108,9 +108,9 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple, class StageParams>
+    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple, class Scalar>
     void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidualVector& res, GridVariablesTuple& gridVariables,
-                                     const StageParams& stageParams, SubResidualVector& temporal, SubResidualVector& spatial,
+                                     const OperatorWeights<Scalar>& weights,
                                      SubResidualVector& constrainedDofs)
     {
         auto assembleCouplingBlocks = [&](const auto& residual)
@@ -129,7 +129,7 @@ public:
         ParentType::assembleJacobianAndResidual(
             jacRow[domainId], res,
             *std::get<domainId>(gridVariables),
-            stageParams, temporal, spatial,
+            weights,
             constrainedDofs,
             noReassembler,
             assembleCouplingBlocks

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <utility>
 #include <memory>
+#include <optional>
 #include <array>
 #include <string>
 #include <vector>
@@ -40,16 +41,14 @@ namespace Dumux {
 
 class ScalarAssembler
 {
-
 public:
     using Scalar = double;
     using SolutionVector = Scalar;
     using ResidualType = Scalar;
     using JacobianMatrix = Scalar;
     using Variables = Experimental::Variables<SolutionVector>;
-    using StageParams = Experimental::MultiStageParams<Scalar>;
+    using SolveParams = Experimental::ImplicitSolveParams<Scalar, ResidualType>;
 
-    //! Solves du/dt = lambda*u + exp(t). The default lambda=0 reduces to du/dt = exp(t).
     explicit ScalarAssembler(Scalar lambda = 0.0) : lambda_(lambda) {}
 
     void setLinearSystem() {}
@@ -58,101 +57,52 @@ public:
 
     void assembleResidual(const Variables& vars)
     {
-        if (stageParams_->size() != spatialResiduals_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
+        if (!params_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set");
 
-        // assemble residual components depending on current solution
-        assembleResiduals_(vars,
-            temporalResiduals_.back(),
-            spatialResiduals_.back()
-        );
-
-        // assemble residual for current stage solver
-        res_ = 0.0;
-        for (std::size_t k = 0; k < stageParams_->size(); ++k)
-        {
-            if (!stageParams_->skipTemporal(k))
-                res_ += stageParams_->temporalWeight(k)*temporalResiduals_[k];
-            if (!stageParams_->skipSpatial(k))
-                res_ += stageParams_->spatialWeight(k)*spatialResiduals_[k];
-        }
+        const auto& weights = params_->weights;
+        res_ = weights.storage*storage_(vars) + weights.spatial*spatial_(vars);
+        if (params_->constant)
+            res_ += *params_->constant;
     }
 
     void assembleJacobianAndResidual(const Variables& vars)
     {
         assembleResidual(vars);
-        // d(spatial residual)/du = -lambda_, weighted by the diagonal stage coefficient beta_ii*dt
-        jac_ = 1.0 - lambda_*stageParams_->spatialWeight(stageParams_->size() - 1);
+        jac_ = params_->weights.storage - lambda_*params_->weights.spatial;
     }
 
-    void prepareStage(Variables& variables,
-                      std::shared_ptr<const StageParams> params)
+    void setImplicitSolve(Variables& vars, const SolveParams& params)
     {
-        const auto curStage = params->size() - 1;
-        std::cout << "Assembler is preparing stage " << curStage << std::endl;
-        const auto prevStage = stageParams_ ? stageParams_->size() - 1 : 0;
-        if (curStage != prevStage+1)
-            DUNE_THROW(Dune::InvalidStateException,
-                "Can only prepare stages consecutively (current stage: " << curStage
-                << ", previous stage: " << prevStage << ")");
-
-        stageParams_ = params;
-
-        // in the first stage, also assemble the old residual
-        if (curStage == 1)
-        {
-            // we update the time level of the given grid variables
-            const auto t = params->timeAtStage(0);
-            const auto prevT = params->timeAtStage(0);
-            const auto dtFraction = params->timeStepFraction(0);
-            variables.updateTime(Experimental::TimeLevel{t, prevT, dtFraction});
-
-            // allocate memory for residuals of stage 0
-            spatialResiduals_.emplace_back(0.0);
-            temporalResiduals_.emplace_back(0.0);
-
-            // assemble stage 0 residuals
-            assembleResiduals_(variables,
-                temporalResiduals_.back(),
-                spatialResiduals_.back()
-            );
-        }
-
-        // we update the time level of the given grid variables
-        const auto t = params->timeAtStage(curStage);
-        const auto prevT = params->timeAtStage(0);
-        const auto dtFraction = params->timeStepFraction(curStage);
-        variables.updateTime(Experimental::TimeLevel{t, prevT, dtFraction});
-
-        // allocate memory for residuals of the upcoming stage
-        spatialResiduals_.emplace_back(0.0);
-        temporalResiduals_.emplace_back(0.0);
+        vars.updateTime(params.timeLevel);
+        params_ = params;
     }
 
-    void clearStages()
+    void assembleOperators(Variables& vars,
+                           const Experimental::TimeLevel<Scalar>& timeLevel,
+                           Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        std::cout << "Assembler is clearing stage data " << std::endl;
-        spatialResiduals_.clear();
-        temporalResiduals_.clear();
-        stageParams_.reset();
+        vars.updateTime(timeLevel);
+        if (evaluations.storage)
+            *evaluations.storage = storage_(vars);
+        if (evaluations.spatial)
+            *evaluations.spatial = spatial_(vars);
     }
 
 private:
-    void assembleResiduals_(const Variables& variables,
-                            ResidualType& temporal,
-                            ResidualType& spatial) const
+    Scalar storage_(const Variables& vars) const
+    { return vars.dofs(); }
+
+    Scalar spatial_(const Variables& vars) const
     {
         using std::exp;
-        temporal = variables.dofs();
-        spatial = -(lambda_*variables.dofs() + exp(variables.timeLevel().current()));
+        return -(lambda_*vars.dofs() + exp(vars.timeLevel().current()));
     }
 
     Scalar lambda_;
     ResidualType res_;
     JacobianMatrix jac_;
-    std::vector<ResidualType> spatialResiduals_;
-    std::vector<ResidualType> temporalResiduals_;
-    std::shared_ptr<const StageParams> stageParams_;
+    std::optional<SolveParams> params_;
 };
 
 class ScalarLinearSolver

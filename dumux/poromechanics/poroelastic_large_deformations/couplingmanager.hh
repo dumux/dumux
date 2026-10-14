@@ -104,8 +104,8 @@ public:
                          const LocalAssemblerI& localAssemblerI,
                          Dune::index_constant<j>, std::size_t)
     {
-        const auto [tWeight, sWeight] = localAssemblerI.assembler().currentStageWeights();
-        return localAssemblerI.evalLocalResidualForStage(localAssemblerI.curElemVars(), tWeight, sWeight);
+        return localAssemblerI.evalLocalResidualForStage(localAssemblerI.curElemVars(),
+                                                         localAssemblerI.assembler().currentOperatorWeights());
     }
 
     template<std::size_t i, std::size_t j>

@@ -19,8 +19,12 @@
 
 #include <dumux/io/format.hh>
 
+#include <dumux/common/exceptions.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/variablesbackend.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 
 namespace Dumux::Experimental {
@@ -92,12 +96,19 @@ private:
  * \note We limit ourselves to "diagonally" implicit multi-stage methods where solving
  *       a stage can only depend on the values of the same stage and stages before
  *       but not future stages (which would require solving larger linear systems)
+ * \note The stepper evaluates the storage and spatial operators at the solution of each
+ *       stage and hands their weighted sum to the assembler (see ImplicitSolveParams).
+ *       The residual of each stage is scaled by \f$ 1/\Delta t \f$, i.e. its spatial
+ *       part has the units of the spatial operator.
  */
 template<class PDESolver, class Scalar = double>
 class MultiStageTimeStepper
 {
     using Variables = typename PDESolver::Variables;
+    using Assembler = typename PDESolver::Assembler;
+    using Residual = typename Assembler::ResidualType;
     using StageParams = MultiStageParams<Scalar>;
+    using SolveParams = ImplicitSolveParams<Scalar, Residual>;
     using Backend = VariablesBackend<Variables>;
 
 public:
@@ -131,17 +142,7 @@ public:
      */
     void step(Variables& vars, const Scalar t, const Scalar dt)
     {
-        // make sure there are no traces of previous stages
-        pdeSolver_->assembler().clearStages();
-
-        // do time integration
-        bool converged = step_(vars, t, dt);
-
-        // clear traces of previously registered stages
-        pdeSolver_->assembler().clearStages();
-
-        // if the solver didn't converge we can't recover
-        if (!converged)
+        if (!step_(vars, t, dt))
             DUNE_THROW(NumericalProblem, "Solver did not converge!");
     }
 
@@ -153,25 +154,16 @@ public:
      */
     void step(Variables& vars, TimeLoopBase<Scalar>& timeLoop)
     {
-        // make sure there are no traces of previous stages
-        pdeSolver_->assembler().clearStages();
+        const auto initialDofs = Backend::dofs(vars);
 
-        // try solving the non-linear system
         for (std::size_t i = 0; i <= maxTimeStepDivisions_; ++i)
         {
-            // try solving the non-linear system
-            bool converged = step_(vars, timeLoop.time(), timeLoop.timeStepSize());
-            if (converged)
-            {
-                // clear traces of previously registered stages
-                pdeSolver_->assembler().clearStages();
+            if (step_(vars, timeLoop.time(), timeLoop.timeStepSize()))
                 return;
-            }
 
-            else if (!converged && i < maxTimeStepDivisions_)
+            if (i < maxTimeStepDivisions_)
             {
-                // set solution to previous solution & reset time step
-                Backend::update(vars, pdeSolver_->assembler().prevSol());
+                Backend::update(vars, initialDofs);
                 pdeSolver_->assembler().resetTimeStep(Backend::dofs(vars));
 
                 if (pdeSolver_->verbosity() >= 1)
@@ -181,37 +173,55 @@ public:
                             << Fmt::format("Retrying with time step of dt = {} seconds.\n", dt*retryTimeStepReductionFactor_);
                 }
 
-                // try again with dt = dt * retryTimeStepReductionFactor_
                 timeLoop.setTimeStepSize(timeLoop.timeStepSize() * retryTimeStepReductionFactor_);
-            }
-
-            else
-            {
-                pdeSolver_->assembler().clearStages();
-                DUNE_THROW(NumericalProblem,
-                    Fmt::format("Solver didn't converge after {} time-step divisions; dt = {}.\n",
-                                maxTimeStepDivisions_, timeLoop.timeStepSize()));
             }
         }
 
-        DUNE_THROW(Dune::InvalidStateException, "Unreachable");
+        DUNE_THROW(NumericalProblem,
+            Fmt::format("Solver didn't converge after {} time-step divisions; dt = {}.\n",
+                        maxTimeStepDivisions_, timeLoop.timeStepSize()));
     }
 
 private:
     bool step_(Variables& vars, const Scalar t, const Scalar dt)
     {
-        for (auto stageIdx = 1UL; stageIdx <= msMethod_->numStages(); ++stageIdx)
-        {
-            // prepare the assembler for this stage
-            pdeSolver_->assembler().prepareStage(
-                vars,
-                std::make_shared<StageParams>(*msMethod_, stageIdx, t, dt)
-            );
+        auto& assembler = pdeSolver_->assembler();
+        const auto numStages = msMethod_->numStages();
+        storage_.resize(numStages);
+        spatial_.resize(numStages);
 
-            // assemble & solve
-            bool converged = pdeSolver_->apply(vars);
-            if (!converged)
+        assembler.assembleOperators(vars, TimeLevel<Scalar>{t, t, msMethod_->timeStepWeight(0)},
+                                    {.storage = &storage_[0], .spatial = &spatial_[0]});
+
+        for (std::size_t stageIdx = 1; stageIdx <= numStages; ++stageIdx)
+        {
+            const StageParams params(*msMethod_, stageIdx, t, dt);
+            const TimeLevel<Scalar> timeLevel{params.timeAtStage(stageIdx), t, params.timeStepFraction(stageIdx)};
+
+            auto constant = std::make_shared<Residual>(storage_[0]);
+            *constant = 0.0;
+            for (std::size_t k = 0; k < stageIdx; ++k)
+            {
+                if (!params.skipTemporal(k))
+                    Detail::TimeStepping::axpy(*constant, msMethod_->temporalWeight(stageIdx, k)/dt, storage_[k]);
+                if (!params.skipSpatial(k))
+                    Detail::TimeStepping::axpy(*constant, msMethod_->spatialWeight(stageIdx, k), spatial_[k]);
+            }
+
+            OperatorWeights<Scalar> weights;
+            if (!params.skipTemporal(stageIdx))
+                weights.storage = msMethod_->temporalWeight(stageIdx, stageIdx)/dt;
+            if (!params.skipSpatial(stageIdx))
+                weights.spatial = msMethod_->spatialWeight(stageIdx, stageIdx);
+
+            assembler.setImplicitSolve(vars, SolveParams{timeLevel, weights, std::move(constant)});
+
+            if (!pdeSolver_->apply(vars))
                 return false;
+
+            if (stageIdx < numStages)
+                assembler.assembleOperators(vars, timeLevel,
+                                            {.storage = &storage_[stageIdx], .spatial = &spatial_[stageIdx]});
         }
 
         return true;
@@ -226,7 +236,10 @@ private:
     std::shared_ptr<PDESolver> pdeSolver_;
     std::shared_ptr<const MultiStageMethod<Scalar>> msMethod_;
 
-    Scalar maxTimeStepDivisions_;
+    std::vector<Residual> storage_; //!< storage operator at the solutions of the stages
+    std::vector<Residual> spatial_; //!< spatial operator at the solutions of the stages
+
+    std::size_t maxTimeStepDivisions_;
     Scalar retryTimeStepReductionFactor_;
 };
 
