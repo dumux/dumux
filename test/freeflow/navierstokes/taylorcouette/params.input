@@ -1,0 +1,19 @@
+[Grid]
+Radial0 = 1.0 2.0
+Angular1 = 0.0 360.0
+Cells0 = 16
+Cells1 = 128
+
+[Problem]
+Name = test_ff_navierstokes_taylorcouette
+Omega1 = 100.0
+Omega2 = 0.0
+EnableGravity = false
+EnableInertiaTerms = true
+
+[Flux]
+UpwindWeight = 0.5
+
+[Component]
+LiquidDensity = 1.0
+LiquidDynamicViscosity = 1.0
