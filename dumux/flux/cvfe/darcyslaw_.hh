@@ -20,6 +20,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
+#include <dumux/flux/gravitytermdensity.hh>
 
 namespace Dumux::Experimental {
 
@@ -31,8 +32,10 @@ namespace Dumux::Experimental {
  *
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridDiscretization the grid discretization
+ * \tparam GravityTermDensity provides the density \f$\rho\f$ in the gravity term,
+ *         `GravityTermDensity::density(problem, vars, phaseIdx)`
  */
-template<class Scalar, class GridDiscretization>
+template<class Scalar, class GridDiscretization, class GravityTermDensity = PhaseDensityInGravityTerm>
 class CVFEDarcysLawAtIp
 {
     using GridView = typename GridDiscretization::GridView;
@@ -75,7 +78,7 @@ public:
             interpolatedTensor += shapeValue*tensor(vars);
 
             if (enableGravity)
-                rho += vars.density(phaseIdx)*shapeValue;
+                rho += GravityTermDensity::density(problem, vars, phaseIdx)*shapeValue;
 
             // the global shape function gradient
             gradP.axpy(vars.pressure(phaseIdx), ipCache.gradN(localDof.index()));
@@ -115,7 +118,7 @@ public:
             const auto& vars = elemVars[localDof];
 
             if (enableGravity)
-                rho += vars.density(phaseIdx)*shapeValues[localDof.index()][0];
+                rho += GravityTermDensity::density(problem, vars, phaseIdx)*shapeValues[localDof.index()][0];
 
             // the global shape function gradient
             gradP.axpy(vars.pressure(phaseIdx), ipCache.gradN(localDof.index()));
