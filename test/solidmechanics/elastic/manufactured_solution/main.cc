@@ -103,7 +103,8 @@ int main(int argc, char** argv)
             xExact[localDof.dofIndex()] = problem->exactSolution(ipData(elemDisc, localDof).global());
     }
 
-    IO::GridWriter writer{IO::Format::vtu, leafGridView, IO::order<1>};
+    IO::GridWriter writer{IO::Format::vtu({.encoder = IO::Encoding::ascii, .compressor = IO::Compression::none}),
+                          leafGridView, IO::order<1>};
     writer.setPointField("u", IO::cvfeGridFunction(*gridGeometry, x));
     writer.setPointField("u_exact", IO::cvfeGridFunction(*gridGeometry, xExact));
     writer.write(problem->name());

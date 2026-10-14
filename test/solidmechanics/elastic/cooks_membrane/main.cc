@@ -95,16 +95,17 @@ int main(int argc, char** argv)
               << ", u_y = " << x[*tipDof][1] << std::endl;
 
 #if DUMUX_HAVE_GRIDFORMAT
+    const auto format = IO::Format::vtu({.encoder = IO::Encoding::ascii, .compressor = IO::Compression::none});
     using DiscretizationMethod = typename GridGeometry::DiscretizationMethod;
     if constexpr (std::is_same_v<DiscretizationMethod, DiscretizationMethods::Box>)
     {
-        IO::GridWriter writer{IO::Format::vtu, leafGridView, IO::order<1>};
+        IO::GridWriter writer{format, leafGridView, IO::order<1>};
         writer.setPointField("u", IO::cvfeGridFunction(*gridGeometry, x));
         writer.write(problem->name());
     }
     else
     {
-        IO::GridWriter writer{IO::Format::vtu, leafGridView, IO::order<2>};
+        IO::GridWriter writer{format, leafGridView, IO::order<2>};
         writer.setPointField("u", IO::cvfeGridFunction(*gridGeometry, x));
         writer.write(problem->name());
     }
