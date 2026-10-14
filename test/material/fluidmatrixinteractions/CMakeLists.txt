@@ -13,3 +13,6 @@ dumux_add_test(SOURCES test_effectivediffusivity.cc
                                ${CMAKE_SOURCE_DIR}/test/references/test_effectivediffusivitymillingtonquirk-reference.dat
                                ${CMAKE_CURRENT_BINARY_DIR}/millingtonquirk_d_eff.dat
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_effectivediffusivity -SpatialParams.Tortuosity 0.3")
+
+dumux_add_test(SOURCES test_porositylinearporoelasticity.cc
+              LABELS unit material)

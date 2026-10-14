@@ -5,7 +5,7 @@ test for volumetric locking under combined bending and shear @cite Ong2015. The 
 the elastic model (@ref Elastic) assembled with local degrees of freedom, with three
 control-volume finite-element schemes and two Galerkin finite-element schemes.
 
-## Problem
+## Problem {#benchmark-cooks-membrane-elastic-problem}
 
 The panel has the corners (0, 0), (48, 44), (48, 60) and (0, 44). The left edge \f$ x = 0 \f$ is
 clamped, the right edge \f$ x = 48 \f$ carries the vertical traction \f$ t = 6.25 \f$ (a total load of
