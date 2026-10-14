@@ -25,6 +25,7 @@ for more information.
 | ![mcwhorter-sunada](mcwhortersunada_lineplot_comparison.png) | @ref benchmark-mcwhorter-sunada "↗️ McWhorter-Sunada" | @ref TwoPModel, @ref CCTpfaDiscretization | Counter-current imbibition compared with Fučík's semi-analytical reference |
 |  | @ref benchmark-cooks-membrane-elastic "↗️ Cook's Membrane, Linear Elasticity" | solid mechanics, linear elasticity, locking, @ref Elastic, @ref BoxDiscretization, PQ1-bubble and PQ2 | Tapered panel under shear load with a nearly incompressible material; tip displacement under mesh refinement compared with @cite Chen2024 |
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
+| ![mandel](mandel_pressure.png) | @ref benchmark-mandel "↗️ Mandel's Problem" | poromechanics, consolidation, @ref OnePModel, @ref PoroElastic, @ref CCTpfaDiscretization, @ref BoxDiscretization, @ref MultiDomain | Consolidation of a poroelastic slab between rigid plates (Mandel-Cryer effect), also with compressible solid grains; comparison with the analytical solution @cite Abousleiman1996 |
 
 ## Benchmarks in documented examples
 
