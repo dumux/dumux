@@ -12,8 +12,9 @@
  * Two local residual classes are provided:
  *
  * - `HyperelasticVolIsoMomentumLocalResidual`: Momentum equation
- *   \f[ -\nabla_X \cdot \mathbf{P} = \mathbf{0} \f]
- *   where the stress tensor \f$ \mathbf{P} \f$ is supplied by the problem.
+ *   \f[ -\nabla_X \cdot \mathbf{P} = \mathbf{f}, \quad
+ *       \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p_s J \mathbf{F}^{-\top}, \f]
+ *   where the problem supplies the isochoric stress \f$ \mathbf{P}_\text{iso} \f$.
  *
  * - `HyperelasticVolIsoPressureLocalResidual`: Algebraic pressure constraint
  *   \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
@@ -39,10 +40,13 @@ namespace Dumux {
  * \ingroup HyperelasticVolIso
  * \brief Momentum local residual for the mixed u–p hyperelastic model.
  *
- * Uses the Experimental::GridVariables concept so that `ElementVariables`
- * covers all local DOFs. The stress tensor is obtained from the problem via
- * `firstPiolaKirchhoffStressTensor(...)`. Neumann boundary conditions and
- * non-CV DOFs are also handled.
+ * Assembles \f$ -\nabla_X \cdot \mathbf{P} = \mathbf{f} \f$ with the first Piola–Kirchhoff stress
+ * \f[ \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p\, J\, \mathbf{F}^{-\top}. \f]
+ * The problem supplies \f$ \mathbf{P}_\text{iso} \f$ through
+ * `isochoricFirstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal)` and the body force
+ * \f$ \mathbf{f} \f$ through `source`. The scalar \f$ p \f$ is `volumetricStressPressure`, here the
+ * pressure \f$ p_s \f$ of the pressure subdomain; derived residuals may add further pressures.
+ * The residual is quasi-static (no storage term).
  */
 template<class TypeTag>
 class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
@@ -54,6 +58,7 @@ class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLoca
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
+    using GlobalPosition = typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Tensor = Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension>;
     static constexpr int dim = GridView::dimension;
@@ -65,20 +70,14 @@ public:
     using ParentType::ParentType;
     using ElementResidualVector = typename ParentType::ElementResidualVector;
 
-    NumEqVector computeStorage(const Problem&, const auto&, const auto&) const
+    NumEqVector computeStorage(const auto&, const auto&, const auto&) const
     { return NumEqVector(0.0); }
 
     NumEqVector storageIntegral(const FVElementGeometry&, const ElementVariables&,
                                 const auto&, bool) const
     { return NumEqVector(0.0); }
 
-    NumEqVector sourceIntegral(const FVElementGeometry&, const ElementVariables&,
-                               const auto&) const
-    { return NumEqVector(0.0); }
-
-    /*!
-     * \brief FE contributions for non-CV DOFs.
-     */
+    //! FE contributions of stress divergence and body force for non-CV dofs (e.g. PQ2 hybrid)
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const auto& element,
@@ -87,40 +86,34 @@ public:
     {
         if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
         {
+            if (nonCVLocalDofs(fvGeometry).empty())
+                return;
 
-        if (nonCVLocalDofs(fvGeometry).empty())
-            return;
-
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
-        {
-            const auto& ipCache = cache(elemVars, qpData.ipData());
-            const auto& ipGlobal = qpData.ipData().global();
-
-            Tensor F(0.0);
-            for (const auto& localDof : localDofs(fvGeometry))
-                for (int d = 0; d < dim; ++d)
-                    F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
-            for (int d = 0; d < dim; ++d) F[d][d] += 1.0;
-
-            const auto P = problem.firstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal);
-
-            for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
+            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
             {
-                const auto idx = nonCVdof.index();
-                for (int i = 0; i < dim; ++i)
-                    for (int j = 0; j < dim; ++j)
-                        residual[idx][i] += P[i][j] * ipCache.gradN(idx)[j] * qpData.weight();
+                const auto& ipCache = cache(elemVars, qpData.ipData());
+                const auto& ipGlobal = qpData.ipData().global();
+
+                const auto F = deformationGradient_(fvGeometry, elemVars, ipCache);
+                const auto P = firstPiolaKirchhoffStressTensor_(problem, F, fvGeometry, ipGlobal);
+                const auto f = problem.source(fvGeometry, elemVars, qpData.ipData());
+                const auto& shapeValues = ipCache.shapeValues();
+
+                for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
+                {
+                    const auto idx = nonCVdof.index();
+                    for (int i = 0; i < dim; ++i)
+                    {
+                        for (int j = 0; j < dim; ++j)
+                            residual[idx][Indices::momentum(i)] += P[i][j] * ipCache.gradN(idx)[j] * qpData.weight();
+                        residual[idx][Indices::momentum(i)] -= f[Indices::momentum(i)] * double(shapeValues[idx]) * qpData.weight();
+                    }
+                }
             }
         }
-
-        } // end if constexpr
     }
 
-    /*!
-     * \brief Interior flux integral.
-     *
-     * Called by Experimental::CVFELocalResidual::evalFlux for interior faces.
-     */
+    //! Interior flux integral: \f$ -\int \mathbf{P} \cdot \mathbf{n} \, \mathrm{d}A \f$
     template<class SubControlVolumeFace>
     NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
                              const ElementVariables& elemVars,
@@ -133,21 +126,52 @@ public:
         for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
         {
             const auto& ipCache = cache(elemVars, qpData.ipData());
-            const auto& ipGlobal = qpData.ipData().global();
-
-            Tensor F(0.0);
-            for (const auto& localDof : localDofs(fvGeometry))
-                for (int d = 0; d < dim; ++d)
-                    F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
-            for (int d = 0; d < dim; ++d) F[d][d] += 1.0;
-
-            const auto P = problem.firstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal);
+            const auto F = deformationGradient_(fvGeometry, elemVars, ipCache);
+            const auto P = firstPiolaKirchhoffStressTensor_(problem, F, fvGeometry, qpData.ipData().global());
 
             for (int i = 0; i < dim; ++i)
                 for (int j = 0; j < dim; ++j)
                     f[Indices::momentum(i)] -= P[i][j] * n[j] * qpData.weight();
         }
         return f;
+    }
+
+    //! The scalar \f$ p \f$ of the volumetric stress \f$ p J \mathbf{F}^{-\top} \f$
+    Scalar volumetricStressPressure(const Problem& problem,
+                                    const FVElementGeometry& fvGeometry,
+                                    const GlobalPosition& ipGlobal) const
+    { return problem.couplingManager().pressureAtPoint(fvGeometry, ipGlobal); }
+
+private:
+    template<class IpCache>
+    Tensor deformationGradient_(const FVElementGeometry& fvGeometry,
+                                const ElementVariables& elemVars,
+                                const IpCache& ipCache) const
+    {
+        Tensor F(0.0);
+        for (const auto& localDof : localDofs(fvGeometry))
+            for (int d = 0; d < dim; ++d)
+                F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
+        for (int d = 0; d < dim; ++d)
+            F[d][d] += 1.0;
+        return F;
+    }
+
+    Tensor firstPiolaKirchhoffStressTensor_(const Problem& problem,
+                                            const Tensor& F,
+                                            const FVElementGeometry& fvGeometry,
+                                            const GlobalPosition& ipGlobal) const
+    {
+        auto P = problem.isochoricFirstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal);
+
+        Tensor Finv(F);
+        Finv.invert();
+        const Scalar pJ = this->asImp().volumetricStressPressure(problem, fvGeometry, ipGlobal)*F.determinant();
+        for (int i = 0; i < dim; ++i)
+            for (int j = 0; j < dim; ++j)
+                P[i][j] += pJ*Finv[j][i];
+
+        return P;
     }
 };
 

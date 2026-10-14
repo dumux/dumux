@@ -82,25 +82,23 @@ public:
 
     // First Piola-Kirchhoff stress P = ∂W/∂F from the vol-iso split of Eq. 3.2:
     //   W = µ/2·(trC − 3 − 2·ln J) + λ/2·(J−1)²
-    // Isochoric part gives µ·(F − F^{−T}), volumetric part gives J·p_s·F^{−T}
-    // where p_s is the mixed pressure variable (= λ·(J−1) at equilibrium).
+    // This is the part µ·(F − F^{−T}); the model adds the volumetric part J·p_s·F^{−T}
+    // with the mixed pressure variable p_s (= λ·(J−1) at equilibrium).
     template<class Tensor, class FVElementGeometry_, class GlobalPosition_>
-    Tensor firstPiolaKirchhoffStressTensor(const Tensor& F,
-                                           const FVElementGeometry_& fvGeometry,
-                                           const GlobalPosition_& globalPos) const
+    Tensor isochoricFirstPiolaKirchhoffStressTensor(const Tensor& F,
+                                                    const FVElementGeometry_&,
+                                                    const GlobalPosition_&) const
     {
         const Scalar mu = this->spatialParams().shearModulus();
-        const Scalar ps = couplingManager().pressureAtPoint(fvGeometry, globalPos);
 
         Tensor Finv = F;
         Finv.invert();
         const Tensor FinvT = transpose(Finv);
 
         Tensor P(0.0);
-        const Scalar J = F.determinant();
         for (int i = 0; i < P.N(); ++i)
             for (int j = 0; j < P.M(); ++j)
-                P[i][j] = mu*(F[i][j] - FinvT[i][j]) + J*ps*FinvT[i][j];
+                P[i][j] = mu*(F[i][j] - FinvT[i][j]);
 
         return P;
     }

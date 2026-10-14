@@ -33,10 +33,12 @@
  *
  * **Momentum subproblem** (displacement \f$ \mathbf{d} \f$):
  * \f[
- *   -\nabla_X \cdot \mathbf{P} = \mathbf{0},
+ *   -\nabla_X \cdot \mathbf{P} = \mathbf{f}, \quad
+ *   \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p_s J \mathbf{F}^{-\top},
  * \f]
- * where the stress tensor \f$ \mathbf{P} \f$ is supplied by the problem via
- * `firstPiolaKirchhoffStressTensor(F, ...)`.
+ * where the problem supplies the stress without the volumetric part via
+ * `isochoricFirstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal)` and the body force
+ * \f$ \mathbf{f} \f$ via `source`; the model adds \f$ p_s J \mathbf{F}^{-\top} \f$.
  *
  * **Pressure subproblem** (pressure \f$ p_s \f$):
  * \f[

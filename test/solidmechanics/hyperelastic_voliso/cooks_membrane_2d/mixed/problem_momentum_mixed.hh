@@ -7,52 +7,53 @@
 #ifndef DUMUX_COOKS_MEMBRANE_MOMENTUM_MIXED_PROBLEM_HH
 #define DUMUX_COOKS_MEMBRANE_MOMENTUM_MIXED_PROBLEM_HH
 
+#include <vector>
+
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/boundarytypes.hh>
-#include <dumux/common/fvproblemwithspatialparams.hh>
-#include <dumux/common/numeqvector.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/constraintinfo.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/math.hh>
+#include <dumux/common/numeqvector.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/problemwithspatialparams.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
-#include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
 
 /*!
- * \brief Momentum problem for the Cook's membrane MINI mixed formulation.
+ * \brief Momentum subproblem of Cook's membrane with the mixed u–p formulation.
  *
- * Uses the new Donea-style problem interface:
- *  - `constraints()`: global Dirichlet constraints built via
- *    CVFE::appendDirichletConstraints — handles ALL DOFs incl. edge midpoints.
- *  - `boundaryFlux(fvGeometry, elemVars, ipCache)`: called per boundary QP
- *    from the local residual's evalFluxAndSource.
- *  - `boundaryTypes(fvGeometry, intersection)`: new intersection-based interface
- *    used by appendDirichletConstraints.
+ * Compressible neo-Hookean material
+ * \f$ \mathbf{P} = \mu (\mathbf{F} - \mathbf{F}^{-\top}) + \frac{\lambda}{2} (J^2 - 1) \mathbf{F}^{-\top} \f$,
+ * split into the part \f$ \mu (\mathbf{F} - \mathbf{F}^{-\top}) \f$ supplied here and the volumetric
+ * part \f$ p_s J \mathbf{F}^{-\top} \f$ with \f$ p_s = \lambda (J^2 - 1)/(2J) \f$ from the pressure
+ * subproblem. The left face \f$ x = 0 \f$ is clamped, the right face \f$ x = 48 \f$ carries an upward
+ * shear traction `Problem.ShearTraction`; in 3D, the face \f$ z = 0 \f$ has \f$ u_z = 0 \f$.
  */
 template<class TypeTag>
-class CooksMembraneMomentumMixedProblem : public FVProblemWithSpatialParams<TypeTag>
+class CooksMembraneMomentumMixedProblem : public Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
-    using Intersection = typename GridView::Intersection;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using BoundaryTypes = Dumux::Experimental::BoundaryTypes<PrimaryVariables::size()>;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using GridIndexType = typename IndexTraits<GridView>::GridIndex;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
+    static constexpr int dim = GridView::dimension;
     static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
     using ConstraintInfo = Dumux::DirichletConstraintInfo<numEq>;
     using ConstraintValues = Dune::FieldVector<Scalar, numEq>;
-    using DirichletConstraintData = Dumux::DirichletConstraintData<
-        ConstraintInfo, ConstraintValues, GridIndexType>;
+    using DirichletConstraintData = Dumux::DirichletConstraintData<ConstraintInfo, ConstraintValues, GridIndexType>;
 
 public:
     CooksMembraneMomentumMixedProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -61,54 +62,38 @@ public:
     , couplingManager_(couplingManager)
     , shearTraction_(getParam<Scalar>("Problem.ShearTraction"))
     {
-        // Build Dirichlet constraints for ALL DOFs on the left face (x=0).
-        // Works for PQ1Bubble (vertex + bubble) and PQ2 (vertex + edge midpoints).
-        CVFE::appendDirichletConstraints(*this,
-            [&](const auto& fvGeometry, const auto&, const auto& localDof) {
-                return this->dirichletAtPos(ipData(fvGeometry, localDof).global());
-            },
-            constraints_);
+        appendDirichletConstraints_();
     }
 
-    const CouplingManager& couplingManager() const { return *couplingManager_; }
+    const CouplingManager& couplingManager() const
+    { return *couplingManager_; }
 
-    // New intersection-based BC type (used by appendDirichletConstraints)
-    BoundaryTypes boundaryTypes(const FVElementGeometry&, const Intersection& is) const
-    { return boundaryTypesAtPos(is.geometry().center()); }
+    template<class Tensor, class FVElementGeometry_, class GlobalPosition_>
+    Tensor isochoricFirstPiolaKirchhoffStressTensor(const Tensor& F,
+                                                    const FVElementGeometry_&,
+                                                    const GlobalPosition_&) const
+    {
+        auto FinvT = F;
+        FinvT.invert();
+        FinvT = transpose(FinvT);
 
-    // Position-based BC type.
-    // 2D: left face clamped, others free.
-    // 3D: additionally z=0 face has u_z=0 (plane-strain symmetry).
+        Tensor P = F;
+        P.axpy(-1.0, FinvT);
+        P *= this->spatialParams().shearModulus();
+        return P;
+    }
+
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[0] < eps_)
-        {
-            values.setAllDirichlet(); // left face: fully clamped
-        }
-        else if constexpr (GlobalPosition::dimension == 3)
-        {
-            if (globalPos[2] < eps_) // z=0 plane-strain symmetry face
-            {
-                values.setAllNeumann();
-                values.setDirichlet(2); // u_z = 0 only
-            }
-            else
-                values.setAllNeumann();
-        }
-        else
-            values.setAllNeumann();
+        if (globalPos[0] > 48.0 - eps_)
+            values.setAllFluxBoundary();
         return values;
     }
 
-    PrimaryVariables dirichletAtPos(const GlobalPosition&) const
-    { return PrimaryVariables(0.0); }
-
-    //! Neumann traction per quadrature point. Used by both CV (boundaryFluxIntegral)
-    //! and FE (addToElementFluxAndSourceResidual) Neumann integration paths.
+    //! The negative traction: upward shear on the right face
     template<class ElementVariables, class IpData>
-    NumEqVector boundaryFlux(const FVElementGeometry&, const ElementVariables&,
-                             const IpData& ipData) const
+    NumEqVector boundaryFlux(const FVElementGeometry&, const ElementVariables&, const IpData& ipData) const
     {
         NumEqVector flux(0.0);
         if (ipData.global()[0] > 48.0 - eps_)
@@ -116,23 +101,33 @@ public:
         return flux;
     }
 
-    //! Integrated Neumann traction over a boundary scvf (CV path).
-    //! Called by Experimental::CVFELocalResidual::evalFlux for Neumann scvfs.
-    template<class ElementVariables>
-    NumEqVector boundaryFluxIntegral(const FVElementGeometry& fvGeometry,
-                                     const ElementVariables& elemVars,
-                                     const SubControlVolumeFace& scvf) const
-    {
-        NumEqVector flux(0.0);
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
-            flux += qpData.weight() * this->boundaryFlux(fvGeometry, elemVars, qpData.ipData());
-        return flux;
-    }
-
-    //! Dirichlet constraints — applied globally by the assembler after assembly.
-    const auto& constraints() const { return constraints_; }
+    const auto& constraints() const
+    { return constraints_; }
 
 private:
+    void appendDirichletConstraints_()
+    {
+        auto fvGeometry = localView(this->gridGeometry());
+        for (const auto& element : elements(this->gridGeometry().gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+            {
+                const auto& center = boundaryFace.center();
+                ConstraintInfo info;
+                if (center[0] < eps_)
+                    info.setAll();
+                else if (dim == 3 && center[dim-1] < eps_)
+                    info.set(dim-1, dim-1);
+                else
+                    continue;
+
+                for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    constraints_.push_back(DirichletConstraintData{info, ConstraintValues(0.0), localDof.dofIndex()});
+            }
+        }
+    }
+
     static constexpr Scalar eps_ = 1e-6;
     std::shared_ptr<CouplingManager> couplingManager_;
     Scalar shearTraction_;
@@ -140,4 +135,5 @@ private:
 };
 
 } // end namespace Dumux
+
 #endif

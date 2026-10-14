@@ -24,8 +24,8 @@
 #include <dumux/solidmechanics/hyperelastic_voliso/model.hh>
 #include <dumux/solidmechanics/hyperelastic_voliso/couplingmanager.hh>
 #include "../../../hyperelastic/cooks_membrane_3d/spatialparams.hh"
-#include "problem_momentum_mixed.hh"
-#include "problem_pressure_mixed.hh"
+#include "../../cooks_membrane_2d/mixed/problem_momentum_mixed.hh"
+#include "../../cooks_membrane_2d/mixed/problem_pressure_mixed.hh"
 
 namespace Dumux::Properties {
 
