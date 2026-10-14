@@ -1,0 +1,56 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 100 10 # half-width a and half-height b (m)
+Cells = 40 4
+
+[Problem]
+Force = 6e8 # force per unit length applied by each plate (N/m)
+EnableGravity = false
+EModulus = 5.94e9 # drained Young's modulus (Pa)
+Nu = 0.2 # drained Poisson's ratio
+BiotCoefficient = 1.0
+InitialPorosity = 0.2
+FluidBulkModulus = 3.3e9 # (Pa)
+Permeability = 9.8692326671601e-14 # 0.1 darcy (m^2)
+NumSeriesTerms = 240 # number of terms of the analytical solution
+
+[OneP.Problem]
+Name = flow
+
+[PoroElastic.Problem]
+Name = mech
+
+[Component]
+LiquidDensity = 1000 # (kg/m^3)
+LiquidDynamicViscosity = 1e-3 # (Pa s)
+SolidDensity = 2700 # (kg/m^3)
+
+# The storage term is dominated by the constant porosity phi_0, so the default perturbation
+# (1e-10 relative to the primary variable) changes it only in its last digits. The model is linear,
+# hence larger perturbations give an exact numeric Jacobian.
+[OneP.Assembly.NumericDifference]
+PriVarMagnitude = 1e14 # perturbation of 1e4 Pa
+
+[PoroElastic.Assembly.NumericDifference]
+PriVarMagnitude = 1e4 1e4 # perturbation of 1e-6 m
+
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[Newton]
+MaxRelativeShift = 1e-10
+MaxSteps = 50
+EnableShiftCriterion = true
+EnableResidualCriterion = false
+
+[TimeLoop]
+TEnd = 5000 # (s)
+Dt = 0.1 # initial time step size (s)
+MaxTimeStepSize = 10 # (s)
+CheckPoints = 10 100 1000 5000 # output times (s)
+Scheme = ImplicitEuler # ImplicitEuler, CrankNicolson or DIRK3
+
+[Vtk]
+OutputName = test_md_mandel
+AddVelocity = true
