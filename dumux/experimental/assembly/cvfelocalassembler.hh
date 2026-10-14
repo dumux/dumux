@@ -40,6 +40,8 @@
 
 #include <dumux/assembly/cvfevolvarsdeflectionpolicy_.hh>
 
+#include <dumux/experimental/timestepping/implicitsolve.hh>
+
 namespace Dumux::Experimental {
 
 /*!
@@ -82,9 +84,9 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template <class ResidualVector, class StageParams, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Noop>
+    template <class ResidualVector, class Scalar, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Noop>
     void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
-                                     const StageParams& stageParams, ResidualVector& temporal, ResidualVector& spatial,
+                                     const OperatorWeights<Scalar>& weights,
                                      ResidualVector& constrainedDofs,
                                      const PartialReassembler* partialReassembler = nullptr,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = noop)
@@ -92,29 +94,28 @@ public:
         this->asImp_().bindLocalViews();
         const auto eIdxGlobal = Dumux::gridDiscretization(this->asImp_().problem()).elementMapper().index(this->element());
 
-        this->localResidual().spatialWeight(1.0);
-        this->localResidual().temporalWeight(1.0);
+        const bool skipSpatial = (weights.spatial == 0.0);
+        const bool skipStorage = (weights.storage == 0.0);
 
-        const auto sWeight = stageParams.spatialWeight(stageParams.size()-1);
-        const auto tWeight = stageParams.temporalWeight(stageParams.size()-1);
-
-        const auto flux = this->evalLocalFluxAndSourceResidual(this->curElemVolVars());
-        const auto storage = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars());
-        ElementResidualVector origResidual(flux.size());
+        ElementResidualVector origResidual(this->fvGeometry().numScv());
         origResidual = 0.0;
-        for (const auto& scv : scvs(this->fvGeometry()))
+        if (!skipSpatial)
         {
-            spatial[scv.dofIndex()] += flux[scv.localDofIndex()];
-            temporal[scv.dofIndex()] += storage[scv.localDofIndex()];
-            if (!stageParams.skipSpatial(stageParams.size()-1))
-                origResidual[scv.localDofIndex()] += flux[scv.localDofIndex()]*sWeight;
-            if (!stageParams.skipTemporal(stageParams.size()-1))
-                origResidual[scv.localDofIndex()] += storage[scv.localDofIndex()]*tWeight;
-            res[scv.dofIndex()] += origResidual[scv.localDofIndex()];
+            const auto flux = this->evalLocalFluxAndSourceResidual(this->curElemVolVars());
+            for (const auto& scv : scvs(this->fvGeometry()))
+                origResidual[scv.localDofIndex()] += flux[scv.localDofIndex()]*weights.spatial;
         }
+        if (!skipStorage)
+        {
+            const auto storage = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars());
+            for (const auto& scv : scvs(this->fvGeometry()))
+                origResidual[scv.localDofIndex()] += storage[scv.localDofIndex()]*weights.storage;
+        }
+        for (const auto& scv : scvs(this->fvGeometry()))
+            res[scv.dofIndex()] += origResidual[scv.localDofIndex()];
 
-        this->localResidual().spatialWeight(sWeight, stageParams.skipSpatial(stageParams.size()-1));
-        this->localResidual().temporalWeight(tWeight, stageParams.skipTemporal(stageParams.size()-1));
+        this->localResidual().spatialWeight(weights.spatial, skipSpatial);
+        this->localResidual().temporalWeight(weights.storage, skipStorage);
 
         if (partialReassembler && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {

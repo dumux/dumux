@@ -9,7 +9,7 @@ in Shu-Osher form @cite ShuOsher1988 (see `MultiStageMethod`). Given the
 semi-discrete problem
 
 $$
-\frac{\partial M(x,t)}{\partial t} - R(x,t) = 0,
+\frac{\partial M(x,t)}{\partial t} + R(x,t) = 0,
 $$
 
 an $m$-stage scheme advances the solution from $t^n$ to $t^{n+1}=t^n+\Delta t^n$ via

@@ -120,15 +120,12 @@ public:
     }
 
     /*!
-     * \brief Multi-stage assembly: assembles the Jacobian and stage-weighted residual while
-     *        separately accumulating temporal and spatial operator evaluations for this domain.
-     *
-     * Called by the multi-stage multi-domain assembler for each element during stage assembly.
+     * \brief Assembles the Jacobian and the weighted residual of an implicit solve of a time
+     *        integration method for this domain.
      */
-    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple, class StageParams>
+    template<class JacobianMatrixRow, class SubResidualVector, class GridVariablesTuple, class Scalar>
     void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubResidualVector& res, GridVariablesTuple& gridVariables,
-                                     const StageParams& stageParams,
-                                     SubResidualVector& temporal, SubResidualVector& spatial,
+                                     const Experimental::OperatorWeights<Scalar>& weights,
                                      SubResidualVector& constrainedDofs)
     {
         auto assembleCouplingBlocks = [&](const auto& residual)
@@ -143,15 +140,13 @@ public:
 
         ParentType::assembleJacobianAndResidual(
             jacRow[domainId], res, *std::get<domainId>(gridVariables),
-            stageParams, temporal, spatial, constrainedDofs,
+            weights, constrainedDofs,
             assembleCouplingBlocks
         );
     }
 
     /*!
-     * \brief Assemble only the current-stage residual contributions (no Jacobian).
-     *        Used during stage 0 preparation where only the previous-time-level
-     *        temporal and spatial operators need to be stored.
+     * \brief Assemble the unweighted storage and spatial operators (no Jacobian)
      */
     template<class SubResidualVector>
     void assembleCurrentResidual(SubResidualVector& temporal, SubResidualVector& spatial)

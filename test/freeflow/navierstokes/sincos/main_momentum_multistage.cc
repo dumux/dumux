@@ -49,6 +49,7 @@
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
 #include <test/freeflow/navierstokes/errors_cvfe.hh>
+#include <test/experimental/timestepping/implicitsolvecheck.hh>
 
 #include "properties.hh"
 
@@ -143,6 +144,39 @@ Result solveWithMultiStageAssembler(std::shared_ptr<const GridGeometry> gridGeom
 }
 
 /*!
+ * \brief Newton's method recording the largest relative difference between the residual
+ *        assembled without and with the Jacobian at the start of each solve
+ */
+template<class Assembler, class LinearSolver>
+class ResidualConsistencyCheckingNewton : public NewtonSolver<Assembler, LinearSolver>
+{
+    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+public:
+    using ParentType::ParentType;
+    using typename ParentType::Variables;
+
+    bool apply(Variables& vars) override
+    {
+        auto& assembler = this->assembler();
+        assembler.assembleJacobianAndResidual(vars);
+        auto difference = assembler.residual();
+        assembler.assembleResidual(vars);
+        difference -= assembler.residual();
+
+        using std::max;
+        maxRelDiff_ = max(maxRelDiff_, difference.two_norm()/assembler.residual().two_norm());
+
+        return ParentType::apply(vars);
+    }
+
+    Scalar maxRelativeDifference() const
+    { return maxRelDiff_; }
+
+private:
+    Scalar maxRelDiff_ = 0.0;
+};
+
+/*!
  * \brief Largest relative difference over the stages of one time step between the residual
  *        assembled without and with the Jacobian, both at the solution the stage starts from
  */
@@ -162,25 +196,16 @@ Scalar residualAssemblyDifference(std::shared_ptr<const GridGeometry> gridGeomet
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, method, xOld);
 
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, std::make_shared<LinearSolver>());
+    using Newton = ResidualConsistencyCheckingNewton<Assembler, LinearSolver>;
+    auto nonLinearSolver = std::make_shared<Newton>(assembler, std::make_shared<LinearSolver>());
 
-    Scalar maxRelDiff = 0.0;
-    for (std::size_t stageIdx = 1; stageIdx <= method->numStages(); ++stageIdx)
-    {
-        assembler->prepareStage(x, std::make_shared<Experimental::MultiStageParams<Scalar>>(*method, stageIdx, 0.0, dt));
+    if (Test::checkImplicitSolveContract(*assembler, x, 0.0, 1.0/dt, 1.0) == 0)
+        DUNE_THROW(Dune::Exception, "Expected Dirichlet constraints in the implicit solve contract check");
 
-        assembler->assembleJacobianAndResidual(x);
-        auto difference = assembler->residual();
-        assembler->assembleResidual(x);
-        difference -= assembler->residual();
+    Experimental::MultiStageTimeStepper<Newton> timeStepper(nonLinearSolver, method);
+    timeStepper.step(x, 0.0, dt);
 
-        using std::max;
-        maxRelDiff = max(maxRelDiff, difference.two_norm()/assembler->residual().two_norm());
-
-        nonLinearSolver.solve(x);
-    }
-
-    return maxRelDiff;
+    return nonLinearSolver->maxRelativeDifference();
 }
 
 Scalar discreteL2Norm(const SolutionVector& x)

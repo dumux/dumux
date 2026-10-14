@@ -107,15 +107,16 @@ public:
 
     /*!
      * \brief Evaluates the complete local residual for the current element.
-     * \note With a multi-stage assembler this is the stage-weighted residual of the current stage.
+     * \note With an assembler for the implicit solves of a time integration method this is the
+     *       weighted residual without the contribution of known states (see Experimental::ImplicitSolveParams).
      * \param elemVars The element variables
      */
     ElementResidualVector evalLocalResidual(const ElementVariables& elemVars) const
     {
-        if constexpr (requires (const Assembler& a) { a.currentStageWeights(); })
+        if constexpr (requires (const Assembler& a) { a.currentOperatorWeights(); })
         {
-            const auto [temporalWeight, spatialWeight] = assembler().currentStageWeights();
-            return evalLocalResidualForStage(elemVars, temporalWeight, spatialWeight);
+            const auto& weights = assembler().currentOperatorWeights();
+            return evalLocalResidualForStage(elemVars, weights.storage, weights.spatial);
         }
         else if (!assembler().isStationaryProblem())
         {

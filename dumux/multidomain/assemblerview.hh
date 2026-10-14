@@ -72,10 +72,10 @@ public:
     const auto& prevSol() const { return assembler_.prevSol(); }
     bool isStationaryProblem() const { return assembler_.isStationaryProblem(); }
 
-    //! The temporal and spatial weight of the current stage (only for multi-stage assemblers)
-    auto currentStageWeights() const
-    requires requires (const MDAssembler& a) { a.currentStageWeights(); }
-    { return assembler_.currentStageWeights(); }
+    //! The operator weights of the current implicit solve (only for assemblers of time integration methods)
+    const auto& currentOperatorWeights() const
+    requires requires (const MDAssembler& a) { a.currentOperatorWeights(); }
+    { return assembler_.currentOperatorWeights(); }
 
     template<class A = MDAssembler, typename std::enable_if_t<hasStaticIsImplicit<A>, int> = 0>
     static constexpr bool isImplicit() { return MDAssembler::isImplicit(); }
