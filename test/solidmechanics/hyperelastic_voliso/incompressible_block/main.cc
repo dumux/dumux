@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     }
 
     // Point P = (w/2, l/2, h) = (50,50,50) mm: center of the full load patch (Fig. 3.1).
-    // Maximum |u_z| occurs here; SPP-1748 Tables 3.3 & 3.4 reference ≈ 20 mm.
+    // Maximum |u_z| occurs here; Tables 17 and 18 of Schröder et al. (2021): ≈ 20 mm.
     using GlobalPosition = typename MomGG::GlobalCoordinate;
     const GlobalPosition P{ 50.0 - 1e-6, 50.0 - 1e-6, 50.0 - 1e-6 };
     const auto& momSol = x[CouplingManager::momentumIdx];
@@ -166,19 +166,19 @@ int main(int argc, char** argv)
         const int nDofs = momGG->numDofs() + presGG->numDofs();
 
         // ---------------------------------------------------------------
-        // SPP-1748 Benchmark 3 (Kollmannsberger et al. 2020, Tables 3.3 & 3.4)
+        // SPP 1748 incompressible block (Schröder et al. 2021, Sect. 3, Tables 17 and 18)
         // |u_z(P)| [mm] at P=(w/2, l/2, h) = (50,50,50) mm (center of full load patch).
         // Full model: w=100mm, l=100mm, h=50mm; quarter [0,50]³ simulated.
-        // Load: q=3 MPa, a=b=25mm (Table 3.1); λ=499.92568 MPa, µ=1.61148 MPa (Table 3.2).
+        // Load: q=3 MPa, a=b=25mm (Table 15); λ=499.92568 MPa, µ=1.61148 MPa (Table 16).
         // ---------------------------------------------------------------
-        // Table 3.3: h-refinement (n_dofs for H1; same node count for other elements)
+        // Table 17: h-refinement (n_dofs for H1; same node count for other elements)
         // n_dofs |   H1  | H1P0  | O2P1  | H1EI9 | TSCG
         //    260 |  7.78 | 19.87 | 19.80 | 19.09 | 20.14
         //   1800 | 13.17 | 20.02 | 19.93 | 19.98 | 20.10
         //  13328 | 17.54 | 20.01 | 19.97 | 20.01 | 20.03
         // 102432 | 19.52 | 20.00 | 19.98 | 20.00 | 20.01
         // ---------------------------------------------------------------
-        // Table 3.4: p-extension on 4×4×4 mesh (isotropic trunk space)
+        // Table 18: p-extension on 4×4×4 mesh (isotropic trunk space)
         // p=1 (375 dofs): 7.656 mm, p=2 (1275): 19.637, p=3 (2175): 19.998
         // Converged reference: |u_z(P)| ≈ 20.00 mm
         // ---------------------------------------------------------------
@@ -197,8 +197,8 @@ int main(int argc, char** argv)
                 row = i;
 
         std::cout << "\n";
-        std::cout << " SPP-1748 Benchmark 3 — incompressible block |u_z(P)| comparison\n";
-        std::cout << " Reference: Schröder et al. (2020), Tables 3.3 & 3.4\n";
+        std::cout << " SPP 1748 incompressible block (Schröder et al. 2021, Sect. 3) |u_z(P)| comparison\n";
+        std::cout << " Reference: Schröder et al. (2021), Table 17\n";
         std::cout << " Converged reference: |u_z(P)| ≈ 20.00 mm\n\n";
         std::cout << std::left
               << " " << std::setw(28) << "Formulation"
@@ -206,9 +206,9 @@ int main(int argc, char** argv)
                   << std::setw(14) << "|u_z(P)| mm" << "\n";
         std::cout << " " << std::string(52, '-') << "\n";
 
-        auto row2 = [&](const std::string& name, int nd, double val) {
+        auto row2 = [&](const std::string& name, int dofs, double val) {
             std::cout << " " << std::left << std::setw(28) << name
-                      << std::right << std::setw(10) << nd
+                      << std::right << std::setw(10) << dofs
                       << std::setw(14) << std::fixed << std::setprecision(2) << val << "\n";
         };
 

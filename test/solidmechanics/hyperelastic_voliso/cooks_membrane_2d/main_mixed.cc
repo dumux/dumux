@@ -151,7 +151,7 @@ int main(int argc, char** argv)
     }
 
     // print comparison table
-    // 3D p-FEM references from SPP-1748 Table 2.9; see locked test for explanation
+    // 3D p-FEM references from Table 9 of Schröder et al. (2021)
     const std::vector<Scalar> refs3D = { 11.381, 11.156, 10.783, 10.746, 10.741 };
     std::cout << "\n"
               << "SPP-1748 Cook's membrane — MINI (PQ1Bubble+P1) mixed formulation, ψ₁\n"

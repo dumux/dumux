@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SPP-1748 Cook's membrane — 3D MINI (PQ1Bubble displacement + P1 pressure).
-// Direct comparison to SPP-1748 Table 2.9 (3D p-FEM reference values).
+// Direct comparison to Table 9 of Schröder et al. (2021) (3D p-FEM reference values).
 //
 #include <config.h>
 #include <iomanip>
@@ -147,15 +147,15 @@ int main(int argc, char** argv)
         results.push_back({ lambda, nu, uy, converged });
     }
 
-    // SPP-1748 Table 2.9 — 3D p-FEM reference values
+    // Table 9 of Schröder et al. (2021) — 3D p-FEM reference values
     const std::vector<Scalar> refs3D = { 11.38113537, 11.15639736, 10.78267246, 10.74641606, 10.74061099 };
-    // T2 / T2P0 from Table 2.5 (finest mesh 125856 DOFs, λ=432 only)
+    // T2 / T2P0 from Table 5 (finest mesh 125856 DOFs, λ=432 only)
     const std::vector<Scalar> refsT2   = { 11.37441, -1, -1, -1, -1 };
     const std::vector<Scalar> refsT2P0 = { 11.38386, -1, -1, -1, -1 };
 
     std::cout << "\n"
               << "SPP-1748 Cook's membrane — 3D MINI (PQ1Bubble+P1), ψ₁\n"
-              << "  T2/T2P0: Galerkin FEM from Table 2.5 (125856 DOFs, λ=432 only).\n"
+              << "  T2/T2P0: Galerkin FEM from Table 5 (125856 DOFs, λ=432 only).\n"
               << std::string(90, '-') << "\n"
               << std::setw(14) << "λ [MPa]"
               << std::setw(10) << "ν"

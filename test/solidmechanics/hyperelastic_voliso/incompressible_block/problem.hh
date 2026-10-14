@@ -19,13 +19,12 @@
 
 namespace Dumux {
 
-// SPP-1748 Benchmark 3: quasi-incompressible cube under constant partial load
-// (Kollmannsberger et al., Section 3, SPP-1748 Benchmark Collection, 2020).
+// SPP 1748 incompressible block under constant partial load (Schröder et al. 2021, Sect. 3).
 //
-// Full model: w=100mm, l=100mm, h=50mm (Table 3.1). Axial symmetry → quarter model
+// Full model: w=100mm, l=100mm, h=50mm (Table 15). Axial symmetry → quarter model
 // [0, w/2]×[0, l/2]×[0, h] = [0,50]³ mm is simulated.
 // Strain energy (Eq. 3.2): W = µ/2·(trC − 3 − 2·ln J) + λ/2·(J−1)²
-// Material (Table 3.2): λ=499.92568 MPa, µ=1.61148 MPa (ν≈0.4983)
+// Material (Table 16): λ=499.92568 MPa, µ=1.61148 MPa (ν≈0.4983)
 //
 // BCs (Section 3.1):
 //   z=0   : u_z=0 (bottom fixed in z)
@@ -33,7 +32,7 @@ namespace Dumux {
 //   x=w/2 : u_x=0 (symmetry plane)
 //   y=l/2 : u_y=0 (symmetry plane)
 //   Neumann load q=3 MPa at z=h on quarter patch x∈[w/2−a, w/2]×y∈[l/2−b, l/2] = [25,50]²
-//   with a=25mm, b=25mm (Table 3.1) the load half-widths in x and y
+//   with a=25mm, b=25mm (Table 15) the load half-widths in x and y
 //
 // Probe: |u_z(P)| at P=(w/2, l/2, h) = (50,50,50) mm (Tables 3.3 & 3.4, ref ≈ 20 mm)
 template<class TypeTag>
@@ -41,7 +40,7 @@ class IncompressibleBlockMomentumProblem : public Dumux::Experimental::ProblemWi
 {
     using ParentType = Dumux::Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using ElementDiscretization = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Intersection = typename GridView::Intersection;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -59,11 +58,11 @@ class IncompressibleBlockMomentumProblem : public Dumux::Experimental::ProblemWi
     using DirichletConstraintData = Dumux::DirichletConstraintData<
         ConstraintInfo, ConstraintValues, GridIndexType>;
 
-    static constexpr Scalar h_  = 50.0;   // height z = h (Table 3.1)
-    static constexpr Scalar w2_ = 50.0;   // half-width x = w/2 (Table 3.1: w=100mm)
-    static constexpr Scalar l2_ = 50.0;   // half-length y = l/2 (Table 3.1: l=100mm)
-    static constexpr Scalar a_  = 25.0;   // load half-width in x (Table 3.1: a=25mm)
-    static constexpr Scalar b_  = 25.0;   // load half-width in y (Table 3.1: b=25mm)
+    static constexpr Scalar h_  = 50.0;   // height z = h (Table 15)
+    static constexpr Scalar w2_ = 50.0;   // half-width x = w/2 (Table 15: w=100mm)
+    static constexpr Scalar l2_ = 50.0;   // half-length y = l/2 (Table 15: l=100mm)
+    static constexpr Scalar a_  = 25.0;   // load half-width in x (Table 15: a=25mm)
+    static constexpr Scalar b_  = 25.0;   // load half-width in y (Table 15: b=25mm)
 
 public:
     IncompressibleBlockMomentumProblem(std::shared_ptr<const GridGeometry> gridGeometry,
@@ -84,9 +83,9 @@ public:
     //   W = µ/2·(trC − 3 − 2·ln J) + λ/2·(J−1)²
     // This is the part µ·(F − F^{−T}); the model adds the volumetric part J·p_s·F^{−T}
     // with the mixed pressure variable p_s (= λ·(J−1) at equilibrium).
-    template<class Tensor, class FVElementGeometry_, class GlobalPosition_>
+    template<class Tensor, class ElementDiscretization_, class GlobalPosition_>
     Tensor isochoricFirstPiolaKirchhoffStressTensor(const Tensor& F,
-                                                    const FVElementGeometry_&,
+                                                    const ElementDiscretization_&,
                                                     const GlobalPosition_&) const
     {
         const Scalar mu = this->spatialParams().shearModulus();
@@ -114,12 +113,12 @@ public:
     }
 
     template<class ElementVariables, class IpData>
-    NumEqVector boundaryFlux(const FVElementGeometry&, const ElementVariables&,
+    NumEqVector boundaryFlux(const ElementDiscretization&, const ElementVariables&,
                              const IpData& ipData) const
     {
         NumEqVector flux(0.0);
         const auto& pos = ipData.global();
-        // Compressive load q (Table 3.1) at z=h on patch x∈[w/2−a, w/2]×y∈[l/2−b, l/2]
+        // Compressive load q (Table 15) at z=h on patch x∈[w/2−a, w/2]×y∈[l/2−b, l/2]
         // (Section 3.1). Applied traction T = −q·e_z → boundaryFlux[z] = +q.
         if (pos[2] > h_ - eps_ && pos[0] > w2_ - a_ - eps_ && pos[1] > l2_ - b_ - eps_)
             flux[2] = loadFactor_ * load_;
@@ -152,16 +151,16 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        auto elemDisc = localView(this->gridDiscretization());
+        for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
-            fvGeometry.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+            elemDisc.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(elemDisc))
             {
                 const auto& bcTypes = this->boundaryTypesAtPos_(boundaryFace.center());
                 if (bcTypes.hasDirichlet())
                 {
-                    for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                    for (const auto& localDof : localDofs(elemDisc, boundaryFace))
                     {
                         ConstraintInfo info;
                         // set the Dirichlet constraints

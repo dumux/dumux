@@ -26,7 +26,7 @@
 
 #include <dumux/solidmechanics/hyperelastic_voliso/model.hh>
 #include <dumux/solidmechanics/hyperelastic_voliso/couplingmanager.hh>
-#include "../../hyperelastic/incompressible_block/spatialparams.hh"
+#include "spatialparams.hh"
 #include "problem.hh"
 
 #ifndef ALU_ELEMENT_TYPE

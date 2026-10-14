@@ -38,7 +38,7 @@ class CooksMembraneMomentumMixedProblem : public Experimental::ProblemWithSpatia
 {
     using ParentType = Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using ElementDiscretization = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -68,9 +68,9 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
-    template<class Tensor, class FVElementGeometry_, class GlobalPosition_>
+    template<class Tensor, class ElementDiscretization_, class GlobalPosition_>
     Tensor isochoricFirstPiolaKirchhoffStressTensor(const Tensor& F,
-                                                    const FVElementGeometry_&,
+                                                    const ElementDiscretization_&,
                                                     const GlobalPosition_&) const
     {
         auto FinvT = F;
@@ -93,7 +93,7 @@ public:
 
     //! The negative traction: upward shear on the right face
     template<class ElementVariables, class IpData>
-    NumEqVector boundaryFlux(const FVElementGeometry&, const ElementVariables&, const IpData& ipData) const
+    NumEqVector boundaryFlux(const ElementDiscretization&, const ElementVariables&, const IpData& ipData) const
     {
         NumEqVector flux(0.0);
         if (ipData.global()[0] > 48.0 - eps_)
@@ -107,11 +107,11 @@ public:
 private:
     void appendDirichletConstraints_()
     {
-        auto fvGeometry = localView(this->gridGeometry());
-        for (const auto& element : elements(this->gridGeometry().gridView()))
+        auto elemDisc = localView(this->gridDiscretization());
+        for (const auto& element : elements(this->gridDiscretization().gridView()))
         {
-            fvGeometry.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+            elemDisc.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(elemDisc))
             {
                 const auto& center = boundaryFace.center();
                 ConstraintInfo info;
@@ -122,7 +122,7 @@ private:
                 else
                     continue;
 
-                for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
+                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
                     constraints_.push_back(DirichletConstraintData{info, ConstraintValues(0.0), localDof.dofIndex()});
             }
         }

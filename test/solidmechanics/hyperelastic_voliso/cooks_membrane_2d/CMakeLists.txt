@@ -1,10 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params_mixed.input)
-file(CREATE_LINK
-    ${CMAKE_SOURCE_DIR}/test/solidmechanics/hyperelastic/cooks_membrane_2d/cooksmembrane.msh
-    ${CMAKE_CURRENT_BINARY_DIR}/cooksmembrane.msh SYMBOLIC)
+dune_symlink_to_source_files(FILES params_mixed.input cooksmembrane.msh)
 
 dumux_add_test(
     NAME test_hyperelastic_cooks_membrane_mini

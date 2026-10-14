@@ -146,7 +146,7 @@ int main(int argc, char** argv)
         results.push_back({ lambda, nu, uy, converged });
     }
 
-    // 3D p-FEM references from SPP-1748 Table 2.9
+    // 3D p-FEM references from Table 9 of Schröder et al. (2021)
     const std::vector<Scalar> refs3D = { 11.381, 11.156, 10.783, 10.746, 10.741 };
     std::cout << "\n"
               << "SPP-1748 Cook's membrane — Taylor-Hood (PQ2+P1) mixed formulation, ψ₁\n"

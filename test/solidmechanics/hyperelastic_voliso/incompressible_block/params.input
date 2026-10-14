@@ -12,7 +12,7 @@ Load = 3.0
 NSteps = 5
 
 [SpatialParams]
-# SPP-1748 benchmark (Table 3.2): λ = 499.92568 MPa, µ = 1.61148 MPa (ν ≈ 0.4983)
+# Schröder et al. (2021), Table 16: λ = 499.92568 MPa, µ = 1.61148 MPa (ν ≈ 0.4983)
 Lambda = 499.92568
 Mu = 1.61148
 

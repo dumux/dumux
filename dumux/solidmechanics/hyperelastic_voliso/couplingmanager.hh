@@ -85,7 +85,7 @@ public:
     {
         static_assert(i != j);
         const auto eIdx = this->problem(Dune::index_constant<j>{})
-                              .gridGeometry().elementMapper().index(element);
+                              .gridDiscretization().elementMapper().index(element);
         if constexpr (i == momIdx_) return stencilsMomToPres_[eIdx];
         else                        return stencilsPresTOMom_[eIdx];
     }
@@ -94,7 +94,7 @@ public:
     Scalar pressureAtPoint(const typename GridGeometry<momIdx_>::LocalView& fvGeom,
                            const GlobalPosition& ip) const
     {
-        const auto& gg = this->problem(pressureIdx).gridGeometry();
+        const auto& gg = this->problem(pressureIdx).gridDiscretization();
         const auto elemSol = elementSolution(fvGeom.element(), this->curSol(pressureIdx), gg);
         return evalSolution(fvGeom.element(), fvGeom.element().geometry(),
                             gg, elemSol, ip)[0];
@@ -104,7 +104,7 @@ public:
     Tensor deformationGradientAtPoint(const typename GridGeometry<presIdx_>::LocalView& fvGeom,
                                       const GlobalPosition& ip) const
     {
-        const auto& gg = this->problem(momentumIdx).gridGeometry();
+        const auto& gg = this->problem(momentumIdx).gridDiscretization();
         const auto fvGeomMom = localView(gg).bindElement(fvGeom.element());
         return computeF_(fvGeom.element(), ip, fvGeomMom);
     }
@@ -112,7 +112,7 @@ public:
     void computeColorsForAssembly()
     {
         elementSets_ = computeColoring(
-            this->problem(momentumIdx).gridGeometry()).sets;
+            this->problem(momentumIdx).gridDiscretization()).sets;
     }
 
     template<std::size_t i, class AssembleElementFunc>
@@ -122,7 +122,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                 "Call computeColorsForAssembly before parallel assembly!");
         const auto& grid = this->problem(Dune::index_constant<i>{})
-                               .gridGeometry().gridView().grid();
+                               .gridDiscretization().gridView().grid();
         for (const auto& elems : elementSets_)
             Dumux::parallelFor(elems.size(), [&](std::size_t n)
             { f(grid.entity(elems[n])); });

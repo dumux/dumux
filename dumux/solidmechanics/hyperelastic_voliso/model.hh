@@ -9,8 +9,6 @@
  * \ingroup HyperelasticVolIso
  * \brief Hyperelastic model with volumetric-isochoric split
  *
- * \page HyperelasticVolIsoModel Hyperelastic model with volumetric-isochoric split
- *
  * # Physical model
  *
  * This model solves the finite-strain quasi-static balance laws for a
@@ -37,7 +35,7 @@
  *   \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p_s J \mathbf{F}^{-\top},
  * \f]
  * where the problem supplies the stress without the volumetric part via
- * `isochoricFirstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal)` and the body force
+ * `isochoricFirstPiolaKirchhoffStressTensor(F, elemDisc, ipGlobal)` and the body force
  * \f$ \mathbf{f} \f$ via `source`; the model adds \f$ p_s J \mathbf{F}^{-\top} \f$.
  *
  * **Pressure subproblem** (pressure \f$ p_s \f$):

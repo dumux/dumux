@@ -43,7 +43,7 @@ namespace Dumux {
  * Assembles \f$ -\nabla_X \cdot \mathbf{P} = \mathbf{f} \f$ with the first Piola–Kirchhoff stress
  * \f[ \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p\, J\, \mathbf{F}^{-\top}. \f]
  * The problem supplies \f$ \mathbf{P}_\text{iso} \f$ through
- * `isochoricFirstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal)` and the body force
+ * `isochoricFirstPiolaKirchhoffStressTensor(F, elemDisc, ipGlobal)` and the body force
  * \f$ \mathbf{f} \f$ through `source`. The scalar \f$ p \f$ is `volumetricStressPressure`, here the
  * pressure \f$ p_s \f$ of the pressure subdomain; derived residuals may add further pressures.
  * The residual is quasi-static (no storage term).
@@ -56,7 +56,7 @@ class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLoca
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using ElementDiscretization = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using GlobalPosition = typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
@@ -73,7 +73,7 @@ public:
     NumEqVector computeStorage(const auto&, const auto&, const auto&) const
     { return NumEqVector(0.0); }
 
-    NumEqVector storageIntegral(const FVElementGeometry&, const ElementVariables&,
+    NumEqVector storageIntegral(const ElementDiscretization&, const ElementVariables&,
                                 const auto&, bool) const
     { return NumEqVector(0.0); }
 
@@ -81,32 +81,32 @@ public:
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const auto& element,
-                                           const FVElementGeometry& fvGeometry,
+                                           const ElementDiscretization& elemDisc,
                                            const ElementVariables& elemVars) const
     {
-        if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
-            if (nonCVLocalDofs(fvGeometry).empty())
+            if (nonCVLocalDofs(elemDisc).empty())
                 return;
 
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element))
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
             {
                 const auto& ipCache = cache(elemVars, qpData.ipData());
                 const auto& ipGlobal = qpData.ipData().global();
 
-                const auto F = deformationGradient_(fvGeometry, elemVars, ipCache);
-                const auto P = firstPiolaKirchhoffStressTensor_(problem, F, fvGeometry, ipGlobal);
-                const auto f = problem.source(fvGeometry, elemVars, qpData.ipData());
+                const auto F = deformationGradient_(elemDisc, elemVars, ipCache);
+                const auto P = firstPiolaKirchhoffStressTensor_(problem, F, elemDisc, ipGlobal);
+                const auto f = problem.source(elemDisc, elemVars, qpData.ipData());
                 const auto& shapeValues = ipCache.shapeValues();
 
-                for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
+                for (const auto& nonCVdof : nonCVLocalDofs(elemDisc))
                 {
                     const auto idx = nonCVdof.index();
                     for (int i = 0; i < dim; ++i)
                     {
                         for (int j = 0; j < dim; ++j)
                             residual[idx][Indices::momentum(i)] += P[i][j] * ipCache.gradN(idx)[j] * qpData.weight();
-                        residual[idx][Indices::momentum(i)] -= f[Indices::momentum(i)] * double(shapeValues[idx]) * qpData.weight();
+                        residual[idx][Indices::momentum(i)] -= f[Indices::momentum(i)] * shapeValues[idx][0] * qpData.weight();
                     }
                 }
             }
@@ -115,7 +115,7 @@ public:
 
     //! Interior flux integral: \f$ -\int \mathbf{P} \cdot \mathbf{n} \, \mathrm{d}A \f$
     template<class SubControlVolumeFace>
-    NumEqVector fluxIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector fluxIntegral(const ElementDiscretization& elemDisc,
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
     {
@@ -123,11 +123,11 @@ public:
         const auto& n = scvf.unitOuterNormal();
         NumEqVector f(0.0);
 
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scvf))
+        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf))
         {
             const auto& ipCache = cache(elemVars, qpData.ipData());
-            const auto F = deformationGradient_(fvGeometry, elemVars, ipCache);
-            const auto P = firstPiolaKirchhoffStressTensor_(problem, F, fvGeometry, qpData.ipData().global());
+            const auto F = deformationGradient_(elemDisc, elemVars, ipCache);
+            const auto P = firstPiolaKirchhoffStressTensor_(problem, F, elemDisc, qpData.ipData().global());
 
             for (int i = 0; i < dim; ++i)
                 for (int j = 0; j < dim; ++j)
@@ -138,18 +138,18 @@ public:
 
     //! The scalar \f$ p \f$ of the volumetric stress \f$ p J \mathbf{F}^{-\top} \f$
     Scalar volumetricStressPressure(const Problem& problem,
-                                    const FVElementGeometry& fvGeometry,
+                                    const ElementDiscretization& elemDisc,
                                     const GlobalPosition& ipGlobal) const
-    { return problem.couplingManager().pressureAtPoint(fvGeometry, ipGlobal); }
+    { return problem.couplingManager().pressureAtPoint(elemDisc, ipGlobal); }
 
 private:
     template<class IpCache>
-    Tensor deformationGradient_(const FVElementGeometry& fvGeometry,
+    Tensor deformationGradient_(const ElementDiscretization& elemDisc,
                                 const ElementVariables& elemVars,
                                 const IpCache& ipCache) const
     {
         Tensor F(0.0);
-        for (const auto& localDof : localDofs(fvGeometry))
+        for (const auto& localDof : localDofs(elemDisc))
             for (int d = 0; d < dim; ++d)
                 F[d].axpy(elemVars[localDof].displacement(d), ipCache.gradN(localDof.index()));
         for (int d = 0; d < dim; ++d)
@@ -159,14 +159,14 @@ private:
 
     Tensor firstPiolaKirchhoffStressTensor_(const Problem& problem,
                                             const Tensor& F,
-                                            const FVElementGeometry& fvGeometry,
+                                            const ElementDiscretization& elemDisc,
                                             const GlobalPosition& ipGlobal) const
     {
-        auto P = problem.isochoricFirstPiolaKirchhoffStressTensor(F, fvGeometry, ipGlobal);
+        auto P = problem.isochoricFirstPiolaKirchhoffStressTensor(F, elemDisc, ipGlobal);
 
         Tensor Finv(F);
         Finv.invert();
-        const Scalar pJ = this->asImp().volumetricStressPressure(problem, fvGeometry, ipGlobal)*F.determinant();
+        const Scalar pJ = this->asImp().volumetricStressPressure(problem, elemDisc, ipGlobal)*F.determinant();
         for (int i = 0; i < dim; ++i)
             for (int j = 0; j < dim; ++j)
                 P[i][j] += pJ*Finv[j][i];
@@ -192,7 +192,7 @@ class HyperelasticVolIsoPressureLocalResidual : public DiscretizationDefaultLoca
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
+    using ElementDiscretization = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Tensor = Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension>;
 
@@ -206,11 +206,11 @@ public:
     NumEqVector computeStorage(const Problem&, const auto&, const auto&) const
     { return NumEqVector(0.0); }
 
-    NumEqVector storageIntegral(const FVElementGeometry&, const ElementVariables&,
+    NumEqVector storageIntegral(const ElementDiscretization&, const ElementVariables&,
                                 const auto&, bool) const
     { return NumEqVector(0.0); }
 
-    NumEqVector fluxIntegral(const FVElementGeometry&, const ElementVariables&,
+    NumEqVector fluxIntegral(const ElementDiscretization&, const ElementVariables&,
                              const auto&) const
     { return NumEqVector(0.0); }
 
@@ -222,26 +222,26 @@ public:
      * \f$ p_s^{\mathrm{eq}} - p_s = 0 \f$ at equilibrium).
      */
     template<class SubControlVolume_>
-    NumEqVector sourceIntegral(const FVElementGeometry& fvGeometry,
+    NumEqVector sourceIntegral(const ElementDiscretization& elemDisc,
                                const ElementVariables& elemVars,
                                const SubControlVolume_& scv) const
     {
         NumEqVector source(0.0);
 
         const auto& problem = this->asImp().problem();
-        const auto& localBasis = fvGeometry.gridGeometry().feCache().get(fvGeometry.element().type()).localBasis();
+        const auto& localBasis = elemDisc.gridDiscretization().feCache().get(elemDisc.element().type()).localBasis();
         std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
 
-        for (const auto& qpData : CVFE::quadratureRule(fvGeometry, scv, QuadratureRules::DuneQuadrature<3>{}))
+        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv, QuadratureRules::DuneQuadrature<3>{}))
         {
             const Tensor F = problem.couplingManager().deformationGradientAtPoint(
-                fvGeometry, qpData.ipData().global());
+                elemDisc, qpData.ipData().global());
             const Scalar J = F.determinant();
             const Scalar psEq = problem.volumetricPressure(J);
 
             localBasis.evaluateFunction(qpData.ipData().local(), shapeValues);
             Scalar ps = 0.0;
-            for (const auto& localDof : localDofs(fvGeometry))
+            for (const auto& localDof : localDofs(elemDisc))
                 ps += elemVars[localDof].pressure() * shapeValues[localDof.index()][0];
 
             source[0] -= (psEq - ps) * qpData.weight();
@@ -256,31 +256,31 @@ public:
     void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
                                            const Problem& problem,
                                            const auto& element,
-                                           const FVElementGeometry& fvGeometry,
+                                           const ElementDiscretization& elemDisc,
                                            const ElementVariables& elemVars) const
     {
-        if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<FVElementGeometry>())
+        if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
         {
-            if (nonCVLocalDofs(fvGeometry).empty())
+            if (nonCVLocalDofs(elemDisc).empty())
                 return;
 
             const auto& problem = this->asImp().problem();
-            const auto& localBasis = fvGeometry.gridGeometry().feCache().get(fvGeometry.element().type()).localBasis();
+            const auto& localBasis = elemDisc.gridDiscretization().feCache().get(elemDisc.element().type()).localBasis();
             std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
 
-            for (const auto& qpData : CVFE::quadratureRule(fvGeometry, element, QuadratureRules::DuneQuadrature<3>{}))
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, element, QuadratureRules::DuneQuadrature<3>{}))
             {
                 const Tensor F = problem.couplingManager().deformationGradientAtPoint(
-                    fvGeometry, qpData.ipData().global());
+                    elemDisc, qpData.ipData().global());
                 const Scalar J = F.determinant();
                 const Scalar psEq = problem.volumetricPressure(J);
 
                 localBasis.evaluateFunction(qpData.ipData().local(), shapeValues);
                 Scalar ps = 0.0;
-                for (const auto& localDof : localDofs(fvGeometry))
+                for (const auto& localDof : localDofs(elemDisc))
                     ps += elemVars[localDof].pressure() * shapeValues[localDof.index()][0];
 
-                for (const auto& nonCVdof : nonCVLocalDofs(fvGeometry))
+                for (const auto& nonCVdof : nonCVLocalDofs(elemDisc))
                 {
                     const auto idx = nonCVdof.index();
                     residual[idx][0] -= (psEq - ps) * shapeValues[idx][0] * qpData.weight();
