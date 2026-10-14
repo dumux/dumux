@@ -20,6 +20,9 @@ namespace Dumux {
  * \ingroup Fluidmatrixinteractions
  * \brief A relationship for the porosity of a porous medium under mechanical deformation.
  *
+ * The porosity is the pore volume per unit volume of the deformed medium, assuming
+ * incompressible solid grains.
+ *
  * \tparam Scalar The type used for scalar values
  */
 template<class Scalar>
