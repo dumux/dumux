@@ -39,6 +39,13 @@ of the subdomain Jacobians, and `MatrixConverter` and `VectorConverter` default 
 The embedded 1D-3D coupling interpolates complex-valued primary variables at its integration points with real shape values.
 Complex-valued Helmholtz tests in `test/experimental/complex` demonstrate the feature, including a box facet-coupling test.
 - __Elastic model__: The linear elastic model (`solidmechanics/elastic`) can also be assembled with local degrees of freedom (`Experimental::Assembler` with `Experimental::GridVariables`), with the box, PQ1-bubble and PQ2 control-volume finite-element schemes and the PQ1 and PQ2 finite-element schemes. Such problems derive from `Experimental::ProblemWithSpatialParams`, impose Dirichlet conditions as constraints, provide boundary terms with `boundaryFlux` and body forces with `source`, use `ElasticVariables` and spatial parameters derived from `Experimental::ElasticSpatialParams`. The classic assembly with `FVGridVariables` is unchanged. `test/solidmechanics/elastic/cooks_membrane` implements Cook's membrane for nearly incompressible linear elasticity, and the manufactured-solution test (`test_elastic_manufactured_solution_box`, formerly `test_elastic_box`) uses the new interface.
+- __Hyperelasticity with volumetric-isochoric split__: The new model `solidmechanics/hyperelastic_voliso` solves finite-strain
+hyperelasticity of nearly incompressible solids with a mixed displacement-pressure formulation: a momentum and a pressure subdomain
+coupled by `HyperelasticVolIsoCouplingManager` and assembled with `Experimental::MultiDomainAssembler` (control-volume, hybrid and
+finite-element schemes). The momentum problem provides the isochoric stress (`isochoricFirstPiolaKirchhoffStressTensor`), the
+pressure problem the volumetric pressure (`volumetricPressure(J)`), and the model adds the volumetric stress \f$ p_s J \mathbf{F}^{-\top} \f$.
+Tests: Cook's membrane (SPP 1748, 2D and 3D, MINI and Taylor-Hood elements) and the incompressible block (SPP 1748; MINI, P2-P1, P2-P1
+finite elements, Q2-Q1), each with a benchmark page.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's

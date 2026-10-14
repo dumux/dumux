@@ -23,6 +23,8 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/solidmechanics/turek_hron/README.md \
                          @top_srcdir@/test/solidmechanics/elastic/cooks_membrane/README.md \
                          @top_srcdir@/test/multidomain/poromechanics/mandel/README.md \
+                         @top_srcdir@/test/solidmechanics/hyperelastic_voliso/cooks_membrane_2d/README.md \
+                         @top_srcdir@/test/solidmechanics/hyperelastic_voliso/incompressible_block/README.md \
                          @top_srcdir@/CONTRIBUTING.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
