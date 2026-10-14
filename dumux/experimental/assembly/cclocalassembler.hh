@@ -32,6 +32,7 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
 #include <dumux/experimental/assembly/fvlocalassemblerbase.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 
 namespace Dumux::Experimental {
 
@@ -63,9 +64,9 @@ public:
 
     using ParentType::ParentType;
 
-    template <class ResidualVector, class StageParams, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Noop>
+    template <class ResidualVector, class Scalar, class PartialReassembler = DefaultPartialReassembler, class CouplingFunction = Noop>
     void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
-                                     const StageParams& stageParams, ResidualVector& temporal, ResidualVector& spatial,
+                                     const OperatorWeights<Scalar>& weights,
                                      ResidualVector& constrainedDofs,
                                      const PartialReassembler* partialReassembler = nullptr,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = noop)
@@ -73,21 +74,17 @@ public:
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
 
-        this->localResidual().spatialWeight(1.0);
-        this->localResidual().temporalWeight(1.0);
+        const bool skipSpatial = (weights.spatial == 0.0);
+        const bool skipStorage = (weights.storage == 0.0);
 
-        spatial[globalI] = this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0];
-        temporal[globalI] = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars())[0];
         res[globalI] = 0.0;
-        if (!stageParams.skipSpatial(stageParams.size()-1))
-            res[globalI] += spatial[globalI]*stageParams.spatialWeight(stageParams.size()-1);
-        if (!stageParams.skipTemporal(stageParams.size()-1))
-            res[globalI] += temporal[globalI]*stageParams.temporalWeight(stageParams.size()-1);
+        if (!skipSpatial)
+            res[globalI] += this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0]*weights.spatial;
+        if (!skipStorage)
+            res[globalI] += this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars())[0]*weights.storage;
 
-        this->localResidual().spatialWeight(stageParams.spatialWeight(stageParams.size()-1),
-                                            stageParams.skipSpatial(stageParams.size()-1));
-        this->localResidual().temporalWeight(stageParams.temporalWeight(stageParams.size()-1),
-                                             stageParams.skipTemporal(stageParams.size()-1));
+        this->localResidual().spatialWeight(weights.spatial, skipSpatial);
+        this->localResidual().temporalWeight(weights.storage, skipStorage);
 
 
         if (partialReassembler

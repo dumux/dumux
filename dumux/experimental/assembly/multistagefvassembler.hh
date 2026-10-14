@@ -17,6 +17,7 @@
 #include <deque>
 #include <type_traits>
 #include <memory>
+#include <optional>
 
 #include <dune/istl/matrixindexset.hh>
 
@@ -39,8 +40,9 @@
 #include <dumux/experimental/assembly/cclocalassembler.hh>
 #include <dumux/experimental/assembly/multistagefvlocaloperator.hh>
 
-#include <dumux/experimental/timestepping/multistagemethods.hh>
-#include <dumux/experimental/timestepping/multistagetimestepper.hh>
+#include <dumux/experimental/timestepping/timelevel.hh>
+#include <dumux/experimental/timestepping/timeintegrationmethod.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 
 namespace Dumux::Experimental::Detail {
 
@@ -81,6 +83,7 @@ namespace Dumux::Experimental {
  * \ingroup Experimental
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
+ *        and the implicit solves of a time integration method (see ImplicitSolveParams)
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
  */
@@ -100,10 +103,10 @@ class MultiStageFVAssembler
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using StageParams = Experimental::MultiStageParams<Scalar>;
     using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     using ResidualType = typename Dumux::Detail::NativeDuneVectorType<SolutionVector>::type;
+    using SolveParams = Experimental::ImplicitSolveParams<Scalar, ResidualType>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
 
@@ -112,15 +115,17 @@ public:
 
     /*!
      * \brief The constructor for instationary problems
+     * \param method The time integration method, which determines the Jacobian pattern
+     * \param prevSol The solution at the beginning of the time step (used by solvers that reset a time step)
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
      *       it is however guaranteed that the state after assembly will be the same as before
      */
     MultiStageFVAssembler(std::shared_ptr<const Problem> problem,
                           std::shared_ptr<const GridGeometry> gridGeometry,
                           std::shared_ptr<GridVariables> gridVariables,
-                          std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> msMethod,
+                          std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> method,
                           const SolutionVector& prevSol)
-    : timeSteppingMethod_(msMethod)
+    : timeSteppingMethod_(method)
     , problem_(problem)
     , gridGeometry_(gridGeometry)
     , gridVariables_(gridVariables)
@@ -141,56 +146,31 @@ public:
     template<class PartialReassembler = DefaultPartialReassembler>
     void assembleJacobianAndResidual(const SolutionVector& curSol, const PartialReassembler* partialReassembler = nullptr)
     {
+        if (!solveParams_)
+            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set. Call setImplicitSolve first.");
+
         resetJacobian_(partialReassembler);
-
         resetResidual_();
-        spatialOperatorEvaluations_.back() = 0.0;
-        temporalOperatorEvaluations_.back() = 0.0;
-
-        if (stageParams_->size() != spatialOperatorEvaluations_.size())
-            DUNE_THROW(Dune::InvalidStateException, "Wrong number of residuals");
 
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleJacobianAndResidual(
                 *jacobian_, *residual_, *gridVariables_,
-                *stageParams_,
-                temporalOperatorEvaluations_.back(),
-                spatialOperatorEvaluations_.back(),
+                solveParams_->weights,
                 constrainedDofs_,
                 partialReassembler
             );
         });
 
-        // Autonomous spatial operator: finalize the previous stage's stored evaluation for
-        // free. On the first assembly of this stage, curSol is the converged previous-stage
-        // solution and the value just assembled into the current slot equals R/M at that
-        // solution; time-independence makes the stage time irrelevant, so a copy suffices
-        // (no extra evaluation, no dependence on the solver re-assembling at convergence).
-        const auto curStage = stageParams_->size() - 1;
-        if (curStage > 1 && autonomousSpatialOperator_ && firstStageAssembly_)
+        // the contribution of known states does not enter the constraint equations
+        if (solveParams_->constant)
         {
-            spatialOperatorEvaluations_[curStage-1] = spatialOperatorEvaluations_.back();
-            temporalOperatorEvaluations_[curStage-1] = temporalOperatorEvaluations_.back();
+            const auto& constant = *solveParams_->constant;
+            for (std::size_t i = 0; i < constant.size(); ++i)
+                for (std::size_t ii = 0; ii < constant[i].size(); ++ii)
+                    (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constant[i][ii];
         }
-        firstStageAssembly_ = false;
-
-        // assemble the full residual for the time integration stage
-        auto constantResidualComponent = (*residual_);
-        constantResidualComponent = 0.0;
-        for (std::size_t k = 0; k < stageParams_->size()-1; ++k)
-        {
-            if (!stageParams_->skipTemporal(k))
-                constantResidualComponent.axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_[k]);
-            if (!stageParams_->skipSpatial(k))
-                constantResidualComponent.axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_[k]);
-        }
-
-        // masked summation of constant residual component onto this stage's resiudal component
-        for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
-            for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
-                (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
     }
 
     //! compute the residuals using the internal residual
@@ -273,99 +253,49 @@ public:
      * \brief Reset the gridVariables
      */
     void resetTimeStep(const SolutionVector &cursol)
+    { gridVariables().resetTimeStep(cursol); }
+
+    /*!
+     * \brief Set the weights, the time level and the contribution of known states for the next implicit solve
+     */
+    void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        gridVariables().resetTimeStep(cursol);
-        this->clearStages();
+        if (params.weights.inertia != 0.0)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage FV assembler");
+
+        setProblemTime_(*problem_, params.timeLevel.current());
+        solveParams_ = params;
     }
 
-    void clearStages()
+    /*!
+     * \brief Evaluate the unweighted operators at the given solution and time level
+     * \note The grid variables have to be updated to the given solution.
+     */
+    void assembleOperators(const SolutionVector& sol,
+                           const Experimental::TimeLevel<Scalar>& timeLevel,
+                           Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        spatialOperatorEvaluations_.clear();
-        temporalOperatorEvaluations_.clear();
-        stageParams_.reset();
-    }
+        if (evaluations.inertia)
+            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage FV assembler");
 
-    template<class StageParams>
-    void prepareStage(SolutionVector& x, StageParams params)
-    {
-        stageParams_ = std::move(params);
-        const auto curStage = stageParams_->size() - 1;
-        firstStageAssembly_ = true;
+        setProblemTime_(*problem_, timeLevel.current());
 
-        // in the first stage, also assemble the residual
-        // at the previous time level (stage 0 residual)
-        if (curStage == 1)
+        ResidualType unused;
+        auto& storage = evaluations.storage ? *evaluations.storage : unused;
+        auto& spatial = evaluations.spatial ? *evaluations.spatial : unused;
+        for (auto* r : {&storage, &spatial})
         {
-            // update time in variables?
-            setProblemTime_(*problem_, stageParams_->timeAtStage(0));
-
-            resetResidual_(); // residual resized and zero
-
-            assert(spatialOperatorEvaluations_.size() >= 0);
-            if (spatialOperatorEvaluations_.size() == 0)
-            {
-                spatialOperatorEvaluations_.push_back(*residual_);
-                temporalOperatorEvaluations_.push_back(*residual_);
-
-                // assemble stage 0 residuals
-                assemble_([&](const auto& element)
-                {
-                    LocalAssembler localAssembler(*this, element, *prevSol_);
-                    localAssembler.localResidual().spatialWeight(1.0);
-                    localAssembler.localResidual().temporalWeight(1.0);
-                    localAssembler.assembleCurrentResidual(spatialOperatorEvaluations_.back(), temporalOperatorEvaluations_.back());
-                });
-            }
-
-            // we don't delete the first stage so it can be reused in a restarted
-            // time integration step. The evaluations are only deleted
-            // when explicitly requested by calling clearStages().
-            // So if here the vector is non-empty, we don't need to evaluate again
-            // (this should only occur if we are restarting time integration, e.g.
-            // with a different time step size)
-            else if (spatialOperatorEvaluations_.size() > 0)
-            {
-                updateGridVariables(x);
-                spatialOperatorEvaluations_.resize(1);
-                temporalOperatorEvaluations_.resize(1);
-            }
+            setResidualSize_(*r);
+            (*r) = 0.0;
         }
 
-        // Non-autonomous spatial operator: the constant residual component reuses each previous
-        // stage's operators at its *converged* solution. During the stage solve the residual
-        // assembly stored them at the solver's last iterate — correct for solvers that re-assemble
-        // at the converged solution (e.g. NewtonSolver), but stale for single-assembly solvers
-        // (e.g. LinearPDESolver). So we re-evaluate here at the converged solution and the previous
-        // stage's time level (which matters for time-dependent operators), making multi-stage
-        // schemes correct for any solver. This is one extra residual (no Jacobian) evaluation per
-        // stage; it is skipped entirely for an autonomous operator, where the value is instead
-        // reused for free in assembleJacobianAndResidual (see setAutonomousSpatialOperator).
-        if (curStage > 1 && !autonomousSpatialOperator_)
+        assemble_([&](const auto& element)
         {
-            setProblemTime_(*problem_, stageParams_->timeAtStage(curStage-1));
-            spatialOperatorEvaluations_.back() = 0.0;
-            temporalOperatorEvaluations_.back() = 0.0;
-            assemble_([&](const auto& element)
-            {
-                LocalAssembler localAssembler(*this, element, x);
-                localAssembler.localResidual().spatialWeight(1.0);
-                localAssembler.localResidual().temporalWeight(1.0);
-                localAssembler.assembleCurrentResidual(spatialOperatorEvaluations_.back(), temporalOperatorEvaluations_.back());
-            });
-        }
-
-        // update time in variables?
-        setProblemTime_(*problem_, stageParams_->timeAtStage(curStage));
-
-        resetResidual_(); // residual resized and zero
-
-        if (spatialOperatorEvaluations_.size() != curStage)
-            DUNE_THROW(Dune::InvalidStateException,
-                "Invalid state. Maybe you forgot to call clearStages()");
-
-        // allocate memory for this stage
-        spatialOperatorEvaluations_.push_back(*residual_);
-        temporalOperatorEvaluations_.push_back(*residual_);
+            LocalAssembler localAssembler(*this, element, sol);
+            localAssembler.localResidual().spatialWeight(1.0, !evaluations.spatial);
+            localAssembler.localResidual().temporalWeight(1.0, !evaluations.storage);
+            localAssembler.assembleCurrentResidual(spatial, storage);
+        });
     }
 
     //! TODO get rid of this (called by Newton but shouldn't be necessary)
@@ -374,17 +304,6 @@ public:
 
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
-
-    //! Declare the spatial operator (flux + source) time-independent (autonomous). Then the
-    //! per-stage operator reuse in the constant residual component is exact via a cheap copy in
-    //! assembleJacobianAndResidual, with no extra evaluation and independent of the solver — so
-    //! multi-stage schemes are correct with any solver (e.g. LinearPDESolver) at no added cost.
-    //! Otherwise (default) the previous stage's operators are re-evaluated at their converged
-    //! solution in prepareStage, which is correct for any solver but costs one residual evaluation
-    //! per stage (redundant when the solver already re-assembles at convergence, e.g. Newton).
-    //! Only set true if flux and source do not depend on time explicitly.
-    void setAutonomousSpatialOperator(bool a)
-    { autonomousSpatialOperator_ = a; }
 
 private:
     /*!
@@ -512,11 +431,9 @@ private:
                 "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
     }
 
-    std::shared_ptr<const Experimental::MultiStageMethod<Scalar>> timeSteppingMethod_;
-    std::vector<ResidualType> spatialOperatorEvaluations_;
-    std::vector<ResidualType> temporalOperatorEvaluations_;
+    std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> timeSteppingMethod_;
     ResidualType constrainedDofs_;
-    std::shared_ptr<const StageParams> stageParams_;
+    std::optional<SolveParams> solveParams_;
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
@@ -533,12 +450,6 @@ private:
     //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<ResidualType> residual_;
-
-    //! whether the spatial operator is time-independent (enables free per-stage reuse)
-    bool autonomousSpatialOperator_ = false;
-
-    //! true only for the first residual assembly of the current stage
-    bool firstStageAssembly_ = false;
 
     //! element sets for parallel assembly
     bool enableMultithreading_ = false;

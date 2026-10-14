@@ -34,6 +34,8 @@
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
+#include <test/experimental/timestepping/implicitsolvecheck.hh>
+
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -123,6 +125,13 @@ int main(int argc, char** argv)
 
     using TimeStepper = Experimental::MultiStageTimeStepper<NewtonSolver>;
     TimeStepper timeStepper(nonLinearSolver, timeSteppingMethod);
+
+    const auto numConstrained = Test::checkImplicitSolveContract(
+        *assembler, x, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0
+    );
+    if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+        if (numConstrained == 0)
+            DUNE_THROW(Dune::Exception, "Expected Dirichlet constraints in the implicit solve contract check");
 
     // time loop
     timeLoop->start(); do

@@ -37,6 +37,8 @@
 
 #include "cvfevolvarsdeflectionpolicy_.hh"
 
+#include <dumux/experimental/timestepping/implicitsolve.hh>
+
 namespace Dumux::Experimental {
 
 #ifndef DOXYGEN
@@ -158,46 +160,38 @@ public:
     }
 
     /*!
-     * \brief Multi-stage assembly: assembles Jacobian and residual while separately
-     *        accumulating the current stage's temporal and spatial operator evaluations.
+     * \brief Assembles Jacobian and residual of an implicit solve of a time integration method
      *
      * \param jac            The Jacobian matrix to add to
-     * \param res            The residual to add the stage-weighted contribution to
+     * \param res            The residual to add the weighted contribution to
      * \param gridVariables  The grid variables for this subdomain
-     * \param stageParams    Multi-stage parameters (Butcher tableau weights for this stage)
-     * \param temporal       Accumulator for the temporal (storage) operator at this stage
-     * \param spatial        Accumulator for the spatial (flux+source) operator at this stage
+     * \param weights        The weights of the storage and spatial operators
      * \param constrainedDofs Vector tracking which dofs have Dirichlet constraints
      * \param maybeAssembleCouplingBlocks Optional functor for coupling Jacobian blocks
      */
-    template<class ResidualVector, class StageParams, class CouplingFunction = Detail::CVFE::NoOperator>
+    template<class ResidualVector, class Scalar, class CouplingFunction = Detail::CVFE::NoOperator>
     void assembleJacobianAndResidual(JacobianMatrix& jac, ResidualVector& res, GridVariables& gridVariables,
-                                     const StageParams& stageParams,
-                                     ResidualVector& temporal, ResidualVector& spatial,
+                                     const OperatorWeights<Scalar>& weights,
                                      ResidualVector& constrainedDofs,
                                      const CouplingFunction& maybeAssembleCouplingBlocks = {})
     {
         this->asImp_().bindLocalViews();
 
-        const auto sWeight = stageParams.spatialWeight(stageParams.size()-1);
-        const auto tWeight = stageParams.temporalWeight(stageParams.size()-1);
+        const auto sWeight = weights.spatial;
+        const auto tWeight = weights.storage;
 
         if (!this->elementIsGhost())
         {
-            // evaluate current stage spatial and temporal contributions separately
             const auto spatialResidual = this->evalLocalFluxAndSourceResidual(this->curElemVars());
             const auto storageResidual = this->localResidual().evalStorageCurrentLevel(
                 this->element(), this->elemDisc(), this->curElemVars());
 
-            // accumulate into stage vectors and form weighted stage residual
             ElementResidualVector origResidual(spatialResidual.size());
             origResidual = 0.0;
             for (const auto& localDof : localDofs(this->elemDisc()))
             {
                 const auto li = localDof.index();
                 const auto di = localDof.dofIndex();
-                spatial[di] += spatialResidual[li];
-                temporal[di] += storageResidual[li];
                 origResidual[li] += spatialResidual[li]*sWeight + storageResidual[li]*tWeight;
                 res[di] += origResidual[li];
             }
@@ -210,8 +204,7 @@ public:
     }
 
     /*!
-     * \brief Convenience method for assembling only the current residual (no Jacobian)
-     *        used during stage 0 preparation in multi-stage assembly.
+     * \brief Assemble the unweighted storage and spatial operators (no Jacobian)
      */
     template<class ResidualVector>
     void assembleCurrentResidual(ResidualVector& temporal, ResidualVector& spatial)
