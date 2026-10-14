@@ -15,18 +15,19 @@ dumux_add_test(NAME test_2pve_immiscible_tpfa_2d
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_2d params_2d.input -Problem.Name 2pve_lenses_2d_ -Grid.LowerLeft '0 0' -Grid.UpperRight '250 55' -Grid.Cells '40 18' -TimeLoop.TEnd 4e5 -TimeLoop.MaxTimeStepSize 10000 -BoundaryConditions.InjectionRate -5.835e-4")
 
 # Homogeneous shutoff experiment: 1 m vertical reconstruction, still only 40 VE columns.
+# Prescribed startup ramp and fixed steps keep trapping history independent of Newton iteration counts.
 # Require at least 1% of the injected gas to remain residually trapped.
 dumux_add_test(NAME test_2pve_immiscible_tpfa_2d_trapping
                TARGET test_2pve_immiscible_tpfa_2d
                LABELS porousmediumflow 2pve
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
-                        --zeroThreshold "{\"S_gas\":3e-3,\"mob_gas\":90,\"velocity_gas (m/s)\":1e-7,\"velocity_liquid (m/s)\":1e-7}"
+                        --zeroThreshold "{\"S_gas\":3e-3,\"mob_gas\":90,\"velocity_gas (m/s)\":1e-7,\"velocity_liq (m/s)\":1e-7}"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2pve_immiscible_tpfa_2d_trapping_coarse-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/2pve_trapping_2d_40x0x55-00011.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/test_2pve_immiscible_tpfa_2d_trapping_fine-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/fine_2pve_trapping_2d_40x0x55-00011.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_2d params_2d.input -Problem.Name 2pve_trapping_2d_ -Grid.LowerLeft '0 0' -Grid.UpperRight '250 55' -Grid.Cells '40 55' -TimeLoop.TEnd 2e6 -TimeLoop.MaxTimeStepSize 25000 -BoundaryConditions.InjectionRate -5.835e-4 -BoundaryConditions.InjectionEndTime 8e4 -SpatialParams.Snr 0.2 -SpatialParams.EnableLens false -MassBalance.MinTrappedGasFraction 0.01")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_2d params_2d.input -Problem.Name 2pve_trapping_2d_ -Grid.LowerLeft '0 0' -Grid.UpperRight '250 55' -Grid.Cells '40 55' -TimeLoop.TEnd 2e6 -TimeLoop.MaxTimeStepSize 390 -TimeLoop.UsePrescribedTimeSteps true -BoundaryConditions.InjectionRate -5.835e-4 -BoundaryConditions.InjectionEndTime 8e4 -SpatialParams.Snr 0.2 -SpatialParams.EnableLens false -MassBalance.MinTrappedGasFraction 0.01")
 
 dumux_add_test(NAME test_2pve_immiscible_tpfa_3d
                SOURCES main.cc

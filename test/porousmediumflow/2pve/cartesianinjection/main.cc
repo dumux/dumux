@@ -17,6 +17,7 @@
 
 #include <config.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <iostream>
@@ -146,6 +147,10 @@ int main(int argc, char** argv)
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const bool usePrescribedTimeSteps = getParam<bool>("TimeLoop.UsePrescribedTimeSteps", false);
+    // Keep the nominal ramp independent of Newton iterations and checkpoint clipping.
+    Scalar prescribedDt = std::min(dt, maxDt);
+    std::size_t retriedTimeSteps = 0;
 
     // instantiate time loop
     auto timeLoopCoarse = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
@@ -206,7 +211,15 @@ int main(int argc, char** argv)
     timeLoopCoarse->start(); do
     {
         // solve the non-linear system with time step control
+        const auto requestedDt = timeLoopCoarse->timeStepSize();
         nonLinearSolverCoarse.solve(*xCoarse, *timeLoopCoarse);
+        if (timeLoopCoarse->timeStepSize() < requestedDt)
+        {
+            ++retriedTimeSteps;
+            if (mpiHelper.rank() == 0)
+                std::cout << "Newton retry reduced time step from " << requestedDt
+                          << " to " << timeLoopCoarse->timeStepSize() << " seconds\n";
+        }
 
         // the cached coarse-level volume variables depend on the column history updated with the fine-level solution
         fineLevelView->updateSol(*problemCoarse, *xCoarse);
@@ -234,8 +247,13 @@ int main(int argc, char** argv)
         // report statistics of this time step
         timeLoopCoarse->reportTimeStep();
 
-        // set new dt as suggested by the Newton solver
-        timeLoopCoarse->setTimeStepSize(nonLinearSolverCoarse.suggestTimeStepSize(timeLoopCoarse->timeStepSize()));
+        if (usePrescribedTimeSteps)
+        {
+            prescribedDt = std::min(2.0*prescribedDt, maxDt);
+            timeLoopCoarse->setTimeStepSize(prescribedDt);
+        }
+        else
+            timeLoopCoarse->setTimeStepSize(nonLinearSolverCoarse.suggestTimeStepSize(timeLoopCoarse->timeStepSize()));
     } while (!timeLoopCoarse->finished());
 
     const auto finalMassBalance = Dumux::VETest::computeMassBalance<TypeTag>(*gridGeometryCoarse, *gridGeometryFine, *xCoarse, *problemCoarse, *timeLoopCoarse);
@@ -250,6 +268,8 @@ int main(int argc, char** argv)
                    << " is below the required minimum " << minimumTrappedFraction);
 
     // output some Newton statistics
+    if (usePrescribedTimeSteps && mpiHelper.rank() == 0)
+        std::cout << "Prescribed schedule: " << retriedTimeSteps << " time steps required Newton retries\n";
     nonLinearSolverCoarse.report();
 
     timeLoopCoarse->finalize(leafGridViewCoarse.comm());

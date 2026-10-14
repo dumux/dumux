@@ -2,6 +2,7 @@
 TEnd = 4e5 #[s]
 DtInitial = 0.125 #[s]
 MaxTimeStepSize = 10000
+UsePrescribedTimeSteps = false # double the initial step up to MaxTimeStepSize, independently of Newton iterations
 
 [Grid]
 LowerLeft = 0 0
