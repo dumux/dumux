@@ -1,0 +1,34 @@
+[Grid]
+File = cooksmembrane.msh
+# Coarser mesh so locking vs locking-free difference is visible.
+# At Refinement=1 locked P1 gives ~80% vs MINI ~83% vs TH ~84% at nu=0.4999.
+# With Refinement=6 (fine mesh) all three methods converge to the same 2D value (~10.59 mm).
+Refinement = 1
+
+[Problem]
+Name = test_hyperelastic_cooks_membrane
+EnableGravity = false
+# Applied shear load p0 = 20 MPa; neumann returns -T_applied
+ShearTraction = 20.0
+
+[SpatialParams]
+# Fixed shear modulus µ = 185.185 MPa (SPP-1748 Table 2.1)
+Mu = 185.185
+# Initial λ (first value of the sweep, used by the spatial params constructor)
+Lambda = 432.099
+# Sweep values (SPP-1748 Table 2.7): ν ≈ 0.35, 0.40, 0.49, 0.499, 0.4999
+LambdaValues = 432.099 750 9260 92600 926000
+
+[Component]
+SolidDensity = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+AddProcessRank = false
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-6
+MaxSteps = 25
+UseLineSearch = true

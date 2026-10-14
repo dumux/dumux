@@ -1,0 +1,31 @@
+[Grid]
+UpperRight = 50 50 50
+Cells = 8 8 8
+
+[Problem]
+Name = test_hyperelastic_incompressible_block
+EnableGravity = false
+# Applied load q = 3 MPa (downward); boundaryFlux = +q per sign convention
+Load = 3.0
+
+[LoadStepping]
+NSteps = 5
+
+[SpatialParams]
+# SPP-1748 benchmark (Table 3.2): λ = 499.92568 MPa, µ = 1.61148 MPa (ν ≈ 0.4983)
+Lambda = 499.92568
+Mu = 1.61148
+
+[Component]
+SolidDensity = 1.0
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+AddProcessRank = false
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-8
+MaxSteps = 25
+UseLineSearch = true

@@ -13,11 +13,10 @@
  *
  * Services provided:
  * - `pressureAtPoint(fvGeom, ip)`:
- *   evaluates \f$ p_s \f$ at a global position using P1 shape functions
- *   from the stored pressure solution.  Called by the momentum residual.
+ *   evaluates \f$ p_s \f$ at a global position from the stored pressure solution.
+ *   Called by the momentum residual.
  * - `deformationGradientAtPoint(fvGeom, ip)`:
- *   evaluates \f$ \mathbf{F} \f$ at a global position using the displacement
- *   shape functions (PQ1Bubble or PQ2) from the stored displacement solution.
+ *   evaluates \f$ \mathbf{F} \f$ at a global position from the stored displacement solution.
  *   Called by the pressure residual.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_COUPLING_MANAGER_HH
