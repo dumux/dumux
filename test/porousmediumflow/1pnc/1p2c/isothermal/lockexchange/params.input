@@ -1,0 +1,31 @@
+[TimeLoop]
+DtInitial = 200 # [s]
+MaxTimeStepSize = 200 # [s]
+TEnd = 20000 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 2 1
+Cells = 40 20
+
+[Problem]
+Name = lockexchange
+EnableGravity = true
+MassFractionLeft = 0.01
+
+[SpatialParams]
+Temperature = 293.15 # [K]
+
+[1.Component]
+Name = Solvent
+MolarMass = 18e-3 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa s]
+
+[2.Component]
+Name = Solute
+MolarMass = 18e-3 # [kg/mol]
+LiquidDiffusionCoefficient = 1e-9 # [m^2/s]
+
+[Vtk]
+AddVelocity = true
