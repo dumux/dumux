@@ -8,8 +8,8 @@ Usage:
 
 Runs the executable with params.input of the current directory on the grid of params.input and on
 three global refinements of it, prints the discrete L2 errors with the convergence rates and writes
-taylorcouette_comparison.png (tangential velocity and pressure over the radius) to the output
-directory (default: current directory). Requires numpy, matplotlib and pyvista.
+taylorcouette_comparison.png (tangential velocity and pressure over the radius and their errors) to
+the output directory (default: current directory). Requires numpy, matplotlib and pyvista.
 """
 
 import sys
@@ -18,7 +18,6 @@ from pathlib import Path
 from convergencetest import run, rates
 
 LEVELS = [0, 1, 2, 3]
-PLOT_LEVELS = [0, 1]
 
 
 def radialProfile(vtu):
@@ -71,19 +70,24 @@ def main():
         nr, nt = profile["cells"]
         print(f"| {nr} × {nt} | {ep:.3e} | {rp} | {eu:.3e} | {ru} |")
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+    fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharex=True)
     finest = profiles[-1]
-    for ax, field, label in ((axes[0], "u", r"$u_\theta$ [m/s]"), (axes[1], "p", "$p$ [Pa]")):
-        ax.plot(finest["r"], finest[field + "Exact"], color="black", label="analytical")
-        for level in PLOT_LEVELS:
-            profile = profiles[level]
+    fields = (("u", r"$u_\theta$ [m/s]", r"$|u_\theta - u_{\theta,\mathrm{exact}}|$ [m/s]"),
+              ("p", "$p$ [Pa]", r"$|p - p_\mathrm{exact}|$ [Pa]"))
+    for column, (field, label, errorLabel) in enumerate(fields):
+        axes[0, column].plot(finest["r"], finest[field + "Exact"], color="black", label="analytical")
+        for profile in profiles:
             nr, nt = profile["cells"]
-            ax.plot(profile["r"], profile[field], "o", markerfacecolor="none", markersize=4,
-                    label=f"DuMux, {nr} × {nt} cells")
-        ax.set_xlabel("$r$ [m]")
-        ax.set_ylabel(label)
-        ax.grid(alpha=0.3)
-        ax.legend(fontsize=9)
+            line, = axes[0, column].plot(profile["r"], profile[field], "o", markerfacecolor="none",
+                                         markersize=3, label=f"DuMux, {nr} × {nt} cells")
+            axes[1, column].semilogy(profile["r"], abs(profile[field] - profile[field + "Exact"]),
+                                     "-o", color=line.get_color(), markersize=2, linewidth=0.8)
+        axes[0, column].set_ylabel(label)
+        axes[1, column].set_ylabel(errorLabel)
+        axes[1, column].set_xlabel("$r$ [m]")
+        axes[0, column].legend(fontsize=9)
+        for ax in axes[:, column]:
+            ax.grid(alpha=0.3)
     fig.tight_layout()
     fig.savefig(outdir / "taylorcouette_comparison.png", dpi=150)
 

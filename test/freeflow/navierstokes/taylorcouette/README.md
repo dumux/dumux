@@ -76,7 +76,11 @@ python3 plot_results.py ./test_ff_navierstokes_taylorcouette
 in the build directory `test/freeflow/navierstokes/taylorcouette` (requires NumPy, Matplotlib and PyVista).
 The script runs the grid of `params.input` and three global refinements of it.
 
-![Tangential velocity and pressure over the radius](taylorcouette_comparison.png){html: width=90%}
+![Tangential velocity and pressure over the radius (top) and their errors (bottom) on all four grids](taylorcouette_comparison.png){html: width=90%}
+
+The figure shows the values in the cells of one angular column. With each refinement, the error of both
+velocity and pressure decreases by a factor of about four at every radius. The pressure error changes sign
+near $r = 1.4$ m: after matching the volume-averaged pressure, its volume average is zero.
 
 The table lists the discrete $L^2$ errors $\left( \sum_i |V_i|\, |e_i|^2 / \sum_i |V_i| \right)^{1/2}$,
 where $e_i$ is the error at the degree of freedom $i$ with control volume $V_i$: the cell centers for the
