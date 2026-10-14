@@ -1,0 +1,14 @@
+[Grid]
+File = cooksmembrane.msh
+
+[Problem]
+Name = test_cooks_membrane_box
+# total vertical load 100 on the right edge of length 16
+ShearTraction = 6.25
+
+[SpatialParams]
+YoungsModulus = 250
+PoissonRatio = 0.4999
+
+[Newton]
+MaxRelativeShift = 1e-8

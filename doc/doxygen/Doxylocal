@@ -19,6 +19,7 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/solidmechanics/plate/mindlin_reissner/README.md \
                          @top_srcdir@/test/experimental/timestepping/README.md \
                          @top_srcdir@/test/solidmechanics/turek_hron/README.md \
+                         @top_srcdir@/test/solidmechanics/elastic/cooks_membrane/README.md \
                          @top_srcdir@/CONTRIBUTING.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
