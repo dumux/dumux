@@ -22,6 +22,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/flux/facetensoraverage.hh>
+#include <dumux/flux/gravitytermdensity.hh>
 
 namespace Dumux {
 
@@ -30,8 +31,10 @@ namespace Dumux {
  * \brief Darcy's law for control-volume finite element schemes
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
+ * \tparam GravityTermDensity provides the density \f$\rho\f$ in the gravity term,
+ *         `GravityTermDensity::density(problem, volVars, phaseIdx)`
  */
-template<class Scalar, class GridGeometry>
+template<class Scalar, class GridGeometry, class GravityTermDensity = PhaseDensityInGravityTerm>
 class CVFEDarcysLaw
 {
     using FVElementGeometry = typename GridGeometry::LocalView;
@@ -90,7 +93,7 @@ public:
             const auto& volVars = elemVolVars[scv];
 
             if (enableGravity)
-                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
+                rho += GravityTermDensity::density(problem, volVars, phaseIdx)*shapeValues[scv.indexInElement()][0];
 
             // the global shape function gradient
             gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
