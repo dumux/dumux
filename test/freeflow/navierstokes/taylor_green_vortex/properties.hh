@@ -54,7 +54,11 @@
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
 
+#if TAYLORGREEN_DIM == 2
 #include "problem_2d.hh"
+#else
+#include "problem_3d.hh"
+#endif
 
 namespace Dumux::Properties {
 
@@ -89,9 +93,14 @@ struct Grid<TypeTag, TTag::TaylorGreenTest>
 { using type = Dune::YaspGrid<TAYLORGREEN_DIM, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, TAYLORGREEN_DIM> >; };
 #endif
 
-// Set the problem property
+// Set the problem property: the Taylor-Green vortex in 2D and the Beltrami (ABC) flow in 3D
+#if TAYLORGREEN_DIM == 2
 template<class TypeTag, class BaseProblem>
 using TaylorGreenProblem = TaylorGreenVortexProblem2D<TypeTag, BaseProblem>;
+#else
+template<class TypeTag, class BaseProblem>
+using TaylorGreenProblem = BeltramiFlowProblem3D<TypeTag, BaseProblem>;
+#endif
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>

@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-Run the Taylor-Green vortex benchmark (2D): spatial and
+Run the Taylor-Green vortex benchmark (2D) and the Beltrami flow benchmark (3D): spatial and
 temporal convergence studies, the decay of kinetic energy and enstrophy, and the simulation
 for the animation, see README.md.
 
@@ -38,11 +38,14 @@ SCHEME_LABELS = {
     "pq2hybridhoquad": "hybrid PQ2, higher-order quadrature",
     "pq3hybrid": "hybrid PQ3",
 }
-# default momentum schemes of the studies (unless given with --schemes)
+# default momentum schemes of the studies (unless given with --schemes): in 3D, the Newton solver
+# does not converge with PQ1Bubble and hybrid PQ1Bubble, and a time step of hybrid PQ3 on the 8^3
+# grid of the energy study takes about 10 minutes with the direct linear solver
+HYBRID_PQ2_PQ3 = ("pq2hybrid", "pq2hybridhoquad", "pq3hybrid")
 DEFAULT_SCHEMES = {
-    "spatial": {2: SCHEMES},
-    "temporal": {2: ("pq2hybrid",)},
-    "energy": {2: SCHEMES},
+    "spatial": {2: SCHEMES, 3: HYBRID_PQ2_PQ3},
+    "temporal": {2: ("pq2hybrid",), 3: ("pq2hybrid",)},
+    "energy": {2: SCHEMES, 3: ("pq2hybrid", "pq2hybridhoquad")},
     "animation": {2: ("pq3hybrid",)},
 }
 # time integration methods (TimeLoop.Scheme) of the instationary problem
@@ -71,22 +74,26 @@ ORDER_TOLERANCE = 0.3
 UNCHECKED_SPATIAL_ORDER = {"pq2hybrid": ("velocityL2",), "pq2hybridhoquad": ("velocityL2",)}
 ERROR_KEYS = ("velocityL2", "velocityH1", "pressureL2", "pressureH1")
 
-# grid sequences of the spatial study (full study, test mode); the velocity L2 error of hybrid
-# PQ1Bubble and hybrid PQ2 converges irregularly on the coarse grids, so their tests start with
-# 32^2 cells; the Newton solver does not converge for PQ1Bubble on 16^2 cells
-SPATIAL_CELLS = {2: ([16, 32, 64, 128], [16, 32, 64])}
+# grid sequences of the spatial study (full study, test mode); in 3D, the direct linear solver
+# limits the grid size (hybrid PQ3 has 64 degrees of freedom per hexahedron); the velocity L2
+# error of hybrid PQ1Bubble and hybrid PQ2 converges irregularly on the coarse 2D grids, so their
+# tests start with 32^2 cells; the Newton solver does not converge for PQ1Bubble on 16^2 cells
+SPATIAL_CELLS = {2: ([16, 32, 64, 128], [16, 32, 64]), 3: ([6, 9, 12], [6, 9])}
 SCHEME_SPATIAL_CELLS = {
     (2, "pq1bubble"): ([32, 64, 128], [32, 64]),
     (2, "pq1bubblehybrid"): ([16, 32, 64, 128], [32, 64, 128]),
     (2, "pq2hybrid"): ([16, 32, 64, 128], [32, 64, 128]),
     (2, "pq2hybridhoquad"): ([16, 32, 64, 128], [32, 64, 128]),
+    (3, "pq3hybrid"): ([6, 8], [6, 8]),
 }
-# additional Newton settings of the stationary problem
-SPATIAL_NEWTON = {2: {}}
+# Newton settings of the stationary problem (in 3D, the default settings do not converge on the
+# coarse grids for all schemes)
+SPATIAL_NEWTON = {2: {}, 3: {"Newton.MaxSteps": 30, "Newton.UseLineSearch": "true"}}
 # cells per direction (full study, test mode) and time step refinements (full study, test mode)
-# of the temporal study; the spatial error should be small compared to the temporal error
-TEMPORAL_CELLS = {2: (64, 32)}
-TEMPORAL_LEVELS = {2: (4, 3)}
+# of the temporal study; the spatial error should be small compared to the temporal error, in 3D
+# the direct linear solver limits the grid size
+TEMPORAL_CELLS = {2: (64, 32), 3: (8, 6)}
+TEMPORAL_LEVELS = {2: (4, 3), 3: (3, 2)}
 TEMPORAL_TEND = 0.4
 # setup of the animation (2D, instationary)
 ANIMATION = {"cells": 32, "dt": 0.01, "tEnd": 1.0}
@@ -481,7 +488,7 @@ def parseArguments():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--dim", type=int, nargs="+", choices=(2,), default=[2])
+    parser.add_argument("--dim", type=int, nargs="+", choices=(2, 3), default=[2, 3])
     parser.add_argument(
         "--schemes",
         nargs="+",
@@ -510,6 +517,10 @@ def parseArguments():
         "default from the input file: 0.5, i.e. central differences; 1 is full upwinding)",
     )
     parser.add_argument("--wavelength", type=float, help="wavelength L (Problem.WaveLength)")
+    for amplitude in "ABC":
+        parser.add_argument(
+            f"--{amplitude.lower()}", type=float, help=f"amplitude {amplitude} of the 3D flow"
+        )
     parser.add_argument("--levels", type=int, help="number of time step refinements (temporal)")
     parser.add_argument(
         "--cells", type=int, nargs="+", help="cells per direction of the grids (spatial study)"
@@ -532,6 +543,8 @@ def parseArguments():
         parser.error("At least two refinement levels are needed to compute convergence rates")
     if args.cells is not None and len(args.cells) < 2:
         parser.error("At least two grids are needed to compute convergence rates")
+    if any(v is not None for v in (args.a, args.b, args.c)) and args.dim != [3]:
+        parser.error("The amplitudes A, B, C only apply to the 3D flow, use --dim 3")
     return args
 
 
@@ -541,6 +554,9 @@ def main():
     optional = {
         "Flux.UpwindWeight": args.upwind_weight,
         "Problem.WaveLength": args.wavelength,
+        "Problem.A": args.a,
+        "Problem.B": args.b,
+        "Problem.C": args.c,
     }
     settings = Settings(
         reuse=args.reuse,

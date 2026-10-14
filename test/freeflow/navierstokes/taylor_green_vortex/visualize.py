@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-Plot the results of the Taylor-Green vortex benchmark (2D)
+Plot the results of the Taylor-Green vortex benchmark (2D) and the Beltrami flow benchmark (3D)
 run by benchmark.py, see README.md:
 
   * spatial:   errors over the mesh sizes h^v and h^p with the expected slopes
@@ -42,7 +42,7 @@ ENSTROPHY_LABEL = (
     r"$\boldsymbol{\varepsilon} = \frac{1}{2}\int_\Omega \rho"
     r" \|\boldsymbol{\omega}\|^2 \, \mathrm{d}x$"
 )
-TITLES = {2: "2D Taylor-Green vortex"}
+TITLES = {2: "2D Taylor-Green vortex", 3: "3D Beltrami (ABC) flow"}
 # index of the color in the color cycle of each momentum scheme
 SCHEME_COLORS = {
     "pq1bubble": 0,
@@ -379,7 +379,7 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--dim", type=int, nargs="+", choices=(2,), default=[2])
+    parser.add_argument("--dim", type=int, nargs="+", choices=(2, 3), default=[2, 3])
     parser.add_argument(
         "--study",
         nargs="+",

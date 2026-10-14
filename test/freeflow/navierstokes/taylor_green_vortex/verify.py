@@ -2,10 +2,12 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
-Verify symbolically (with sympy) the analytical solution of the Taylor-Green vortex benchmark
+Verify symbolically (with sympy) the analytical solutions of the Taylor-Green vortex benchmark
 and the formulas given in README.md:
 
   * 2D: Taylor-Green vortex (Taylor 1923) with amplitude U_0 and wavelength L
+  * 3D: Beltrami (ABC) flow (Barbato, Berselli & Grisanti 2007) with amplitudes A, B, C
+    and wavelength L
 
 For each solution, the following is checked (with mu = rho nu and k = 2 pi / L):
 
@@ -14,7 +16,8 @@ For each solution, the following is checked (with mu = rho nu and k = 2 pi / L):
     rho du/dt + div(rho u (x) u) - div(mu grad u) + grad p = 0,
   * the identities behind the source terms of the stationary and the Stokes variants,
     rho du/dt = div(mu grad u) = -lambda mu u and div(rho u (x) u) = -grad p,
-  * the vorticity (the scalar dv/dx - du/dy) is given by the stated formula,
+  * the vorticity (2D: the scalar dv/dx - du/dy, 3D: the vector curl u) is given by the stated
+    formula,
   * the kinetic energy E = rho/2 int |u|^2 and the enstrophy eps = rho/2 int |omega|^2 over one
     wavelength in each direction are given by the stated closed forms,
   * the energy balance -dE/dt = 2 nu eps holds.
@@ -157,17 +160,51 @@ def verify2d():
     return checkMomentum(solution, s) & checkIndicators(solution, s)
 
 
+def verify3d():
+    """The three-dimensional Beltrami (ABC) flow (Barbato, Berselli & Grisanti 2007)"""
+    s = makeSymbols()
+    x, y, z, a, b, c = sp.symbols("x y z A B C", real=True)
+    k = 2 * sp.pi / s.wavelength
+    decay = sp.exp(-s.nu * k**2 * s.t)
+    velocity = [
+        (a * sp.sin(k * z) + c * sp.cos(k * y)) * decay,
+        (b * sp.sin(k * x) + a * sp.cos(k * z)) * decay,
+        (c * sp.sin(k * y) + b * sp.cos(k * x)) * decay,
+    ]
+    energy = s.rho * (a**2 + b**2 + c**2) * s.wavelength**3 / 2 * decay**2
+    bernoulliTerms = sum(
+        (
+            b * c * sp.cos(k * x) * sp.sin(k * y),
+            a * b * sp.sin(k * x) * sp.cos(k * z),
+            a * c * sp.sin(k * z) * sp.cos(k * y),
+        )
+    )
+    solution = Solution(
+        name="3D: Beltrami (ABC) flow (Barbato, Berselli & Grisanti 2007)",
+        coords=[x, y, z],
+        velocity=velocity,
+        pressure=-s.rho * bernoulliTerms * decay**2,
+        vorticity=[k * u for u in velocity],
+        eigenvalue=k**2,
+        indicators=(energy, k**2 * energy),
+    )
+    print(solution.name)
+    return checkMomentum(solution, s) & checkIndicators(solution, s)
+
+
 def main():
     """Run the checks of the selected dimensions"""
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--dim", type=int, nargs="+", choices=(2,), default=[2])
+    parser.add_argument("--dim", type=int, nargs="+", choices=(2, 3), default=[2, 3])
     args = parser.parse_args()
 
     success = True
     if 2 in args.dim:
         success &= verify2d()
+    if 3 in args.dim:
+        success &= verify3d()
 
     print("All checks passed" if success else "Some checks FAILED")
     sys.exit(0 if success else 1)

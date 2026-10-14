@@ -1,8 +1,12 @@
 # Taylor-Green vortex {#benchmark-taylor-green-vortex}
 
 This benchmark compares the spatial and temporal discretization schemes for the incompressible
-Navier-Stokes equations available in DuMu<sup>x</sup> against an exact solution, the two-dimensional
-Taylor-Green vortex. It is spatially periodic and decays exponentially in time.
+Navier-Stokes equations available in DuMu<sup>x</sup> against two exact solutions:
+
+* **2D**: the Taylor-Green vortex,
+* **3D**: a Beltrami (ABC) flow.
+
+Both solutions are spatially periodic and decay exponentially in time.
 
 ## Problem description
 
@@ -31,9 +35,9 @@ The viscous term is discretized in the form $\nabla \cdot (\mu \nabla \mathbf{u}
 it equals the symmetrized form $\nabla \cdot (\mu (\nabla \mathbf{u} + \nabla \mathbf{u}^T))$, which is used with
 `FreeFlow.EnableUnsymmetrizedVelocityGradient = false`.
 
-### Construction of the solution
+### Construction of the solutions
 
-The solution belongs to the class of solutions described by Ethier & Steinman @cite EthierSteinman1994,
+Both solutions belong to the class of solutions described by Ethier & Steinman @cite EthierSteinman1994,
 summarized in Antuono @cite Antuono2020 (Section 2):
 
 * the velocity is divergence free,
@@ -42,7 +46,7 @@ summarized in Antuono @cite Antuono2020 (Section 2):
 * the convective term is a gradient (generalized Beltrami flow), $\nabla \cdot (\rho \mathbf{u} \otimes \mathbf{u}) = -\nabla p$,
   so it is balanced by the pressure alone.
 
-Hence, the solution is exact for any amplitude and viscosity. It is periodic in every direction with the
+Hence, the solutions are exact for any amplitude and viscosity. They are periodic in every direction with the
 wavelength $L$, i.e. with the wave number $k = 2\pi / L$.
 
 ### Two-dimensional case: Taylor-Green vortex
@@ -64,6 +68,32 @@ $$
 This solution is due to Taylor (1923) alone. Taylor & Green @cite Taylor1937 studied the evolution of a
 three-dimensional initial condition, for which no closed-form solution is known.
 
+### Three-dimensional case: Beltrami (ABC) flow
+
+The tri-periodic Beltrami flow of Barbato, Berselli & Grisanti @cite Barbato2007 (Eq. (2.9) in
+Antuono @cite Antuono2020), also known as Arnold-Beltrami-Childress (ABC) flow, reads
+
+$$
+\begin{align*}
+u(x, y, z, t) &= \left( A \sin(k z) + C \cos(k y) \right) F(t), \\
+v(x, y, z, t) &= \left( B \sin(k x) + A \cos(k z) \right) F(t), \\
+w(x, y, z, t) &= \left( C \sin(k y) + B \cos(k x) \right) F(t), \\
+p(x, y, z, t) &= -\rho \left( B C \cos(k x) \sin(k y) + A B \sin(k x) \cos(k z) + A C \sin(k z) \cos(k y) \right) F^2(t),
+\end{align*}
+$$
+
+* amplitudes: $A, B, C$ (arbitrary),
+* decay factor: $F(t) = e^{-\nu k^2 t}$,
+* vorticity: parallel to the velocity, $\boldsymbol{\omega} = \nabla \times \mathbf{u} = k \mathbf{u}$.
+
+Remarks:
+
+* The pressure equals $-\frac{\rho}{2} \|\mathbf{u}\|^2$ up to the time-dependent constant
+  $\frac{\rho}{2} (A^2 + B^2 + C^2) F^2(t)$.
+* The flow is not fully three-dimensional, since every velocity component is independent of the corresponding
+  coordinate ($\partial_x u = \partial_y v = \partial_z w = 0$). Fully three-dimensional tri-periodic solutions are
+  given by Antuono @cite Antuono2020 (Section 3).
+
 ### Variants and source terms
 
 The instationary Navier-Stokes problem uses **no source term**. The other variants omit a term of the
@@ -75,7 +105,7 @@ two identities above, all source terms are closed-form expressions in the analyt
 | instationary (`Problem.IsStationary = false`) | $\mathbf{f} = \mathbf{0}$ | $\mathbf{f} = -\nabla \cdot (\rho \mathbf{u} \otimes \mathbf{u}) = \nabla p$ |
 | stationary (`Problem.IsStationary = true`) | $\mathbf{f} = -\rho \partial_t \mathbf{u} = \lambda \mu \mathbf{u}$ | $\mathbf{f} = \lambda \mu \mathbf{u} + \nabla p$ |
 
-* $\lambda = 2 k^2$.
+* $\lambda = 2 k^2$ in 2D and $\lambda = k^2$ in 3D.
 * The stationary variant is the solution at $t = 0$ ($F \equiv 1$): it adds the **storage term**.
 * The Stokes variant adds the **convective term**.
 
@@ -92,7 +122,7 @@ errors:
   constant. It is therefore fixed to its analytical value at a single degree of freedom (the Box control volume of
   the vertex at the lower left corner).
 
-Due to the periodicity of the solution, periodic boundary conditions on a domain of an integer number of
+Due to the periodicity of the solutions, periodic boundary conditions on a domain of an integer number of
 wavelengths would be the natural choice. They are not yet supported for the control-volume finite-element schemes
 in the coupled free-flow setup.
 
@@ -114,6 +144,8 @@ discretized with the following control-volume finite-element schemes:
 * In the hybrid schemes, only the vertex degrees of freedom have control volumes (the sub-control volumes of the
   Box scheme). The balance equations of the edge, face and element degrees of freedom are discretized with finite
   elements.
+* In 3D, the Newton solver does not converge with PQ1Bubble and hybrid PQ1Bubble. Their executables are built,
+  but they are not tested and not part of the default 3D studies.
 * The new CVFE problem interface is used (see also the tests `donea` and `sincos`).
 
 ### Quadrature rules
@@ -156,23 +188,25 @@ discretized with the following control-volume finite-element schemes:
 
 ## Parameters
 
-| Parameter | Symbol | Value | Unit | Input parameter |
-|-----------|--------|-------|------|-----------------|
-| Domain | $\Omega$ | $[0, 1]^2$ | m | `Grid.UpperRight` |
-| Grid | | $32 \times 32$ | - | `Grid.Cells` |
-| Wavelength | $L$ | $1$ | m | `Problem.WaveLength` (default: domain length in $x$ direction) |
-| Wave number | $k = 2\pi/L$ | $2\pi$ | 1/m | |
-| Amplitude | $U_0$ | $1$ | m/s | `Problem.ReferenceVelocity` |
-| Root mean square velocity | $U = \left( \frac{1}{\|\Omega\|} \int_\Omega \|\mathbf{u}(\mathbf{x}, 0)\|^2 \, \mathrm{d}x \right)^{1/2}$ | $U_0/\sqrt{2} \approx 0.71$ | m/s | |
-| Density | $\rho$ | $1$ | kg/m³ | `Component.LiquidDensity` |
-| Kinematic viscosity | $\nu$ | $0.01$ | m²/s | `Component.LiquidKinematicViscosity` |
-| Reynolds number | $Re = U L / \nu$ | $71$ | - | |
-| End time | $T$ | $1$ | s | `TimeLoop.TEnd` |
-| Time step size | $\Delta t$ | $0.05$ | s | `TimeLoop.DtInitial` |
-| Time integration | | implicit Euler | - | `TimeLoop.Scheme` |
-| Decay factor at end time | $F(T)$ | $0.45$ | - | |
+| Parameter | Symbol | Value (2D) | Value (3D) | Unit | Input parameter |
+|-----------|--------|------------|------------|------|-----------------|
+| Domain | $\Omega$ | $[0, 1]^2$ | $[0, 1]^3$ | m | `Grid.UpperRight` |
+| Grid | | $32 \times 32$ | $8 \times 8 \times 8$ | - | `Grid.Cells` |
+| Wavelength | $L$ | $1$ | $1$ | m | `Problem.WaveLength` (default: domain length in $x$ direction) |
+| Wave number | $k = 2\pi/L$ | $2\pi$ | $2\pi$ | 1/m | |
+| Amplitude(s) | $U_0$; $A, B, C$ | $1$ | $1, 1, 1$ | m/s | `Problem.ReferenceVelocity`; `Problem.A`, `Problem.B`, `Problem.C` |
+| Root mean square velocity | $U = \left( \frac{1}{\|\Omega\|} \int_\Omega \|\mathbf{u}(\mathbf{x}, 0)\|^2 \, \mathrm{d}x \right)^{1/2}$ | $U_0/\sqrt{2} \approx 0.71$ | $\sqrt{A^2 + B^2 + C^2} \approx 1.73$ | m/s | |
+| Density | $\rho$ | $1$ | $1$ | kg/m³ | `Component.LiquidDensity` |
+| Kinematic viscosity | $\nu$ | $0.01$ | $0.02$ | m²/s | `Component.LiquidKinematicViscosity` |
+| Reynolds number | $Re = U L / \nu$ | $71$ | $87$ | - | |
+| End time | $T$ | $1$ | $1$ | s | `TimeLoop.TEnd` |
+| Time step size | $\Delta t$ | $0.05$ | $0.05$ | s | `TimeLoop.DtInitial` |
+| Time integration | | implicit Euler | implicit Euler | - | `TimeLoop.Scheme` |
+| Decay factor at end time | $F(T)$ | $0.45$ | $0.45$ | - | |
 
-* The parameters are set in `params_2d.input`.
+* The parameters are set in `params_2d.input` and `params_3d.input`.
+* In 3D, $\nu = 0.02$ is used since the Newton solver does not converge for the stationary problem on the coarse 3D
+  grids with $\nu = 0.01$. The decay over the simulated time then equals the one of the 2D case.
 
 ## Benchmark indicators
 
@@ -184,7 +218,7 @@ analytical solution, and written for every time step to the error file (`Problem
 
 | Indicator | Definition |
 |-----------|------------|
-| Vorticity | $\omega = \partial_x v - \partial_y u$ (a scalar) |
+| Vorticity | $\omega = \partial_x v - \partial_y u$ (a scalar) in 2D, $\boldsymbol{\omega} = \nabla \times \mathbf{u}$ in 3D |
 | Kinetic energy | $E(t) = \frac{1}{2} \int_\Omega \rho \|\mathbf{u}\|^2 \, \mathrm{d}x$ |
 | Enstrophy | $\boldsymbol{\varepsilon}(t) = \frac{1}{2} \int_\Omega \rho \|\boldsymbol{\omega}\|^2 \, \mathrm{d}x$ |
 
@@ -199,11 +233,12 @@ analytical solution, and written for every time step to the error file (`Problem
   | | $E(t)$ | $\boldsymbol{\varepsilon}(t)$ |
   |-|--------|-------------------------------|
   | 2D | $\frac{1}{4} \rho U_0^2 \|\Omega\| F^2(t)$ | $2 k^2 E(t)$ |
+  | 3D | $\frac{1}{2} \rho (A^2 + B^2 + C^2) \|\Omega\| F^2(t)$ | $k^2 E(t)$ |
 
-  and the analytical solution satisfies the energy balance $-\frac{\mathrm{d}E}{\mathrm{d}t} = 2 \nu \boldsymbol{\varepsilon}$.
+  and the analytical solutions satisfy the energy balance $-\frac{\mathrm{d}E}{\mathrm{d}t} = 2 \nu \boldsymbol{\varepsilon}$.
 * For the numerical solution, the Dirichlet boundaries add boundary terms (the energy flux through $\partial \Omega$)
   and the time integration adds numerical dissipation.
-* The solution, the identities behind the source terms and these formulas are verified symbolically by `verify.py`.
+* The solutions, the identities behind the source terms and these formulas are verified symbolically by `verify.py`.
 
 ### Spatial convergence (stationary variant)
 
@@ -248,7 +283,7 @@ Expected orders:
 
 The executables are named `test_ff_navierstokes_taylorgreen_<dim>_<scheme>`:
 
-* `<dim>`: `2d`,
+* `<dim>`: `2d` or `3d`,
 * `<scheme>`: `pq1bubble`, `pq1bubblehybrid`, `pq2hybrid`, `pq2hybridhoquad` (hybrid PQ2 with higher-order quadrature
   rules) or `pq3hybrid`.
 
@@ -259,18 +294,19 @@ The benchmark consists of four scripts, which are executed in the build director
 
 ```bash
 cmake --build ../../../.. --target build_taylorgreen_tests
-python3 verify.py                   # symbolic check of the analytical solution (requires sympy)
+python3 verify.py                   # symbolic check of the analytical solutions (requires sympy)
 python3 benchmark.py --study all    # run the spatial, temporal and energy studies
 python3 visualize.py                # plot the results (requires matplotlib, pyvista)
-python3 benchmark.py --study animation --dim 2 && python3 animate.py  # animation (requires pyvista, ffmpeg)
+python3 benchmark.py --study animation --dim 2 && python3 animate.py  # 2D animation (requires pyvista, ffmpeg)
+python3 animate.py --dim 3          # 3D animation of the 3D energy study (requires pyvista, ffmpeg)
 ```
 
 | Script | Purpose | Output |
 |--------|---------|--------|
-| `verify.py` | symbolic check (`sympy`) of the solution, the source-term identities and the indicator formulas | console |
+| `verify.py` | symbolic check (`sympy`) of the solutions (`--dim 2 3`), the source-term identities and the indicator formulas | console |
 | `benchmark.py` | runs the studies | `runs/` |
 | `visualize.py` | plots of all studies (matplotlib) | `results/taylorgreen_<study>_<dim>d.png` |
-| `animate.py` | animation of the fields of `benchmark.py --study animation`, sampled from the higher-order output with [pyvista](https://pyvista.org), plotted with matplotlib and written with ffmpeg | `results/taylorgreen_animation_2d_<scheme>.mp4` |
+| `animate.py` | animation of the higher-order output, sampled with [pyvista](https://pyvista.org) and written with ffmpeg; 2D: fields of `benchmark.py --study animation` (matplotlib), 3D: isosurfaces of the 3D energy study (rendered with pyvista) | `results/taylorgreen_animation_<dim>d_<scheme>.mp4` |
 
 ### Output of `benchmark.py`
 
@@ -289,13 +325,14 @@ animation).
 
 | Option | Meaning | Default |
 |--------|---------|---------|
+| `--dim 2 3` | spatial dimensions | 2 and 3 |
 | `--study spatial temporal energy animation all` | studies to run (`all`: all except the animation) | `all` |
-| `--schemes ...` | momentum schemes | spatial and energy: all; temporal: hybrid PQ2; animation: hybrid PQ3 |
+| `--schemes ...` | momentum schemes | spatial: all in 2D, hybrid PQ2/PQ3 in 3D; temporal: hybrid PQ2; energy: all in 2D, hybrid PQ2 in 3D; animation: hybrid PQ3 |
 | `--time-scheme ImplicitEuler\|CrankNicolson\|DIRK2\|DIRK3` | time integration of the energy study and the animation | `ImplicitEuler` |
-| `--wavelength L` | wavelength of the solution | from the input file |
+| `--wavelength L`, `--a A --b B --c C` | wavelength and (3D) amplitudes of the solution | from the input files |
 | `--upwind-weight W` | upwind weight of the convective flux (`Flux.UpwindWeight`), e.g. `1` for full upwinding | 0.5 |
-| `--cells N1 N2 ...` | cells per direction of the grids of the spatial study | 16, 32, 64, 128 (PQ1Bubble: 32, 64, 128) |
-| `--levels N` | number of time step refinements of the temporal study | 4 on $64^2$ cells |
+| `--cells N1 N2 ...` | cells per direction of the grids of the spatial study | 2D: 16, 32, 64, 128 (PQ1Bubble: 32, 64, 128); 3D: 6, 9, 12 (hybrid PQ3: 6, 8) |
+| `--levels N` | number of time step refinements of the temporal study | 4 on $64^2$ cells (2D), 3 on $8^3$ cells (3D) |
 | `--vtk` | ParaView output for all runs | instationary runs only |
 | `--reuse` | reuse existing error files instead of rerunning the simulations | |
 | `--test` | short study checking the convergence rates (used by CTest) | |
@@ -305,8 +342,10 @@ animation).
 | Option | Meaning |
 |--------|---------|
 | `--study spatial temporal energy` | plots to create (`visualize.py`) |
-| `--output-dir` | directory of the figures and the video (default: `results`) |
-| `--resolution`, `--arrows`, `--fps` | sampling points and arrows per direction, frames per second (`animate.py`) |
+| `--dim 2 3` | spatial dimensions (`visualize.py`: both; `animate.py`: one, default 2) |
+| `--manifest`, `--scheme` | run to animate (`animate.py`; default: the animation study in 2D, hybrid PQ2 of the energy study in 3D) |
+| `--output-dir` | directory of the figures and the videos (default: `results`) |
+| `--resolution`, `--arrows`, `--fps` | sampling points and arrows per direction, frames per second (`animate.py`; default: 200, 16, 10 in 2D and 41, -, 4 in 3D) |
 
 ## Related setups and literature
 
@@ -336,7 +375,7 @@ Combinations of schemes used for Taylor-Green(-type) verification:
 
 ### Pressure robustness
 
-* The convective term of the solution is a gradient balanced by the pressure.
+* The convective term of both solutions is a gradient balanced by the pressure.
 * For pairs that are not pressure-robust (e.g. MINI, Taylor-Hood, and also the schemes with Box pressure used here),
   the velocity error then contains a contribution proportional to the pressure approximation error divided by $\nu$
   @cite John2017, @cite Gauger2019, which grows with the Reynolds number. The convergence studies therefore use moderate

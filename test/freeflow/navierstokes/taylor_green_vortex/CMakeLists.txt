@@ -6,8 +6,12 @@ dune_symlink_to_source_files(FILES benchmark.py visualize.py animate.py verify.p
 
 # the momentum discretizations (the mass balance is always discretized with the Box scheme);
 # pq2hybridhoquad is hybrid PQ2 with higher-order quadrature rules for the source term on the
-# sub-control volumes and for the mass fluxes instead of the midpoint rule (for comparison)
+# sub-control volumes and for the mass fluxes instead of the midpoint rule (for comparison);
+# in 3D, the Newton solver does not converge with PQ1Bubble and hybrid PQ1Bubble (see README.md),
+# so they are only built (TAYLORGREEN_SCHEMES_3_COMPILE_ONLY) and not tested
 set(TAYLORGREEN_SCHEMES_2 pq1bubble pq1bubblehybrid pq2hybrid pq2hybridhoquad pq3hybrid)
+set(TAYLORGREEN_SCHEMES_3 pq2hybrid pq2hybridhoquad pq3hybrid)
+set(TAYLORGREEN_SCHEMES_3_COMPILE_ONLY pq1bubble pq1bubblehybrid)
 set(TAYLORGREEN_TYPETAG_pq1bubble TaylorGreenTestMomentumPQ1Bubble)
 set(TAYLORGREEN_TYPETAG_pq1bubblehybrid TaylorGreenTestMomentumPQ1BubbleHybrid)
 set(TAYLORGREEN_TYPETAG_pq2hybrid TaylorGreenTestMomentumPQ2Hybrid)
@@ -29,11 +33,12 @@ set(TAYLORGREEN_GUARD_0 "HAVE_UMFPACK")
 set(TAYLORGREEN_GUARD_1 "( HAVE_UMFPACK AND dune-alugrid_FOUND )")
 
 # small grids for the regression tests (on coarser grids, the Newton solver does not
-# converge for the stationary problem with PQ1Bubble)
+# converge for the stationary problem with PQ1Bubble in 2D and with all schemes in 3D)
 set(TAYLORGREEN_CELLS_2 "16 16")
 set(TAYLORGREEN_CELLS_2_pq1bubble "32 32")
+set(TAYLORGREEN_CELLS_3 "6 6 6")
 
-foreach(dim 2)
+foreach(dim 2 3)
   foreach(scheme ${TAYLORGREEN_SCHEMES_${dim}})
     set(name test_ff_navierstokes_taylorgreen_${dim}d_${scheme})
     set(simplex ${TAYLORGREEN_SIMPLEX_${scheme}})
@@ -61,7 +66,11 @@ foreach(dim 2)
                             -Problem.IsStationary true
                             -Grid.Cells '${cells}'")
 
-    # instationary problem (decaying vortex), four time steps
+    # instationary problem (decaying vortex), four time steps; skipped for hybrid PQ3 in 3D,
+    # which takes too long for a regression test
+    if(dim EQUAL 3 AND scheme STREQUAL "pq3hybrid")
+      continue()
+    endif()
     dumux_add_test(NAME ${name}_instationary
                    TARGET ${name}
                    LABELS freeflow navierstokes taylorgreen
@@ -76,6 +85,19 @@ foreach(dim 2)
                             -Grid.Cells '${cells}'
                             -TimeLoop.TEnd 0.2")
   endforeach()
+endforeach()
+
+foreach(scheme ${TAYLORGREEN_SCHEMES_3_COMPILE_ONLY})
+  set(simplex ${TAYLORGREEN_SIMPLEX_${scheme}})
+  dumux_add_test(NAME test_ff_navierstokes_taylorgreen_3d_${scheme}
+                 SOURCES main.cc
+                 LABELS freeflow navierstokes taylorgreen
+                 CMAKE_GUARD "${TAYLORGREEN_GUARD_${simplex}}"
+                 COMPILE_DEFINITIONS TAYLORGREEN_DIM=3
+                 COMPILE_DEFINITIONS TYPETAG_MOMENTUM=${TAYLORGREEN_TYPETAG_${scheme}}
+                 COMPILE_DEFINITIONS TYPETAG_MASS=${TAYLORGREEN_MASS_${scheme}}
+                 COMPILE_DEFINITIONS SIMPLEX_GRID=${simplex}
+                 COMPILE_ONLY)
 endforeach()
 
 # spatial convergence tests (stationary problem)

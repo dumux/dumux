@@ -1,0 +1,51 @@
+[TimeLoop]
+DtInitial = 0.05 # [s]
+MaxTimeStepSize = 0.05 # [s]
+TEnd = 1.0 # [s]
+Scheme = ImplicitEuler # time integration of the instationary problem: ImplicitEuler, CrankNicolson, DIRK2, DIRK3
+
+[Grid]
+LowerLeft = 0 0 0
+UpperRight = 1 1 1
+Cells = 8 8 8
+
+[Problem]
+Name = test_ff_navierstokes_taylorgreen_3d
+EnableGravity = false
+EnableInertiaTerms = true
+IsStationary = false
+PrintErrors = true
+# WaveLength = 1.0 # [m] wavelength L (wave number k = 2 pi / L), default: domain length in x direction
+A = 1.0 # [m/s] amplitudes of the Beltrami (ABC) flow
+B = 1.0 # [m/s]
+C = 1.0 # [m/s]
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 0.02 # Re = sqrt(A^2 + B^2 + C^2) L / nu = 87, F(T) = exp(-nu k^2 T) = 0.45 as in 2D
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true # viscous term div(mu grad u), equivalent to the symmetrized form for div u = 0
+
+[Flux]
+UpwindWeight = 0.5 # central differences for the convective term (1 = full upwinding is only first-order accurate)
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+MaxSteps = 10
+# the multi-stage assembler (instationary problem) does not implement the residual assembly,
+# so only the shift criterion is used
+MaxRelativeShift = 1e-10
+EnableAbsoluteResidualCriterion = false
+SatisfyResidualAndShiftCriterion = false
+
+[Vtk]
+AddProcessRank = false
+
+[IO.GridWriter]
+AddProcessRank = false # higher-order output
+
+[SpatialParams]
+Temperature = 298.0
