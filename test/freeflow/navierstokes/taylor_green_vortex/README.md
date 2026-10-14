@@ -277,6 +277,130 @@ Expected orders:
 * The errors at $t = T$ on a fine grid under refinement of the time step size.
 * Expected orders: 1 (implicit Euler), 2 (Crank-Nicolson, DIRK2), 3 (DIRK3).
 
+## Results
+
+The results were obtained with `benchmark.py` using the default settings (`--study spatial temporal energy` in 2D
+and 3D, `--study animation` in 2D), plotted with `visualize.py` and animated with `animate.py`. The figures and the
+videos are stored in the directory `results/`.
+
+### Spatial convergence in 2D
+
+Setup: stationary problem, $16^2$ to $128^2$ cells ($32^2$ to $128^2$ cells for PQ1Bubble, for which the Newton
+solver does not converge on $16^2$ cells).
+
+| Scheme | velocity $L^2$ EOC | velocity $H^1$ EOC (finest) | pressure $L^2$ EOC (finest) |
+|--------|--------------------|-----------------------------|-----------------------------|
+| PQ1Bubble | 2.42, 2.08 | 1.05 | 2.17 |
+| hybrid PQ1Bubble | 2.74, 1.63, 1.90 | 1.06 | 1.94 |
+| hybrid PQ2 | 5.66, 0.44, 1.60 | 2.08 | 2.13 |
+| hybrid PQ2, higher-order quadrature | 4.54, 2.67, 1.29 | 2.24 | 2.16 |
+| hybrid PQ3 | 3.70, 3.78, 3.72 | 2.00 | 1.80 |
+
+* PQ1Bubble and hybrid PQ1Bubble reach the expected orders.
+* Hybrid PQ3 converges with order 3.7 in the velocity $L^2$ error and 2 in the velocity $H^1$ error.
+* Hybrid PQ2 converges with order 2 in the velocity $H^1$ error, but only irregularly in the velocity $L^2$ error.
+  This norm is therefore not checked by the convergence tests.
+* The pressure converges with order 2 in $L^2$ and 1 in $H^1$ for all schemes.
+
+![Spatial convergence in 2D](results/taylorgreen_spatial_2d.png)
+
+The higher-order quadrature rules change the velocity $L^2$ error of hybrid PQ2 on the individual grids, but neither
+its irregular convergence nor the other error norms, i.e. the default quadrature rules are sufficient:
+
+![Spatial convergence of hybrid PQ2 with default and higher-order quadrature rules in 2D](results/taylorgreen_spatial_2d_quadrature.png)
+
+### Spatial convergence in 3D
+
+Setup: stationary problem, $6^3$ to $12^3$ cells ($6^3$ and $8^3$ cells for hybrid PQ3), Newton solver with line
+search.
+
+| Scheme | velocity $L^2$ EOC | velocity $H^1$ EOC |
+|--------|--------------------|--------------------|
+| hybrid PQ2 | 3.74, 3.42 | 2.83, 2.42 |
+| hybrid PQ3 | 3.46 | 2.31 |
+
+* On these coarse grids, the errors are not yet in the asymptotic regime.
+* Hybrid PQ3 has larger errors than hybrid PQ2 for the same number of degrees of freedom.
+* As in 2D, the higher-order quadrature rules hardly change the errors of hybrid PQ2
+  ([figure](results/taylorgreen_spatial_3d_quadrature.png)).
+
+![Spatial convergence in 3D](results/taylorgreen_spatial_3d.png)
+
+### Temporal convergence in 2D
+
+Setup: instationary problem, $64^2$ cells, hybrid PQ2, $t = 0.4$ s. The expected slopes are drawn through the errors
+of the largest time step size, since on smaller time step sizes the spatial error dominates.
+
+* Implicit Euler converges with an order of about 0.9 in the velocity errors and in the pressure $L^2$ error.
+* For Crank-Nicolson, DIRK2 and DIRK3, the velocity error ($\approx 1.1 \cdot 10^{-4}$ in $L^2$) is already for the
+  largest time step size dominated by the spatial error. Their temporal orders cannot be observed with the error
+  against the analytical solution.
+* The pressure $H^1$ error is dominated by the spatial error for all methods.
+
+![Temporal convergence in 2D](results/taylorgreen_temporal_2d.png)
+
+### Temporal convergence in 3D
+
+Setup: instationary problem, $8^3$ cells (limited by the direct linear solver), hybrid PQ2, $t = 0.4$ s.
+
+* The spatial error ($\approx 1.5 \cdot 10^{-2}$ in the velocity $L^2$ norm) dominates the temporal error of all
+  methods already for the largest time step size, so no temporal orders can be observed with the error against the
+  analytical solution.
+* Only the pressure $L^2$ error of implicit Euler decreases noticeably (EOC 0.6, 0.4).
+
+![Temporal convergence in 3D](results/taylorgreen_temporal_3d.png)
+
+### Kinetic energy and enstrophy in 2D
+
+Setup: instationary problem, $32^2$ cells, $\Delta t = 0.05$ s, implicit Euler.
+
+| Scheme | $(E_h - E)/E$ at $t = 1$ s | $(\boldsymbol{\varepsilon}_h - \boldsymbol{\varepsilon})/\boldsymbol{\varepsilon}$ at $t = 1$ s |
+|--------|----------------------------|------------------------------------------------------------------------------------------------|
+| PQ1Bubble | 3.5 % | 4.5 % |
+| hybrid schemes | 1.5-1.8 % | 1.5-1.8 % |
+
+* The deviation is dominated by the temporal error: in a periodic domain, the implicit Euler method alone
+  overestimates the energy at $t = 1$ s by 3.1 %.
+* With $\Delta t = 0.01$ s (as in the animation), the deviation of hybrid PQ3 reduces to 0.7 % (0.6 % predicted for
+  the implicit Euler method).
+* Hybrid PQ2 with higher-order quadrature rules is not shown, since its kinetic energy and enstrophy coincide with
+  those of hybrid PQ2 (relative difference below $10^{-5}$).
+
+![Kinetic energy and enstrophy in 2D](results/taylorgreen_energy_2d.png)
+
+### Kinetic energy and enstrophy in 3D
+
+Setup: instationary problem, $8^3$ cells, $\Delta t = 0.05$ s, implicit Euler, hybrid PQ2. Hybrid PQ3 is not part of
+the default study, since a time step takes about 10 minutes with the direct linear solver.
+
+* At $t = 1$ s, the kinetic energy deviates by 1.1 % and the enstrophy by 1.6 % from the analytical values.
+* The kinetic energy of hybrid PQ2 with higher-order quadrature rules (not shown) differs by about $10^{-4}$
+  (relative).
+
+![Kinetic energy and enstrophy in 3D](results/taylorgreen_energy_3d.png)
+
+### Animation in 2D
+
+Setup: instationary problem, hybrid PQ3, $32^2$ cells, $\Delta t = 0.01$ s. The video shows the velocity magnitude
+with arrows, the pressure, the vorticity magnitude, the kinetic energy and the enstrophy of the decaying vortex.
+
+![Animation of the decaying 2D Taylor-Green vortex](results/taylorgreen_animation_2d_pq3hybrid.mp4)
+
+### Animation in 3D
+
+Setup: the hybrid PQ2 run of the 3D energy study ($8^3$ cells, $\Delta t = 0.05$ s, implicit Euler). The video shows
+the isosurfaces of the velocity magnitude $\|\mathbf{u}_h\|$ and of the vorticity magnitude
+$\|\boldsymbol{\omega}_h\|$, the kinetic energy and the enstrophy.
+
+* The isovalues are fixed at 0.25, 0.5 and 0.75 of the maximum at $t = 0$, so the decay shows as vanishing
+  isosurfaces: first the largest isovalue, then the middle one.
+* For the exact solution, $\|\boldsymbol{\omega}\| = k \|\mathbf{u}\|$, so both fields have the same isosurfaces.
+  Differences between the two panels are numerical errors.
+* The vorticity is computed from the gradient of the finite-element velocity, which is discontinuous across the
+  elements. On the coarse $8^3$ grid, this causes the rough vorticity isosurfaces and the small spurious patches.
+
+![Animation of the decaying 3D Beltrami flow](results/taylorgreen_animation_3d_pq2hybrid.mp4)
+
 ## How to reproduce results
 
 ### Executables
