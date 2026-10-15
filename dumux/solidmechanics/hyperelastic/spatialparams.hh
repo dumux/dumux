@@ -12,15 +12,29 @@
 #ifndef DUMUX_SOLIDMECHANICS_DEFAULT_HYPERELASTIC_SPATIAL_PARAMS_HH
 #define DUMUX_SOLIDMECHANICS_DEFAULT_HYPERELASTIC_SPATIAL_PARAMS_HH
 
-#include <dumux/common/fvspatialparams.hh>
+#include <dumux/common/spatialparams.hh>
 
 namespace Dumux {
 
+/*!
+ * \ingroup Hyperelastic
+ * \brief Spatial parameters of the hyperelastic model for problems that define the
+ *        material parameters of their constitutive law themselves
+ */
+template<class GridGeometry, class Scalar>
+class HyperelasticSpatialParams
+: public Experimental::SpatialParams<GridGeometry, Scalar, HyperelasticSpatialParams<GridGeometry, Scalar>>
+{
+    using ParentType = Experimental::SpatialParams<GridGeometry, Scalar, HyperelasticSpatialParams<GridGeometry, Scalar>>;
+public:
+    using ParentType::ParentType;
+};
+
 template<class GridGeometry, class Scalar>
 class DefaultHyperelasticSpatialParams
-: public FVSpatialParams<GridGeometry, Scalar, DefaultHyperelasticSpatialParams<GridGeometry, Scalar>>
+: public Experimental::SpatialParams<GridGeometry, Scalar, DefaultHyperelasticSpatialParams<GridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<GridGeometry, Scalar, DefaultHyperelasticSpatialParams<GridGeometry, Scalar>>;
+    using ParentType = Experimental::SpatialParams<GridGeometry, Scalar, DefaultHyperelasticSpatialParams<GridGeometry, Scalar>>;
 public:
     DefaultHyperelasticSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
