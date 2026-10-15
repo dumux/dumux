@@ -249,7 +249,7 @@ def finish_solution_figure(fig, ax, error_ax, path, **legend_args):
     """Common styling of the figures with solutions and errors, then save."""
     ax.grid(color=GUIDE_COLOR, linewidth=0.8, alpha=0.7)
     error_ax.grid(color=GUIDE_COLOR, linewidth=0.8, alpha=0.7)
-    error_ax.set_ylabel("Error vs Ramey [°C]")
+    error_ax.set_ylabel("Error vs Ramey / K")
     ax.legend(frameon=False, fontsize=9, **legend_args)
     save_figure(fig, path)
 
@@ -258,11 +258,10 @@ def plot_outlet(variants, refinement, results, setup, ramey, path):
     """Outlet temperature over time on the finest grid."""
     fig, ax, error_ax = solution_figure()
 
-    # The error over time leaves out the first output: there the fluid that was in the pipe
-    # initially is still flowing out, which Ramey neglects, and its error of about 1 °C would
-    # set the scale of the error axis. The outlet temperature itself shows all outputs.
+    # the error over time leaves out t = 0, where Ramey's solution is not defined
     def plot_error(t, T, color, linestyle="-"):
-        error_ax.plot(t[1:] / 86400, T[1:] - ramey.outlet(t[1:]), color=color,
+        mask = t > 0.0
+        error_ax.plot(t[mask] / 86400, T[mask] - ramey.outlet(t[mask]), color=color,
                       linewidth=LINE_WIDTH, linestyle=linestyle)
 
     times = np.linspace(0.0, setup["t_end"], 200)[1:]
@@ -282,8 +281,8 @@ def plot_outlet(variants, refinement, results, setup, ramey, path):
         ax.plot(t / 86400, T, color=color, linewidth=LINE_WIDTH, linestyle=linestyle,
                 label=f"{variant} refinement {refinement}")
         plot_error(t, T, color, linestyle)
-    error_ax.set_xlabel("Time [d]")
-    ax.set_ylabel("Outlet temperature [°C]")
+    error_ax.set_xlabel("Time / d")
+    ax.set_ylabel("Outlet temperature / °C")
     ax.set_title("Outlet temperature over time")
 
     finish_solution_figure(fig, ax, error_ax, path)
@@ -309,8 +308,8 @@ def plot_profile(variants, refinement, results, setup, ramey, path):
                 label=f"{variant} refinement {refinement}")
         error_ax.plot(x, T - ramey(x, setup["t_end"]), color=color, linewidth=LINE_WIDTH,
                       linestyle=linestyle)
-    error_ax.set_xlabel("Distance along borehole [m]")
-    ax.set_ylabel("Fluid temperature [°C]")
+    error_ax.set_xlabel("Distance along borehole / m")
+    ax.set_ylabel("Fluid temperature / °C")
     ax.set_xlim(0, setup["length"])
     ax.set_title(f"Temperature profile at t = {setup['t_end'] / 86400:.3g} d")
 
@@ -350,6 +349,9 @@ def plot_convergence(variants, refinements, results, setup, path):
             first_changes.append(change[0])
 
     # each refinement halves the cell size, so second order convergence is a factor of 4
+    # The kernel outlet does not reach 2nd order: its maximum change is set by the first output
+    # (4 h), where the heat has spread less than the kernel width into the rock, so the kernel
+    # coupling is not yet valid there.
     steps = np.array(refinements[1:])
     ax.plot(steps, max(first_changes) * 4.0**-(steps - steps[0]), color=GUIDE_COLOR,
             linewidth=LINE_WIDTH, linestyle=":", label="2nd order")
@@ -357,7 +359,7 @@ def plot_convergence(variants, refinements, results, setup, path):
     ax.set_yscale("log")
     ax.set_xticks(steps)
     ax.set_xlabel("Refinement")
-    ax.set_ylabel("Max. change of the temperature [°C]")
+    ax.set_ylabel("Max. change of the temperature / K")
     ax.set_title("Change with regard to the previous refinement")
     ax.grid(color=GUIDE_COLOR, linewidth=0.8, alpha=0.7)
     ax.legend(frameon=False, fontsize=9)
