@@ -26,6 +26,8 @@
  *   and with the default start,
  * - the damping of the constraint of u0' = -u0 + u1, 0 = sin(t) - u1 by -alpha_f/(1 - alpha_f) per
  *   step, and that the default start keeps a constraint that holds initially,
+ * - second order with smoothly varying step sizes for the oscillators and the first-order equation,
+ * - that a step retried after a solver failure gives the same result as taking the reduced step directly,
  * - that the Newmark parameters reproduce Experimental::NewmarkBeta.
  */
 #include <config.h>
@@ -52,6 +54,7 @@
 #include <dumux/io/json.hh>
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/experimental/common/variables.hh>
 #include <dumux/experimental/ode/odesolver.hh>
@@ -61,6 +64,7 @@
 #include "scalarassembler.hh"
 #include "constrainedode.hh"
 #include "polynomialroots.hh"
+#include "failingnewton.hh"
 
 namespace Dumux {
 
@@ -366,6 +370,16 @@ Scalar dampedOscillator(const Scalar t, const Scalar c, const Scalar k, const Sc
     return std::exp(-zeta*omega*t)*(u0*std::cos(omegaD*t) + (v0 + zeta*omega*u0)/omegaD*std::sin(omegaD*t));
 }
 
+//! Time step sizes for t_i = tEnd g(i/n) with g(s) = s + sin(2 pi s)/(4 pi), between 0.5 and 1.5 times tEnd/n
+std::vector<Scalar> variableSteps(const Scalar tEnd, const int n)
+{
+    const auto g = [](const Scalar s) { return s + 0.25*std::sin(2.0*M_PI*s)/M_PI; };
+    std::vector<Scalar> steps(n);
+    for (int i = 0; i < n; ++i)
+        steps[i] = tEnd*(g(Scalar(i+1)/n) - g(Scalar(i)/n));
+    return steps;
+}
+
 } // end namespace Dumux
 
 int main(int argc, char* argv[])
@@ -464,24 +478,33 @@ int main(int argc, char* argv[])
         const Vector a0{-c0*v0[0] - k0*u0[0], -c1*v0[1] - k1*u0[1]};
         const Scalar tEnd = 2.0;
 
+        const auto error = [&](std::shared_ptr<const Method> method, const std::vector<Scalar>& steps)
+        {
+            Experimental::GeneralizedAlphaTimeStepper<Newton> stepper(makeNewton(assembler), method);
+            OscillatorAssembler::Variables vars(u0);
+            stepper.initialize(vars, 0.0, v0, a0);
+            Scalar t = 0.0;
+            for (const auto dt : steps)
+            {
+                stepper.step(vars, t, dt);
+                t += dt;
+            }
+            return std::max(std::abs(vars.dofs()[0] - dampedOscillator(t, c0, k0, u0[0], v0[0])),
+                            std::abs(vars.dofs()[1] - dampedOscillator(t, c1, k1, u0[1], v0[1])));
+        };
+
         for (const auto& [id, method] : methods)
         {
             std::vector<std::array<Scalar, 2>> convergence;
             for (const int n : {25, 50, 100, 200, 400})
-            {
-                Experimental::GeneralizedAlphaTimeStepper<Newton> stepper(makeNewton(assembler), method);
-                OscillatorAssembler::Variables vars(u0);
-                stepper.initialize(vars, 0.0, v0, a0);
-                const Scalar dt = tEnd/n;
-                for (int i = 0; i < n; ++i)
-                    stepper.step(vars, i*dt, dt);
-                const Scalar error = std::max(std::abs(vars.dofs()[0] - dampedOscillator(tEnd, c0, k0, u0[0], v0[0])),
-                                              std::abs(vars.dofs()[1] - dampedOscillator(tEnd, c1, k1, u0[1], v0[1])));
-                convergence.push_back({dt, error});
-            }
+                convergence.push_back({tEnd/n, error(method, std::vector<Scalar>(n, tEnd/n))});
             const auto rate = std::log2(convergence[3][1]/convergence[4][1]);
-            std::cout << Fmt::format("-- {}: observed order {:.3f}\n", id, rate);
+            const auto variableError = error(method, variableSteps(tEnd, 400));
+            const auto variableRate = std::log2(error(method, variableSteps(tEnd, 200))/variableError);
+            std::cout << Fmt::format("-- {}: observed order {:.3f} (error {:.3e} for n = 400), with variable step sizes {:.3f} (error {:.3e})\n",
+                                     id, rate, convergence[4][1], variableRate, variableError);
             expect(rate > 1.9, "Observed order of " + id);
+            expect(variableRate > 1.9, "Observed order with variable step sizes of " + id);
 
             auto& node = out["methods"][id];
             node["name"] = method->name();
@@ -619,7 +642,7 @@ int main(int argc, char* argv[])
     {
         using ScalarNewton = NewtonSolver<ScalarAssembler, ScalarLinearSolver, DefaultPartialReassembler>;
         enum class Start { consistent, standard, zeroRates };
-        const auto error = [&](const Start start, const Scalar u0, const int n)
+        const auto error = [&](const Start start, const Scalar u0, const std::vector<Scalar>& steps)
         {
             auto newton = std::make_shared<ScalarNewton>(std::make_shared<ScalarAssembler>(-1.0), std::make_shared<ScalarLinearSolver>(),
                                                          Dune::MPIHelper::getCommunication(), "", "Newton", 0);
@@ -631,25 +654,32 @@ int main(int argc, char* argv[])
                 stepper.initialize(vars, 0.0);
             else
                 stepper.initialize(vars, 0.0, 0.0, 0.0);
-            const Scalar dt = 1.0/n;
-            for (int i = 0; i < n; ++i)
-                stepper.step(vars, i*dt, dt);
-            return std::abs(vars.dofs() - ((u0 - 0.5)*std::exp(-1.0) + 0.5*std::exp(1.0)));
+            Scalar t = 0.0;
+            for (const auto dt : steps)
+            {
+                stepper.step(vars, t, dt);
+                t += dt;
+            }
+            return std::abs(vars.dofs() - ((u0 - 0.5)*std::exp(-t) + 0.5*std::exp(t)));
         };
+        const auto constantSteps = [](const int n) { return std::vector<Scalar>(n, 1.0/n); };
 
-        const auto observedOrder = [&](const Start start, const Scalar u0)
-        { return std::log2(error(start, u0, 100)/error(start, u0, 200)); };
+        const auto observedOrder = [&](const Start start, const Scalar u0, const auto& steps)
+        { return std::log2(error(start, u0, steps(100))/error(start, u0, steps(200))); };
 
-        const auto consistentOrder = observedOrder(Start::consistent, 1.0);
-        const auto standardOrder = observedOrder(Start::standard, 2.0);
+        const auto consistentOrder = observedOrder(Start::consistent, 1.0, constantSteps);
+        const auto standardOrder = observedOrder(Start::standard, 2.0, constantSteps);
+        const auto variableOrder = observedOrder(Start::standard, 2.0, [](const int n) { return variableSteps(1.0, n); });
         std::cout << Fmt::format("-- {}: first-order equation: observed order {:.3f} with consistent rates, "
-                                 "{:.3f} with the default start\n", id, consistentOrder, standardOrder);
+                                 "{:.3f} with the default start, {:.3f} with variable step sizes\n",
+                                 id, consistentOrder, standardOrder, variableOrder);
         expect(consistentOrder > 1.9, "Observed order for the first-order equation with " + id);
         expect(standardOrder > 1.9, "Observed order for the first-order equation with the default start of " + id);
+        expect(variableOrder > 1.9, "Observed order for the first-order equation with variable step sizes of " + id);
 
         std::vector<std::array<Scalar, 3>> convergence;
         for (const int n : {10, 20, 40, 80, 160, 320, 640})
-            convergence.push_back({1.0/n, error(Start::standard, 2.0, n), error(Start::zeroRates, 2.0, n)});
+            convergence.push_back({1.0/n, error(Start::standard, 2.0, constantSteps(n)), error(Start::zeroRates, 2.0, constantSteps(n))});
         out["methods"][id]["firstOrderConvergence"] = convergence;
     }
 
@@ -696,6 +726,54 @@ int main(int argc, char* argv[])
             maxError = std::max(maxError, std::abs(standardVars.dofs()[1] - std::sin((i+1)*dt)));
         }
         expect(maxError < 1e-12, "The default start keeps the constraint with " + id);
+    }
+
+    ////////////////////////////////////////////////////////////
+    // a step retried after a solver failure gives the same result as taking the reduced step directly
+    ////////////////////////////////////////////////////////////
+    {
+        const Matrix mass{{2.0, 0.3}, {0.3, 1.0}};
+        const Matrix damping{{0.4, -0.1}, {0.05, 0.2}};
+        const Matrix stiffness{{3.0, -1.0}, {-1.0, 2.0}};
+        auto assembler = std::make_shared<OscillatorAssembler>(mass, damping, stiffness, 0.5);
+        const Vector u0{1.0, -0.5}, v0{0.0, 0.3}, a0{-1.0, 0.5};
+
+        for (const auto& [id, method] : methods)
+        {
+            using Failing = Test::FailingNewton<OscillatorAssembler, LinearSolver>;
+            auto failing = std::make_shared<Failing>(assembler, std::make_shared<LinearSolver>(),
+                                                     Dune::MPIHelper::getCommunication(), "", "Newton", 0);
+            failing->failOnCall(5);
+            Experimental::GeneralizedAlphaTimeStepper<Failing> stepper(failing, method);
+            OscillatorAssembler::Variables vars(u0);
+            stepper.initialize(vars, 0.0, v0, a0);
+
+            TimeLoop<Scalar> timeLoop(0.0, 0.05, 1.0, false);
+            std::vector<Scalar> stepSizes;
+            while (!timeLoop.finished())
+            {
+                stepper.step(vars, timeLoop);
+                stepSizes.push_back(timeLoop.timeStepSize());
+                timeLoop.advanceTimeStep();
+            }
+            expect(stepSizes[4] < 0.03, "The failure should have reduced the step size with " + id);
+
+            Experimental::GeneralizedAlphaTimeStepper<Newton> reference(makeNewton(assembler), method);
+            OscillatorAssembler::Variables referenceVars(u0);
+            reference.initialize(referenceVars, 0.0, v0, a0);
+            Scalar t = 0.0;
+            for (const auto dt : stepSizes)
+            {
+                reference.step(referenceVars, t, dt);
+                t += dt;
+            }
+
+            auto difference = vars.dofs();
+            difference -= referenceVars.dofs();
+            std::cout << Fmt::format("-- {}: retried step: difference to taking the reduced step directly {:.2e}\n",
+                                     id, difference.infinity_norm());
+            expect(difference.infinity_norm() < 1e-13, "A retried step differs from the reduced step with " + id);
+        }
     }
 
     ////////////////////////////////////////////////////////////

@@ -48,6 +48,7 @@
 
 #include "scalarassembler.hh"
 #include "constrainedode.hh"
+#include "failingnewton.hh"
 
 namespace Dumux {
 
@@ -65,29 +66,6 @@ void expectNear(const Scalar value, const Scalar reference, const Scalar toleran
     if (!(abs(value - reference) <= tolerance))
         DUNE_THROW(Dune::InvalidStateException, message << " (" << value << " vs. " << reference << ")");
 }
-
-//! Newton's method that reports a failure on the given call of apply, after modifying the variables
-template<class Assembler, class LinearSolver>
-class FailingNewton : public NewtonSolver<Assembler, LinearSolver, DefaultPartialReassembler>
-{
-    using ParentType = NewtonSolver<Assembler, LinearSolver, DefaultPartialReassembler>;
-public:
-    using ParentType::ParentType;
-    using typename ParentType::Variables;
-
-    void failOnCall(const std::size_t call)
-    { failOnCall_ = call; }
-
-    bool apply(Variables& vars) override
-    {
-        const bool converged = ParentType::apply(vars);
-        return (++calls_ == failOnCall_) ? false : converged;
-    }
-
-private:
-    std::size_t calls_ = 0;
-    std::size_t failOnCall_ = 0;
-};
 
 } // end namespace Dumux
 
@@ -344,7 +322,7 @@ int main(int argc, char* argv[])
     {
         const auto method = std::make_shared<BDF>(k);
 
-        using Failing = FailingNewton<Assembler, LinearSolver>;
+        using Failing = Test::FailingNewton<Assembler, LinearSolver>;
         auto failing = std::make_shared<Failing>(std::make_shared<Assembler>(-1.0), std::make_shared<LinearSolver>(),
                                                  Dune::MPIHelper::getCommunication(), "", "Newton", 0);
         // fail after the startup steps (two steps with five stages each for BDF3)

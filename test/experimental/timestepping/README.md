@@ -438,7 +438,10 @@ $\bar\theta=2\arctan(\omega\Delta t/2)$.
   60 steps with $\Delta t=0.05$ for a system with two degrees of freedom, a
   non-diagonal mass matrix, a non-symmetric damping matrix and the nonlinear
   stiffness term $0.5\,u_i^3$. It computes the errors of the damped
-  oscillators at $t=2$ for $n=25,50,100,200,400$ steps, and the amplification
+  oscillators at $t=2$ for $n=25,50,100,200,400$ steps and for $n=200,400$
+  steps with the step sizes $t_i=2\,g(i/n)$,
+  $g(s)=s+\tfrac{1}{4\pi}\sin(2\pi s)$ (ratios between $0.5$ and $1.5$ of the
+  mean), and the amplification
   matrix of the stepper for $10^{-2}\le\omega\Delta t\le10^{6}$ (with
   $\Delta t=1$). For $\dot u=\lambda u$ (storage operator only, $\Delta t=1$),
   it computes the amplification matrix of the stepper on 41 radii
@@ -448,7 +451,9 @@ $\bar\theta=2\arctan(\omega\Delta t/2)$.
   $-\rho_\infty$ at seven values of $\lambda$. It computes the order for
   $\dot u=-u+e^t$ with $u(0)=1$ and consistent initial rates, and the errors at
   $t=1$ for $u(0)=2$ and $n=10,20,\ldots,640$ steps with the default start and
-  with zero initial rates. It checks the factor $-\alpha_f/(1-\alpha_f)$ for
+  with zero initial rates, and for $n=100,200$ steps with the step sizes
+  $t_i=g(i/n)$. It checks that a step retried with half the step size after a
+  solver failure gives the same result as taking the reduced step directly. It checks the factor $-\alpha_f/(1-\alpha_f)$ for
   the constraint of the constrained system of the BDF benchmark with
   $u_1(0)-\sin(0)=0.1$ and zero initial rates, checks that the default start
   keeps the constraint for $u(0)=(0.5,0)$ in 20 steps with $\Delta t=0.1$, and
@@ -466,7 +471,9 @@ parameter sets. For the damped
 oscillators (top left), the observed orders between $n=200$ and $n=400$ are
 2.000 for Newmark and Chung-Hulbert with $\rho_\infty=1$ and $0.8$, 2.004,
 2.024, 2.003 and 2.004 for Chung-Hulbert with $\rho_\infty=0.5$ and $0$, HHT
-and WBZ with $\rho_\infty=0.8$. Chung-Hulbert with $\rho_\infty=1$ and the
+and WBZ with $\rho_\infty=0.8$. With the variable step sizes, the observed
+orders are the same to three digits, and the errors at $n=400$ are 1.34 to 1.37
+times those with constant step sizes. Chung-Hulbert with $\rho_\infty=1$ and the
 Newmark method have the same damping ratio and period (to $10^{-9}$ for
 $\omega\Delta t\le 10^4$), and their curves coincide.
 
@@ -513,7 +520,10 @@ default start gives the order 2.000 between $n=320$ and $n=640$ for all
 parameter sets. With zero initial rates, the order is 1.00 for all parameter
 sets except Chung-Hulbert with $\rho_\infty=1$, whose errors do not depend on
 the start, and the error at $n=640$ is 603 (Chung-Hulbert, $\rho_\infty=0$) to
-39513 (Newmark) times the error with the default start.
+39513 (Newmark) times the error with the default start. With the default start
+and the variable step sizes, the observed orders are 2.000 to 2.002. A step
+retried after a solver failure gives the same result as the reduced step to the
+last bit for all parameter sets.
 
 The violation of the constraint is multiplied by $-\alpha_f/(1-\alpha_f)$ to
 $10^{-12}$ in each step, i.e. by $0$, $-1$, $-0.8$, $-0.5$, $0$, $-0.125$ and
