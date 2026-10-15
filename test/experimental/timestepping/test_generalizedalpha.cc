@@ -19,8 +19,13 @@
  * - spectral radius, algorithmic damping ratio and period elongation of the amplification matrix
  *   of the stepper for the undamped oscillator, against the exact values for the Newmark
  *   average acceleration method,
- * - second order for the first-order equation du/dt = -u + exp(t) (storage operator only),
- * - the damping of the constraint of u0' = -u0 + u1, 0 = sin(t) - u1 by -alpha_f/(1 - alpha_f) per step,
+ * - for problems without inertia (storage operator only): A-stability and the spectral radius for
+ *   lambda dt -> -infinity of the amplification matrix for du/dt = lambda u, its eigenvalues against
+ *   those of the first-order generalized-alpha method of Jansen, Whiting and Hulbert plus
+ *   -alpha_f/(1 - alpha_f), and second order for du/dt = -u + exp(t) with consistent initial rates
+ *   and with the default start,
+ * - the damping of the constraint of u0' = -u0 + u1, 0 = sin(t) - u1 by -alpha_f/(1 - alpha_f) per
+ *   step, and that the default start keeps a constraint that holds initially,
  * - that the Newmark parameters reproduce Experimental::NewmarkBeta.
  */
 #include <config.h>
@@ -226,15 +231,101 @@ struct StateSpaceGeneralizedAlpha
     }
 };
 
+using Complex = std::complex<Scalar>;
+using ComplexMatrix = std::array<std::array<Complex, 3>, 3>;
+
+//! The eigenvalues of a 3x3 matrix as the roots of its characteristic polynomial
+std::vector<Complex> eigenvalues(const ComplexMatrix& A)
+{
+    const Complex trace = A[0][0] + A[1][1] + A[2][2];
+    const Complex minors = A[0][0]*A[1][1] - A[0][1]*A[1][0] + A[0][0]*A[2][2] - A[0][2]*A[2][0]
+                         + A[1][1]*A[2][2] - A[1][2]*A[2][1];
+    const Complex determinant = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1])
+                              - A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0])
+                              + A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+    return Test::roots({1.0, -trace, minors, -determinant});
+}
+
+//! The oscillator assembler for problems without inertia
+struct FirstOrderAssembler : public OscillatorAssembler
+{
+    using OscillatorAssembler::OscillatorAssembler;
+
+    static constexpr bool hasInertia()
+    { return false; }
+};
+
+using FirstOrderNewton = NewtonSolver<FirstOrderAssembler, LinearSolver, DefaultPartialReassembler>;
+
+/*!
+ * \brief The eigenvalues of the amplification matrix of the stepper for du/dt = z u with dt = 1
+ *        (storage operator only)
+ *
+ * The real system with the matrix ((Re z, -Im z), (Im z, Re z)) represents the complex equation, and
+ * the stepper commutes with its complex structure, so the states after one step from real unit
+ * states are the columns of the complex amplification matrix for (u, du/dt, d^2u/dt^2).
+ */
+std::vector<Complex> firstOrderAmplificationEigenvalues(std::shared_ptr<const Method> method, const Complex z)
+{
+    const Matrix identity{{1.0, 0.0}, {0.0, 1.0}};
+    const Matrix stiffness{{-z.real(), z.imag()}, {-z.imag(), -z.real()}};
+    auto assembler = std::make_shared<FirstOrderAssembler>(Matrix(0.0), identity, stiffness, 0.0);
+
+    ComplexMatrix A;
+    for (int j = 0; j < 3; ++j)
+    {
+        auto newton = std::make_shared<FirstOrderNewton>(assembler, std::make_shared<LinearSolver>(),
+                                                         Dune::MPIHelper::getCommunication(), "", "Newton", 0);
+        Experimental::GeneralizedAlphaTimeStepper<FirstOrderNewton> stepper(newton, method);
+        FirstOrderAssembler::Variables vars(Vector{j == 0 ? 1.0 : 0.0, 0.0});
+        stepper.initialize(vars, 0.0, Vector{j == 1 ? 1.0 : 0.0, 0.0}, Vector{j == 2 ? 1.0 : 0.0, 0.0});
+        stepper.step(vars, 0.0, 1.0);
+        const auto& history = stepper.storageHistory();
+        A[0][j] = Complex(history.value[0], history.value[1]);
+        A[1][j] = Complex(history.rate[0], history.rate[1]);
+        A[2][j] = Complex(history.secondRate[0], history.secondRate[1]);
+    }
+    return eigenvalues(A);
+}
+
+/*!
+ * \brief The eigenvalues of the amplification matrix of the first-order generalized-alpha method of
+ *        Jansen, Whiting and Hulbert for du/dt = z u with dt = 1 and spectral radius rhoInf at infinity
+ *
+ * The method solves (1 - a_m) w_n + a_m w_{n+1} = z ((1 - a_f) u_n + a_f u_{n+1}) with
+ * u_{n+1} = u_n + (1 - g) w_n + g w_{n+1} for the rate w, where a_m = (3 - rhoInf)/(2 (1 + rhoInf)),
+ * a_f = 1/(1 + rhoInf) and g = 1/2 + a_m - a_f.
+ */
+std::array<Complex, 2> jansenWhitingHulbertEigenvalues(const Scalar rhoInf, const Complex z)
+{
+    const Scalar am = 0.5*(3.0 - rhoInf)/(1.0 + rhoInf);
+    const Scalar af = 1.0/(1.0 + rhoInf);
+    const Scalar g = 0.5 + am - af;
+
+    std::array<std::array<Complex, 2>, 2> A;
+    for (int j = 0; j < 2; ++j)
+    {
+        const Complex u0 = j == 0 ? 1.0 : 0.0, w0 = j == 1 ? 1.0 : 0.0;
+        const Complex u1 = -((1.0 - am)*w0 + am*(-u0 - (1.0 - g)*w0)/g - z*(1.0 - af)*u0)/(am/g - z*af);
+        A[0][j] = u1;
+        A[1][j] = (u1 - u0 - (1.0 - g)*w0)/g;
+    }
+
+    const Complex trace = A[0][0] + A[1][1];
+    const Complex determinant = A[0][0]*A[1][1] - A[0][1]*A[1][0];
+    const Complex root = std::sqrt(trace*trace - 4.0*determinant);
+    return {0.5*(trace + root), 0.5*(trace - root)};
+}
+
 //! The eigenvalues of the amplification matrix of the stepper for u'' + omega^2 u = 0 with dt = 1
-std::vector<std::complex<Scalar>> amplificationEigenvalues(std::shared_ptr<const Method> method, const Scalar omegaDt)
+std::vector<Complex> amplificationEigenvalues(std::shared_ptr<const Method> method, const Scalar omegaDt)
 {
     const Matrix mass{{1.0, 0.0}, {0.0, 1.0}};
     const Matrix stiffness{{omegaDt*omegaDt, 0.0}, {0.0, 1.0}};
     auto assembler = std::make_shared<OscillatorAssembler>(mass, Matrix(0.0), stiffness, 0.0);
 
     // the columns are the states after one step from the unit states (u, v, a)
-    Dune::FieldMatrix<Scalar, 3, 3> A;
+    ComplexMatrix A;
     for (int j = 0; j < 3; ++j)
     {
         Experimental::GeneralizedAlphaTimeStepper<Newton> stepper(makeNewton(assembler), method);
@@ -246,15 +337,11 @@ std::vector<std::complex<Scalar>> amplificationEigenvalues(std::shared_ptr<const
         A[1][j] = history.rate[0];
         A[2][j] = history.secondRate[0];
     }
-
-    const Scalar trace = A[0][0] + A[1][1] + A[2][2];
-    const Scalar minors = A[0][0]*A[1][1] - A[0][1]*A[1][0] + A[0][0]*A[2][2] - A[0][2]*A[2][0]
-                        + A[1][1]*A[2][2] - A[1][2]*A[2][1];
-    return Test::roots({1.0, -trace, minors, -A.determinant()});
+    return eigenvalues(A);
 }
 
 //! The eigenvalue r exp(i theta) with theta > 0 that approximates exp(i omega dt)
-std::optional<std::complex<Scalar>> principalEigenvalue(const std::vector<std::complex<Scalar>>& eigenvalues)
+std::optional<Complex> principalEigenvalue(const std::vector<Complex>& eigenvalues)
 {
     for (const auto& lambda : eigenvalues)
         if (lambda.imag() > 1e-12)
@@ -263,11 +350,11 @@ std::optional<std::complex<Scalar>> principalEigenvalue(const std::vector<std::c
 }
 
 //! The algorithmic damping ratio -ln(r)/theta of the principal eigenvalue r exp(i theta)
-Scalar dampingRatio(const std::complex<Scalar>& principal)
+Scalar dampingRatio(const Complex& principal)
 { return -std::log(std::abs(principal))/std::arg(principal); }
 
 //! The ratio of the numerical to the exact period, omega dt/theta
-Scalar periodRatio(const std::complex<Scalar>& principal, const Scalar omegaDt)
+Scalar periodRatio(const Complex& principal, const Scalar omegaDt)
 { return omegaDt/std::arg(principal); }
 
 //! The exact solution of u'' + c u' + k u = 0 (underdamped)
@@ -462,47 +549,134 @@ int main(int argc, char* argv[])
     }
 
     ////////////////////////////////////////////////////////////
-    // first-order equation du/dt = -u + exp(t), u(0) = 1 (storage only)
+    // amplification matrix for du/dt = z u (storage only)
+    ////////////////////////////////////////////////////////////
+    for (const auto& [id, method] : methods)
+    {
+        // A-stability: the closed left half-plane including the imaginary axis
+        Scalar maxSpectralRadius = 0.0;
+        for (int i = 0; i <= 40; ++i)
+        {
+            const Scalar radius = std::pow(10.0, -2.0 + 8.0*i/40.0);
+            for (int k = 0; k <= 36; ++k)
+            {
+                const Scalar angle = M_PI*(0.5 + k/36.0);
+                for (const auto& lambda : firstOrderAmplificationEigenvalues(method, std::polar(radius, angle)))
+                    maxSpectralRadius = std::max(maxSpectralRadius, std::abs(lambda));
+            }
+        }
+
+        std::vector<std::array<Scalar, 2>> spectralRadii;
+        for (int i = 0; i <= 120; ++i)
+        {
+            const Scalar minusZ = std::pow(10.0, -2.0 + 8.0*i/120.0);
+            Scalar spectralRadius = 0.0;
+            for (const auto& lambda : firstOrderAmplificationEigenvalues(method, -minusZ))
+                spectralRadius = std::max(spectralRadius, std::abs(lambda));
+            spectralRadii.push_back({minusZ, spectralRadius});
+        }
+        out["methods"][id]["firstOrderSpectralRadius"] = spectralRadii;
+
+        Scalar stiffSpectralRadius = 0.0;
+        for (const auto& lambda : firstOrderAmplificationEigenvalues(method, -1e8))
+            stiffSpectralRadius = std::max(stiffSpectralRadius, std::abs(lambda));
+
+        // as for the second-order equation, the eigenvalues of rho_inf = 1 approach a multiple root for z -> -infinity
+        std::cout << Fmt::format("-- {}: first-order equation: largest spectral radius in the left half-plane {:.8f}, "
+                                 "spectral radius at z = -1e8: {:.5f}\n", id, maxSpectralRadius, stiffSpectralRadius);
+        expect(maxSpectralRadius < 1.0 + 1e-4, "A-stability for the first-order equation of " + id);
+        const Scalar rhoInf = id == "newmark" || id == "ch_1.0" ? 1.0 : id == "ch_0.5" ? 0.5 : id == "ch_0.0" ? 0.0 : 0.8;
+        expect(std::abs(stiffSpectralRadius - rhoInf) < 1e-3, "Spectral radius at infinity for the first-order equation of " + id);
+
+        // Chung-Hulbert: the eigenvalues of Jansen-Whiting-Hulbert with the same rho_inf and -alpha_f/(1 - alpha_f)
+        if (id.starts_with("ch_"))
+        {
+            Scalar maxDeviation = 0.0;
+            for (const Complex z : {Complex(-0.1), Complex(-1.0), Complex(-10.0), Complex(-100.0),
+                                    Complex(0.0, 0.5), Complex(0.0, 3.0), Complex(-0.3, 2.0)})
+            {
+                auto remaining = firstOrderAmplificationEigenvalues(method, z);
+                const auto jwh = jansenWhitingHulbertEigenvalues(rhoInf, z);
+                const Complex constraintMode = -method->alphaF()/(1.0 - method->alphaF());
+                for (const auto& expected : {jwh[0], jwh[1], constraintMode})
+                {
+                    const auto closest = std::min_element(remaining.begin(), remaining.end(),
+                        [&](const auto& a, const auto& b) { return std::abs(a - expected) < std::abs(b - expected); });
+                    maxDeviation = std::max(maxDeviation, std::abs(*closest - expected));
+                    remaining.erase(closest);
+                }
+            }
+            std::cout << Fmt::format("-- {}: largest deviation from the eigenvalues of Jansen-Whiting-Hulbert "
+                                     "and -alpha_f/(1 - alpha_f): {:.2e}\n", id, maxDeviation);
+            expect(maxDeviation < 1e-6, "Eigenvalues of the first-order equation of " + id);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////
+    // first-order equation du/dt = -u + exp(t) (storage only), u(t) = (u0 - 1/2) exp(-t) + exp(t)/2
     ////////////////////////////////////////////////////////////
     for (const auto& [id, method] : methods)
     {
         using ScalarNewton = NewtonSolver<ScalarAssembler, ScalarLinearSolver, DefaultPartialReassembler>;
-        std::vector<Scalar> errors;
-        for (const int n : {50, 100, 200})
+        enum class Start { consistent, standard, zeroRates };
+        const auto error = [&](const Start start, const Scalar u0, const int n)
         {
             auto newton = std::make_shared<ScalarNewton>(std::make_shared<ScalarAssembler>(-1.0), std::make_shared<ScalarLinearSolver>(),
                                                          Dune::MPIHelper::getCommunication(), "", "Newton", 0);
             Experimental::GeneralizedAlphaTimeStepper<ScalarNewton> stepper(newton, method);
-            ScalarAssembler::Variables vars(1.0);
-            stepper.initialize(vars, 0.0, 0.0, 1.0);
+            ScalarAssembler::Variables vars(u0);
+            if (start == Start::consistent)
+                stepper.initialize(vars, 0.0, 1.0 - u0, u0);
+            else if (start == Start::standard)
+                stepper.initialize(vars, 0.0);
+            else
+                stepper.initialize(vars, 0.0, 0.0, 0.0);
             const Scalar dt = 1.0/n;
             for (int i = 0; i < n; ++i)
                 stepper.step(vars, i*dt, dt);
-            errors.push_back(std::abs(vars.dofs() - std::cosh(1.0)));
-        }
-        const auto rate = std::log2(errors[1]/errors[2]);
-        std::cout << Fmt::format("-- {}: observed order for the first-order equation {:.3f}\n", id, rate);
-        expect(rate > 1.9, "Observed order for the first-order equation with " + id);
+            return std::abs(vars.dofs() - ((u0 - 0.5)*std::exp(-1.0) + 0.5*std::exp(1.0)));
+        };
+
+        const auto observedOrder = [&](const Start start, const Scalar u0)
+        { return std::log2(error(start, u0, 100)/error(start, u0, 200)); };
+
+        const auto consistentOrder = observedOrder(Start::consistent, 1.0);
+        const auto standardOrder = observedOrder(Start::standard, 2.0);
+        std::cout << Fmt::format("-- {}: first-order equation: observed order {:.3f} with consistent rates, "
+                                 "{:.3f} with the default start\n", id, consistentOrder, standardOrder);
+        expect(consistentOrder > 1.9, "Observed order for the first-order equation with " + id);
+        expect(standardOrder > 1.9, "Observed order for the first-order equation with the default start of " + id);
+
+        std::vector<std::array<Scalar, 3>> convergence;
+        for (const int n : {10, 20, 40, 80, 160, 320, 640})
+            convergence.push_back({1.0/n, error(Start::standard, 2.0, n), error(Start::zeroRates, 2.0, n)});
+        out["methods"][id]["firstOrderConvergence"] = convergence;
     }
 
     ////////////////////////////////////////////////////////////
-    // the constraint error of u0' = -u0 + u1, 0 = sin(t) - u1 is multiplied by -alpha_f/(1 - alpha_f)
+    // the constraint error of u0' = -u0 + u1, 0 = sin(t) - u1 is multiplied by -alpha_f/(1 - alpha_f),
+    // and the default start keeps a constraint that holds initially
     ////////////////////////////////////////////////////////////
     for (const auto& [id, method] : methods)
     {
         using ODEAssembler = Experimental::MultiStageODEAssembler<Test::ConstrainedODE>;
         using ODELinearSolver = Experimental::ODELocalLinearSolver<Test::ConstrainedODE::JacobianMatrix, Test::ConstrainedODE::ResidualType>;
         using ODENewton = NewtonSolver<ODEAssembler, ODELinearSolver, DefaultPartialReassembler>;
-        auto newton = std::make_shared<ODENewton>(std::make_shared<ODEAssembler>(std::make_shared<const Test::ConstrainedODE>()),
-                                                  std::make_shared<ODELinearSolver>(),
-                                                  Dune::MPIHelper::getCommunication(), "", "Newton", 0);
-        Experimental::GeneralizedAlphaTimeStepper<ODENewton> stepper(newton, method);
-        Test::ConstrainedODE::Variables vars(Test::ConstrainedODE::SolutionVector{0.0, 0.1});
-        stepper.initialize(vars, 0.0);
+        using ODESolution = Test::ConstrainedODE::SolutionVector;
+        const auto makeStepper = [&]
+        {
+            auto newton = std::make_shared<ODENewton>(std::make_shared<ODEAssembler>(std::make_shared<const Test::ConstrainedODE>()),
+                                                      std::make_shared<ODELinearSolver>(),
+                                                      Dune::MPIHelper::getCommunication(), "", "Newton", 0);
+            return Experimental::GeneralizedAlphaTimeStepper<ODENewton>(newton, method);
+        };
+        const Scalar dt = 0.1;
 
+        auto stepper = makeStepper();
+        Test::ConstrainedODE::Variables vars(ODESolution{0.0, 0.1});
+        stepper.initialize(vars, 0.0, ODESolution(0.0), ODESolution(0.0));
         const Scalar factor = -method->alphaF()/(1.0 - method->alphaF());
         Scalar error = 0.1;
-        const Scalar dt = 0.1;
         for (int i = 0; i < 4; ++i)
         {
             stepper.step(vars, i*dt, dt);
@@ -511,6 +685,17 @@ int main(int argc, char* argv[])
             error = newError;
         }
         std::cout << Fmt::format("-- {}: constraint error after four steps {:.3e} (factor {:.4f})\n", id, error, factor);
+
+        auto standardStepper = makeStepper();
+        Test::ConstrainedODE::Variables standardVars(ODESolution{0.5, 0.0});
+        standardStepper.initialize(standardVars, 0.0);
+        Scalar maxError = 0.0;
+        for (int i = 0; i < 20; ++i)
+        {
+            standardStepper.step(standardVars, i*dt, dt);
+            maxError = std::max(maxError, std::abs(standardVars.dofs()[1] - std::sin((i+1)*dt)));
+        }
+        expect(maxError < 1e-12, "The default start keeps the constraint with " + id);
     }
 
     ////////////////////////////////////////////////////////////

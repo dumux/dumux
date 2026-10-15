@@ -39,8 +39,8 @@ def main() -> int:
                          "xtick.labelsize": 11, "ytick.labelsize": 11})
 
     cmap = plt.get_cmap("tab10").colors
-    fig, axes = plt.subplots(2, 2, figsize=(13.0, 10.0), constrained_layout=True)
-    (axConvergence, axRadius), (axDamping, axPeriod) = axes
+    fig, axes = plt.subplots(2, 3, figsize=(19.0, 10.0), constrained_layout=True)
+    (axConvergence, axRadius, axFirstOrderRadius), (axDamping, axPeriod, axFirstOrderConvergence) = axes
 
     for i, key in enumerate(METHODS):
         method = data[key]
@@ -58,6 +58,14 @@ def main() -> int:
         stepPerPeriod = [p[0]/(2.0*math.pi) for p in method["dampingAndPeriod"]]
         axDamping.semilogx(stepPerPeriod, [p[1] for p in method["dampingAndPeriod"]], **style)
         axPeriod.semilogx(stepPerPeriod, [p[2] - 1.0 for p in method["dampingAndPeriod"]], **style)
+
+        axFirstOrderRadius.semilogx([p[0] for p in method["firstOrderSpectralRadius"]],
+                                    [p[1] for p in method["firstOrderSpectralRadius"]], **style)
+
+        dts = [p[0] for p in method["firstOrderConvergence"]]
+        axFirstOrderConvergence.loglog(dts, [p[1] for p in method["firstOrderConvergence"]], marker="o", **style)
+        axFirstOrderConvergence.loglog(dts, [p[2] for p in method["firstOrderConvergence"]], marker="x",
+                                       color=style["color"], linestyle=":", linewidth=1.0)
 
     dts = [p[0] for p in data["newmark"]["convergence"]]
     e0 = data["newmark"]["convergence"][0][1]
@@ -85,6 +93,17 @@ def main() -> int:
     axPeriod.set_title("Period elongation")
     axPeriod.set_xlim(1e-2, 1e0)
     axPeriod.set_ylim(-0.01, 0.5)
+
+    axFirstOrderRadius.set_xlabel(r"$-\lambda \Delta t$")
+    axFirstOrderRadius.set_ylabel(r"spectral radius $\rho$")
+    axFirstOrderRadius.set_title(r"Spectral radius for $\dot u = \lambda u$ (storage only)")
+    axFirstOrderRadius.set_xlim(1e-2, 1e6)
+    axFirstOrderRadius.set_ylim(-0.02, 1.05)
+
+    axFirstOrderConvergence.set_xlabel(r"time step size $\Delta t$")
+    axFirstOrderConvergence.set_ylabel("absolute error at $t=1$")
+    axFirstOrderConvergence.set_title(r"$\dot u = -u + e^t$: default start (o) and zero rates (x)")
+    axFirstOrderConvergence.xaxis.set_minor_formatter(plt.NullFormatter())
 
     for ax in axes.flat:
         ax.grid(True, which="both", alpha=0.3)
