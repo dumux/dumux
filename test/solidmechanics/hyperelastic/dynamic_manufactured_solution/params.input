@@ -1,0 +1,30 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 8 8
+CellType = Simplex
+
+[TimeLoop]
+TEnd = 1.0
+DtInitial = 0.25
+
+[Problem]
+ShearModulus = 1.0
+LameLambda = 4.0
+Viscosity = 0.1
+Density = 1.0
+SpringStiffness = 2.0
+DashpotCoefficient = 0.5
+Pressure = 0.3
+
+[Newton]
+MaxRelativeShift = 1e-12
+EnableResidualCriterion = true
+ResidualReduction = 1e-12
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-12
+SatisfyResidualAndShiftCriterion = false
+Verbosity = 0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
