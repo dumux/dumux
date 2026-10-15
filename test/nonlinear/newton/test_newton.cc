@@ -17,67 +17,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-/*
-  This test currently solves a scalar non-linear equation using the
-  Dumux::NewtonSolver. The Mock classes expose which dependencies the
-  current implementation has on different other classes it interacts with.
-  This test is to ensure that the dependencies do not grow more in the future.
-  The Mock classes can be step-wise reduced in complexity once the Newton
-  implementation required a smaller interface from assembler and solver.
- */
-
-namespace Dumux {
-
-class MockScalarAssembler
-{
-public:
-    using Scalar = double;
-    using ResidualType = Scalar;
-    using JacobianMatrix = Scalar;
-    using SolutionVector = Scalar;
-    using Variables = Scalar;
-
-    void setLinearSystem() {}
-
-    void assembleResidual(const ResidualType& sol)
-    {
-        res_ = sol*sol - 5.0;
-    }
-
-    void assembleJacobianAndResidual (const ResidualType& sol)
-    {
-        assembleResidual(sol);
-        jac_ = 2.0*sol;
-    }
-
-    JacobianMatrix& jacobian() { return jac_; }
-
-    ResidualType& residual() { return res_; }
-
-private:
-    JacobianMatrix jac_;
-    ResidualType res_;
-};
-
-class MockScalarLinearSolver
-{
-public:
-    void setResidualReduction(double residualReduction) {}
-
-    bool solve(const double& A, double& x, const double& b) const
-    {
-        x = b/A;
-        return true;
-    }
-
-    double norm(const double& residual) const
-    {
-        using std::abs;
-        return abs(residual);
-    }
-};
-
-} // end namespace Dumux
+#include "test_newton_common.hh"
 
 int main(int argc, char* argv[])
 {
