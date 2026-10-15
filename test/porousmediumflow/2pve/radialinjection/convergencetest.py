@@ -65,7 +65,7 @@ def run_case(executable, name, rate_factor=1, radial_cells=400, entry_pressure=N
 
 
 def remove_outputs(name):
-    for pattern in (f"{name}-*.vtu", f"{name}.pvd", f"fine_{name}-*.vtu", f"fine_{name}.pvd"):
+    for pattern in (f"{name}-*.vtu", f"{name}-*.vtp", f"{name}.pvd", f"fine_{name}-*.vtu", f"fine_{name}.pvd"):
         for f in glob.glob(pattern):
             os.remove(f)
 

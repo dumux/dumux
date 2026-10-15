@@ -28,13 +28,13 @@ namespace Dumux {
  * \ingroup TwoPVETests
  * \brief The coarse-level spatial params for the vertical equilibrium Darcy test.
  */
-template<class GridGeometry, class Scalar>
+template<class GridGeometry, class FineGridGeometry, class Scalar>
 class TwoPTestSpatialParams
-: public TwoPVESpatialParams<GridGeometry, Scalar, TwoPTestFineSpatialParams<GridGeometry, Scalar>, TwoPTestSpatialParams<GridGeometry, Scalar>>
+: public TwoPVESpatialParams<GridGeometry, FineGridGeometry, Scalar, TwoPTestFineSpatialParams<FineGridGeometry, Scalar>, TwoPTestSpatialParams<GridGeometry, FineGridGeometry, Scalar>>
 {
-    using ThisType = TwoPTestSpatialParams<GridGeometry, Scalar>;
-    using SpatialParamsFine = TwoPTestFineSpatialParams<GridGeometry, Scalar>;
-    using ParentType = TwoPVESpatialParams<GridGeometry, Scalar, SpatialParamsFine, ThisType>;
+    using ThisType = TwoPTestSpatialParams<GridGeometry, FineGridGeometry, Scalar>;
+    using SpatialParamsFine = TwoPTestFineSpatialParams<FineGridGeometry, Scalar>;
+    using ParentType = TwoPVESpatialParams<GridGeometry, FineGridGeometry, Scalar, SpatialParamsFine, ThisType>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -42,7 +42,7 @@ class TwoPTestSpatialParams
 
 public:
     TwoPTestSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
-                          const TwoPVEColumnMapping<GridGeometry, Scalar>& columnMapping,
+                          const TwoPVEColumnMapping<GridGeometry, FineGridGeometry, Scalar>& columnMapping,
                           std::shared_ptr<const SpatialParamsFine> spatialParamsFine,
                           const Scalar fineCellHeight)
     : ParentType(gridGeometry, columnMapping, spatialParamsFine, fineCellHeight)

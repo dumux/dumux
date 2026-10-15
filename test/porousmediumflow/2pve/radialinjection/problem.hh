@@ -29,7 +29,7 @@ namespace Dumux {
  * \ingroup TwoPVETests
  * \brief Radial injection into a homogeneous confined aquifer, solved with the two-phase VE model
  *
- * The grid spans the radial and the vertical coordinate and is rotated about the vertical axis.
+ * The coarse grid consists of radial segments rotated about the well axis.
  * The injected fluid enters through the well at the inner radius, and the pressure at the bottom
  * of the aquifer is fixed at the outer radius.
  */
@@ -52,7 +52,8 @@ class TwoPVERadialInjectionProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
-    using FineLevelView = TwoPVEFineLevelView<GridGeometry, Scalar, FluidSystem, Indices, SolutionVector, typename SpatialParams::SpatialParamsFine>;
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    using FineLevelView = TwoPVEFineLevelView<GridGeometry, FineGridGeometry, Scalar, FluidSystem, Indices, SolutionVector, typename SpatialParams::SpatialParamsFine>;
 
     TwoPVERadialInjectionProblem(std::shared_ptr<const GridGeometry> gridGeometry,
                                  std::shared_ptr<SpatialParams> spatialParams,
@@ -85,7 +86,7 @@ public:
     { return initialAtPos(globalPos); }
 
     /*!
-     * \brief The mass flux of the injected fluid through the well, distributed over the aquifer height
+     * \brief The mass flux per physical well area; assembly supplies the column height
      *
      * \param globalPos the center of the boundary face
      */
@@ -95,7 +96,8 @@ public:
         if (onWell_(globalPos))
         {
             const Scalar wellRadius = this->gridGeometry().bBoxMin()[0];
-            const Scalar height = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
+            const auto& fineGeometry = fineLevelView_->gridGeometry();
+            const Scalar height = fineGeometry.bBoxMax()[1] - fineGeometry.bBoxMin()[1];
             values[injectedPhaseEqIdx] = -injectedDensity_()*injectionRate_/(2.0*M_PI*wellRadius*height);
         }
         return values;

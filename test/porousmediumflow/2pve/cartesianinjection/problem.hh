@@ -46,7 +46,8 @@ class TwoPVETestProblem : public FVProblem<TypeTag>
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     static constexpr int pressureH2OIdx = Indices::pressureIdx;
     static constexpr int saturationGasIdx = Indices::saturationIdx;
-    static constexpr int dim = GridView::dimension;
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    static constexpr int dim = FineGridGeometry::GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -58,7 +59,7 @@ class TwoPVETestProblem : public FVProblem<TypeTag>
 public:
     using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
     using FineProblem = TwoPVEFineProblem<TypeTag>;
-    using FineLevelView = TwoPVEFineLevelView<GridGeometry, Scalar, FluidSystem, Indices, SolutionVector, typename FineProblem::SpatialParamsFine>;
+    using FineLevelView = TwoPVEFineLevelView<GridGeometry, FineGridGeometry, Scalar, FluidSystem, Indices, SolutionVector, typename FineProblem::SpatialParamsFine>;
 
     TwoPVETestProblem(std::shared_ptr<const GridGeometry> gridGeometryCoarse,
                       std::shared_ptr<FineLevelView> fineLevelView,
@@ -128,21 +129,21 @@ public:
         const auto& column = fineLevelView_->columnMap().column(columnIdx);
 
         // evaluate pressure at bottom of column
-        GlobalPosition globalPosFineElementBottom = column[0].geometry().center();
+        auto globalPosFineElementBottom = column[0].geometry().center();
         // shift by 0.5*cellHeight downwards, to evaluate p at the bottom of column and not center of fine cell
         globalPosFineElementBottom[dim-1] -= 0.5*deltaZ;
         values[pressureH2OIdx] = fineProblem_->dirichletAtPos(globalPosFineElementBottom)[pressureH2OIdx];
 
         for (const auto& fineElement : column)
         {
-            GlobalPosition globalPosFineElement = fineElement.geometry().center();
+            auto globalPosFineElement = fineElement.geometry().center();
             globalPosFineElement[0] = scvf.center()[0];
             // integration of fine-level saturation to obtain coarse-level saturation
             values[saturationGasIdx] += (fineProblem_->dirichletAtPos(globalPosFineElement)[saturationGasIdx] * fineLevelView_->spatialParams().porosityAtElement(fineElement))*deltaZ;
         }
 
         // porosity-weighted average over the column
-        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element)*column.size()*deltaZ;
+        values[saturationGasIdx] /= this->spatialParams().porosityIntegralAtElement(element);
 
         return values;
     }
@@ -172,15 +173,14 @@ public:
         {
             for (const auto& fineElement : column)
             {
-                GlobalPosition globalPosFineElement = fineElement.geometry().center();
+                auto globalPosFineElement = fineElement.geometry().center();
                 globalPosFineElement[0] = scvf.center()[0];
                 values += fineProblem_->neumannAtPos(globalPosFineElement)*deltaZ;
             }
-
-            // average over the height of the coarse-level face
-            values /= column.size()*deltaZ;
         }
 
+        // Assembly multiplies this height-average flux by the column extrusion.
+        values /= this->spatialParams().columnHeightAtElement(element);
         return values;
     }
 
@@ -197,20 +197,20 @@ public:
         const auto& column = fineLevelView_->columnMap().column(columnIdx);
 
         // evaluate pressure at bottom of column
-        GlobalPosition globalPosFineElementBottom = column[0].geometry().center();
+        auto globalPosFineElementBottom = column[0].geometry().center();
         // shift by 0.5*cellHeight downwards, to evaluate p at the bottom of column and not center of fine cell
         globalPosFineElementBottom[dim-1] -= 0.5*deltaZ;
         values[pressureH2OIdx] = fineProblem_->dirichletAtPos(globalPosFineElementBottom)[pressureH2OIdx];
 
         for (const auto& fineElement : column)
         {
-            GlobalPosition globalPosFineElement = fineElement.geometry().center();
+            auto globalPosFineElement = fineElement.geometry().center();
             // integration of fine-level saturation to obtain coarse-level saturation
             values[saturationGasIdx] += (fineProblem_->initialAtPos(globalPosFineElement)[saturationGasIdx] * fineLevelView_->spatialParams().porosityAtElement(fineElement))*deltaZ;
         }
 
         // porosity-weighted average over the column
-        values[saturationGasIdx] /= this->spatialParams().porosityAtElement(element)*column.size()*deltaZ;
+        values[saturationGasIdx] /= this->spatialParams().porosityIntegralAtElement(element);
 
         return values;
     }

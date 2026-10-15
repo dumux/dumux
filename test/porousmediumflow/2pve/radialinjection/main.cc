@@ -79,19 +79,24 @@ int main(int argc, char** argv)
 
     Parameters::init(argc, argv);
 
-    // the fine grid resolves the vertical direction, the coarse grid consists of a single layer of columns
+    // The fine grid resolves radius and height. The coarse grid contains radial segments.
     using Grid = GetPropType<TypeTag, Properties::Grid>;
-    using GlobalPosition = Dune::FieldVector<double, Grid::dimensionworld>;
-    GridManager<Grid> gridManagerFine;
+    using FineGrid = GetPropType<TypeTag, Properties::FineGrid>;
+    using GlobalPosition = Dune::FieldVector<double, FineGrid::dimensionworld>;
+    GridManager<FineGrid> gridManagerFine;
     gridManagerFine.init();
     GridManager<Grid> gridManagerCoarse;
-    auto coarseCells = getParam<std::array<int, Grid::dimension>>("Grid.Cells");
-    coarseCells[Grid::dimension-1] = 1;
-    gridManagerCoarse.init(getParam<GlobalPosition>("Grid.LowerLeft"), getParam<GlobalPosition>("Grid.UpperRight"), coarseCells);
+    const auto fineCells = getParam<std::array<int, FineGrid::dimension>>("Grid.Cells");
+    const auto lower = getParam<GlobalPosition>("Grid.LowerLeft");
+    const auto upper = getParam<GlobalPosition>("Grid.UpperRight");
+    gridManagerCoarse.init(Dune::FieldVector<double, 1>({lower[0]}),
+                           Dune::FieldVector<double, 1>({upper[0]}),
+                           std::array<int, 1>({fineCells[0]}));
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometryCoarse = std::make_shared<GridGeometry>(gridManagerCoarse.grid().leafGridView());
-    auto gridGeometryFine = std::make_shared<GridGeometry>(gridManagerFine.grid().leafGridView());
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    auto gridGeometryFine = std::make_shared<FineGridGeometry>(gridManagerFine.grid().leafGridView());
 
     // the fine-level view and the coarse-level spatial parameters upscaled from the fine level
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -122,7 +127,7 @@ int main(int argc, char** argv)
     const Scalar viscosityResident = FluidSystem::viscosity(fluidState, FluidSystem::phase0Idx);
     const Scalar viscosityInjected = FluidSystem::viscosity(fluidState, FluidSystem::phase1Idx);
     const Scalar densityDifference = FluidSystem::density(fluidState, FluidSystem::phase0Idx) - FluidSystem::density(fluidState, FluidSystem::phase1Idx);
-    const Scalar aquiferHeight = gridGeometryCoarse->bBoxMax()[1] - gridGeometryCoarse->bBoxMin()[1];
+    const Scalar aquiferHeight = gridGeometryFine->bBoxMax()[1] - gridGeometryFine->bBoxMin()[1];
     const Scalar permeability = getParam<Scalar>("SpatialParams.Permeability");
     const TwoPVERadialInjectionSimilaritySolution<Scalar> similaritySolution(
             viscosityResident/viscosityInjected,
@@ -130,7 +135,7 @@ int main(int argc, char** argv)
             getParam<Scalar>("SpatialParams.Porosity"),
             getParam<Scalar>("SpatialParams.Swr"),
             problem->injectionRate());
-    const Scalar gravityNumber = 2.0*M_PI*densityDifference*spatialParams->gravity(gridGeometryCoarse->bBoxMin()).two_norm()*permeability/viscosityResident*aquiferHeight*aquiferHeight/problem->injectionRate();
+    const Scalar gravityNumber = 2.0*M_PI*densityDifference*spatialParamsFine->gravity(gridGeometryFine->bBoxMin()).two_norm()*permeability/viscosityResident*aquiferHeight*aquiferHeight/problem->injectionRate();
     std::cout << "Mobility ratio: " << viscosityResident/viscosityInjected << ", gravity number: " << gravityNumber << std::endl;
 
     // The effective gas plume distance corresponds to a sharp-interface plume at saturation 1 - Swr.
@@ -153,13 +158,15 @@ int main(int argc, char** argv)
     using VtkOutputFields = GetPropType<TypeTag, Properties::IOFields>;
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::initOutputModule(vtkWriter);
+    vtkWriter.addVolumeVariable([](const auto& v){ return v.porosityIntegral(); }, "porosityIntegral");
+    vtkWriter.addVolumeVariable([](const auto& v){ return v.permeabilityIntegral(); }, "permeabilityIntegral");
     vtkWriter.addVolumeVariable([](const auto& v){ return v.gasPlumeDist(); }, "zp");
     vtkWriter.addField(gasPlumeDistance, "gasPlumeDistance");
     vtkWriter.addField(exactGasPlumeDistance, "gasPlumeDistanceExact");
     updateGasPlumeDistances(0.0);
     vtkWriter.write(0.0);
 
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename FineGridGeometry::GridView;
     Dune::VTKSequenceWriter<GridView> vtkWriterFine(gridGeometryFine->gridView(), "fine_" + problem->name(), ".", "");
     fineLevelView->fields().registerFields(vtkWriterFine);
     vtkWriterFine.write(0.0);

@@ -49,11 +49,11 @@ public:
     }
 };
 
-template<class GridGeometry, class SpatialParamsFine>
+template<class GridGeometry, class FineGridGeometry, class SpatialParamsFine>
 class SpatialParams
-: public TwoPVESpatialParams<GridGeometry, double, SpatialParamsFine, SpatialParams<GridGeometry, SpatialParamsFine>>
+: public TwoPVESpatialParams<GridGeometry, FineGridGeometry, double, SpatialParamsFine, SpatialParams<GridGeometry, FineGridGeometry, SpatialParamsFine>>
 {
-    using ParentType = TwoPVESpatialParams<GridGeometry, double, SpatialParamsFine, SpatialParams<GridGeometry, SpatialParamsFine>>;
+    using ParentType = TwoPVESpatialParams<GridGeometry, FineGridGeometry, double, SpatialParamsFine, SpatialParams<GridGeometry, FineGridGeometry, SpatialParamsFine>>;
 public:
     using ParentType::ParentType;
 };
@@ -83,22 +83,24 @@ int main(int argc, char** argv)
     using Scalar = double;
     using Grid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<Scalar, dim>>;
     using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView>;
+    using CoarseGrid = Dune::YaspGrid<dim-1, Dune::EquidistantOffsetCoordinates<Scalar, dim-1>>;
+    using CoarseGridGeometry = CCTpfaFVGridGeometry<typename CoarseGrid::LeafGridView>;
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
     using SpatialParamsFine = TwoPVETest::FineSpatialParams<Element>;
 
     const Dune::FieldVector<Scalar, dim> lowerLeft({1.0, -2.0});
     const Dune::FieldVector<Scalar, dim> upperRight({5.0, 6.0});
-    const std::array<int, dim> coarseCells({2, 1});
+    const std::array<int, dim-1> coarseCells({2});
     const std::array<int, dim> fineCells({2, 4});
     const Scalar fineCellHeight = (upperRight[dim-1] - lowerLeft[dim-1])/fineCells[dim-1];
 
-    Grid coarseGrid(lowerLeft, upperRight, coarseCells);
+    CoarseGrid coarseGrid(Dune::FieldVector<Scalar, dim-1>({lowerLeft[0]}), Dune::FieldVector<Scalar, dim-1>({upperRight[0]}), coarseCells);
     Grid fineGrid(lowerLeft, upperRight, fineCells);
-    auto coarseGridGeometry = std::make_shared<GridGeometry>(coarseGrid.leafGridView());
+    auto coarseGridGeometry = std::make_shared<CoarseGridGeometry>(coarseGrid.leafGridView());
     auto fineGridGeometry = std::make_shared<GridGeometry>(fineGrid.leafGridView());
-    const TwoPVEColumnMapping<GridGeometry, Scalar> columnMapping(coarseGridGeometry, fineGridGeometry);
+    const TwoPVEColumnMapping<CoarseGridGeometry, GridGeometry, Scalar> columnMapping(coarseGridGeometry, fineGridGeometry);
 
-    const TwoPVETest::SpatialParams<GridGeometry, SpatialParamsFine> spatialParams(
+    const TwoPVETest::SpatialParams<CoarseGridGeometry, GridGeometry, SpatialParamsFine> spatialParams(
         coarseGridGeometry, columnMapping, std::make_shared<const SpatialParamsFine>(), fineCellHeight
     );
 
@@ -107,24 +109,31 @@ int main(int argc, char** argv)
     const Scalar height = top - bottom;
     for (const auto& element : elements(coarseGridGeometry->gridView()))
     {
-        // vertical averages of the fine-level fields over the column
+        // Vertical integrals over the fine-level fields.
         const Scalar x = element.geometry().center()[0];
-        const Scalar expectedPermeability = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom))/height;
+        const Scalar expectedPermeabilityIntegral = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom));
         const Scalar expectedPorosity = ((0.1 + 0.01*x)*height + 0.01*(top*top - bottom*bottom))/height;
 
-        TwoPVETest::checkClose(spatialParams.permeabilityAtElement(element), expectedPermeability, "column-averaged permeability");
-        TwoPVETest::checkClose(spatialParams.porosityAtElement(element), expectedPorosity, "column-averaged porosity");
+
+        TwoPVETest::checkClose(spatialParams.permeabilityIntegralAtElement(element), expectedPermeabilityIntegral, "permeability integral");
+        TwoPVETest::checkClose(spatialParams.porosityIntegralAtElement(element), expectedPorosity*height, "porosity integral");
+        TwoPVETest::checkClose(spatialParams.columnHeightAtElement(element), height, "column height");
+        if (spatialParams.gravity(element.geometry().center()).two_norm() != 0.0)
+            DUNE_THROW(Dune::Exception, "Coarse horizontal gravity must vanish");
+        if (std::abs(element.geometry().volume() - 2.0) > 1e-14)
+            DUNE_THROW(Dune::Exception, "Coarse measure must be a length independent of height");
 
         const auto fvGeometry = localView(*coarseGridGeometry).bindElement(element);
         for (const auto& scv : scvs(fvGeometry))
         {
             const int elemSol = 0;
-            TwoPVETest::checkClose(spatialParams.permeability(element, scv, elemSol), expectedPermeability, "scv permeability");
-            TwoPVETest::checkClose(spatialParams.porosity(element, scv, elemSol), expectedPorosity, "scv porosity");
+            TwoPVETest::checkClose(spatialParams.extrusionFactor(element, scv, elemSol), height, "extrusion height");
+            TwoPVETest::checkClose(spatialParams.permeability(element, scv, elemSol), expectedPermeabilityIntegral/height, "scv average permeability");
+            TwoPVETest::checkClose(spatialParams.porosity(element, scv, elemSol), expectedPorosity, "scv average porosity");
         }
     }
 
-    if (spatialParams.template wettingPhaseAtPos<TwoPVETest::FluidSystem>(lowerLeft) != TwoPVETest::FluidSystem::phase0Idx)
+    if (spatialParams.template wettingPhaseAtPos<TwoPVETest::FluidSystem>(coarseGridGeometry->bBoxMin()) != TwoPVETest::FluidSystem::phase0Idx)
         DUNE_THROW(Dune::Exception, "Expected the first phase to be the wetting phase");
 
     return 0;
