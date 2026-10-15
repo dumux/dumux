@@ -47,7 +47,7 @@ with line search for each \f$ \lambda \f$.
 
 ### 2D, plane strain {#benchmark-cooks-membrane-hyperelastic-2d}
 
-![Deformed membrane on the finest Taylor–Hood mesh (refinement 4), coloured by the displacement magnitude; dashed: undeformed membrane](cooks_membrane_hyperelastic_deformation.png)
+![Deformed membrane on the finest Taylor–Hood mesh (refinement 4) for Poisson's ratios 0.35 and 0.4999, coloured by the displacement magnitude; dashed: undeformed membrane](cooks_membrane_hyperelastic_deformation.png)
 
 Tip displacement \f$ u_y(A) \f$ in mm for Poisson's ratios 0.35 (\f$ \lambda = 432.099 \f$ MPa) and 0.4999
 (\f$ \lambda = 926,000 \f$ MPa), and the number of degrees of freedom (displacement and pressure, including
