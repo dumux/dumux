@@ -46,6 +46,12 @@ finite-element schemes). The momentum problem provides the isochoric stress (`is
 pressure problem the volumetric pressure (`volumetricPressure(J)`), and the model adds the volumetric stress \f$ p_s J \mathbf{F}^{-\top} \f$.
 Tests: Cook's membrane (SPP 1748, 2D and 3D, MINI and Taylor-Hood elements) and the incompressible block (SPP 1748; MINI, P2-P1, P2-P1
 finite elements, Q2-Q1), each with a benchmark page.
+- __Large-deformation poroelasticity__: The new model `poromechanics/poroelastic_large_deformations` solves finite-strain poroelasticity
+of a saturated porous solid with three coupled subdomains (displacement, solid pressure, fluid pressure). The momentum residual is the
+one of `hyperelastic_voliso` plus \f$ -\alpha_B p_f J \mathbf{F}^{-\top} \f$; the storage is \f$ \alpha_B \partial_t J + S_p \partial_t p_f \f$
+and the permeability may depend on \f$ J \f$. Time integration with the multi-stage multi-domain assembler.
+Tests: Cryer's sphere consolidation against Cryer's solution (`test/poromechanics/cryer`, with a benchmark page) and a plane-strain
+manufactured solution at finite strain with convergence rates (`test/poromechanics/poroelastic_large_deformations/manufactured_solution`).
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's

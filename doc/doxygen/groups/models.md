@@ -208,6 +208,11 @@
 @copydoc dumux/poromechanics/poroelastic/model.hh
 @ingroup PoroMechanicsModels
 
+@defgroup PoroElasticLargeDef Large-deformation poroelasticity
+@brief Finite-deformation poroelastic model with a three-field (displacement, solid pressure, fluid pressure) formulation for a saturated porous solid.
+@copydoc dumux/poromechanics/poroelastic_large_deformations/model.hh
+@ingroup PoroMechanicsModels
+
 <!-- PoreNetworkModels -->
 
 @defgroup PoreNetworkModels Pore network

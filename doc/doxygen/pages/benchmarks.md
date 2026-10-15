@@ -47,6 +47,7 @@ for more information.
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
 | ![mandel](mandel_pressure.png) | @ref benchmark-mandel "↗️ Mandel's Problem" | poromechanics, consolidation, @ref OnePModel, @ref PoroElastic, @ref CCTpfaDiscretization, @ref BoxDiscretization, @ref MultiDomain | Consolidation of a poroelastic slab between rigid plates (Mandel-Cryer effect), also with compressible solid grains; comparison with the analytical solution @cite Abousleiman1996 |
+| ![cryer sphere](cryer_overview.png) | @ref benchmark-cryer "↗️ Cryer Sphere Consolidation" | poromechanics, large deformation, @ref PoroElasticLargeDef, @ref PQ2Discretization, @ref BoxDiscretization, @ref MultiDomain | Mandel–Cryer effect: the centre pore pressure of a drained poroelastic sphere overshoots the surface load; comparison with Cryer's solution @cite Cryer1963 |
 
 ## Time integration benchmarks
 
