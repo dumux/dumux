@@ -11,7 +11,7 @@ import sys
 # otherwise put explicit and implicit Euler next to each other in the tab10 cycle and give
 # them similar reddish/brownish colors that are hard to tell apart)
 METHOD_ORDER = ["explicit_euler", "implicit_euler", "crank_nicolson", "heun",
-                "dirk2", "qin_zhang", "rk3", "dirk3", "rk4"]
+                "dirk2", "qin_zhang", "rk3", "dirk3", "rk4", "dirk4"]
 
 
 def split_attribution(name: str):
@@ -82,7 +82,7 @@ def main() -> int:
     cmap = plt.get_cmap("tab10").colors
     colors = {method_id: cmap[i % len(cmap)] for i, method_id in enumerate(ordered_ids)}
 
-    markers = ["o", "s", "^", "D", "v", "P", "X", "*"]
+    markers = ["o", "s", "^", "D", "v", "P", "X", "*", "h", "<"]
     marker_styles = {method_id: markers[i % len(markers)] for i, method_id in enumerate(ordered_ids)}
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

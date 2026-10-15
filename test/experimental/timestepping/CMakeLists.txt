@@ -5,6 +5,8 @@ dune_symlink_to_source_files(FILES
     plot_timestepmethods_convergence.py
     plot_timestepmethods_stabilityregions.py
     plot_timestepmethods_symplectic.py
+    plot_multistepmethods_convergence.py
+    plot_multistepmethods_stability.py
     run_benchmarks.py
 )
 
@@ -21,6 +23,14 @@ set_tests_properties(test_timestepmethods_stabilityregions PROPERTIES
 dumux_add_test(SOURCES test_timestepmethods_symplectic.cc LABELS unit timestepping experimental)
 set_tests_properties(test_timestepmethods_symplectic PROPERTIES
   FIXTURES_SETUP timestepmethods_symplectic_data)
+
+dumux_add_test(SOURCES test_multistepmethods.cc LABELS unit timestepping experimental)
+set_tests_properties(test_multistepmethods PROPERTIES
+  FIXTURES_SETUP multistepmethods_convergence_data)
+
+dumux_add_test(SOURCES test_multistepmethods_stability.cc LABELS unit timestepping experimental)
+set_tests_properties(test_multistepmethods_stability PROPERTIES
+  FIXTURES_SETUP multistepmethods_stability_data)
 
 dumux_add_test(
     NAME test_timestepmethods_convergence_plot
@@ -54,3 +64,25 @@ dumux_add_test(
 )
 set_tests_properties(test_timestepmethods_symplectic_plot PROPERTIES
   FIXTURES_REQUIRED timestepmethods_symplectic_data)
+
+dumux_add_test(
+    NAME test_multistepmethods_convergence_plot
+    TARGET test_multistepmethods
+    LABELS unit timestepping experimental
+    COMMAND ./plot_multistepmethods_convergence.py
+    CMD_ARGS --input test_multistepmethods_data.json
+             --output test_multistepmethods_convergence.png
+)
+set_tests_properties(test_multistepmethods_convergence_plot PROPERTIES
+  FIXTURES_REQUIRED multistepmethods_convergence_data)
+
+dumux_add_test(
+    NAME test_multistepmethods_stability_plot
+    TARGET test_multistepmethods_stability
+    LABELS unit timestepping experimental
+    COMMAND ./plot_multistepmethods_stability.py
+    CMD_ARGS --input test_multistepmethods_stability_data.json
+             --output test_multistepmethods_stability.png
+)
+set_tests_properties(test_multistepmethods_stability_plot PROPERTIES
+  FIXTURES_REQUIRED multistepmethods_stability_data)

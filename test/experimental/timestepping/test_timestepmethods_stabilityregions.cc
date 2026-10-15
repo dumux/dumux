@@ -235,6 +235,7 @@ int main(int argc, char* argv[])
     const Method rk4 = std::make_shared<RungeKuttaExplicitFourthOrder<Scalar>>();
     const Method dirk2 = std::make_shared<DIRKSecondOrderAlexander<Scalar>>();
     const Method dirk3 = std::make_shared<DIRKThirdOrderAlexander<Scalar>>();
+    const Method dirk4 = std::make_shared<DIRKFourthOrderHairerWanner<Scalar>>();
     const Method qinZhang = std::make_shared<QinZhangSymplecticDIRK<Scalar>>();
 
     // shorter display names for plot legends/titles
@@ -243,6 +244,7 @@ int main(int argc, char* argv[])
         if (id == "crank_nicolson") return std::string{"Crank-Nicolson"};
         if (id == "dirk2") return std::string{"DIRK2 (Alexander)"};
         if (id == "dirk3") return std::string{"DIRK3 (Alexander)"};
+        if (id == "dirk4") return std::string{"DIRK4 (Hairer-Wanner)"};
         if (id == "qin_zhang") return std::string{"Qin-Zhang (symplectic)"};
         return method->name();
     };
@@ -259,6 +261,10 @@ int main(int argc, char* argv[])
                         - ((1.0 + (1.0 - 2.0 * gamma) * z) / ((1.0 - gamma * z) * (1.0 - gamma * z)))),
                0.0, 1e-14,
                "Unexpected stability function for Alexander DIRK2");
+
+    // the stability function of the Hairer-Wanner DIRK4 scheme at z = -1/2 is 35816/59049 (exact rational arithmetic)
+    expectNear(std::abs(stabilityFunction(dirk4, z) - 35816.0/59049.0), 0.0, 1e-14,
+               "Unexpected stability function for Hairer-Wanner DIRK4");
 
     // Qin-Zhang is symplectic: its stability function is R(z) = ((4+z)/(4-z))^2, the square
     // of a Cayley-like factor, so |R(iy)| = 1 (no dissipation) and |R(z)| -> 1 as Re(z) -> -inf
@@ -338,6 +344,7 @@ int main(int argc, char* argv[])
         {"crank_nicolson", crankNicolson, 2},
         {"dirk2",          dirk2,         2},
         {"dirk3",          dirk3,         3},
+        {"dirk4",          dirk4,         4},
         {"qin_zhang",      qinZhang,      2}
     };
 

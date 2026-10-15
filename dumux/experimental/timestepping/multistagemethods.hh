@@ -389,6 +389,67 @@ private:
 };
 
 /*!
+ * \brief Fourth order singly diagonally implicit Runge-Kutta scheme
+ * \note See Hairer & Wanner (1996) \cite HairerWanner1996 (Section IV.6).
+ *       The five-stage scheme is stiffly accurate and L-stable.
+ *
+ * Butcher tableau (c | A):
+ * \verbatim
+ *    1/4  |   1/4
+ *    3/4  |   1/2       1/4
+ *   11/20 |  17/50     -1/25     1/4
+ *    1/2  | 371/1360 -137/2720  15/544    1/4
+ *     1   |  25/24    -49/48   125/16   -85/12   1/4
+ * \endverbatim
+ */
+template<class Scalar>
+class DIRKFourthOrderHairerWanner final : public MultiStageMethod<Scalar>
+{
+public:
+    DIRKFourthOrderHairerWanner()
+    {
+        paramD_ = {{0.0, 1.0/4.0, 3.0/4.0, 11.0/20.0, 1.0/2.0, 1.0}};
+        paramAlpha_ = {{
+            {-1.0, 1.0, 0.0, 0.0, 0.0, 0.0},
+            {-1.0, 0.0, 1.0, 0.0, 0.0, 0.0},
+            {-1.0, 0.0, 0.0, 1.0, 0.0, 0.0},
+            {-1.0, 0.0, 0.0, 0.0, 1.0, 0.0},
+            {-1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
+        }};
+        paramBeta_ = {{
+            {0.0, 1.0/4.0, 0.0, 0.0, 0.0, 0.0},
+            {0.0, 1.0/2.0, 1.0/4.0, 0.0, 0.0, 0.0},
+            {0.0, 17.0/50.0, -1.0/25.0, 1.0/4.0, 0.0, 0.0},
+            {0.0, 371.0/1360.0, -137.0/2720.0, 15.0/544.0, 1.0/4.0, 0.0},
+            {0.0, 25.0/24.0, -49.0/48.0, 125.0/16.0, -85.0/12.0, 1.0/4.0}
+        }};
+    }
+
+    bool implicit () const final
+    { return true; }
+
+    std::size_t numStages () const final
+    { return 5; }
+
+    Scalar temporalWeight (std::size_t i, std::size_t k) const final
+    { return paramAlpha_[i-1][k]; }
+
+    Scalar spatialWeight (std::size_t i, std::size_t k) const final
+    { return paramBeta_[i-1][k]; }
+
+    Scalar timeStepWeight (std::size_t k) const final
+    { return paramD_[k]; }
+
+    std::string name () const final
+    { return "diagonally implicit Runge-Kutta 4th order (Hairer-Wanner)"; }
+
+private:
+    std::array<std::array<Scalar, 6>, 5> paramAlpha_;
+    std::array<std::array<Scalar, 6>, 5> paramBeta_;
+    std::array<Scalar, 6> paramD_;
+};
+
+/*!
  * \brief Second order symplectic diagonally implicit Runge-Kutta scheme (Qin-Zhang)
  * \note See Qin & Zhang (1992) \cite QinZhang1992, the two-stage second-order
  *       symplectic DIRK. Being symplectic it satisfies the Cooper condition

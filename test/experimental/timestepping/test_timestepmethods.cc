@@ -37,90 +37,7 @@
    and thus, the exact solution is u_e = exp(t) - 1.
  */
 
-namespace Dumux {
-
-class ScalarAssembler
-{
-public:
-    using Scalar = double;
-    using SolutionVector = Scalar;
-    using ResidualType = Scalar;
-    using JacobianMatrix = Scalar;
-    using Variables = Experimental::Variables<SolutionVector>;
-    using SolveParams = Experimental::ImplicitSolveParams<Scalar, ResidualType>;
-
-    explicit ScalarAssembler(Scalar lambda = 0.0) : lambda_(lambda) {}
-
-    void setLinearSystem() {}
-    JacobianMatrix& jacobian() { return jac_; }
-    ResidualType& residual() { return res_; }
-
-    void assembleResidual(const Variables& vars)
-    {
-        if (!params_)
-            DUNE_THROW(Dune::InvalidStateException, "No implicit solve set");
-
-        const auto& weights = params_->weights;
-        res_ = weights.storage*storage_(vars) + weights.spatial*spatial_(vars);
-        if (params_->constant)
-            res_ += *params_->constant;
-    }
-
-    void assembleJacobianAndResidual(const Variables& vars)
-    {
-        assembleResidual(vars);
-        jac_ = params_->weights.storage - lambda_*params_->weights.spatial;
-    }
-
-    void setImplicitSolve(Variables& vars, const SolveParams& params)
-    {
-        vars.updateTime(params.timeLevel);
-        params_ = params;
-    }
-
-    void assembleOperators(Variables& vars,
-                           const Experimental::TimeLevel<Scalar>& timeLevel,
-                           Experimental::OperatorEvaluations<ResidualType> evaluations)
-    {
-        vars.updateTime(timeLevel);
-        if (evaluations.storage)
-            *evaluations.storage = storage_(vars);
-        if (evaluations.spatial)
-            *evaluations.spatial = spatial_(vars);
-    }
-
-private:
-    Scalar storage_(const Variables& vars) const
-    { return vars.dofs(); }
-
-    Scalar spatial_(const Variables& vars) const
-    {
-        using std::exp;
-        return -(lambda_*vars.dofs() + exp(vars.timeLevel().current()));
-    }
-
-    Scalar lambda_;
-    ResidualType res_;
-    JacobianMatrix jac_;
-    std::optional<SolveParams> params_;
-};
-
-class ScalarLinearSolver
-{
-public:
-    void setResidualReduction(double residualReduction) {}
-
-    bool solve(const double& A, double& x, const double& b) const
-    { x = b/A; return true; }
-
-    double norm(const double residual) const
-    {
-        using std::abs;
-        return abs(residual);
-    }
-};
-
-} // end namespace Dumux
+#include "scalarassembler.hh"
 
 int main(int argc, char* argv[])
 {
@@ -278,6 +195,7 @@ int main(int argc, char* argv[])
     const Method rk4 = std::make_shared<RungeKuttaExplicitFourthOrder<Scalar>>();
     const Method dirk2 = std::make_shared<DIRKSecondOrderAlexander<Scalar>>();
     const Method dirk3 = std::make_shared<DIRKThirdOrderAlexander<Scalar>>();
+    const Method dirk4 = std::make_shared<DIRKFourthOrderHairerWanner<Scalar>>();
     const Method qinZhang = std::make_shared<QinZhangSymplecticDIRK<Scalar>>();
 
     // shorter display names for plot legends
@@ -286,6 +204,7 @@ int main(int argc, char* argv[])
         if (id == "crank_nicolson") return std::string{"Crank-Nicolson"};
         if (id == "dirk2") return std::string{"DIRK2 (Alexander)"};
         if (id == "dirk3") return std::string{"DIRK3 (Alexander)"};
+        if (id == "dirk4") return std::string{"DIRK4 (Hairer-Wanner)"};
         if (id == "qin_zhang") return std::string{"Qin-Zhang (symplectic)"};
         return method->name();
     };
@@ -299,6 +218,7 @@ int main(int argc, char* argv[])
         {rk4, false},
         {dirk2, true},
         {dirk3, true},
+        {dirk4, true},
         {qinZhang, true}
     };
 
@@ -315,6 +235,7 @@ int main(int argc, char* argv[])
     testSingleStepAccuracy(rk4, 1e-11);
     testSingleStepAccuracy(dirk2, 1e-5);
     testSingleStepAccuracy(dirk3, 1e-8);
+    testSingleStepAccuracy(dirk4, 1e-11);
     testSingleStepAccuracy(qinZhang, 2e-6);
 
     testObservedOrder(explicitEuler, 1);
@@ -325,6 +246,7 @@ int main(int argc, char* argv[])
     testObservedOrder(rk4, 4);
     testObservedOrder(dirk2, 2);
     testObservedOrder(dirk3, 3);
+    testObservedOrder(dirk4, 4);
     testObservedOrder(qinZhang, 2);
 
     // --- convergence sweep: error vs. step size for all methods, written to JSON for plotting ---
@@ -377,6 +299,7 @@ int main(int argc, char* argv[])
         {"qin_zhang",      qinZhang,      2},
         {"rk3",            rk3,           3},
         {"dirk3",          dirk3,         3},
+        {"dirk4",          dirk4,         4},
         {"rk4",            rk4,           4}
     };
 

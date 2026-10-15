@@ -52,4 +52,4 @@ for more information.
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
-| ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper` | Observed temporal convergence order and linear stability regions of 8 explicit, implicit and DIRK schemes, verified against analytical references |
+| ![time-stepping stability](timestepping_stability_comparison.png) | @ref benchmark-timestepping-methods "↗️ Time-Stepping Methods" | time integration, `MultiStageMethod`, `MultiStageTimeStepper`, `MultiStepMethod`, `MultiStepTimeStepper` | Observed temporal convergence order and linear stability regions of 10 explicit, implicit and DIRK schemes and of the BDF methods of order 1 to 5 with constant and variable step sizes, verified against analytical references |
