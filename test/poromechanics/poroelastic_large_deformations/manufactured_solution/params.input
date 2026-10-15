@@ -1,0 +1,18 @@
+[Grid]
+UpperRight = 1 1
+Cells = 8 8
+
+[TimeLoop]
+TEnd = 1.0
+Dt = 0.25
+
+[SpatialParams]
+ShearModulus = 1.0
+BulkModulus = 2.0
+BiotCoefficient = 0.7
+StorageCoefficient = 0.4
+ReferencePermeability = 1.0
+FluidViscosity = 1.0
+
+[Newton]
+MaxRelativeShift = 1e-12
