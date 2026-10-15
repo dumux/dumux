@@ -47,38 +47,49 @@ with line search for each \f$ \lambda \f$.
 
 ### 2D, plane strain {#benchmark-cooks-membrane-hyperelastic-2d}
 
-![Deformed membrane on the finest Taylor–Hood mesh (refinement 4) for Poisson's ratios 0.35 and 0.4999, coloured by the displacement magnitude; dashed: undeformed membrane](cooks_membrane_hyperelastic_deformation.png)
+![Deformed membrane on Taylor–Hood refinement 4 for Poisson's ratios 0.35 and 0.4999, coloured by the displacement magnitude; dashed: undeformed membrane](cooks_membrane_hyperelastic_deformation.png)
 
 Tip displacement \f$ u_y(A) \f$ in mm for Poisson's ratios 0.35 (\f$ \lambda = 432.099 \f$ MPa) and 0.4999
 (\f$ \lambda = 926,000 \f$ MPa), and the number of degrees of freedom (displacement and pressure, including
-the constrained ones):
+the constrained ones). The last row is the Richardson extrapolation of the last three even and the last
+three odd refinement levels:
 
 | Refinement | MINI, dofs | MINI, \f$ \nu = 0.35 \f$ | MINI, \f$ \nu = 0.4999 \f$ | Taylor–Hood, dofs | Taylor–Hood, \f$ \nu = 0.35 \f$ | Taylor–Hood, \f$ \nu = 0.4999 \f$ |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 1979 | 10.468 | 8.870 | 2583 | 10.567 | 9.001 |
-| 2 | 4228 | 10.529 | 8.949 | 5490 | 10.584 | 9.024 |
-| 3 | 8894 | 10.554 | 8.978 | 11,516 | 10.585 | 9.032 |
-| 4 | 18,559 | 10.575 | 9.011 | 23,975 | 10.591 | 9.042 |
-| 5 | 38,457 | 10.582 | 9.022 | | | |
+| 1 | 1979 | 10.4676 | 8.8703 | 2583 | 10.5672 | 9.0009 |
+| 2 | 4228 | 10.5291 | 8.9490 | 5490 | 10.5837 | 9.0239 |
+| 3 | 8894 | 10.5535 | 8.9784 | 11,516 | 10.5847 | 9.0315 |
+| 4 | 18,559 | 10.5749 | 9.0106 | 23,975 | 10.5912 | 9.0415 |
+| 5 | 38,457 | 10.5817 | 9.0222 | 49,609 | 10.5910 | 9.0455 |
+| 6 | 79,085 | 10.5888 | 9.0363 | 101,913 | 10.5937 | 9.0500 |
+| 7 | 161,493 | 10.5906 | 9.0409 | 207,965 | 10.5933 | 9.0525 |
+| 8 | 327,992 | 10.5930 | 9.0475 | | | |
+| extrapolated | | 10.5947–10.5948 | 9.0549–9.0563 | | 10.5947–10.5949 | 9.0577–9.0592 |
 
-![Tip displacement versus the number of degrees of freedom; reference values of Schröder et al. (2021) for Poisson's ratio 0.35](cooks_membrane_hyperelastic_convergence.png)
+![Relative error of the tip displacement at Poisson's ratio 0.35 with respect to the p-FEM value of Schröder et al. (2021); dotted: deviation of the extrapolated value](cooks_membrane_hyperelastic_convergence.png)
 
 Schröder et al. report 10.5953 mm (p-FEM with plane-strain constraints, 18,213 dofs) and 10.5919 mm
-(quadratic triangles T2, 115,680 dofs) (Table 3 of @cite Schroeder2021). At Poisson's ratio 0.35, Taylor–Hood
-on refinement 4 (23,975 dofs) is 0.004 mm below the p-FEM value and 0.001 mm below the T2 value, and MINI on
-refinement 5 is 0.013 mm below the p-FEM value. At Poisson's ratio 0.4999, the tip displacement of both
-elements increases with every refinement; on the finest meshes the two differ by 0.020 mm, and Taylor–Hood
-changes by 0.010 mm from refinement 3 to 4.
+(quadratic triangles T2, 115,680 dofs) (Table 3 of @cite Schroeder2021). `Grid.Refinement` bisects every
+triangle once per level, so the mesh size halves every second level and the tip displacement changes in
+steps of two levels. At Poisson's ratio 0.35, the change over two levels decreases by a factor of 2.7 to 3.3
+from one pair of levels to the next for both elements, roughly \f$ N^{-3/4} \f$ in the number of degrees of
+freedom \f$ N \f$. Both elements extrapolate to 10.5947 to 10.5949 mm, 0.0004 to 0.0006 mm below the p-FEM
+value and 0.0028 to 0.0030 mm above the T2 value. Taylor–Hood on refinement 6 (101,913 dofs) is 0.0016 mm
+below the p-FEM value, T2 with 115,680 dofs 0.0034 mm.
 
-All five values of \f$ \lambda \f$ on the finest meshes (mm):
+At Poisson's ratio 0.4999, the factor is 2.0 to 2.3 and the values extrapolate to 9.0549 to 9.0592 mm.
+The finest meshes are 0.06 % to 0.07 % (Taylor–Hood, refinement 7) and 0.08 % to 0.10 % (MINI, refinement 8)
+below the extrapolated values of the same element.
 
-| \f$ \lambda \f$ [MPa] | MINI, refinement 5 | Taylor–Hood, refinement 4 |
-| ---: | ---: | ---: |
-| 432.099 | 10.582 | 10.591 |
-| 750 | 10.093 | 10.105 |
-| 9260 | 9.136 | 9.154 |
-| 92,600 | 9.033 | 9.052 |
-| 926,000 | 9.022 | 9.042 |
+All five values of \f$ \lambda \f$ on the finest meshes and extrapolated (mm):
+
+| \f$ \lambda \f$ [MPa] | MINI, refinement 8 | Taylor–Hood, refinement 7 | extrapolated, both elements |
+| ---: | ---: | ---: | ---: |
+| 432.099 | 10.5930 | 10.5933 | 10.5947–10.5949 |
+| 750 | 10.1082 | 10.1094 | 10.1109–10.1122 |
+| 9260 | 9.1599 | 9.1642 | 9.1665–9.1705 |
+| 92,600 | 9.0580 | 9.0629 | 9.0653–9.0696 |
+| 926,000 | 9.0475 | 9.0525 | 9.0549–9.0592 |
 
 Schröder et al. give no plane-strain reference for \f$ \lambda > 432.099 \f$ MPa.
 

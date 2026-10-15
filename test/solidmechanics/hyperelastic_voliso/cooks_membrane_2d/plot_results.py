@@ -6,12 +6,14 @@
 Usage:
   python3 plot_results.py <mini executable> <taylorhood executable> [output directory]
 
-Runs both executables with params_mixed.input of the current directory on refinement levels 1-5
-(MINI) and 1-4 (Taylor-Hood) and writes to the output directory (default: current directory)
-- cooks_membrane_hyperelastic_convergence.png: tip displacement u_y(A) versus the number of
-  degrees of freedom for Poisson's ratios 0.35 and 0.4999,
-- cooks_membrane_hyperelastic_deformation.png: deformed membrane on the finest Taylor-Hood mesh.
-The tip displacements of all runs are printed as a table.
+Runs both executables with params_mixed.input of the current directory on refinement levels 1-8
+(MINI) and 1-7 (Taylor-Hood) and writes to the output directory (default: current directory)
+- cooks_membrane_hyperelastic_convergence.png: relative error of the tip displacement u_y(A) at
+  Poisson's ratio 0.35 with respect to the p-FEM value of Schröder et al. (2021) versus the number
+  of degrees of freedom,
+- cooks_membrane_hyperelastic_deformation.png: deformed membrane on Taylor-Hood refinement level 4.
+The tip displacements of all runs and their extrapolation from every second refinement level are
+printed.
 Requires numpy, matplotlib and pyvista.
 """
 
@@ -20,10 +22,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-LEVELS = {"MINI": [1, 2, 3, 4, 5], "Taylor-Hood": [1, 2, 3, 4]}
+LEVELS = {"MINI": [1, 2, 3, 4, 5, 6, 7, 8], "Taylor-Hood": [1, 2, 3, 4, 5, 6, 7]}
+DEFORMATION_LEVEL = 4
 TIP = (48.0, 60.0)
 # Table 3 of Schröder et al. (2021), plane strain, Poisson's ratio 0.35
-REFERENCES = {"p-FEM": 10.5953, "T2": 10.5919}
+P_FEM = 10.5953
+T2 = {"dofs": 115680, "uy": 10.5919}
 COLORS = {"MINI": "#2a78d6", "Taylor-Hood": "#eb6834"}
 MARKERS = {"MINI": "s", "Taylor-Hood": "o"}
 
@@ -69,31 +73,45 @@ def run(executable, level, lambdas):
     return {lam: pv.read(outputFile(executable, lam)) for lam in lambdas}
 
 
-def plotConvergence(results, lambdas, mu, outdir):
+def extrapolated(levels, lam):
+    """Richardson extrapolation of u_y(A) from the last three even and the last three odd levels.
+
+    Every refinement level bisects each triangle once, so the mesh size halves every second level.
+    Returns the extrapolated values and the ratios of successive changes over two levels.
+    """
+    estimates, ratios = [], []
+    for parity in (0, 1):
+        uy = [r["uy"][lam] for r in levels if r["level"] % 2 == parity][-3:]
+        ratios.append((uy[1] - uy[0])/(uy[2] - uy[1]))
+        estimates.append(uy[2] + (uy[2] - uy[1])/(ratios[-1] - 1.0))
+    return estimates, ratios
+
+
+def plotConvergence(results, lambdas, outdir):
+    import numpy as np
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import FixedLocator, FuncFormatter, NullFormatter
 
-    shown = [lambdas[0], lambdas[-1]]
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
-    for ax, lam in zip(axes, shown):
-        for element, levels in results.items():
-            dofs = [r["dofs"] for r in levels]
-            uy = [r["uy"][lam] for r in levels]
-            ax.semilogx(dofs, uy, marker=MARKERS[element], color=COLORS[element], linewidth=2,
-                        markersize=8, markeredgecolor="white", markeredgewidth=1.5, label=element)
-        ax.set_title(f"$\\nu = {lam/(2.0*(lam + mu)):.4g}$, $\\lambda = {lam:g}$ MPa", fontsize=11)
-        ax.set_xlabel("degrees of freedom (displacement and pressure)")
-        ax.set_ylabel("$u_y(A)$ [mm]")
-        ax.xaxis.set_major_locator(FixedLocator([2e3, 5e3, 1e4, 2e4, 4e4]))
-        ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:,.0f}"))
-        ax.xaxis.set_minor_formatter(NullFormatter())
-        ax.grid(alpha=0.3)
-
-    for (name, value), style in zip(REFERENCES.items(), [":", "-."]):
-        axes[0].axhline(value, color="#52514e", linestyle=style, linewidth=1.2,
-                        label=f"{name}, Schröder et al. (2021)")
-    axes[0].set_ylim(top=max(REFERENCES.values()) + 0.01)
-    axes[0].legend(fontsize=9)
+    lam = lambdas[0]
+    limit = np.mean([value for levels in results.values() for value in extrapolated(levels, lam)[0]])
+    fig, ax = plt.subplots(figsize=(6.4, 4.4))
+    for element, levels in results.items():
+        dofs = [r["dofs"] for r in levels]
+        error = [abs(r["uy"][lam] - P_FEM)/P_FEM for r in levels]
+        ax.loglog(dofs, error, marker=MARKERS[element], color=COLORS[element], linewidth=2,
+                  markersize=8, markeredgecolor="white", markeredgewidth=1.5, label=element)
+    ax.loglog(T2["dofs"], abs(T2["uy"] - P_FEM)/P_FEM, "D", color="#52514e", markersize=8,
+              label="T2, Schröder et al. (2021)")
+    ax.axhline(abs(limit - P_FEM)/P_FEM, color="#52514e", linestyle=":", linewidth=1.2,
+               label="extrapolated, MINI and Taylor-Hood")
+    guide = np.array([3e3, 8e4])
+    ax.loglog(guide, 3e-4*(guide/1e4)**-0.75, color="#52514e", linestyle="--", linewidth=1.0)
+    ax.annotate("$\\propto N^{-3/4}$", (guide[1], 3e-4*(guide[1]/1e4)**-0.75), xytext=(4, 0),
+                textcoords="offset points", fontsize=10, va="center")
+    ax.set_xlabel("degrees of freedom $N$ (displacement and pressure)")
+    ax.set_ylabel("relative error of $u_y(A)$")
+    ax.set_title("$\\nu = 0.35$, reference: p-FEM, Schröder et al. (2021)", fontsize=11)
+    ax.grid(alpha=0.3)
+    ax.legend(fontsize=9)
     fig.tight_layout()
     fig.savefig(outdir/"cooks_membrane_hyperelastic_convergence.png", dpi=150)
 
@@ -144,7 +162,7 @@ def main():
     outdir = Path(sys.argv[3]).resolve() if len(sys.argv) > 3 else Path.cwd()
     lambdas, mu = readParameters("params_mixed.input")
 
-    results, finestMeshes = {}, {}
+    results = {}
     for element, executable in executables.items():
         results[element] = []
         for level in LEVELS[element]:
@@ -155,15 +173,22 @@ def main():
                 "uy": {lam: tipDisplacement(mesh) for lam, mesh in meshes.items()},
             })
             print(f"{element} level {level}: {results[element][-1]['dofs']} dofs", flush=True)
-        finestMeshes[element] = meshes
+            if element == "Taylor-Hood" and level == DEFORMATION_LEVEL:
+                deformationMeshes = meshes
 
-    plotConvergence(results, lambdas, mu, outdir)
-    plotDeformation(finestMeshes["Taylor-Hood"], lambdas, mu, outdir)
+    plotConvergence(results, lambdas, outdir)
+    plotDeformation(deformationMeshes, lambdas, mu, outdir)
 
     print("\n| element | refinement | dofs | " + " | ".join(f"lambda = {lam:g}" for lam in lambdas) + " |")
     for element, levels in results.items():
         for r in levels:
-            print(f"| {element} | {r['level']} | {r['dofs']} | " + " | ".join(f"{r['uy'][lam]:.3f}" for lam in lambdas) + " |")
+            print(f"| {element} | {r['level']} | {r['dofs']} | " + " | ".join(f"{r['uy'][lam]:.4f}" for lam in lambdas) + " |")
+    print()
+    for element, levels in results.items():
+        for lam in lambdas:
+            (even, odd), (evenRatio, oddRatio) = extrapolated(levels, lam)
+            print(f"{element}, lambda = {lam:g}: extrapolated {even:.4f} (even levels), {odd:.4f} (odd levels), "
+                  f"ratio of changes over two levels {evenRatio:.2f} (even), {oddRatio:.2f} (odd)")
     print(f"\nWrote {outdir/'cooks_membrane_hyperelastic_convergence.png'} and {outdir/'cooks_membrane_hyperelastic_deformation.png'}")
 
 
