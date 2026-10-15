@@ -24,3 +24,5 @@ dumux_add_test(
                       ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box_gridformat_io-00001.vtu
               --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box_gridformat_io params.input -Problem.Name test_hyperelastic_box_gridformat_io"
 )
+
+add_subdirectory(dynamic_manufactured_solution)

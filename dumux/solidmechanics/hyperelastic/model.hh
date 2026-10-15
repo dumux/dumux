@@ -21,11 +21,12 @@
  \f[
  \mathbf{F} = \frac{\partial \mathbf{x}}{\partial \mathbf{X}} = \mathbf{I} + \nabla \mathbf{d}.
  \f]
- * The equilibrium equation (nonlinear elastostatics) in the reference frame is given by
+ * The balance of momentum in the reference frame is given by
  \f[
- - \nabla\cdot\mathbf{P} = \mathbf{f}
+ \varrho_0 \ddot{\mathbf{d}} - \nabla\cdot\mathbf{P} = \mathbf{f}
  \f]
- * where \f$ \mathbf{f} \f$ in \f$ \mathrm{N/m^3} \f$ is the external force acting
+ * with the density \f$ \varrho_0 \f$ in the reference configuration, where the inertia term is
+ * only present for dynamic problems, and where \f$ \mathbf{f} \f$ in \f$ \mathrm{N/m^3} \f$ is the external force acting
  * on the body per unit volume and \f$ \mathbf{P} = \mathbf{P}(\mathbf{F}) \f$ is
  * the first Piola-Kirchhoff stress tensor which relates the stress in the current
  * and the reference configuration. It is related to the Cauchy stress,
@@ -43,18 +44,28 @@
  * where \f$ \mathbf{C} = \mathbf{F}^T\mathbf{F} \f$ is the right Cauchy-Green tensor
  * and the term \f$ \mathbf{S} = 2 (\partial \psi / \partial \mathbf{C}) \f$ is the
  * second Piola-Kirchhoff stress tensor.
- * This model expects the user problem implementation to provide a function
- * `firstPiolaKirchhoffStressTensor(F)` implementing the constitutive law.
+ * The user problem implements the constitutive law, for example as
+ * `firstPiolaKirchhoffStressTensor(F)`, and for dynamic problems the acceleration and velocity of
+ * the degrees of freedom; see Dumux::HyperelasticLocalResidual for the interface.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
 
+#include <type_traits>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+#include <dumux/discretization/concepts.hh>
+#include <dumux/discretization/gridvariables.hh>
+#include <dumux/discretization/cvfe/gridvariablescache_.hh>
+#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/cvfe/variablesadapter.hh>
+#include <dumux/discretization/fem/gridvariablescache.hh>
 
 #include "spatialparams.hh"
 #include "localresidual.hh"
-#include "volumevariables.hh"
+#include "variables.hh"
 
 namespace Dumux {
 
@@ -97,14 +108,39 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::Hyperelastic>
 { using type = HyperelasticLocalResidual<TypeTag>; };
 
-//! Set the volume variables property
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::Hyperelastic>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using Traits = HyperelasticVolumeVariablesTraits<PV, MT>;
-    using type = HyperelasticVolumeVariables<Traits>;
+    using type = HyperelasticVariables<Traits>;
+};
+
+//! The general grid variables, with the cache matching the discretization scheme
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::Hyperelastic>
+{
+private:
+    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElementDiscretization = typename GG::LocalView;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
+    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
+
+    using FECache = Dumux::Experimental::FEGridVariablesCache<
+        Dumux::Experimental::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
+    using HybridCache = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<
+        Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
+    using CVFECache = Dumux::Experimental::CVFE::CVFEGridVariablesCache<
+        Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
+
+    using Cache = std::conditional_t<Dumux::Experimental::Concepts::FEElementDiscretization<ElementDiscretization>, FECache,
+                  std::conditional_t<Dumux::Experimental::Concepts::HybridElementDiscretization<ElementDiscretization>, HybridCache,
+                                     CVFECache>>;
+public:
+    using type = Dumux::Experimental::GridVariables<GG, Cache>;
 };
 
 // Set the default spatial parameters

@@ -46,12 +46,14 @@ finite-element schemes). The momentum problem provides the isochoric stress (`is
 pressure problem the volumetric pressure (`volumetricPressure(J)`), and the model adds the volumetric stress \f$ p_s J \mathbf{F}^{-\top} \f$.
 Tests: Cook's membrane (SPP 1748, 2D and 3D, MINI and Taylor-Hood elements) and the incompressible block (SPP 1748; MINI, P2-P1, P2-P1
 finite elements, Q2-Q1), each with a benchmark page.
+- __Hyperelastic model__: The hyperelastic model (`solidmechanics/hyperelastic`) is implemented on the new CVFE and finite element interface (`HyperelasticLocalResidual`, `HyperelasticVariables`) and works with the box, PQ2 hybrid and PQ2 finite element discretizations. Problems may provide an acceleration (inertia with lumped mass for control-volume dofs and consistent mass for the other dofs) and a velocity (rate-dependent stress laws). A dynamic manufactured-solution test checks the convergence rates.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
 coordinate type for the quadrature rule instead of the field type of the integrated function, and `integrateL2Error` returns the
 real type of that field type. `evalGradients` for CVFE schemes returns gradient entries in the field type of the primary variables
 instead of the coordinate type. For real-valued unknowns with the same precision as the grid coordinates nothing changes.
+- __Hyperelastic model__: The volume variables and the finite-volume local residual of the hyperelastic model have been replaced (see above). Problems derive from `Experimental::ProblemWithSpatialParams`, impose Dirichlet conditions as constraints, provide boundary terms via `boundaryFlux`, and are assembled with `Experimental::Assembler`; the spatial parameters derive from `Experimental::SpatialParams`.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 

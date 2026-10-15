@@ -7,12 +7,16 @@
 #ifndef DUMUX_HYPERELASTICITY_TEST_PROBLEM_HH
 #define DUMUX_HYPERELASTICITY_TEST_PROBLEM_HH
 
-#include <dumux/common/boundarytypes.hh>
-#include <dumux/common/fvproblemwithspatialparams.hh>
+#include <vector>
+
+#include <dumux/common/constraintinfo.hh>
+#include <dumux/common/indextraits.hh>
+#include <dumux/common/math.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/problemwithspatialparams.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/math.hh>
+#include <dumux/discretization/dirichletconstraints.hh>
 
 namespace Dumux {
 
@@ -20,19 +24,18 @@ namespace Dumux {
 // https://fenicsproject.org/olddocs/dolfin/1.6.0/python/demo/documented/hyperelasticity/python/documentation.html
 // using a slightly different material law and finite volumes
 template<class TypeTag>
-class HyperelasticityProblem : public FVProblemWithSpatialParams<TypeTag>
+class HyperelasticityProblem : public Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using FVElementGeometry = typename GridGeometry::LocalView;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename GridGeometry::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    using DirichletConstraintData = Dumux::DirichletConstraintData<Dumux::DirichletConstraintInfo<numEq>, PrimaryVariables,
+                                                                   typename IndexTraits<GridView>::GridIndex>;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr int dim = GridView::dimension;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -42,29 +45,33 @@ class HyperelasticityProblem : public FVProblemWithSpatialParams<TypeTag>
 public:
     HyperelasticityProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    {}
-
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryTypes values;
-        if (globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_ || globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
-            values.setAllDirichlet();
-        return values;
+        auto elemDisc = localView(*gridGeometry);
+        std::vector<bool> isConstrained(gridGeometry->numDofs(), false);
+        for (const auto& element : elements(gridGeometry->gridView()))
+        {
+            elemDisc.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
+                {
+                    const auto globalPos = ipData(elemDisc, localDof).global();
+                    if (isDirichletBoundary_(globalPos) && !isConstrained[localDof.dofIndex()])
+                    {
+                        isConstrained[localDof.dofIndex()] = true;
+                        typename DirichletConstraintData::ConstraintInfo info;
+                        info.setAll();
+                        constraints_.push_back(DirichletConstraintData{std::move(info), dirichletAtPos(globalPos), localDof.dofIndex()});
+                    }
+                }
+        }
     }
 
-    template<class ElementVolumeVariables, class ElementFluxVariablesCache>
-    NumEqVector neumann(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const ElementFluxVariablesCache& elemFluxVarsCache,
-                        const SubControlVolumeFace& scvf) const
-    {
-        return {0.1, 0.0, 0.0};
-    }
+    const std::vector<DirichletConstraintData>& constraints() const
+    { return constraints_; }
 
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
+        if (globalPos[0] > this->gridDiscretization().bBoxMax()[0] - eps_)
             return {0.0, 0.0, 0.0};
 
         PrimaryVariables values(0.0);
@@ -115,7 +122,14 @@ public:
     }
 
 private:
+    bool isDirichletBoundary_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < this->gridDiscretization().bBoxMin()[0] + eps_
+            || globalPos[0] > this->gridDiscretization().bBoxMax()[0] - eps_;
+    }
+
     static constexpr Scalar eps_ = 1e-7;
+    std::vector<DirichletConstraintData> constraints_;
 };
 
 } // end namespace Dumux
