@@ -52,7 +52,7 @@
 namespace Dumux::VETest {
 
 /*!
- * \brief Initializes the coarse grid. Sets the number of vertical cells to 1.
+ * \brief Initializes the horizontal coarse grid by projecting the fine-grid bounds.
  *
  * \param gridManagerCoarse gridManager belonging to the coarse grid
  */
@@ -64,10 +64,19 @@ void initializeCoarseGrid(GridManager& gridManagerCoarse)
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     constexpr int dim = GridView::dimension;
 
-    const GlobalPosition lowerLeftCoarse = getParam<GlobalPosition>("Grid.LowerLeft");
-    const GlobalPosition upperRightCoarse = getParam<GlobalPosition>("Grid.UpperRight");
-    std::array<int, dim> cellsCoarse = getParam<std::array<int, dim>>("Grid.Cells");
-    cellsCoarse[dim-1] = 1;
+    using FineGrid = GetPropType<TypeTag, Properties::FineGrid>;
+    using FinePosition = Dune::FieldVector<double, FineGrid::dimensionworld>;
+    const auto lowerLeftFine = getParam<FinePosition>("Grid.LowerLeft");
+    const auto upperRightFine = getParam<FinePosition>("Grid.UpperRight");
+    const auto cellsFine = getParam<std::array<int, FineGrid::dimension>>("Grid.Cells");
+    GlobalPosition lowerLeftCoarse, upperRightCoarse;
+    std::array<int, dim> cellsCoarse;
+    for (int axis = 0; axis < dim; ++axis)
+    {
+        lowerLeftCoarse[axis] = lowerLeftFine[axis];
+        upperRightCoarse[axis] = upperRightFine[axis];
+        cellsCoarse[axis] = cellsFine[axis];
+    }
     gridManagerCoarse.init(lowerLeftCoarse, upperRightCoarse, cellsCoarse);
 }
 
@@ -79,7 +88,7 @@ void initializeCoarseGrid(GridManager& gridManagerCoarse)
 template<typename TypeTag>
 std::string outputNameCoarse(const GetPropType<TypeTag, Properties::Problem>& problemCoarse)
 {
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridView = typename GetPropType<TypeTag, Properties::FineGridGeometry>::GridView;
     constexpr int dim = GridView::dimension;
     using CellArray = std::array<unsigned int, GridView::dimensionworld>;
     const auto numberCellsFine = getParam<CellArray>("Grid.Cells");
@@ -114,7 +123,7 @@ int main(int argc, char** argv)
 
     // create a grid
     using GridManagerType = GridManager<GetPropType<TypeTag, Properties::Grid>>;
-    GridManagerType gridManagerFine;
+    GridManager<GetPropType<TypeTag, Properties::FineGrid>> gridManagerFine;
     gridManagerFine.init("");
     GridManagerType gridManagerCoarse;
     Dumux::VETest::initializeCoarseGrid<GridManagerType, TypeTag>(gridManagerCoarse);
@@ -130,7 +139,8 @@ int main(int argc, char** argv)
     // create the finite volume grid geometry
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometryCoarse = std::make_shared<GridGeometry>(leafGridViewCoarse);
-    auto gridGeometryFine = std::make_shared<GridGeometry>(leafGridViewFine);
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    auto gridGeometryFine = std::make_shared<FineGridGeometry>(leafGridViewFine);
 
     // create the fine-level problem and the fine-level view of the VE scheme
     using Problem = GetPropType<TypeTag, Properties::Problem>;
@@ -181,13 +191,14 @@ int main(int argc, char** argv)
     using IOFieldsVECoarse = GetPropType<TypeTag, Properties::IOFields>;
     using VelocityOutputVE = GetPropType<TypeTag, Properties::VelocityOutput>;
     vtkWriterCoarse.addVelocityOutput(std::make_shared<VelocityOutputVE>(*gridVariablesCoarse));
-    vtkWriterCoarse.addVolumeVariable([](const auto& v){return v.permeability();}, "permeability");
     vtkWriterCoarse.addVolumeVariable([](const auto& v){return v.gasPlumeDist();}, "zp");
     IOFieldsVECoarse::initOutputModule(vtkWriterCoarse);
+    vtkWriterCoarse.addVolumeVariable([](const auto& v){ return v.porosityIntegral(); }, "porosityIntegral");
+    vtkWriterCoarse.addVolumeVariable([](const auto& v){ return v.permeabilityIntegral(); }, "permeabilityIntegral");
     vtkWriterCoarse.write(0.0);
 
     // fine-level vtk output
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using GridView = typename FineGridGeometry::GridView;
     const std::string fineOutputName = "fine_" + Dumux::VETest::outputNameCoarse<TypeTag>(*problemCoarse);
     Dune::VTKSequenceWriter<GridView> vtkWriterFineLevel(gridGeometryFine->gridView(), fineOutputName, ".", "");
     fineLevelView->fields().registerFields(vtkWriterFineLevel);

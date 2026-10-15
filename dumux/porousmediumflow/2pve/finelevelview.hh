@@ -52,19 +52,21 @@ struct TwoPVEColumnHistory
  * Provides the mapping between coarse-level columns and fine-level elements, the history of each column,
  * and the reconstruction of the fine-level solution from the coarse-level solution.
  *
- * \tparam GridGeometry the grid geometry of both levels
+ * \tparam CoarseGridGeometry the horizontal, lower-dimensional grid geometry
+ * \tparam FineGridGeometry the full-dimensional reconstruction grid geometry
  * \tparam Scalar the scalar type
  * \tparam FluidSystem the immiscible two-phase fluid system
  * \tparam Indices the primary variable indices of the model
  * \tparam SolutionVector the type of the coarse-level and the fine-level solution vectors
  * \tparam SpatialParamsFine the fine-level spatial parameters, providing `permeabilityAtElement(fineElement)`,
- *         `porosityAtElement(fineElement)` and `gridGeometry()`
+ *         `porosityAtElement(fineElement)`, `gravity(finePosition)` and `gridGeometry()`
  */
-template<class GridGeometry, class Scalar, class FluidSystem, class Indices, class SolutionVector, class SpatialParamsFine>
+template<class CoarseGridGeometry, class FineGridGeometry, class Scalar, class FluidSystem, class Indices, class SolutionVector, class SpatialParamsFine>
 class TwoPVEFineLevelView
 {
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using GridView = typename FineGridGeometry::GridView;
+    using CoarseGridView = typename CoarseGridGeometry::GridView;
+    using Element = typename CoarseGridView::template Codim<0>::Entity;
     using QuantityReconstructor = TwoPVEQuantityReconstruction<Scalar, FluidSystem>;
     static constexpr int pressureIdx = Indices::pressureIdx;
     static constexpr int saturationIdx = Indices::saturationIdx;
@@ -74,15 +76,15 @@ class TwoPVEFineLevelView
     static constexpr int dimWorld = GridView::dimensionworld;
     static_assert(dim == 2 || dim == 3, "TwoPVEFineLevelView only supports two- and three-dimensional grids");
     using ColumnState = TwoPVEColumnState<Scalar>;
-    using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
+    using ColumnMapping = TwoPVEColumnMapping<CoarseGridGeometry, FineGridGeometry, Scalar>;
 
     using PhaseDensities = TwoPVE::PhaseDensitiesData<Scalar>;
     using ResidualSaturations = TwoPVE::ResidualSaturationsData<Scalar>;
     using BrooksCoreyParameters = TwoPVE::BrooksCoreyParametersData<Scalar>;
 
 public:
-    using FineLevelElementState = TwoPVEFineLevelElementState<GridGeometry, Scalar, FluidSystem>;
-    using FineLevelFields = TwoPVEFineLevelFieldStorage<GridGeometry, Scalar, FluidSystem>;
+    using FineLevelElementState = TwoPVEFineLevelElementState<FineGridGeometry, Scalar, FluidSystem>;
+    using FineLevelFields = TwoPVEFineLevelFieldStorage<FineGridGeometry, Scalar, FluidSystem>;
 
     /*!
      * \brief Builds the mapping between the levels and checks that the grids fulfill the requirements of the model
@@ -91,8 +93,8 @@ public:
      * \param gridGeometryCoarse coarse-level grid geometry
      * \param spatialParamsFine  fine-level spatial parameters
      */
-    TwoPVEFineLevelView(std::shared_ptr<const GridGeometry> gridGeometry,
-                        std::shared_ptr<const GridGeometry> gridGeometryCoarse,
+    TwoPVEFineLevelView(std::shared_ptr<const FineGridGeometry> gridGeometry,
+                        std::shared_ptr<const CoarseGridGeometry> gridGeometryCoarse,
                         std::shared_ptr<const SpatialParamsFine> spatialParamsFine)
     : gridGeometryFine_(gridGeometry),
       gridGeometryCoarse_(gridGeometryCoarse),
@@ -149,7 +151,7 @@ public:
     /*!
      * \brief Getter function for fine-level grid geometry
      */
-    const GridGeometry& gridGeometry() const
+    const FineGridGeometry& gridGeometry() const
     {
         return *gridGeometryFine_;
     }
@@ -157,7 +159,7 @@ public:
     /*!
      * \brief Getter function for coarse-level grid geometry
      */
-    const GridGeometry& gridGeometryCoarse() const
+    const CoarseGridGeometry& gridGeometryCoarse() const
     {
         return *gridGeometryCoarse_;
     }
@@ -227,7 +229,8 @@ public:
         state.snr = absoluteSaturationParams.snr();
         state.brooksCoreyLambda = brooksCoreyParams.lambda();
         state.entryPressure = brooksCoreyParams.pcEntry();
-        const auto& gravity = coarseSpatialParams.gravity(coarsePosition);
+        const auto& fineElement = columnMapping_.column(columnIdx).front();
+        const auto& gravity = spatialParamsFine_->gravity(fineElement.geometry().center());
         for (int dirIdx = 0; dirIdx < dimWorld - 1; ++dirIdx)
             if (gravity[dirIdx] != 0.0)
                 DUNE_THROW(Dune::InvalidStateException, "The VE model requires gravity to be aligned with the vertical coordinate axis");
@@ -336,7 +339,7 @@ private:
 
         for (std::size_t columnIdx = 0; columnIdx < columnMapping_.numberOfColumns(); ++columnIdx)
             if (abs(columnMapping_.column(columnIdx).size()*fineCellHeight_ - domainHeight) > tolerance)
-                DUNE_THROW(Dune::InvalidStateException, "Column " << columnIdx << " does not span the domain height, the coarse grid of the VE model has to consist of a single layer of elements");
+                DUNE_THROW(Dune::InvalidStateException, "Column " << columnIdx << " does not span the domain height");
     }
 
     /*!
@@ -349,8 +352,8 @@ private:
         return elementExtent_(element.geometry(), dim - 1);
     }
 
-    std::shared_ptr<const GridGeometry> gridGeometryFine_;
-    std::shared_ptr<const GridGeometry> gridGeometryCoarse_;
+    std::shared_ptr<const FineGridGeometry> gridGeometryFine_;
+    std::shared_ptr<const CoarseGridGeometry> gridGeometryCoarse_;
     std::shared_ptr<const SpatialParamsFine> spatialParamsFine_;
     QuantityReconstructor quantityReconstructor_;
     ColumnMapping columnMapping_;

@@ -15,6 +15,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -41,9 +42,10 @@ template<class GridGeometry>
 class FineSpatialParams
 {
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
-    FineSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
-    : gridGeometry_(gridGeometry)
+    FineSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry, GlobalPosition gravity = GlobalPosition({0.0, -9.81}))
+    : gridGeometry_(gridGeometry), gravity_(gravity)
     {}
 
     double permeabilityAtElement(const Element& element) const
@@ -52,11 +54,14 @@ public:
     double porosityAtElement(const Element& element) const
     { return 0.2; }
 
+    const GlobalPosition& gravity(const GlobalPosition&) const { return gravity_; }
+
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
 
 private:
     std::shared_ptr<const GridGeometry> gridGeometry_;
+    GlobalPosition gravity_;
 };
 
 template<class GlobalPosition>
@@ -64,9 +69,8 @@ class CoarseSpatialParams
 {
     using MaterialLaw = FluidMatrix::BrooksCoreyNoReg<double>;
 public:
-    CoarseSpatialParams(const GlobalPosition& gravity)
-    : gravity_(gravity)
-    , materialLaw_(typename MaterialLaw::BasicParams(1.0e5, 2.0), typename MaterialLaw::EffToAbsParams(0.1, 0.2))
+    CoarseSpatialParams()
+    : materialLaw_(typename MaterialLaw::BasicParams(1.0e5, 2.0), typename MaterialLaw::EffToAbsParams(0.1, 0.2))
     {}
 
     double temperatureAtPos(const GlobalPosition& globalPos) const
@@ -75,11 +79,7 @@ public:
     auto fluidMatrixInteractionAtPos(const GlobalPosition& globalPos) const
     { return makeFluidMatrixInteraction(materialLaw_); }
 
-    const GlobalPosition& gravity(const GlobalPosition& globalPos) const
-    { return gravity_; }
-
 private:
-    GlobalPosition gravity_;
     MaterialLaw materialLaw_;
 };
 
@@ -108,45 +108,48 @@ int main(int argc, char** argv)
     static constexpr int dim = 2;
     using Grid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim>>;
     using GridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView>;
-    using GlobalPosition = Dune::FieldVector<double, dim>;
+    using GlobalPosition = Dune::FieldVector<double, dim-1>;
+    using FinePosition = Dune::FieldVector<double, dim>;
+    using CoarseGrid = Dune::YaspGrid<dim-1, Dune::TensorProductCoordinates<double, dim-1>>;
+    using CoarseGridGeometry = CCTpfaFVGridGeometry<typename CoarseGrid::LeafGridView>;
     using FluidSystem = FluidSystems::TwoPImmiscible<double,
                                                      FluidSystems::OnePLiquid<double, Components::H2O<double>>,
                                                      FluidSystems::OnePGas<double, Components::CH4<double>>>;
     using SolutionVector = Dune::BlockVector<Dune::FieldVector<double, 2>>;
-    using FineLevelView = TwoPVEFineLevelView<GridGeometry, double, FluidSystem, TwoPIndices, SolutionVector, TwoPVETest::FineSpatialParams<GridGeometry>>;
+    using FineLevelView = TwoPVEFineLevelView<CoarseGridGeometry, GridGeometry, double, FluidSystem, TwoPIndices, SolutionVector, TwoPVETest::FineSpatialParams<GridGeometry>>;
 
     const std::vector<double> horizontalCoordinates({0.0, 1.0, 2.0});
-    const auto makeGridGeometry = [&](const std::vector<double>& verticalCoordinates)
+    const auto makeFineLevelView = [&](const std::vector<double>& coarseCoordinates,
+                                      const std::vector<double>& fineCoordinates,
+                                      std::optional<FinePosition> gravity = std::nullopt)
     {
-        auto grid = std::make_shared<Grid>(std::array<std::vector<double>, dim>({horizontalCoordinates, verticalCoordinates}));
-        return std::make_pair(grid, std::make_shared<GridGeometry>(grid->leafGridView()));
-    };
-    const auto makeFineLevelView = [&](const std::vector<double>& coarseCoordinates, const std::vector<double>& fineCoordinates)
-    {
-        const auto [coarseGrid, coarseGridGeometry] = makeGridGeometry(coarseCoordinates);
-        const auto [fineGrid, fineGridGeometry] = makeGridGeometry(fineCoordinates);
-        return std::make_tuple(coarseGrid, fineGrid, coarseGridGeometry, std::make_shared<FineLevelView>(fineGridGeometry, coarseGridGeometry, std::make_shared<TwoPVETest::FineSpatialParams<GridGeometry>>(fineGridGeometry)));
+        auto coarseGrid = std::make_shared<CoarseGrid>(std::array<std::vector<double>, dim-1>({coarseCoordinates}));
+        auto fineGrid = std::make_shared<Grid>(std::array<std::vector<double>, dim>({horizontalCoordinates, fineCoordinates}));
+        auto coarseGridGeometry = std::make_shared<CoarseGridGeometry>(coarseGrid->leafGridView());
+        auto fineGridGeometry = std::make_shared<GridGeometry>(fineGrid->leafGridView());
+        using SpatialParams = TwoPVETest::FineSpatialParams<GridGeometry>;
+        auto spatialParams = gravity
+            ? std::make_shared<SpatialParams>(fineGridGeometry, *gravity)
+            : std::make_shared<SpatialParams>(fineGridGeometry);
+        return std::make_tuple(coarseGrid, fineGrid, coarseGridGeometry,
+            std::make_shared<FineLevelView>(fineGridGeometry, coarseGridGeometry, spatialParams));
     };
 
-    // single coarse layer and uniform fine layers
-    const auto [coarseGrid, fineGrid, coarseGridGeometry, fineLevelView] = makeFineLevelView({0.0, 6.0}, {0.0, 2.0, 4.0, 6.0});
+    const auto [coarseGrid, fineGrid, coarseGridGeometry, fineLevelView] = makeFineLevelView(horizontalCoordinates, {0.0, 2.0, 4.0, 6.0});
     const auto coarseElement = *elements(coarseGridGeometry->gridView()).begin();
     const Dune::FieldVector<double, 2> waterSaturatedColumn({1.0e7, 0.0});
-
-    const TwoPVETest::CoarseSpatialParams<GlobalPosition> verticalGravity(GlobalPosition({0.0, -9.81}));
-    const auto columnState = fineLevelView->makeColumnState(coarseElement, waterSaturatedColumn, verticalGravity);
+    const TwoPVETest::CoarseSpatialParams<GlobalPosition> coarseParams;
+    const auto columnState = fineLevelView->makeColumnState(coarseElement, waterSaturatedColumn, coarseParams);
     if (std::abs(columnState.gravityNorm - 9.81) > 1.0e-14 || std::abs(columnState.gasPlumeDistance - 6.0) > 1.0e-14)
-        DUNE_THROW(Dune::Exception, "Unexpected column state: gravity norm " << columnState.gravityNorm << ", gas plume distance " << columnState.gasPlumeDistance);
+        DUNE_THROW(Dune::Exception, "Unexpected column state");
 
-    const TwoPVETest::CoarseSpatialParams<GlobalPosition> inclinedGravity(GlobalPosition({1.0, -9.81}));
-    TwoPVETest::expectInvalidState([&]{ fineLevelView->makeColumnState(coarseElement, waterSaturatedColumn, inclinedGravity); },
+    const auto [inclinedCoarse, inclinedFine, inclinedGeometry, inclinedView] =
+        makeFineLevelView(horizontalCoordinates, {0.0, 2.0, 4.0, 6.0}, FinePosition({1.0, -9.81}));
+    TwoPVETest::expectInvalidState([&]{ inclinedView->makeColumnState(*elements(inclinedGeometry->gridView()).begin(), waterSaturatedColumn, coarseParams); },
                                    "gravity not aligned with the vertical axis");
-
-    TwoPVETest::expectInvalidState([&]{ makeFineLevelView({0.0, 6.0}, {0.0, 2.0, 3.0, 6.0}); },
+    TwoPVETest::expectInvalidState([&]{ makeFineLevelView(horizontalCoordinates, {0.0, 2.0, 3.0, 6.0}); },
                                    "fine grid with non-uniform vertical spacing");
-
-    TwoPVETest::expectInvalidState([&]{ makeFineLevelView({0.0, 3.0, 6.0}, {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0}); },
-                                   "coarse grid with two layers");
-
+    TwoPVETest::expectInvalidState([&]{ makeFineLevelView({0.0, 2.0}, {0.0, 2.0, 4.0, 6.0}); },
+                                   "coarse and fine grids with different horizontal subdivisions");
     return 0;
 }

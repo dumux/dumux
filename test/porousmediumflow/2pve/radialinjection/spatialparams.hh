@@ -31,6 +31,7 @@ template<class GridGeometry, class Scalar>
 class TwoPVERadialInjectionFineSpatialParams
 {
     using Element = typename GridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     TwoPVERadialInjectionFineSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -44,6 +45,14 @@ public:
 
     Scalar porosityAtElement(const Element& element) const
     { return porosity_; }
+
+    GlobalPosition gravity(const GlobalPosition&) const
+    {
+        GlobalPosition result(0.0);
+        if (getParam<bool>("Problem.EnableGravity", true))
+            result[GridGeometry::GridView::dimensionworld - 1] = -9.81;
+        return result;
+    }
 
     const GridGeometry& gridGeometry() const
     { return *gridGeometry_; }
@@ -61,22 +70,22 @@ private:
  * A small Brooks-Corey entry pressure yields a thin capillary fringe,
  * which approximates the sharp interface of the similarity solution.
  */
-template<class GridGeometry, class Scalar>
+template<class GridGeometry, class FineGridGeometry, class Scalar>
 class TwoPVERadialInjectionSpatialParams
-: public TwoPVESpatialParams<GridGeometry, Scalar,
-                             TwoPVERadialInjectionFineSpatialParams<GridGeometry, Scalar>,
-                             TwoPVERadialInjectionSpatialParams<GridGeometry, Scalar>>
+: public TwoPVESpatialParams<GridGeometry, FineGridGeometry, Scalar,
+                             TwoPVERadialInjectionFineSpatialParams<FineGridGeometry, Scalar>,
+                             TwoPVERadialInjectionSpatialParams<GridGeometry, FineGridGeometry, Scalar>>
 {
-    using ThisType = TwoPVERadialInjectionSpatialParams<GridGeometry, Scalar>;
-    using ParentType = TwoPVESpatialParams<GridGeometry, Scalar, TwoPVERadialInjectionFineSpatialParams<GridGeometry, Scalar>, ThisType>;
+    using ThisType = TwoPVERadialInjectionSpatialParams<GridGeometry, FineGridGeometry, Scalar>;
+    using ParentType = TwoPVESpatialParams<GridGeometry, FineGridGeometry, Scalar, TwoPVERadialInjectionFineSpatialParams<FineGridGeometry, Scalar>, ThisType>;
     using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
     using PcKrSwCurve = FluidMatrix::BrooksCoreyNoReg<Scalar>;
 
 public:
-    using SpatialParamsFine = TwoPVERadialInjectionFineSpatialParams<GridGeometry, Scalar>;
+    using SpatialParamsFine = TwoPVERadialInjectionFineSpatialParams<FineGridGeometry, Scalar>;
 
     TwoPVERadialInjectionSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry,
-                                       const TwoPVEColumnMapping<GridGeometry, Scalar>& columnMapping,
+                                       const TwoPVEColumnMapping<GridGeometry, FineGridGeometry, Scalar>& columnMapping,
                                        std::shared_ptr<const SpatialParamsFine> spatialParamsFine,
                                        Scalar fineCellHeight)
     : ParentType(gridGeometry, columnMapping, spatialParamsFine, fineCellHeight)
