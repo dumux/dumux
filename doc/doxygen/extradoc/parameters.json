@@ -2396,6 +2396,18 @@
             "bool"
         ]
     },
+    "Newton.LineSearchArmijoC1": {
+        "defaultValue": [
+            "1e-4"
+        ],
+        "explanation": [
+            "Constant of the sufficient decrease (Armijo) condition in the line search of NewtonSolverLinesearchCubicbacktracking."
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
+        ]
+    },
     "Newton.LineSearchMinRelaxationFactor": {
         "defaultValue": [
             "0.125"
