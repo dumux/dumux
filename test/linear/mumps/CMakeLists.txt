@@ -12,3 +12,10 @@ dumux_add_test(NAME test_mumps_gridadaption
                MPI_RANKS 1 2 4
                TIMEOUT 300
                LABELS unit linear parallel)
+
+dumux_add_test(NAME test_mumps_facedofs
+               SOURCES test_mumps_facedofs.cc
+               CMAKE_GUARD MUMPS_FOUND
+               MPI_RANKS 1 2 4
+               TIMEOUT 300
+               LABELS unit linear parallel)
