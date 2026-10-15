@@ -31,6 +31,7 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/multidomain/poromechanics/mandel/README.md \
                          @top_srcdir@/test/solidmechanics/hyperelastic_voliso/cooks_membrane_2d/README.md \
                          @top_srcdir@/test/solidmechanics/hyperelastic_voliso/incompressible_block/README.md \
+                         @top_srcdir@/test/poromechanics/poroelastic_large_deformations/cryer/README.md \
                          @top_srcdir@/CONTRIBUTING.md \
                          @srcdir@/pages \
                          @srcdir@/groups \
