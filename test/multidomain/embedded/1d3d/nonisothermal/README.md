@@ -7,7 +7,7 @@
 The benchmark simulates non-isothermal single-phase flow in a vertical wellbore (a borehole
 heat exchanger with a grouted pipe) that is embedded as a 1D line in a 3D rock domain.
 Cold water is injected at the top of the pipe, is heated on its way down by the surrounding
-warm rock, and leaves the pipe at the bottom. The only driving force for the flow is the pressure gradient. Ghravity is neglected in this setup. The quantities of interest are the outlet
+warm rock, and leaves the pipe at the bottom. The only driving force for the flow is the pressure gradient, gravity is neglected in this setup. The quantities of interest are the outlet
 temperature as a function of time and the fluid temperature along the pipe at the final time.
 
 The setup follows the
@@ -180,18 +180,20 @@ method; `params.input` contains both grid specifications in `[Rock.Grid]`:
   the axis and 26 mm at the borehole wall to 0.84 m at the lateral boundary), and a single cell
   over the depth.
 - *Kernel coupling*: `EquidistantOffsetCoordinates` (compile definition `COORDINATETYPE`) with
-  $68 \times 68 \times 1$ cells, i.e. a lateral cell width of 0.147 m. The kernel coupling
-  does not support refined rock grids (`Rock.Grid.Refinement`).
+  $68 \times 68 \times 1$ cells, i.e. a lateral cell width of 0.147 m.
 
-The pipe grid `grids/pipe.dgf` consists of a single 30 m element; `Well.Grid.Refinement`
-refines it.
+The pipe grid `grids/pipe.dgf` consists of a single 30 m element.
+
+A plain run of the executables, as in the CTest, uses these grids (refinement 0). The
+convergence script refines them by passing the refinement as command line arguments (see Grid
+Convergence below).
 
 Boundary conditions:
 
 | Domain | Boundary | Condition |
 |--------|----------|-----------|
 | Pipe | inlet ($z = 0$) | Neumann: mass influx $q\varrho_f/(\pi r_i^2)$ and the corresponding enthalpy influx at $T_\mathrm{in}$ |
-| Pipe | outlet ($z = -L$) | Dirichlet pressure $10^5$ Pa; energy: advective outflow plus Fourier conduction evaluated from the local gradients |
+| Pipe | outlet ($z = -L$) | Dirichlet pressure $10^5$ Pa; Neumann energy: advective outflow plus Fourier conduction evaluated from the local gradients |
 | Rock | top and bottom ($z = 0$, $z = -L$) | no-heat-flux Neumann |
 | Rock | lateral faces | Dirichlet at the initial state ($T_{s,0}$) |
 
@@ -211,10 +213,12 @@ The output of the 3D rock solution can be switched off with `Vtk.EnableBulkOutpu
 
 `convergence.py` runs both coupling methods on a sequence of grids and plots them together
 with Ramey's solution and the OGS results. Refinement $n$ means $68 \cdot 2^n \times 68 \cdot 2^n
-\times 2^n$ rock cells and $2^n$ pipe elements for both methods. For the surface coupling the
-script sets `Rock.Grid.Refinement` and `Well.Grid.Refinement` to $n$. For the kernel coupling it
-multiplies `Rock.Grid.Cells` by $2^n$ instead, since the kernel coupling does not support refined
-rock grids.
+\times 2^n$ rock cells and $2^n$ pipe elements for both methods. The script starts from the
+grids in `params.input` and refines them by overriding parameters on the command line; these
+parameters are not set in `params.input`. For both methods it passes `-Well.Grid.Refinement n`.
+For the rock grid of the surface coupling it passes `-Rock.Grid.Refinement n`. The kernel
+coupling does not support refined rock grids, so for it the script instead passes
+`-Rock.Grid.Cells` with the cells of `params.input` multiplied by $2^n$.
 
 | Refinement | Rock cells | Pipe elements | Lateral rock cell width at the borehole wall, surface / kernel |
 |------------|------------|---------------|-----------------------------------------------------------------|
