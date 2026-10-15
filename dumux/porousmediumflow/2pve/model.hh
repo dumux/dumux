@@ -39,8 +39,8 @@
  * Coarse cell volumes and face areas are horizontal measures. The column height H is
  * the extrusion factor for storage, fluxes and sources. Volume-variable porosity() and
  * permeability() are column averages with their usual units, so H times these averages
- * gives Phi and K_I. Integral diagnostics are available separately. The prescribed temperature determines
- * fluid properties. Standard velocity
+ * gives Phi and K_I. Integral diagnostics are available separately. No solid state or energy
+ * equation is used; the prescribed temperature determines fluid properties. Standard velocity
  * output reports the column-average Darcy velocity in m/s.
  *
  * The coarse grid has only horizontal coordinates, so its gravity vector is zero. Vertical
@@ -135,24 +135,16 @@ private:
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
-    using SolidState = GetPropType<TypeTag, Properties::SolidState>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     using PermeabilityType = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
     using DiscretizationMethod = typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod;
     static_assert(DiscretizationMethod{} == DiscretizationMethods::cctpfa, "The two-phase VE model is only implemented for the cell-centered TPFA discretization");
-    static constexpr bool enableBoxInterfaceSolver = getPropValue<TypeTag, Properties::EnableBoxInterfaceSolver>();
-    using SaturationReconstruction = TwoPScvSaturationReconstruction<DiscretizationMethod, enableBoxInterfaceSolver>;
-
-    using Traits = TwoPVolumeVariablesTraits<
+    using Traits = TwoPVEVolumeVariablesTraits<
         PrimaryVariables,
         FluidSystem,
         FluidState,
-        SolidSystem,
-        SolidState,
         PermeabilityType,
-        ModelTraits,
-        SaturationReconstruction>;
+        ModelTraits>;
 
 public:
     using type = TwoPVEVolumeVariables<Traits>;
