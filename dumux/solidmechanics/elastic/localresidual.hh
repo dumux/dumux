@@ -88,6 +88,24 @@ public:
     }
 
     /*!
+     * \brief The inertia term \f$ \rho_s \mathbf{u} \f$, whose second time derivative is the
+     *        acceleration term \f$ \rho_s \partial^2 \mathbf{u}/\partial t^2 \f$ (mass lumped)
+     * \note Used by the assemblers of time integration methods if the problem enables inertia
+     *       with `static constexpr bool enableInertia()`.
+     */
+    template<class SubControlVolume, class VolumeVariables>
+    NumEqVector computeInertia(const Problem& problem,
+                               const Element& element,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
+    {
+        NumEqVector inertia(0.0);
+        for (int dir = 0; dir < dim; ++dir)
+            inertia[Indices::momentum(dir)] = volVars.solidDensity()*volVars.displacement(dir);
+        return inertia;
+    }
+
+    /*!
      * \brief Evaluates the force in all grid directions acting
      *        on a face of a sub-control volume.
      *

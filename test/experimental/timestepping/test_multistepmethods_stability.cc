@@ -39,6 +39,8 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/experimental/timestepping/multistepmethods.hh>
 
+#include "polynomialroots.hh"
+
 namespace Dumux {
 
 using Scalar = double;
@@ -57,49 +59,13 @@ void expectNear(const Scalar value, const Scalar reference, const Scalar toleran
         DUNE_THROW(Dune::InvalidStateException, message << " (" << value << " vs. " << reference << ")");
 }
 
-//! The roots of sum_j c_j zeta^{n-j} (Durand-Kerner iteration)
-std::vector<Complex> roots(const std::vector<Complex>& coefficients)
-{
-    const auto n = coefficients.size() - 1;
-    std::vector<Complex> z(n);
-    for (std::size_t i = 0; i < n; ++i)
-        z[i] = std::pow(Complex{0.4, 0.9}, Scalar(i));
-
-    const auto evaluate = [&](const Complex x)
-    {
-        Complex value = 0.0;
-        for (const auto& c : coefficients)
-            value = value*x + c/coefficients[0];
-        return value;
-    };
-
-    for (int iteration = 0; iteration < 1000; ++iteration)
-    {
-        Scalar change = 0.0;
-        for (std::size_t i = 0; i < n; ++i)
-        {
-            Complex denominator = 1.0;
-            for (std::size_t j = 0; j < n; ++j)
-                if (j != i)
-                    denominator *= z[i] - z[j];
-            const auto delta = evaluate(z[i])/denominator;
-            z[i] -= delta;
-            change = std::max(change, std::abs(delta));
-        }
-        if (change < 1e-15)
-            break;
-    }
-
-    return z;
-}
-
 //! The largest modulus of the roots of the characteristic polynomial for z = lambda dt
 Scalar rootModulus(const std::vector<Scalar>& alpha, const Complex z)
 {
     std::vector<Complex> coefficients(alpha.begin(), alpha.end());
     coefficients[0] -= z;
     Scalar modulus = 0.0;
-    for (const auto& r : roots(coefficients))
+    for (const auto& r : Test::roots(coefficients))
         modulus = std::max(modulus, std::abs(r));
     return modulus;
 }
@@ -189,7 +155,7 @@ int main(int argc, char* argv[])
         const BDF bdf(2);
         std::vector<Scalar> alpha(3), beta(3);
         bdf.weights(std::vector<Scalar>{omega, 1.0}, alpha, beta);
-        const auto r = roots({alpha[0], alpha[1], alpha[2]});
+        const auto r = Test::roots({alpha[0], alpha[1], alpha[2]});
         const auto modulus = std::abs(std::abs(r[0] - 1.0) < std::abs(r[1] - 1.0) ? r[1] : r[0]);
         expectNear(modulus, omega*omega/(1.0 + 2.0*omega), 1e-10, "Parasitic root of variable-step BDF2");
         parasitic.push_back({omega, modulus});

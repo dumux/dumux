@@ -47,6 +47,7 @@
 #include <dumux/experimental/timestepping/multisteptimestepper.hh>
 
 #include "scalarassembler.hh"
+#include "constrainedode.hh"
 
 namespace Dumux {
 
@@ -87,51 +88,6 @@ private:
     std::size_t calls_ = 0;
     std::size_t failOnCall_ = 0;
 };
-
-//! u0' = -u0 + u1 with the constraint 0 = sin(t) - u1 (no storage term in the second equation)
-class ConstrainedODE
-{
-public:
-    using Scalar = double;
-    using SolutionVector = Dune::FieldVector<Scalar, 2>;
-    using ResidualType = SolutionVector;
-    using JacobianMatrix = Dune::FieldMatrix<Scalar, 2, 2>;
-    using Variables = Experimental::ODEVariables<SolutionVector>;
-
-    void accumulation(const Variables& vars, ResidualType& value) const
-    {
-        value[0] = vars.dofs()[0];
-        value[1] = 0.0;
-    }
-
-    void accumulationJacobian(const Variables&, JacobianMatrix& jacobian) const
-    {
-        jacobian = 0.0;
-        jacobian[0][0] = 1.0;
-    }
-
-    void rhs(const Variables& vars, ResidualType& rhs) const
-    {
-        using std::sin;
-        rhs[0] = -vars.dofs()[0] + vars.dofs()[1];
-        rhs[1] = sin(vars.independentVariableLevel().current()) - vars.dofs()[1];
-    }
-
-    void rhsJacobian(const Variables&, JacobianMatrix& jacobian) const
-    {
-        jacobian = 0.0;
-        jacobian[0][0] = -1.0;
-        jacobian[0][1] = 1.0;
-        jacobian[1][1] = -1.0;
-    }
-};
-
-//! u0(t) of the constrained system for u0(0) = 0
-Scalar constrainedExact(const Scalar t)
-{
-    using std::sin; using std::cos; using std::exp;
-    return 0.5*(sin(t) - cos(t) + exp(-t));
-}
 
 } // end namespace Dumux
 
@@ -428,10 +384,10 @@ int main(int argc, char* argv[])
     // the constraint u1 = sin(t) holds after every step
     ////////////////////////////////////////////////////////////
     {
-        using ODEAssembler = Experimental::MultiStageODEAssembler<ConstrainedODE>;
-        using ODELinearSolver = Experimental::ODELocalLinearSolver<ConstrainedODE::JacobianMatrix, ConstrainedODE::ResidualType>;
+        using ODEAssembler = Experimental::MultiStageODEAssembler<Test::ConstrainedODE>;
+        using ODELinearSolver = Experimental::ODELocalLinearSolver<Test::ConstrainedODE::JacobianMatrix, Test::ConstrainedODE::ResidualType>;
         using ODENewton = NewtonSolver<ODEAssembler, ODELinearSolver, DefaultPartialReassembler>;
-        using ODEVars = ConstrainedODE::Variables;
+        using ODEVars = Test::ConstrainedODE::Variables;
 
         for (std::size_t k = 1; k <= 5; ++k)
         {
@@ -440,11 +396,11 @@ int main(int argc, char* argv[])
 
             const auto [convergence, orders] = observedOrders([&](int n)
             {
-                auto newton = std::make_shared<ODENewton>(std::make_shared<ODEAssembler>(std::make_shared<const ConstrainedODE>()),
+                auto newton = std::make_shared<ODENewton>(std::make_shared<ODEAssembler>(std::make_shared<const Test::ConstrainedODE>()),
                                                           std::make_shared<ODELinearSolver>(),
                                                           Dune::MPIHelper::getCommunication(), "", "Newton", 0);
                 Experimental::MultiStepTimeStepper<ODENewton> stepper(newton, method);
-                ODEVars vars(ConstrainedODE::SolutionVector{0.0, 0.0});
+                ODEVars vars(Test::ConstrainedODE::SolutionVector{0.0, 0.0});
                 Scalar t = 0.0;
                 for (const auto dt : constantSteps(n))
                 {
@@ -454,7 +410,7 @@ int main(int argc, char* argv[])
                     maxConstraintError = max(maxConstraintError, abs(vars.dofs()[1] - sin(t)));
                 }
                 using std::abs;
-                return abs(vars.dofs()[0] - constrainedExact(t));
+                return abs(vars.dofs()[0] - Test::constrainedExact(t));
             });
 
             printOrders(Fmt::format("BDF{} for the constrained system", k), orders);

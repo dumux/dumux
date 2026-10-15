@@ -7,6 +7,8 @@
 #include <config.h>
 #include <iostream>
 #include <fstream>
+#include <memory>
+#include <string>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
@@ -17,9 +19,8 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 
-#include <dumux/assembly/assembler.hh>
-
-#include <dumux/experimental/timestepping/newmarkbeta.hh>
+#include <dumux/assembly/multistageassembler.hh>
+#include <dumux/experimental/timestepping/generalizedalpha.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
@@ -87,14 +88,29 @@ int main(int argc, char** argv)
     const auto dtInitial = getParam<Scalar>("TimeLoop.DtInitial");
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dtInitial, tEnd);
 
-    // the time stepping scheme
-    auto newmarkBeta = std::make_shared<Experimental::NewmarkBeta<Scalar, SolutionVector>>();
-    newmarkBeta->initialize(x);
-    problem->setNewmarkScheme(newmarkBeta);
+    // the time integration method
+    const auto method = [&]() -> std::shared_ptr<const Experimental::GeneralizedAlphaMethod<Scalar>>
+    {
+        using namespace Experimental::GeneralizedAlpha;
+        const auto name = getParam<std::string>("TimeStepping.Method", "Newmark");
+        if (name == "Newmark")
+            return std::make_shared<Newmark<Scalar>>(getParam<Scalar>("TimeStepping.Beta", 0.25),
+                                                     getParam<Scalar>("TimeStepping.Gamma", 0.5));
 
-    // the Newmark scheme provides the inertia, so the system in each time step is assembled as a stationary one
-    using Assembler = Experimental::Assembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
+        const auto rhoInf = getParam<Scalar>("TimeStepping.SpectralRadius");
+        if (name == "ChungHulbert")
+            return std::make_shared<ChungHulbert<Scalar>>(rhoInf);
+        else if (name == "HilberHughesTaylor")
+            return std::make_shared<HilberHughesTaylor<Scalar>>(rhoInf);
+        else if (name == "WoodBossakZienkiewicz")
+            return std::make_shared<WoodBossakZienkiewicz<Scalar>>(rhoInf);
+        DUNE_THROW(Dune::InvalidStateException, "Unknown time stepping method " << name);
+    }();
+
+    // the assembler for the implicit solves of the time integration method
+    auto xOld = x;
+    using Assembler = Experimental::MultiStageAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, method, xOld);
 
     // the linear solver
     using LAT = LinearAlgebraTraitsFromAssembler<Assembler>;
@@ -105,6 +121,24 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
 
+    // the beam starts at rest, and gravity acts from t = 0 on
+    Experimental::GeneralizedAlphaTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, method);
+    if (getParam<bool>("TimeStepping.ConsistentInitialAcceleration", false))
+    {
+        // the undeformed beam is stress-free, so the free degrees of freedom accelerate with gravity
+        SolutionVector velocity(x.size()), acceleration(x.size());
+        velocity = 0.0;
+        acceleration = 0.0;
+        const auto gravity = getParam<Scalar>("Problem.Gravity");
+        for (auto& a : acceleration)
+            a[1] = -gravity;
+        for (const auto& constraint : problem->constraints())
+            acceleration[constraint.dofIndex()] = 0.0;
+        timeStepper.initialize(x, 0.0, velocity, acceleration);
+    }
+    else
+        timeStepper.initialize(x, 0.0);
+
     const int vtkInterval = getParam<int>("VTKOutput.Every", 5);
 
     // If the output already exist we overwrite it
@@ -114,12 +148,9 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // linearize & solve
-        problem->setTimeStepSize(timeLoop->timeStepSize());
-        nonLinearSolver->solve(x);
-
-        // update the solution in the time stepping scheme
-        newmarkBeta->update(timeLoop->timeStepSize(), x);
+        // time integration
+        timeStepper.step(x, timeLoop->time(), timeLoop->timeStepSize());
+        xOld = x;
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

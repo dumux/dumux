@@ -8,6 +8,7 @@ Runs DuMuX simulations for CSM3 and compares results against
 reference data
 """
 
+import argparse
 import os
 import subprocess
 import pandas as pd
@@ -52,7 +53,7 @@ def compute_csm3_metrics(time, signal, dt_nominal):
 # DuMux Simulation and Data Management
 ###############################################################################
 
-def run_simulation(name, refinement, dt, vtk):
+def run_simulation(name, refinement, dt, vtk, method_args):
     """Executes the DuMuX binary for CSM3."""
     binary = "./test_saint_venant_kirchhoff_dynamic"
     if not os.path.exists(binary):
@@ -62,7 +63,7 @@ def run_simulation(name, refinement, dt, vtk):
            "-Problem.Name", name,
            "-Grid.Refinement", str(refinement),
            "-TimeLoop.DtInitial", str(dt),
-           "-VTKOutput.Every", str(vtk)]
+           "-VTKOutput.Every", str(vtk)] + method_args
     subprocess.check_call(cmd)
     return True
 
@@ -101,7 +102,7 @@ def get_reference_summary():
 # Visualizing results
 ###############################################################################
 
-def print_summary_table(results, output_md=True):
+def print_summary_table(results, discretisation="Box", output_md=True):
     """Formats and prints a clean comparison table sorted primarily by timestep."""
     table_rows = []
     for entry in results:
@@ -119,7 +120,7 @@ def print_summary_table(results, output_md=True):
                 "nel": nel,
                 "ndofs": ndof,
                 "Source": "DuMuX",
-                "Discretisation": "Box",
+                "Discretisation": discretisation,
                 "ux of A [mm] (Mean +/- Amp [Freq])": f"{ux_mean:+.3f} +/- {ux_amp:.3f} [{ux_freq:.4f}]",
                 "uy of A [mm] (Mean +/- Amp [Freq])": f"{uy_mean:+.3f} +/- {uy_amp:.3f} [{uy_freq:.4f}]"
             })
@@ -155,11 +156,11 @@ def print_summary_table(results, output_md=True):
             with open("csm_3.md", "w") as f:
                 f.write("\n".join(md_lines) + "\n")
 
-def generate_plots(dt, level_d, level_ref, output_filename="csm3_comparison.png"):
+def generate_plots(dt, level_d, level_ref, base_name="csm3", output_filename="csm3_comparison.png"):
     """Compare results over time with a unified global legend and fine reference."""
 
     ref_fine = get_reference(4, 0.005)
-    local_results = get_result(f"csm3_refinement_{level_d}_dt_{dt}")
+    local_results = get_result(f"{base_name}_refinement_{level_d}_dt_{dt}")
     reference_results = get_reference(level_ref, dt)
 
     t_ref, ux_ref, uy_ref = reference_results["t"], reference_results["ux"], reference_results["uy"]
@@ -218,8 +219,25 @@ def generate_plots(dt, level_d, level_ref, output_filename="csm3_comparison.png"
 # Actual main
 ###############################################################################
 
+parser = argparse.ArgumentParser(description="Run the CSM3 benchmark and compare with the reference data.")
+parser.add_argument("--method", default="Newmark",
+                    choices=["Newmark", "ChungHulbert", "HilberHughesTaylor", "WoodBossakZienkiewicz"],
+                    help="time integration method (default: Newmark)")
+parser.add_argument("--spectral-radius", type=float, default=None,
+                    help="spectral radius at infinity of the generalized-alpha methods other than Newmark")
+parser.add_argument("--levels", type=int, nargs="+", default=[0, 1, 2, 3],
+                    help="grid refinement levels (default: 0 1 2 3)")
+args = parser.parse_args()
+
+method_args = ["-TimeStepping.Method", args.method]
 base_name = "csm3"
-levels = [0, 1, 2, 3]
+if args.method != "Newmark":
+    if args.spectral_radius is None:
+        parser.error(f"--spectral-radius is required for {args.method}")
+    method_args += ["-TimeStepping.SpectralRadius", str(args.spectral_radius)]
+    base_name = f"csm3_{args.method}_{args.spectral_radius}"
+
+levels = args.levels
 dt = [0.02, 0.01]
 vtk_out = [10, 20]
 
@@ -227,10 +245,12 @@ all_results = []
 for i in range(len(dt)):
     for j in range(len(levels)):
         name = f"{base_name}_refinement_{levels[j]}_dt_{dt[i]}"
-        run_simulation(name, levels[j], dt[i], vtk_out[i])
+        run_simulation(name, levels[j], dt[i], vtk_out[i], method_args)
         df = get_result(name)
         all_results.append({"level": levels[j], "dt": dt[i], "data": df})
 
-print_summary_table(all_results)
+discretisation = "Box" if args.method == "Newmark" else f"Box, {args.method} {args.spectral_radius}"
+print_summary_table(all_results, discretisation)
 
-generate_plots(0.01, 2, 2)
+if 2 in levels:
+    generate_plots(0.01, 2, 2, base_name, f"{base_name}_comparison.png")

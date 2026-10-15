@@ -22,7 +22,7 @@ where $\lambda$ is the first Lamé parameter and $\mu$ is the shear modulus.
 ### Numerical Discretization
 | Implementation | Spatial Discretization | Type | Order | Temporal Discretization | Type | Order |
 | :--- | :--- | :---: | :---: | :--- | :--- | :---: |
-| Dumux | Box @ref BoxDiscretization | CVFE | 1 | Newmark-$\beta$ | Implicit | 2 |
+| Dumux | Box @ref BoxDiscretization | CVFE | 1 | Newmark ($\beta=\tfrac14$, $\gamma=\tfrac12$) or generalized-$\alpha$ (`GeneralizedAlphaTimeStepper`) | Implicit | 2 |
 | Reference (Featflow) | Galerkin FEM  (Q2/P1) | FEM | 2 | Crank-Nicolson | Implicit | 2 |
 
 Due to the difference in interpolation order (linear vs. quadratic), DuMuX typically requires a higher mesh refinement level to match the peak amplitudes of the reference solution.
@@ -96,17 +96,49 @@ For the dynamic **CSM3** case, the beam exhibits large, persistent oscillations 
 | 0.010 | 320 | 6468 | FeatFlow | FEM | -14.632 +/- 14.636 [1.0978] | -64.744 +/- 64.907 [1.0978] |
 | 0.010 | 1280 | 25092 | FeatFlow | FEM | -14.645 +/- 14.650 [1.0978] | -64.765 +/- 64.946 [1.0978] |
 | 0.010 | 1923 | 1087 | DuMuX | Box | -13.719 +/- 13.720 [1.2295] | -62.448 +/- 63.292 [1.1111] |
+| 0.010 | 1923 | 1087 | DuMuX | Box, CH $\rho_\infty=0.8$ | -13.748 +/- 13.748 [1.2195] | -62.548 +/- 63.288 [1.1111] |
 | 0.010 | 5120 | 98820 | FeatFlow | FEM | -14.645 +/- 14.650 [1.0978] | -64.766 +/- 64.948 [1.0978] |
 | 0.010 | 10631 | 5586 | DuMuX | Box | -14.396 +/- 14.402 [1.2097] | -63.970 +/- 64.709 [1.0949] |
+| 0.010 | 10631 | 5586 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.412 +/- 14.412 [1.2097] | -64.041 +/- 64.657 [1.1029] |
 | 0.010 | 49710 | 25429 | DuMuX | Box | -14.590 +/- 14.594 [1.2097] | -64.381 +/- 65.109 [1.0949] |
+| 0.010 | 49710 | 25429 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.591 +/- 14.592 [1.2097] | -64.446 +/- 65.015 [1.0949] |
 | 0.010 | 218076 | 110216 | DuMuX | Box | -14.629 +/- 14.633 [1.2097] | -64.497 +/- 65.178 [1.0989] |
 | 0.020 | 320 | 6468 | FeatFlow | FEM | -14.384 +/- 14.389 [1.0956] | -64.271 +/- 64.595 [1.0956] |
 | 0.020 | 1280 | 25092 | FeatFlow | FEM | -14.402 +/- 14.406 [1.0956] | -64.352 +/- 64.679 [1.0956] |
 | 0.020 | 1923 | 1087 | DuMuX | Box | -13.659 +/- 13.665 [1.2295] | -61.923 +/- 63.544 [1.1194] |
+| 0.020 | 1923 | 1087 | DuMuX | Box, CH $\rho_\infty=0.8$ | -13.629 +/- 13.628 [1.2097] | -61.980 +/- 63.538 [1.1029] |
 | 0.020 | 5120 | 98820 | FeatFlow | FEM | -14.404 +/- 14.408 [1.0956] | -64.371 +/- 64.695 [1.0956] |
 | 0.020 | 10631 | 5586 | DuMuX | Box | -14.336 +/- 14.338 [1.2097] | -63.910 +/- 64.510 [1.1029] |
+| 0.020 | 10631 | 5586 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.306 +/- 14.306 [1.2097] | -63.698 +/- 64.741 [1.0870] |
 | 0.020 | 49710 | 25429 | DuMuX | Box | -14.516 +/- 14.521 [1.2097] | -64.315 +/- 64.933 [1.0870] |
+| 0.020 | 49710 | 25429 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.513 +/- 14.513 [1.2097] | -64.042 +/- 65.163 [1.0989] |
 | 0.020 | 218076 | 110216 | DuMuX | Box | -14.580 +/- 14.584 [1.1905] | -64.381 +/- 65.104 [1.0870] |
+
+The rows labelled "Box" use the Newmark method with $\beta=\tfrac14$, $\gamma=\tfrac12$ (no numerical
+dissipation). The rows labelled "CH $\rho_\infty=0.8$" use the generalized-$\alpha$ method of Chung and
+Hulbert @cite ChungHulbert1993 with the spectral radius $\rho_\infty=0.8$ in the limit of large time steps
+(`-TimeStepping.Method ChungHulbert -TimeStepping.SpectralRadius 0.8`), which damps the
+oscillations of the highest frequencies of the mesh. On the same mesh and time step size, the
+means and amplitudes of the two methods differ by at most $0.273\,$mm.
+
+Both start from rest with zero initial acceleration. Since gravity acts from $t=0$ on the
+stress-free beam, the consistent initial acceleration is $-g$ in the vertical direction at all
+degrees of freedom except those on the cylinder, and the zero initial acceleration
+introduces an error of first order in $\Delta t$. With `-TimeStepping.ConsistentInitialAcceleration true`,
+the stepper starts from the consistent acceleration. On the coarsest mesh, the largest
+difference of the displacement at $t=1\,$s to the Newmark solution with $\Delta t=0.000625\,$s is:
+
+| $\Delta t$ [s] | Newmark, zero initial acceleration [m] | Newmark, consistent initial acceleration [m] |
+| :--- | :--- | :--- |
+| 0.01 | $1.8\cdot10^{-3}$ | $4.4\cdot10^{-4}$ |
+| 0.005 | $7.0\cdot10^{-4}$ | $1.8\cdot10^{-4}$ |
+| 0.0025 | $3.1\cdot10^{-4}$ | $4.2\cdot10^{-5}$ |
+
+(each column relative to the finest run with the same initial acceleration). The difference
+between Chung-Hulbert with $\rho_\infty=0.8$ and Newmark at $t=1\,$s and $\Delta t=0.01\,$s is
+$1.3\cdot10^{-3}\,$m with zero and $3.5\cdot10^{-5}\,$m with consistent initial acceleration. The
+test `test_saint_venant_kirchhoff_dynamic_chunghulbert` runs Chung-Hulbert with
+$\rho_\infty=0.8$ and consistent initial acceleration.
 
 ### Reproducing our simulation data
 
@@ -116,11 +148,13 @@ To reproduce the benchmark results, navigate to the specific test directory with
 # Example for CSM12
 cd build-cmake/test/solidmechanics/turek_hron/csm12
 make test_saint_venant_kirchhoff
-python3 runBenchmarks.py
+python3 run_benchmarks.py
 # Example for CSM3
 cd build-cmake/test/solidmechanics/turek_hron/csm3
 make test_saint_venant_kirchhoff_dynamic
-python3 runBenchmarks.py
+python3 run_benchmarks.py
+# CSM3 with the Chung-Hulbert method on the refinement levels 0 to 2
+python3 run_benchmarks.py --method ChungHulbert --spectral-radius 0.8 --levels 0 1 2
 ```
 
 ## References

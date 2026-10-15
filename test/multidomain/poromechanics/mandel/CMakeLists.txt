@@ -32,6 +32,20 @@ dumux_add_test(NAME test_md_mandel_compressible_grains
                                   -TimeLoop.TEnd 50 -Problem.BiotCoefficient 0.7 -Problem.FluidBulkModulus 2.2e9
                                   -Vtk.OutputName test_md_mandel_compressible_grains")
 
+dumux_add_test(NAME test_md_mandel_inertia
+              LABELS multidomain poromechanics 1p poroelastic
+              SOURCES test_mandel.cc
+              COMPILE_DEFINITIONS MANDEL_ENABLE_INERTIA=1
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_md_mandel_inertia_flow-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_md_mandel_inertia_flow-00002.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_md_mandel_inertia_mech-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_md_mandel_inertia_mech-00002.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_mandel_inertia params.input
+                                  -TimeLoop.TEnd 50 -TimeLoop.SpectralRadius 0.5 -Vtk.OutputName test_md_mandel_inertia")
+
 dumux_add_test(NAME test_md_mandel_convergence
               LABELS multidomain poromechanics 1p poroelastic
               TARGET test_md_mandel

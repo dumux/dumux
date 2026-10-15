@@ -13,3 +13,15 @@ dumux_add_test(
                       ${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic-00002.vtu
               --command "${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic params.input -TimeLoop.TEnd 1 -VTKOutput.Every 50"
 )
+
+dumux_add_test(
+    NAME test_saint_venant_kirchhoff_dynamic_chunghulbert
+    TARGET test_saint_venant_kirchhoff_dynamic
+    LABELS geomechanics elastic
+    CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
+    COMMAND ${DUMUX_RUNTEST}
+    CMD_ARGS  --script fuzzy
+              --files ${CMAKE_SOURCE_DIR}/test/references/test_saint_venant_kirchhoff_dynamic_chunghulbert-reference.vtu
+                      ${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic_chunghulbert-00002.vtu
+              --command "${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic params.input -TimeLoop.TEnd 1 -VTKOutput.Every 50 -Problem.Name test_saint_venant_kirchhoff_dynamic_chunghulbert -TimeStepping.Method ChungHulbert -TimeStepping.SpectralRadius 0.8 -TimeStepping.ConsistentInitialAcceleration true"
+)
