@@ -16,12 +16,13 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 
-#include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
 #if USE_GRIDFORMAT
+#include <dumux/io/cvfegridfunction.hh>
 #include <dumux/io/gridwriter.hh>
 #endif
 
@@ -67,15 +68,19 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module
 #if USE_GRIDFORMAT
-    IO::OutputModule vtkWriter(*gridVariables, x, problem->name());
+    IO::GridWriter vtkWriter{IO::Format::pvd_with(IO::Format::vtu.with({.encoder = IO::Encoding::ascii,
+                                                                        .compressor = IO::Compression::none,
+                                                                        .data_format = IO::VTK::DataFormat::inlined})),
+                             leafGridView, problem->name()};
+    vtkWriter.setPointField("d", IO::cvfeGridFunction(*gridGeometry, x));
 #else
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-#endif
     vtkWriter.addField(x, "d");
+#endif
     vtkWriter.write(0.0);
 
     // the assembler with time loop for a transient problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = Experimental::Assembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
