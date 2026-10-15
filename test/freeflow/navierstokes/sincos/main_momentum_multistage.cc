@@ -199,7 +199,7 @@ Scalar residualAssemblyDifference(std::shared_ptr<const GridGeometry> gridGeomet
     using Newton = ResidualConsistencyCheckingNewton<Assembler, LinearSolver>;
     auto nonLinearSolver = std::make_shared<Newton>(assembler, std::make_shared<LinearSolver>());
 
-    if (Test::checkImplicitSolveContract(*assembler, x, 0.0, 1.0/dt, 1.0) == 0)
+    if (Test::checkImplicitSolveContract(*assembler, x, 0.0, 1.0/dt, 1.0, 1.0) == 0)
         DUNE_THROW(Dune::Exception, "Expected Dirichlet constraints in the implicit solve contract check");
 
     Experimental::MultiStageTimeStepper<Newton> timeStepper(nonLinearSolver, method);

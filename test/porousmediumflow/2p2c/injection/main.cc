@@ -127,7 +127,7 @@ int main(int argc, char** argv)
     TimeStepper timeStepper(nonLinearSolver, timeSteppingMethod);
 
     const auto numConstrained = Test::checkImplicitSolveContract(
-        *assembler, x, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0
+        *assembler, x, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0, 1.0
     );
     if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
         if (numConstrained == 0)

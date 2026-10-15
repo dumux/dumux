@@ -25,4 +25,10 @@ foreach(_scheme box pq1bubble pq2 pq1fe pq2fe)
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_cooks_membrane_${_scheme}-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/test_cooks_membrane_${_scheme}.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_cooks_membrane_${_scheme} params.input -Problem.Name test_cooks_membrane_${_scheme}")
+    dumux_add_test(NAME test_cooks_membrane_inertia_${_scheme}
+                   LABELS solidmechanics elastic timestepping
+                   SOURCES main_inertia.cc
+                   COMPILE_DEFINITIONS DISCRETIZATION_MODEL=${_model}
+                   CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK AND DUMUX_HAVE_GRIDFORMAT )"
+                   CMD_ARGS params.input -SpatialParams.SolidDensity 1.0 -Assembly.NumericDifference.BaseEpsilon 1e-7)
 endforeach()

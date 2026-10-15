@@ -99,6 +99,9 @@ public:
     : pdeSolver_(pdeSolver)
     , method_(method)
     {
+        static_assert(!assemblerHasInertia_(),
+            "The multi-step time stepper integrates first time derivatives only, but the problem enables inertia");
+
         initParams_(paramGroup);
 
         if (startupMethod)
@@ -265,6 +268,14 @@ private:
         if (method.numSteps() >= 3)
             return std::make_shared<MultiStage::DIRKFourthOrderHairerWanner<Scalar>>();
         return nullptr;
+    }
+
+    static constexpr bool assemblerHasInertia_()
+    {
+        if constexpr (requires { Assembler::hasInertia(); })
+            return Assembler::hasInertia();
+        else
+            return false;
     }
 
     void initParams_(const std::string& group = "")

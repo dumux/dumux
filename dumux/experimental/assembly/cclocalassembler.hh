@@ -76,15 +76,19 @@ public:
 
         const bool skipSpatial = (weights.spatial == 0.0);
         const bool skipStorage = (weights.storage == 0.0);
+        const bool skipInertia = (weights.inertia == 0.0);
 
         res[globalI] = 0.0;
         if (!skipSpatial)
             res[globalI] += this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0]*weights.spatial;
         if (!skipStorage)
-            res[globalI] += this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars())[0]*weights.storage;
+            res[globalI] += this->localResidual().evalStorageOperator(this->fvGeometry(), this->curElemVolVars())[0]*weights.storage;
+        if (!skipInertia)
+            res[globalI] += this->localResidual().evalInertiaOperator(this->fvGeometry(), this->curElemVolVars())[0]*weights.inertia;
 
         this->localResidual().spatialWeight(weights.spatial, skipSpatial);
         this->localResidual().temporalWeight(weights.storage, skipStorage);
+        this->localResidual().inertiaWeight(weights.inertia, skipInertia);
 
 
         if (partialReassembler
@@ -141,18 +145,23 @@ public:
     }
 
     /*!
-     * \brief Assemble the residual only
+     * \brief Set the unweighted operators of this element in the requested global vectors
      */
     template<class SubResidualVector>
-    void assembleCurrentResidual(SubResidualVector& spatialRes, SubResidualVector& temporalRes)
+    void assembleOperators(OperatorEvaluations<SubResidualVector> evaluations)
     {
+        if constexpr (Problem::enableInternalDirichletConstraints())
+            DUNE_THROW(Dune::NotImplemented, "Operator evaluations with internal Dirichlet constraints");
+
+        this->localResidual().spatialWeight(1.0, !evaluations.spatial);
         this->asImp_().bindLocalViews();
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
-        spatialRes[globalI] = this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0];
-        temporalRes[globalI] = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars())[0];
-
-        if constexpr (Problem::enableInternalDirichletConstraints())
-            DUNE_THROW(Dune::NotImplemented, "Not implemented");
+        if (evaluations.spatial)
+            (*evaluations.spatial)[globalI] = this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0];
+        if (evaluations.storage)
+            (*evaluations.storage)[globalI] = this->localResidual().evalStorageOperator(this->fvGeometry(), this->curElemVolVars())[0];
+        if (evaluations.inertia)
+            (*evaluations.inertia)[globalI] = this->localResidual().evalInertiaOperator(this->fvGeometry(), this->curElemVolVars())[0];
     }
 
     /*!

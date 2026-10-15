@@ -165,7 +165,7 @@ public:
      * \param jac            The Jacobian matrix to add to
      * \param res            The residual to add the weighted contribution to
      * \param gridVariables  The grid variables for this subdomain
-     * \param weights        The weights of the storage and spatial operators
+     * \param weights        The weights of the inertia, storage and spatial operators
      * \param constrainedDofs Vector tracking which dofs have Dirichlet constraints
      * \param maybeAssembleCouplingBlocks Optional functor for coupling Jacobian blocks
      */
@@ -191,38 +191,50 @@ public:
             for (const auto& localDof : localDofs(this->elemDisc()))
             {
                 const auto li = localDof.index();
-                const auto di = localDof.dofIndex();
                 origResidual[li] += spatialResidual[li]*sWeight + storageResidual[li]*tWeight;
-                res[di] += origResidual[li];
             }
 
-            // assemble the Jacobian differentiated w.r.t. the stage-weighted residual
-            this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, tWeight, sWeight);
+            if (weights.inertia != 0.0)
+            {
+                const auto inertiaResidual = this->localResidual().evalInertia(
+                    this->element(), this->elemDisc(), this->curElemVars());
+                for (const auto& localDof : localDofs(this->elemDisc()))
+                    origResidual[localDof.index()] += inertiaResidual[localDof.index()]*weights.inertia;
+            }
+
+            for (const auto& localDof : localDofs(this->elemDisc()))
+                res[localDof.dofIndex()] += origResidual[localDof.index()];
+
+            // assemble the Jacobian differentiated w.r.t. the weighted residual
+            this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, weights);
 
             maybeAssembleCouplingBlocks(origResidual);
         }
     }
 
     /*!
-     * \brief Assemble the unweighted storage and spatial operators (no Jacobian)
+     * \brief Add the unweighted operators of this element to the requested global vectors (no Jacobian)
      */
     template<class ResidualVector>
-    void assembleCurrentResidual(ResidualVector& temporal, ResidualVector& spatial)
+    void assembleOperators(OperatorEvaluations<ResidualVector> evaluations)
     {
         this->asImp_().bindLocalViews();
 
-        if (!this->elementIsGhost())
-        {
-            const auto spatialResidual = this->evalLocalFluxAndSourceResidual(this->curElemVars());
-            const auto storageResidual = this->localResidual().evalStorageCurrentLevel(
-                this->element(), this->elemDisc(), this->curElemVars());
+        if (this->elementIsGhost())
+            return;
 
+        const auto addToGlobal = [&](ResidualVector& global, const auto& local)
+        {
             for (const auto& localDof : localDofs(this->elemDisc()))
-            {
-                spatial[localDof.dofIndex()] += spatialResidual[localDof.index()];
-                temporal[localDof.dofIndex()] += storageResidual[localDof.index()];
-            }
-        }
+                global[localDof.dofIndex()] += local[localDof.index()];
+        };
+
+        if (evaluations.spatial)
+            addToGlobal(*evaluations.spatial, this->evalLocalFluxAndSourceResidual(this->curElemVars()));
+        if (evaluations.storage)
+            addToGlobal(*evaluations.storage, this->localResidual().evalStorageCurrentLevel(this->element(), this->elemDisc(), this->curElemVars()));
+        if (evaluations.inertia)
+            addToGlobal(*evaluations.inertia, this->localResidual().evalInertia(this->element(), this->elemDisc(), this->curElemVars()));
     }
 
     /*!
@@ -415,14 +427,14 @@ public:
     }
 
     /*!
-     * \brief Multi-stage variant: computes the Jacobian of the stage-weighted residual.
+     * \brief Computes the Jacobian of the weighted residual of an implicit solve of a time integration method
      *
-     * Differentiates `tWeight * storage(u) + sWeight * (flux+source)(u)` w.r.t. dof values.
-     * Used by the multi-stage overload of `assembleJacobianAndResidual`.
+     * Differentiates `weights.inertia * inertia(u) + weights.storage * storage(u) + weights.spatial * (flux+source)(u)`
+     * w.r.t. dof values.
      */
     template<class Scalar>
     ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
-                                                           Scalar tWeight, Scalar sWeight)
+                                                           const OperatorWeights<Scalar>& weights)
     {
         const auto& element = this->element();
         const auto& elemDisc = this->elemDisc();
@@ -430,7 +442,7 @@ public:
 
         auto&& curElemVars = this->curElemVars();
 
-        const auto origResiduals = this->evalLocalResidualForStage(curElemVars, tWeight, sWeight);
+        const auto origResiduals = this->evalLocalResidualForStage(curElemVars, weights);
 
         static const bool updateAllVars = getParamFromGroup<bool>(
             this->asImp_().problem().paramGroup(), "Assembly.VarsDependOnAllElementDofs", false
@@ -458,7 +470,7 @@ public:
                     elemSol[localIdx][pvIdx] = priVar;
                     deflectionPolicy.update(elemSol, localDof, this->asImp_().problem());
                     this->asImp_().maybeUpdateCouplingContext(localDof, elemSol, pvIdx);
-                    return this->evalLocalResidualForStage(curElemVars, tWeight, sWeight);
+                    return this->evalLocalResidualForStage(curElemVars, weights);
                 };
 
                 static const NumericEpsilon<PrimaryVariable, numEq> eps_{this->asImp_().problem().paramGroup()};

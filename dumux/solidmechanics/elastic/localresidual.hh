@@ -15,6 +15,7 @@
 
 #include <ranges>
 
+#include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/parameters.hh>
@@ -22,6 +23,7 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
@@ -38,7 +40,10 @@ namespace Dumux {
  * freedom with a control volume are tested with its indicator function, all others with their
  * basis function. The problem then provides the body force as `source(elemDisc, elemVars, ipData)`,
  * boundary terms as `boundaryFlux(elemDisc, elemVars, ipData)` and Dirichlet conditions as
- * constraints, and the spatial parameters provide `lameParams(elemDisc, ipData)`.
+ * constraints, and the spatial parameters provide `lameParams(elemDisc, ipData)`. Problems that
+ * enable inertia (`static constexpr bool enableInertia()`) solve elastodynamics with the inertia
+ * term \f$ \rho_s \mathbf{u} \f$ (time integration with a second-order time stepper), and the
+ * spatial parameters then also provide `solidDensity(elemDisc, ipData)`.
  */
 template<class TypeTag>
 class ElasticLocalResidual
@@ -144,10 +149,64 @@ public:
 
         return source;
     }
-    //! The storage term is zero for quasi-static elasticity (assembly with local degrees of freedom)
+    //! The storage term of a first time derivative is zero (assembly with local degrees of freedom)
     template<class ElementDiscretization, class ElementVariables, class Scv>
     NumEqVector storageIntegral(const ElementDiscretization&, const ElementVariables&, const Scv&, bool) const
     { return NumEqVector(0.0); }
+
+    /*!
+     * \brief The inertia \f$ \int \rho_s \mathbf{u} \f$ over a control volume, mass lumped (assembly with local degrees of freedom)
+     * \note Used if the problem enables inertia with `static constexpr bool enableInertia()`. The spatial
+     *       parameters provide the solid density.
+     */
+    template<class ElementDiscretization, class ElementVariables, class Scv>
+    NumEqVector inertiaIntegral(const ElementDiscretization& elemDisc,
+                                const ElementVariables& elemVars,
+                                const Scv& scv) const
+    {
+        const auto& problem = this->asImp().problem();
+        const auto& vars = elemVars[scv];
+        const auto density = problem.spatialParams().solidDensity(elemDisc, ipData(elemDisc, scv));
+        NumEqVector inertia(0.0);
+        for (int dir = 0; dir < dim; ++dir)
+            inertia[Indices::momentum(dir)] = density*vars.displacement(dir);
+        inertia *= Extrusion_t<GridGeometry>::volume(elemDisc, scv)*vars.extrusionFactor();
+        return inertia;
+    }
+
+    /*!
+     * \brief The inertia \f$ \int \rho_s \mathbf{u} \cdot \mathbf{w} \f$ of the degrees of freedom
+     *        without control volume, with the consistent mass (assembly with local degrees of freedom)
+     */
+    template<class ElementResidualVector, class ElementDiscretization, class ElementVariables>
+    void addToElementInertia(ElementResidualVector& inertia,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars) const
+    {
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
+        {
+            if (std::ranges::empty(nonCVLocalDofs(elemDisc)))
+                return;
+
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
+            {
+                const auto& ipData = qpData.ipData();
+                const auto& shapeValues = cache(elemVars, ipData).shapeValues();
+                Dune::FieldVector<Scalar, dim> u(0.0);
+                for (const auto& localDof : localDofs(elemDisc))
+                    for (int dir = 0; dir < dim; ++dir)
+                        u[dir] += shapeValues[localDof.index()][0]*elemVars[localDof].displacement(dir);
+
+                const auto density = problem.spatialParams().solidDensity(elemDisc, ipData);
+                for (const auto& localDof : nonCVLocalDofs(elemDisc))
+                    for (int dir = 0; dir < dim; ++dir)
+                        inertia[localDof.index()][Indices::momentum(dir)]
+                            += qpData.weight()*density*shapeValues[localDof.index()][0]*u[dir];
+            }
+        }
+    }
 
     //! The body force \f$ \int \mathbf{f} \f$ over a control volume (assembly with local degrees of freedom)
     template<class ElementDiscretization, class ElementVariables, class Scv>

@@ -125,6 +125,9 @@ public:
     : pdeSolver_(pdeSolver)
     , msMethod_(msMethod)
     {
+        static_assert(!assemblerHasInertia_(),
+            "The multi-stage time stepper integrates first time derivatives only, but the problem enables inertia");
+
         initParams_(paramGroup);
 
         if (pdeSolver_->verbosity() >= 1)
@@ -236,6 +239,14 @@ private:
         }
 
         return true;
+    }
+
+    static constexpr bool assemblerHasInertia_()
+    {
+        if constexpr (requires { Assembler::hasInertia(); })
+            return Assembler::hasInertia();
+        else
+            return false;
     }
 
     void initParams_(const std::string& group = "")

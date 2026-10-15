@@ -223,14 +223,16 @@ public:
         }
 
         const auto& weights = solveParams_->weights;
-        ResidualType storage, spatial;
-        assembleOperators_(curSol, {.storage = &storage, .spatial = &spatial});
+        ResidualType inertia, storage, spatial;
+        assembleOperators_(curSol, {.inertia = weights.inertia != 0.0 ? &inertia : nullptr, .storage = &storage, .spatial = &spatial});
 
         (*residual_) = 0.0;
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
         {
             auto& residual = (*residual_)[domainId];
+            if (weights.inertia != 0.0)
+                residual.axpy(weights.inertia, inertia[domainId]);
             if (weights.storage != 0.0)
                 residual.axpy(weights.storage, storage[domainId]);
             if (weights.spatial != 0.0)
@@ -350,9 +352,6 @@ public:
      */
     void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        if (params.weights.inertia != 0.0)
-            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage multi-domain assembler");
-
         setProblemTimes_(params.timeLevel.current());
         solveParams_ = params;
     }
@@ -365,9 +364,6 @@ public:
                            const Experimental::TimeLevel<Scalar>& timeLevel,
                            Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        if (evaluations.inertia)
-            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage multi-domain assembler");
-
         setProblemTimes_(timeLevel.current());
         assembleOperators_(sol, evaluations);
     }
@@ -378,6 +374,13 @@ public:
 
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
+
+    //! Whether the problem of any subdomain enables the inertia operator
+    static constexpr bool hasInertia()
+    {
+        return []<std::size_t... i>(std::index_sequence<i...>)
+        { return (Detail::TimeStepping::enablesInertia<Problem<i>>() || ...); }(std::make_index_sequence<JacobianMatrix::N()>{});
+    }
 
 protected:
     //! the coupling manager coupling the sub domains
@@ -564,25 +567,30 @@ private:
     //! Evaluate the unweighted operators at the given solution at the current problem time
     void assembleOperators_(const SolutionVector& sol, Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        ResidualType unused;
-        auto& storage = evaluations.storage ? *evaluations.storage : unused;
-        auto& spatial = evaluations.spatial ? *evaluations.spatial : unused;
-        for (auto* r : {&storage, &spatial})
+        for (auto* r : {evaluations.inertia, evaluations.storage, evaluations.spatial})
         {
-            setResidualSize_(*r);
-            (*r) = 0.0;
+            if (r)
+            {
+                setResidualSize_(*r);
+                (*r) = 0.0;
+            }
         }
 
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
         {
+            using SubResidual = std::decay_t<decltype(std::declval<ResidualType&>()[domainId])>;
+            const OperatorEvaluations<SubResidual> subEvaluations{
+                .inertia = evaluations.inertia ? &(*evaluations.inertia)[domainId] : nullptr,
+                .storage = evaluations.storage ? &(*evaluations.storage)[domainId] : nullptr,
+                .spatial = evaluations.spatial ? &(*evaluations.spatial)[domainId] : nullptr
+            };
+
             assemble_(domainId, [&](const auto& element)
             {
                 MultiDomainAssemblerSubDomainView view{*this, domainId};
                 SubDomainAssembler<domainId()> subDomainAssembler(view, element, sol, *couplingManager_);
-                subDomainAssembler.localResidual().spatialWeight(1.0, !evaluations.spatial);
-                subDomainAssembler.localResidual().temporalWeight(1.0, !evaluations.storage);
-                subDomainAssembler.assembleCurrentResidual(spatial[domainId], storage[domainId]);
+                subDomainAssembler.assembleOperators(subEvaluations);
             });
         });
     }

@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 
     Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, timeSteppingMethod);
 
-    if (Test::checkImplicitSolveContract(*assembler, x, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0) == 0)
+    if (Test::checkImplicitSolveContract(*assembler, x, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0, 1.0) == 0)
         DUNE_THROW(Dune::Exception, "Expected Dirichlet constraints in the implicit solve contract check");
 
     timeLoop->start(); do

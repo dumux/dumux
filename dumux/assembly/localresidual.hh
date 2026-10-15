@@ -25,6 +25,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/concepts.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 
 namespace Dumux::Experimental {
 
@@ -93,6 +94,44 @@ public:
         this->asImp().addToElementStorage(storage, this->problem(), element, elemDisc, elemVars, /*isPreviousTimeLevel=*/false);
 
         return storage;
+    }
+
+    /*!
+     * \brief Evaluate the inertia operator, the term with the second time derivative
+     * \note The inertia operator is zero unless the problem enables it with
+     *       `static constexpr bool enableInertia()`. Models then implement
+     *       `inertiaIntegral(elemDisc, elemVars, scv)` for control-volume schemes and
+     *       may add contributions of other degrees of freedom in addToElementInertia().
+     *
+     * \param element The element
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     */
+    ElementResidualVector evalInertia(const Element& element,
+                                      const ElementDiscretization& elemDisc,
+                                      const ElementVariables& elemVars) const
+    {
+        ElementResidualVector inertia(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
+        inertia = 0.0;
+
+        if constexpr (Detail::TimeStepping::enablesInertia<Problem>())
+        {
+            if constexpr (Concepts::FVElementDiscretization<ElementDiscretization>)
+            {
+                using Scv = typename ElementDiscretization::SubControlVolume;
+                static_assert(requires (const Implementation& impl, const ElementDiscretization& ed,
+                                        const ElementVariables& ev, const Scv& scv)
+                              { impl.inertiaIntegral(ed, ev, scv); },
+                    "The problem enables inertia, so the local residual has to implement inertiaIntegral(elemDisc, elemVars, scv)");
+
+                for (const auto& scv : scvs(elemDisc))
+                    inertia[scv.localDofIndex()] += this->asImp().inertiaIntegral(elemDisc, elemVars, scv);
+            }
+
+            this->asImp().addToElementInertia(inertia, this->problem(), element, elemDisc, elemVars);
+        }
+
+        return inertia;
     }
 
     ElementResidualVector evalStorage(const Element& element,
@@ -183,6 +222,22 @@ public:
                              const ElementDiscretization& elemDisc,
                              const ElementVariables& elemVars,
                              bool isPreviousTimeLevel) const
+    {}
+
+    /*!
+     * \brief Add inertia contributions of degrees of freedom without control volume (e.g. hybrid CVFE or FE schemes)
+     *
+     * \param inertia The element inertia vector to add to
+     * \param problem The problem
+     * \param element The element
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     */
+    void addToElementInertia(ElementResidualVector& inertia,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars) const
     {}
 
     //! add additional flux and source contributions (e.g. hybrid CVFE or FE schemes)

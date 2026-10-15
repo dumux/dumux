@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <memory>
+#include <random>
 #include <iostream>
 #include <algorithm>
 
@@ -49,41 +50,58 @@ void forEachEntry(V& a, V& b, V& c, V& d, F&& f)
 /*!
  * \brief Checks that an assembler implements the contract of an implicit solve
  *
- * For a given solution, the residual assembled for the weights (0, wM, wR) and a
- * constant c has to equal wM M + wR R + c in all unconstrained equations, where
- * M and R are the operators returned by assembleOperators, and has to be independent
- * of c in the constrained equations.
+ * For a given solution, the residual assembled for the weights (wI, wM, wR) and a
+ * constant c has to equal wI I + wM M + wR R + c in all unconstrained equations, where
+ * I, M and R are the operators returned by assembleOperators, and has to be independent
+ * of c in the constrained equations. The inertia operator has to vanish for problems
+ * without inertia.
  * \return the number of constrained equations
  */
 template<class Assembler, class SolutionVector, class Scalar>
 std::size_t checkImplicitSolveContract(Assembler& assembler, const SolutionVector& x, const Scalar time,
-                                       const Scalar storageWeight, const Scalar spatialWeight)
+                                       const Scalar storageWeight, const Scalar spatialWeight,
+                                       const Scalar inertiaWeight = 0.0)
 {
     using Residual = typename Assembler::ResidualType;
     using SolveParams = Experimental::ImplicitSolveParams<Scalar, Residual>;
     const Experimental::TimeLevel<Scalar> timeLevel(time);
 
-    Residual storage, spatial;
-    assembler.assembleOperators(x, timeLevel, {.storage = &storage, .spatial = &spatial});
+    Residual inertia, storage, spatial;
+    assembler.assembleOperators(x, timeLevel, {.inertia = &inertia, .storage = &storage, .spatial = &spatial});
+
+    constexpr bool hasInertia = [] {
+        if constexpr (requires { Assembler::hasInertia(); })
+            return Assembler::hasInertia();
+        else
+            return false;
+    }();
+    if constexpr (!hasInertia)
+    {
+        Scalar maxInertia = 0.0;
+        Detail::forEachEntry(inertia, inertia, inertia, inertia, [&](auto& i, auto&, auto&, auto&)
+        { using std::abs; using std::max; maxInertia = max(maxInertia, Scalar(abs(i))); });
+        if (maxInertia != 0.0)
+            DUNE_THROW(Dune::Exception, "The inertia operator of a problem without inertia is not zero");
+    }
 
     auto constant = std::make_shared<Residual>(storage);
     std::size_t counter = 0;
     Detail::forEachEntry(*constant, storage, storage, storage, [&](auto& c, auto&, auto&, auto&)
     { c = std::sin(1.0 + 0.37*(counter++)); });
 
-    assembler.setImplicitSolve(x, SolveParams{timeLevel, {0.0, storageWeight, spatialWeight}, nullptr});
+    assembler.setImplicitSolve(x, SolveParams{timeLevel, {inertiaWeight, storageWeight, spatialWeight}, nullptr});
     assembler.assembleJacobianAndResidual(x);
     Residual withoutConstant = assembler.residual();
 
-    assembler.setImplicitSolve(x, SolveParams{timeLevel, {0.0, storageWeight, spatialWeight}, constant});
+    assembler.setImplicitSolve(x, SolveParams{timeLevel, {inertiaWeight, storageWeight, spatialWeight}, constant});
     assembler.assembleJacobianAndResidual(x);
     Residual withConstant = assembler.residual();
 
     Scalar scale = 0.0;
-    Detail::forEachEntry(withoutConstant, storage, spatial, withConstant, [&](auto& r, auto& m, auto& s, auto&)
+    Detail::forEachEntry(withoutConstant, storage, spatial, inertia, [&](auto& r, auto& m, auto& s, auto& i)
     {
         using std::abs; using std::max;
-        scale = max({scale, abs(r), abs(storageWeight*m), abs(spatialWeight*s)});
+        scale = max({scale, abs(r), abs(storageWeight*m), abs(spatialWeight*s), abs(inertiaWeight*i)});
     });
 
     std::size_t numConstrained = 0;
@@ -100,6 +118,7 @@ std::size_t checkImplicitSolveContract(Assembler& assembler, const SolutionVecto
     Residual weighted = storage;
     weighted *= storageWeight;
     weighted.axpy(spatialWeight, spatial);
+    weighted.axpy(inertiaWeight, inertia);
     Detail::forEachEntry(withoutConstant, withConstant, weighted, storage, [&](auto& r0, auto& r, auto& w, auto&)
     {
         using std::abs; using std::max;
@@ -118,6 +137,65 @@ std::size_t checkImplicitSolveContract(Assembler& assembler, const SolutionVecto
         DUNE_THROW(Dune::Exception, "The residual does not equal the weighted sum of the operator evaluations");
 
     return numConstrained;
+}
+
+/*!
+ * \brief The largest deviation of the assembled Jacobian from central differences of the residual
+ *        in a random direction, relative to the largest entry of the Jacobian-vector product
+ * \note For single-domain assemblers with block vectors
+ */
+template<class Assembler, class SolutionVector, class Scalar>
+Scalar jacobianDeviationFromFiniteDifferences(Assembler& assembler, const SolutionVector& x, const Scalar time,
+                                              const Experimental::OperatorWeights<Scalar>& weights,
+                                              const Scalar epsilon, const unsigned int seed = 1)
+{
+    using Residual = typename Assembler::ResidualType;
+    using SolveParams = Experimental::ImplicitSolveParams<Scalar, Residual>;
+    assembler.setImplicitSolve(x, SolveParams{Experimental::TimeLevel<Scalar>(time), weights, nullptr});
+
+    const auto residualAt = [&](const SolutionVector& y)
+    {
+        assembler.updateGridVariables(y);
+        assembler.assembleJacobianAndResidual(y);
+        return Residual(assembler.residual());
+    };
+
+    const auto residual = residualAt(x);
+    const auto jacobian = assembler.jacobian();
+
+    std::mt19937 generator(seed);
+    std::uniform_real_distribution<Scalar> distribution(-1.0, 1.0);
+    Residual direction(residual);
+    for (auto& block : direction)
+        for (auto& entry : block)
+            entry = distribution(generator);
+
+    Residual jacobianTimesDirection(residual);
+    jacobian.mv(direction, jacobianTimesDirection);
+
+    auto xPlus = x, xMinus = x;
+    for (std::size_t i = 0; i < x.size(); ++i)
+        for (std::size_t j = 0; j < x[i].size(); ++j)
+        {
+            xPlus[i][j] += epsilon*direction[i][j];
+            xMinus[i][j] -= epsilon*direction[i][j];
+        }
+
+    const auto residualPlus = residualAt(xPlus);
+    const auto residualMinus = residualAt(xMinus);
+    assembler.updateGridVariables(x);
+
+    Scalar maxDeviation = 0.0, scale = 0.0;
+    for (std::size_t i = 0; i < residual.size(); ++i)
+        for (std::size_t j = 0; j < residual[i].size(); ++j)
+        {
+            using std::abs; using std::max;
+            const auto finiteDifference = (residualPlus[i][j] - residualMinus[i][j])/(2.0*epsilon);
+            maxDeviation = max(maxDeviation, abs(finiteDifference - jacobianTimesDirection[i][j]));
+            scale = max(scale, abs(jacobianTimesDirection[i][j]));
+        }
+
+    return maxDeviation/scale;
 }
 
 } // end namespace Dumux::Test
