@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 
     // the beam starts at rest, and gravity acts from t = 0 on
     Experimental::GeneralizedAlphaTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, method);
-    if (getParam<bool>("TimeStepping.ConsistentInitialAcceleration", false))
+    if (getParam<bool>("TimeStepping.ConsistentInitialAcceleration", true))
     {
         // the undeformed beam is stress-free, so the free degrees of freedom accelerate with gravity
         SolutionVector velocity(x.size()), acceleration(x.size());

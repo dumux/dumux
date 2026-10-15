@@ -80,13 +80,13 @@ To verify the accuracy of this numerical implementation, the values can be valid
 ### Steady State Tests (CSM1 & CSM2)
 If utilizing this setup to evaluate steady-state accuracy before running time-dependent loops, compare your final deflection values against the highest mesh-refinement levels:
 
-![CSM1 and CSM2 Validation](csm12_comparison.png)
+![CSM1 and CSM2 Validation](solid_csm12_comparison.png)
 The plots above compare DuMuX (Box scheme) against the Featflow reference data for stationary cases.
 
 ### Instationary Test (CSM3)
 For the dynamic **CSM3** case, the beam exhibits large, persistent oscillations due to the sudden application of gravity on the elastic structure starting from an undeformed configuration.
 
-![CSM3 Validation](csm3_comparison.png)
+![CSM3 Validation](solid_csm3_comparison.png)
 
 | $\Delta t$ | nel | ndofs | Source | Discretisation | ux of A [mm] (Mean $\pm$ Amp [Freq]) | uy of A [mm] (Mean $\pm$ Amp [Freq]) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -95,50 +95,50 @@ For the dynamic **CSM3** case, the beam exhibits large, persistent oscillations 
 | 0.005 | 5120 | 98820 | FeatFlow | FEM | -14.305 +/- 14.305 [1.0995] | -63.607 +/- 65.160 [1.0995] |
 | 0.010 | 320 | 6468 | FeatFlow | FEM | -14.632 +/- 14.636 [1.0978] | -64.744 +/- 64.907 [1.0978] |
 | 0.010 | 1280 | 25092 | FeatFlow | FEM | -14.645 +/- 14.650 [1.0978] | -64.765 +/- 64.946 [1.0978] |
-| 0.010 | 1923 | 1087 | DuMuX | Box | -13.719 +/- 13.720 [1.2295] | -62.448 +/- 63.292 [1.1111] |
-| 0.010 | 1923 | 1087 | DuMuX | Box, CH $\rho_\infty=0.8$ | -13.748 +/- 13.748 [1.2195] | -62.548 +/- 63.288 [1.1111] |
+| 0.010 | 1923 | 1087 | DuMuX | Box | -13.728 +/- 13.729 [1.2195] | -62.425 +/- 63.338 [1.1111] |
+| 0.010 | 1923 | 1087 | DuMuX | Box, CH $\rho_\infty=0.8$ | -13.747 +/- 13.747 [1.2195] | -62.542 +/- 63.291 [1.1111] |
 | 0.010 | 5120 | 98820 | FeatFlow | FEM | -14.645 +/- 14.650 [1.0978] | -64.766 +/- 64.948 [1.0978] |
-| 0.010 | 10631 | 5586 | DuMuX | Box | -14.396 +/- 14.402 [1.2097] | -63.970 +/- 64.709 [1.0949] |
-| 0.010 | 10631 | 5586 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.412 +/- 14.412 [1.2097] | -64.041 +/- 64.657 [1.1029] |
-| 0.010 | 49710 | 25429 | DuMuX | Box | -14.590 +/- 14.594 [1.2097] | -64.381 +/- 65.109 [1.0949] |
-| 0.010 | 49710 | 25429 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.591 +/- 14.592 [1.2097] | -64.446 +/- 65.015 [1.0949] |
-| 0.010 | 218076 | 110216 | DuMuX | Box | -14.629 +/- 14.633 [1.2097] | -64.497 +/- 65.178 [1.0989] |
+| 0.010 | 10631 | 5586 | DuMuX | Box | -14.404 +/- 14.411 [1.2097] | -63.978 +/- 64.754 [1.1029] |
+| 0.010 | 10631 | 5586 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.412 +/- 14.412 [1.2097] | -64.043 +/- 64.656 [1.1029] |
+| 0.010 | 49710 | 25429 | DuMuX | Box | -14.599 +/- 14.603 [1.2097] | -64.409 +/- 65.140 [1.0949] |
+| 0.010 | 49710 | 25429 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.592 +/- 14.592 [1.2097] | -64.443 +/- 65.020 [1.0949] |
+| 0.010 | 218076 | 110216 | DuMuX | Box | -14.643 +/- 14.649 [1.2000] | -64.472 +/- 65.237 [1.0949] |
 | 0.020 | 320 | 6468 | FeatFlow | FEM | -14.384 +/- 14.389 [1.0956] | -64.271 +/- 64.595 [1.0956] |
 | 0.020 | 1280 | 25092 | FeatFlow | FEM | -14.402 +/- 14.406 [1.0956] | -64.352 +/- 64.679 [1.0956] |
-| 0.020 | 1923 | 1087 | DuMuX | Box | -13.659 +/- 13.665 [1.2295] | -61.923 +/- 63.544 [1.1194] |
-| 0.020 | 1923 | 1087 | DuMuX | Box, CH $\rho_\infty=0.8$ | -13.629 +/- 13.628 [1.2097] | -61.980 +/- 63.538 [1.1029] |
+| 0.020 | 1923 | 1087 | DuMuX | Box | -13.758 +/- 13.764 [1.2295] | -61.966 +/- 63.859 [1.1029] |
+| 0.020 | 1923 | 1087 | DuMuX | Box, CH $\rho_\infty=0.8$ | -13.643 +/- 13.642 [1.2295] | -61.995 +/- 63.564 [1.1029] |
 | 0.020 | 5120 | 98820 | FeatFlow | FEM | -14.404 +/- 14.408 [1.0956] | -64.371 +/- 64.695 [1.0956] |
-| 0.020 | 10631 | 5586 | DuMuX | Box | -14.336 +/- 14.338 [1.2097] | -63.910 +/- 64.510 [1.1029] |
-| 0.020 | 10631 | 5586 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.306 +/- 14.306 [1.2097] | -63.698 +/- 64.741 [1.0870] |
-| 0.020 | 49710 | 25429 | DuMuX | Box | -14.516 +/- 14.521 [1.2097] | -64.315 +/- 64.933 [1.0870] |
-| 0.020 | 49710 | 25429 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.513 +/- 14.513 [1.2097] | -64.042 +/- 65.163 [1.0989] |
-| 0.020 | 218076 | 110216 | DuMuX | Box | -14.580 +/- 14.584 [1.1905] | -64.381 +/- 65.104 [1.0870] |
+| 0.020 | 10631 | 5586 | DuMuX | Box | -14.421 +/- 14.432 [1.2097] | -63.951 +/- 64.846 [1.0870] |
+| 0.020 | 10631 | 5586 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.319 +/- 14.319 [1.2097] | -63.693 +/- 64.786 [1.0870] |
+| 0.020 | 49710 | 25429 | DuMuX | Box | -14.601 +/- 14.607 [1.2097] | -64.335 +/- 65.215 [1.0989] |
+| 0.020 | 49710 | 25429 | DuMuX | Box, CH $\rho_\infty=0.8$ | -14.512 +/- 14.511 [1.2097] | -64.035 +/- 65.154 [1.0989] |
+| 0.020 | 218076 | 110216 | DuMuX | Box | -14.594 +/- 14.599 [1.2097] | -64.384 +/- 65.153 [1.0989] |
 
 The rows labelled "Box" use the Newmark method with $\beta=\tfrac14$, $\gamma=\tfrac12$ (no numerical
 dissipation). The rows labelled "CH $\rho_\infty=0.8$" use the generalized-$\alpha$ method of Chung and
 Hulbert @cite ChungHulbert1993 with the spectral radius $\rho_\infty=0.8$ in the limit of large time steps
 (`-TimeStepping.Method ChungHulbert -TimeStepping.SpectralRadius 0.8`), which damps the
 oscillations of the highest frequencies of the mesh. On the same mesh and time step size, the
-means and amplitudes of the two methods differ by at most $0.273\,$mm.
+means and amplitudes of the two methods differ by at most $0.300\,$mm.
 
-Both start from rest with zero initial acceleration. Since gravity acts from $t=0$ on the
-stress-free beam, the consistent initial acceleration is $-g$ in the vertical direction at all
-degrees of freedom except those on the cylinder, and the zero initial acceleration
-introduces an error of first order in $\Delta t$. With `-TimeStepping.ConsistentInitialAcceleration true`,
-the stepper starts from the consistent acceleration. On the coarsest mesh, the largest
-difference of the displacement at $t=1\,$s to the Newmark solution with $\Delta t=0.000625\,$s is:
+The beam starts from rest. Since gravity acts from $t=0$ on the stress-free beam, the initial
+acceleration is $-g$ in the vertical direction at all degrees of freedom except those on the
+cylinder, and the time stepper starts from this acceleration. A zero initial acceleration
+(`-TimeStepping.ConsistentInitialAcceleration false`) introduces an error of first order in
+$\Delta t$. On the coarsest mesh, the largest difference of the displacement at $t=1\,$s to the
+Newmark solution with $\Delta t=0.000625\,$s and the same initial acceleration is:
 
-| $\Delta t$ [s] | Newmark, zero initial acceleration [m] | Newmark, consistent initial acceleration [m] |
+| $\Delta t$ [s] | Newmark, initial acceleration $-g$ [m] | Newmark, zero initial acceleration [m] |
 | :--- | :--- | :--- |
-| 0.01 | $1.8\cdot10^{-3}$ | $4.4\cdot10^{-4}$ |
-| 0.005 | $7.0\cdot10^{-4}$ | $1.8\cdot10^{-4}$ |
-| 0.0025 | $3.1\cdot10^{-4}$ | $4.2\cdot10^{-5}$ |
+| 0.01 | $4.4\cdot10^{-4}$ | $1.8\cdot10^{-3}$ |
+| 0.005 | $1.8\cdot10^{-4}$ | $7.0\cdot10^{-4}$ |
+| 0.0025 | $4.2\cdot10^{-5}$ | $3.1\cdot10^{-4}$ |
 
-(each column relative to the finest run with the same initial acceleration). The difference
-between Chung-Hulbert with $\rho_\infty=0.8$ and Newmark at $t=1\,$s and $\Delta t=0.01\,$s is
-$1.3\cdot10^{-3}\,$m with zero and $3.5\cdot10^{-5}\,$m with consistent initial acceleration. The
-test `test_saint_venant_kirchhoff_dynamic_chunghulbert` runs Chung-Hulbert with
-$\rho_\infty=0.8$ and consistent initial acceleration.
+The difference between Chung-Hulbert with $\rho_\infty=0.8$ and Newmark at $t=1\,$s and
+$\Delta t=0.01\,$s is $3.5\cdot10^{-5}\,$m with the initial acceleration $-g$ and $1.3\cdot10^{-3}\,$m
+with zero initial acceleration. In the table, a zero initial acceleration changes the means and
+amplitudes by up to $0.336\,$mm for Newmark and by up to $0.045\,$mm for Chung-Hulbert with
+$\rho_\infty=0.8$.
 
 ### Reproducing our simulation data
 
