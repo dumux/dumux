@@ -7,8 +7,11 @@
 #ifndef DUMUX_DYNAMIC_HYPERELASTICITY_TEST_PROBLEM_HH
 #define DUMUX_DYNAMIC_HYPERELASTICITY_TEST_PROBLEM_HH
 
-#include <dumux/common/boundarytypes.hh>
-#include <dumux/common/fvproblemwithspatialparams.hh>
+#include <vector>
+
+#include <dumux/common/constraintinfo.hh>
+#include <dumux/common/indextraits.hh>
+#include <dumux/common/problemwithspatialparams.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
@@ -16,6 +19,7 @@
 
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/dirichletconstraints.hh>
 
 #include <dumux/experimental/timestepping/newmarkbeta.hh>
 
@@ -27,17 +31,19 @@ namespace Dumux {
 // between an Elastic Object and Laminar Incompressible Flow."
 // https://doi.org/10.1007/3-540-34596-5_15
 template<class TypeTag>
-class DynamicHyperelasticityProblem : public FVProblemWithSpatialParams<TypeTag>
+class DynamicHyperelasticityProblem : public Experimental::ProblemWithSpatialParams<TypeTag>
 {
-    using ParentType = FVProblemWithSpatialParams<TypeTag>;
+    using ParentType = Experimental::ProblemWithSpatialParams<TypeTag>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
+    using ElementDiscretization = typename GridGeometry::LocalView;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    static constexpr int numEq = GetPropType<TypeTag, Properties::ModelTraits>::numEq();
+    using DirichletConstraintData = Dumux::DirichletConstraintData<Dumux::DirichletConstraintInfo<numEq>, PrimaryVariables,
+                                                                   typename IndexTraits<GridView>::GridIndex>;
     static constexpr int dim = GridView::dimension;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Tensor = Dune::FieldMatrix<Scalar, dim, dim>;
@@ -48,27 +54,29 @@ public:
     DynamicHyperelasticityProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     , gravity_(getParam<Scalar>("Problem.Gravity"))
-    {}
-
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
-     *
-     * \param globalPos The position of the center of the finite volume
-     */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryTypes values;
-        const auto r = std::hypot(globalPos[0]-0.2, globalPos[1]-0.2);
-        if (r < 0.05 + eps_)
+        auto elemDisc = localView(*gridGeometry);
+        std::vector<bool> isConstrained(gridGeometry->numDofs(), false);
+        for (const auto& element : elements(gridGeometry->gridView()))
         {
-            values.setDirichlet(0);
-            values.setDirichlet(1);
+            elemDisc.bind(element);
+            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
+                {
+                    const auto globalPos = ipData(elemDisc, localDof).global();
+                    if (isClamped_(globalPos) && !isConstrained[localDof.dofIndex()])
+                    {
+                        isConstrained[localDof.dofIndex()] = true;
+                        typename DirichletConstraintData::ConstraintInfo info;
+                        info.setAll();
+                        constraints_.push_back(DirichletConstraintData{std::move(info), dirichletAtPos(globalPos), localDof.dofIndex()});
+                    }
+                }
         }
-        else
-            values.setAllNeumann();
-        return values;
     }
+
+    const std::vector<DirichletConstraintData>& constraints() const
+    { return constraints_; }
 
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     { return PrimaryVariables(0.0); }
@@ -114,49 +122,51 @@ public:
     { newmark_ = std::move(newmark); }
 
     // the effective density of the solid material
-    Scalar solidDensity(const Element&, const SubControlVolume&) const
+    template<class IpData>
+    Scalar solidDensity(const ElementDiscretization&, const IpData&) const
     { return this->spatialParams().solidDensity(); }
+
+    void setTimeStepSize(const Scalar dt)
+    { dt_ = dt; }
 
     // the Newmark scheme is used for time integration and this
     // computes the acceleration at the current time step for us
-    auto acceleration(const Element& element,
-                      const SubControlVolume& scv,
-                      const Scalar dt,
-                      const PrimaryVariables& d) const
-    {
-        const auto dofIndex = scv.dofIndex();
-        return newmark_->acceleration(dofIndex, dt, d);
-    }
+    template<class ElementVariables, class LocalDof>
+    auto acceleration(const ElementDiscretization&, const ElementVariables& elemVars, const LocalDof& localDof) const
+    { return newmark_->acceleration(localDof.dofIndex(), dt_, elemVars[localDof].displacement()); }
 
     // compute displacement at benchmark evaluation point A
     template<class SolutionVector, class GridVariables>
-    GlobalPosition evalControlPointDisplacement(const GridVariables& gridVariables, const SolutionVector& p) const
+    GlobalPosition evalControlPointDisplacement(const GridVariables&, const SolutionVector& p) const
     {
         if (!controlPointElement_)
         {
-            const auto& tree = gridVariables.gridGeometry().boundingBoxTree();
+            const auto& tree = this->gridDiscretization().boundingBoxTree();
             auto entities = intersectingEntities(controlPointA_, tree);
             if (entities.empty()) DUNE_THROW(Dune::Exception, "Control point A not found!");
             controlPointElement_ = entities[0];
         }
 
-        const auto& gg = gridVariables.gridGeometry();
+        const auto& gg = this->gridDiscretization();
         const auto element = gg.element(*controlPointElement_);
-        const auto fvGeometry = localView(gg).bindElement(element);
-        const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, p);
-        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto elemSol = elementSolution(element, p, gg);
 
-        return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, controlPointA_);
+        return evalSolution(element, element.geometry(), gg, elemSol, controlPointA_);
     }
 
 
 private:
+    bool isClamped_(const GlobalPosition& globalPos) const
+    { return std::hypot(globalPos[0]-0.2, globalPos[1]-0.2) < 0.05 + eps_; }
+
     static constexpr Scalar eps_ = 1e-7;
+    std::vector<DirichletConstraintData> constraints_;
     Scalar gravity_;
     GlobalPosition controlPointA_{{0.6, 0.2}};
     mutable std::optional<std::size_t> controlPointElement_;
 
     std::shared_ptr<const Experimental::NewmarkBeta<Scalar, SolutionVector>> newmark_;
+    Scalar dt_ = 0.0;
 };
 
 } // end namespace Dumux
