@@ -147,6 +147,17 @@ public:
     }
 
     /*!
+     * \brief Try to advance one time step
+     * \param vars The variables object at the current time level
+     * \param t The current time level
+     * \param dt The time step size to be used
+     * \return whether the solver converged in all stages
+     * \note If the solver did not converge, vars may be in an intermediate state.
+     */
+    bool tryStep(Variables& vars, const Scalar t, const Scalar dt)
+    { return step_(vars, t, dt); }
+
+    /*!
      * \brief Advance one time step of the given time loop (adaptive time stepping on solver failure)
      * \param vars The variables object at the current time level.
      * \param timeLoop An instance of a time loop
