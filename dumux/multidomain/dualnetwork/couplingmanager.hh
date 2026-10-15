@@ -14,13 +14,19 @@
 #ifndef DUMUX_MULTIDOMAIN_DUAL_NETWORK_COUPLINGMANAGER_HH
 #define DUMUX_MULTIDOMAIN_DUAL_NETWORK_COUPLINGMANAGER_HH
 
+#include <algorithm>
+#include <array>
+#include <deque>
 #include <iostream>
+#include <type_traits>
 #include <vector>
 #include <tuple>
 
 #include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/reservedvector.hh>
+#include <dune/common/timer.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
@@ -29,7 +35,11 @@
 #include <dumux/common/dimensionlessnumbers.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/io/format.hh>
+#include <dumux/assembly/coloring.hh>
+#include <dumux/parallel/parallel_for.hh>
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 #include "extendedsourcestencil.hh"
 
 #include "couplingmapper.hh"
@@ -66,6 +76,7 @@ class PNMHeatTransferCouplingManager
     template<std::size_t i> using SubControlVolume = typename GridGeometry<i>::SubControlVolume;
     template<std::size_t i> using GridView = typename GridGeometry<i>::GridView;
     template<std::size_t i> using Element = typename GridView<i>::template Codim<0>::Entity;
+    template<std::size_t i> using ElementSeed = typename GridView<i>::Grid::template Codim<0>::EntitySeed;
     template<std::size_t i> using Indices = typename GetPropType<SubDomainTypeTag<i>, Properties::ModelTraits>::Indices;
 
     template<std::size_t id> using GridVariables = typename MDTraits::template SubDomain<id>::GridVariables;
@@ -87,8 +98,11 @@ public:
 
 private:
 
-    using VoidElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element<voidDomainIdx>>(), std::declval<SolutionVector>()[voidDomainIdx], std::declval<GridGeometry<voidDomainIdx>>()))>;
-    using SolidElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element<solidDomainIdx>>(), std::declval<SolutionVector>()[solidDomainIdx], std::declval<GridGeometry<solidDomainIdx>>()))>;
+    //! whether the void subproblem keeps its volume variables / flux variables caches grid-wide
+    static constexpr bool voidVolVarsCachingEnabled
+        = getPropValue<SubDomainTypeTag<voidDomainIdx>, Properties::EnableGridVolumeVariablesCache>();
+    static constexpr bool voidFluxVarsCachingEnabled
+        = getPropValue<SubDomainTypeTag<voidDomainIdx>, Properties::EnableGridFluxVariablesCache>();
 
     struct CouplingContextForOneConnection
     {
@@ -101,16 +115,16 @@ private:
     };
 
     using CouplingContextForOnePore = std::pair<std::size_t, std::vector<CouplingContextForOneConnection>>;
-    using CouplingContextForOneElement = Dune::ReservedVector<CouplingContextForOnePore, 2>;
 
+    /*!
+     * \brief The coupling context of one element, holding for each of its (at most two) coupled
+     *        pores the data needed to evaluate that pore's convective coupling source
+     * \note Building the context is far too expensive to redo for every deflected dof, so it is
+     *       kept while the derivatives of one element are computed and only patched up by
+     *       updateCouplingContext(). One instance exists per thread, see elementCouplingContext_().
+     */
     struct ElementCouplingContext
     {
-        std::size_t boundElementIndex() const
-        { return boundElementIndex_; }
-
-        std::size_t boundDomainId() const
-        { return domaindId_; }
-
         auto& data()
         { return data_; }
 
@@ -119,82 +133,32 @@ private:
                   const Element<i>& element,
                   const ThisType& couplingManager)
         {
-            // do nothing if context is already bound correctly
+            // do nothing if the context is already bound to this element by this manager
             const auto eIdx = couplingManager.gridGeometry(domainI).elementMapper().index(element);
-            if (domaindId_ == i && boundElementIndex_ == eIdx && initialized_)
+            if (boundManager_ == &couplingManager && boundDomainId_ == i && boundElementIndex_ == eIdx)
                 return;
 
-            // do nothing if the element does not couple at all
-            // (this check is probably more expensive, so we do it after the above one)
+            boundManager_ = &couplingManager;
+            boundDomainId_ = i;
+            boundElementIndex_ = eIdx;
+            data_.clear();
+
+            // nothing to bind if the element does not couple at all
+            // (this check is more expensive, so we do it after the above one)
             constexpr auto domainJ = Dune::index_constant<1-i>{};
             if (couplingManager.couplingStencil(domainI, element, domainJ).empty())
                 return;
 
-            data_.clear();
-
-            // each element has two pores for which we need to bind some connection coupling context
+            // each element has two pores for which we may need to bind a coupling context
             for (int localVertexIdx = 0; localVertexIdx < 2; ++localVertexIdx)
             {
                 const auto vIdx = couplingManager.gridGeometry(domainI).vertexMapper().subIndex(element, localVertexIdx, 1);
                 if (!couplingManager.isCoupledPore(domainI, vIdx))
                     continue;
 
-                initialized_ = true;
-                domaindId_ = i;
-                boundElementIndex_ = eIdx;
-
-                const auto& connections = [&]
-                {
-                    if constexpr(domainI == solidDomainIdx)
-                        return couplingManager.couplingMapper().solidToVoidConnections(vIdx);
-                    else
-                        return couplingManager.couplingMapper().voidToSolidConnections(vIdx);
-                }();
-                const auto numConnections = std::distance(connections.begin(), connections.end());
-                assert(numConnections == (domainI == solidDomainIdx ? couplingManager.couplingMapper().solidToVoidConnectionIds().at(vIdx).size() : couplingManager.couplingMapper().voidToSolidConnectionIds().at(vIdx).size()));
-
-                data_.push_back(CouplingContextForOnePore{});
-
-                // iterate over all solid/void connections for the given pore
-                data_.back().first = vIdx;
-                data_.back().second.reserve(numConnections);
-                for (const auto& connection : connections)
-                {
-                    CouplingContextForOneConnection context;
-                    context.connectionGlobalId = connection.id;
-
-                    const auto& solidElement = couplingManager.solidGridGeometry_->element(connection.someSolidElementIdx);
-                    auto solidFVGeometry = localView(*couplingManager.solidGridGeometry_);
-                    solidFVGeometry.bindElement(solidElement);
-                    context.solidFVGeometry.push_back(solidFVGeometry);
-
-                    for (const auto& solidScv : scvs(solidFVGeometry))
-                    {
-                        if (solidScv.dofIndex() == connection.solidVertexIdx)
-                            context.solidVolVars = couplingManager.volVars(solidDomainIdx, solidElement, solidScv);
-                    }
-
-                    auto voidFVGeometry = localView(couplingManager.gridGeometry(voidDomainIdx));
-                    auto voidElemVolVars = localView(couplingManager.gridVariables(voidDomainIdx).curGridVolVars());
-                    auto voidElemFluxVarsCache = localView(couplingManager.gridVariables(voidDomainIdx).gridFluxVarsCache());
-
-                    const auto numConvectionVoidElems = connection.convectionVoidElementIdx.size();
-                    context.voidFVGeometry.reserve(numConvectionVoidElems);
-                    context.voidElemVolVars.reserve(numConvectionVoidElems);
-                    context.voidElemFluxVarsCache.reserve(numConvectionVoidElems);
-                    for (const auto voidElemIdx : connection.convectionVoidElementIdx)
-                    {
-                        const auto voidElem = couplingManager.gridGeometry(voidDomainIdx).element(voidElemIdx);
-                        voidFVGeometry.bindElement(voidElem);
-                        voidElemVolVars.bindElement(voidElem, voidFVGeometry, couplingManager.curSol(voidDomainIdx));
-                        voidElemFluxVarsCache.bindElement(voidElem, voidFVGeometry, voidElemVolVars);
-
-                        context.voidFVGeometry.push_back(voidFVGeometry);
-                        context.voidElemVolVars.push_back(voidElemVolVars);
-                        context.voidElemFluxVarsCache.push_back(voidElemFluxVarsCache);
-                    }
-                    data_.back().second.push_back(std::move(context));
-                }
+                data_.push_back(CouplingContextForOnePore{
+                    vIdx, couplingManager.couplingContextForPore(domainI, vIdx)
+                });
             }
         }
 
@@ -209,12 +173,23 @@ private:
         }
 
     private:
-
-        bool initialized_ = false;
-        std::size_t domaindId_;
-        std::size_t boundElementIndex_;
-        mutable Dune::ReservedVector<CouplingContextForOnePore, 2> data_;
+        const ThisType* boundManager_ = nullptr;
+        std::size_t boundDomainId_ = 0;
+        std::size_t boundElementIndex_ = 0;
+        Dune::ReservedVector<CouplingContextForOnePore, 2> data_;
     };
+
+    /*!
+     * \brief The coupling context of the element that the calling thread is assembling
+     * \note Each thread has its own, which is what makes multithreaded assembly possible. The
+     *       context also remembers the manager that bound it, so that two managers of the same
+     *       type can never see each other's context.
+     */
+    ElementCouplingContext& elementCouplingContext_() const
+    {
+        static thread_local ElementCouplingContext context;
+        return context;
+    }
 
 public:
 
@@ -243,10 +218,6 @@ public:
         this->setSubProblems(std::make_tuple(solidProblem, voidProblem));
         this->updateSolution(curSol);
 
-        const auto& someVoidElement = voidGridGeometry_->element(0);
-        const auto& someSolidElement = solidGridGeometry_->element(0);
-        voidElementSolution_.update(someVoidElement, curSol[voidDomainIdx], *voidGridGeometry_);
-        solidElementSolution_.update(someSolidElement, curSol[solidDomainIdx], *solidGridGeometry_);
         setupExtendedStencil();
     }
 
@@ -339,8 +310,10 @@ public:
         return source;
     }
 
-    template<class Connection, class Context>
-    Scalar convectiveHeatFluxForOneConnection(const Connection& connection, const Context& context) const
+    template<std::size_t i, class Connection, class Context>
+    Scalar convectiveHeatFluxForOneConnection(Dune::index_constant<i> domainI,
+                                              const Connection& connection,
+                                              const Context& context) const
     {
         const auto& solidSol = this->curSol(solidDomainIdx);
         const auto& voidSol = this->curSol(voidDomainIdx);
@@ -455,13 +428,13 @@ public:
             static const bool useAvgA = getParam<bool>("DualNetwork.UseAverageConvectionArea", false);
             const Scalar A = useAvgA ? 0.5*(selfA + neighborA()) : selfA;
 
-            const Scalar deltaT = (elementCouplingContext_.boundDomainId() == voidDomainIdx) ? (tSolid - tFluid) : (tFluid - tSolid);
+            const Scalar deltaT = (domainI == voidDomainIdx) ? (tSolid - tFluid) : (tFluid - tSolid);
 
             static const int verbose = getParam<int>("DualNetwork.SourceVerboseForDof", -1);
             if (verbose >= 0 && (connection.voidVertexIdx == verbose || connection.solidVertexIdx == verbose))
             {
                 std::cout << "\n" << std::endl;
-                const auto domain = elementCouplingContext_.boundDomainId() == solidDomainIdx ? "solid" : "void";
+                const auto domain = (domainI == solidDomainIdx) ? "solid" : "void";
                 std::cout << "At " << domain << ", dof " << verbose << ", flow elem " << convectionVoidElementIdx << ", globalId " << connection.id << std::endl;
                 std::cout << std::scientific << std::setprecision(15) << "velocity " << velocity << ", Re "  << Re << ", delTaT " << deltaT << ", result " << lambda*A/distance*deltaT << std::endl;
                 std::cout <<  std::scientific << std::setprecision(15) << "A " << A << ", distance " << distance << std::endl;
@@ -485,8 +458,6 @@ public:
                             const ElementVolumeVariables<i>& elemVolVars,
                             const SubControlVolume<i>& scv) const
     {
-        bindCouplingContext(domainI, element);
-
         static const int verbose = getParam<int>("DualNetwork.SourceVerboseForDof", -1);
         if (scv.dofIndex() == verbose)
             std::cout << "Start Source at elemn " << fvGeometry.gridGeometry().elementMapper().index(element) << " *******************************" <<  std::endl;
@@ -501,10 +472,11 @@ public:
         }();
 
         Scalar source = 0.0;
-        const auto& contextForPore = elementCouplingContext_[scv.dofIndex()];
+        bindCouplingContext(domainI, element);
+        const auto& contextForPore = elementCouplingContext_()[scv.dofIndex()];
 
         for (const auto& [localConnectionIdx, connection] : enumerate(connections))
-            source += convectiveHeatFluxForOneConnection(connection, contextForPore[localConnectionIdx]);
+            source += convectiveHeatFluxForOneConnection(domainI, connection, contextForPore[localConnectionIdx]);
 
         if (scv.dofIndex() == verbose)
             std::cout << std::scientific << std::setprecision(15) << "total conv source  " << source << "\n\n ********************" << std::endl;
@@ -693,10 +665,76 @@ public:
         return residual;
     }
 
-    //! Bind the coupling context for a low dim element TODO remove Assembler
+    /*!
+     * \brief Build the coupling context for one pore of domain i
+     *
+     * The context holds everything needed to evaluate the convective coupling source of that
+     * pore: for each of its connections the adjacent solid grain and the void throats carrying
+     * the flow. It is returned by value and built from the current solution only, so that it
+     * can be assembled concurrently on several threads.
+     */
+    template<std::size_t i>
+    std::vector<CouplingContextForOneConnection>
+    couplingContextForPore(Dune::index_constant<i> domainI, const std::size_t dofIdx) const
+    {
+        const auto& connections = [&]
+        {
+            if constexpr (domainI == solidDomainIdx)
+                return couplingMapper().solidToVoidConnections(dofIdx);
+            else
+                return couplingMapper().voidToSolidConnections(dofIdx);
+        }();
+
+        std::vector<CouplingContextForOneConnection> contextForPore;
+        contextForPore.reserve(std::distance(connections.begin(), connections.end()));
+
+        auto solidFVGeometry = localView(*solidGridGeometry_);
+        auto voidFVGeometry = localView(*voidGridGeometry_);
+        auto voidElemVolVars = localView(gridVariables(voidDomainIdx).curGridVolVars());
+        auto voidElemFluxVarsCache = localView(gridVariables(voidDomainIdx).gridFluxVarsCache());
+
+        for (const auto& connection : connections)
+        {
+            CouplingContextForOneConnection context;
+            context.connectionGlobalId = connection.id;
+
+            const auto& solidElement = solidGridGeometry_->element(connection.someSolidElementIdx);
+            solidFVGeometry.bindElement(solidElement);
+            context.solidFVGeometry.push_back(solidFVGeometry);
+
+            for (const auto& solidScv : scvs(solidFVGeometry))
+                if (solidScv.dofIndex() == connection.solidVertexIdx)
+                    context.solidVolVars = volVars(solidDomainIdx, solidElement, solidScv);
+
+            const auto numConvectionVoidElems = connection.convectionVoidElementIdx.size();
+            context.voidFVGeometry.reserve(numConvectionVoidElems);
+            context.voidElemVolVars.reserve(numConvectionVoidElems);
+            context.voidElemFluxVarsCache.reserve(numConvectionVoidElems);
+            for (const auto voidElemIdx : connection.convectionVoidElementIdx)
+            {
+                const auto voidElem = voidGridGeometry_->element(voidElemIdx);
+                voidFVGeometry.bindElement(voidElem);
+                voidElemVolVars.bindElement(voidElem, voidFVGeometry, this->curSol(voidDomainIdx));
+                voidElemFluxVarsCache.bindElement(voidElem, voidFVGeometry, voidElemVolVars);
+
+                context.voidFVGeometry.push_back(voidFVGeometry);
+                context.voidElemVolVars.push_back(voidElemVolVars);
+                context.voidElemFluxVarsCache.push_back(voidElemFluxVarsCache);
+            }
+
+            contextForPore.push_back(std::move(context));
+        }
+
+        return contextForPore;
+    }
+
+    /*!
+     * \brief Bind the coupling context of the calling thread to the given element
+     * \note TODO remove Assembler
+     */
     template<std::size_t i, class Assembler = int>
     void bindCouplingContext(Dune::index_constant<i> domainI, const Element<i>& element, const Assembler& assembler = 0) const
-    { elementCouplingContext_.bind(domainI, element, *this); }
+    { elementCouplingContext_().bind(domainI, element, *this); }
 
     /*!
      * \brief Update the coupling context
@@ -711,22 +749,24 @@ public:
     {
         this->curSol(domainJ)[dofIdxGlobalJ][pvIdxJ] = priVars[pvIdxJ];
 
-        // each element has two pores for which we need to bind some connection coupling context
-        for (auto& context : elementCouplingContext_.data())
+        // patch up this thread's coupling context so that it reflects the deflected dof
+        for (auto& context : elementCouplingContext_().data())
         {
             for (auto& connInfo : context.second)
             {
                 const auto& staticConnectionInfo = couplingMapper().connectionInfo()[connInfo.connectionGlobalId];
 
-                // when the solid dof is deflected, just updated the solid volVars
+                // when the solid dof is deflected, just update the solid volVars
                 if constexpr (domainJ == solidDomainIdx)
                 {
                     const auto& solidElement = gridGeometry(domainJ).element(staticConnectionInfo.someSolidElementIdx);
                     for (const auto& scv : scvs(connInfo.solidFVGeometry.front()))
                     {
-                        solidElementSolution_[scv.localDofIndex()] = this->curSol(domainJ)[scv.dofIndex()];
                         if (scv.dofIndex() == dofIdxGlobalJ)
-                            connInfo.solidVolVars.update(solidElementSolution_, this->problem(domainJ), solidElement, scv);
+                        {
+                            const auto elemSol = elementSolution(solidElement, this->curSol(domainJ), gridGeometry(domainJ));
+                            connInfo.solidVolVars.update(elemSol, this->problem(domainJ), solidElement, scv);
+                        }
                     }
                 }
                 else // deflection of void dofs
@@ -741,16 +781,20 @@ public:
 
                         for (const auto& scv : scvs(fvGeometry))
                         {
+                            // writing into the grid-wide volume variables cache (if the void
+                            // domain has one) is safe under multithreaded assembly: the assembly
+                            // coloring keeps elements writing the same void element's cached data
+                            // in different colors, see computeColorsForAssembly()
                             if (scv.dofIndex() == dofIdxGlobalJ)
                             {
-                                voidElementSolution_[scv.localDofIndex()] = this->curSol(voidDomainIdx)[scv.dofIndex()];
-                                getVolVarAccess_(domainJ, gridVars_(voidDomainIdx).curGridVolVars(), elemVolVars, scv).update(voidElementSolution_, this->problem(voidDomainIdx), element, scv);
+                                const auto elemSol = elementSolution(element, this->curSol(voidDomainIdx), gridGeometry(voidDomainIdx));
+                                getVolVarAccess_(domainJ, gridVars_(voidDomainIdx).curGridVolVars(), elemVolVars, scv).update(elemSol, this->problem(voidDomainIdx), element, scv);
                             }
                         }
 
                         for (const auto& scvf : scvfs(fvGeometry))
                         {
-                            if constexpr (getPropValue<SubDomainTypeTag<j>, Properties::EnableGridFluxVariablesCache>())
+                            if constexpr (voidFluxVarsCachingEnabled)
                                 gridVars_(voidDomainIdx).gridFluxVarsCache().cache(eIdx, scvf.index()).update(problem(voidDomainIdx), element, fvGeometry, elemVolVars, scvf);
                             else
                                 connInfo.voidElemFluxVarsCache[voidElemLocalIdx][scvf].update(this->problem(voidDomainIdx), element, fvGeometry, elemVolVars, scvf);
@@ -760,10 +804,6 @@ public:
             }
         }
     }
-
-    const auto& couplingContext() const
-    { return elementCouplingContext_; }
-
 
     template<std::size_t i>
     const auto& gridGeometry(Dune::index_constant<i> domainI) const
@@ -882,6 +922,164 @@ public:
     }
 
 
+    /*!
+     * \brief Compute colors for multithreaded assembly
+     *
+     * Two elements of the same subdomain may only be assembled concurrently if they never
+     * write to the same memory. Assembling one element writes to
+     *  -# its own matrix rows and the grid variables caches of its own stencil (the regular
+     *     box stencil, which Dumux::Detail::addNeighborColors takes care of),
+     *  -# the solution vector entry of every dof it deflects for the numeric differentiation,
+     *     that is the dofs of the other subdomain in its coupling stencil and, in the void
+     *     domain, additionally the dofs of its extended source stencil, and
+     *  -# the cached void volume variables and void flux variables caches that its coupling
+     *     context reads back, see updateCouplingContext().
+     * Each of those makes a pair of elements conflicting, so none of them may share a color.
+     */
+    void computeColorsForAssembly()
+    {
+        Dune::Timer timer;
+        using namespace Dune::Hybrid;
+        static constexpr auto numDomains = Dune::index_constant<2>{};
+
+        // (1) for each dof of a subdomain, the elements of that subdomain writing it
+        auto connectedElements = std::make_tuple(
+            Dumux::Detail::computeConnectedElements(gridGeometry(solidDomainIdx)),
+            Dumux::Detail::computeConnectedElements(gridGeometry(voidDomainIdx))
+        );
+
+        // the extended source stencil makes a void element write dofs outside its regular stencil
+        for (const auto& element : elements(gridView(voidDomainIdx)))
+        {
+            const auto eIdx = gridGeometry(voidDomainIdx).elementMapper().index(element);
+            for (const auto dofIdx : extendedSourceStencil_.stencil().at(eIdx))
+                addUnique_(std::get<voidDomainIdx>(connectedElements)[dofIdx], eIdx);
+        }
+
+        // (2) for each dof of a subdomain, the elements of the *other* subdomain deflecting it
+        std::array<std::vector<std::vector<std::size_t>>, 2> coupledDofWriters;
+        forEach(integralRange(numDomains), [&](const auto i)
+        {
+            constexpr auto j = Dune::index_constant<1-i>{};
+            coupledDofWriters[j()].resize(gridGeometry(j).numDofs());
+            for (const auto& element : elements(gridView(i)))
+            {
+                const auto eIdx = gridGeometry(i).elementMapper().index(element);
+                for (const auto dofIdx : couplingStencil(i, element, j))
+                    addUnique_(coupledDofWriters[j()][dofIdx], eIdx);
+            }
+        });
+
+        // (3) for each void element, the elements of each subdomain writing its cached data.
+        //     Without grid-wide caches in the void domain, updateCouplingContext() only ever
+        //     touches the calling thread's own coupling context, so there is nothing to avoid.
+        std::array<std::vector<std::vector<std::size_t>>, 2> voidCacheWriters;
+        if constexpr (voidVolVarsCachingEnabled || voidFluxVarsCachingEnabled)
+        {
+            std::vector<std::size_t> writeSet;
+            forEach(integralRange(numDomains), [&](const auto i)
+            {
+                voidCacheWriters[i()].resize(gridView(voidDomainIdx).size(0));
+                for (const auto& element : elements(gridView(i)))
+                {
+                    const auto eIdx = gridGeometry(i).elementMapper().index(element);
+                    voidCacheWriteSet_(i, element, writeSet);
+                    for (const auto voidEIdx : writeSet)
+                        voidCacheWriters[i()][voidEIdx].push_back(eIdx);
+                }
+            });
+        }
+
+        // greedily color each subdomain such that no conflicting elements share a color
+        forEach(integralRange(numDomains), [&](const auto i)
+        {
+            constexpr auto j = Dune::index_constant<1-i>{};
+            const auto& gg = gridGeometry(i);
+            const auto& connected = std::get<i>(connectedElements);
+
+            std::vector<int> colors(gg.gridView().size(0), -1);
+            std::vector<int> neighborColors; neighborColors.reserve(200);
+            std::vector<bool> colorUsed; colorUsed.reserve(200);
+            std::vector<std::size_t> ownWriteSet;
+
+            auto& elementSets = std::get<i>(elementSets_);
+            elementSets.clear();
+
+            for (const auto& element : elements(gg.gridView()))
+            {
+                const auto eIdx = gg.elementMapper().index(element);
+                neighborColors.clear();
+
+                // (1) everyone sharing a dof of our own stencil
+                Dumux::Detail::addNeighborColors(gg, element, colors, connected, neighborColors);
+
+                // (1b) everyone writing a dof of our extended source stencil (void domain only)
+                if constexpr (i == voidDomainIdx)
+                    for (const auto dofIdx : extendedSourceStencil_.stencil().at(eIdx))
+                        for (const auto nIdx : connected[dofIdx])
+                            neighborColors.push_back(colors[nIdx]);
+
+                // (2) everyone deflecting a coupled dof that we deflect
+                for (const auto dofIdx : couplingStencil(i, element, j))
+                    for (const auto nIdx : coupledDofWriters[j()][dofIdx])
+                        neighborColors.push_back(colors[nIdx]);
+
+                // (3) everyone writing cached void data that we write
+                if constexpr (voidVolVarsCachingEnabled || voidFluxVarsCachingEnabled)
+                {
+                    voidCacheWriteSet_(i, element, ownWriteSet);
+                    for (const auto voidEIdx : ownWriteSet)
+                        for (const auto nIdx : voidCacheWriters[i()][voidEIdx])
+                            neighborColors.push_back(colors[nIdx]);
+                }
+
+                // assign the smallest color not taken by any conflicting element
+                const auto color = Dumux::Detail::smallestAvailableColor(neighborColors, colorUsed);
+                colors[eIdx] = color;
+
+                if (static_cast<std::size_t>(color) < elementSets.size())
+                    elementSets[color].push_back(element.seed());
+                else
+                    elementSets.push_back(std::vector<ElementSeed<i>>{ element.seed() });
+            }
+        });
+
+        std::cout << Fmt::format("Colored dual network in {} seconds:\n", timer.elapsed());
+        forEach(integralRange(numDomains), [&](const auto i)
+        {
+            std::cout << Fmt::format(
+                "-- {} elements in subdomain {} with {} colors\n",
+                gridView(i).size(0), i(), std::get<i>(elementSets_).size()
+            );
+        });
+    }
+
+    /*!
+     * \brief Execute assembly kernel in parallel
+     *
+     * \param domainI the domain index of domain i
+     * \param assembleElement kernel function to execute for one element
+     */
+    template<std::size_t i, class AssembleElementFunc>
+    void assembleMultithreaded(Dune::index_constant<i> domainI, AssembleElementFunc&& assembleElement) const
+    {
+        if (std::get<i>(elementSets_).empty())
+            DUNE_THROW(Dune::InvalidStateException, "Call computeColorsForAssembly before assembling in parallel!");
+
+        // make this element loop run in parallel: elements of the same color are guaranteed
+        // not to write the same data (see computeColorsForAssembly), so each color can be
+        // assembled by multiple threads while the colors themselves are done one after another
+        const auto& grid = gridView(domainI).grid();
+        for (const auto& elements : std::get<i>(elementSets_))
+        {
+            Dumux::parallelFor(elements.size(), [&](const std::size_t n)
+            {
+                const auto element = grid.entity(elements[n]);
+                assembleElement(element);
+            });
+        }
+    }
+
 protected:
 
     template<std::size_t i>
@@ -913,6 +1111,50 @@ protected:
         stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
     }
 
+    //! Appends an element index to a list of element indices unless it is already in there
+    static void addUnique_(std::vector<std::size_t>& elems, const std::size_t eIdx)
+    {
+        if (std::find(elems.begin(), elems.end(), eIdx) == elems.end())
+            elems.push_back(eIdx);
+    }
+
+    /*!
+     * \brief The void elements whose cached volume variables and flux variables caches are
+     *        written while the residual of the given element of domain i is assembled
+     * \note These are exactly the void elements that the coupling context of this element
+     *       reads and that updateCouplingContext() therefore has to deflect.
+     */
+    template<std::size_t i>
+    void voidCacheWriteSet_(Dune::index_constant<i> domainI,
+                            const Element<i>& element,
+                            std::vector<std::size_t>& writeSet) const
+    {
+        writeSet.clear();
+
+        // each element has two pores, each of which may be coupled to the other domain
+        for (int localVertexIdx = 0; localVertexIdx < 2; ++localVertexIdx)
+        {
+            const auto vIdx = gridGeometry(domainI).vertexMapper().subIndex(element, localVertexIdx, 1);
+            if (!isCoupledPore(domainI, vIdx))
+                continue;
+
+            const auto& connections = [&]
+            {
+                if constexpr (domainI == solidDomainIdx)
+                    return couplingMapper().solidToVoidConnections(vIdx);
+                else
+                    return couplingMapper().voidToSolidConnections(vIdx);
+            }();
+
+            for (const auto& connection : connections)
+                for (const auto voidEIdx : connection.convectionVoidElementIdx)
+                    writeSet.push_back(voidEIdx);
+        }
+
+        std::sort(writeSet.begin(), writeSet.end());
+        writeSet.erase(std::unique(writeSet.begin(), writeSet.end()), writeSet.end());
+    }
+
 
     bool convectiveHeatTransfer_;
 
@@ -921,9 +1163,6 @@ protected:
     const GridGeometry<voidDomainIdx>* voidGridGeometry_;
     const GridGeometry<solidDomainIdx>* solidGridGeometry_;
 
-    VoidElementSolution voidElementSolution_;
-    SolidElementSolution solidElementSolution_;
-    mutable ElementCouplingContext elementCouplingContext_;
 
     /*!
      * \brief A tuple of std::shared_ptrs to the grid variables of the sub problems
@@ -932,8 +1171,29 @@ protected:
 
     //! the extended source stencil object
     PoreNetwork::PNMHeatExtendedSourceStencil<ThisType> extendedSourceStencil_;
+
+    //! for each subdomain, the element seeds grouped by color for multithreaded assembly
+    std::tuple<
+        std::deque<std::vector<ElementSeed<solidDomainIdx>>>,
+        std::deque<std::vector<ElementSeed<voidDomainIdx>>>
+    > elementSets_;
 };
 
-}; // end namespace Dumux::PoreNetwork
+} // end namespace Dumux::PoreNetwork
+
+namespace Dumux {
+
+/*!
+ * \brief Multithreaded assembly is supported for the dual network coupling manager: the
+ *        per-element coupling data is derived from the solution independently on each thread
+ *        and the remaining shared data written during assembly (the coupled solution vector
+ *        and the void domain's grid variables caches) is kept free of races by the assembly
+ *        coloring, see PNMHeatTransferCouplingManager::computeColorsForAssembly().
+ */
+template<class MDTraits>
+struct CouplingManagerSupportsMultithreadedAssembly<PoreNetwork::PNMHeatTransferCouplingManager<MDTraits>>
+: public std::true_type {};
+
+} // end namespace Dumux
 
 #endif

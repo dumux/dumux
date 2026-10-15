@@ -365,7 +365,7 @@ int main(int argc, char** argv)
                 {
                     // iterate over all connection throats
                     const auto& connections = couplingManager->couplingMapper().solidToVoidConnections(scv.dofIndex());
-                    const auto& contextForPore = couplingManager->couplingContext()[scv.dofIndex()];
+                    const auto contextForPore = couplingManager->couplingContextForPore(CouplingManager::solidDomainIdx, scv.dofIndex());
 
                     for (const auto& [localConnectionIdx, connection] : enumerate(connections))
                     {
@@ -379,7 +379,7 @@ int main(int argc, char** argv)
                             tVoidMinusTSolid[connection.id] = tVoid - tSolid;
 
                             if (voidProblem->sourceMode() == decltype(voidProblem->sourceMode())::convection)
-                                solidConnectionFlux[connection.id] = couplingManager->convectiveHeatFluxForOneConnection(connection, context);
+                                solidConnectionFlux[connection.id] = couplingManager->convectiveHeatFluxForOneConnection(CouplingManager::solidDomainIdx, connection, context);
                             else
                             {
                                 const Scalar t = couplingManager->getConnectionTransmissiblity(CouplingManager::solidDomainIdx, connection, solidElemVolVars, scv);
@@ -412,7 +412,7 @@ int main(int argc, char** argv)
                 {
                     // iterate over all connection throats
                     const auto& connections = couplingManager->couplingMapper().voidToSolidConnections(scv.dofIndex());
-                    const auto& contextForPore = couplingManager->couplingContext()[scv.dofIndex()];
+                    const auto contextForPore = couplingManager->couplingContextForPore(CouplingManager::voidDomainIdx, scv.dofIndex());
 
                     for (const auto& [localConnectionIdx, connection] : enumerate(connections))
                     {
@@ -422,7 +422,7 @@ int main(int argc, char** argv)
                             const auto& context = contextForPore[localConnectionIdx];
 
                             if (voidProblem->sourceMode() == decltype(voidProblem->sourceMode())::convection)
-                                voidConnectionFlux[connection.id] = couplingManager->convectiveHeatFluxForOneConnection(connection, context);
+                                voidConnectionFlux[connection.id] = couplingManager->convectiveHeatFluxForOneConnection(CouplingManager::voidDomainIdx, connection, context);
                             else
                             {
                                 const Scalar t = couplingManager->getConnectionTransmissiblity(CouplingManager::voidDomainIdx, connection, voidElemVolVars, scv);
