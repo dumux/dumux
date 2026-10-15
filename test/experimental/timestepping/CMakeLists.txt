@@ -7,6 +7,7 @@ dune_symlink_to_source_files(FILES
     plot_timestepmethods_symplectic.py
     plot_multistepmethods_convergence.py
     plot_multistepmethods_stability.py
+    plot_generalizedalpha.py
     run_benchmarks.py
 )
 
@@ -31,6 +32,10 @@ set_tests_properties(test_multistepmethods PROPERTIES
 dumux_add_test(SOURCES test_multistepmethods_stability.cc LABELS unit timestepping experimental)
 set_tests_properties(test_multistepmethods_stability PROPERTIES
   FIXTURES_SETUP multistepmethods_stability_data)
+
+dumux_add_test(SOURCES test_generalizedalpha.cc LABELS unit timestepping experimental)
+set_tests_properties(test_generalizedalpha PROPERTIES
+  FIXTURES_SETUP generalizedalpha_data)
 
 dumux_add_test(
     NAME test_timestepmethods_convergence_plot
@@ -86,3 +91,14 @@ dumux_add_test(
 )
 set_tests_properties(test_multistepmethods_stability_plot PROPERTIES
   FIXTURES_REQUIRED multistepmethods_stability_data)
+
+dumux_add_test(
+    NAME test_generalizedalpha_plot
+    TARGET test_generalizedalpha
+    LABELS unit timestepping experimental
+    COMMAND ./plot_generalizedalpha.py
+    CMD_ARGS --input test_generalizedalpha_data.json
+             --output test_generalizedalpha.png
+)
+set_tests_properties(test_generalizedalpha_plot PROPERTIES
+  FIXTURES_REQUIRED generalizedalpha_data)

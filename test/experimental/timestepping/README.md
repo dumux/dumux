@@ -322,21 +322,173 @@ $2.3\cdot10^{-2}$ and $4.8\cdot10^{-2}$ for BDF1 to BDF5. The right panel shows
 the parasitic root of variable-step BDF2, which reaches the unit circle at
 $\omega=1+\sqrt{2}$ and is $0.8$ at the default limit $\omega=2$.
 
+## Verification of the Generalized-α Method for Second Time Derivatives
+
+**Problem Description**
+
+For the semi-discrete problem with inertia operator $I$, storage operator $M$
+and spatial operator $R$,
+
+$$
+\frac{\partial^2 I(x,t)}{\partial t^2} + \frac{\partial M(x,t)}{\partial t} + R(x,t) = 0,
+$$
+
+the generalized-α method (see `GeneralizedAlphaMethod` and
+`GeneralizedAlphaTimeStepper`) advances the values of $I$ and $M$ together with
+their first and second time derivatives. For $X \in \{I, M\}$, the Newmark
+relations
+
+$$
+X^{n+1} = X^n + \Delta t\,\dot X^n + \Delta t^2\Big[\big(\tfrac12-\beta\big)\ddot X^n + \beta\,\ddot X^{n+1}\Big],
+\qquad
+\dot X^{n+1} = \dot X^n + \Delta t\Big[(1-\gamma)\,\ddot X^n + \gamma\,\ddot X^{n+1}\Big]
+$$
+
+express the time derivatives at the new time level by $X^{n+1}=X(x^{n+1},t^{n+1})$,
+and the method solves
+
+$$
+(1-\alpha_m)\,\ddot I^{n+1} + \alpha_m\,\ddot I^{n}
++ (1-\alpha_f)\,\dot M^{n+1} + \alpha_f\,\dot M^{n}
++ (1-\alpha_f)\,R\big(x^{n+1},t^{n+1}\big) + \alpha_f\,R\big(x^{n},t^{n}\big) = 0
+$$
+
+for $x^{n+1}$. For $I$ and $M$ linear in $x$, this is the method of Chung and
+Hulbert (1993) @cite ChungHulbert1993 for
+$\mathbf{M}\ddot{\mathbf{u}} + \mathbf{C}\dot{\mathbf{u}} + \mathbf{r}(\mathbf{u}) = 0$
+with the spatial term averaged between the time levels. The parameter sets are
+given by the spectral radius $\rho_\infty$ of the amplification matrix in the
+limit $\omega\Delta t\to\infty$, where $\omega$ is the angular frequency of an
+undamped linear oscillator:
+
+| Scheme | $\alpha_m$ | $\alpha_f$ | Range of $\rho_\infty$ |
+|---|---|---|---|
+| Chung-Hulbert @cite ChungHulbert1993 | $(2\rho_\infty-1)/(\rho_\infty+1)$ | $\rho_\infty/(\rho_\infty+1)$ | $[0, 1]$ |
+| Hilber-Hughes-Taylor (HHT) @cite HilberHughesTaylor1977 | $0$ | $(1-\rho_\infty)/(1+\rho_\infty)$ | $[\tfrac12, 1]$ |
+| Wood-Bossak-Zienkiewicz (WBZ) @cite WoodBossakZienkiewicz1980 | $(\rho_\infty-1)/(\rho_\infty+1)$ | $0$ | $[0, 1]$ |
+| Newmark @cite Newmark1959 | $0$ | $0$ | $1$ for $(\beta,\gamma)=(\tfrac14,\tfrac12)$ |
+
+The first three use $\gamma=\tfrac12-\alpha_m+\alpha_f$, which gives second
+order, and $\beta=\tfrac14(1-\alpha_m+\alpha_f)^2$, which together with
+$\alpha_m\le\alpha_f\le\tfrac12$ (satisfied in the given ranges of
+$\rho_\infty$) gives unconditional stability for linear problems. The Newmark method takes $\beta$ and $\gamma$
+as parameters; the default $(\beta,\gamma)=(\tfrac14,\tfrac12)$ is the average
+acceleration method.
+
+An equation without inertia and storage terms, $g(x,t)=0$, is solved in the
+form $(1-\alpha_f)\,g^{n+1} + \alpha_f\,g^n = 0$, so its residual is multiplied
+by $-\alpha_f/(1-\alpha_f)$ in every step: by $-\rho_\infty$ for
+Chung-Hulbert, by $-(1-\rho_\infty)/(2\rho_\infty)$ for HHT, and by zero for
+WBZ and Newmark. For Chung-Hulbert with $\rho_\infty=1$, an initial violation
+of such an equation persists with alternating sign.
+
+The time derivatives of $I$ and $M$ at the initial time are the Jacobians of
+the operators times given time derivatives of the solution
+(`initialize(vars, t0, velocity, acceleration)`), or zero
+(`initialize(vars, t0)`). Without an inertia operator, the stepper integrates
+first-order problems; $M$ then follows the Newmark relations.
+
+**Analytical Solution**
+
+The convergence tests solve two decoupled damped oscillators
+$\ddot u_i + c_i\,\dot u_i + k_i\,u_i = 0$ with $(c_0,k_0)=(0.2,4)$,
+$(c_1,k_1)=(0.5,9)$, $u(0)=(1,0.5)$ and $\dot u(0)=(0,1)$. With
+$\omega_i=\sqrt{k_i}$, $\zeta_i=c_i/(2\omega_i)$ and
+$\omega_{d,i}=\omega_i\sqrt{1-\zeta_i^2}$, the exact solution is
+
+$$
+u_i(t) = e^{-\zeta_i\omega_i t}\left[u_i(0)\cos(\omega_{d,i}t)
++ \frac{\dot u_i(0)+\zeta_i\omega_i u_i(0)}{\omega_{d,i}}\sin(\omega_{d,i}t)\right].
+$$
+
+For the undamped oscillator $\ddot u + \omega^2 u = 0$, one step maps
+$(u^n,\dot u^n,\ddot u^n)$ to $(u^{n+1},\dot u^{n+1},\ddot u^{n+1})$ with the
+amplification matrix $\mathbf{A}(\omega\Delta t)$. Its spectral radius $\rho$
+is the largest modulus of its eigenvalues. The principal eigenvalues
+$r\,e^{\pm i\bar\theta}$ approximate $e^{\pm i\omega\Delta t}$; they define the
+algorithmic damping ratio $\bar\xi=-\ln(r)/\bar\theta$ and the numerical period
+$\bar T=2\pi\Delta t/\bar\theta$, compared with the period $T=2\pi/\omega$. For
+the Newmark method with $(\beta,\gamma)=(\tfrac14,\tfrac12)$, $r=1$ and
+$\bar\theta=2\arctan(\omega\Delta t/2)$.
+
+**Setup**
+
+- `test_generalizedalpha.cc` checks the parameters of the four schemes and
+  that the stepper, which advances operator values, reproduces the
+  generalized-α method written for displacement, velocity and acceleration in
+  60 steps with $\Delta t=0.05$ for a system with two degrees of freedom, a
+  non-diagonal mass matrix, a non-symmetric damping matrix and the nonlinear
+  stiffness term $0.5\,u_i^3$. It computes the errors of the damped
+  oscillators at $t=2$ for $n=25,50,100,200,400$ steps, and the amplification
+  matrix of the stepper for $10^{-2}\le\omega\Delta t\le10^{6}$ (with
+  $\Delta t=1$). It computes the order for $\dot u=-u+e^t$ of the BDF
+  benchmark (storage operator only), checks the factor
+  $-\alpha_f/(1-\alpha_f)$ for the constraint of the constrained system of the
+  BDF benchmark with $u_1(0)-\sin(0)=0.1$, and checks that the Newmark
+  parameters reproduce `NewmarkBeta` in 100 steps of $\ddot u=-u$ with
+  $(\beta,\gamma)=(0.3,0.6)$. It writes `test_generalizedalpha_data.json`.
+
+**Benchmark: convergence and dissipation**
+
+![Convergence and dissipation of the generalized-α methods](timestepping_generalizedalpha.png)
+
+The largest difference between the stepper and the generalized-α method for
+displacement, velocity and acceleration is $4.5\cdot10^{-14}$ over the seven
+parameter sets. For the damped
+oscillators (top left), the observed orders between $n=200$ and $n=400$ are
+2.000 for Newmark and Chung-Hulbert with $\rho_\infty=1$ and $0.8$, 2.004,
+2.024, 2.003 and 2.004 for Chung-Hulbert with $\rho_\infty=0.5$ and $0$, HHT
+and WBZ with $\rho_\infty=0.8$. Chung-Hulbert with $\rho_\infty=1$ and the
+Newmark method have the same damping ratio and period (to $10^{-9}$ for
+$\omega\Delta t\le 10^4$), and their curves coincide.
+
+The spectral radius (top right) at $\omega\Delta t=10^6$ is 0.80008, 0.50008
+and 0.00010 for Chung-Hulbert with $\rho_\infty=0.8$, $0.5$ and $0$, and
+0.80000 for HHT and WBZ with $\rho_\infty=0.8$. The largest spectral radius
+over all $\omega\Delta t$ is one for all methods up to $6.3\cdot10^{-6}$ for
+Chung-Hulbert with $\rho_\infty=1$, whose three eigenvalues approach $-1$ for
+$\omega\Delta t\to\infty$; the roots of the characteristic polynomial are
+then only accurate to about the cube root of the round-off. At
+$\Delta t/T=0.1$, the damping ratio (bottom left) and the relative period
+error (bottom right) are:
+
+| Scheme | $\bar\xi$ | $(\bar T-T)/T$ |
+|---|---|---|
+| Newmark, $(\beta,\gamma)=(\tfrac14,\tfrac12)$ | 0 | 0.03207 |
+| Chung-Hulbert, $\rho_\infty=1$ | 0 | 0.03207 |
+| Chung-Hulbert, $\rho_\infty=0.8$ | 0.00016 | 0.03383 |
+| Chung-Hulbert, $\rho_\infty=0.5$ | 0.00378 | 0.04672 |
+| Chung-Hulbert, $\rho_\infty=0$ | 0.05499 | 0.12321 |
+| HHT, $\rho_\infty=0.8$ | 0.00228 | 0.04017 |
+| WBZ, $\rho_\infty=0.8$ | 0.00340 | 0.04192 |
+
+For $\rho_\infty=0.8$, the damping ratio of Chung-Hulbert at $\Delta t/T=0.1$
+is $7\,\%$ of that of HHT and $5\,\%$ of that of WBZ.
+
+For $\dot u=-u+e^t$, the observed orders between $n=100$ and $n=200$ are 2.000
+for Newmark, HHT, WBZ and Chung-Hulbert with $\rho_\infty=1$ and $0.8$, and
+1.999 and 1.990 for Chung-Hulbert with $\rho_\infty=0.5$ and $0$. The
+violation of the constraint is multiplied by $-\alpha_f/(1-\alpha_f)$ to
+$10^{-12}$ in each step, i.e. by $0$, $-1$, $-0.8$, $-0.5$, $0$, $-0.125$ and
+$0$ for Newmark, Chung-Hulbert with $\rho_\infty=1$, $0.8$, $0.5$, $0$, HHT and
+WBZ. The Newmark parameter set and `NewmarkBeta` agree to $1.2\cdot10^{-14}$.
+
 **Reproducing the figures**
 
 After building the `test_timestepmethods`,
 `test_timestepmethods_stabilityregions`, `test_timestepmethods_symplectic`,
-`test_multistepmethods` and `test_multistepmethods_stability` executables, run:
+`test_multistepmethods`, `test_multistepmethods_stability` and
+`test_generalizedalpha` executables, run:
 
 ```bash
 python3 run_benchmarks.py <path-to-build-dir>
 ```
 
-This runs all five executables to (re-)generate the JSON data and produces
-the seven figures above via `plot_timestepmethods_convergence.py`,
+This runs all six executables to (re-)generate the JSON data and produces
+the eight figures above via `plot_timestepmethods_convergence.py`,
 `plot_timestepmethods_stabilityregions.py`,
-`plot_timestepmethods_symplectic.py`, `plot_multistepmethods_convergence.py`
-and `plot_multistepmethods_stability.py`. If run from within
-`<build-dir>/test/experimental/timestepping`, the build directory argument
-can be omitted. Pass `--copy-to-doc` to additionally copy the figures into
-`doc/doxygen/images/` (used to update the images shown on this page).
+`plot_timestepmethods_symplectic.py`, `plot_multistepmethods_convergence.py`,
+`plot_multistepmethods_stability.py` and `plot_generalizedalpha.py`. If run
+from within `<build-dir>/test/experimental/timestepping`, the build directory
+argument can be omitted. Pass `--copy-to-doc` to additionally copy the figures
+into `doc/doxygen/images/` (used to update the images shown on this page).

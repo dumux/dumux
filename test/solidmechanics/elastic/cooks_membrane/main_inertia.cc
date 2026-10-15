@@ -16,9 +16,12 @@
  * the contribution of known states, and the assembled Jacobian agrees with central differences
  * of the residual. The problem is linear, so the numeric differentiation step can be chosen large
  * enough (Assembly.NumericDifference.BaseEpsilon) that its round-off does not limit the agreement.
+ * Finally, the generalized-alpha method with vanishing spectral radius at infinity reaches the static
+ * solution with time steps much larger than all periods of the structure.
  */
 #include <config.h>
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <random>
@@ -32,8 +35,13 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/concepts.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/multistageassembler.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/generalizedalpha.hh>
 
 #include <test/experimental/timestepping/implicitsolvecheck.hh>
 
@@ -199,6 +207,44 @@ int main(int argc, char** argv)
               << inertiaDeviation << ", all operators " << fullDeviation << std::endl;
     if (!(inertiaDeviation < 1e-7) || !(fullDeviation < 1e-5))
         passed = false;
+
+    // the static solution and the generalized-alpha method with spectral radius zero at infinity,
+    // whose amplification vanishes for time steps much larger than all periods
+    {
+        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+        using Newton = NewtonSolver<Assembler, LinearSolver>;
+        auto newton = std::make_shared<Newton>(assembler, std::make_shared<LinearSolver>());
+
+        SolutionVector xStatic(x.size());
+        xStatic = 0.0;
+        gridVariables->update(xStatic);
+        using SolveParams = Experimental::ImplicitSolveParams<Scalar, typename Assembler::ResidualType>;
+        assembler->setImplicitSolve(xStatic, SolveParams{Experimental::TimeLevel<Scalar>(0.0), {0.0, 0.0, 1.0}, nullptr});
+        newton->solve(xStatic);
+
+        SolutionVector xDynamic(x.size());
+        xDynamic = 0.0;
+        gridVariables->update(xDynamic);
+        const auto method = std::make_shared<Experimental::GeneralizedAlpha::ChungHulbert<Scalar>>(0.0);
+        Experimental::GeneralizedAlphaTimeStepper<Newton> timeStepper(newton, method);
+        timeStepper.initialize(xDynamic, 0.0);
+        const Scalar dt = 1e8;
+        for (int i = 0; i < 6; ++i)
+            timeStepper.step(xDynamic, i*dt, dt);
+
+        Scalar maxDifference = 0.0, maxStatic = 0.0;
+        for (std::size_t i = 0; i < xStatic.size(); ++i)
+        {
+            auto difference = xDynamic[i];
+            difference -= xStatic[i];
+            maxDifference = std::max(maxDifference, difference.infinity_norm());
+            maxStatic = std::max(maxStatic, xStatic[i].infinity_norm());
+        }
+        std::cout << "[Inertia] generalized-alpha with dt = " << dt << ": relative difference to the static solution "
+                  << maxDifference/maxStatic << std::endl;
+        if (!(maxStatic > 0.0) || !(maxDifference < 1e-8*maxStatic))
+            passed = false;
+    }
 
     std::cout << (passed ? "Inertia test: PASSED" : "Inertia test: FAILED") << std::endl;
     return passed ? 0 : 1;

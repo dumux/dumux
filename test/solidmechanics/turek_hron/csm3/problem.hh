@@ -21,8 +21,6 @@
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
 
-#include <dumux/experimental/timestepping/newmarkbeta.hh>
-
 namespace Dumux {
 
 // This test case corresponds to the CSM benchmark problem
@@ -47,8 +45,6 @@ class DynamicHyperelasticityProblem : public Experimental::ProblemWithSpatialPar
     static constexpr int dim = GridView::dimension;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Tensor = Dune::FieldMatrix<Scalar, dim, dim>;
-
-    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
 
 public:
     DynamicHyperelasticityProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -114,26 +110,14 @@ public:
         return multiplyMatrices(F, S);
     }
 
-    // the following methods are needed to solve structural dynamics
-    // with the Newmark-beta time integration scheme
-
-    // we use the Newmark scheme for time integration
-    void setNewmarkScheme(std::shared_ptr<const Experimental::NewmarkBeta<Scalar, SolutionVector>> newmark)
-    { newmark_ = std::move(newmark); }
+    // the acceleration term rho d^2u/dt^2 is the second time derivative of the inertia operator
+    static constexpr bool enableInertia()
+    { return true; }
 
     // the effective density of the solid material
     template<class IpData>
     Scalar solidDensity(const ElementDiscretization&, const IpData&) const
     { return this->spatialParams().solidDensity(); }
-
-    void setTimeStepSize(const Scalar dt)
-    { dt_ = dt; }
-
-    // the Newmark scheme is used for time integration and this
-    // computes the acceleration at the current time step for us
-    template<class ElementVariables, class LocalDof>
-    auto acceleration(const ElementDiscretization&, const ElementVariables& elemVars, const LocalDof& localDof) const
-    { return newmark_->acceleration(localDof.dofIndex(), dt_, elemVars[localDof].displacement()); }
 
     // compute displacement at benchmark evaluation point A
     template<class SolutionVector, class GridVariables>
@@ -164,9 +148,6 @@ private:
     Scalar gravity_;
     GlobalPosition controlPointA_{{0.6, 0.2}};
     mutable std::optional<std::size_t> controlPointElement_;
-
-    std::shared_ptr<const Experimental::NewmarkBeta<Scalar, SolutionVector>> newmark_;
-    Scalar dt_ = 0.0;
 };
 
 } // end namespace Dumux

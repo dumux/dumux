@@ -4,8 +4,9 @@
 """Run the time-stepping benchmark and reproduce its figures.
 
 Runs the test_timestepmethods, test_timestepmethods_stabilityregions,
-test_timestepmethods_symplectic, test_multistepmethods and
-test_multistepmethods_stability executables and generates the seven figures
+test_timestepmethods_symplectic, test_multistepmethods,
+test_multistepmethods_stability and test_generalizedalpha executables and
+generates the eight figures
 shown in README.md via the corresponding plot_*.py scripts. With
 --copy-to-doc, the figures are additionally copied into doc/doxygen/images/
 for the Doxygen documentation.
@@ -93,6 +94,16 @@ def main() -> int:
         "--output", os.path.join(bin_dir, "test_multistepmethods_stability.png"),
     ])
 
+    print(f"\n{'='*60}")
+    print("Running test_generalizedalpha")
+    print(f"{'='*60}")
+    subprocess.check_call([os.path.join(bin_dir, "test_generalizedalpha")], cwd=bin_dir)
+    subprocess.check_call([
+        sys.executable, os.path.join(src_dir, "plot_generalizedalpha.py"),
+        "--input", os.path.join(bin_dir, "test_generalizedalpha_data.json"),
+        "--output", os.path.join(bin_dir, "test_generalizedalpha.png"),
+    ])
+
     images = [
         ("test_timestepmethods_convergence.png", "timestepping_convergence.png"),
         ("test_timestepmethods_stability_explicit.png", "timestepping_stability_explicit.png"),
@@ -101,6 +112,7 @@ def main() -> int:
         ("test_timestepmethods_symplectic.png", "timestepping_symplectic.png"),
         ("test_multistepmethods_convergence.png", "timestepping_bdf_convergence.png"),
         ("test_multistepmethods_stability.png", "timestepping_bdf_stability.png"),
+        ("test_generalizedalpha.png", "timestepping_generalizedalpha.png"),
     ]
 
     print(f"\n{'='*60}")

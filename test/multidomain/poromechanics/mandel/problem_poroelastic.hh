@@ -20,6 +20,10 @@
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/fvproblemwithspatialparams.hh>
 
+#ifndef MANDEL_ENABLE_INERTIA
+#define MANDEL_ENABLE_INERTIA 0
+#endif
+
 namespace Dumux {
 
 /*!
@@ -28,6 +32,8 @@ namespace Dumux {
  *
  * The rigid plate on top prescribes the vertical displacement of the analytical solution.
  * The left and bottom boundaries are symmetry planes and the right boundary is traction-free.
+ * With MANDEL_ENABLE_INERTIA, the momentum balance contains the inertia of the mixture
+ * (elastodynamics), whose elastic waves are much faster than the consolidation.
  */
 template<class TypeTag>
 class PoroElasticSubProblem : public FVProblemWithSpatialParams<TypeTag>
@@ -51,6 +57,9 @@ public:
 
     const std::string& name() const
     { return problemName_; }
+
+    static constexpr bool enableInertia()
+    { return MANDEL_ENABLE_INERTIA; }
 
     //! Set the time at which the boundary conditions are evaluated
     void setTime(Scalar time) const

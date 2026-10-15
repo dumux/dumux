@@ -36,6 +36,7 @@
 #include <dumux/experimental/assembly/multistagemultidomainfvassembler.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
+#include <dumux/experimental/timestepping/generalizedalpha.hh>
 
 #include <test/experimental/timestepping/implicitsolvecheck.hh>
 
@@ -142,7 +143,14 @@ int main(int argc, char** argv)
     const auto outputTimes = getParam<std::vector<Scalar>>("TimeLoop.CheckPoints");
     timeLoop->setCheckPoint(outputTimes.begin(), outputTimes.end());
 
-    const auto timeSteppingMethod = []() -> std::shared_ptr<Experimental::MultiStageMethod<Scalar>>
+    using Assembler = Experimental::MultiStageMultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    constexpr bool withInertia = Assembler::hasInertia();
+
+    // the elastic waves are damped with the Chung-Hulbert method, the consolidation is resolved
+    const auto generalizedAlpha = []
+    { return std::make_shared<Experimental::GeneralizedAlpha::ChungHulbert<Scalar>>(getParam<Scalar>("TimeLoop.SpectralRadius")); };
+
+    const auto multiStageMethod = []() -> std::shared_ptr<Experimental::MultiStageMethod<Scalar>>
     {
         const auto scheme = getParam<std::string>("TimeLoop.Scheme", "ImplicitEuler");
         if (scheme == "ImplicitEuler")
@@ -154,9 +162,16 @@ int main(int argc, char** argv)
         else
             DUNE_THROW(ParameterException, "Unknown time stepping scheme " << scheme
                        << ". Possible values are ImplicitEuler, CrankNicolson and DIRK3.");
+    };
+
+    const auto timeSteppingMethod = [&]
+    {
+        if constexpr (withInertia)
+            return generalizedAlpha();
+        else
+            return multiStageMethod();
     }();
 
-    using Assembler = Experimental::MultiStageMultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(
         std::make_tuple(onePProblem, poroMechProblem),
         std::make_tuple(onePGridGeometry, poroMechGridGeometry),
@@ -170,10 +185,60 @@ int main(int argc, char** argv)
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
 
-    Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, timeSteppingMethod);
+    auto timeStepper = [&](const auto& method)
+    {
+        if constexpr (withInertia)
+        {
+            // the solid starts at rest
+            Experimental::GeneralizedAlphaTimeStepper<NewtonSolver> stepper(nonLinearSolver, method);
+            stepper.initialize(x, 0.0);
+            return stepper;
+        }
+        else
+            return Experimental::MultiStageTimeStepper<NewtonSolver>(nonLinearSolver, method);
+    }(timeSteppingMethod);
 
-    if (Test::checkImplicitSolveContract(*assembler, x, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0, 1.0) == 0)
+    const Scalar inverseDt = 1.0/timeLoop->timeStepSize();
+    if (Test::checkImplicitSolveContract(*assembler, x, timeLoop->time(), inverseDt, 1.0, withInertia ? inverseDt*inverseDt : 0.0) == 0)
         DUNE_THROW(Dune::Exception, "Expected Dirichlet constraints in the implicit solve contract check");
+
+    // a translation of the solid changes neither strain nor porosity, so the inertia summed over
+    // all degrees of freedom changes by the density of the mixture times the volume times the translation
+    if constexpr (withInertia)
+    {
+        using Displacement = Dune::FieldVector<Scalar, 2>;
+        const auto summedInertia = [&](const SolutionVector& sol)
+        {
+            couplingManager->updateSolution(sol);
+            assembler->updateGridVariables(sol);
+            typename Assembler::ResidualType inertia;
+            assembler->assembleOperators(sol, Experimental::TimeLevel<Scalar>(0.0), {.inertia = &inertia});
+            Displacement total(0.0);
+            for (const auto& block : inertia[poroMechId])
+                total += block;
+            return total;
+        };
+
+        const Displacement translation{0.3, -0.2};
+        auto xTranslated = x;
+        for (auto& block : xTranslated[poroMechId])
+            block += translation;
+
+        auto change = summedInertia(xTranslated);
+        change -= summedInertia(x);
+
+        const auto phi = getParam<Scalar>("Problem.InitialPorosity");
+        const auto mixtureDensity = phi*getParam<Scalar>("Component.LiquidDensity")
+                                    + (1.0 - phi)*getParam<Scalar>("Component.SolidDensity");
+        auto volume = poroMechGridGeometry->bBoxMax() - poroMechGridGeometry->bBoxMin();
+        auto expected = translation;
+        expected *= mixtureDensity*volume[0]*volume[1];
+        auto difference = change;
+        difference -= expected;
+        std::cout << "[Inertia] translation: change of the summed inertia " << change << ", expected " << expected << std::endl;
+        if (!(difference.infinity_norm() < 1e-10*expected.infinity_norm()))
+            DUNE_THROW(Dune::Exception, "The inertia of a translation is not the mixture density times the volume");
+    }
 
     timeLoop->start(); do
     {

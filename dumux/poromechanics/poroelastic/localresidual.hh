@@ -90,6 +90,29 @@ public:
 
         return source;
     }
+
+    /*!
+     * \brief The inertia term \f$ \bar\rho \mathbf{u} \f$ with the density of the mixture
+     *        \f$ \bar\rho = \phi \rho_f + (1-\phi) \rho_s \f$ (mass lumped)
+     * \note Used by the assemblers of time integration methods if the problem enables inertia
+     *       with `static constexpr bool enableInertia()`. As for the gravitational body force,
+     *       the porosity and the fluid density are those of the current state, and the relative
+     *       acceleration of the fluid is neglected.
+     */
+    NumEqVector computeInertia(const Problem& problem,
+                               const Element& element,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
+    {
+        const auto phi = volVars.porosity();
+        const auto rhoFluid = problem.spatialParams().effectiveFluidDensity(element, scv);
+        const auto rhoAverage = phi*rhoFluid + (1.0 - phi)*volVars.solidDensity();
+
+        NumEqVector inertia(0.0);
+        for (int dir = 0; dir < GridView::dimensionworld; ++dir)
+            inertia[Indices::momentum(dir)] = rhoAverage*volVars.displacement(dir);
+        return inertia;
+    }
 };
 
 } // end namespace Dumux
