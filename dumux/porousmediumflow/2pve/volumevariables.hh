@@ -18,33 +18,40 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
-#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/2pve/quantityreconstruction.hh>
 
 namespace Dumux {
+
+//! Traits for isothermal VE flow, without solid-state or energy properties.
+template<class PV, class FS, class FST, class PT, class MT>
+struct TwoPVEVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FS;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
 
 /*!
  * \ingroup TwoPVEModel
  * \brief Contains the quantities which are constant within a coarse-level finite volume in the two-phase VE model
  *
  * The coarse-level mobilities are the permeability-weighted vertical averages of the reconstructed fine-level mobilities.
+ * Permeability [m^2] and dimensionless porosity are column averages; extrusion supplies the column height.
  */
 template <class Traits>
 class TwoPVEVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
-, public EnergyVolumeVariables<Traits, TwoPVEVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
-    using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPVEVolumeVariables<Traits> >;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
     using Idx = typename ModelTraits::Indices;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
-    static constexpr int numFluidComps = ParentType::numFluidComponents();
     static constexpr int pressureIdx = Idx::pressureIdx;
     static constexpr int saturationIdx = Idx::saturationIdx;
     static constexpr int phase0Idx = FS::phase0Idx;
@@ -69,10 +76,6 @@ public:
     using FluidState = typename Traits::FluidState;
     //! Export the indices
     using Indices = typename ModelTraits::Indices;
-    //! Export type of solid state
-    using SolidState = typename Traits::SolidState;
-    //! Export type of solid system
-    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \brief Updates all quantities for a given control volume, these volume variables refer to the coarse level of the VE scheme.
@@ -110,8 +113,8 @@ public:
              columnState.gravityNorm,
              columnState.entryPressure);
         const Scalar permeabilityIntegral = problem.spatialParams().permeabilityIntegralAtElement(element);
-        porosityIntegral_ = problem.spatialParams().porosityIntegralAtElement(element);
         columnHeight_ = problem.spatialParams().columnHeightAtElement(element);
+        porosity_ = problem.spatialParams().porosityIntegralAtElement(element)/columnHeight_;
 
         // column integrals of the fine-level permeability times the reconstructed fine-level mobilities
         mobility_[phase0Idx] = 0.0;
@@ -136,17 +139,13 @@ public:
             mobility_[phase1Idx] += permeabilityFine * reconstructedMobilities[phase1Idx] * deltaZ;
         }
 
-        completeFluidStateCoarse(elemSol, problem, element, scv, fluidState_, solidState_, pcCoarse, columnState.gasPlumeDistance);
+        completeFluidStateCoarse(elemSol, problem, element, scv, fluidState_, columnState.temperature, pcCoarse, columnState.gasPlumeDistance);
 
         // permeability-weighted column average, the denominator is the column integral of the fine-level permeability
         mobility_[phase0Idx] /= permeabilityIntegral;
         mobility_[phase1Idx] /= permeabilityIntegral;
 
-        // porosity calculation over inert volumefraction
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
-        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = permeabilityIntegral/columnHeight_;
-        EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -157,11 +156,11 @@ public:
      * \param element       an element which contains part of the control volume
      * \param scv           the sub-control volume
      * \param fluidState    a container with the current (physical) state of the fluid
-     * \param solidState    a container with the current (physical) state of the solid
+     * \param temperature   prescribed column temperature
      * \param pcCoarse      coarsened capillary pressure of coarse-level element
      * \param gasPlumeDist  gas plume distance/height belonging to the coarse-level element
      *
-     * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
+     * Set temperature, saturations, capillary pressures, viscosities, densities.
      */
     template<class ElemSol, class Problem, class Element, class Scv>
     void completeFluidStateCoarse(const ElemSol& elemSol,
@@ -169,11 +168,12 @@ public:
                                   const Element& element,
                                   const Scv& scv,
                                   FluidState& fluidState,
-                                  SolidState& solidState,
+                                  Scalar temperature,
                                   Scalar pcCoarse,
                                   Scalar gasPlumeDist)
     {
-        EnergyVolVars::updateTemperature(elemSol, problemCoarse, element, scv, fluidState, solidState);
+        for (int phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+            fluidState.setTemperature(phaseIdx, temperature);
         const auto& priVars = elemSol[scv.localDofIndex()];
 
         const auto wPhaseIdx = problemCoarse.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
@@ -189,15 +189,6 @@ public:
         fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
 
         gasPlumeDist_ = gasPlumeDist;
-
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numFluidPhases(); ++phaseIdx) {
-            // compute and set the enthalpy
-            Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
-            fluidState.setEnthalpy(phaseIdx, h);
-        }
     }
 
     /*!
@@ -205,12 +196,6 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
-
-    /*!
-     * \brief Returns the phase state for the control volume.
-     */
-    const SolidState &solidState() const
-    { return solidState_; }
 
     /*!
      * \brief Returns the saturation of a given phase within
@@ -276,16 +261,24 @@ public:
     { return mobility_[phaseIdx]; }
 
     /*!
-     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
+     * \brief Returns the dimensionless column-average porosity.
      */
     Scalar porosity() const
-    { return solidState_.porosity(); }
+    { return porosity_; }
 
     /*!
      * \brief Returns the column-average intrinsic permeability in \f$[m^2]\f$.
      */
     const PermeabilityType& permeability() const
     { return permeability_; }
+
+    //! Vertical integral of porosity [m].
+    Scalar porosityIntegral() const
+    { return porosity_*columnHeight_; }
+
+    //! Vertical integral of permeability [m^3].
+    PermeabilityType permeabilityIntegral() const
+    { return permeability_*columnHeight_; }
 
     /*!
      * \brief Returns the wetting phase index
@@ -299,23 +292,16 @@ public:
     Scalar gasPlumeDist() const
     { return gasPlumeDist_; }
 
-    //! Vertical integral of permeability [m^3].
-    PermeabilityType permeabilityIntegral() const { return permeability_*columnHeight_; }
-
-    //! Vertical integral of porosity [m].
-    Scalar porosityIntegral() const { return porosityIntegral_; }
-
     //! Height of the reconstructed column [m].
     Scalar columnHeight() const { return columnHeight_; }
 
 protected:
     FluidState fluidState_;
-    SolidState solidState_;
 
 private:
     Scalar pc_;
     PermeabilityType permeability_;
-    Scalar porosityIntegral_;
+    Scalar porosity_;
     Scalar columnHeight_;
     Scalar mobility_[ModelTraits::numFluidPhases()];
 
