@@ -13,31 +13,38 @@
  * nonwetting phase \f$n\f$ in a formation of height \f$H\f$, for instance the injection of CO2 into
  * a saline aquifer. The phases are assumed to be segregated by gravity and in hydrostatic equilibrium
  * in the vertical direction (vertical equilibrium) \cite Nordbotten2012. The mass balance equations
- * are solved on a coarse grid that consists of a single layer of columns spanning the height of the
- * formation, and the vertical distribution of the saturations, pressures and mobilities is
- * reconstructed in each column on a fine grid that resolves the vertical direction.
+ * are solved on a horizontal grid of dimension one lower than the formation. Each coarse cell
+ * represents a vertical column on a separate full-dimensional fine grid, and the vertical distribution of the saturations, pressures and mobilities is
+ * reconstructed in each column on the fine grid.
  * See \cite Buntic2025 for a detailed description of the model.
  *
  * On the coarse level, the mass balance of each phase \f$\alpha \in \{ w, n \}\f$ reads
  \f[
- \frac{\partial (\bar\phi \varrho_\alpha \bar S_\alpha)}{\partial t}
+ \frac{\partial (\Phi \varrho_\alpha \bar S_\alpha)}{\partial t}
  -
- \nabla \cdot \left\{ \varrho_\alpha \bar\lambda_\alpha \bar K \nabla P_\alpha \right\} - q_\alpha = 0,
+ \nabla_h \cdot \left\{ \varrho_\alpha \bar\lambda_\alpha K_I \nabla_h P_\alpha \right\} - q_\alpha = 0,
  \f]
  * where:
  * * \f$ z \f$ is the height above the bottom of the formation,
- * * \f$ \bar\phi = \frac{1}{H} \int_0^H \phi \, \mathrm{d}z \f$ is the vertical average of the porosity \f$\phi\f$,
- * * \f$ \bar K = \frac{1}{H} \int_0^H k \, \mathrm{d}z \f$ is the vertical average of the scalar permeability \f$k\f$,
+ * * \f$ \Phi = \int_0^H \phi \, \mathrm{d}z \f$ is the vertical integral of the porosity \f$\phi\f$,
+ * * \f$ K_I = \int_0^H k \, \mathrm{d}z \f$ is the vertical integral of the scalar permeability \f$k\f$,
  * * \f$ \bar S_\alpha \f$ is the porosity-weighted vertical average of the saturation of phase \f$\alpha\f$,
  * * \f$ \bar\lambda_\alpha = \int_0^H k \lambda_\alpha \, \mathrm{d}z \big/ \int_0^H k \, \mathrm{d}z \f$ is the
  *   permeability-weighted vertical average of the mobility \f$ \lambda_\alpha = k_{r\alpha}/\mu_\alpha \f$ of phase \f$\alpha\f$,
  *   with the relative permeability \f$ k_{r\alpha} \f$ and the dynamic viscosity \f$ \mu_\alpha \f$,
  * * \f$ \varrho_\alpha \f$ is the mass density of phase \f$\alpha\f$,
  * * \f$ P_\alpha \f$ is the pressure of phase \f$\alpha\f$ at the bottom of the column,
- * * \f$ q_\alpha \f$ is a source or sink term.
+ * * \f$ q_\alpha \f$ is a vertically integrated source or sink per horizontal measure.
  *
- * The centers of all coarse-level elements lie at the same height, so gravity only enters the
- * coarse level through the reconstruction. The primary variables are \f$ P_w \f$ and \f$ \bar S_n \f$.
+ * Coarse cell volumes and face areas are horizontal measures. The column height H is
+ * the extrusion factor for storage, fluxes and sources. Volume-variable porosity() and
+ * permeability() are column averages with their usual units, so H times these averages
+ * gives Phi and K_I. Integral diagnostics are available separately. The prescribed temperature determines
+ * fluid properties. Standard velocity
+ * output reports the column-average Darcy velocity in m/s.
+ *
+ * The coarse grid has only horizontal coordinates, so its gravity vector is zero. Vertical
+ * gravity is supplied by the fine-level spatial parameters and enters through reconstruction. The primary variables are \f$ P_w \f$ and \f$ \bar S_n \f$.
  * Extrapolating the hydrostatic nonwetting-phase pressure to the bottom of the column gives the
  * coarse-level capillary pressure
  \f[
@@ -61,15 +68,14 @@
  * are the cell averages of the Brooks-Corey relative permeabilities for this profile divided by the viscosities.
  *
  * The current implementation has the following restrictions:
- * - only two- and three-dimensional, structured, axis-aligned grids are
- *   supported
+ * - the fine grid is two- or three-dimensional and the coarse grid is one- or
+ *   two-dimensional, respectively. Both are structured and axis-aligned
  * - the fine grid must be uniform in the vertical direction
- * - the coarse and fine grids must have identical domain bounds and matching
- *   subdivisions in all horizontal directions
- * - each coarse column must contain exactly one coarse cell in the vertical
- *   direction and the same number of fine cells
- * - each fine-cell center must be contained unambiguously in exactly one
- *   coarse cell
+ * - the coarse domain bounds and cell subdivisions must match the horizontal
+ *   projection of the fine grid
+ * - each coarse cell must map to the same number of vertically stacked fine cells
+ * - each horizontally projected fine-cell center must be contained unambiguously
+ *   in exactly one coarse cell
  * - gravity must be nonzero and aligned with the vertical coordinate axis
  * - the first fluid phase must be the wetting phase, and it must be denser than the nonwetting phase
  * - the reconstruction uses a Brooks-Corey material law
@@ -103,6 +109,14 @@
 
 namespace Dumux::Properties {
 
+//! Full-dimensional grid used only for the vertical reconstruction.
+template<class TypeTag, class MyTypeTag>
+struct FineGrid { using type = UndefinedProperty; };
+
+//! Finite-volume geometry of the reconstruction grid.
+template<class TypeTag, class MyTypeTag>
+struct FineGridGeometry { using type = UndefinedProperty; };
+
 namespace TTag {
 
 //! The type tag for the two-phase vertical-equilibrium model, derived from the two-phase model
@@ -113,7 +127,7 @@ struct TwoPVE
 
 } // namespace TTag
 
-//! Set the volume variables property, the only property in which the VE model differs from the two-phase model
+//! Set the VE volume variables.
 template<class TypeTag>
 struct VolumeVariables<TypeTag, TTag::TwoPVE>
 {

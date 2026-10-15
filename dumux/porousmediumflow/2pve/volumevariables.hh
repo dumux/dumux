@@ -13,6 +13,8 @@
 #ifndef DUMUX_TWOPVE_VOLUMEVARIABLES_HH
 #define DUMUX_TWOPVE_VOLUMEVARIABLES_HH
 
+#include <type_traits>
+
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
@@ -88,12 +90,11 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
         const auto columnIdx = problem.gridGeometry().elementMapper().index(element);
         const auto& fineLevelView = problem.fineLevelView();
         const auto columnState = fineLevelView.makeColumnState(element, this->priVars(), problem.spatialParams());
         const Scalar deltaZ = fineLevelView.fineCellHeight();
-        constexpr int dim = GlobalPosition::dimension;
+        constexpr int dim = std::decay_t<decltype(fineLevelView.gridGeometry())>::GridView::dimensionworld;
 
         const auto& column = fineLevelView.columnMap().column(columnIdx);
 
@@ -108,7 +109,9 @@ public:
              PhaseDensities{columnState.densityW, columnState.densityNw},
              columnState.gravityNorm,
              columnState.entryPressure);
-        const Scalar permeabilityCoarse = problem.spatialParams().permeability(element, scv, elemSol);
+        const Scalar permeabilityIntegral = problem.spatialParams().permeabilityIntegralAtElement(element);
+        porosityIntegral_ = problem.spatialParams().porosityIntegralAtElement(element);
+        columnHeight_ = problem.spatialParams().columnHeightAtElement(element);
 
         // column integrals of the fine-level permeability times the reconstructed fine-level mobilities
         mobility_[phase0Idx] = 0.0;
@@ -136,14 +139,13 @@ public:
         completeFluidStateCoarse(elemSol, problem, element, scv, fluidState_, solidState_, pcCoarse, columnState.gasPlumeDistance);
 
         // permeability-weighted column average, the denominator is the column integral of the fine-level permeability
-        const Scalar columnHeight = column.size()*deltaZ;
-        mobility_[phase0Idx] /= permeabilityCoarse*columnHeight;
-        mobility_[phase1Idx] /= permeabilityCoarse*columnHeight;
+        mobility_[phase0Idx] /= permeabilityIntegral;
+        mobility_[phase1Idx] /= permeabilityIntegral;
 
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        permeability_ = permeabilityCoarse;
+        permeability_ = permeabilityIntegral/columnHeight_;
         EnergyVolVars::updateEffectiveThermalConductivity();
     }
 
@@ -280,7 +282,7 @@ public:
     { return solidState_.porosity(); }
 
     /*!
-     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
+     * \brief Returns the column-average intrinsic permeability in \f$[m^2]\f$.
      */
     const PermeabilityType& permeability() const
     { return permeability_; }
@@ -297,6 +299,15 @@ public:
     Scalar gasPlumeDist() const
     { return gasPlumeDist_; }
 
+    //! Vertical integral of permeability [m^3].
+    PermeabilityType permeabilityIntegral() const { return permeability_*columnHeight_; }
+
+    //! Vertical integral of porosity [m].
+    Scalar porosityIntegral() const { return porosityIntegral_; }
+
+    //! Height of the reconstructed column [m].
+    Scalar columnHeight() const { return columnHeight_; }
+
 protected:
     FluidState fluidState_;
     SolidState solidState_;
@@ -304,6 +315,8 @@ protected:
 private:
     Scalar pc_;
     PermeabilityType permeability_;
+    Scalar porosityIntegral_;
+    Scalar columnHeight_;
     Scalar mobility_[ModelTraits::numFluidPhases()];
 
     Scalar gasPlumeDist_;

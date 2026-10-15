@@ -39,12 +39,18 @@ def read_parameters(file_name):
     return parser
 
 
-def read_vtu(file_name):
-    """Return the cell centers and the cell data of an ASCII VTU file with quadrilateral cells."""
+def read_vtk(file_name):
+    """Return cell centers and data from ASCII VTU cells or VTP segments."""
     piece = ET.parse(file_name).getroot().find(".//Piece")
     points = np.array(piece.find("Points/DataArray").text.split(), dtype=float).reshape(-1, 3)
-    connectivity = np.array(piece.find("Cells/DataArray[@Name='connectivity']").text.split(), dtype=int)
-    centers = points[connectivity.reshape(-1, 4)].mean(axis=1)
+    cells = piece.find("Cells")
+    if cells is None:
+        cells = piece.find("Lines")
+    if cells is None:
+        raise ValueError(f"No cells or line segments found in {file_name}")
+    connectivity = np.array(cells.find("DataArray[@Name='connectivity']").text.split(), dtype=int)
+    offsets = np.array(cells.find("DataArray[@Name='offsets']").text.split(), dtype=int)
+    centers = np.array([points[cell].mean(axis=0) for cell in np.split(connectivity, offsets[:-1])])
     cell_data = {array.get("Name"): np.array(array.text.split(), dtype=float) for array in piece.find("CellData")}
     return centers, cell_data
 
@@ -110,7 +116,7 @@ for factor, color in zip(profile_rate_factors, profile_colors):
     gravity_number = next(float(line.split()[-1]) for line in output.split("\n") if line.startswith("Mobility ratio: "))
     print(f"Finished profile simulation {case_name}: gravity number={gravity_number:.6g}", flush=True)
     time, file_name = read_pvd(case_name + ".pvd")[-1]
-    centers, cell_data = read_vtu(file_name)
+    centers, cell_data = read_vtk(file_name)
     chi = 2.0*np.pi*height*porosity*(1.0 - residual_saturation)*centers[:, 0]**2/(injection_rate*factor*time)
     ax.plot(np.sqrt(chi), cell_data["gasPlumeDistance"]/height, color=color, lw=1.5,
             label=rf"VE model, $\Gamma = {gravity_number:.2g}$")
@@ -128,7 +134,7 @@ print("Saved profile.png")
 
 # fine-level saturation of the injected fluid at the end of the simulation
 time, file_name = read_pvd("fine_" + name + ".pvd")[-1]
-centers, cell_data = read_vtu(file_name)
+centers, cell_data = read_vtk(file_name)
 radii, heights = np.unique(centers[:, 0]), np.unique(centers[:, 1])
 order = np.lexsort((centers[:, 0], centers[:, 1]))
 saturation = cell_data["S_gas"][order].reshape(len(heights), len(radii))
@@ -142,7 +148,7 @@ fig.tight_layout()
 fig.savefig("plume.png", dpi=150)
 print("Saved plume.png")
 
-for f in glob.glob(name + "*.vtu") + glob.glob("fine_" + name + "*.vtu") + [name + ".pvd", "fine_" + name + ".pvd"]:
+for f in glob.glob(name + "*.vtu") + glob.glob(name + "*.vtp") + glob.glob("fine_" + name + "*.vtu") + [name + ".pvd", "fine_" + name + ".pvd"]:
     if os.path.exists(f):
         os.remove(f)
 

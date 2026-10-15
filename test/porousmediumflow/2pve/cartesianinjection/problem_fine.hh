@@ -30,7 +30,7 @@ template<class TypeTag>
 class TwoPVEFineProblem
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

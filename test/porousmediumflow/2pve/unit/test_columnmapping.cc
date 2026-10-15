@@ -23,35 +23,43 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/porousmediumflow/2pve/columnmapping.hh>
 
-int main(int argc, char** argv)
+template<int dim>
+void checkMapping()
 {
-    Dumux::initialize(argc, argv);
-
-    static constexpr int dim = 2;
     using Scalar = double;
     using Grid = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<Scalar, dim>>;
     using GridGeometry = Dumux::CCTpfaFVGridGeometry<typename Grid::LeafGridView>;
+    using CoarseGrid = Dune::YaspGrid<dim-1, Dune::EquidistantOffsetCoordinates<Scalar, dim-1>>;
+    using CoarseGridGeometry = Dumux::CCTpfaFVGridGeometry<typename CoarseGrid::LeafGridView>;
 
-    const Dune::FieldVector<Scalar, dim> lowerLeft({1.0, -2.0});
-    const Dune::FieldVector<Scalar, dim> upperRight({5.0, 6.0});
-    const std::array<int, dim> coarseCells({2, 1});
-    const std::array<int, dim> fineCells({2, 4});
-
-    Grid coarseGrid(lowerLeft, upperRight, coarseCells);
+    Dune::FieldVector<Scalar, dim> lowerLeft(1.0), upperRight(5.0);
+    lowerLeft[dim-1] = -2.0;
+    upperRight[dim-1] = 6.0;
+    Dune::FieldVector<Scalar, dim-1> lowerHorizontal(1.0), upperHorizontal(5.0);
+    std::array<int, dim-1> coarseCells;
+    coarseCells.fill(2);
+    std::array<int, dim> fineCells;
+    fineCells.fill(2);
+    fineCells[dim-1] = 4;
+    CoarseGrid coarseGrid(lowerHorizontal, upperHorizontal, coarseCells);
     Grid fineGrid(lowerLeft, upperRight, fineCells);
 
-    auto coarseGridGeometry = std::make_shared<GridGeometry>(coarseGrid.leafGridView());
+    auto coarseGridGeometry = std::make_shared<CoarseGridGeometry>(coarseGrid.leafGridView());
     auto fineGridGeometry = std::make_shared<GridGeometry>(fineGrid.leafGridView());
-    const Dumux::TwoPVEColumnMapping<GridGeometry, Scalar> mapping(coarseGridGeometry, fineGridGeometry);
+    const Dumux::TwoPVEColumnMapping<CoarseGridGeometry, GridGeometry, Scalar> mapping(coarseGridGeometry, fineGridGeometry);
 
-    if (mapping.numberOfColumns() != coarseCells[0])
-        DUNE_THROW(Dune::Exception, "Expected " << coarseCells[0] << " columns, obtained " << mapping.numberOfColumns());
+    std::size_t expectedNumberOfColumns = 1;
+    for (const auto cellsInDirection : coarseCells)
+        expectedNumberOfColumns *= cellsInDirection;
+
+    if (mapping.numberOfColumns() != expectedNumberOfColumns)
+        DUNE_THROW(Dune::Exception, "Expected " << expectedNumberOfColumns << " columns, obtained " << mapping.numberOfColumns());
 
     for (std::size_t coarseIdx = 0; coarseIdx < mapping.numberOfColumns(); ++coarseIdx)
     {
         const auto& column = mapping.column(coarseIdx);
-        if (column.size() != fineCells[1])
-            DUNE_THROW(Dune::Exception, "Expected " << fineCells[1] << " fine elements in column " << coarseIdx << ", obtained " << column.size());
+        if (column.size() != fineCells[dim-1])
+            DUNE_THROW(Dune::Exception, "Expected " << fineCells[dim-1] << " fine elements in column " << coarseIdx << ", obtained " << column.size());
 
         for (std::size_t i = 0; i < column.size(); ++i)
         {
@@ -64,5 +72,12 @@ int main(int argc, char** argv)
         }
     }
 
+}
+
+int main(int argc, char** argv)
+{
+    Dumux::initialize(argc, argv);
+    checkMapping<2>();
+    checkMapping<3>();
     return 0;
 }

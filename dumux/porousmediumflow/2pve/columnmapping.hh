@@ -14,11 +14,14 @@
 #define DUMUX_TWOPVE_COLUMN_MAPPING_HH
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstddef>
 #include <memory>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dumux/geometry/intersectingentities.hh>
@@ -27,21 +30,24 @@ namespace Dumux {
 
 /*!
  * \ingroup TwoPVEModel
- * \brief Maps each coarse-level column to the fine-level elements it contains and each fine-level element to its column
+ * \brief Maps horizontal coarse cells to vertically stacked fine cells using horizontal projection
  *
  * The fine-level elements of each column are sorted by increasing vertical coordinate.
  */
-template<class GridGeometry, class Scalar>
+template<class CoarseGridGeometry, class FineGridGeometry, class Scalar>
 class TwoPVEColumnMapping
 {
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename FineGridGeometry::GridView;
+    using CoarseGridView = typename CoarseGridGeometry::GridView;
+    static_assert(CoarseGridView::dimension + 1 == GridView::dimension);
+    static_assert(CoarseGridView::dimensionworld + 1 == GridView::dimensionworld);
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
     using Column = std::vector<Element>;
 
-    TwoPVEColumnMapping(std::shared_ptr<const GridGeometry> gridGeometryCoarse,
-                        std::shared_ptr<const GridGeometry> gridGeometryFine)
+    TwoPVEColumnMapping(std::shared_ptr<const CoarseGridGeometry> gridGeometryCoarse,
+                        std::shared_ptr<const FineGridGeometry> gridGeometryFine)
     {
         build_(*gridGeometryCoarse, *gridGeometryFine);
     }
@@ -82,8 +88,8 @@ private:
      * \param gridGeometryCoarse coarse-level grid geometry
      * \param gridGeometryFine   fine-level grid geometry
      */
-    void build_(const GridGeometry& gridGeometryCoarse,
-                const GridGeometry& gridGeometryFine)
+    void build_(const CoarseGridGeometry& gridGeometryCoarse,
+                const FineGridGeometry& gridGeometryFine)
     {
         const std::size_t numberOfCoarseElements = gridGeometryCoarse.elementMapper().size();
         const std::size_t numberOfFineElements = gridGeometryFine.elementMapper().size();
@@ -102,12 +108,25 @@ private:
             const auto idxFine = gridGeometryFine.elementMapper().index(elementFine);
             const auto fineCenter = elementFine.geometry().center();
 
-            const auto coarseCandidates = intersectingEntities(fineCenter, gridGeometryCoarse.boundingBoxTree());
+            Dune::FieldVector<Scalar, CoarseGridView::dimensionworld> horizontalCenter;
+            for (int axis = 0; axis < CoarseGridView::dimensionworld; ++axis)
+                horizontalCenter[axis] = fineCenter[axis];
+            const auto coarseCandidates = intersectingEntities(horizontalCenter, gridGeometryCoarse.boundingBoxTree());
             if (coarseCandidates.empty())
                 DUNE_THROW(Dune::InvalidStateException, "Fine element " << idxFine << " is not contained in a coarse element");
             if (coarseCandidates.size() != 1)
                 DUNE_THROW(Dune::InvalidStateException, "Fine element " << idxFine << " intersects more than one coarse element");
             const auto idxCoarse = coarseCandidates.front();
+            const auto coarseGeometry = gridGeometryCoarse.element(idxCoarse).geometry();
+            for (int axis = 0; axis < CoarseGridView::dimensionworld; ++axis)
+            {
+                const auto coarseBounds = axisBounds_(coarseGeometry, axis);
+                const auto fineBounds = axisBounds_(elementFine.geometry(), axis);
+                const Scalar tolerance = 1e-10*(coarseBounds[1] - coarseBounds[0]);
+                using std::abs;
+                if (abs(coarseBounds[0] - fineBounds[0]) > tolerance || abs(coarseBounds[1] - fineBounds[1]) > tolerance)
+                    DUNE_THROW(Dune::InvalidStateException, "Coarse and fine grids must have matching horizontal cell bounds");
+            }
 
             coarseToFine_[idxCoarse].push_back(elementFine);
             fineToCoarse_[idxFine] = idxCoarse;
@@ -117,9 +136,20 @@ private:
         sanityCheckColumn_(numberOfCoarseElements, numberOfFineElements);
     }
 
-    /*!
-     * \brief Sorts the fine-element index within the columns from lower to highest z-coordinate. This sorting is naturally given by the indexing scheme of YASP grid.
-     */
+    //! Bounds of an axis-aligned cell along one coordinate.
+    template<class Geometry>
+    static std::array<Scalar, 2> axisBounds_(const Geometry& geometry, int axis)
+    {
+        std::array<Scalar, 2> bounds{geometry.corner(0)[axis], geometry.corner(0)[axis]};
+        for (int corner = 1; corner < geometry.corners(); ++corner)
+        {
+            bounds[0] = std::min(bounds[0], geometry.corner(corner)[axis]);
+            bounds[1] = std::max(bounds[1], geometry.corner(corner)[axis]);
+        }
+        return bounds;
+    }
+
+    //! Sort fine elements by increasing height within each column.
     void sortColumns_()
     {
         static constexpr int verticalAxis = GridView::dimensionworld - 1;
@@ -142,6 +172,8 @@ private:
                             const std::size_t numberOfFineElements)
     {
         static constexpr int verticalAxis = GridView::dimensionworld - 1;
+        if (numberOfFineElements == 0 || numberOfFineElements % numberOfCoarseElements != 0)
+            DUNE_THROW(Dune::InvalidStateException, "Each coarse element must map to a nonempty column of equal size");
         const auto expectedColumnSize = numberOfFineElements / numberOfCoarseElements;
 
         for (std::size_t coarseIdx = 0; coarseIdx < coarseToFine_.size(); ++coarseIdx)

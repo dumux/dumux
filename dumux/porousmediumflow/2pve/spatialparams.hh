@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <dune/grid/common/rangegenerators.hh>
@@ -28,19 +29,20 @@ namespace Dumux {
  * \ingroup TwoPVEModel
  * \brief The base class for the coarse-level spatial parameters of the two-phase VE model
  *
- * The coarse-level permeability and porosity of a column are the vertical averages of the
- * fine-level permeability and porosity over the column.
+ * The vertical integrals of fine-level permeability and porosity are stored per horizontal
+ * coarse element. The volume variables use column averages and the column height as extrusion factor.
  * The fine-level spatial parameters have to provide `permeabilityAtElement(fineElement)` and
  * `porosityAtElement(fineElement)`. The implementation has to provide
  * `fluidMatrixInteractionAtPos(globalPos)` returning a Brooks-Corey material law and
  * `temperatureAtPos(globalPos)`.
  *
  * \tparam GridGeometry the coarse-level grid geometry
+ * \tparam FineGridGeometry the full-dimensional reconstruction grid geometry
  * \tparam Scalar the scalar type
  * \tparam SpatialParamsFine the fine-level spatial parameters
  * \tparam Implementation the class deriving from this class
  */
-template<class GridGeometry, class Scalar, class SpatialParamsFine, class Implementation>
+template<class GridGeometry, class FineGridGeometry, class Scalar, class SpatialParamsFine, class Implementation>
 class TwoPVESpatialParams
 : public FVPorousMediumFlowSpatialParamsMP<GridGeometry, Scalar, Implementation>
 {
@@ -49,7 +51,7 @@ class TwoPVESpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GridGeometry::LocalView::SubControlVolume;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using ColumnMapping = TwoPVEColumnMapping<GridGeometry, Scalar>;
+    using ColumnMapping = TwoPVEColumnMapping<GridGeometry, FineGridGeometry, Scalar>;
 
 public:
     using PermeabilityType = Scalar;
@@ -68,10 +70,11 @@ public:
                         const Scalar fineCellHeight)
     : ParentType(gridGeometry)
     , spatialParamsFine_(spatialParamsFine)
-    , permeability_(gridGeometry->elementMapper().size(), 0.0)
-    , porosity_(gridGeometry->elementMapper().size(), 0.0)
+    , permeabilityIntegral_(gridGeometry->elementMapper().size(), 0.0)
+    , porosityIntegral_(gridGeometry->elementMapper().size(), 0.0)
+    , columnHeight_(gridGeometry->elementMapper().size(), 0.0)
     {
-        using FinePermeability = std::decay_t<decltype(spatialParamsFine_->permeabilityAtElement(std::declval<const Element&>()))>;
+        using FinePermeability = std::decay_t<decltype(spatialParamsFine_->permeabilityAtElement(std::declval<const typename FineGridGeometry::GridView::template Codim<0>::Entity&>()))>;
         static_assert(std::is_convertible_v<FinePermeability, Scalar>, "The VE upscaling requires a scalar fine-level permeability");
 
         for (const auto& element : elements(gridGeometry->gridView()))
@@ -80,13 +83,12 @@ public:
             const auto& column = columnMapping.column(columnIdx);
             for (const auto& fineElement : column)
             {
-                permeability_[columnIdx] += spatialParamsFine_->permeabilityAtElement(fineElement)*fineCellHeight;
-                porosity_[columnIdx] += spatialParamsFine_->porosityAtElement(fineElement)*fineCellHeight;
+                permeabilityIntegral_[columnIdx] += spatialParamsFine_->permeabilityAtElement(fineElement)*fineCellHeight;
+                porosityIntegral_[columnIdx] += spatialParamsFine_->porosityAtElement(fineElement)*fineCellHeight;
             }
 
             const Scalar columnHeight = column.size()*fineCellHeight;
-            permeability_[columnIdx] /= columnHeight;
-            porosity_[columnIdx] /= columnHeight;
+            columnHeight_[columnIdx] = columnHeight;
         }
     }
 
@@ -97,7 +99,7 @@ public:
     { return *spatialParamsFine_; }
 
     /*!
-     * \brief Returns the coarse-level permeability \f$\mathrm{[m^2]}\f$ of a column
+     * \brief Returns the column-average intrinsic permeability \f$\mathrm{[m^2]}\f$
      *
      * \param element coarse-level element
      * \param scv     sub-control volume of the element
@@ -107,18 +109,10 @@ public:
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
-    { return permeabilityAtElement(element); }
+    { return permeabilityIntegralAtElement(element)/columnHeightAtElement(element); }
 
     /*!
-     * \brief Returns the coarse-level permeability \f$\mathrm{[m^2]}\f$ of a column
-     *
-     * \param element coarse-level element
-     */
-    PermeabilityType permeabilityAtElement(const Element& element) const
-    { return permeability_[this->gridGeometry().elementMapper().index(element)]; }
-
-    /*!
-     * \brief Returns the coarse-level porosity \f$\mathrm{[-]}\f$ of a column
+     * \brief Returns the dimensionless column-average porosity
      *
      * \param element coarse-level element
      * \param scv     sub-control volume of the element
@@ -128,15 +122,14 @@ public:
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
-    { return porosityAtElement(element); }
+    { return porosityIntegralAtElement(element)/columnHeightAtElement(element); }
 
-    /*!
-     * \brief Returns the coarse-level porosity \f$\mathrm{[-]}\f$ of a column
-     *
-     * \param element coarse-level element
-     */
-    Scalar porosityAtElement(const Element& element) const
-    { return porosity_[this->gridGeometry().elementMapper().index(element)]; }
+    //! Column height [m], used to extrude the horizontal cell and its faces.
+    template<class ElementSolution>
+    Scalar extrusionFactor(const Element& element,
+                           const SubControlVolume&,
+                           const ElementSolution&) const
+    { return columnHeightAtElement(element); }
 
     /*!
      * \brief Returns the index of the wetting phase, which the VE model requires to be the first phase
@@ -147,10 +140,27 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::phase0Idx; }
 
+    //! Vertical integral of the intrinsic permeability [m^3].
+    Scalar permeabilityIntegralAtElement(const Element& element) const
+    { return permeabilityIntegral_[this->gridGeometry().elementMapper().index(element)]; }
+
+    //! Vertical integral of porosity [m], used for storage per horizontal measure.
+    Scalar porosityIntegralAtElement(const Element& element) const
+    { return porosityIntegral_[this->gridGeometry().elementMapper().index(element)]; }
+
+    //! Height of the reconstructed column [m].
+    Scalar columnHeightAtElement(const Element& element) const
+    { return columnHeight_[this->gridGeometry().elementMapper().index(element)]; }
+
+    //! Horizontal gravity is zero; vertical gravity enters through fine-level reconstruction.
+    GlobalPosition gravity(const GlobalPosition&) const
+    { return GlobalPosition(0.0); }
+
 private:
     std::shared_ptr<const SpatialParamsFine> spatialParamsFine_;
-    std::vector<PermeabilityType> permeability_;
-    std::vector<Scalar> porosity_;
+    std::vector<PermeabilityType> permeabilityIntegral_;
+    std::vector<Scalar> porosityIntegral_;
+    std::vector<Scalar> columnHeight_;
 };
 
 } // end namespace Dumux

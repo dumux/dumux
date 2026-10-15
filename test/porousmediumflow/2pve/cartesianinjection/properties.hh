@@ -42,7 +42,21 @@ struct TwoPVEImmiscibleTpfa { using InheritsFrom = std::tuple<TwoPVEImmiscible, 
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPVEImmiscible> { using type = GRIDTYPE; };
+struct FineGrid<TypeTag, TTag::TwoPVEImmiscible> { using type = GRIDTYPE; };
+
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPVEImmiscible>
+{
+    static constexpr int dim = GetPropType<TypeTag, Properties::FineGrid>::dimension - 1;
+    using type = Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<double, dim>>;
+};
+
+template<class TypeTag>
+struct FineGridGeometry<TypeTag, TTag::TwoPVEImmiscible>
+{
+    using GridView = typename GetPropType<TypeTag, Properties::FineGrid>::LeafGridView;
+    using type = CCTpfaFVGridGeometry<GridView>;
+};
 
 // Set the problem type
 template<class TypeTag>
@@ -66,7 +80,8 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = TwoPTestSpatialParams<GridGeometry, Scalar>;
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    using type = TwoPTestSpatialParams<GridGeometry, FineGridGeometry, Scalar>;
 };
 
 template<class TypeTag>

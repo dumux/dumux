@@ -54,14 +54,14 @@ struct VEMassBalance
  */
 template<typename TypeTag>
 auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fvGridGeometryVE,
-                        const GetPropType<TypeTag, Properties::GridGeometry>& fvGridGeometryVEFine,
+                        const GetPropType<TypeTag, Properties::FineGridGeometry>& fvGridGeometryVEFine,
                         const GetPropType<TypeTag, Properties::SolutionVector>& solution,
                         const GetPropType<TypeTag, Properties::Problem>& problemVE,
                         const TimeLoop<GetPropType<TypeTag, Properties::Scalar>>& timeLoop)
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GridView = typename GridGeometry::GridView;
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    using GridView = typename FineGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NonwettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::NonwettingPhase;
@@ -87,7 +87,7 @@ auto computeMassBalance(const GetPropType<TypeTag, Properties::GridGeometry>& fv
         auto densityNw = NonwettingPhase::density(dummyTemperature, pwCoarse);
         auto fvGeometryVE = localView(fvGridGeometryVE);
         fvGeometryVE.bind(element);
-        Scalar coarsePorosity = spatialParamsCoarse.porosityAtElement(element);
+        Scalar coarsePorosity = spatialParamsCoarse.porosityIntegralAtElement(element);
 
         for (const auto& scvVE : scvs(fvGeometryVE))
         {

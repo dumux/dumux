@@ -35,10 +35,14 @@ struct TwoPVERadialInjection { using InheritsFrom = std::tuple<TwoPVE, CCTpfaMod
 } // end namespace TTag
 
 template<class TypeTag>
-struct Grid<TypeTag, TTag::TwoPVERadialInjection>
+struct FineGrid<TypeTag, TTag::TwoPVERadialInjection>
 { using type = Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<double, 2>>; };
 
-// the grid spans the radial and the vertical coordinate and is rotated about the vertical axis
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPVERadialInjection>
+{ using type = Dune::YaspGrid<1, Dune::EquidistantOffsetCoordinates<double, 1>>; };
+
+// The horizontal radial grid is rotated about the well axis; height is integrated explicitly.
 template<class TypeTag>
 struct GridGeometry<TypeTag, TTag::TwoPVERadialInjection>
 {
@@ -48,6 +52,16 @@ private:
     struct Traits : public CCTpfaDefaultGridGeometryTraits<GridView> { using Extrusion = RotationalExtrusion<0>; };
 public:
     using type = CCTpfaFVGridGeometry<GridView, enableCache, Traits>;
+};
+
+template<class TypeTag>
+struct FineGridGeometry<TypeTag, TTag::TwoPVERadialInjection>
+{
+private:
+    using GridView = typename GetPropType<TypeTag, Properties::FineGrid>::LeafGridView;
+    struct Traits : public CCTpfaDefaultGridGeometryTraits<GridView> { using Extrusion = RotationalExtrusion<0>; };
+public:
+    using type = CCTpfaFVGridGeometry<GridView, false, Traits>;
 };
 
 template<class TypeTag>
@@ -72,7 +86,8 @@ private:
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 public:
-    using type = TwoPVERadialInjectionSpatialParams<GridGeometry, Scalar>;
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    using type = TwoPVERadialInjectionSpatialParams<GridGeometry, FineGridGeometry, Scalar>;
 };
 
 template<class TypeTag>
