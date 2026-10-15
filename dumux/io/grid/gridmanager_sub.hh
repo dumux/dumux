@@ -37,6 +37,7 @@
 #include <dumux/io/grid/gridmanager_base.hh>
 #endif
 #include <dumux/io/grid/periodicgridtraits.hh>
+#include <dumux/common/gridcapabilities.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/boundaryflag.hh>
@@ -643,6 +644,22 @@ public:
         }
     }
 };
+
+namespace Grid::Capabilities {
+
+// SubGrid is a meta grid that forwards grid view traversal, entity lookup and index set
+// queries to its host grid. The only extra state it keeps is a lazily computed boundary
+// segment count, which is not touched during assembly. To the best of our knowledge it is
+// therefore view thread-safe exactly when its host grid is.
+template<int dim, class HostGrid, bool MapIndexStorage>
+struct MultithreadingSupported<Dune::SubGrid<dim, HostGrid, MapIndexStorage>>
+{
+    template<class GV>
+    static bool eval(const GV& gv)
+    { return MultithreadingSupported<HostGrid>::eval(gv); }
+};
+
+} // end namespace Grid::Capabilities
 
 } // end namespace Dumux
 #endif // HAVE_DUNE_SUBGRID
