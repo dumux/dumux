@@ -171,6 +171,11 @@
 @copydoc dumux/solidmechanics/hyperelastic/model.hh
 @ingroup SolidMechanicsModels
 
+@defgroup HyperelasticVolIso Hyperelasticity with volumetric-isochoric split
+@brief Models nonlinear deformation of a (nearly) incompressible elastic solid with a mixed displacement-pressure formulation.
+@copydoc dumux/solidmechanics/hyperelastic_voliso/model.hh
+@ingroup Hyperelastic
+
 @defgroup Plate Plate mechanics
 @brief Models for thin-plate structural mechanics (Kirchhoff-Love and Mindlin-Reissner).
 @ingroup SolidMechanicsModels

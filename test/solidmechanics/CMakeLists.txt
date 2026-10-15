@@ -3,5 +3,6 @@
 
 add_subdirectory(elastic)
 add_subdirectory(hyperelastic)
+add_subdirectory(hyperelastic_voliso)
 add_subdirectory(turek_hron)
 add_subdirectory(plate)

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 24 560 446" font-family="Georgia, 'Times New Roman', serif">
+  <defs>
+    <marker id="forceArrow" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <marker id="axisArrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <marker id="dimArrowStart" viewBox="0 0 10 10" refX="1" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 10 0 L 0 5 L 10 10 z" fill="#000"/>
+    </marker>
+    <marker id="dimArrowEnd" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <rect y="24" width="560" height="446" fill="white"/>
+
+  <!-- Membrane, corners (0,0), (48,44), (48,60), (0,44) mm at 6 px/mm -->
+  <polygon points="130,420 418,156 418,60 130,156" fill="#d9d9d9" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Clamped left edge -->
+  <line x1="130" y1="148" x2="130" y2="428" stroke="#000" stroke-width="1.5"/>
+  <g stroke="#000" stroke-width="1.2">
+    <line x1="130" y1="160" x2="116" y2="174"/>
+    <line x1="130" y1="184" x2="116" y2="198"/>
+    <line x1="130" y1="208" x2="116" y2="222"/>
+    <line x1="130" y1="232" x2="116" y2="246"/>
+    <line x1="130" y1="256" x2="116" y2="270"/>
+    <line x1="130" y1="280" x2="116" y2="294"/>
+    <line x1="130" y1="304" x2="116" y2="318"/>
+    <line x1="130" y1="328" x2="116" y2="342"/>
+    <line x1="130" y1="352" x2="116" y2="366"/>
+    <line x1="130" y1="376" x2="116" y2="390"/>
+    <line x1="130" y1="400" x2="116" y2="414"/>
+  </g>
+  <text x="100" y="296" font-size="18" fill="#000" text-anchor="middle" transform="rotate(-90 100 296)"><tspan font-style="italic" font-weight="bold">u</tspan> = <tspan font-weight="bold">0</tspan></text>
+
+  <!-- Shear traction on the right edge, +y direction -->
+  <g stroke="#000" stroke-width="2.5" fill="none">
+    <line x1="430" y1="150" x2="430" y2="126" marker-end="url(#forceArrow)"/>
+    <line x1="430" y1="118" x2="430" y2="94" marker-end="url(#forceArrow)"/>
+    <line x1="430" y1="86" x2="430" y2="62" marker-end="url(#forceArrow)"/>
+  </g>
+  <text x="442" y="112" font-size="20" font-style="italic" fill="#000">p<tspan font-size="14" baseline-shift="sub" font-style="normal">0</tspan></text>
+
+  <!-- Point A -->
+  <circle cx="418" cy="60" r="5" fill="#000"/>
+  <text x="400" y="48" font-size="20" font-style="italic" fill="#000">A</text>
+
+  <!-- Coordinate directions -->
+  <g stroke="#000" stroke-width="1.8" fill="none">
+    <line x1="330" y1="396" x2="375" y2="396" marker-end="url(#axisArrow)"/>
+    <line x1="330" y1="396" x2="330" y2="351" marker-end="url(#axisArrow)"/>
+  </g>
+  <text x="380" y="402" font-size="18" font-style="italic" fill="#000">x</text>
+  <text x="336" y="350" font-size="18" font-style="italic" fill="#000">y</text>
+
+  <!-- Dimension: width 48 -->
+  <line x1="130" y1="432" x2="130" y2="456" stroke="#000" stroke-width="0.8"/>
+  <line x1="418" y1="164" x2="418" y2="456" stroke="#000" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="132" y1="448" x2="416" y2="448" stroke="#000" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrowEnd)"/>
+  <text x="274" y="442" font-size="18" fill="#000" text-anchor="middle">48</text>
+
+  <!-- Dimensions on the right: 44 and 16 -->
+  <line x1="138" y1="420" x2="512" y2="420" stroke="#000" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="426" y1="156" x2="512" y2="156" stroke="#000" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="426" y1="60" x2="512" y2="60" stroke="#000" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="500" y1="418" x2="500" y2="158" stroke="#000" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrowEnd)"/>
+  <text x="508" y="294" font-size="18" fill="#000">44</text>
+  <line x1="500" y1="154" x2="500" y2="62" stroke="#000" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrowEnd)"/>
+  <text x="508" y="114" font-size="18" fill="#000">16</text>
+
+  <!-- Dimension: left edge 44 -->
+  <line x1="112" y1="420" x2="48" y2="420" stroke="#000" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="112" y1="156" x2="48" y2="156" stroke="#000" stroke-width="0.8" stroke-dasharray="4 3"/>
+  <line x1="58" y1="418" x2="58" y2="158" stroke="#000" stroke-width="1.4"
+        marker-start="url(#dimArrowStart)" marker-end="url(#dimArrowEnd)"/>
+  <text x="36" y="294" font-size="18" fill="#000" text-anchor="middle">44</text>
+</svg>
