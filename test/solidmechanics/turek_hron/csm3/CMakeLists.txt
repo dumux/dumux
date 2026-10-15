@@ -23,5 +23,5 @@ dumux_add_test(
     CMD_ARGS  --script fuzzy
               --files ${CMAKE_SOURCE_DIR}/test/references/test_saint_venant_kirchhoff_dynamic_chunghulbert-reference.vtu
                       ${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic_chunghulbert-00002.vtu
-              --command "${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic params.input -TimeLoop.TEnd 1 -VTKOutput.Every 50 -Problem.Name test_saint_venant_kirchhoff_dynamic_chunghulbert -TimeStepping.Method ChungHulbert -TimeStepping.SpectralRadius 0.8 -TimeStepping.ConsistentInitialAcceleration true"
+              --command "${CMAKE_CURRENT_BINARY_DIR}/test_saint_venant_kirchhoff_dynamic params.input -TimeLoop.TEnd 1 -VTKOutput.Every 50 -Problem.Name test_saint_venant_kirchhoff_dynamic_chunghulbert -TimeStepping.Method ChungHulbert -TimeStepping.SpectralRadius 0.8"
 )
