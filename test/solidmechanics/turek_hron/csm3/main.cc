@@ -17,7 +17,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 
-#include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
 
 #include <dumux/experimental/timestepping/newmarkbeta.hh>
 
@@ -81,9 +81,6 @@ int main(int argc, char** argv)
     }, "d");
     vtkWriter.write(0.0);
 
-    // solution at previous time
-    auto xOld = x;
-
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -95,9 +92,9 @@ int main(int argc, char** argv)
     newmarkBeta->initialize(x);
     problem->setNewmarkScheme(newmarkBeta);
 
-    // the assembler with time loop for a transient problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+    // the Newmark scheme provides the inertia, so the system in each time step is assembled as a stationary one
+    using Assembler = Experimental::Assembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
     using LAT = LinearAlgebraTraitsFromAssembler<Assembler>;
@@ -118,14 +115,11 @@ int main(int argc, char** argv)
     timeLoop->start(); do
     {
         // linearize & solve
+        problem->setTimeStepSize(timeLoop->timeStepSize());
         nonLinearSolver->solve(x);
 
         // update the solution in the time stepping scheme
         newmarkBeta->update(timeLoop->timeStepSize(), x);
-
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

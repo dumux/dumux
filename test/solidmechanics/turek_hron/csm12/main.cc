@@ -17,7 +17,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/istlsolvers.hh>
 
-#include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     }, "d");
 
     // the assembler for a stationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = Experimental::Assembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     // the linear solver
