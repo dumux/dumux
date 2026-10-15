@@ -27,7 +27,7 @@
 
 namespace Dumux {
 
-// R(x) = x^2 - 5 = 0
+// R(x) = f(x) = 0, by default with f(x) = x^2 - 5
 class MockScalarAssembler
 {
 public:
@@ -37,17 +37,25 @@ public:
     using SolutionVector = Scalar;
     using Variables = Scalar;
 
+    MockScalarAssembler()
+    : MockScalarAssembler([](Scalar x){ return x*x - 5.0; }, [](Scalar x){ return 2.0*x; })
+    {}
+
+    MockScalarAssembler(std::function<Scalar(Scalar)> f, std::function<Scalar(Scalar)> df)
+    : f_(std::move(f)), df_(std::move(df))
+    {}
+
     void setLinearSystem() {}
 
     void assembleResidual(const ResidualType& sol)
     {
-        res_ = sol*sol - 5.0;
+        res_ = f_(sol);
     }
 
     void assembleJacobianAndResidual (const ResidualType& sol)
     {
         assembleResidual(sol);
-        jac_ = 2.0*sol;
+        jac_ = df_(sol);
     }
 
     JacobianMatrix& jacobian() { return jac_; }
@@ -55,6 +63,8 @@ public:
     ResidualType& residual() { return res_; }
 
 private:
+    std::function<Scalar(Scalar)> f_;
+    std::function<Scalar(Scalar)> df_;
     JacobianMatrix jac_;
     ResidualType res_;
 };

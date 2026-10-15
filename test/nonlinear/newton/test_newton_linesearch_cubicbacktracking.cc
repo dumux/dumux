@@ -78,5 +78,18 @@ int main(int argc, char* argv[])
     );
     solveAndCheck<MockSystemLinearSolver>("log(x_i) = 0", logAssembler, Vector({3.0, 0.5}), Vector(1.0));
 
+    // pole at x = 1 with the roots 1 -/+ 1/sqrt(10) on either side
+    auto poleAssembler = std::make_shared<MockScalarAssembler>(
+        [](double x){ return 1.0/((x - 1.0)*(x - 1.0)) - 10.0; },
+        [](double x){ return -2.0/((x - 1.0)*(x - 1.0)*(x - 1.0)); }
+    );
+    const double leftRoot = 1.0 - 1.0/std::sqrt(10.0);
+    solveAndCheck<MockScalarLinearSolver>("1/(x - 1)^2 - 10 = 0", poleAssembler, 0.5, leftRoot);
+
+    // Newton's method without line search diverges from x = 2.5. The line search accepts
+    // the step to x = -0.39 across the pole, where |f| is smaller than at x = 2.5,
+    // because it only evaluates the residual at the trial points.
+    solveAndCheck<MockScalarLinearSolver>("1/(x - 1)^2 - 10 = 0", poleAssembler, 2.5, leftRoot);
+
     return 0;
 }
