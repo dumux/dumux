@@ -15,6 +15,7 @@
 #include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
+#include <dumux/porousmediumflow/solidenergy/model.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
@@ -40,7 +41,7 @@ namespace Dumux::Properties {
 
 // Create new type tags
 namespace TTag {
-struct Rock { using InheritsFrom = std::tuple<OnePNI, CCTpfaModel>; };
+struct Rock { using InheritsFrom = std::tuple<SolidEnergy, CCTpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
@@ -55,29 +56,11 @@ struct EnableGridVolumeVariablesCache<TypeTag, TTag::Rock> { static constexpr bo
 template<class TypeTag>
 struct EnableGridFluxVariablesCache<TypeTag, TTag::Rock> { static constexpr bool value = false; };
 template<class TypeTag>
-struct SolutionDependentAdvection<TypeTag, TTag::Rock> { static constexpr bool value = false; };
-template<class TypeTag>
-struct SolutionDependentMolecularDiffusion<TypeTag, TTag::Rock> { static constexpr bool value = false; };
-template<class TypeTag>
 struct SolutionDependentHeatConduction<TypeTag, TTag::Rock> { static constexpr bool value = false; };
 
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::Rock> { using type = RockProblem<TypeTag>; };
-
-// Set the problem property
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::Rock> { using type = OnePIncompressibleLocalResidual<TypeTag>; };
-
-// the fluid system
-template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::Rock>
-{
-private:
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar>>;
-};
 
 // Set the spatial parameters
 template<class TypeTag>

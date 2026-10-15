@@ -22,27 +22,9 @@ class RockSpatialParams
     using SubControlVolume = typename GridGeometry::SubControlVolume;
 
 public:
-    // export permeability type
-    using PermeabilityType = Scalar;
-
     RockSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {}
-
-    /*!
-    * \brief Defines the intrinsic permeability \f$\mathrm{[m^2]}\f$.
-    *
-    * \param element The element
-    * \param scv The sub control volume
-    * \param elemSol The element solution vector
-    */
-    template<class ElementSolution>
-    PermeabilityType permeability(const Element& element,
-                                const SubControlVolume& scv,
-                                const ElementSolution& elemSol) const
-    {
-        return 1.0e-20;
-    }
 
     /*!
     * \brief Defines the porosity \f$\mathrm{[-]}\f$.
