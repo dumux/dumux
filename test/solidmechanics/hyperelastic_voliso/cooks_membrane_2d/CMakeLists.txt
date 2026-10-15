@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params_mixed.input cooksmembrane.msh plot_results.py)
+dune_symlink_to_source_files(FILES params_mixed.input plot_results.py)
 
 dumux_add_test(
     NAME test_hyperelastic_cooks_membrane_mini

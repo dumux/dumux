@@ -28,7 +28,7 @@ displacement \f$ u_y \f$ of the upper right corner \f$ A = (48, 60) \f$. For the
 
 The problem derives from `Experimental::ProblemWithSpatialParams`: the clamped edge is imposed as
 constraints of the local degrees of freedom (`constraints()`) and the traction with
-`boundaryFluxAtPos`. The mesh `cooksmembrane.msh` has 233 triangles; `Grid.Refinement` refines it
+`boundaryFluxAtPos`. The mesh `test/solidmechanics/cooksmembrane.msh` has 233 triangles; `Grid.Refinement` refines it
 by conforming bisection, which roughly doubles the number of triangles per level.
 
 ## Results
