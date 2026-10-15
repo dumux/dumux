@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 14400     # [s] = 4 hours
+DtInitial = 1         # [s]
 EpisodeLength = 14400 # [s] = 4 hours
 TEnd = 432000         # [s] = 5 days
 
@@ -35,6 +35,7 @@ EnableGravity = false
 
 [Vtk]
 OutputName = test_wellbore_heat_transport
+Precision = Float64
 AddVelocity = true
 AddProcessRank = false
 EnableBulkOutput = true # write the 3D bulk (rock) solution
