@@ -6,7 +6,8 @@
 Runs the heat pipe test on successively refined grids and checks the convergence
 rates of the discrete L2 errors with respect to the solution of Udell (1985).
 
-usage: convergencetest.py <executable> [input file] [runtime arguments]
+usage: convergencetest.py <executable> [input file] [--expected-rate <rate>] [--refinements <n>]
+                          [--name <output name>] [runtime arguments]
 """
 
 import os
@@ -17,10 +18,10 @@ from math import log
 FIELDS = ["saturation", "gas pressure", "liquid pressure", "temperature"]
 
 
-def collect_data(testname, refinements, input_file="params.input", extra_args=()):
+def collect_data(testname, refinements, input_file="params.input", extra_args=(), name=None):
     """Run the test for each grid refinement and return the mesh sizes and the errors per field."""
     exe = testname if os.path.isabs(testname) else "./" + testname
-    name = os.path.basename(testname)
+    name = name or os.path.basename(testname)
     error_file = name + "-errors.csv"
     if os.path.exists(error_file):
         os.remove(error_file)
@@ -58,16 +59,28 @@ if __name__ == "__main__":
         sys.stderr.write(__doc__)
         sys.exit(1)
 
-    testname = sys.argv[1]
-    input_file = sys.argv[2] if len(sys.argv) > 2 else "params.input"
-    hs, errors = collect_data(testname, refinements=range(4), input_file=input_file, extra_args=sys.argv[3:])
+    args = sys.argv[1:]
+
+    def pop_option(option, default):
+        if option in args:
+            i = args.index(option)
+            value = args[i + 1]
+            del args[i:i + 2]
+            return value
+        return default
+
+    expected_order = float(pop_option("--expected-rate", 1.0))
+    num_refinements = int(pop_option("--refinements", 4))
+    name = pop_option("--name", None)
+    testname = args[0]
+    input_file = args[1] if len(args) > 1 else "params.input"
+    hs, errors = collect_data(testname, refinements=range(num_refinements), input_file=input_file,
+                              extra_args=args[2:], name=name)
     rates = {field: compute_rates(hs, errors[field]) for field in FIELDS}
 
     print(f"\nConvergence rates for {testname}:")
     print_table(hs, errors, rates)
 
-    # full upwinding of the mobilities makes the scheme first order
-    expected_order = 1
     tol = 0.2
     failed = False
     for field in FIELDS:
