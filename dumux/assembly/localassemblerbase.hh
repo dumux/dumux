@@ -18,6 +18,7 @@
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 
 #include <dumux/common/properties.hh>
+#include <dumux/experimental/timestepping/implicitsolve.hh>
 
 namespace Dumux::Experimental {
 
@@ -114,10 +115,7 @@ public:
     ElementResidualVector evalLocalResidual(const ElementVariables& elemVars) const
     {
         if constexpr (requires (const Assembler& a) { a.currentOperatorWeights(); })
-        {
-            const auto& weights = assembler().currentOperatorWeights();
-            return evalLocalResidualForStage(elemVars, weights.storage, weights.spatial);
-        }
+            return evalLocalResidualForStage(elemVars, assembler().currentOperatorWeights());
         else if (!assembler().isStationaryProblem())
         {
             ElementResidualVector residual = evalLocalFluxAndSourceResidual(elemVars);
@@ -129,26 +127,32 @@ public:
     }
 
     /*!
-     * \brief Evaluate the stage-weighted residual for multi-stage (e.g. Runge-Kutta) assembly.
+     * \brief Evaluate the weighted residual of an implicit solve of a time integration method
      *
-     * Returns `temporalWeight * raw_storage(elemVars) + spatialWeight * (flux + source)(elemVars)`
+     * Returns `weights.inertia * inertia(elemVars) + weights.storage * storage(elemVars) + weights.spatial * (flux + source)(elemVars)`
      *
-     * \param elemVars Element variables bound to the current stage's solution
-     * \param temporalWeight Butcher tableau weight for the storage term at this stage
-     * \param spatialWeight  Butcher tableau weight for the spatial term at this stage
+     * \param elemVars Element variables bound to the solution of the implicit solve
+     * \param weights The operator weights
      */
     template<class Scalar>
     ElementResidualVector evalLocalResidualForStage(const ElementVariables& elemVars,
-                                                     Scalar temporalWeight,
-                                                     Scalar spatialWeight) const
+                                                     const OperatorWeights<Scalar>& weights) const
     {
         auto spatial = evalLocalFluxAndSourceResidual(elemVars);
-        for (auto& r : spatial) r *= spatialWeight;
+        for (auto& r : spatial) r *= weights.spatial;
 
         auto temporal = localResidual_.evalStorageCurrentLevel(element_, elemDisc_, elemVars);
-        for (auto& r : temporal) r *= temporalWeight;
+        for (auto& r : temporal) r *= weights.storage;
 
         spatial += temporal;
+
+        if (weights.inertia != 0.0)
+        {
+            auto inertia = localResidual_.evalInertia(element_, elemDisc_, elemVars);
+            for (auto& r : inertia) r *= weights.inertia;
+            spatial += inertia;
+        }
+
         return spatial;
     }
 

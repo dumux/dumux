@@ -52,6 +52,11 @@ namespace Dumux {
  * `firstPiolaKirchhoffStressTensor(F, dF/dt, elemDisc, ipData)`, which allows rate-dependent laws.
  * Degrees of freedom with a control volume use the acceleration of the degree of freedom (lumped
  * mass), all others the interpolated acceleration at the element quadrature points (consistent mass).
+ *
+ * Alternatively, a problem enables the inertia operator \f$ \varrho_0 \mathbf{u} \f$ with
+ * `static constexpr bool enableInertia()` for the time integration methods with second time
+ * derivatives (see Experimental::ImplicitSolveParams), with the same mass lumping and the density
+ * `solidDensity(elemDisc, ipData)`. Such problems do not provide the acceleration.
  */
 template<class TypeTag>
 class HyperelasticLocalResidual
@@ -89,6 +94,56 @@ public:
     NumEqVector storageIntegral(const ElementDiscretization&, const ElementVariables&,
                                 const SubControlVolume&, bool) const
     { return NumEqVector(0.0); }
+
+    /*!
+     * \brief The inertia \f$ \int \varrho_0 \mathbf{u} \f$ over a control volume, mass lumped
+     * \note Used if the problem enables inertia with `static constexpr bool enableInertia()`.
+     */
+    template<class SubControlVolume>
+    NumEqVector inertiaIntegral(const ElementDiscretization& elemDisc,
+                                const ElementVariables& elemVars,
+                                const SubControlVolume& scv) const
+    {
+        static_assert(!hasInertia, "Problems that enable the inertia operator do not provide the acceleration");
+        const auto& problem = this->asImp().problem();
+        Scalar mass = 0.0;
+        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv))
+            mass += qpData.weight()*problem.solidDensity(elemDisc, qpData.ipData());
+
+        NumEqVector inertia(elemVars[scv].displacement());
+        inertia *= mass*elemVars[scv].extrusionFactor();
+        return inertia;
+    }
+
+    /*!
+     * \brief The inertia \f$ \int \varrho_0 \mathbf{u} \cdot \mathbf{w} \f$ of the degrees of
+     *        freedom without control volume, with the consistent mass
+     */
+    void addToElementInertia(ElementResidualVector& inertia,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars) const
+    {
+        if constexpr (Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>())
+        {
+            if (std::ranges::empty(nonCVLocalDofs(elemDisc)))
+                return;
+
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
+            {
+                const auto& ipData = qpData.ipData();
+                const auto& shapeValues = cache(elemVars, ipData).shapeValues();
+                Vector u(0.0);
+                for (const auto& localDof : localDofs(elemDisc))
+                    u.axpy(shapeValues[localDof.index()][0], elemVars[localDof].displacement());
+
+                const auto rho = problem.solidDensity(elemDisc, ipData);
+                for (const auto& localDof : nonCVLocalDofs(elemDisc))
+                    inertia[localDof.index()].axpy(qpData.weight()*rho*shapeValues[localDof.index()][0], u);
+            }
+        }
+    }
 
     //! Body force minus inertia (lumped) over a control volume
     template<class SubControlVolume>

@@ -145,11 +145,14 @@ public:
         resetResidual_();
         markConstrainedDofs_();
 
-        ResidualType storage, spatial;
-        assembleOperators_(curSol, {.storage = &storage, .spatial = &spatial});
+        const auto& weights = solveParams_->weights;
+        ResidualType inertia, storage, spatial;
+        assembleOperators_(curSol, {.inertia = weights.inertia != 0.0 ? &inertia : nullptr, .storage = &storage, .spatial = &spatial});
         (*residual_) = 0.0;
-        residual_->axpy(solveParams_->weights.storage, storage);
-        residual_->axpy(solveParams_->weights.spatial, spatial);
+        if (weights.inertia != 0.0)
+            residual_->axpy(weights.inertia, inertia);
+        residual_->axpy(weights.storage, storage);
+        residual_->axpy(weights.spatial, spatial);
 
         addConstant_();
         applyDirichletResidual_(curSol);
@@ -244,9 +247,6 @@ public:
      */
     void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        if (params.weights.inertia != 0.0)
-            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage assembler");
-
         setProblemTime_(*problem_, params.timeLevel.current());
         solveParams_ = params;
     }
@@ -259,9 +259,6 @@ public:
                            const Experimental::TimeLevel<Scalar>& timeLevel,
                            Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        if (evaluations.inertia)
-            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage assembler");
-
         setProblemTime_(*problem_, timeLevel.current());
         assembleOperators_(sol, evaluations);
     }
@@ -272,6 +269,10 @@ public:
 
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
+
+    //! Whether the problem enables the inertia operator
+    static constexpr bool hasInertia()
+    { return Detail::TimeStepping::enablesInertia<Problem>(); }
 
     //! The operator weights of the current implicit solve
     const Experimental::OperatorWeights<Scalar>& currentOperatorWeights() const
@@ -285,19 +286,19 @@ private:
     //! Assemble the unweighted operators at the given solution at the current problem time
     void assembleOperators_(const SolutionVector& sol, Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        ResidualType unused;
-        auto& storage = evaluations.storage ? *evaluations.storage : unused;
-        auto& spatial = evaluations.spatial ? *evaluations.spatial : unused;
-        for (auto* r : {&storage, &spatial})
+        for (auto* r : {evaluations.inertia, evaluations.storage, evaluations.spatial})
         {
-            setResidualSize_(*r);
-            (*r) = 0.0;
+            if (r)
+            {
+                setResidualSize_(*r);
+                (*r) = 0.0;
+            }
         }
 
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, sol);
-            localAssembler.assembleCurrentResidual(storage, spatial);
+            localAssembler.assembleOperators(evaluations);
         });
     }
 

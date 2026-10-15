@@ -26,3 +26,18 @@ dumux_add_test(
 )
 
 add_subdirectory(dynamic_manufactured_solution)
+
+dumux_add_test(
+    NAME test_hyperelastic_inertia_box
+    LABELS geomechanics elastic timestepping
+    SOURCES main_inertia.cc
+    CMD_ARGS params.input -Grid.Cells "6 4 4" -SpatialParams.SolidDensity 2.0
+)
+
+dumux_add_test(
+    NAME test_hyperelastic_inertia_firstorderstepper_fails
+    LABELS geomechanics elastic timestepping
+    SOURCES main_inertia.cc
+    COMPILE_DEFINITIONS CHECK_FIRST_ORDER_STEPPER_REJECTION=1
+    EXPECT_COMPILE_FAIL
+)

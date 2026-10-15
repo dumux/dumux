@@ -166,7 +166,7 @@ SolutionVector solveWithMultiStageAssembler(std::shared_ptr<const MomentumGridGe
     using PDESolver = typename decltype(pdeSolver)::element_type;
     Experimental::MultiStageTimeStepper<PDESolver> timeStepper(pdeSolver, method);
 
-    if (Test::checkImplicitSolveContract(*assembler, s->x, 0.0, 1.0/dt, 1.0) == 0)
+    if (Test::checkImplicitSolveContract(*assembler, s->x, 0.0, 1.0/dt, 1.0, 1.0) == 0)
         DUNE_THROW(Dune::Exception, "Expected Dirichlet constraints in the implicit solve contract check");
 
     const auto numSteps = static_cast<int>(std::round(tEnd/dt));

@@ -260,9 +260,6 @@ public:
      */
     void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        if (params.weights.inertia != 0.0)
-            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage FV assembler");
-
         setProblemTime_(*problem_, params.timeLevel.current());
         solveParams_ = params;
     }
@@ -275,26 +272,21 @@ public:
                            const Experimental::TimeLevel<Scalar>& timeLevel,
                            Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        if (evaluations.inertia)
-            DUNE_THROW(Dune::NotImplemented, "Inertia terms in the multi-stage FV assembler");
-
         setProblemTime_(*problem_, timeLevel.current());
 
-        ResidualType unused;
-        auto& storage = evaluations.storage ? *evaluations.storage : unused;
-        auto& spatial = evaluations.spatial ? *evaluations.spatial : unused;
-        for (auto* r : {&storage, &spatial})
+        for (auto* r : {evaluations.inertia, evaluations.storage, evaluations.spatial})
         {
-            setResidualSize_(*r);
-            (*r) = 0.0;
+            if (r)
+            {
+                setResidualSize_(*r);
+                (*r) = 0.0;
+            }
         }
 
         assemble_([&](const auto& element)
         {
             LocalAssembler localAssembler(*this, element, sol);
-            localAssembler.localResidual().spatialWeight(1.0, !evaluations.spatial);
-            localAssembler.localResidual().temporalWeight(1.0, !evaluations.storage);
-            localAssembler.assembleCurrentResidual(spatial, storage);
+            localAssembler.assembleOperators(evaluations);
         });
     }
 
@@ -304,6 +296,10 @@ public:
 
     bool isImplicit() const
     { return timeSteppingMethod_->implicit(); }
+
+    //! Whether the problem enables the inertia operator
+    static constexpr bool hasInertia()
+    { return Detail::TimeStepping::enablesInertia<Problem>(); }
 
 private:
     /*!

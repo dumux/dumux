@@ -149,9 +149,9 @@ public:
      * \brief Assemble the unweighted storage and spatial operators (no Jacobian)
      */
     template<class SubResidualVector>
-    void assembleCurrentResidual(SubResidualVector& temporal, SubResidualVector& spatial)
+    void assembleOperators(OperatorEvaluations<SubResidualVector> evaluations)
     {
-        ParentType::assembleCurrentResidual(temporal, spatial);
+        ParentType::assembleOperators(evaluations);
     }
 
     /*!

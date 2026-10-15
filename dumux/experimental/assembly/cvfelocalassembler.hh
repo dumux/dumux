@@ -96,6 +96,7 @@ public:
 
         const bool skipSpatial = (weights.spatial == 0.0);
         const bool skipStorage = (weights.storage == 0.0);
+        const bool skipInertia = (weights.inertia == 0.0);
 
         ElementResidualVector origResidual(this->fvGeometry().numScv());
         origResidual = 0.0;
@@ -107,15 +108,22 @@ public:
         }
         if (!skipStorage)
         {
-            const auto storage = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars());
+            const auto storage = this->localResidual().evalStorageOperator(this->fvGeometry(), this->curElemVolVars());
             for (const auto& scv : scvs(this->fvGeometry()))
                 origResidual[scv.localDofIndex()] += storage[scv.localDofIndex()]*weights.storage;
+        }
+        if (!skipInertia)
+        {
+            const auto inertia = this->localResidual().evalInertiaOperator(this->fvGeometry(), this->curElemVolVars());
+            for (const auto& scv : scvs(this->fvGeometry()))
+                origResidual[scv.localDofIndex()] += inertia[scv.localDofIndex()]*weights.inertia;
         }
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += origResidual[scv.localDofIndex()];
 
         this->localResidual().spatialWeight(weights.spatial, skipSpatial);
         this->localResidual().temporalWeight(weights.storage, skipStorage);
+        this->localResidual().inertiaWeight(weights.inertia, skipInertia);
 
         if (partialReassembler && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
         {
@@ -246,19 +254,26 @@ public:
     }
 
     /*!
-     * \brief Assemble the residual only
+     * \brief Add the unweighted operators of this element to the requested global vectors
      */
     template<class ResidualVector>
-    void assembleCurrentResidual(ResidualVector& spatialRes, ResidualVector& temporalRes)
+    void assembleOperators(OperatorEvaluations<ResidualVector> evaluations)
     {
+        this->localResidual().spatialWeight(1.0, !evaluations.spatial);
         this->asImp_().bindLocalViews();
-        const auto flux = this->evalLocalFluxAndSourceResidual(this->curElemVolVars());
-        const auto storage = this->localResidual().evalStorage(this->fvGeometry(), this->curElemVolVars());
-        for (const auto& scv : scvs(this->fvGeometry()))
+
+        const auto addToGlobal = [&](ResidualVector& global, const auto& local)
         {
-            spatialRes[scv.dofIndex()] += flux[scv.localDofIndex()];
-            temporalRes[scv.dofIndex()] += storage[scv.localDofIndex()];
-        }
+            for (const auto& scv : scvs(this->fvGeometry()))
+                global[scv.dofIndex()] += local[scv.localDofIndex()];
+        };
+
+        if (evaluations.spatial)
+            addToGlobal(*evaluations.spatial, this->evalLocalFluxAndSourceResidual(this->curElemVolVars()));
+        if (evaluations.storage)
+            addToGlobal(*evaluations.storage, this->localResidual().evalStorageOperator(this->fvGeometry(), this->curElemVolVars()));
+        if (evaluations.inertia)
+            addToGlobal(*evaluations.inertia, this->localResidual().evalInertiaOperator(this->fvGeometry(), this->curElemVolVars()));
     }
 
     //! Enforce Dirichlet constraints
