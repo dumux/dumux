@@ -205,8 +205,10 @@ faces, and the Dirichlet condition does not bias the solution.
 Initial conditions are $T = T_\mathrm{in} = 20\ ^\circ\mathrm{C}$ (`Well.Problem.InjectionTemperature`),
 $p = 10^5\ \mathrm{Pa}$ in the pipe and $T = T_{s,0} = 55\ ^\circ\mathrm{C}$
 (`Rock.Problem.InitialTemperature`) in the rock. The simulation runs for
-5 days with a time step of 4 h (`TimeLoop.DtInitial`, limited by `TimeLoop.EpisodeLength`);
-the outlet temperature and the solutions of both domains are written at the end of every episode.
+5 days. It starts with a time step of 1 s (`TimeLoop.DtInitial`), so that the flushing of the
+cold initial pipe content is resolved in time; the time step then grows up to the episode length
+of 4 h (`TimeLoop.EpisodeLength`). The outlet temperature and the solutions of both domains are
+written at the end of every episode.
 The output of the 3D rock solution can be switched off with `Vtk.EnableBulkOutput = false`.
 
 **Grid Convergence**
@@ -234,13 +236,12 @@ coupling does not support refined rock grids, so for it the script instead passe
 ![Figure 2: Temperature profile along the borehole at the final time](wellbore_temperature_profile.png)
 
 Figures 1 and 2 show both coupling methods on the finest grid (refinement 3) together with
-Ramey's solution (dashed) and the OGS results. Figure 1 shows the outlet temperature at a depth
+Ramey's solution (dotted) and the OGS results. Figure 1 shows the outlet temperature at a depth
 of 30 m over the 5 days of simulated time, Figure 2 the fluid temperature along the borehole at
 the final time $t = 5$ days. In both figures the upper panel shows the temperatures and the
-lower panel their deviation from Ramey's solution. The outlet temperature is shown at all
-outputs except $t = 0$, where the pipe is still filled with the cold initial water that Ramey's
-solution does not contain. Its deviation also leaves out the first output ($t = 4$ h), where it
-is about 1 °C for all simulations (see below) and would set the scale of the lower panel.
+lower panel their deviation from Ramey's solution. The outlet temperature and its deviation are
+shown at all outputs except $t = 0$, where the pipe is still filled with the cold initial water
+that Ramey's solution does not contain.
 
 The kink in Ramey's outlet temperature at $t \approx 9.4$ h comes from the time function: there
 $t_D = 1.5$, where $f(t_D)$ switches from the early-time to the late-time approximation. The two
@@ -254,32 +255,37 @@ branches do not match ($f$ drops from 0.874 to 0.853), so the outlet temperature
 Figure 3 shows the change of the solution with regard to the previous refinement: for the
 outlet temperature the maximum over all outputs in time, for the temperature profile at 5 d the
 maximum along the borehole. Ramey's solution is only approximate, so the
-convergence is measured between successive grids. The changes decrease with every refinement, for the profile
-at about second order. Going from refinement 2 to 3 changes the outlet temperature by at most
-0.008 °C (surface) and 0.014 °C (kernel), both at the first output; after the first day the
-change is below 0.001 °C. The profile changes by up to 0.006 °C for both methods. Refinement 3
+convergence is measured between successive grids. The changes decrease with every refinement,
+for the profile at about second order, except for the outlet temperature of the kernel coupling
+(see below). Going from refinement 2 to 3 changes the outlet temperature by at most 0.009 °C
+(surface, at 8 h) and 0.054 °C (kernel, at 4 h); from 8 h on the change is below 0.01 °C for both
+methods, and after the first day below 0.001 °C. The profile changes by up to 0.006 °C for both
+methods. Refinement 3
 is therefore considered converged; on this grid the solutions of both methods lie on top of each
 other (Figures 1 and 2).
 
-At the first output ($t = 4$ h) the kernel coupling still gives an outlet temperature 0.05 °C
+At the first output ($t = 4$ h) the kernel coupling still gives an outlet temperature 0.07 °C
 below the surface coupling. At this time the thermal front in the rock has only penetrated about
 0.1 m, less than the kernel width of 0.28 m, so the steady radial profile assumed by the kernel
-flux scaling does not hold yet. This early-time error is the reason for the small kernel width,
-see the coupling section above.
+flux scaling does not hold yet. This early-time error sets the maximum change of the kernel outlet
+temperature in Figure 3, which therefore does not decrease from refinement 2 to 3. It is also the
+reason for the small kernel width, see the coupling section above.
 
-*Comparison with Ramey and OGS.* At the first output the outlet temperature (25.4 °C) is still
-about 1 °C below Ramey's solution (Figure 1). The reason for this discrepancy is that the residence time of the water in the pipe is 2.2 h, and
-Ramey neglects the heat stored in the fluid, so the initially cold pipe content is not part of
-the analytical solution. The outlet temperature peaks at about 26.3 °C after 8 h and then decays
-as the rock around the borehole cools down and the temperature difference driving the heat
-exchange shrinks. During the first day the simulations are warmer than Ramey's solution, by up
-to 0.3 °C for DuMux and 0.6 °C for OGS. From day 2 on the deviation stays below 0.05 °C for DuMux and below 0.07 °C for OGS.
+*Comparison with Ramey and OGS.* The residence time of the water in the pipe is 2.2 h, so at the
+first output ($t = 4$ h) the cold initial pipe content has left the pipe. The outlet temperature
+is highest there (26.87 °C surface, 26.81 °C kernel) and then decays as the rock around the
+borehole cools down and the temperature difference driving the heat exchange shrinks
+(Figure 1). During the first day DuMux is warmer than Ramey's solution, by up to 0.44 °C
+(surface) and 0.37 °C (kernel) at 4 h. OGS lies 0.76 °C below Ramey at 4 h and up to 0.6 °C
+above it later in the first day. From day 2 on the deviation stays below 0.04 °C for DuMux and
+below 0.07 °C for OGS.
 
 The temperature profile (Figure 2) is the expected exponential approach of the fluid temperature towards
 the undisturbed rock temperature. With a characteristic length $X \approx 208$ m it is still
 practically linear over the 30 m of this benchmark and rises from 20 °C at the inlet to
-24.675 °C at the outlet for both methods, against 24.702 °C for Ramey and 24.670 °C for OGS.
-Over the whole borehole the deviation from Ramey is at most 0.027 °C for both methods, against
+24.674 °C (surface) and 24.675 °C (kernel) at the outlet, against 24.702 °C for Ramey and
+24.670 °C for OGS. Over the whole borehole the deviation from Ramey is at most 0.028 °C for both
+methods, against
 0.032 °C for OGS.
 
 **Running the Benchmark**
