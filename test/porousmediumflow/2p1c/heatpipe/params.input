@@ -1,0 +1,44 @@
+[TimeLoop]
+DtInitial = 100 # [s]
+TEnd = 1e11 # [s]
+MaxTimeStepSize = 1e10 # [s]
+
+[Grid]
+UpperRight = 1.0 # [m]
+Cells = 20
+Refinement = 0
+
+[Problem]
+Name = test_2p1cni_heatpipe
+EnableGravity = false
+HeatFlux = 100 # [W/m^2] entering at the heated end
+ColdEndGasPressure = 101325 # [Pa]
+ColdEndSaturation = 0.7
+
+[SpatialParams]
+Permeability = 1e-12 # [m^2]
+Porosity = 0.4
+SurfaceTension = 0.0589 # [N/m]
+
+[FluidSystem]
+ReferenceTemperature = 373.15 # [K] saturation temperature at the reference pressure
+ReferencePressure = 101325 # [Pa]
+
+[Component]
+Name = Water
+MolarMass = 0.018015 # [kg/mol]
+LiquidDensity = 958 # [kg/m^3]
+LiquidDynamicViscosity = 2.8e-4 # [Pa s]
+GasDensity = 0.6 # [kg/m^3]
+GasDynamicViscosity = 1.2e-5 # [Pa s]
+EnthalpyOfVaporization = 2.257e6 # [J/kg]
+LiquidHeatCapacity = 4200 # [J/(kg K)]
+ReferenceTemperature = 373.15 # [K]
+LiquidThermalConductivity = 0 # [W/(m K)]
+GasThermalConductivity = 0 # [W/(m K)]
+SolidDensity = 2650 # [kg/m^3]
+SolidHeatCapacity = 800 # [J/(kg K)]
+SolidThermalConductivity = 0 # [W/(m K)]
+
+[Newton]
+MaxRelativeShift = 1e-10
