@@ -28,4 +28,4 @@ dumux_add_test(NAME test_wellbore_heat_transport_kernel
                                    -Vtk.OutputName test_wellbore_heat_transport_kernel")
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES "grids" "convergence.py" "ramey.py" "ogs_solution.py")
+dune_symlink_to_source_files(FILES "grids")

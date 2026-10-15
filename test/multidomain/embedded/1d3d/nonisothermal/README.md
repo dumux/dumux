@@ -7,7 +7,7 @@
 The benchmark simulates non-isothermal single-phase flow in a vertical wellbore (a borehole
 heat exchanger with a grouted pipe) that is embedded as a 1D line in a 3D rock domain.
 Cold water is injected at the top of the pipe, is heated on its way down by the surrounding
-warm rock, and leaves the pipe at the bottom. The quantities of interest are the outlet
+warm rock, and leaves the pipe at the bottom. The only driving force for the flow is the pressure gradient. Ghravity is neglected in this setup. The quantities of interest are the outlet
 temperature as a function of time and the fluid temperature along the pipe at the final time.
 
 The setup follows the
@@ -231,13 +231,18 @@ rock grids.
 ![Figure 2: Temperature profile along the borehole at the final time](wellbore_temperature_profile.png)
 
 Figures 1 and 2 show both coupling methods on the finest grid (refinement 3) together with
-Ramey's solution and the OGS results. Figure 1 shows the outlet temperature at a depth of 30 m
-over the 5 days of simulated time, Figure 2 the fluid temperature along the borehole at the
-final time $t = 5$ days; the dashed curves on the secondary axes are the deviations from
-Ramey's solution. The deviation of the outlet temperature leaves out the first
-output ($t = 4$ h), where it is about 1 °C for all simulations (see below) and would set the
-scale of the error axis. The outlet temperature itself is shown at all outputs except $t = 0$, where the pipe is still
-filled with the cold initial water that Ramey's solution does not contain (see below).
+Ramey's solution (dashed) and the OGS results. Figure 1 shows the outlet temperature at a depth
+of 30 m over the 5 days of simulated time, Figure 2 the fluid temperature along the borehole at
+the final time $t = 5$ days. In both figures the upper panel shows the temperatures and the
+lower panel their deviation from Ramey's solution. The outlet temperature is shown at all
+outputs except $t = 0$, where the pipe is still filled with the cold initial water that Ramey's
+solution does not contain. Its deviation also leaves out the first output ($t = 4$ h), where it
+is about 1 °C for all simulations (see below) and would set the scale of the lower panel.
+
+The kink in Ramey's outlet temperature at $t \approx 9.4$ h comes from the time function: there
+$t_D = 1.5$, where $f(t_D)$ switches from the early-time to the late-time approximation. The two
+branches do not match ($f$ drops from 0.874 to 0.853), so the outlet temperature jumps by about
+0.04 °C.
 
 *Grid convergence.*
 
@@ -265,36 +270,34 @@ Ramey neglects the heat stored in the fluid, so the initially cold pipe content 
 the analytical solution. The outlet temperature peaks at about 26.3 °C after 8 h and then decays
 as the rock around the borehole cools down and the temperature difference driving the heat
 exchange shrinks. During the first day the simulations are warmer than Ramey's solution, by up
-to 0.3 °C for DuMux and 0.6 °C for OGS. From day 2 on the deviation stays below 0.05 °C.
+to 0.3 °C for DuMux and 0.6 °C for OGS. From day 2 on the deviation stays below 0.05 °C for DuMux and below 0.07 °C for OGS.
 
 The temperature profile (Figure 2) is the expected exponential approach of the fluid temperature towards
 the undisturbed rock temperature. With a characteristic length $X \approx 208$ m it is still
 practically linear over the 30 m of this benchmark and rises from 20 °C at the inlet to
 24.675 °C at the outlet for both methods, against 24.702 °C for Ramey and 24.670 °C for OGS.
-Over the whole borehole the deviation from Ramey is at most 0.028 °C for both methods, against
+Over the whole borehole the deviation from Ramey is at most 0.027 °C for both methods, against
 0.032 °C for OGS.
 
 **Running the Benchmark**
 
-Run the convergence test with:
+Navigate to the source directory of the benchmark and run the convergence test:
 
 ```bash
+cd dumux/test/multidomain/embedded/1d3d/nonisothermal
 python3 convergence.py
 ```
 
-The script builds both executables and runs every coupling method at refinements 0 to 3, each
-in its own directory `convergence/<method>_refinement_<n>` in the build directory. It then writes
-the figures to `convergence/outlet_temperature.png`, `convergence/temperature_profile.png` and
-`convergence/refinement_convergence.png` (Figures 1 to 3). The 3D rock output is not used and
-would take several GB per run on the fine grids, so the script switches it off
+The script builds both executables and runs every coupling method at refinements 0 to 3. The
+output is saved in the matching build directory,
+`dumux/build-cmake/test/multidomain/embedded/1d3d/nonisothermal/convergence`: each run in its own
+subdirectory `<method>_refinement_<n>`, and the figures as `outlet_temperature.png`,
+`temperature_profile.png` and `refinement_convergence.png` (Figures 1 to 3). The 3D rock output
+is not used and would take several GB per run on the fine grids, so the script switches it off
 (`-Vtk.EnableBulkOutput false`).
 
-Building and running the simulations needs the Python standard library only. Evaluating and
-plotting the results needs the Python packages `numpy` and `matplotlib`; the temperature profile
-(Figure 2 and the profile in Figure 3) is read from the VTK output of the pipe and additionally
-needs `vtk`. Without `numpy` or `matplotlib` the script still builds and runs the simulations
-and only skips the evaluation; without `vtk` it skips the temperature profile. The packages can
-be installed e.g. with `python3 -m pip install numpy matplotlib vtk`.
+The script needs the Python packages `numpy`, `matplotlib` and `vtk`, which can be installed
+e.g. with `python3 -m pip install numpy matplotlib vtk`.
 
 **References**
 
