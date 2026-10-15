@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input cooksmembrane.msh)
+dune_symlink_to_source_files(FILES params.input)
 
 foreach(_scheme box pq1bubble pq2 pq1fe pq2fe)
     if(_scheme STREQUAL "box")
