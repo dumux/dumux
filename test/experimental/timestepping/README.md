@@ -384,9 +384,25 @@ of such an equation persists with alternating sign.
 
 The time derivatives of $I$ and $M$ at the initial time are the Jacobians of
 the operators times given time derivatives of the solution
-(`initialize(vars, t0, velocity, acceleration)`), or zero
-(`initialize(vars, t0)`). Without an inertia operator, the stepper integrates
-first-order problems; $M$ then follows the Newmark relations.
+(`initialize(vars, t0, velocity, acceleration)`). `initialize(vars, t0)`
+starts problems with inertia at rest (vanishing time derivatives of the
+operators) and problems without inertia with $\dot M^0=-R(x^0,t^0)$ and
+$\ddot M^0=0$. This rate is consistent if the initial solution satisfies the
+equations without storage term.
+
+Without an inertia operator, the stepper integrates first-order problems, and
+$M$ follows the Newmark relations. For $\dot u=\lambda u$ ($M(u)=u$,
+$R(u)=-\lambda u$), the stepper with the Chung-Hulbert parameters has the
+eigenvalues of the first-order generalized-α method of Jansen, Whiting and
+Hulbert (2000) @cite JansenWhitingHulbert2000 with the same $\rho_\infty$,
+which solves
+$(1-\alpha^J_m)\,\dot u^n + \alpha^J_m\,\dot u^{n+1} = \lambda\big((1-\alpha^J_f)\,u^n + \alpha^J_f\,u^{n+1}\big)$
+with $u^{n+1}=u^n+\Delta t\big[(1-\gamma^J)\,\dot u^n+\gamma^J\,\dot u^{n+1}\big]$,
+$\alpha^J_m=(3-\rho_\infty)/(2(1+\rho_\infty))$, $\alpha^J_f=1/(1+\rho_\infty)$
+and $\gamma^J=\tfrac12+\alpha^J_m-\alpha^J_f$, and the additional eigenvalue
+$-\alpha_f/(1-\alpha_f)=-\rho_\infty$, by which the residual
+$\dot u-\lambda u$ is multiplied in every step. A consistent start does not
+excite this eigenvalue.
 
 **Analytical Solution**
 
@@ -400,6 +416,9 @@ $$
 u_i(t) = e^{-\zeta_i\omega_i t}\left[u_i(0)\cos(\omega_{d,i}t)
 + \frac{\dot u_i(0)+\zeta_i\omega_i u_i(0)}{\omega_{d,i}}\sin(\omega_{d,i}t)\right].
 $$
+
+The first-order equation $\dot u=-u+e^t$ has the exact solution
+$u(t)=(u(0)-\tfrac12)\,e^{-t}+\tfrac12\,e^t$.
 
 For the undamped oscillator $\ddot u + \omega^2 u = 0$, one step maps
 $(u^n,\dot u^n,\ddot u^n)$ to $(u^{n+1},\dot u^{n+1},\ddot u^{n+1})$ with the
@@ -421,12 +440,21 @@ $\bar\theta=2\arctan(\omega\Delta t/2)$.
   stiffness term $0.5\,u_i^3$. It computes the errors of the damped
   oscillators at $t=2$ for $n=25,50,100,200,400$ steps, and the amplification
   matrix of the stepper for $10^{-2}\le\omega\Delta t\le10^{6}$ (with
-  $\Delta t=1$). It computes the order for $\dot u=-u+e^t$ of the BDF
-  benchmark (storage operator only), checks the factor
-  $-\alpha_f/(1-\alpha_f)$ for the constraint of the constrained system of the
-  BDF benchmark with $u_1(0)-\sin(0)=0.1$, and checks that the Newmark
-  parameters reproduce `NewmarkBeta` in 100 steps of $\ddot u=-u$ with
-  $(\beta,\gamma)=(0.3,0.6)$. It writes `test_generalizedalpha_data.json`.
+  $\Delta t=1$). For $\dot u=\lambda u$ (storage operator only, $\Delta t=1$),
+  it computes the amplification matrix of the stepper on 41 radii
+  $10^{-2}\le|\lambda|\le10^{6}$ times 37 angles in the closed left
+  half-plane, on the negative real axis and at $\lambda=-10^8$, and compares
+  the eigenvalues for Chung-Hulbert with those of Jansen-Whiting-Hulbert and
+  $-\rho_\infty$ at seven values of $\lambda$. It computes the order for
+  $\dot u=-u+e^t$ with $u(0)=1$ and consistent initial rates, and the errors at
+  $t=1$ for $u(0)=2$ and $n=10,20,\ldots,640$ steps with the default start and
+  with zero initial rates. It checks the factor $-\alpha_f/(1-\alpha_f)$ for
+  the constraint of the constrained system of the BDF benchmark with
+  $u_1(0)-\sin(0)=0.1$ and zero initial rates, checks that the default start
+  keeps the constraint for $u(0)=(0.5,0)$ in 20 steps with $\Delta t=0.1$, and
+  checks that the Newmark parameters reproduce `NewmarkBeta` in 100 steps of
+  $\ddot u=-u$ with $(\beta,\gamma)=(0.3,0.6)$. It writes
+  `test_generalizedalpha_data.json`.
 
 **Benchmark: convergence and dissipation**
 
@@ -442,7 +470,7 @@ and WBZ with $\rho_\infty=0.8$. Chung-Hulbert with $\rho_\infty=1$ and the
 Newmark method have the same damping ratio and period (to $10^{-9}$ for
 $\omega\Delta t\le 10^4$), and their curves coincide.
 
-The spectral radius (top right) at $\omega\Delta t=10^6$ is 0.80008, 0.50008
+The spectral radius (top centre) at $\omega\Delta t=10^6$ is 0.80008, 0.50008
 and 0.00010 for Chung-Hulbert with $\rho_\infty=0.8$, $0.5$ and $0$, and
 0.80000 for HHT and WBZ with $\rho_\infty=0.8$. The largest spectral radius
 over all $\omega\Delta t$ is one for all methods up to $6.3\cdot10^{-6}$ for
@@ -450,7 +478,7 @@ Chung-Hulbert with $\rho_\infty=1$, whose three eigenvalues approach $-1$ for
 $\omega\Delta t\to\infty$; the roots of the characteristic polynomial are
 then only accurate to about the cube root of the round-off. At
 $\Delta t/T=0.1$, the damping ratio (bottom left) and the relative period
-error (bottom right) are:
+error (bottom centre) are:
 
 | Scheme | $\bar\xi$ | $(\bar T-T)/T$ |
 |---|---|---|
@@ -465,13 +493,33 @@ error (bottom right) are:
 For $\rho_\infty=0.8$, the damping ratio of Chung-Hulbert at $\Delta t/T=0.1$
 is $7\,\%$ of that of HHT and $5\,\%$ of that of WBZ.
 
-For $\dot u=-u+e^t$, the observed orders between $n=100$ and $n=200$ are 2.000
-for Newmark, HHT, WBZ and Chung-Hulbert with $\rho_\infty=1$ and $0.8$, and
-1.999 and 1.990 for Chung-Hulbert with $\rho_\infty=0.5$ and $0$. The
-violation of the constraint is multiplied by $-\alpha_f/(1-\alpha_f)$ to
+For $\dot u=\lambda u$ (top right), all parameter sets are A-stable: the
+largest spectral radius in the closed left half-plane exceeds one by at most
+$3.8\cdot10^{-5}$, for Chung-Hulbert with $\rho_\infty=1$, whose eigenvalues
+approach $-1$ for $\lambda\Delta t\to-\infty$. At $\lambda=-10^8$, the
+spectral radius is 0.80000, 0.50000 and 0.00007 for Chung-Hulbert with
+$\rho_\infty=0.8$, $0.5$ and $0$, 0.80000 for HHT and WBZ, and one for Newmark.
+For Chung-Hulbert, the eigenvalues agree with those of Jansen-Whiting-Hulbert
+and $-\rho_\infty$ to $3.5\cdot10^{-14}$ ($5.9\cdot10^{-8}$ for
+$\rho_\infty=1$). The eigenvalue $-\rho_\infty$ does not depend on $\lambda$,
+so the spectral radius of Chung-Hulbert is $\rho_\infty$ wherever the
+eigenvalues of Jansen-Whiting-Hulbert are smaller.
+
+For $\dot u=-u+e^t$ with $u(0)=1$ and consistent initial rates, the observed
+orders between $n=100$ and $n=200$ are 2.000 for Newmark, HHT, WBZ and
+Chung-Hulbert with $\rho_\infty=1$ and $0.8$, and 1.999 and 1.990 for
+Chung-Hulbert with $\rho_\infty=0.5$ and $0$. For $u(0)=2$ (bottom right), the
+default start gives the order 2.000 between $n=320$ and $n=640$ for all
+parameter sets. With zero initial rates, the order is 1.00 for all parameter
+sets except Chung-Hulbert with $\rho_\infty=1$, whose errors do not depend on
+the start, and the error at $n=640$ is 603 (Chung-Hulbert, $\rho_\infty=0$) to
+39513 (Newmark) times the error with the default start.
+
+The violation of the constraint is multiplied by $-\alpha_f/(1-\alpha_f)$ to
 $10^{-12}$ in each step, i.e. by $0$, $-1$, $-0.8$, $-0.5$, $0$, $-0.125$ and
 $0$ for Newmark, Chung-Hulbert with $\rho_\infty=1$, $0.8$, $0.5$, $0$, HHT and
-WBZ. The Newmark parameter set and `NewmarkBeta` agree to $1.2\cdot10^{-14}$.
+WBZ. With the default start and $u(0)=(0.5,0)$, the constraint holds to
+$10^{-12}$ in all 20 steps. The Newmark parameter set and `NewmarkBeta` agree to $1.2\cdot10^{-14}$.
 
 **Reproducing the figures**
 

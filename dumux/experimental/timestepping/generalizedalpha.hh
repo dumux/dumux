@@ -210,7 +210,10 @@ public:
  * each implicit solve has the units of the spatial operator.
  *
  * Problems without inertia can be integrated as well: the storage operator then follows the
- * Newmark relations.
+ * Newmark relations. With the Chung-Hulbert parameters, the method then has the eigenvalues of the
+ * first-order generalized-alpha method of Jansen, Whiting and Hulbert (2000) \cite JansenWhitingHulbert2000
+ * with the same \f$ \rho_\infty \f$ and the additional eigenvalue \f$ -\alpha_f/(1-\alpha_f) \f$ of the
+ * residual \f$ \dot M + R \f$.
  */
 template<class PDESolver, class Scalar = double>
 class GeneralizedAlphaTimeStepper
@@ -256,9 +259,13 @@ public:
     }
 
     /*!
-     * \brief Start the time integration at time t0 with vanishing time derivatives of the solution
+     * \brief Start the time integration at time t0
      * \param vars The variables object at t0
      * \param t0 The initial time
+     * \note With inertia, the integration starts at rest (vanishing time derivatives of the operators).
+     *       Without inertia, the storage operator starts with the rate \f$ -R(x_0, t_0) \f$ and a
+     *       vanishing second time derivative. This rate is consistent if the initial solution
+     *       satisfies the equations without storage term.
      */
     void initialize(Variables& vars, const Scalar t0)
     { initialize_(vars, t0, nullptr, nullptr); }
@@ -280,7 +287,7 @@ public:
      * \param vars The variables object at the current time level
      * \param t The current time level
      * \param dt The time step size to be used
-     * \note Without a preceding call of initialize(), the integration starts at t with vanishing time derivatives.
+     * \note Without a preceding call of initialize(), the integration starts at t as with initialize(vars, t).
      */
     void step(Variables& vars, const Scalar t, const Scalar dt)
     {
@@ -380,6 +387,12 @@ private:
             if constexpr (withInertia)
                 applyJacobian(OperatorWeights<Scalar>{1.0, 0.0, 0.0}, inertia_);
             applyJacobian(OperatorWeights<Scalar>{0.0, 1.0, 0.0}, storage_);
+        }
+        else if constexpr (!withInertia)
+        {
+            // the equation dM/dt + R = 0 at t0; the second time derivative does not affect the order
+            storage_.rate = spatial_;
+            storage_.rate *= -1.0;
         }
 
         time_ = t0;
