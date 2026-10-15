@@ -39,20 +39,17 @@ class RockProblem : public PorousMediumFlowProblem<TypeTag>
     using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename GridGeometry::GlobalCoordinate;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
 
     // copy some indices for convenience
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     enum {
-        // indices of the primary variables
-        pressureIdx = Indices::pressureIdx,
+        // index of the primary variable
         temperatureIdx = Indices::temperatureIdx
     };
     enum {
-        // index of the transport equation
-        conti0EqIdx = Indices::conti0EqIdx,
+        // index of the energy balance equation
         energyEqIdx = Indices::energyEqIdx
     };
 
@@ -245,7 +242,6 @@ public:
     {
         PrimaryVariables values;
         values[temperatureIdx] = initialTemperature_;
-        values[pressureIdx] = 1.0e5;
         return values;
     }
 
@@ -268,7 +264,7 @@ public:
                 source += pointSources;
 
                 const auto dofIdxGlobal = scv.dofIndex();
-                energySources_[dofIdxGlobal] += pointSources[1]; // index 1 for energy eq. index
+                energySources_[dofIdxGlobal] += pointSources[energyEqIdx];
             }
         }
 

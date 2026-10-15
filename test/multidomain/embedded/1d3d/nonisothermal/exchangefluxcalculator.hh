@@ -17,26 +17,20 @@ class ExchangeFluxCalculator
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using CouplingManager = GetPropType<TypeTag, Properties::CouplingManager>;
-    using PointSource = GetPropType<TypeTag, Properties::PointSource>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
-    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
+    // the bulk (rock) and the low-dim (well) domain use different models, so the
+    // primary variables of each domain are accessed with the indices of its own model
     using MDTraits = typename CouplingManager::MultiDomainTraits;
-    static constexpr auto bulkIdx = typename MDTraits::template SubDomain<0>::Index();
-    static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
+    using BulkTypeTag = typename MDTraits::template SubDomain<0>::TypeTag;
+    using LowDimTypeTag = typename MDTraits::template SubDomain<1>::TypeTag;
+    using BulkIndices = typename GetPropType<BulkTypeTag, Properties::ModelTraits>::Indices;
+    using LowDimIndices = typename GetPropType<LowDimTypeTag, Properties::ModelTraits>::Indices;
+    using FluidSystem = GetPropType<LowDimTypeTag, Properties::FluidSystem>;
 
-    enum {
-        // indices of the primary variables
-        pressureIdx = Indices::pressureIdx,
-        temperatureIdx = Indices::temperatureIdx
-    };
-    enum {
-        // index of the transport equation
-        conti0EqIdx = Indices::conti0EqIdx,
-        energyEqIdx = Indices::energyEqIdx
-    };
+    // index of the energy balance in the domain of TypeTag
+    static constexpr int energyEqIdx = GetPropType<TypeTag, Properties::ModelTraits>::Indices::energyEqIdx;
 
     public:
     ExchangeFluxCalculator(std::shared_ptr<CouplingManager> couplingManager)
@@ -47,8 +41,8 @@ class ExchangeFluxCalculator
     {
         NumEqVector values(0.0);
 
-        const Scalar temperature3D = this->couplingManager().bulkPriVars(id)[temperatureIdx];
-        const Scalar temperature1D = this->couplingManager().lowDimPriVars(id)[temperatureIdx];
+        const Scalar temperature3D = this->couplingManager().bulkPriVars(id)[BulkIndices::temperatureIdx];
+        const Scalar temperature1D = this->couplingManager().lowDimPriVars(id)[LowDimIndices::temperatureIdx];
 
         const Scalar radius = this->couplingManager().radius(id);
         const Scalar surface = 2*M_PI*radius;
@@ -86,7 +80,7 @@ class ExchangeFluxCalculator
         static const Scalar kernelWidthFactor = getParam<Scalar>("MixedDimension.KernelWidthFactor");
         const Scalar kernelWidth = kernelWidthFactor*radius;
 
-        // The soil porosity is zero in this test, hence the effective thermal conductivity
+        // The rock porosity is zero in this test, hence the effective thermal conductivity
         // of the bulk domain equals the thermal conductivity of the solid.
         static const Scalar lambdaBulk = getParam<Scalar>("Component.SolidThermalConductivity");
 
@@ -114,8 +108,8 @@ private:
      */
     Scalar convectionCoeff_(const std::size_t id) const
     {
-        const Scalar T = this->couplingManager().lowDimPriVars(id)[temperatureIdx];
-        const Scalar p = this->couplingManager().lowDimPriVars(id)[pressureIdx];
+        const Scalar T = this->couplingManager().lowDimPriVars(id)[LowDimIndices::temperatureIdx];
+        const Scalar p = this->couplingManager().lowDimPriVars(id)[LowDimIndices::pressureIdx];
         const Scalar lambdaFluid = FluidSystem::thermalConductivity(T, p);
 
         const Scalar rOuter = this->couplingManager().radius(id);

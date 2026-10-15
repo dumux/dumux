@@ -23,32 +23,31 @@ refinement 3 they are converged (Figure 3) and agree with each other (Figures 1 
 
 **Model**
 
-Both subdomains use the non-isothermal one-phase model (@ref OnePModel with @ref NIModel),
-i.e. a mass and an energy balance. With gravity switched off they read in both domains
+The 1D pipe domain $\Lambda$ uses the non-isothermal one-phase model (@ref OnePModel with
+@ref NIModel), i.e. a mass and an energy balance. With gravity switched off they read
 
 $$\frac{\partial (\phi \varrho_f)}{\partial t}
 - \nabla\cdot\left(\varrho_f \frac{\mathbf{K}}{\mu_f}\nabla p\right) = q_m$$
 
 $$\frac{\partial (\phi \varrho_f u_f)}{\partial t}
-+ \frac{\partial \left((1 - \phi)\, \varrho_s c_s T\right)}{\partial t}
 - \nabla\cdot\left(\varrho_f h_f \frac{\mathbf{K}}{\mu_f}\nabla p\right)
-- \nabla\cdot\left(\lambda_\mathrm{eff}\nabla T\right) = q_e$$
+- \nabla\cdot\left(\lambda_f\nabla T\right) = q_e$$
 
-where the storage of energy is split between the fluid and the solid rock, $u_f$ and $h_f$ are
-the specific internal energy and enthalpy of the fluid, and $\lambda_\mathrm{eff}$ is the
-effective thermal conductivity of fluid and rock. $q_m$ and $q_e$ are mass and energy sources;
-there is no mass exchange ($q_m = 0$), and $q_e$ holds the exchange term $q_h$ of the coupling.
-
-In the 1D pipe domain $\Lambda$ all terms are extruded with the pipe cross-section $\pi r_i^2$.
+where $u_f$ and $h_f$ are the specific internal energy and enthalpy of the fluid. $q_m$ and $q_e$
+are mass and energy sources; there is no mass exchange ($q_m = 0$), and $q_e$ holds the exchange
+term $q_h$ of the coupling. All terms are extruded with the pipe cross-section $\pi r_i^2$.
 The pipe is modelled as a porous medium with porosity $\phi = 1$, so only the fluid stores and
-conducts heat ($\lambda_\mathrm{eff} = \lambda_f$), and a Hagen–Poiseuille-equivalent permeability
-$\mathbf{K} = r_i^2/8$
+conducts heat, and a Hagen–Poiseuille-equivalent permeability $\mathbf{K} = r_i^2/8$
 (`spatialparams_well.hh`), so that the Darcy flux reproduces laminar pipe flow.
 
-In the 3D rock domain $\Omega$ the porosity is $\phi = 0$ and
-$\mathbf{K} = 10^{-20}\,\mathrm{m^2}$ (`spatialparams_rock.hh`), i.e. heat is stored in the
-solid only ($\lambda_\mathrm{eff} = \lambda_s$) and, since the rock is effectively
-impermeable, transported by conduction only.
+The 3D rock domain $\Omega$ is impermeable, so heat is transported by conduction only. It uses
+the energy balance of a solid (@ref SolidEnergyModel)
+
+$$\frac{\partial (\varrho_s c_s T)}{\partial t} - \nabla\cdot\left(\lambda_s\nabla T\right) = -q_e$$
+
+where the source $-q_e$ is the exchange term of the coupling with the opposite sign. The model
+scales storage and conduction with the solid fraction $1 - \phi$, which is one as the rock has
+the porosity $\phi = 0$ (`spatialparams_rock.hh`).
 
 **Coupling**
 
@@ -193,8 +192,8 @@ Boundary conditions:
 |--------|----------|-----------|
 | Pipe | inlet ($z = 0$) | Neumann: mass influx $q\varrho_f/(\pi r_i^2)$ and the corresponding enthalpy influx at $T_\mathrm{in}$ |
 | Pipe | outlet ($z = -L$) | Dirichlet pressure $10^5$ Pa; energy: advective outflow plus Fourier conduction evaluated from the local gradients |
-| Rock | top and bottom ($z = 0$, $z = -L$) | no-flow / no-heat-flux Neumann |
-| Rock | lateral faces | Dirichlet at the initial state ($T_{s,0}$, $10^5$ Pa) |
+| Rock | top and bottom ($z = 0$, $z = -L$) | no-heat-flux Neumann |
+| Rock | lateral faces | Dirichlet at the initial state ($T_{s,0}$) |
 
 The lateral extent of the rock domain is chosen such that the cooling around the wellbore does
 not reach the lateral boundaries within the simulated time. The rock temperature next to the
@@ -203,7 +202,7 @@ faces, and the Dirichlet condition does not bias the solution.
 
 Initial conditions are $T = T_\mathrm{in} = 20\ ^\circ\mathrm{C}$ (`Well.Problem.InjectionTemperature`),
 $p = 10^5\ \mathrm{Pa}$ in the pipe and $T = T_{s,0} = 55\ ^\circ\mathrm{C}$
-(`Rock.Problem.InitialTemperature`), $p = 10^5\ \mathrm{Pa}$ in the rock. The simulation runs for
+(`Rock.Problem.InitialTemperature`) in the rock. The simulation runs for
 5 days with a time step of 4 h (`TimeLoop.DtInitial`, limited by `TimeLoop.EpisodeLength`);
 the outlet temperature and the solutions of both domains are written at the end of every episode.
 The output of the 3D rock solution can be switched off with `Vtk.EnableBulkOutput = false`.
