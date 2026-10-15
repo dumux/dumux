@@ -21,3 +21,20 @@ dumux_add_test(NAME test_2p1cni_heatpipe_tpfa
                LABELS porousmediumflow 2p1c 2p1cni
                COMMAND ./convergencetest.py
                CMD_ARGS test_2p1cni_heatpipe_tpfa params.input)
+
+# central weighting of the mobilities makes both schemes second order
+dumux_add_test(NAME test_2p1cni_heatpipe_box_central
+               TARGET test_2p1cni_heatpipe_box
+               LABELS porousmediumflow 2p1c 2p1cni
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_2p1cni_heatpipe_box params.input
+                        --expected-rate 2 --refinements 6 --name test_2p1cni_heatpipe_box_central
+                        -Flux.UpwindWeight 0.5)
+
+dumux_add_test(NAME test_2p1cni_heatpipe_tpfa_central
+               TARGET test_2p1cni_heatpipe_tpfa
+               LABELS porousmediumflow 2p1c 2p1cni
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_2p1cni_heatpipe_tpfa params.input
+                        --expected-rate 2 --refinements 6 --name test_2p1cni_heatpipe_tpfa_central
+                        -Flux.UpwindWeight 0.5)

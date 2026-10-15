@@ -85,7 +85,7 @@ To run the convergence study and produce the figures, run in the build directory
 python3 plot_convergence.py test_2p1cni_heatpipe_box test_2p1cni_heatpipe_tpfa
 ```
 
-The script produces two figures:
+The script runs both schemes with full upwinding of the mobilities (`Flux.UpwindWeight = 1`, the default) and with central weighting (`Flux.UpwindWeight = 0.5`) and produces two figures:
 
 - **`profile.png`**: liquid saturation, temperature, gas pressure and liquid pressure on the coarsest grid compared with the reference solution.
 - **`convergence.png`**: discrete $L^2$ errors of the four fields versus the mesh size $h$ on a log-log scale for 20 to 1280 cells.
@@ -94,13 +94,22 @@ The script produces two figures:
 
 ![Grid convergence](heatpipe2p1c_convergence.png)
 
-Both schemes converge with first order in all four fields, as expected from the full upwinding of the mobilities. The errors of the liquid saturation and the temperature are
+With full upwinding, both schemes converge with first order in all four fields. The vapor flows towards the cold end and takes its mobility from the drier neighbor, the liquid flows towards the heated end and takes its mobility from the wetter neighbor. Both mobilities are too large, so the gas pressure rises too little and the liquid pressure drops too little. The capillary pressure is then too small, the saturation too large and the temperature too low. On the coarsest grid, the gas relative permeability doubles across the first cell at the cold end. The errors of the liquid saturation and the temperature are
 
-| cells | saturation, box | rate | saturation, TPFA | rate | temperature [K], box | rate | temperature [K], TPFA | rate |
+| cells | saturation, box | rate | saturation, TPFA | rate | temperature (K), box | rate | temperature (K), TPFA | rate |
 |------:|----------------:|-----:|-----------------:|-----:|---------------------:|-----:|----------------------:|-----:|
 | 20    | 1.86e-2 | -    | 1.71e-2 | -    | 4.76e-2 | -    | 4.33e-2 | -    |
 | 80    | 5.13e-3 | 0.93 | 4.98e-3 | 0.89 | 1.32e-2 | 0.93 | 1.27e-2 | 0.88 |
 | 320   | 1.32e-3 | 0.98 | 1.31e-3 | 0.96 | 3.40e-3 | 0.98 | 3.37e-3 | 0.96 |
 | 1280  | 3.33e-4 | 0.99 | 3.32e-4 | 0.99 | 8.57e-4 | 0.99 | 8.55e-4 | 0.99 |
 
-with rates computed between successive rows. The CTest `test_2p1cni_heatpipe_box` (and `_tpfa`) runs `convergencetest.py` on 20 to 160 cells and requires a mean convergence rate within $1 \pm 0.2$ for the saturation, both pressures and the temperature.
+With central weighting, both schemes converge with second order, so the upwinding is the only first-order error. The errors are
+
+| cells | saturation, box | rate | saturation, TPFA | rate | temperature (K), box | rate | temperature (K), TPFA | rate |
+|------:|----------------:|-----:|-----------------:|-----:|---------------------:|-----:|----------------------:|-----:|
+| 20    | 1.64e-3 | -    | 1.19e-3 | -    | 4.38e-3 | -    | 3.05e-3 | -    |
+| 80    | 1.10e-4 | 1.95 | 9.99e-5 | 1.79 | 2.99e-4 | 1.94 | 2.66e-4 | 1.76 |
+| 320   | 6.94e-6 | 2.00 | 6.76e-6 | 1.94 | 1.88e-5 | 2.00 | 1.82e-5 | 1.93 |
+| 1280  | 4.34e-7 | 2.00 | 4.31e-7 | 1.99 | 1.18e-6 | 2.00 | 1.17e-6 | 1.98 |
+
+with rates computed between successive rows in both tables. The CTests `test_2p1cni_heatpipe_box` and `test_2p1cni_heatpipe_tpfa` run `convergencetest.py` on 20 to 160 cells with full upwinding and require a mean convergence rate within $1 \pm 0.2$ for the saturation, both pressures and the temperature. The CTests `test_2p1cni_heatpipe_box_central` and `test_2p1cni_heatpipe_tpfa_central` run 20 to 640 cells with central weighting and require a mean convergence rate within $2 \pm 0.2$.
