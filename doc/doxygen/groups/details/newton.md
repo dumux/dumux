@@ -102,6 +102,22 @@ The default implementation of @ref Dumux::NewtonSolver uses a simple backtrackin
 @note To customize the line search strategy, create a new class derived from @ref Dumux::NewtonSolver and override the private virtual method @ref Dumux::NewtonSolver::lineSearchUpdate_.
 Activate line search update by setting the parameter `Newton.UseLineSearch = true`.
 
+#### Line search with quadratic and cubic backtracking
+
+@ref Dumux::NewtonSolverLinesearchCubicbacktracking is a Newton solver with a line search that requires a sufficient decrease of the residual norm.
+With $g(\alpha) = \frac{1}{2} ||F(\textbf{u}_k - \alpha \Delta \textbf{u})||_2^2$, a step size $\alpha$ is accepted if it satisfies the Armijo condition
+
+```math
+g(\alpha) \leq g(0) + c_1 \alpha g'(0), \quad g'(0) = -||\textbf{r}_k||_2^2,
+```
+
+where $g'(0)$ follows from $J(\textbf{u}_k) \Delta \textbf{u} = \textbf{r}_k$ and the constant $c_1$ is set by `Newton.LineSearchArmijoC1` (default value $10^{-4}$).
+Starting from $\alpha = 1$, a rejected step size is replaced by the minimizer of the polynomial that matches $g(0)$ and $g'(0)$ and interpolates $g$ at the last trial step size (quadratic, after the first rejection)
+or at the last two trial step sizes (cubic, after subsequent rejections) @cite NocedalWright2006.
+The new step size is restricted to the interval $[0.1\alpha, 0.5\alpha]$. If the residual is not finite for a trial step size, the step size is halved.
+As for the default line search, a step size that reaches `Newton.LineSearchMinRelaxationFactor` is accepted.
+The line search of this solver is always enabled, independent of `Newton.UseLineSearch`.
+
 ### Chopped update
 
 For instance in problems where the residual has multiple roots, it can be beneficial to restrict the search space to a certain region in the parameter space. This can be achieved by a chopped update strategy, where the solution vector is projected back to a feasible region after each Newton step.
