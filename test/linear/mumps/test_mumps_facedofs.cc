@@ -7,7 +7,8 @@
  * \brief Test for the MUMPS solver backend with dofs on the element faces, on a non-overlapping
  *        and an overlapping decomposition, for one domain, for two coupled subdomains, for the
  *        two coupled fields as one system with two unknowns per dof, and for two subdomains on
- *        two grids with different resolutions and decompositions
+ *        two grids with different resolutions and decompositions. The single-domain and the
+ *        two-subdomain solvers also reuse a factorization for several right-hand sides.
  *
  * Every element adds its contributions to its own faces only. In the non-overlapping
  * decomposition, the rows of the faces on the process border are therefore split among the
@@ -162,6 +163,27 @@ void checkSolution(const GridGeometry& gridGeometry, const Vector& x, int domain
         DUNE_THROW(Dune::Exception, name << ": wrong solution, max error " << error);
 }
 
+/*!
+ * \brief Factorizes A with setMatrix, changes A afterwards and solves for two multiples of b,
+ *        which has to give the corresponding multiples of the solution of the unchanged A
+ */
+template<class Solver, class M, class V, class CheckSolution>
+void solveWithReusedFactorization(Solver& solver, M A, const V& b, const CheckSolution& checkSolution)
+{
+    solver.setMatrix(A);
+    A *= 2.0;
+    for (const double scale : {1.0, -3.0})
+    {
+        V scaledB = b;
+        scaledB *= scale;
+        V x = b;
+        x = 0.0;
+        solver.solve(x, scaledB);
+        x *= 1.0/scale;
+        checkSolution(x, scale);
+    }
+}
+
 template<class Solver, class GridGeometry>
 void solveSingleDomain(Solver& solver, const GridGeometry& gridGeometry, const std::string& name)
 {
@@ -172,6 +194,10 @@ void solveSingleDomain(Solver& solver, const GridGeometry& gridGeometry, const s
     x = 0.0;
     solver.solve(A, x, b);
     checkSolution(gridGeometry, x, 0, name);
+
+    solveWithReusedFactorization(solver, A, b, [&](const Vector& y, double scale) {
+        checkSolution(gridGeometry, y, 0, name + ", reused factorization, scale " + std::to_string(scale));
+    });
 }
 
 template<class Solver, class GridGeometry>
@@ -187,6 +213,12 @@ void solveTwoDomains(Solver& solver, const GridGeometry& gridGeometry, const std
     solver.solve(A, x, b);
     checkSolution(gridGeometry, x[_0], 0, name + " (subdomain 0)");
     checkSolution(gridGeometry, x[_1], 1, name + " (subdomain 1)");
+
+    solveWithReusedFactorization(solver, A, b, [&](const MTVector& y, double scale) {
+        const std::string suffix = ", reused factorization, scale " + std::to_string(scale);
+        checkSolution(gridGeometry, y[_0], 0, name + suffix + " (subdomain 0)");
+        checkSolution(gridGeometry, y[_1], 1, name + suffix + " (subdomain 1)");
+    });
 }
 
 //! The system of the two coupled subdomains, assembled with one block of two unknowns per dof

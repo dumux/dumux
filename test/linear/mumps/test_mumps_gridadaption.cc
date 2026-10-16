@@ -182,6 +182,7 @@ int main(int argc, char* argv[])
     solveSingleDomain(solver, *gridGeometry, "coarse grid");
     solveTwoDomains(mtSolver, *gridGeometry, "coarse grid, two subdomains");
 
+    const std::size_t numCoarseDofs = gridGeometry->gridView().size(0);
     grid.globalRefine(1);
     gridGeometry->update(grid.leafGridView());
 
@@ -193,6 +194,15 @@ int main(int argc, char* argv[])
         catch (const Dune::InvalidStateException&) { detected = true; }
         if (!detected)
             DUNE_THROW(Dune::Exception, "Solving after grid adaption without updateAfterGridAdaption did not throw");
+
+        // the failed setMatrix also dropped the factorization of the coarse system
+        Vector x(numCoarseDofs), b(numCoarseDofs);
+        b = 1.0;
+        detected = false;
+        try { solver.solve(x, b); }
+        catch (const Dune::InvalidStateException&) { detected = true; }
+        if (!detected)
+            DUNE_THROW(Dune::Exception, "Solving with the factorization of the coarse system after a failed setMatrix did not throw");
     }
 
     solver.updateAfterGridAdaption(gridGeometry->gridView(), gridGeometry->elementMapper());
