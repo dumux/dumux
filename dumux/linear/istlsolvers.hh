@@ -381,6 +381,24 @@ public:
             solver_ = constructPreconditionedSolver_(linearOperator_);
     }
 
+protected:
+    /*!
+     * \brief Set the factory that constructs the preconditioner of each solve
+     * \note For factories that carry data, e.g. the prolongation of a multigrid preconditioner
+     */
+    void setPreconditionerFactory(PreconditionerFactory factory)
+    {
+        preconditionerFactory_ = std::move(factory);
+
+        // reconstruct the solver with the new preconditioner
+        if (solver_)
+            solver_ = constructPreconditionedSolver_(linearOperator_);
+    }
+
+    //! The factory that constructs the preconditioner of each solve
+    PreconditionerFactory& preconditionerFactory()
+    { return preconditionerFactory_; }
+
 private:
 
     void initializeParameters_(const ParameterInitializer& params)
@@ -575,10 +593,10 @@ private:
             using Prec = Dune::Preconditioner<typename LinearOperator::domain_type, typename LinearOperator::range_type>;
 #if DUNE_VERSION_GTE(DUNE_ISTL,2,11)
             using OpTraits = Dune::OperatorTraits<LinearOperator>;
-            std::shared_ptr<Prec> prec = PreconditionerFactory{}(OpTraits{}, op, params);
+            std::shared_ptr<Prec> prec = preconditionerFactory_(OpTraits{}, op, params);
 #else
             using TL = Dune::TypeList<typename LinearOperator::matrix_type, typename LinearOperator::domain_type, typename LinearOperator::range_type>;
-            std::shared_ptr<Prec> prec = PreconditionerFactory{}(TL{}, op, params);
+            std::shared_ptr<Prec> prec = preconditionerFactory_(TL{}, op, params);
 #endif
 
 #if HAVE_MPI
@@ -644,6 +662,7 @@ private:
 
     Dune::ParameterTree params_;
     std::string name_;
+    PreconditionerFactory preconditionerFactory_;
 };
 
 } // end namespace Dumux::Detail
