@@ -28,8 +28,11 @@
  * not provide: such subdomains are supported in sequential runs only.
  *
  * The symbolic analysis is reused as long as the matrix keeps its size and sparsity pattern and
- * is repeated automatically otherwise. In parallel runs, the dof maps depend on the grid: after
- * the grid changed (e.g. grid adaption or load balancing), call updateAfterGridAdaption.
+ * is repeated automatically otherwise. The numeric factorization of the matrix given to setMatrix
+ * is reused by every solve(x, b), also for several right-hand sides at once; solve(A, x, b)
+ * factorizes A. In parallel runs, the dof maps
+ * depend on the grid: after the grid changed (e.g. grid adaption or load balancing), call
+ * updateAfterGridAdaption.
  *
  * This solver backend requires MPI (even for sequential runs, using MPI_COMM_SELF).
  */
@@ -263,6 +266,7 @@ public:
         mapper_ = &dofMapper;
         buildGlobalDofIndices_(gridView, dofMapper);
         analyzed_ = false;
+        factorized_ = false;
     }
 
     /*!
@@ -278,17 +282,54 @@ public:
         gridView_ = Detail::mumpsDeref(std::get<0>(ggTuple)).gridView();
         buildMultiTypeMaps_(ggTuple);
         analyzed_ = false;
+        factorized_ = false;
     }
 
+    /*!
+     * \brief Solve the linear system Ax = b
+     * \note Following calls of solve(x, b) reuse the factorization of A.
+     */
     SolverResult solve(const Matrix& A, XVector& x, const BVector& b)
     {
-        result_.clear();
-        if constexpr (isMultiType)
-            solveMultiType_(A, x, b);
-        else
-            solveSingleType_(A, x, b);
-        result_.converged = true;
-        return result_;
+        setMatrix(A);
+        return solve(x, b);
+    }
+
+    /*!
+     * \brief Factorize the matrix A of the linear system Ax = b for solve(x, b)
+     * \note The solver keeps the factorization, not the matrix, so A may change afterwards.
+     *       After a failed call, solve(x, b) throws until a matrix has been set successfully.
+     */
+    void setMatrix(const Matrix& A)
+    {
+        factorized_ = false;
+        prepareMaps_(A);
+        factorize_(A);
+    }
+
+    //! \copydoc setMatrix(const Matrix&)
+    void setMatrix(std::shared_ptr<Matrix> A)
+    { setMatrix(*A); }
+
+    /*!
+     * \brief Solve the linear system Ax = b with the factorization of the matrix set with setMatrix
+     */
+    SolverResult solve(XVector& x, const BVector& b)
+    { return solveColumns_({&x}, {&b}); }
+
+    /*!
+     * \brief Solve the linear systems A x[j] = b[j] for several right-hand sides in one MUMPS
+     *        solve with the factorization of the matrix set with setMatrix
+     */
+    SolverResult solve(std::vector<XVector>& x, const std::vector<BVector>& b)
+    {
+        std::vector<XVector*> xColumns;
+        std::vector<const BVector*> bColumns;
+        for (auto& xj : x)
+            xColumns.push_back(&xj);
+        for (const auto& bj : b)
+            bColumns.push_back(&bj);
+        return solveColumns_(xColumns, bColumns);
     }
 
     const Dune::InverseOperatorResult& result() const
@@ -928,7 +969,7 @@ private:
             displs_.assign(commSize, 0);
             std::partial_sum(recvCounts_.begin(), recvCounts_.end() - 1, displs_.begin() + 1);
             allGlobalIdx_.assign(nScalar, 0);
-            rhsHost_.assign(nScalar, 0.0); // natural (MUMPS) order, length n
+            rhsHost_.assign(nScalar, 0.0); // natural (MUMPS) order, length n per right-hand side
             tmpHost_.assign(nScalar, 0.0); // gather order
         }
         // Gather the owned global indices (constant across solves).
@@ -941,30 +982,46 @@ private:
     }
 
     /*!
-     * Gather the owned RHS entries onto the host as a dense vector in natural global order, run
-     * the MUMPS solve (JOB=3), and scatter the solution back to the owned DOFs of x.
+     * Gather the owned entries of the right-hand sides onto the host as dense columns in natural
+     * global order (leading dimension n), solve for all of them in one MUMPS call (JOB=3), and
+     * scatter the solutions back to the owned DOFs.
      */
     template<class BVec, class XVec>
-    void solveCentralized_(const BVec& b, XVec& x)
+    void solveCentralized_(const std::vector<const BVec*>& b, const std::vector<XVec*>& x)
     {
-        // Pack owned scalar RHS values in the same order as setupRhsGather_'s indices.
-        std::size_t s = 0;
-        for (std::size_t i = 0; i < b.size(); ++i)
-            if (isOwned_[i])
-                for (std::size_t k = 0; k < blockSize; ++k)
-                    sendBuf_[s++] = b[i][k];
+        const auto start = std::chrono::steady_clock::now();
+        const std::size_t numColumns = b.size();
+        if (numColumns == 0)
+            return;
 
-        MPI_Gatherv(sendBuf_.data(), nOwnedScalar_, MPI_DOUBLE,
-                    isHost_ ? tmpHost_.data() : nullptr,
-                    isHost_ ? recvCounts_.data() : nullptr,
-                    isHost_ ? displs_.data() : nullptr,
-                    MPI_DOUBLE, 0, mpiComm_);
+        const std::size_t n = tmpHost_.size();
+        if (isHost_)
+            rhsHost_.resize(n*numColumns);
+
+        for (std::size_t j = 0; j < numColumns; ++j)
+        {
+            // Pack owned scalar RHS values in the same order as setupRhsGather_'s indices.
+            const auto& bj = *b[j];
+            std::size_t s = 0;
+            for (std::size_t i = 0; i < bj.size(); ++i)
+                if (isOwned_[i])
+                    for (std::size_t k = 0; k < blockSize; ++k)
+                        sendBuf_[s++] = bj[i][k];
+
+            MPI_Gatherv(sendBuf_.data(), nOwnedScalar_, MPI_DOUBLE,
+                        isHost_ ? tmpHost_.data() : nullptr,
+                        isHost_ ? recvCounts_.data() : nullptr,
+                        isHost_ ? displs_.data() : nullptr,
+                        MPI_DOUBLE, 0, mpiComm_);
+
+            if (isHost_)
+                for (std::size_t p = 0; p < n; ++p)
+                    rhsHost_[j*n + static_cast<std::size_t>(allGlobalIdx_[p])] = tmpHost_[p];
+        }
 
         if (isHost_)
         {
-            for (std::size_t p = 0; p < tmpHost_.size(); ++p)
-                rhsHost_[static_cast<std::size_t>(allGlobalIdx_[p])] = tmpHost_[p];
-            id_.nrhs = 1;
+            id_.nrhs = static_cast<MUMPS_INT>(numColumns);
             id_.lrhs = id_.n;
             id_.rhs = rhsHost_.data();
         }
@@ -972,27 +1029,35 @@ private:
         dmumps_c(&id_);
         checkError_("solve");
 
-        // Solution is centralized on the host (natural order); permute back to gather order.
-        if (isHost_)
-            for (std::size_t p = 0; p < tmpHost_.size(); ++p)
-                tmpHost_[p] = rhsHost_[static_cast<std::size_t>(allGlobalIdx_[p])];
+        for (std::size_t j = 0; j < numColumns; ++j)
+        {
+            // The solutions are centralized on the host (natural order); permute back to gather order.
+            if (isHost_)
+                for (std::size_t p = 0; p < n; ++p)
+                    tmpHost_[p] = rhsHost_[j*n + static_cast<std::size_t>(allGlobalIdx_[p])];
 
-        MPI_Scatterv(isHost_ ? tmpHost_.data() : nullptr,
-                     isHost_ ? recvCounts_.data() : nullptr,
-                     isHost_ ? displs_.data() : nullptr,
-                     MPI_DOUBLE, sendBuf_.data(), nOwnedScalar_, MPI_DOUBLE, 0, mpiComm_);
+            MPI_Scatterv(isHost_ ? tmpHost_.data() : nullptr,
+                         isHost_ ? recvCounts_.data() : nullptr,
+                         isHost_ ? displs_.data() : nullptr,
+                         MPI_DOUBLE, sendBuf_.data(), nOwnedScalar_, MPI_DOUBLE, 0, mpiComm_);
 
-        s = 0;
-        for (std::size_t i = 0; i < x.size(); ++i)
-            if (isOwned_[i])
-                for (std::size_t k = 0; k < blockSize; ++k)
-                    x[i][k] = sendBuf_[s++];
+            auto& xj = *x[j];
+            std::size_t s = 0;
+            for (std::size_t i = 0; i < xj.size(); ++i)
+                if (isOwned_[i])
+                    for (std::size_t k = 0; k < blockSize; ++k)
+                        xj[i][k] = sendBuf_[s++];
+        }
+
+        if (this->verbosity() > 0 && isHost_)
+            std::cout << "[MUMPS] solve+gather "
+                      << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()
+                      << " ms" << (numColumns > 1 ? " for " + std::to_string(numColumns) + " right-hand sides" : std::string{})
+                      << std::endl;
     }
 
-    // Core MUMPS pipeline shared by single-type and MultiType: symbolic analysis (repeated only
-    // if the matrix structure changed) + numeric factorization + centralized solve.
-    template<class AScalar, class BScalar, class XScalar>
-    void solveCore_(const AScalar& A, const BScalar& b, XScalar& x)
+    // Symbolic analysis (repeated only if the matrix structure changed) and numeric factorization
+    void factorize_(const Matrix& A)
     {
         using Clock = std::chrono::steady_clock;
         const bool time = this->verbosity() > 0;
@@ -1030,17 +1095,98 @@ private:
         id_.job = 2; // numeric factorization
         dmumps_c(&id_);
         checkError_("numeric factorization");
+        factorized_ = true;
         const double tNumeric = ms(t2, Clock::now());
-
-        auto t3 = Clock::now();
-        solveCentralized_(b, x);
-        const double tSolve = ms(t3, Clock::now());
 
         if (time && isHost_)
             std::cout << "[MUMPS] assemble " << tAssemble << " ms"
                       << (tAnalysis > 0.0 ? (", analysis " + std::to_string(tAnalysis) + " ms") : std::string{})
-                      << ", numeric factorization " << tNumeric << " ms"
-                      << ", solve+gather " << tSolve << " ms" << std::endl;
+                      << ", numeric factorization " << tNumeric << " ms" << std::endl;
+    }
+
+    // Sequential dof maps follow the size of the system of A, parallel ones are checked against it.
+    void prepareMaps_(const Matrix& A)
+    {
+        if constexpr (isMultiType)
+        {
+            if (isParallel_)
+                updateMapsToSystemSize_(numScalarRows_(A), subdomainSizesMatch_(A));
+            else
+            {
+                updateMapsToSystemSize_(numScalarRows_(A));
+                initSeqDomainOffsets_(A);
+            }
+        }
+        else
+            updateMapsToSystemSize_(A.N());
+    }
+
+    template<class MTMatrix>
+    static std::size_t numScalarRows_(const MTMatrix& A)
+    {
+        std::size_t numRows = 0;
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<MTMatrix::N()>{}, [&](auto I)
+        {
+            const auto& block = A[I][I];
+            numRows += block.N()*std::decay_t<decltype(block)>::block_type::rows;
+        });
+        return numRows;
+    }
+
+    SolverResult solveColumns_(const std::vector<XVector*>& x, const std::vector<const BVector*>& b)
+    {
+        if (!factorized_)
+            DUNE_THROW(Dune::InvalidStateException, "Called solve(x, b) but no matrix has been set");
+
+        checkColumns_(x, b);
+        result_.clear();
+        if constexpr (isMultiType)
+            solveMultiType_(x, b);
+        else
+            solveSingleType_(x, b);
+        result_.converged = true;
+        return result_;
+    }
+
+    // The vectors have to match the factorized system and the number of right-hand sides has to be
+    // the same on all processes, which take part in every gather; otherwise all processes throw.
+    void checkColumns_(const std::vector<XVector*>& x, const std::vector<const BVector*>& b) const
+    {
+        bool match = x.size() == b.size();
+        for (std::size_t j = 0; match && j < x.size(); ++j)
+            match = sizeInDofMaps_(*x[j]) == localToGlobal_.size() && sizeInDofMaps_(*b[j]) == localToGlobal_.size();
+
+        if (isParallel_)
+        {
+            long long counts[2] = { static_cast<long long>(b.size()), -static_cast<long long>(b.size()) };
+            MPI_Allreduce(MPI_IN_PLACE, counts, 2, MPI_LONG_LONG, MPI_MIN, mpiComm_);
+            match = match && counts[0] == -counts[1];
+        }
+
+        if (!onAllProcesses_(match))
+            DUNE_THROW(Dune::InvalidStateException,
+                       "DirectSolverMumps: the solutions and right-hand sides do not match each other or the "
+                       "factorized system on at least one process (here " << x.size() << " solutions and "
+                       << b.size() << " right-hand sides, the system has " << localToGlobal_.size() << " rows)");
+    }
+
+    // The size of a vector in the entries of the dof maps (blocks for single-type, scalars for MultiType)
+    template<class V>
+    static std::size_t sizeInDofMaps_(const V& v)
+    {
+        if constexpr (isMultiTypeBlockVector<V>::value)
+        {
+            std::size_t size = 0;
+            Dune::Hybrid::forEach(std::make_index_sequence<V::N()>{}, [&](auto i)
+            {
+                using Block = typename std::decay_t<decltype(v[i])>::block_type;
+                size += v[i].size()*Block::size();
+            });
+            return size;
+        }
+        else
+            return v.size();
     }
 
     bool onAllProcesses_(bool value) const
@@ -1074,13 +1220,28 @@ private:
         }
     }
 
-    void solveSingleType_(const Matrix& A, XVector& x, const BVector& b)
+    void solveSingleType_(const std::vector<XVector*>& x, const std::vector<const BVector*>& b)
     {
-        updateMapsToSystemSize_(A.N());
+        std::vector<BVector> bConsistent;
+        bConsistent.reserve(b.size());
+        for (const auto* bj : b)
+        {
+            bConsistent.push_back(*bj);
+            makeRhsConsistent_(bConsistent.back());
+        }
 
-        auto bcopy = b;
+        std::vector<const BVector*> bColumns;
+        for (const auto& bj : bConsistent)
+            bColumns.push_back(&bj);
+        solveCentralized_(bColumns, x);
 
-        // Non-overlapping parallel: accumulate partial border RHS onto owners before the gather.
+        for (auto* xj : x)
+            distributeSolution_(*xj);
+    }
+
+    // Non-overlapping parallel: accumulate partial border RHS onto owners before the gather.
+    void makeRhsConsistent_(BVector& b) const
+    {
         if constexpr (LSTraits::canCommunicate)
         {
             if (isParallel_ && LSTraits::isNonOverlapping(*gridView_))
@@ -1088,19 +1249,20 @@ private:
                 if constexpr (requires { LSTraits::dofCodims; })
                 {
                     MultiCodimParallelVectorHelper<GridView, DofMapper> vecHelper(*gridView_, *mapper_);
-                    vecHelper.makeNonOverlappingConsistent(bcopy, LSTraits::dofCodims);
+                    vecHelper.makeNonOverlappingConsistent(b, LSTraits::dofCodims);
                 }
                 else
                 {
                     ParallelVectorHelper<GridView, DofMapper, LSTraits::dofCodim> vecHelper(*gridView_, *mapper_);
-                    vecHelper.makeNonOverlappingConsistent(bcopy);
+                    vecHelper.makeNonOverlappingConsistent(b);
                 }
             }
         }
+    }
 
-        solveCore_(A, bcopy, x);
-
-        // Distribute the solution: zero non-owned, then sum-communicate to the owner's value.
+    // Distribute the solution: zero non-owned, then sum-communicate to the owner's value.
+    void distributeSolution_(XVector& x) const
+    {
         if constexpr (LSTraits::canCommunicate)
         {
             if (isParallel_)
@@ -1119,40 +1281,46 @@ private:
         }
     }
 
-    void solveMultiType_(const Matrix& A, XVector& x, const BVector& b)
+    void solveMultiType_(const std::vector<XVector*>& x, const std::vector<const BVector*>& b)
     {
-        // The matrix stays in its block form; the triplets are read off the blocks with the
-        // scalar layout of the flattened system, which is the layout of the flattened vectors.
-        auto bscalar = VectorConverter<BVector>::multiTypeToBlockVector(b);
-
-        if (isParallel_)
-            updateMapsToSystemSize_(bscalar.size(), subdomainSizesMatch_(A));
-        else
+        // The flattened vectors have the scalar layout of the system factorized by MUMPS.
+        std::vector<ScalarBlockVector> bScalar;
+        bScalar.reserve(b.size());
+        for (const auto* bj : b)
         {
-            updateMapsToSystemSize_(bscalar.size());
-            initSeqDomainOffsets_(A);
+            bScalar.push_back(VectorConverter<BVector>::multiTypeToBlockVector(*bj));
+
+            // RHS preprocessing per subdomain: sum partial border-DOF contributions onto the owner.
+            if (isParallel_)
+                for (const auto& sub : subs_)
+                    if (sub.rhsPreprocess)
+                        sub.rhsPreprocess(bScalar.back());
         }
 
-        // RHS preprocessing per subdomain: sum partial border-DOF contributions onto the owner.
-        if (isParallel_)
-            for (const auto& sub : subs_)
-                if (sub.rhsPreprocess)
-                    sub.rhsPreprocess(bscalar);
-
-        auto xscalar = bscalar; // same layout; owned entries overwritten by the solve
-        solveCore_(A, bscalar, xscalar);
-
-        // Ghost broadcast per subdomain: zero non-owned DOFs, sum-communicate to the owner's value.
-        if (isParallel_)
+        auto xScalar = bScalar; // same layout; owned entries overwritten by the solve
+        std::vector<const ScalarBlockVector*> bColumns;
+        std::vector<ScalarBlockVector*> xColumns;
+        for (std::size_t j = 0; j < bScalar.size(); ++j)
         {
-            for (std::size_t r = 0; r < xscalar.size(); ++r)
-                if (!isOwned_[r]) xscalar[r] = 0.0;
-            for (const auto& sub : subs_)
-                if (sub.ghostBroadcast)
-                    sub.ghostBroadcast(xscalar);
+            bColumns.push_back(&bScalar[j]);
+            xColumns.push_back(&xScalar[j]);
         }
+        solveCentralized_(bColumns, xColumns);
 
-        VectorConverter<XVector>::retrieveValues(x, xscalar);
+        for (std::size_t j = 0; j < x.size(); ++j)
+        {
+            // Ghost broadcast per subdomain: zero non-owned DOFs, sum-communicate to the owner's value.
+            if (isParallel_)
+            {
+                for (std::size_t r = 0; r < xScalar[j].size(); ++r)
+                    if (!isOwned_[r]) xScalar[j][r] = 0.0;
+                for (const auto& sub : subs_)
+                    if (sub.ghostBroadcast)
+                        sub.ghostBroadcast(xScalar[j]);
+            }
+
+            VectorConverter<XVector>::retrieveValues(*x[j], xScalar[j]);
+        }
     }
 
     Scalar ownedGlobalNorm_(const XVector& x) const
@@ -1198,6 +1366,7 @@ private:
     DMUMPS_STRUC_C id_;
     bool initialized_ = false;
     bool analyzed_ = false;
+    bool factorized_ = false;
     SolverResult result_;
 
     // Global DOF bookkeeping (block level for single-type, scalar level for MultiType).
@@ -1221,7 +1390,7 @@ private:
     std::vector<int> recvCounts_; // host only
     std::vector<int> displs_; // host only
     std::vector<int> allGlobalIdx_; // host only, gather-order -> natural global index
-    std::vector<double> rhsHost_; // host only, natural (MUMPS) order, length n
+    std::vector<double> rhsHost_; // host only, natural (MUMPS) order, length n per right-hand side
     std::vector<double> tmpHost_; // host only, gather order
     std::vector<double> sendBuf_; // per-rank owned scalar values / solution
 

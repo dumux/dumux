@@ -97,3 +97,40 @@ dumux_add_test(NAME test_tracer_implicit_dispersion_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_dispersion_tpfa params.input -Problem.Name test_tracer_implicit_dispersion_tpfa
                        -Problem.AlphaL 0.02
                        -Problem.AlphaT 0.008")
+
+# implicit tracer tests with the direct solver MUMPS, which reuses the factorization of the constant
+# matrix, sequentially and on two processes (box also on a non-overlapping decomposition); the
+# velocity output is not computed in the parallel runs (not supported for cell-centered schemes
+# on overlapping decompositions, averaged differently at the process border for box)
+foreach(disc tpfa box)
+    if(disc STREQUAL "tpfa")
+        set(typetag TracerTestTpfa)
+        set(overlaps 1)
+    else()
+        set(typetag TracerTestBox)
+        set(overlaps 0 1)
+    endif()
+    dumux_add_test(NAME test_tracer_implicit_${disc}_mumps
+                  LABELS porousmediumflow tracer
+                  SOURCES main.cc
+                  COMPILE_DEFINITIONS TYPETAG=${typetag} IMPLICIT=true USEMOLES=false USE_MUMPS_SOLVER=1
+                  CMAKE_GUARD MUMPS_FOUND
+                  COMMAND ${DUMUX_RUNTEST}
+                  CMD_ARGS --script fuzzy
+                           --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_${disc}-reference.vtu
+                                   ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_${disc}_mumps-00010.vtu
+                           --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_${disc}_mumps params.input -Problem.Name test_tracer_implicit_${disc}_mumps")
+    foreach(overlap ${overlaps})
+        dumux_add_test(NAME test_tracer_implicit_${disc}_mumps_parallel_ovlp_${overlap}
+                      TARGET test_tracer_implicit_${disc}_mumps
+                      LABELS porousmediumflow tracer parallel
+                      CMAKE_GUARD MUMPS_FOUND
+                      COMMAND ${DUMUX_RUNTEST}
+                      CMD_ARGS --script fuzzy --ignore "process rank" "velocity_Groundwater (m/s)"
+                               --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_${disc}-reference.vtu
+                                       ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_tracer_implicit_${disc}_mumps_parallel_ovlp_${overlap}-00010.pvtu
+                               --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_${disc}_mumps params.input
+                               -Problem.Name test_tracer_implicit_${disc}_mumps_parallel_ovlp_${overlap} -Grid.Overlap ${overlap}
+                               -Vtk.AddVelocity false")
+    endforeach()
+endforeach()
