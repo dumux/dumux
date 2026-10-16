@@ -7,67 +7,44 @@
 /*!
  * \file
  * \ingroup OnePNCTests
- * \brief Spatial parameters matching Fahs et al. (2016), Table 2.
+ * \brief Constant spatial parameters with dispersivities for the Henry problem \cite Henry1964
  */
-#ifndef DUMUX_TEST_HENRY_FAHS_SPATIAL_PARAMS_HH
-#define DUMUX_TEST_HENRY_FAHS_SPATIAL_PARAMS_HH
+#ifndef DUMUX_TEST_HENRY_FAHS_SPATIALPARAMS_HH
+#define DUMUX_TEST_HENRY_FAHS_SPATIALPARAMS_HH
 
 #include <array>
+#include <memory>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/fvspatialparams1p.hh>
+#include <dumux/porousmediumflow/fvspatialparams1pconstant.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup OnePNCTests
- * \brief Homogeneous, isotropic aquifer with the exact permeability and porosity
- *        given in Fahs et al. (2016), Table 2 (k = 1.0204e-9 m^2 is used directly,
- *        rather than re-derived from a hydraulic conductivity, to match their value
- *        exactly). Longitudinal/transverse dispersivities (alphaL, alphaT) are read
- *        from Problem.AlphaL/Problem.AlphaT: 0/0 for "Test Case 1" (purely diffusive,
- *        dispersion disabled entirely -- see properties.hh), nonzero for Test Cases
- *        2/3 where velocity-dependent (Scheidegger) dispersion is enabled.
+ * \brief Constant spatial parameters with the longitudinal and transverse dispersivities
+ *        of Scheidegger's dispersion tensor
  */
 template<class GridGeometry, class Scalar>
 class HenryFahsSpatialParams
-: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
-                             HenryFahsSpatialParams<GridGeometry, Scalar>>
+: public FVPorousMediumFlowSpatialParamsOnePConstant<GridGeometry, Scalar>
 {
-    using GridView = typename GridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
-                                           HenryFahsSpatialParams<GridGeometry, Scalar>>;
-
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
+    using ParentType = FVPorousMediumFlowSpatialParamsOnePConstant<GridGeometry, Scalar>;
+    using GlobalPosition = typename GridGeometry::GridView::template Codim<0>::Geometry::GlobalCoordinate;
 
 public:
-    using PermeabilityType = Scalar;
-
     HenryFahsSpatialParams(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    , alphaL_(getParam<Scalar>("Problem.AlphaL"))
-    , alphaT_(getParam<Scalar>("Problem.AlphaT"))
+    , dispersivities_{getParam<Scalar>("SpatialParams.LongitudinalDispersivity"),
+                      getParam<Scalar>("SpatialParams.TransverseDispersivity")}
     {}
 
-    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
-    { return permeability_; }
-
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return porosity_; }
-
-    //! Longitudinal/transverse dispersivities [m] for Scheidegger's dispersion tensor
-    //! (only used when EnableCompositionalDispersion is set, see properties.hh)
+    //! The longitudinal and transverse dispersivity \f$[m]\f$
     std::array<Scalar, 2> dispersionAlphas(const GlobalPosition& globalPos, int phaseIdx = 0, int compIdx = 0) const
-    { return {alphaL_, alphaT_}; }
+    { return dispersivities_; }
 
 private:
-    static constexpr Scalar permeability_ = 1.0204e-9; // [m^2], Fahs et al. 2016 Table 2
-    static constexpr Scalar porosity_ = 0.35;
-    Scalar alphaL_;
-    Scalar alphaT_;
+    std::array<Scalar, 2> dispersivities_;
 };
 
 } // end namespace Dumux

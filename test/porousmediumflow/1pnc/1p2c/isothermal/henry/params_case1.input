@@ -1,29 +1,43 @@
 [TimeLoop]
-DtInitial = 864   # [s]
-TEnd = 86400        # [s], 1 d -- well past the ~4 h physical time Fahs et al. (2016)
-                    # report for this case (their Test Case 1) to reach steady state
+DtInitial = 432 # [s]
+MaxTimeStepSize = 3600 # [s]
+OutputInterval = 3600 # [s]
+TEnd = 86400 # [s]
 
 [Grid]
 LowerLeft = 0 0
-UpperRight = 3 1   # aspect ratio 3, matching Fahs et al. (2016) Table 2 (xi = 3)
-Cells = 120 40     # dx = dy = 0.0125, so the Table D1 Z-values (multiples of 0.05)
-                   # land exactly on grid nodes
+UpperRight = 3 1
+Cells = 120 40
 
 [Problem]
-Name = test_1p2c_henry_fahs_case1_box
+Name = test_1p2c_henry_diffusion_box
 EnableGravity = true
-InflowRate = 5.7024 # [m^3/d] = q_d * d = 6.6e-5 m^2/s * 1 m * 86400 s/d, matching
-                     # Fahs et al. (2016) Table 2 exactly
-MolecularDiffusion = 18.86e-6 # [m^2/s], Fahs et al. 2016 Table 2, Test Case 1
-AlphaL = 0 # [m], no dispersion in Test Case 1 (purely diffusive)
-AlphaT = 0 # [m]
+FreshwaterInflow = 6.6e-5 # [m^2/s]
+DensityDifference = 25 # [kg/m^3]
+ReferenceTable = fahs2016_table_d1.csv
+IsochlorTolerance = 1e-2 # [m]
 
 [SpatialParams]
-Tortuosity = 1 # [-]; makes EffectiveDiffusivityModel's D_eff = phi*Dm exactly,
-                # matching Fahs et al. (2016)'s epsilon*Dm (they apply no separate
-                # tortuosity reduction). Without this line, DiffusivityConstantTortuosity
-                # (see properties.hh) would use its default tau=0.5, i.e. half the
-                # diffusion.
+Permeability = 1.0204e-9 # [m^2]
+Porosity = 0.35
+Tortuosity = 1.0
+Temperature = 293.15 # [K]
+LongitudinalDispersivity = 0 # [m]
+TransverseDispersivity = 0 # [m]
+
+[1.Component]
+Name = Water
+MolarMass = 18e-3 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa s]
+
+[2.Component]
+Name = Salt
+MolarMass = 18e-3 # [kg/mol]
+LiquidDiffusionCoefficient = 18.86e-6 # [m^2/s]
+
+[Flux]
+UpwindWeight = 0.5
 
 [Vtk]
 AddVelocity = true

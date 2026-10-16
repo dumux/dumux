@@ -1,18 +1,7 @@
-# Digitized 10/50/90% isochlor positions for "Test Case 2" (velocity-dependent
-# dispersion, alphaL=0.1 m, alphaT=0.01 m, Dm=9.43e-8 m^2/s) of:
-#   Fahs, M., B. Ataie-Ashtiani, A. Younes, C. T. Simmons, and P. Ackerer (2016),
-#   The Henry problem: New semianalytical solution for velocity-dependent dispersion,
-#   Water Resour. Res., 52, 7382-7407, doi:10.1002/2016WR019288.
-# Source: Appendix D, Table D2 (converged semianalytical solution, Nc=4725 Fourier
-# modes). Z and X are dimensionless coordinates (Z = z/d, X = x/d) on their domain
-# (aspect ratio xi = length/depth = 3, i.e. length 3, depth 1). Reproduced here (as
-# the paper itself invites: "To facilitate the validation of numerical codes... the
-# digitized data are provided") to validate this repository's Henry problem
-# implementation (see problem.hh, fluidsystem.hh, spatialparams.hh,
-# validate_fahs2016.py).
-#
-# Unlike Table D1 (Test Case 1), all 19 rows here were legible and consistent across
-# independent re-extractions from the source PDF.
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: CC-BY-4.0
+# Table D2 of Fahs et al. (2016), doi:10.1002/2016WR019288: height Z and positions X of the 10, 50 and 90 % isochlors,
+# both divided by the aquifer depth
 Z,X10,X50,X90
 0.050,1.685,1.803,2.091
 0.100,1.752,1.910,2.205
