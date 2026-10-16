@@ -96,11 +96,11 @@ The tests require neither a mesh nor a linear solver beyond a small dense
 system:
 
 - `test_timestepmethods.cc` advances a single scalar degree of freedom with
-  the `MultiStageTimeStepper` and solves $\dot u = e^t$ with all 10 schemes,
+  the `MultiStageTimeStepper` and solves $\dot u = e^t$ with all schemes of the table,
   checks the Shu-Osher coefficients for consistency and the single-step
   error at $\Delta t=0.01$ against per-scheme tolerances. For the
   convergence-sweep figure, it additionally solves $\dot u = -u + e^t$,
-  $u(0)=0$ with all 10 schemes for
+  $u(0)=0$ with all schemes for
   $\Delta t \in \{0.2, 0.1, 0.05, 0.025, 0.0125, 0.00625\}$ and writes the
   errors at $t=1$ to `test_timestepmethods_data.json`.
 - `test_timestepmethods_stabilityregions.cc` evaluates the stability
@@ -432,7 +432,8 @@ $\bar\theta=2\arctan(\omega\Delta t/2)$.
 
 **Setup**
 
-- `test_generalizedalpha.cc` checks the parameters of the four schemes and
+- `test_generalizedalpha.cc` checks the parameters of the Chung-Hulbert, HHT,
+  WBZ and Newmark methods and
   that the stepper, which advances operator values, reproduces the
   generalized-α method written for displacement, velocity and acceleration in
   60 steps with $\Delta t=0.05$ for a system with two degrees of freedom, a
@@ -466,9 +467,9 @@ $\bar\theta=2\arctan(\omega\Delta t/2)$.
 ![Convergence and dissipation of the generalized-α methods](timestepping_generalizedalpha.png)
 
 The largest difference between the stepper and the generalized-α method for
-displacement, velocity and acceleration is $4.5\cdot10^{-14}$ over the seven
+displacement, velocity and acceleration is $4.5\cdot10^{-14}$ over all
 parameter sets. For the damped
-oscillators (top left), the observed orders between $n=200$ and $n=400$ are
+oscillators, the observed orders between $n=200$ and $n=400$ are
 2.000 for Newmark and Chung-Hulbert with $\rho_\infty=1$ and $0.8$, 2.004,
 2.024, 2.003 and 2.004 for Chung-Hulbert with $\rho_\infty=0.5$ and $0$, HHT
 and WBZ with $\rho_\infty=0.8$. With the variable step sizes, the observed
@@ -477,15 +478,15 @@ times those with constant step sizes. Chung-Hulbert with $\rho_\infty=1$ and the
 Newmark method have the same damping ratio and period (to $10^{-9}$ for
 $\omega\Delta t\le 10^4$), and their curves coincide.
 
-The spectral radius (top centre) at $\omega\Delta t=10^6$ is 0.80008, 0.50008
+The spectral radius at $\omega\Delta t=10^6$ is 0.80008, 0.50008
 and 0.00010 for Chung-Hulbert with $\rho_\infty=0.8$, $0.5$ and $0$, and
 0.80000 for HHT and WBZ with $\rho_\infty=0.8$. The largest spectral radius
 over all $\omega\Delta t$ is one for all methods up to $6.3\cdot10^{-6}$ for
 Chung-Hulbert with $\rho_\infty=1$, whose three eigenvalues approach $-1$ for
 $\omega\Delta t\to\infty$; the roots of the characteristic polynomial are
 then only accurate to about the cube root of the round-off. At
-$\Delta t/T=0.1$, the damping ratio (bottom left) and the relative period
-error (bottom centre) are:
+$\Delta t/T=0.1$, the damping ratio and the relative period
+error are:
 
 | Scheme | $\bar\xi$ | $(\bar T-T)/T$ |
 |---|---|---|
@@ -500,7 +501,7 @@ error (bottom centre) are:
 For $\rho_\infty=0.8$, the damping ratio of Chung-Hulbert at $\Delta t/T=0.1$
 is $7\,\%$ of that of HHT and $5\,\%$ of that of WBZ.
 
-For $\dot u=\lambda u$ (top right), all parameter sets are A-stable: the
+For $\dot u=\lambda u$, all parameter sets are A-stable: the
 largest spectral radius in the closed left half-plane exceeds one by at most
 $3.8\cdot10^{-5}$, for Chung-Hulbert with $\rho_\infty=1$, whose eigenvalues
 approach $-1$ for $\lambda\Delta t\to-\infty$. At $\lambda=-10^8$, the
@@ -515,7 +516,7 @@ eigenvalues of Jansen-Whiting-Hulbert are smaller.
 For $\dot u=-u+e^t$ with $u(0)=1$ and consistent initial rates, the observed
 orders between $n=100$ and $n=200$ are 2.000 for Newmark, HHT, WBZ and
 Chung-Hulbert with $\rho_\infty=1$ and $0.8$, and 1.999 and 1.990 for
-Chung-Hulbert with $\rho_\infty=0.5$ and $0$. For $u(0)=2$ (bottom right), the
+Chung-Hulbert with $\rho_\infty=0.5$ and $0$. For $u(0)=2$, the
 default start gives the order 2.000 between $n=320$ and $n=640$ for all
 parameter sets. With zero initial rates, the order is 1.00 for all parameter
 sets except Chung-Hulbert with $\rho_\infty=1$, whose errors do not depend on
@@ -533,20 +534,14 @@ $10^{-12}$ in all 20 steps. The Newmark parameter set and `NewmarkBeta` agree to
 
 **Reproducing the figures**
 
-After building the `test_timestepmethods`,
-`test_timestepmethods_stabilityregions`, `test_timestepmethods_symplectic`,
-`test_multistepmethods`, `test_multistepmethods_stability` and
-`test_generalizedalpha` executables, run:
+After building the test executables of this folder, run:
 
 ```bash
 python3 run_benchmarks.py <path-to-build-dir>
 ```
 
-This runs all six executables to (re-)generate the JSON data and produces
-the eight figures above via `plot_timestepmethods_convergence.py`,
-`plot_timestepmethods_stabilityregions.py`,
-`plot_timestepmethods_symplectic.py`, `plot_multistepmethods_convergence.py`,
-`plot_multistepmethods_stability.py` and `plot_generalizedalpha.py`. If run
+This runs the executables to (re-)generate the JSON data and produces the
+figures above with the corresponding `plot_*.py` scripts. If run
 from within `<build-dir>/test/experimental/timestepping`, the build directory
 argument can be omitted. Pass `--copy-to-doc` to additionally copy the figures
 into `doc/doxygen/images/` (used to update the images shown on this page).

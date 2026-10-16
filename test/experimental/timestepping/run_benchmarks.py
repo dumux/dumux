@@ -3,11 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Run the time-stepping benchmark and reproduce its figures.
 
-Runs the test_timestepmethods, test_timestepmethods_stabilityregions,
-test_timestepmethods_symplectic, test_multistepmethods,
-test_multistepmethods_stability and test_generalizedalpha executables and
-generates the eight figures
-shown in README.md via the corresponding plot_*.py scripts. With
+Runs the test executables of the time-stepping benchmark and generates the
+figures shown in README.md via the corresponding plot_*.py scripts. With
 --copy-to-doc, the figures are additionally copied into doc/doxygen/images/
 for the Doxygen documentation.
 

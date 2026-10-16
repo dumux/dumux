@@ -119,7 +119,7 @@ dissipation). The rows labelled "CH $\rho_\infty=0.8$" use the generalized-$\alp
 Hulbert @cite ChungHulbert1993 with the spectral radius $\rho_\infty=0.8$ in the limit of large time steps
 (`-TimeStepping.Method ChungHulbert -TimeStepping.SpectralRadius 0.8`), which damps the
 oscillations of the highest frequencies of the mesh. On the same mesh and time step size, the
-means and amplitudes of the two methods differ by at most $0.300\,$mm.
+means and amplitudes of Newmark and Chung-Hulbert differ by at most $0.300\,$mm.
 
 The beam starts from rest. Since gravity acts from $t=0$ on the stress-free beam, the initial
 acceleration is $-g$ in the vertical direction at all degrees of freedom except those on the
