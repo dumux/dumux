@@ -1,23 +1,7 @@
-# Digitized 10/50/90% isochlor positions for the classic (purely diffusive) Henry
-# problem, "Test Case 1" of:
-#   Fahs, M., B. Ataie-Ashtiani, A. Younes, C. T. Simmons, and P. Ackerer (2016),
-#   The Henry problem: New semianalytical solution for velocity-dependent dispersion,
-#   Water Resour. Res., 52, 7382-7407, doi:10.1002/2016WR019288.
-# Source: Appendix D, Table D1 (converged semianalytical solution, Nc=1868 Fourier
-# modes). Z and X are dimensionless coordinates (Z = z/d, X = x/d) on their domain
-# (aspect ratio xi = length/depth = 3, i.e. length 3, depth 1). Reproduced here (as
-# the paper itself invites: "To facilitate the validation of numerical codes... the
-# digitized data are provided") to validate this repository's Henry problem
-# implementation (see problem.hh, fluidsystem.hh, spatialparams.hh,
-# validate_fahs2016.py).
-#
-# Re-transcribed directly from the source PDF (Table D1, p. 7403) and cross-checked
-# cell by cell. The previous version of this file had its X50 column shifted down by
-# exactly one row throughout (e.g. the value filed under Z=0.050 was actually the
-# paper's X50 at Z=0.100, and so on for every row), while X10/X90 were correctly
-# aligned; the apparent "ambiguity" in the source table's last row (Z=0.950,
-# previously omitted here) was that same shift silently consuming it, not an actual
-# digitization problem. All 19 rows (through Z=0.950) are included below.
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: CC-BY-4.0
+# Table D1 of Fahs et al. (2016), doi:10.1002/2016WR019288: height Z and positions X of the 10, 50 and 90 % isochlors,
+# both divided by the aquifer depth
 Z,X10,X50,X90
 0.050,2.018,2.382,2.773
 0.100,2.029,2.402,2.791
