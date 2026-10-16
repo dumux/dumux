@@ -81,11 +81,28 @@ public:
         outsideK *= outsideVolVars.extrusionFactor();
 
         const auto K = faceTensorAverage(insideK, outsideK, scvf.unitOuterNormal());
+        const auto gradPotential = potentialGradient(problem, fvGeometry, elemVolVars, scvf, phaseIdx, fluxVarCache);
+
+        // apply the permeability and return the flux
+        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradPotential)*Extrusion::area(fvGeometry, scvf);
+    }
+
+    /*!
+     * \brief Returns \f$\nabla p - \rho \mathbf{g}\f$ of a fluid phase at the integration point
+     *        of the given sub-control volume face
+     */
+    template<class Problem, class ElementVolumeVariables, class FluxVarCache>
+    static Dune::FieldVector<Scalar, dimWorld> potentialGradient(const Problem& problem,
+                                                                  const FVElementGeometry& fvGeometry,
+                                                                  const ElementVolumeVariables& elemVolVars,
+                                                                  const SubControlVolumeFace& scvf,
+                                                                  const int phaseIdx,
+                                                                  const FluxVarCache& fluxVarCache)
+    {
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& shapeValues = fluxVarCache.shapeValues();
 
-        // evaluate gradP - rho*g at integration point
         Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
@@ -102,8 +119,7 @@ public:
         if (enableGravity)
             gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
 
-        // apply the permeability and return the flux
-        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*Extrusion::area(fvGeometry, scvf);
+        return gradP;
     }
 
     // compute transmissibilities ti for analytical Jacobians
