@@ -5,12 +5,15 @@
  * \file
  * \ingroup Linear
  * \brief Test for the sequential MUMPS solver backend: one solver instance solves a sequence of
- *        systems whose values, sparsity pattern and size change, single-type and MultiType
+ *        systems whose values, sparsity pattern and size change, and reuses a factorization for
+ *        several right-hand sides, single-type and MultiType; several solver instances keep their
+ *        own factorizations at the same time
  */
 #include <config.h>
 
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -87,6 +90,79 @@ void solveAndCheck(Solver& solver, const M& A, const V& xExact, const std::strin
         DUNE_THROW(Dune::Exception, name << ": wrong solution, max error " << error);
 }
 
+/*!
+ * \brief Factorizes A with setMatrix, changes A afterwards and solves for two right-hand sides,
+ *        which has to give the solutions of the unchanged A
+ */
+template<class Solver, class M, class V>
+void solveWithReusedFactorization(Solver& solver, M A, const V& xExact, const std::string& name)
+{
+    V b = xExact;
+    A.mv(xExact, b);
+    solver.setMatrix(A);
+    A *= 2.0;
+
+    for (const double scale : {1.0, -3.0})
+    {
+        V scaledB = b;
+        scaledB *= scale;
+        V x = xExact;
+        x = 0.0;
+        solver.solve(x, scaledB);
+
+        x *= 1.0/scale;
+        x -= xExact;
+        const double error = x.infinity_norm();
+        std::cout << name << ", right-hand side scaled by " << scale << ": max error " << error << std::endl;
+        if (!(error < 1e-12))
+            DUNE_THROW(Dune::Exception, name << ": wrong solution with the reused factorization, max error " << error);
+    }
+
+    V wrongSize;
+    bool detected = false;
+    try { solver.solve(wrongSize, wrongSize); }
+    catch (const Dune::InvalidStateException&) { detected = true; }
+    if (!detected)
+        DUNE_THROW(Dune::Exception, name << ": solving with vectors of the wrong size did not throw");
+}
+
+//! Several solver instances with their own factorizations, solved in turns, one of them destroyed
+void solveWithSeveralInstances()
+{
+    using Solver = DirectSolverMumps<SeqLinearSolverTraits, LinearAlgebraTraits>;
+    std::vector<std::unique_ptr<Solver>> solvers;
+    std::vector<Matrix> matrices;
+    for (int i = 0; i < 4; ++i)
+    {
+        solvers.push_back(std::make_unique<Solver>());
+        matrices.push_back(bandMatrix(90, 90, {-1, 0, 1}, 2.0 + i, 1.0 + 0.5*i));
+        solvers.back()->setMatrix(matrices.back());
+    }
+    solvers[1].reset();
+
+    for (int round = 0; round < 2; ++round)
+    {
+        for (std::size_t i = 0; i < solvers.size(); ++i)
+        {
+            if (!solvers[i])
+                continue;
+
+            const auto xExact = exactSolution(90, 0.1*i + round);
+            Vector b = xExact;
+            matrices[i].mv(xExact, b);
+            Vector x = xExact;
+            x = 0.0;
+            solvers[i]->solve(x, b);
+
+            x -= xExact;
+            const double error = x.infinity_norm();
+            std::cout << "instance " << i << ", round " << round << ": max error " << error << std::endl;
+            if (!(error < 1e-12))
+                DUNE_THROW(Dune::Exception, "instance " << i << ": wrong solution, max error " << error);
+        }
+    }
+}
+
 MTMatrix coupledMatrix(std::size_t n0, std::size_t n1, const std::vector<int>& couplingOffsets, double scale)
 {
     MTMatrix A;
@@ -116,6 +192,15 @@ int main(int argc, char* argv[])
     Dune::MPIHelper::instance(argc, argv);
 
     DirectSolverMumps<SeqLinearSolverTraits, LinearAlgebraTraits> solver;
+    {
+        Vector x(10), b(10);
+        b = 1.0;
+        bool detected = false;
+        try { solver.solve(x, b); }
+        catch (const Dune::InvalidStateException&) { detected = true; }
+        if (!detected)
+            DUNE_THROW(Dune::Exception, "Solving with solve(x, b) before setMatrix did not throw");
+    }
     solveAndCheck(solver, bandMatrix(100, 100, {-1, 0, 1}, 2.0, 1.0), exactSolution(100, 0.0), "first solve");
     solveAndCheck(solver, bandMatrix(100, 100, {-1, 0, 1}, 2.0, 1.0), exactSolution(100, 0.5), "same matrix");
     solveAndCheck(solver, bandMatrix(100, 100, {-1, 0, 1}, 6.0, 3.0), exactSolution(100, 0.0), "new values");
@@ -123,6 +208,8 @@ int main(int argc, char* argv[])
     solveAndCheck(solver, bandMatrix(100, 100, {-3, -1, 0, 1, 3}, 3.0, 1.0), exactSolution(100, 0.0), "more entries");
     solveAndCheck(solver, bandMatrix(150, 150, {-1, 0, 1}, 2.0, 1.0), exactSolution(150, 0.0), "larger system");
     solveAndCheck(solver, bandMatrix(80, 80, {-1, 0, 1}, 2.0, 1.0), exactSolution(80, 0.0), "smaller system");
+    solveWithReusedFactorization(solver, bandMatrix(120, 120, {-2, -1, 0, 1, 2}, 4.0, 1.0), exactSolution(120, 0.3), "reused factorization");
+    solveAndCheck(solver, bandMatrix(120, 120, {-1, 0, 1}, 2.0, 1.0), exactSolution(120, 0.0), "solve after the reused factorization");
 
     DirectSolverMumps<SeqLinearSolverTraits, MTLinearAlgebraTraits> mtSolver;
     solveAndCheck(mtSolver, coupledMatrix(60, 40, {0}, 1.0), coupledExactSolution(60, 40), "multitype: first solve");
@@ -130,6 +217,9 @@ int main(int argc, char* argv[])
     solveAndCheck(mtSolver, coupledMatrix(60, 40, {1}, 1.0), coupledExactSolution(60, 40), "multitype: other coupling pattern");
     solveAndCheck(mtSolver, coupledMatrix(30, 70, {0}, 1.0), coupledExactSolution(30, 70), "multitype: other subdomain sizes, same total size");
     solveAndCheck(mtSolver, coupledMatrix(50, 90, {0}, 1.0), coupledExactSolution(50, 90), "multitype: larger system");
+    solveWithReusedFactorization(mtSolver, coupledMatrix(40, 60, {1}, 1.5), coupledExactSolution(40, 60), "multitype: reused factorization");
+
+    solveWithSeveralInstances();
 
     return 0;
 }
