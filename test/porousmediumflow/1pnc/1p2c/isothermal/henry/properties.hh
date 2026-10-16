@@ -4,78 +4,70 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/**
+/*!
  * \file
  * \ingroup OnePNCTests
- * \brief The Henry problem benchmark of Fahs et al. (2016, WRR,
- *        doi:10.1002/2016WR019288): property definitions.
+ * \brief Properties of the Henry problem of Fahs et al. \cite Fahs2016
  */
-
-#ifndef DUMUX_HENRY_FAHS_TEST_PROBLEM_PROPERTIES_HH
-#define DUMUX_HENRY_FAHS_TEST_PROBLEM_PROPERTIES_HH
+#ifndef DUMUX_TEST_HENRY_FAHS_PROPERTIES_HH
+#define DUMUX_TEST_HENRY_FAHS_PROPERTIES_HH
 
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box.hh>
-#include <dumux/porousmediumflow/1pnc/model.hh>
+#include <dumux/flux/cvfe/boussinesqdarcyslaw.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
+#include <dumux/material/fluidsystems/liquidphase2c.hh>
+#include <dumux/porousmediumflow/1pnc/model.hh>
 
 #include "problem.hh"
-#include "fluidsystem.hh"
 #include "spatialparams.hh"
 
 namespace Dumux::Properties {
-// Create new type tags
+
 namespace TTag {
-struct HenryFahsTest { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
-// Test Case 2 (Fahs et al. 2016): same problem/fluid/spatialparams as Test Case 1,
-// just with velocity-dependent (Scheidegger) dispersion enabled -- see
-// spatialparams.hh's dispersionAlphas() and params_case2.input's nonzero
-// Problem.AlphaL/Problem.AlphaT. ScheideggersDispersionTensor is already the default
-// CompositionalDispersionModel for the whole PorousMediumFlow property tree, so no
-// need to set it explicitly here.
-struct HenryFahsCase2Test { using InheritsFrom = std::tuple<HenryFahsTest>; };
+struct HenryFahs { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
 } // end namespace TTag
 
-// Use a structured yasp grid
 template<class TypeTag>
-struct Grid<TypeTag, TTag::HenryFahsTest> { using type = Dune::YaspGrid<2>; };
+struct Grid<TypeTag, TTag::HenryFahs> { using type = Dune::YaspGrid<2>; };
 
-// Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::HenryFahsTest> { using type = HenryFahsTestProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::HenryFahs> { using type = HenryFahsProblem<TypeTag>; };
 
-// Set fluid configuration
+// equal molar masses give a constant density
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::HenryFahsTest>
-{ using type = FluidSystems::HenryFahsFluid<GetPropType<TypeTag, Properties::Scalar>>; };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::HenryFahsTest>
+struct FluidSystem<TypeTag, TTag::HenryFahs>
 {
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = HenryFahsSpatialParams<GridGeometry, Scalar>;
+    using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::Constant<1, Scalar>, Components::Constant<2, Scalar>>;
 };
 
-// Use mass fractions to set salinity conveniently
 template<class TypeTag>
-struct UseMoles<TypeTag, TTag::HenryFahsTest> { static constexpr bool value = false; };
+struct SpatialParams<TypeTag, TTag::HenryFahs>
+{
+    using type = HenryFahsSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
+                                        GetPropType<TypeTag, Properties::Scalar>>;
+};
 
-// The default (Millington-Quirk, D_eff = phi^(4/3)*Dm when fully saturated) does not
-// match Fahs et al. (2016)'s transport equation, which scales molecular diffusion
-// linearly by porosity alone (their eq. 3: epsilon*Dm, no separate tortuosity
-// reduction); at phi=0.35 it would give ~30% too little diffusion. Constant tortuosity
-// with tau=1 (set via SpatialParams.Tortuosity in params_case1.input) reproduces that
-// exactly: D_eff = phi*Sw*tau*Dm = phi*Dm.
 template<class TypeTag>
-struct EffectiveDiffusivityModel<TypeTag, TTag::HenryFahsTest>
+struct UseMoles<TypeTag, TTag::HenryFahs> { static constexpr bool value = false; };
+
+// porosity times molecular diffusion coefficient (tortuosity 1)
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::HenryFahs>
 { using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
 
-// Enable velocity-dependent (Scheidegger) dispersion for Test Case 2
 template<class TypeTag>
-struct EnableCompositionalDispersion<TypeTag, TTag::HenryFahsCase2Test> { static constexpr bool value = true; };
+struct EnableCompositionalDispersion<TypeTag, TTag::HenryFahs> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::HenryFahs>
+{
+    using type = CVFEBoussinesqDarcysLaw<GetPropType<TypeTag, Properties::Scalar>,
+                                         GetPropType<TypeTag, Properties::GridGeometry>>;
+};
 
 } // end namespace Dumux::Properties
 

@@ -4,158 +4,108 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/**
+/*!
  * \file
  * \ingroup OnePNCTests
- * \brief This directory implements the Henry problem benchmark of Fahs et al. (2016,
- *        WRR, doi:10.1002/2016WR019288), "Test Case 1": the classic (purely diffusive)
- *        Henry (1964) configuration. Used to validate this model's flow/transport
- *        implementation against a published semianalytical solution (see
- *        validate_fahs2016.py and Appendix D, Table D1 of the paper).
- *
- * The sea (right) boundary is the *original* Henry (1964)/Fahs et al. (2016)
- * condition: a simple Dirichlet condition on both pressure (hydrostatic) and
- * concentration (fixed at seawater salinity, their "c=1"), not the Segol/Voss mixed
- * inflow/outflow condition sometimes used for this problem elsewhere in the
- * literature -- deliberately the simpler boundary condition, matching the reference
- * solution being validated against.
+ * \brief The Henry problem of Fahs et al. \cite Fahs2016
  */
-
-#ifndef DUMUX_HENRY_FAHS_TEST_PROBLEM_HH
-#define DUMUX_HENRY_FAHS_TEST_PROBLEM_HH
-
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
+#ifndef DUMUX_TEST_HENRY_FAHS_PROBLEM_HH
+#define DUMUX_TEST_HENRY_FAHS_PROBLEM_HH
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup OnePNCTests
- * \brief The classic (purely diffusive) Henry problem (Henry 1964; Fahs et al. 2016
- *        Test Case 1).
+ * \brief Seawater intrusion into a confined aquifer (Henry \cite Henry1964) as defined by Fahs et al. \cite Fahs2016
  */
 template <class TypeTag>
-class HenryFahsTestProblem : public PorousMediumFlowProblem<TypeTag>
+class HenryFahsProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GlobalPosition = typename GridGeometry::SubControlVolume::GlobalPosition;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
 
-    // copy pressure index for convenience
-    enum { pressureIdx = Indices::pressureIdx };
-
-    //! The test is defined using mass fractions
-    static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions!");
+    static constexpr int soluteIdx = FluidSystem::comp1Idx;
+    static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions");
 
 public:
-    HenryFahsTestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
+    HenryFahsProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     {
         FluidSystem::init();
+        densityDifference_ = getParam<Scalar>("Problem.DensityDifference");
+        length_ = gridGeometry->bBoxMax()[0] - gridGeometry->bBoxMin()[0];
+        depth_ = gridGeometry->bBoxMax()[1] - gridGeometry->bBoxMin()[1];
 
-        domainHeight_ = this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1];
+        const auto& pos = gridGeometry->bBoxMin();
+        const Scalar temperature = this->spatialParams().temperatureAtPos(pos);
+        density_ = FluidSystem::density(temperature, referencePressure_);
+        gravity_ = -this->spatialParams().gravity(pos)[1];
 
-        // freshwater inflow rate [m^3/d], divided by the (2D, unit-thickness) left
-        // boundary's area to get a specific discharge [m/s]
-        const Scalar inflowRate = getParam<Scalar>("Problem.InflowRate"); // [m^3/d]
-        freshwaterSpecificDischarge_ = inflowRate/86400.0/domainHeight_;  // [m/s]
+        // with div q = 0, this inlet pressure gives the inflow for any solute distribution
+        const Scalar inflow = getParam<Scalar>("Problem.FreshwaterInflow");
+        const Scalar mobility = this->spatialParams().permeabilityAtPos(pos)/FluidSystem::viscosity(temperature, referencePressure_);
+        inletPressure_ = referencePressure_ + inflow*length_/(mobility*depth_) + 0.5*densityDifference_*gravity_*depth_;
     }
 
-    /*!
-     * \name Boundary conditions
-     */
-    // \{
-
-    /*!
-     * \brief Left: Neumann everywhere (specified freshwater inflow, see
-     *        neumannAtPos()). Right: Dirichlet everywhere -- hydrostatic pressure and
-     *        fixed (seawater) concentration, the original Henry (1964)/Fahs et al.
-     *        (2016) sea boundary condition.
-     */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
-
-        if (globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
+        if (onLeft_(globalPos) || onRight_(globalPos))
             values.setAllDirichlet();
-
+        else
+            values.setAllNeumann();
         return values;
     }
 
-    /*!
-     * \brief Hydrostatic pressure (seawater reference density) and fixed seawater
-     *        concentration at the right boundary.
-     */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
-        const Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
+        if (!onLeft_(globalPos))
+            return initialAtPos(globalPos);
+
         PrimaryVariables values;
-        values[pressureIdx] = pRef_ + FluidSystem::rhoSeawater()*g_*depth;
-        values[FluidSystem::soluteIdx] = FluidSystem::seawaterMassFraction();
+        values[Indices::pressureIdx] = inletPressure_ + density_*gravity_*depthBelowTop_(globalPos);
+        values[soluteIdx] = 0.0;
         return values;
     }
 
-    /*!
-     * \brief Specified freshwater inflow (fixed rate, zero salt) at the left boundary;
-     *        no-flow everywhere else (the right boundary is Dirichlet, so this is
-     *        only ever evaluated on the left and on the impermeable top/bottom).
-     */
-    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        NumEqVector values(0.0);
-
-        if (globalPos[0] < eps_)
-        {
-            // negative sign as this is an influx; no salt is carried in
-            values[FluidSystem::solventIdx] = -freshwaterSpecificDischarge_*FluidSystem::rhoFresh();
-            values[FluidSystem::soluteIdx] = 0.0;
-        }
-
-        return values;
-    }
-
-    // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
-
-    /*!
-     * \brief Initial condition: the domain is initially filled with seawater,
-     *        hydrostatic (using the seawater reference density).
-     */
+    //! Seawater at rest
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        const Scalar depth = this->gridGeometry().bBoxMax()[1] - globalPos[1];
         PrimaryVariables values;
-        values[pressureIdx] = pRef_ + FluidSystem::rhoSeawater()*g_*depth;
-        values[FluidSystem::soluteIdx] = FluidSystem::seawaterMassFraction();
+        values[Indices::pressureIdx] = referencePressure_ + (density_ + densityDifference_)*gravity_*depthBelowTop_(globalPos);
+        values[soluteIdx] = 1.0;
         return values;
     }
 
-    // \}
+    //! The density deviation that causes buoyancy
+    Scalar buoyantDensity(const VolumeVariables& volVars, int phaseIdx) const
+    { return densityDifference_*volVars.massFraction(phaseIdx, soluteIdx); }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;
-    static constexpr Scalar g_ = 9.81;
-    static constexpr Scalar pRef_ = 1e5;
+    Scalar depthBelowTop_(const GlobalPosition& globalPos) const
+    { return this->gridGeometry().bBoxMax()[1] - globalPos[1]; }
 
-    Scalar domainHeight_;
-    Scalar freshwaterSpecificDischarge_;
+    bool onLeft_(const GlobalPosition& globalPos) const
+    { return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_*length_; }
+
+    bool onRight_(const GlobalPosition& globalPos) const
+    { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_*length_; }
+
+    static constexpr Scalar eps_ = 1e-8;
+    static constexpr Scalar referencePressure_ = 1e5;
+    Scalar densityDifference_, length_, depth_, density_, gravity_, inletPressure_;
 };
 
 } // end namespace Dumux
