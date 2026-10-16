@@ -24,6 +24,7 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/mumpssolver.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/pdesolver.hh>
@@ -101,8 +102,13 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     //! the linear solver
+#if USE_MUMPS_SOLVER
+    using LinearSolver = DirectSolverMumps<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, LinearSolverTraits<GridGeometry>::dofMapper(*gridGeometry));
+#else
     using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
+#endif
 
     //! pde solver (assemble, solve, update)
     LinearPDESolver solver(assembler, linearSolver);
