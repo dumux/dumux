@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params_case1.input)
+dune_symlink_to_source_files(FILES params_case1.input params_case2.input)
 
 # The Henry problem benchmark of Fahs et al. (2016, WRR, doi:10.1002/2016WR019288),
 # "Test Case 1": the classic (purely diffusive) Henry (1964) configuration. Built here
@@ -46,3 +46,37 @@ dumux_add_test(NAME test_1p2c_henry_fahs_case1_box_regression
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case1_box-00100.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case1_box params_case1.input")
 set_tests_properties(test_1p2c_henry_fahs_case1_box PROPERTIES DEPENDS test_1p2c_henry_fahs_case1_box_regression)
+
+# "Test Case 2": same problem, but with velocity-dependent (Scheidegger) dispersion
+# enabled (alphaL=0.1 m, alphaT=0.01 m, smaller molecular diffusion 9.43e-8 m^2/s --
+# see params_case2.input and properties.hh's HenryFahsCase2Test). Validated against
+# Appendix D, Table D2 the same way Test Case 1 is validated against Table D1. Same
+# mesh and number of time steps as Test Case 1 (see params_case2.input). Built here
+# (SOURCES) but *not* run directly, same DEPENDS-on-the-regression-target pattern as
+# test_1p2c_henry_fahs_case1_box above -- see that target's comment.
+dumux_add_test(NAME test_1p2c_henry_fahs_case2_box
+              LABELS porousmediumflow 1p2c
+              SOURCES main.cc
+              LABELS 1pnc
+              COMPILE_DEFINITIONS TYPETAG=HenryFahsCase2Test
+              TIMEOUT 60 # [s]; no simulation run here anymore, see test_1p2c_henry_fahs_case1_box
+              COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/validate_fahs2016.py
+              CMD_ARGS  --vtu ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-00100.vtu
+                        --reference ${CMAKE_CURRENT_SOURCE_DIR}/fahs2016_table_d2.csv)
+
+# Regression test for Test Case 2, same pattern as test_1p2c_henry_fahs_case1_box_regression
+# above, against test/references/test_1p2c_henry_fahs_case2_box-reference.vtu. This is
+# the one and only run of the simulation for this test case; dispersion's extra
+# per-flux cost makes this run somewhat slower than Test Case 1's (measured on the earlier
+# 240x80 grid: ~1269s vs. Test Case 1's ~953s).
+dumux_add_test(NAME test_1p2c_henry_fahs_case2_box_regression
+              TARGET  test_1p2c_henry_fahs_case2_box
+              LABELS porousmediumflow 1p2c 1pnc
+              TIMEOUT 7200 # [s]; measured ~1269s wall clock with the direct (UMFPack)
+                           # linear solver on the earlier 240x80/1 d setup
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p2c_henry_fahs_case2_box-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box-00100.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_henry_fahs_case2_box params_case2.input")
+set_tests_properties(test_1p2c_henry_fahs_case2_box PROPERTIES DEPENDS test_1p2c_henry_fahs_case2_box_regression)
