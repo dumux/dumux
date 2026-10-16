@@ -28,8 +28,10 @@
  * not provide: such subdomains are supported in sequential runs only.
  *
  * The symbolic analysis is reused as long as the matrix keeps its size and sparsity pattern and
- * is repeated automatically otherwise. In parallel runs, the dof maps depend on the grid: after
- * the grid changed (e.g. grid adaption or load balancing), call updateAfterGridAdaption.
+ * is repeated automatically otherwise. The numeric factorization of the matrix given to setMatrix
+ * is reused by every solve(x, b); solve(A, x, b) factorizes A. In parallel runs, the dof maps
+ * depend on the grid: after the grid changed (e.g. grid adaption or load balancing), call
+ * updateAfterGridAdaption.
  *
  * This solver backend requires MPI (even for sequential runs, using MPI_COMM_SELF).
  */
@@ -263,6 +265,7 @@ public:
         mapper_ = &dofMapper;
         buildGlobalDofIndices_(gridView, dofMapper);
         analyzed_ = false;
+        factorized_ = false;
     }
 
     /*!
@@ -278,15 +281,48 @@ public:
         gridView_ = Detail::mumpsDeref(std::get<0>(ggTuple)).gridView();
         buildMultiTypeMaps_(ggTuple);
         analyzed_ = false;
+        factorized_ = false;
     }
 
+    /*!
+     * \brief Solve the linear system Ax = b
+     * \note Following calls of solve(x, b) reuse the factorization of A.
+     */
     SolverResult solve(const Matrix& A, XVector& x, const BVector& b)
     {
+        setMatrix(A);
+        return solve(x, b);
+    }
+
+    /*!
+     * \brief Factorize the matrix A of the linear system Ax = b for solve(x, b)
+     * \note The solver keeps the factorization, not the matrix, so A may change afterwards.
+     *       After a failed call, solve(x, b) throws until a matrix has been set successfully.
+     */
+    void setMatrix(const Matrix& A)
+    {
+        factorized_ = false;
+        prepareMaps_(A);
+        factorize_(A);
+    }
+
+    //! \copydoc setMatrix(const Matrix&)
+    void setMatrix(std::shared_ptr<Matrix> A)
+    { setMatrix(*A); }
+
+    /*!
+     * \brief Solve the linear system Ax = b with the factorization of the matrix set with setMatrix
+     */
+    SolverResult solve(XVector& x, const BVector& b)
+    {
+        if (!factorized_)
+            DUNE_THROW(Dune::InvalidStateException, "Called solve(x, b) but no matrix has been set");
+
         result_.clear();
         if constexpr (isMultiType)
-            solveMultiType_(A, x, b);
+            solveMultiType_(x, b);
         else
-            solveSingleType_(A, x, b);
+            solveSingleType_(x, b);
         result_.converged = true;
         return result_;
     }
@@ -947,6 +983,8 @@ private:
     template<class BVec, class XVec>
     void solveCentralized_(const BVec& b, XVec& x)
     {
+        const auto start = std::chrono::steady_clock::now();
+
         // Pack owned scalar RHS values in the same order as setupRhsGather_'s indices.
         std::size_t s = 0;
         for (std::size_t i = 0; i < b.size(); ++i)
@@ -987,12 +1025,15 @@ private:
             if (isOwned_[i])
                 for (std::size_t k = 0; k < blockSize; ++k)
                     x[i][k] = sendBuf_[s++];
+
+        if (this->verbosity() > 0 && isHost_)
+            std::cout << "[MUMPS] solve+gather "
+                      << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()
+                      << " ms" << std::endl;
     }
 
-    // Core MUMPS pipeline shared by single-type and MultiType: symbolic analysis (repeated only
-    // if the matrix structure changed) + numeric factorization + centralized solve.
-    template<class AScalar, class BScalar, class XScalar>
-    void solveCore_(const AScalar& A, const BScalar& b, XScalar& x)
+    // Symbolic analysis (repeated only if the matrix structure changed) and numeric factorization
+    void factorize_(const Matrix& A)
     {
         using Clock = std::chrono::steady_clock;
         const bool time = this->verbosity() > 0;
@@ -1030,17 +1071,52 @@ private:
         id_.job = 2; // numeric factorization
         dmumps_c(&id_);
         checkError_("numeric factorization");
+        factorized_ = true;
         const double tNumeric = ms(t2, Clock::now());
-
-        auto t3 = Clock::now();
-        solveCentralized_(b, x);
-        const double tSolve = ms(t3, Clock::now());
 
         if (time && isHost_)
             std::cout << "[MUMPS] assemble " << tAssemble << " ms"
                       << (tAnalysis > 0.0 ? (", analysis " + std::to_string(tAnalysis) + " ms") : std::string{})
-                      << ", numeric factorization " << tNumeric << " ms"
-                      << ", solve+gather " << tSolve << " ms" << std::endl;
+                      << ", numeric factorization " << tNumeric << " ms" << std::endl;
+    }
+
+    // Sequential dof maps follow the size of the system of A, parallel ones are checked against it.
+    void prepareMaps_(const Matrix& A)
+    {
+        if constexpr (isMultiType)
+        {
+            if (isParallel_)
+                updateMapsToSystemSize_(numScalarRows_(A), subdomainSizesMatch_(A));
+            else
+            {
+                updateMapsToSystemSize_(numScalarRows_(A));
+                initSeqDomainOffsets_(A);
+            }
+        }
+        else
+            updateMapsToSystemSize_(A.N());
+    }
+
+    template<class MTMatrix>
+    static std::size_t numScalarRows_(const MTMatrix& A)
+    {
+        std::size_t numRows = 0;
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<MTMatrix::N()>{}, [&](auto I)
+        {
+            const auto& block = A[I][I];
+            numRows += block.N()*std::decay_t<decltype(block)>::block_type::rows;
+        });
+        return numRows;
+    }
+
+    // A vector has to match the factorized system; in parallel, all processes throw together.
+    void checkVectorSize_(std::size_t size) const
+    {
+        if (!onAllProcesses_(size == localToGlobal_.size()))
+            DUNE_THROW(Dune::InvalidStateException,
+                       "DirectSolverMumps: the vector does not match the factorized system on at least one "
+                       "process (here " << size << " entries, the system has " << localToGlobal_.size() << ")");
     }
 
     bool onAllProcesses_(bool value) const
@@ -1074,9 +1150,9 @@ private:
         }
     }
 
-    void solveSingleType_(const Matrix& A, XVector& x, const BVector& b)
+    void solveSingleType_(XVector& x, const BVector& b)
     {
-        updateMapsToSystemSize_(A.N());
+        checkVectorSize_(b.size());
 
         auto bcopy = b;
 
@@ -1098,7 +1174,7 @@ private:
             }
         }
 
-        solveCore_(A, bcopy, x);
+        solveCentralized_(bcopy, x);
 
         // Distribute the solution: zero non-owned, then sum-communicate to the owner's value.
         if constexpr (LSTraits::canCommunicate)
@@ -1119,19 +1195,12 @@ private:
         }
     }
 
-    void solveMultiType_(const Matrix& A, XVector& x, const BVector& b)
+    void solveMultiType_(XVector& x, const BVector& b)
     {
-        // The matrix stays in its block form; the triplets are read off the blocks with the
-        // scalar layout of the flattened system, which is the layout of the flattened vectors.
+        // The triplets were read off the matrix blocks with the scalar layout of the flattened
+        // system, which is the layout of the flattened vectors.
         auto bscalar = VectorConverter<BVector>::multiTypeToBlockVector(b);
-
-        if (isParallel_)
-            updateMapsToSystemSize_(bscalar.size(), subdomainSizesMatch_(A));
-        else
-        {
-            updateMapsToSystemSize_(bscalar.size());
-            initSeqDomainOffsets_(A);
-        }
+        checkVectorSize_(bscalar.size());
 
         // RHS preprocessing per subdomain: sum partial border-DOF contributions onto the owner.
         if (isParallel_)
@@ -1140,7 +1209,7 @@ private:
                     sub.rhsPreprocess(bscalar);
 
         auto xscalar = bscalar; // same layout; owned entries overwritten by the solve
-        solveCore_(A, bscalar, xscalar);
+        solveCentralized_(bscalar, xscalar);
 
         // Ghost broadcast per subdomain: zero non-owned DOFs, sum-communicate to the owner's value.
         if (isParallel_)
@@ -1198,6 +1267,7 @@ private:
     DMUMPS_STRUC_C id_;
     bool initialized_ = false;
     bool analyzed_ = false;
+    bool factorized_ = false;
     SolverResult result_;
 
     // Global DOF bookkeeping (block level for single-type, scalar level for MultiType).
