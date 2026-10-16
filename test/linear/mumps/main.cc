@@ -6,11 +6,12 @@
  * \ingroup Linear
  * \brief Test for the sequential MUMPS solver backend: one solver instance solves a sequence of
  *        systems whose values, sparsity pattern and size change, and reuses a factorization for
- *        several right-hand sides, single-type and MultiType; several solver instances keep their
- *        own factorizations at the same time
+ *        several right-hand sides, one by one and in one solve, single-type (also with 4x4 blocks)
+ *        and MultiType; several solver instances keep their own factorizations at the same time
  */
 #include <config.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -38,8 +39,12 @@ using MTMatrix = Dune::MultiTypeBlockMatrix<Dune::MultiTypeBlockVector<Matrix, M
                                             Dune::MultiTypeBlockVector<Matrix, Matrix>>;
 using MTVector = Dune::MultiTypeBlockVector<Vector, Vector>;
 
+using BlockMatrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, 4, 4>>;
+using BlockVector = Dune::BlockVector<Dune::FieldVector<double, 4>>;
+
 struct LinearAlgebraTraits { using Matrix = Test::Matrix; using Vector = Test::Vector; };
 struct MTLinearAlgebraTraits { using Matrix = MTMatrix; using Vector = MTVector; };
+struct BlockLinearAlgebraTraits { using Matrix = BlockMatrix; using Vector = BlockVector; };
 
 /*!
  * \brief A rows x cols matrix with the entries (i, i + d) for the given diagonal offsets d,
@@ -174,13 +179,85 @@ MTMatrix coupledMatrix(std::size_t n0, std::size_t n1, const std::vector<int>& c
     return A;
 }
 
-MTVector coupledExactSolution(std::size_t n0, std::size_t n1)
+MTVector coupledExactSolution(std::size_t n0, std::size_t n1, double shift = 0.0)
 {
     MTVector x;
     using namespace Dune::Indices;
-    x[_0] = exactSolution(n0, 0.0);
-    x[_1] = exactSolution(n1, 1.0);
+    x[_0] = exactSolution(n0, shift);
+    x[_1] = exactSolution(n1, 1.0 + 2.0*shift);
     return x;
+}
+
+//! An unsymmetric, diagonally dominant matrix of 4x4 blocks on three block diagonals
+BlockMatrix blockBandMatrix(std::size_t rows)
+{
+    Dune::MatrixIndexSet pattern(rows, rows);
+    for (std::size_t i = 0; i < rows; ++i)
+        for (std::size_t j = (i > 0 ? i - 1 : 0); j < std::min(rows, i + 2); ++j)
+            pattern.add(i, j);
+
+    BlockMatrix A;
+    pattern.exportIdx(A);
+    for (auto rowIt = A.begin(); rowIt != A.end(); ++rowIt)
+        for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
+            for (int a = 0; a < 4; ++a)
+                for (int c = 0; c < 4; ++c)
+                    (*colIt)[a][c] = (rowIt.index() == colIt.index() && a == c) ? 8.0
+                        : 0.1*std::sin(1.0 + rowIt.index() + 2.0*colIt.index() + 3.0*a + 5.0*c);
+    return A;
+}
+
+BlockVector blockExactSolution(std::size_t size, double shift)
+{
+    BlockVector x(size);
+    for (std::size_t i = 0; i < size; ++i)
+        for (int k = 0; k < 4; ++k)
+            x[i][k] = 1.0 + std::sin(0.1*static_cast<double>(i) + 0.7*k + shift);
+    return x;
+}
+
+/*!
+ * \brief Solves for the columns A xExact[j] in one solve; every column has to equal the exact
+ *        solution and the single right-hand side solve of the same column
+ */
+template<class Solver, class M, class V>
+void solveSeveralRightHandSides(Solver& solver, const M& A, const std::vector<V>& xExact, const std::string& name)
+{
+    std::vector<V> b(xExact), x(xExact);
+    for (std::size_t j = 0; j < xExact.size(); ++j)
+    {
+        A.mv(xExact[j], b[j]);
+        x[j] = 0.0;
+    }
+    solver.setMatrix(A);
+    solver.solve(x, b);
+
+    double maxToExact = 0.0, maxToSingle = 0.0;
+    for (std::size_t j = 0; j < xExact.size(); ++j)
+    {
+        V single = xExact[j];
+        single = 0.0;
+        solver.solve(single, b[j]);
+        single -= x[j];
+        V error = x[j];
+        error -= xExact[j];
+        maxToExact = std::max(maxToExact, error.infinity_norm());
+        maxToSingle = std::max(maxToSingle, single.infinity_norm());
+    }
+    std::cout << name << ", " << xExact.size() << " right-hand sides: max error " << maxToExact
+              << ", max difference to single solves " << maxToSingle << std::endl;
+    if (!(maxToExact < 1e-12) || !(maxToSingle < 1e-12))
+        DUNE_THROW(Dune::Exception, name << ": wrong solution of several right-hand sides");
+
+    std::vector<V> tooFew(xExact.begin(), xExact.end() - 1);
+    bool detected = false;
+    try { solver.solve(tooFew, b); }
+    catch (const Dune::InvalidStateException&) { detected = true; }
+    if (!detected)
+        DUNE_THROW(Dune::Exception, name << ": solving with fewer solutions than right-hand sides did not throw");
+
+    std::vector<V> none;
+    solver.solve(none, none);
 }
 
 } // end namespace Dumux::Test
@@ -218,6 +295,24 @@ int main(int argc, char* argv[])
     solveAndCheck(mtSolver, coupledMatrix(30, 70, {0}, 1.0), coupledExactSolution(30, 70), "multitype: other subdomain sizes, same total size");
     solveAndCheck(mtSolver, coupledMatrix(50, 90, {0}, 1.0), coupledExactSolution(50, 90), "multitype: larger system");
     solveWithReusedFactorization(mtSolver, coupledMatrix(40, 60, {1}, 1.5), coupledExactSolution(40, 60), "multitype: reused factorization");
+
+    {
+        std::vector<Vector> columns;
+        for (int j = 0; j < 5; ++j)
+            columns.push_back(exactSolution(100, 0.4*j));
+        solveSeveralRightHandSides(solver, bandMatrix(100, 100, {-2, -1, 0, 1, 3}, 4.0, 1.0), columns, "several right-hand sides");
+
+        std::vector<MTVector> mtColumns;
+        for (int j = 0; j < 4; ++j)
+            mtColumns.push_back(coupledExactSolution(40, 60, 0.3*j));
+        solveSeveralRightHandSides(mtSolver, coupledMatrix(40, 60, {0}, 1.0), mtColumns, "multitype: several right-hand sides");
+
+        DirectSolverMumps<SeqLinearSolverTraits, BlockLinearAlgebraTraits> blockSolver;
+        std::vector<BlockVector> blockColumns;
+        for (int j = 0; j < 12; ++j)
+            blockColumns.push_back(blockExactSolution(70, 0.25*j));
+        solveSeveralRightHandSides(blockSolver, blockBandMatrix(70), blockColumns, "4x4 blocks: several right-hand sides");
+    }
 
     solveWithSeveralInstances();
 

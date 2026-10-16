@@ -8,7 +8,8 @@
  *        and an overlapping decomposition, for one domain, for two coupled subdomains, for the
  *        two coupled fields as one system with two unknowns per dof, and for two subdomains on
  *        two grids with different resolutions and decompositions. The single-domain and the
- *        two-subdomain solvers also reuse a factorization for several right-hand sides.
+ *        two-subdomain solvers also reuse a factorization for several right-hand sides, one by one
+ *        and in one solve.
  *
  * Every element adds its contributions to its own faces only. In the non-overlapping
  * decomposition, the rows of the faces on the process border are therefore split among the
@@ -142,8 +143,8 @@ void assemble(const GridGeometry& gridGeometry, int domainIdx, double c,
     }
 }
 
-template<class GridGeometry>
-void checkSolution(const GridGeometry& gridGeometry, const Vector& x, int domainIdx, const std::string& name)
+template<class GridGeometry, class ExactSolution>
+void checkSolution(const GridGeometry& gridGeometry, const Vector& x, const ExactSolution& exact, const std::string& name)
 {
     const auto& gridView = gridGeometry.gridView();
     double error = 0.0;
@@ -152,7 +153,7 @@ void checkSolution(const GridGeometry& gridGeometry, const Vector& x, int domain
         for (const auto& intersection : intersections(gridView, element))
         {
             const auto i = gridGeometry.dofMapper().subIndex(element, intersection.indexInInside(), 1);
-            error = std::max(error, std::abs(x[i] - exactSolution(intersection.geometry().center(), domainIdx)));
+            error = std::max(error, std::abs(x[i] - exact(intersection.geometry().center())));
         }
     }
     error = gridView.comm().max(error);
@@ -161,6 +162,42 @@ void checkSolution(const GridGeometry& gridGeometry, const Vector& x, int domain
         std::cout << name << ": max error " << error << std::endl;
     if (!(error < 1e-11))
         DUNE_THROW(Dune::Exception, name << ": wrong solution, max error " << error);
+}
+
+template<class GridGeometry>
+void checkSolution(const GridGeometry& gridGeometry, const Vector& x, int domainIdx, const std::string& name)
+{ checkSolution(gridGeometry, x, [domainIdx](const auto& pos) { return exactSolution(pos, domainIdx); }, name); }
+
+/*!
+ * \brief Solves for several right-hand sides in one solve; every column has to equal the single
+ *        right-hand side solve of the same column on all processes
+ */
+template<class Solver, class GridGeometry, class M, class V>
+std::vector<V> solveSeveralRightHandSides(Solver& solver, const GridGeometry& gridGeometry, const M& A,
+                                          const std::vector<V>& b, const std::string& name)
+{
+    solver.setMatrix(A);
+    std::vector<V> x(b);
+    for (auto& xj : x)
+        xj = 0.0;
+    solver.solve(x, b);
+
+    double difference = 0.0;
+    for (std::size_t j = 0; j < b.size(); ++j)
+    {
+        V single = b[j];
+        single = 0.0;
+        solver.solve(single, b[j]);
+        single -= x[j];
+        difference = std::max(difference, single.infinity_norm());
+    }
+    difference = gridGeometry.gridView().comm().max(difference);
+
+    if (gridGeometry.gridView().comm().rank() == 0)
+        std::cout << name << ": max difference to single solves " << difference << std::endl;
+    if (!(difference < 1e-12))
+        DUNE_THROW(Dune::Exception, name << ": several right-hand sides differ from single solves by " << difference);
+    return x;
 }
 
 /*!
@@ -198,6 +235,34 @@ void solveSingleDomain(Solver& solver, const GridGeometry& gridGeometry, const s
     solveWithReusedFactorization(solver, A, b, [&](const Vector& y, double scale) {
         checkSolution(gridGeometry, y, 0, name + ", reused factorization, scale " + std::to_string(scale));
     });
+
+    // the right-hand sides of the exact solutions u_0, u_1 and u_0 - 2 u_1 (same matrix for c = 0)
+    Matrix A1;
+    Vector b1;
+    assemble(gridGeometry, 1, 0.0, A1, coupling, b1);
+    Vector b2 = b;
+    b2.axpy(-2.0, b1);
+    const auto columns = solveSeveralRightHandSides(solver, gridGeometry, A, std::vector<Vector>{b, b1, b2},
+                                                    name + ", several right-hand sides");
+    checkSolution(gridGeometry, columns[0], 0, name + ", several right-hand sides (column 0)");
+    checkSolution(gridGeometry, columns[1], 1, name + ", several right-hand sides (column 1)");
+    checkSolution(gridGeometry, columns[2], [](const auto& pos) { return exactSolution(pos, 0) - 2.0*exactSolution(pos, 1); },
+                  name + ", several right-hand sides (column 2)");
+
+    // different numbers of right-hand sides on the processes make all processes throw
+    const auto& comm = gridGeometry.gridView().comm();
+    if (comm.size() > 1)
+    {
+        std::vector<Vector> bLocal(comm.rank() == 0 ? 2 : 1, b);
+        std::vector<Vector> xLocal(bLocal);
+        int detected = 0;
+        try { solver.solve(xLocal, bLocal); }
+        catch (const Dune::InvalidStateException&) { detected = 1; }
+        if (!comm.min(detected))
+            DUNE_THROW(Dune::Exception, name << ": different numbers of right-hand sides did not throw on all processes");
+        if (comm.rank() == 0)
+            std::cout << name << ": different numbers of right-hand sides throw on all processes" << std::endl;
+    }
 }
 
 template<class Solver, class GridGeometry>
@@ -219,6 +284,19 @@ void solveTwoDomains(Solver& solver, const GridGeometry& gridGeometry, const std
         checkSolution(gridGeometry, y[_0], 0, name + suffix + " (subdomain 0)");
         checkSolution(gridGeometry, y[_1], 1, name + suffix + " (subdomain 1)");
     });
+
+    const std::vector<double> scales{1.0, -3.0, 0.5};
+    std::vector<MTVector> bColumns(scales.size(), b);
+    for (std::size_t j = 0; j < scales.size(); ++j)
+        bColumns[j] *= scales[j];
+    auto columns = solveSeveralRightHandSides(solver, gridGeometry, A, bColumns, name + ", several right-hand sides");
+    for (std::size_t j = 0; j < scales.size(); ++j)
+    {
+        columns[j] *= 1.0/scales[j];
+        const std::string suffix = ", several right-hand sides (column " + std::to_string(j) + ")";
+        checkSolution(gridGeometry, columns[j][_0], 0, name + suffix + " (subdomain 0)");
+        checkSolution(gridGeometry, columns[j][_1], 1, name + suffix + " (subdomain 1)");
+    }
 }
 
 //! The system of the two coupled subdomains, assembled with one block of two unknowns per dof
@@ -267,6 +345,18 @@ void solveBlockSystem(Solver& solver, const GridGeometry& gridGeometry, const st
     }
     checkSolution(gridGeometry, x0, 0, name + " (component 0)");
     checkSolution(gridGeometry, x1, 1, name + " (component 1)");
+
+    BlockVector bScaled = b;
+    bScaled *= -2.0;
+    const auto columns = solveSeveralRightHandSides(solver, gridGeometry, A, std::vector<BlockVector>{bScaled, b},
+                                                    name + ", several right-hand sides");
+    for (std::size_t i = 0; i < x.size(); ++i)
+    {
+        x0[i] = columns[1][i][0];
+        x1[i] = -0.5*columns[0][i][1];
+    }
+    checkSolution(gridGeometry, x0, 0, name + ", several right-hand sides (column 1, component 0)");
+    checkSolution(gridGeometry, x1, 1, name + ", several right-hand sides (column 0, component 1)");
 }
 
 void runTest(int overlap)
