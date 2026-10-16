@@ -15,3 +15,9 @@ dumux_add_test(NAME test_scalarproducts
 dumux_add_test(NAME test_dunevectors
                SOURCES test_dunevectors.cc
                LABELS linear unit)
+dumux_add_test(NAME test_pmultigridpreconditioner
+               SOURCES test_pmultigridpreconditioner.cc
+               LABELS linear unit
+               CMAKE_GUARD dune-alugrid_FOUND)
+
+add_subdirectory(pmultigrid)
