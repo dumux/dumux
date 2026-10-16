@@ -72,7 +72,10 @@ public:
     ConvergenceProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization)
     : ParentType(gridDiscretization)
     , c_(getParam<Scalar>("Problem.C"))
-    { appendDirichletConstraints_(); }
+    {
+        appendDirichletConstraints_();
+        makeConstraintsConsistent(this->gridDiscretization(), constraints_);
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be

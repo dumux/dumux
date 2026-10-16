@@ -73,6 +73,7 @@ public:
                     }
                 }
         }
+        makeConstraintsConsistent(*gridGeometry, constraints_);
     }
 
     const std::vector<DirichletConstraintData>& constraints() const

@@ -72,6 +72,7 @@ public:
                     }
                 }
         }
+        makeConstraintsConsistent(*gridGeometry, constraints_);
     }
 
     const std::string& name() const

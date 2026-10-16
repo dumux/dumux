@@ -75,6 +75,7 @@ public:
             setVelocityOnCylinders_(*gridGeometry);
         else
             fixPressureInOneCell_(*gridGeometry);
+        makeConstraintsConsistent(*gridGeometry, constraints_);
     }
 
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const

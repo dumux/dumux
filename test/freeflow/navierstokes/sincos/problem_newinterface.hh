@@ -343,6 +343,7 @@ private:
             appendDirichletConstraints_();
         else if (!useNeumann_)
             appendPressureConstraint_();
+        makeConstraintsConsistent(this->gridDiscretization(), constraints_);
     }
 
     void appendDirichletConstraints_() const

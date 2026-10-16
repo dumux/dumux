@@ -51,7 +51,10 @@ public:
     CooksMembraneProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
     , shearTraction_(getParam<Scalar>("Problem.ShearTraction"))
-    { appendDirichletConstraints_(); }
+    {
+        appendDirichletConstraints_();
+        makeConstraintsConsistent(this->gridDiscretization(), constraints_);
+    }
 
     const std::vector<DirichletConstraintData>& constraints() const
     { return constraints_; }

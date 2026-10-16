@@ -76,6 +76,7 @@ public:
             appendDirichletConstraints_();
         else if(!useNeumann_)
             appendInternalConstraints_();
+        makeConstraintsConsistent(Dumux::gridDiscretization(*this), constraints_);
     }
 
     DoneaTestProblemNewInterface(std::shared_ptr<const GridDiscretization> gridDiscretization)
@@ -87,6 +88,7 @@ public:
         mu_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
 
         appendDirichletConstraints_();
+        makeConstraintsConsistent(Dumux::gridDiscretization(*this), constraints_);
     }
 
     /*!

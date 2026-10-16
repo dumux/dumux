@@ -63,6 +63,7 @@ public:
     , shearTraction_(getParam<Scalar>("Problem.ShearTraction"))
     {
         appendDirichletConstraints_();
+        makeConstraintsConsistent(this->gridDiscretization(), constraints_);
     }
 
     const CouplingManager& couplingManager() const
