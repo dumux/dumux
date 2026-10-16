@@ -15,6 +15,12 @@ dumux_add_test(NAME test_scvfnormal_surface
                SOURCES test_scvfnormal_surface.cc
                CMAKE_GUARD dune-foamgrid_FOUND)
 
+dumux_add_test(NAME test_dirichletconstraints_parallel
+               LABELS unit discretization
+               SOURCES test_dirichletconstraints_parallel.cc
+               MPI_RANKS 1 2 4
+               TIMEOUT 300)
+
 dumux_add_test(NAME test_interpolate
                LABELS unit discretization
                SOURCES test_interpolate.cc)

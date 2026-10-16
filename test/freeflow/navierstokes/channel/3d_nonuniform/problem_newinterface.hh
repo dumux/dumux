@@ -82,6 +82,7 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
             appendDirichletConstraints_();
+        makeConstraintsConsistent(Dumux::gridDiscretization(*this), constraints_);
     }
 
     /*!

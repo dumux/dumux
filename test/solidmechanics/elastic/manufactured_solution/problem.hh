@@ -64,7 +64,10 @@ class ElasticProblem : public Experimental::ProblemWithSpatialParams<TypeTag>
 public:
     ElasticProblem(std::shared_ptr<const GridGeometry> gridGeometry)
     : ParentType(gridGeometry)
-    { appendDirichletConstraints_(); }
+    {
+        appendDirichletConstraints_();
+        makeConstraintsConsistent(this->gridDiscretization(), constraints_);
+    }
 
     const std::vector<DirichletConstraintData>& constraints() const
     { return constraints_; }

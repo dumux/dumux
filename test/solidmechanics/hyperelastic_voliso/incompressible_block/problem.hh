@@ -73,6 +73,7 @@ public:
     , loadFactor_(1.0)
     {
         appendDirichletConstraints_();
+        makeConstraintsConsistent(this->gridDiscretization(), constraints_);
     }
 
     void setLoadFactor(Scalar f) { loadFactor_ = f; }
