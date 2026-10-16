@@ -143,3 +143,7 @@ steady state.
 The test `test_1p2c_hortonrogerslapwood_box` runs the setup above on $32 \times 32$ cells and fails if the
 error exceeds $10^{-2}$. The test `test_1p2c_hortonrogerslapwood_decay_box` uses $Ra = 2 \pi^2$, for which
 the perturbation decays with $\sigma = -\pi^2$; its error is $1.3 \times 10^{-4}$.
+The test `test_1p2c_hortonrogerslapwood_dispersion_box` adds Scheidegger's velocity-dependent dispersion
+($\alpha_L = 0.1\,\mathrm{m}$, $\alpha_T = 0.01\,\mathrm{m}$) to the solution at rest ($A_0 = 0$). The velocity and
+with it the dispersion vanish, and the test fails if the maximum deviation from the linear profile exceeds
+$10^{-12}$; it is $3.9 \times 10^{-16}$.
