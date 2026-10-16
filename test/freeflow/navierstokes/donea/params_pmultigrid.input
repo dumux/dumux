@@ -1,0 +1,36 @@
+[Grid]
+UpperRight = 1 1
+Cells = 8 8
+
+[Problem]
+Name = test_donea_momentum_pmultigrid
+EnableGravity = false
+EnableInertiaTerms = false
+UseNeumann = false
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = false
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+
+[SpatialParams]
+Temperature = 298.0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-1
+
+[LinearSolver]
+ResidualReduction = 1e-10
+MaxIterations = 500
+
+[LinearSolver.Preconditioner]
+AmgAccumulationMode = atOnce
+AmgCriterionSymmetric = false
+
+[Test]
+NumLevels = 4
+MaxIterations = 20
+SolutionTolerance = 1e-6
+MinRate = 3.8

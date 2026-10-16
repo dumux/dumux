@@ -1,0 +1,11 @@
+[Grid]
+UpperRight = 1 1 1
+Cells = 4 4 4
+Overlap = 0
+
+[Test]
+NumLevels = 3
+
+[LinearSolver]
+ResidualReduction = 1e-10
+MaxIterations = 500

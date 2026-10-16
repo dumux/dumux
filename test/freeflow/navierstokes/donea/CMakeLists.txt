@@ -882,3 +882,82 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                            -Problem.Name test_ff_stokes_donea_hybrid_quadrature_pq2_cube -Problem.UseNeumann true
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -LinearSolver.Type gmres -LinearSolver.SymmetrizeDirichlet false -LinearSolver.DirectSolverForVelocity true")
+
+# PQ3 momentum balance: BiCGSTAB with AMG and with the p-multigrid preconditioner, sequential and parallel
+# simplices: ILU(1) and exact LU smoothing
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_simplex
+               SOURCES main_momentum_pmultigrid.cc
+               LABELS freeflow navierstokes donea linear
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                   TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
+                                   NEW_PROBLEM_INTERFACE=1 NEW_VARIABLES_INTERFACE=1 ENABLECACHING=1 ENABLEFLUXVARSCACHING=0
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input -Test.NumLevels 3 -Test.MaxIterations 100 -LinearSolver.MaxIterations 150
+                        -LinearSolver.Preconditioner.PMultigridSmoother ilu -LinearSolver.Preconditioner.ILUOrder 1)
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_simplex_lu
+               TARGET test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_simplex
+               LABELS freeflow navierstokes donea linear
+               CMAKE_GUARD "( dune-alugrid_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input -Test.NumLevels 3 -LinearSolver.MaxIterations 150
+                        -LinearSolver.Preconditioner.PMultigridSmoother lu)
+
+# ILU(0) smoothing, nonoverlapping (ALUGrid, smoother on the subdomain extended by the ghost layer)
+# and overlapping (YaspGrid with overlap) decompositions
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_cube
+               SOURCES main_momentum_pmultigrid.cc
+               LABELS freeflow navierstokes donea linear
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+                                   TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
+                                   NEW_PROBLEM_INTERFACE=1 NEW_VARIABLES_INTERFACE=1 ENABLECACHING=1 ENABLEFLUXVARSCACHING=0
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input -Test.NumLevels 3 -LinearSolver.MaxIterations 150
+                        -LinearSolver.Preconditioner.PMultigridSmoother ilu)
+
+# unstructured quadrilaterals (elements touching a process subdomain at a single vertex)
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_unstructured_cube
+               TARGET test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_cube
+               LABELS freeflow navierstokes donea linear
+               CMAKE_GUARD dune-alugrid_FOUND
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input -Grid.File grids/unstructured_quadrilaterals.msh -Test.NumLevels 3
+                        -LinearSolver.MaxIterations 150 -LinearSolver.Preconditioner.PMultigridSmoother ilu)
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_yasp
+               SOURCES main_momentum_pmultigrid.cc
+               LABELS freeflow navierstokes donea linear
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+                                   TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
+                                   NEW_PROBLEM_INTERFACE=1 NEW_VARIABLES_INTERFACE=1 ENABLECACHING=1 ENABLEFLUXVARSCACHING=0
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input -Grid.Overlap 1 -Test.NumLevels 3 -LinearSolver.MaxIterations 150
+                        -LinearSolver.Preconditioner.PMultigridSmoother ilu)
+
+# exact LU solves on the overlapping subdomains, whose rows are truncated at the outer boundary of the overlap
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_yasp_lu
+               TARGET test_ff_stokes_donea_momentum_pmultigrid_hybrid_pq3_yasp
+               LABELS freeflow navierstokes donea linear
+               CMAKE_GUARD HAVE_UMFPACK
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input -Grid.Overlap 1 -Test.NumLevels 3 -Test.MaxIterations 10
+                        -LinearSolver.MaxIterations 150 -LinearSolver.Preconditioner.PMultigridSmoother lu)
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_pmultigrid_fe_pq3_cube
+               SOURCES main_momentum_pmultigrid.cc
+               LABELS freeflow navierstokes donea linear
+               CMAKE_GUARD dune-alugrid_FOUND
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+                                   DISCRETIZATION_MODEL=PQ3FEModel NAVIER_STOKES_MODEL=NavierStokesMomentumFE
+                                   NEW_PROBLEM_INTERFACE=1 NEW_VARIABLES_INTERFACE=1 KEEP_DEFAULT_GRIDVARIABLES=1
+               MPI_RANKS 1 2 4
+               TIMEOUT 600
+               CMD_ARGS params_pmultigrid.input)

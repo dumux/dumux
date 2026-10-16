@@ -123,6 +123,7 @@ LinearSolverParameters<LinearSolverTraits>::dumuxToIstlSolverParams =
     {"Preconditioner.Relaxation", "preconditioner.relaxation"},
     {"Preconditioner.ILUOrder", "preconditioner.n"},
     {"Preconditioner.ILUResort", "preconditioner.resort"},
+    {"Preconditioner.PMultigridSmoother", "preconditioner.pmultigridSmoother"},
     {"Preconditioner.AmgSmootherRelaxation", "preconditioner.smootherRelaxation"},
     {"Preconditioner.AmgSmootherIterations", "preconditioner.smootherIterations"},
     {"Preconditioner.AmgMaxLevel", "preconditioner.maxLevel"},
