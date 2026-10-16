@@ -20,6 +20,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/math.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/flux/facetensoraverage.hh>
 #include <dumux/flux/traits.hh>
@@ -52,7 +53,9 @@ static constexpr bool hasVelocityInSpatialParams()
  * \f]
  * where \f$\mathbf{v}\f$ is the velocity vector, \f$\alpha_L\f$ and \f$\alpha_T\f$ are the
  * longitudinal and transverse dispersivities, respectively, and \f$\mathbf{I}\f$ is the identity matrix.
- * The velocity is either taken from the spatial parameters or from the reconstructed velocity field and the dispersivities are taken from the spatial parameters.
+ * The velocity is either taken from the spatial parameters or, for the box method, evaluated with the potential
+ * gradient of the advection type (`AdvectionType::potentialGradient`), i.e. with the same density in the gravity
+ * term as the advective flux. The dispersivities are taken from the spatial parameters.
  */
 template<class TypeTag>
 class ScheideggersDispersionTensor
@@ -68,6 +71,7 @@ class ScheideggersDispersionTensor
     static const int dimWorld = GridView::dimensionworld;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using FluxTraits = typename Dumux::FluxTraits<FluxVariables>;
     static constexpr bool stationaryVelocityField = FluxTraits::hasStationaryVelocityField();
@@ -136,36 +140,15 @@ private:
         {
             if constexpr (FVElementGeometry::GridGeometry::discMethod == DiscretizationMethods::box)
             {
-                const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-                const auto& shapeValues = fluxVarsCache.shapeValues();
-
-                // get inside and outside permeability tensors and calculate the harmonic mean
                 const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
                 const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
                 const auto K = faceTensorAverage(insideVolVars.permeability(),
                                                  outsideVolVars.permeability(),
                                                  scvf.unitOuterNormal());
 
-                // evaluate gradP - rho*g at integration point
-                Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
-                Scalar rho(0.0);
-                static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    const auto& volVars = elemVolVars[scv];
-
-                    if (enableGravity)
-                        rho += volVars.density(0)*shapeValues[scv.indexInElement()][0];
-                    // the global shape function gradient
-                    gradP.axpy(volVars.pressure(0), fluxVarsCache.gradN(scv.indexInElement()));
-                }
-
-                if (enableGravity)
-                    gradP.axpy(-rho, problem.spatialParams().gravity(scvf.center()));
-
-                velocity = gradP;
-                velocity *= K;
-
+                const auto gradPotential = AdvectionType::potentialGradient(problem, fvGeometry, elemVolVars, scvf,
+                                                                            0, elemFluxVarsCache[scvf]);
+                velocity = mv(K, gradPotential);
                 velocity /= -0.5 * (insideVolVars.viscosity() + outsideVolVars.viscosity());
             }
             else
@@ -186,11 +169,11 @@ private:
                 dispersionTensor[i][j] = velocity[i]*velocity[j];
 
         //normalize velocity product --> vv^T/||v||, [m/s]
-        Scalar vNorm = velocity.two_norm();
+        const Scalar vNorm = velocity.two_norm();
+        if (vNorm < 1e-20)
+            return DimWorldMatrix(0.0);
 
         dispersionTensor /= vNorm;
-        if (vNorm < 1e-20)
-            dispersionTensor = 0;
 
         //multiply with dispersivity difference: vv^T/||v||*(alphaL - alphaT), [m^2/s] --> alphaL = longitudinal disp., alphaT = transverse disp.
         dispersionTensor *= (dispersivity[0] - dispersivity[1]);

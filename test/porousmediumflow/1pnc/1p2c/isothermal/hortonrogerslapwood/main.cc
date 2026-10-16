@@ -36,7 +36,7 @@
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-    using TypeTag = Properties::TTag::HortonRogersLapwood;
+    using TypeTag = Properties::TTag::TYPETAG;
 
     Dumux::initialize(argc, argv);
     const auto& mpiHelper = Dune::MPIHelper::instance();
@@ -166,6 +166,9 @@ int main(int argc, char** argv)
 
     if (hasParam("Problem.GrowthRateTolerance") && !(error < getParam<Scalar>("Problem.GrowthRateTolerance")))
         DUNE_THROW(Dune::Exception, "Growth rate error " << error << " exceeds the tolerance");
+
+    if (hasParam("Problem.MaxDeviationTolerance") && !(maxDeviation < getParam<Scalar>("Problem.MaxDeviationTolerance")))
+        DUNE_THROW(Dune::Exception, "Deviation " << maxDeviation << " from the linear profile exceeds the tolerance");
 
     return 0;
 }

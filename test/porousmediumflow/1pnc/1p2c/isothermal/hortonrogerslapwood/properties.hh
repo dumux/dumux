@@ -23,11 +23,13 @@
 #include <dumux/porousmediumflow/fvspatialparams1pconstant.hh>
 
 #include "problem.hh"
+#include "spatialparams.hh"
 
 namespace Dumux::Properties {
 
 namespace TTag {
 struct HortonRogersLapwood { using InheritsFrom = std::tuple<OnePNC, BoxModel>; };
+struct HortonRogersLapwoodDispersion { using InheritsFrom = std::tuple<HortonRogersLapwood>; };
 } // end namespace TTag
 
 template<class TypeTag>
@@ -67,6 +69,16 @@ struct AdvectionType<TypeTag, TTag::HortonRogersLapwood>
 {
     using type = CVFEBoussinesqDarcysLaw<GetPropType<TypeTag, Properties::Scalar>,
                                          GetPropType<TypeTag, Properties::GridGeometry>>;
+};
+
+template<class TypeTag>
+struct EnableCompositionalDispersion<TypeTag, TTag::HortonRogersLapwoodDispersion> { static constexpr bool value = true; };
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::HortonRogersLapwoodDispersion>
+{
+    using type = HortonRogersLapwoodDispersionSpatialParams<GetPropType<TypeTag, Properties::GridGeometry>,
+                                                            GetPropType<TypeTag, Properties::Scalar>>;
 };
 
 } // end namespace Dumux::Properties
