@@ -61,6 +61,8 @@ Note that the parallel AMG preconditioner of dune-istl defaults
 to an iterative SSOR coarse grid solver if no direct solver is found on your system. Unfortunately, the iterative solver has a very high and hard-coded tolerance as a termination criterion, which will not solve the coarse grid system with sufficient accuracy for typical problems in DuMux.
 We therefore recommend to install one of the direct solver libraries supported by dune-istl. This is either UMFPack contained in SuiteSparse, or SuperLU, see also the section on [External Libraries](#external-libraries).
 
+To solve the complete linear system in parallel with a direct solver, DuMux provides `DirectSolverMumps` (`dumux/linear/mumpssolver.hh`), which requires MUMPS.
+
 ## Run a parallel MPI application
 
 The starting procedure for parallel simulations depends on the chosen MPI library. Most MPI implementations use the `mpirun` command

@@ -93,6 +93,8 @@ find_package(TBB QUIET)
 find_package(Kokkos 3.7 QUIET)
 find_package(OpenMP QUIET)
 
+find_package(MUMPS QUIET)
+
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
 dumux_add_library(dumux
@@ -133,6 +135,11 @@ if (OpenMP_FOUND)
   target_link_libraries(dumux INTERFACE OpenMP::OpenMP_CXX)
 endif()
 
+if (MUMPS_FOUND)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_MUMPS=1)
+  target_link_libraries(dumux INTERFACE MUMPS::MUMPS)
+endif()
+
 if (NOT DUMUX_HAVE_STD_FORMAT)
   dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
   target_compile_features(dumux_format PUBLIC cxx_std_20)
@@ -155,6 +162,7 @@ if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
   endif()
   add_feature_info("Shared-memory parallelism" DUMUX_MULTITHREADING_SUPPORTED "multithreaded loops, assembly and solvers if available")
   add_feature_info("Distributed-memory parallelism" MPI_FOUND "MPI parallel programs")
+  add_feature_info("Direct solver MUMPS" MUMPS_FOUND "sequential and parallel direct linear solver DirectSolverMumps")
   add_feature_info("Python bindings for DuMux" DUMUX_ENABLE_PYTHONBINDINGS "using DuMux via its Python API (experimental)")
 endif()
 
@@ -202,6 +210,33 @@ if (Kokkos_FOUND)
   string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
     "# Make sure Kokkos is found"
     "find_dependency(Kokkos)"
+  )
+endif()
+# make sure downstream projects can find MUMPS too, with the find module of dumux and by default
+# the installation prefix of the MUMPS found here (the parent of include/ or include/MUMPS)
+if (MUMPS_FOUND)
+  get_filename_component(_mumps_prefix "${MUMPS_INCLUDE_DIR}" DIRECTORY)
+  if (_mumps_prefix MATCHES "/include$")
+    get_filename_component(_mumps_prefix "${_mumps_prefix}" DIRECTORY)
+  endif()
+  # one line per library, a list separator would split the section when it is expanded
+  set(_mumps_extra_libraries "")
+  if (MUMPS_EXTRA_LIBRARIES)
+    set(_mumps_extra_libraries "if(NOT DEFINED MUMPS_EXTRA_LIBRARIES)")
+    foreach(_lib IN LISTS MUMPS_EXTRA_LIBRARIES)
+      string(APPEND _mumps_extra_libraries "\n  list(APPEND MUMPS_EXTRA_LIBRARIES \"${_lib}\")")
+    endforeach()
+    string(APPEND _mumps_extra_libraries "\nendif()")
+  endif()
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure MUMPS is found"
+    "if(NOT MUMPS_ROOT)"
+    "  set(MUMPS_ROOT \"${_mumps_prefix}\")"
+    "endif()"
+    "${_mumps_extra_libraries}"
+    "list(PREPEND CMAKE_MODULE_PATH \"\${dumux_MODULE_PATH}\")"
+    "find_dependency(MUMPS)"
+    "list(POP_FRONT CMAKE_MODULE_PATH)"
   )
 endif()
 # make sure downstream projects can find OpenMP too
