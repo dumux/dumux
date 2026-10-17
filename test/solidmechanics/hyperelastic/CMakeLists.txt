@@ -26,3 +26,4 @@ dumux_add_test(
 )
 
 add_subdirectory(dynamic_manufactured_solution)
+add_subdirectory(growth)
