@@ -94,6 +94,12 @@ find_package(Kokkos 3.7 QUIET)
 find_package(OpenMP QUIET)
 
 find_package(MUMPS QUIET)
+find_package(Spectra 1.0 QUIET)
+if (Spectra_FOUND AND TARGET Eigen3::Eigen)
+  set(DUMUX_HAVE_SPECTRA TRUE)
+else()
+  set(DUMUX_HAVE_SPECTRA FALSE)
+endif()
 
 # Create the dumux library target exported as Dumux::Dumux
 include(DumuxAddLibrary)
@@ -140,6 +146,11 @@ if (MUMPS_FOUND)
   target_link_libraries(dumux INTERFACE MUMPS::MUMPS)
 endif()
 
+if (DUMUX_HAVE_SPECTRA)
+  target_compile_definitions(dumux PUBLIC DUMUX_HAVE_SPECTRA=1)
+  target_link_libraries(dumux INTERFACE Spectra::Spectra)
+endif()
+
 if (NOT DUMUX_HAVE_STD_FORMAT)
   dumux_add_library(dumux_format NAMESPACE Dumux:: EXPORT_NAME Format)
   target_compile_features(dumux_format PUBLIC cxx_std_20)
@@ -163,6 +174,7 @@ if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
   add_feature_info("Shared-memory parallelism" DUMUX_MULTITHREADING_SUPPORTED "multithreaded loops, assembly and solvers if available")
   add_feature_info("Distributed-memory parallelism" MPI_FOUND "MPI parallel programs")
   add_feature_info("Direct solver MUMPS" MUMPS_FOUND "sequential and parallel direct linear solver DirectSolverMumps")
+  add_feature_info("Eigenvalue solver Spectra" DUMUX_HAVE_SPECTRA "eigenvalues of sparse matrices closest to a shift (ShiftInvertEigenSolver)")
   add_feature_info("Python bindings for DuMux" DUMUX_ENABLE_PYTHONBINDINGS "using DuMux via its Python API (experimental)")
 endif()
 
@@ -210,6 +222,16 @@ if (Kokkos_FOUND)
   string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
     "# Make sure Kokkos is found"
     "find_dependency(Kokkos)"
+  )
+endif()
+# make sure downstream projects can find Spectra and Eigen too
+if (DUMUX_HAVE_SPECTRA)
+  string(JOIN "\n" DUNE_CUSTOM_PKG_CONFIG_SECTION ${DUNE_CUSTOM_PKG_CONFIG_SECTION}
+    "# Make sure Spectra and Eigen are found"
+    "if(NOT Eigen3_DIR)"
+    "  set(Eigen3_DIR \"${Eigen3_DIR}\")"
+    "endif()"
+    "find_dependency(Spectra HINTS \"${Spectra_DIR}\")"
   )
 endif()
 # make sure downstream projects can find MUMPS too, with the find module of dumux and by default
