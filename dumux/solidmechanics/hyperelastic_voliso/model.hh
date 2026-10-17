@@ -43,7 +43,8 @@
  *   p_s^{\mathrm{eq}}(J) - p_s = 0,
  * \f]
  * where the equilibrium pressure \f$ p_s^{\mathrm{eq}}(J) \f$ is supplied by
- * the pressure problem via `problem.volumetricPressure(J)`.
+ * the pressure problem via `problem.volumetricPressure(J, elemDisc, ipGlobal)` or, if it does
+ * not depend on the position, via `problem.volumetricPressure(J)`.
  *
  * The type tags `HyperelasticVolIsoMomentumModel` and
  * `HyperelasticVolIsoPressureModel` are coupled via

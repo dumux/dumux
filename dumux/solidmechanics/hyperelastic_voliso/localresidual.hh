@@ -18,7 +18,8 @@
  *
  * - `HyperelasticVolIsoPressureLocalResidual`: Algebraic pressure constraint
  *   \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
- *   where \f$ p_s^{\mathrm{eq}}(J) \f$ is supplied by `problem.volumetricPressure(J)`.
+ *   where \f$ p_s^{\mathrm{eq}}(J) \f$ is supplied by `problem.volumetricPressure(J, elemDisc, ipGlobal)`
+ *   or, if it does not depend on the position, by `problem.volumetricPressure(J)`.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_LOCAL_RESIDUAL_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_LOCAL_RESIDUAL_HH
@@ -182,7 +183,12 @@ private:
  * Enforces the algebraic pressure constraint
  * \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
  * averaged over each SCV. The equilibrium pressure \f$ p_s^{\mathrm{eq}}(J) \f$
- * is supplied by the pressure problem via `problem.volumetricPressure(J)`.
+ * is supplied by the pressure problem via `problem.volumetricPressure(J, elemDisc, ipGlobal)`
+ * or, if it does not depend on the position, via `problem.volumetricPressure(J)`.
+ * For a material with growth tensor \f$ \mathbf{F}_\mathrm{g} \f$ and volumetric strain energy
+ * \f$ J_\mathrm{g} U(J/J_\mathrm{g}) \f$ per reference volume, the volumetric stress is
+ * \f$ U'(J/J_\mathrm{g})\, J \mathbf{F}^{-\top} \f$, so the equilibrium pressure is
+ * \f$ U'(J/J_\mathrm{g}) \f$ with \f$ J_\mathrm{g} \f$ at the integration point.
  */
 template<class TypeTag>
 class HyperelasticVolIsoPressureLocalResidual : public DiscretizationDefaultLocalOperator<TypeTag>
@@ -237,7 +243,7 @@ public:
             const Tensor F = problem.couplingManager().deformationGradientAtPoint(
                 elemDisc, qpData.ipData().global());
             const Scalar J = F.determinant();
-            const Scalar psEq = problem.volumetricPressure(J);
+            const Scalar psEq = volumetricPressure_(problem, J, elemDisc, qpData.ipData().global());
 
             localBasis.evaluateFunction(qpData.ipData().local(), shapeValues);
             Scalar ps = 0.0;
@@ -273,7 +279,7 @@ public:
                 const Tensor F = problem.couplingManager().deformationGradientAtPoint(
                     elemDisc, qpData.ipData().global());
                 const Scalar J = F.determinant();
-                const Scalar psEq = problem.volumetricPressure(J);
+                const Scalar psEq = volumetricPressure_(problem, J, elemDisc, qpData.ipData().global());
 
                 localBasis.evaluateFunction(qpData.ipData().local(), shapeValues);
                 Scalar ps = 0.0;
@@ -290,6 +296,17 @@ public:
         }
     }
 
+private:
+    template<class GlobalPosition>
+    Scalar volumetricPressure_(const Problem& problem, Scalar J,
+                               const ElementDiscretization& elemDisc,
+                               const GlobalPosition& ipGlobal) const
+    {
+        if constexpr (requires { problem.volumetricPressure(J, elemDisc, ipGlobal); })
+            return problem.volumetricPressure(J, elemDisc, ipGlobal);
+        else
+            return problem.volumetricPressure(J);
+    }
 };
 
 } // end namespace Dumux
