@@ -10,7 +10,7 @@
  * \brief Pure-FE (continuous Galerkin) continuity residual for the one-phase Navier-Stokes
  *        mass subdomain.
  *
- * Implements the weak incompressible continuity: w*div(u)*dx
+ * The mass balance is tested with the pressure basis functions without integration by parts.
  */
 #ifndef DUMUX_NAVIERSTOKES_MASS_ONEP_FE_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_MASS_ONEP_FE_LOCAL_RESIDUAL_HH
@@ -144,6 +144,18 @@ public:
             }
         }
     }
+
+    /*!
+     * \brief Adds no boundary flux contributions
+     *
+     * The continuity equation is not integrated by parts, so the mass flux over the boundary
+     * follows from the velocity and the boundary fluxes of the problem do not enter the residual.
+     */
+    void addBoundaryFluxIntegral(ElementResidualVector& residual,
+                                 const Problem& problem,
+                                 const ElementDiscretization& elemDisc,
+                                 const ElementVariables& elemVars) const
+    {}
 };
 
 } // end namespace Dumux
