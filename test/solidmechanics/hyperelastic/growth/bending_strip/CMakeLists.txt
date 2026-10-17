@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input params_3d.input)
+dune_symlink_to_source_files(FILES params.input params_3d.input params_incompressible.input)
 
 dumux_add_test(NAME test_hyperelastic_growth_bending_strip_box_2d
                LABELS solidmechanics
@@ -34,3 +34,19 @@ dumux_add_test(NAME test_hyperelastic_growth_bending_strip_box_3d
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../convergencetest.py
                CMD_ARGS test_hyperelastic_growth_bending_strip_box_3d params_3d.input "20 2 2" 1.6 0.9)
+
+dumux_add_test(NAME test_hyperelastic_growth_bending_strip_mixed_p1b_2d
+               LABELS solidmechanics
+               SOURCES main_mixed.cc
+               COMPILE_DEFINITIONS MOMENTUM_TYPETAG=BendingStripMomentumP1B DIMENSION=2
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../convergencetest.py
+               CMD_ARGS test_hyperelastic_growth_bending_strip_mixed_p1b_2d params_incompressible.input "40 4" 1.8 0.9)
+
+dumux_add_test(NAME test_hyperelastic_growth_bending_strip_mixed_q2_2d
+               LABELS solidmechanics
+               SOURCES main_mixed.cc
+               COMPILE_DEFINITIONS MOMENTUM_TYPETAG=BendingStripMomentumQ2 DIMENSION=2
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../convergencetest.py
+               CMD_ARGS test_hyperelastic_growth_bending_strip_mixed_q2_2d params_incompressible.input "40 4" 1.8 1.8)

@@ -108,3 +108,41 @@ surface are 0.601108, 0.891269 and 1.138978 for the cylinder and 0.625936, 0.904
 The elements have straight edges, so the curved surfaces are approximated by polygons. The Q2
 hybrid scheme reaches \f$ H^1 \f$ rates of 1.59 and 1.55 on the cylinder against 1.97 on the
 strip, whose boundaries are straight.
+
+## Mixed displacement-pressure formulation {#benchmark-hyperelastic-growth-mixed}
+
+Both benchmarks also run in the mixed formulation of @ref HyperelasticVolIso. The neo-Hookean
+law is split as \f$ \mathbf{P}_\mathrm{e} = \mu(\mathbf{F}_\mathrm{e} - \mathbf{F}_\mathrm{e}^{-T})
++ p_\mathrm{e} J_\mathrm{e}\mathbf{F}_\mathrm{e}^{-T} \f$ with
+\f$ p_\mathrm{e} = \lambda \ln J_\mathrm{e}/J_\mathrm{e} \f$. The first part is pulled back with
+`Growth::firstPiolaKirchhoffStressTensor`; the second becomes \f$ p J \mathbf{F}^{-T} \f$ with
+\f$ p = \lambda \ln J_\mathrm{e}/J_\mathrm{e} \f$ and \f$ J_\mathrm{e} = J/J_\mathrm{g} \f$, which
+the pressure problem returns from `volumetricPressure(J, elemDisc, ipGlobal)`. Both formulations
+solve the same problem, so the exact solutions above apply. The tests use a nearly incompressible
+material and report the \f$ L^2 \f$ error of the pressure besides the displacement errors.
+
+In the strip, \f$ \lambda = 10^4 \f$ (\f$ \mu = 1 \f$). The exact solution is stress free, so
+\f$ p = 0 \f$, while \f$ J = J_\mathrm{g} = 1 + \kappa T \f$ varies within the elements.
+
+| Test | \f$ h_\mathrm{max} \f$ | \f$ L^2 \f$ error | rate | \f$ H^1 \f$ error | rate | pressure \f$ L^2 \f$ error | rate |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `test_hyperelastic_growth_bending_strip_mixed_p1b_2d` (MINI) | 0.0354 | 2.16e-4 | | 5.96e-3 | | 2.59e-3 | |
+| | 0.0177 | 4.60e-5 | 2.23 | 2.91e-3 | 1.04 | 9.23e-4 | 1.49 |
+| | 0.0088 | 1.00e-5 | 2.20 | 1.44e-3 | 1.02 | 3.26e-4 | 1.50 |
+| `test_hyperelastic_growth_bending_strip_mixed_q2_2d` (Q2–Q1) | 0.0354 | 3.91e-5 | | 2.10e-4 | | 8.25e-5 | |
+| | 0.0177 | 1.05e-5 | 1.90 | 5.55e-5 | 1.92 | 2.06e-5 | 2.00 |
+| | 0.0088 | 2.66e-6 | 1.97 | 1.41e-5 | 1.98 | 5.16e-6 | 2.00 |
+
+In the cylinder, \f$ \lambda = 1.5 \cdot 10^4 \f$ in the inner and \f$ 4.5 \cdot 10^4 \f$ in the
+outer layer. The exact pressure jumps at the layer interface, which the continuous pressure
+approximates with an \f$ L^2 \f$ error of order 1/2, and the displacement errors converge with
+orders 1 and 1/2.
+
+| Test | \f$ h_\mathrm{max} \f$ | \f$ L^2 \f$ error | rate | \f$ H^1 \f$ error | rate | pressure \f$ L^2 \f$ error | rate |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `test_hyperelastic_growth_layered_shell_mixed_p1b_2d` (MINI) | 0.1079 | 1.28e-3 | | 2.87e-2 | | 7.03e-2 | |
+| | 0.0545 | 6.00e-4 | 1.10 | 1.98e-2 | 0.55 | 4.97e-2 | 0.51 |
+| | 0.0274 | 2.90e-4 | 1.06 | 1.38e-2 | 0.52 | 3.51e-2 | 0.50 |
+| `test_hyperelastic_growth_layered_shell_mixed_q2_2d` (Q2–Q1) | 0.1079 | 1.39e-3 | | 2.87e-2 | | 7.11e-2 | |
+| | 0.0545 | 6.73e-4 | 1.06 | 2.02e-2 | 0.51 | 5.03e-2 | 0.51 |
+| | 0.0274 | 3.32e-4 | 1.03 | 1.43e-2 | 0.50 | 3.55e-2 | 0.50 |
