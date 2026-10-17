@@ -197,3 +197,22 @@ with 18 × (12 + 2) to 72 × (48 + 8) cells.
 | `test_hyperelastic_growth_wrinkling_pq2hybrid` (Q2) | 4.84 | 1.1448514 | 1.78e-3 | | 2 |
 | | 2.50 | 1.1435616 | 4.93e-4 | 1.95 | 2 |
 | | 1.27 | 1.1431998 | 1.31e-4 | 1.96 | 2 |
+
+### Post-buckling branch {#benchmark-hyperelastic-growth-wrinkling-branch}
+
+Beyond the onset, the wrinkled branch is traced by prescribing the vertical displacement of the top
+corner at \f$ x = 0 \f$, a distance \f$ a \f$ above the flat state, and finding the growth stretch at
+which its reaction vanishes by the secant method. Each amplitude starts from the previous state
+moved along the eigenvector of the onset. The test `test_hyperelastic_growth_wrinkling_branch_box`
+traces \f$ a = 0.01 \f$ to \f$ 0.16 \f$ on the coarsest mesh, fits
+\f$ \vartheta = \vartheta_0 + c_2 a^2 + c_4 a^4 \f$ and checks that the intercept
+\f$ \vartheta_0 \f$ agrees with the critical stretch from the eigenvalues to \f$ 10^{-6} \f$, that
+\f$ c_2 > 0 \f$ (a supercritical pitchfork) and that \f$ \vartheta - \vartheta_c \f$ grows with
+the exponent 2 between \f$ a = 0.01 \f$ and \f$ 0.02 \f$ to within 0.02. On the three meshes of the
+onset test, the intercept deviates from the critical stretch by \f$ 1.2 \cdot 10^{-7} \f$ to
+\f$ 2.9 \cdot 10^{-7} \f$, and the exponent on the coarsest mesh is 2.0009.
+
+| Discretization | \f$ c_2 \f$, coarsest mesh | middle mesh | finest mesh |
+| :--- | ---: | ---: | ---: |
+| box | 0.11843 | 0.12092 | 0.12140 |
+| Q2 hybrid | 0.11854 | 0.12075 | 0.12133 |

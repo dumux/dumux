@@ -9,6 +9,13 @@
  * \brief Onset of growth-induced wrinkling: the growth stretch of the film is increased along the
  *        flat solution until the smallest real eigenvalue of the Jacobian changes sign, and the
  *        critical stretch is then located by the Illinois method
+ *
+ * If `Problem.BranchAmplitudes` is given, the wrinkled branch is traced beyond the onset: for each
+ * amplitude a, the top corner at x = 0 is displaced by a from the flat state, and the growth stretch
+ * at which its reaction vanishes is found by the secant method, starting from the previous state
+ * moved along the eigenvector of the onset. The stretches are fitted by
+ * \f$ \vartheta = \vartheta_0 + c_2 a^2 + c_4 a^4 \f$, whose intercept has to agree with the
+ * critical stretch from the eigenvalues.
  */
 #include <config.h>
 
@@ -21,11 +28,15 @@
 #include <utility>
 #include <vector>
 
+#include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/assembler.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/linear/eigensolver.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -169,5 +180,86 @@ int main(int argc, char** argv)
               << "Critical growth stretch: " << stretch << "\n"
               << "Wrinkle half-wavelengths: " << signChanges << "\n";
 
+    const auto writeVtk = [&]
+    {
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+        {
+            if (getParam<bool>("Problem.EnableVtkOutput", false))
+            {
+                VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
+                vtkWriter.addField(x, "d");
+                vtkWriter.addField(mode, "mode");
+                vtkWriter.write(1.0);
+            }
+        }
+    };
+
+    if (!hasParam("Problem.BranchAmplitudes"))
+    {
+        writeVtk();
+        return 0;
+    }
+
+    const auto criticalStretch = stretch;
+    const auto amplitudes = getParam<std::vector<Scalar>>("Problem.BranchAmplitudes");
+    const auto pointDof = problem->pointDofIndex();
+    const auto reaction = [&](Scalar stretch, Scalar amplitude)
+    {
+        problem->setGrowthStretch(stretch);
+        problem->setPointDisplacement((problem->filmThicknessStretch(stretch) - 1.0)*problem->filmThickness() + amplitude);
+        problem->enablePointConstraint(true);
+        nonlinearSolver.solve(x);
+        problem->enablePointConstraint(false);
+        assembler->assembleResidual(x);
+        return assembler->residual()[pointDof][1];
+    };
+
+    std::vector<Scalar> branchStretches;
+    for (std::size_t i = 0; i < amplitudes.size(); ++i)
+    {
+        // the initial guess moves along the eigenvector of the onset by the increment of the amplitude
+        x.axpy((amplitudes[i] - (i > 0 ? amplitudes[i-1] : 0.0))/mode[pointDof][1], mode);
+
+        // first guesses from the parabolic shape of the branch
+        Scalar s0 = criticalStretch + 1e-4;
+        if (i > 0)
+        {
+            const auto ratio = amplitudes[i]/amplitudes[i-1];
+            s0 = criticalStretch + (branchStretches[i-1] - criticalStretch)*ratio*ratio;
+        }
+        Scalar s1 = s0 + 1e-4*std::max(std::abs(s0 - criticalStretch), Scalar(1e-3));
+        Scalar r0 = reaction(s0, amplitudes[i]);
+        Scalar r1 = reaction(s1, amplitudes[i]);
+        for (int iter = 0; iter < 50 && std::abs(s1 - s0) > 1e-13; ++iter)
+        {
+            const Scalar s2 = s1 - r1*(s1 - s0)/(r1 - r0);
+            s0 = s1; r0 = r1;
+            s1 = s2; r1 = reaction(s1, amplitudes[i]);
+        }
+        branchStretches.push_back(s1);
+        std::cout << "Branch amplitude " << amplitudes[i] << ": growth stretch " << s1 << "\n";
+    }
+
+    // least-squares fit of theta_0 + c_2 a^2 + c_4 a^4
+    Dune::FieldMatrix<Scalar, 3, 3> normal(0.0);
+    Dune::FieldVector<Scalar, 3> rhs(0.0), coefficients;
+    for (std::size_t i = 0; i < amplitudes.size(); ++i)
+    {
+        const Scalar a2 = amplitudes[i]*amplitudes[i];
+        const Dune::FieldVector<Scalar, 3> basis{1.0, a2, a2*a2};
+        for (int r = 0; r < 3; ++r)
+        {
+            rhs[r] += basis[r]*branchStretches[i];
+            for (int c = 0; c < 3; ++c)
+                normal[r][c] += basis[r]*basis[c];
+        }
+    }
+    normal.solve(coefficients, rhs);
+    std::cout << "Branch intercept: " << coefficients[0] << "\n"
+              << "Branch intercept deviation: " << std::abs(coefficients[0] - criticalStretch) << "\n"
+              << "Branch coefficient c2: " << coefficients[1] << "\n"
+              << "Branch coefficient c4: " << coefficients[2] << "\n";
+
+    writeVtk();
     return 0;
 }

@@ -15,10 +15,15 @@
  * substrate unstrained and film compressed along \f$ x \f$ and stretched along \f$ y \f$, is a
  * solution for every \f$ \vartheta \f$ and becomes unstable at a critical growth stretch, where the
  * film wrinkles.
+ *
+ * Beyond the onset, the wrinkled branch is traced by prescribing the vertical displacement of the top
+ * corner at \f$ x = 0 \f$ in addition (`enablePointConstraint`) and searching the growth stretch at
+ * which its reaction vanishes.
  */
 #ifndef DUMUX_TEST_HYPERELASTIC_GROWTH_WRINKLING_PROBLEM_HH
 #define DUMUX_TEST_HYPERELASTIC_GROWTH_WRINKLING_PROBLEM_HH
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <vector>
@@ -83,10 +88,67 @@ public:
         for (const auto& [dofIdx, info] : constrained)
             if (info.isConstraintEquation(0) || info.isConstraintEquation(1))
                 constraints_.push_back(DirichletConstraintData{info, PrimaryVariables(0.0), dofIdx});
+
+        // the top corner at x = 0
+        for (const auto& element : elements(gridGeometry->gridView()))
+        {
+            elemDisc.bind(element);
+            for (const auto& localDof : localDofs(elemDisc))
+            {
+                const auto pos = ipData(elemDisc, localDof).global();
+                if (pos[0] < lowerLeft[0] + eps_ && pos[1] > upperRight[1] - eps_)
+                    pointDofIndex_ = localDof.dofIndex();
+            }
+        }
+        pointConstraintInfo_ = constrained[pointDofIndex_];
+        pointConstraintInfo_.set(1);
+        constraintsWithPoint_ = constraints_;
+        std::erase_if(constraintsWithPoint_, [&](const auto& c) { return c.dofIndex() == pointDofIndex_; });
+        constraintsWithPoint_.push_back(DirichletConstraintData{pointConstraintInfo_, PrimaryVariables(0.0), pointDofIndex_});
     }
 
     const std::vector<DirichletConstraintData>& constraints() const
-    { return constraints_; }
+    { return pointConstraintEnabled_ ? constraintsWithPoint_ : constraints_; }
+
+    //! Prescribes the vertical displacement of the top corner at x = 0 in addition to the boundary conditions
+    void enablePointConstraint(bool enable)
+    { pointConstraintEnabled_ = enable; }
+
+    void setPointDisplacement(Scalar displacement)
+    {
+        PrimaryVariables values(0.0);
+        values[1] = displacement;
+        constraintsWithPoint_.back() = DirichletConstraintData{pointConstraintInfo_, values, pointDofIndex_};
+    }
+
+    GridIndex pointDofIndex() const
+    { return pointDofIndex_; }
+
+    //! The stretch of the film thickness in the flat state, where the film is free of stress along y
+    Scalar filmThicknessStretch(Scalar growthStretch) const
+    {
+        const auto stressYY = [&](Scalar stretch)
+        {
+            Tensor F(0.0);
+            F[0][0] = 1.0;
+            F[1][1] = stretch;
+            return layerStress_(F, film_, growthStretch)[1][1];
+        };
+
+        Scalar stretch = 1.0;
+        for (int iter = 0; iter < 50; ++iter)
+        {
+            constexpr Scalar h = 1e-7;
+            const Scalar f = stressYY(stretch);
+            stretch -= f/((stressYY(stretch + h) - stressYY(stretch - h))/(2.0*h));
+            if (std::abs(f) < 1e-14)
+                break;
+        }
+        return stretch;
+    }
+
+    Scalar filmThickness() const
+    { return this->gridDiscretization().bBoxMax()[1] - substrateDepth_; }
 
     void setGrowthStretch(const Scalar stretch)
     { growthStretch_ = stretch; }
@@ -95,10 +157,17 @@ public:
     Tensor firstPiolaKirchhoffStressTensor(const Tensor& F, const ElementDiscretization& elemDisc, const IpData&) const
     {
         const bool isFilm = elemDisc.element().geometry().center()[1] > substrateDepth_;
-        const auto& layer = isFilm ? film_ : substrate_;
+        return isFilm ? layerStress_(F, film_, growthStretch_) : layerStress_(F, substrate_, 1.0);
+    }
+
+private:
+    struct Layer { Scalar shearModulus, lameLambda; };
+
+    static Tensor layerStress_(const Tensor& F, const Layer& layer, Scalar growthStretch)
+    {
         Vector axis(0.0);
         axis[0] = 1.0;
-        const auto Fg = Growth::transverselyIsotropicTensor(axis, isFilm ? growthStretch_ : Scalar(1.0), Scalar(1.0));
+        const auto Fg = Growth::transverselyIsotropicTensor(axis, growthStretch, Scalar(1.0));
         return Growth::firstPiolaKirchhoffStressTensor(F, Fg, [&](const Tensor& Fe)
         {
             using std::log;
@@ -109,14 +178,14 @@ public:
         });
     }
 
-private:
-    struct Layer { Scalar shearModulus, lameLambda; };
-
     static constexpr Scalar eps_ = 1e-8;
     Scalar substrateDepth_;
     Layer film_, substrate_;
     Scalar growthStretch_ = 1.0;
-    std::vector<DirichletConstraintData> constraints_;
+    std::vector<DirichletConstraintData> constraints_, constraintsWithPoint_;
+    ConstraintInfo pointConstraintInfo_;
+    GridIndex pointDofIndex_ = 0;
+    bool pointConstraintEnabled_ = false;
 };
 
 } // end namespace Dumux
