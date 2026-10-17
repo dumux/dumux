@@ -1,0 +1,32 @@
+[Grid]
+Cells = 3 2 4
+
+[Problem]
+Name = test_hyperelastic_growth_layered_shell
+InnerRadius = 0.5
+InterfaceRadius = 0.8
+OuterRadius = 1.0
+GrowthSteps = 1
+
+[Problem.Inner]
+GrowthStretch = 1.0
+ShearModulus = 1.0
+LameLambda = 1.5
+
+[Problem.Outer]
+GrowthStretch = 1.2
+ShearModulus = 3.0
+LameLambda = 4.5
+
+[Newton]
+MaxRelativeShift = 1e-12
+EnableResidualCriterion = true
+ResidualReduction = 1e-12
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-12
+SatisfyResidualAndShiftCriterion = false
+MaxSteps = 30
+Verbosity = 0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
