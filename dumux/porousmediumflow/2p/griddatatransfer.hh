@@ -15,6 +15,8 @@
 
 #include <memory>
 
+#include <dune/common/fvector.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 
@@ -24,6 +26,7 @@
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/geometry/volume.hh>
+#include <dumux/parallel/vectorcommdatahandle.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/adaptive/griddatatransfer.hh>
 
@@ -144,7 +147,7 @@ public:
                     fvGeometry.bindElement(element);
 
                     // store current element solution
-                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
+                    adaptedValues.u = elementSolution(element, sol_, *gridGeometry_);
 
                     // compute mass in the scvs
                     for (const auto& scv : scvs(fvGeometry))
@@ -175,7 +178,7 @@ public:
                 // This element solution constructor uses the vertex mapper to obtain
                 // the privars at the vertices, thus, this works for non-leaf elements!
                 if(isBox && !element.isLeaf())
-                    adaptedValues.u = ElementSolution(element, sol_, *gridGeometry_);
+                    adaptedValues.u = elementSolution(element, sol_, *gridGeometry_);
             }
         }
     }
@@ -205,19 +208,20 @@ public:
         adaptionMap_.resize();
         sol_.resize(gridGeometry_->numDofs());
 
-        // vectors storing the mass associated with each vertex, when using the box method
-        std::vector<Scalar> massCoeff;
-        std::vector<Scalar> associatedMass;
+        // For the box method the mass is lumped to the vertices. For each vertex we store
+        // the associated mass (component 0) and the corresponding mass coefficient
+        // (component 1) in a single block, so that the partial contributions at process
+        // boundaries can be summed up in one communication below.
+        using VertexMass = Dune::FieldVector<Scalar, 2>;
+        std::vector<VertexMass> vertexMass;
 
         if(isBox)
-        {
-            massCoeff.resize(gridGeometry_->numDofs(), 0.0);
-            associatedMass.resize(gridGeometry_->numDofs(), 0.0);
-        }
+            vertexMass.assign(gridGeometry_->numDofs(), VertexMass(0.0));
 
-        // iterate over leaf and reconstruct the solution
+        // iterate over the interior leaf elements and reconstruct the solution;
+        // data on ghost entities is obtained by communication further below
         auto fvGeometry = localView(*gridGeometry_);
-        for (const auto& element : elements(gridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridGeometry_->gridView(), Dune::Partitions::interior))
         {
             if (!element.isNew())
             {
@@ -264,13 +268,13 @@ public:
                         const auto scvVolume = Extrusion::volume(fvGeometry, scv);
                         if (formulation == p0s1)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / elementVolume * adaptedValues.associatedMass[phase1Idx];
+                            vertexMass[dofIdxGlobal][0] += scvVolume / elementVolume * adaptedValues.associatedMass[phase1Idx];
+                            vertexMass[dofIdxGlobal][1] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
                         }
                         else if (formulation == p1s0)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase0Idx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / elementVolume * adaptedValues.associatedMass[phase0Idx];
+                            vertexMass[dofIdxGlobal][0] += scvVolume / elementVolume * adaptedValues.associatedMass[phase0Idx];
+                            vertexMass[dofIdxGlobal][1] += scvVolume * volVars.density(phase0Idx) * volVars.porosity();
                         }
                     }
                 }
@@ -282,10 +286,10 @@ public:
 
                 // find the ancestor element that existed on the old grid already
                 auto fatherElement = element.father();
-                while(fatherElement.isNew() && fatherElement.level() > 0)
+                while (fatherElement.isNew() && fatherElement.level() > 0)
                     fatherElement = fatherElement.father();
 
-                if(!isBox)
+                if (!isBox)
                 {
                     const auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
@@ -330,10 +334,9 @@ public:
                     ElementSolution elemSolSon(element, sol_, *gridGeometry_);
                     const auto fatherGeometry = fatherElement.geometry();
                     for (const auto& scv : scvs(fvGeometry))
-                        elemSolSon[scv.localDofIndex()] = evalSolution(fatherElement,
-                                                                        fatherGeometry,
-                                                                        adaptedValuesFather.u,
-                                                                        scv.dofPosition());
+                        elemSolSon[scv.localDofIndex()] = evalSolution(
+                            fatherElement, fatherGeometry, adaptedValuesFather.u, scv.dofPosition()
+                        );
 
                     // compute mass & mass coefficients for the scvs (saturations are recalculated at the end)
                     const auto fatherElementVolume = volume(fatherGeometry, Extrusion{});
@@ -346,13 +349,13 @@ public:
                         const auto scvVolume = Extrusion::volume(fvGeometry, scv);
                         if (formulation == p0s1)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[phase1Idx];
+                            vertexMass[dofIdxGlobal][0] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[phase1Idx];
+                            vertexMass[dofIdxGlobal][1] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
                         }
                         else if (formulation == p1s0)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase0Idx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[phase0Idx];
+                            vertexMass[dofIdxGlobal][0] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[phase0Idx];
+                            vertexMass[dofIdxGlobal][1] += scvVolume * volVars.density(phase0Idx) * volVars.porosity();
                         }
 
                         // store constructed (pressure) values of son in the current solution (saturation comes later)
@@ -364,26 +367,57 @@ public:
 
         if(isBox)
         {
+#if HAVE_MPI
+            // At process-boundary vertices each process only accumulated the mass of its
+            // interior elements. Sum up the partial contributions (associated mass and mass
+            // coefficient together) to obtain the total mass lumped to the vertex before dividing.
+            if constexpr (Dune::Capabilities::canCommunicate<Grid, dim>::v)
+            {
+                const auto& gridView = gridGeometry_->gridView();
+                if (gridView.comm().size() > 1)
+                {
+                    using VertexMapper = std::decay_t<decltype(gridGeometry_->vertexMapper())>;
+                    VectorCommDataHandleSum<VertexMapper, std::vector<VertexMass>, dim> massHandle(
+                        gridGeometry_->vertexMapper(), vertexMass
+                    );
+                    gridView.communicate(
+                        massHandle, Dune::InteriorBorder_InteriorBorder_Interface, Dune::ForwardCommunication
+                    );
+                }
+            }
+#endif
+            // ghost vertices received no interior contribution (mass coefficient == 0); their
+            // values are obtained by communication of the solution below
             for(std::size_t dofIdxGlobal = 0; dofIdxGlobal < gridGeometry_->numDofs(); dofIdxGlobal++)
-                sol_[dofIdxGlobal][saturationIdx] = associatedMass[dofIdxGlobal] / massCoeff[dofIdxGlobal];
+                if (vertexMass[dofIdxGlobal][1] > 0.0)
+                    sol_[dofIdxGlobal][saturationIdx] = vertexMass[dofIdxGlobal][0] / vertexMass[dofIdxGlobal][1];
         }
+
+#if HAVE_MPI
+        // The reconstruction above only produces valid data on interior/border entities.
+        // Overwrite the values on ghost entities with those of their owner so that fluxes
+        // across the process boundary are evaluated with consistent neighbor values.
+        static constexpr int dofCodim = isBox ? dim : 0;
+        if constexpr (Dune::Capabilities::canCommunicate<Grid, dofCodim>::v)
+        {
+            const auto& gridView = gridGeometry_->gridView();
+            if (gridView.comm().size() > 1)
+            {
+                using DofMapper = std::decay_t<decltype(gridGeometry_->dofMapper())>;
+                VectorCommDataHandleEqual<DofMapper, SolutionVector, dofCodim> dataHandle(
+                    gridGeometry_->dofMapper(), sol_
+                );
+                gridView.communicate(
+                    dataHandle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication
+                );
+            }
+        }
+#endif
 
         // reset entries in adaptation map
         adaptionMap_.resize( typename PersistentContainer::Value() );
         adaptionMap_.shrinkToFit();
         adaptionMap_.fill( typename PersistentContainer::Value() );
-
-//! TODO: fix adaptive simulations in parallel
-//#if HAVE_MPI
-//        // communicate ghost data
-//        using SolutionTypes = typename GetProp<TypeTag, SolutionTypes>;
-//        using ElementMapper = typename SolutionTypes::ElementMapper;
-//        using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
-//        DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());
-//        problem.gridView().template communicate<DataHandle>(dataHandle,
-//                                                            Dune::InteriorBorder_All_Interface,
-//                                                            Dune::ForwardCommunication);
-//#endif
     }
 
     /*!

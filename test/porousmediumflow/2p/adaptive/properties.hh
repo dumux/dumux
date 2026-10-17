@@ -34,6 +34,7 @@ namespace TTag {
 struct TwoPIncompressibleAdaptiveTpfa { using InheritsFrom = std::tuple<TwoPIncompressibleTpfa>; };
 struct TwoPIncompressibleAdaptiveMpfa { using InheritsFrom = std::tuple<TwoPIncompressibleMpfa>; };
 struct TwoPIncompressibleAdaptiveBox { using InheritsFrom = std::tuple<TwoPIncompressibleBox>; };
+struct TwoPIncompressibleAdaptiveBoxSimplex { using InheritsFrom = std::tuple<TwoPIncompressibleBox>; };
 struct TwoPAdaptivePointSource { using InheritsFrom = std::tuple<TwoPIncompressibleAdaptiveTpfa>; };
 } // end namespace TTag
 
@@ -43,6 +44,8 @@ template<class TypeTag>
 struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveTpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
 template<class TypeTag>
 struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>; };
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TwoPIncompressibleAdaptiveBoxSimplex> { using type = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>; };
 #endif
 #if HAVE_DUNE_UGGRID
 template<class TypeTag>
@@ -56,6 +59,8 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveMpfa> { using type = TwoPTestProblemAdaptive<TypeTag>; };
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveBox> { using type = TwoPTestProblemAdaptive<TypeTag>; };
+template<class TypeTag>
+struct Problem<TypeTag, TTag::TwoPIncompressibleAdaptiveBoxSimplex> { using type = TwoPTestProblemAdaptive<TypeTag>; };
 
 } // end namespace Dumux::Properties
 
