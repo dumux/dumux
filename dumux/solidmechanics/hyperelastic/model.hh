@@ -47,6 +47,8 @@
  * The user problem implements the constitutive law, for example as
  * `firstPiolaKirchhoffStressTensor(F)`, and for dynamic problems the acceleration and velocity of
  * the degrees of freedom; see Dumux::HyperelasticLocalResidual for the interface.
+ * Growth, swelling and shrinkage enter the constitutive law through the multiplicative
+ * decomposition of the deformation gradient, see Dumux::Growth::firstPiolaKirchhoffStressTensor.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
