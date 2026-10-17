@@ -53,10 +53,20 @@ inline auto scvfUnitNormal(const ElementGeometry& geo, const CornerStorage& corn
     }
 
     else
+    {
+        // mean normal of a possibly non-planar quadrilateral (lexicographic corner order):
+        // the direction of its vector area
+        if (corners.size() == 4)
+            return normalize(crossProduct(
+                GlobalPosition(corners[3] - corners[0]),
+                GlobalPosition(corners[2] - corners[1])
+            ));
+
         return normalize(crossProduct(
             GlobalPosition(corners[1] - corners[0]),
             GlobalPosition(corners[2] - corners[0])
         ));
+    }
 }
 
 } // end namespace Dumux::Detail
