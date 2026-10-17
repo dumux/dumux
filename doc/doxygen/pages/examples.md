@@ -2,7 +2,7 @@
 
 You have downloaded DuMux and its dependencies.
 You have run `dunecontrol` and your first example compiled and showed a nice simulation in ParaView.
-What now? *How on earth is this going to help me solve my multi-(phase, component, scale, physics) flow and transport problems in porous media systems?*
+What now? *How on earth is this going to help me solve my multi-(phase, component, scale, physics, domain) flow, transport and deformation problems?*
 A great collection of additional resources can be found below.
 
 | | | |
