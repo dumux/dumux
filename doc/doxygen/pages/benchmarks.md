@@ -41,6 +41,7 @@ for more information.
 | ![hyperelastic](solid_turekhron_domain.svg) | @ref benchmark-turekhron-csm "↗️ Hyperelastic Dynamic (CSM1-3)" | solid mechanics, hyperelasticity, @ref BoxDiscretization | oscillating/flapping thin solid rectangle ; comparison against reference data from @cite TurekHron2006 |
 | ![cook hyperelastic](cooks_membrane_hyperelastic_deformation.png) | @ref benchmark-cooks-membrane-hyperelastic "↗️ Cook's Membrane, Hyperelastic (SPP 1748)" | solid mechanics, hyperelasticity, locking, mixed formulation, @ref HyperelasticVolIso, MINI and Taylor–Hood elements | Tapered cantilever under shear load, 2D plane strain and 3D, Poisson's ratio from 0.35 to 0.4999; tip displacement compared with @cite Schroeder2021 |
 | ![incompressible block](incompressible_block_deformation.png) | @ref benchmark-incompressible-block "↗️ Incompressible Block (SPP 1748)" | solid mechanics, hyperelasticity, locking, mixed formulation, @ref HyperelasticVolIso, MINI, Taylor–Hood and Q2–Q1 elements | Nearly incompressible block under a partial surface load; displacement of the load centre compared with @cite Schroeder2021 |
+|  | @ref benchmark-hyperelastic-growth "↗️ Growth with Exact Solutions" | solid mechanics, hyperelasticity, growth, @ref Hyperelastic, @ref BoxDiscretization, Q2 | Strip bent into a circular arc by growth that varies through its thickness, and a two-layer cylinder and sphere with a growing outer layer; L2 and H1 convergence against the exact solutions |
 
 ## Poromechanics benchmarks
 

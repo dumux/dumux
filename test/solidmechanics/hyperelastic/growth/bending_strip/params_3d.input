@@ -1,0 +1,23 @@
+[Grid]
+UpperRight = 1.0 0.1 0.1
+Cells = 20 2 2
+
+[Problem]
+Name = test_hyperelastic_growth_bending_strip
+ShearModulus = 1.0
+LameLambda = 1.5
+Curvature = 3.141592653589793
+GrowthSteps = 8
+
+[Newton]
+MaxRelativeShift = 1e-12
+EnableResidualCriterion = true
+ResidualReduction = 1e-12
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-12
+SatisfyResidualAndShiftCriterion = false
+MaxSteps = 30
+Verbosity = 0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
