@@ -19,6 +19,11 @@ dumux_add_test(NAME test_interpolate
                LABELS unit discretization
                SOURCES test_interpolate.cc)
 
+dumux_add_test(NAME test_periodicdofmap
+               LABELS unit discretization
+               SOURCES test_periodicdofmap.cc
+               CMAKE_GUARD dune-spgrid_FOUND)
+
 dumux_add_test(NAME test_facetgridmapper
                LABELS unit
                SOURCES test_facetgridmapper.cc

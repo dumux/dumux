@@ -10,6 +10,14 @@
  * \brief Stationary test for the staggered grid Navier-Stokes model with periodic BC
  */
 
+#ifndef MOMENTUM_TYPETAG
+#define MOMENTUM_TYPETAG PeriodicTestMomentumStaggered
+#endif
+
+#ifndef MASS_TYPETAG
+#define MASS_TYPETAG PeriodicTestMassTpfa
+#endif
+
 #include <config.h>
 
 #include <ctime>
@@ -40,13 +48,45 @@
 
 #include "properties.hh"
 
+template<class GridGeometry, class GridVariables, class SolutionVector>
+void updateVelocities(
+    std::vector<Dune::FieldVector<double, 2>>& faceVelocity,
+    const GridGeometry& gridGeometry,
+    const GridVariables& gridVariables,
+    const SolutionVector& x
+){
+    auto fvGeometry = localView(gridGeometry);
+    auto elemVolVars = localView(gridVariables.curGridVolVars());
+    for (const auto& element : elements(gridGeometry.gridView()))
+    {
+        fvGeometry.bind(element);
+        elemVolVars.bind(element, fvGeometry, x);
+
+        if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcstaggered)
+        {
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto& vars = elemVolVars[scv];
+                faceVelocity[scv.dofIndex()][scv.dofAxis()] = vars.velocity();
+            }
+        }
+        else if constexpr (GridGeometry::discMethod == Dumux::DiscretizationMethods::fcdiamond)
+        {
+            for (const auto& scv : scvs(fvGeometry))
+                faceVelocity[scv.dofIndex()] = elemVolVars[scv].velocity();
+        }
+        else
+            DUNE_THROW(Dune::Exception, "Invalid discretization type: " << GridGeometry::discMethod);
+    }
+}
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using MomentumTypeTag = Properties::TTag::PeriodicTestMomentum;
-    using MassTypeTag = Properties::TTag::PeriodicTestMass;
+    using MomentumTypeTag = Properties::TTag::MOMENTUM_TYPETAG;
+    using MassTypeTag = Properties::TTag::MASS_TYPETAG;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -66,9 +106,10 @@ int main(int argc, char** argv)
 #if HAVE_DUNE_SUBGRID && USESUBGRID
     auto selector = [](const auto& element) {
         const static auto trivialSelector = getParam<bool>("Problem.TrivialSelector", true);
+        const static auto radius = getParam<double>("Problem.Radius", 0.25);
         const auto distance = std::max(std::abs(element.geometry().center()[0] - 0.5),
                                        std::abs(element.geometry().center()[1] - 0.5));
-        return trivialSelector || distance > 0.25 - 1e-6;
+        return trivialSelector || distance > radius - 1e-6;
     };
     gridManager.init(selector);
 
@@ -132,18 +173,12 @@ int main(int argc, char** argv)
 
     // initialize the vtk output module
     using IOFields = GetPropType<MassTypeTag, Properties::IOFields>;
-    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name());
+    constexpr bool isDiamond = MassGridGeometry::discMethod == DiscretizationMethods::fcdiamond;
+    constexpr auto mode = isDiamond ? Dune::VTK::nonconforming : Dune::VTK::conforming;
+    VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name(), "", mode);
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-
     ConformingIntersectionWriter faceVtk(momentumGridGeometry->gridView());
-    std::vector<std::size_t> dofIdx(x[momentumIdx].size());
-    for (const auto& facet : facets(momentumGridGeometry->gridView()))
-    {
-        const auto idx = momentumGridGeometry->gridView().indexSet().index(facet);
-        dofIdx[idx] = idx;
-    }
-    faceVtk.addField(dofIdx, "dofIdx");
 
     using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -156,21 +191,22 @@ int main(int argc, char** argv)
     Dune::Timer timer;
     nonLinearSolver.solve(x);
 
-    std::vector<Dune::FieldVector<double,2>> faceVelocityVector(x[momentumIdx].size());
-    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    if constexpr (MomentumGridGeometry::discMethod != DiscretizationMethods::pq1bubble)
     {
-        auto fvGeometry = localView(*momentumGridGeometry);
-        fvGeometry.bind(element);
+        std::vector<Dune::FieldVector<double,2>> faceVelocityVector(x[momentumIdx].size());
+        updateVelocities(faceVelocityVector, *momentumGridGeometry, *momentumGridVariables, x[momentumIdx]);
 
-        auto elemVolVars = localView(momentumGridVariables->curGridVolVars());
-        elemVolVars.bind(element, fvGeometry, x[momentumIdx]);
+        std::vector<std::size_t> dofIdx(x[momentumIdx].size());
+        for (const auto& facet : facets(momentumGridGeometry->gridView()))
+        {
+            const auto idx = momentumGridGeometry->gridView().indexSet().index(facet);
+            dofIdx[idx] = idx;
+        }
+        faceVtk.addField(dofIdx, "dofIdx");
 
-        for (const auto& scv : scvs(fvGeometry))
-            faceVelocityVector[scv.dofIndex()][scv.dofAxis()] = elemVolVars[scv].velocity();
+        faceVtk.addField(faceVelocityVector, "velocityVector");
+        faceVtk.write("facedata", Dune::VTK::ascii);
     }
-
-    faceVtk.addField(faceVelocityVector, "velocityVector");
-    faceVtk.write("facedata", Dune::VTK::ascii);
 
     // write vtk output
     vtkWriter.write(1.0);
@@ -178,6 +214,7 @@ int main(int argc, char** argv)
 
     // verify periodic mapping of dofs
     {
+        const bool periodicInX = getParam<bool>("Problem.PeriodicInX", false);
         const auto eps = 1e-6;
         const auto bBoxMax = momentumGridGeometry->bBoxMax();
         const auto bBoxMin = momentumGridGeometry->bBoxMin();
@@ -188,19 +225,21 @@ int main(int argc, char** argv)
             for (const auto& scv : scvs(fvGeometry))
             {
                 const bool isPeriodic = std::min(scv.dofPosition()[1]-bBoxMin[1],
-                                                 bBoxMax[1]-scv.dofPosition()[1]) < eps;
+                                                 bBoxMax[1]-scv.dofPosition()[1]) < eps
+                    || (periodicInX && std::min(scv.dofPosition()[0]-bBoxMin[0],
+                                                 bBoxMax[0]-scv.dofPosition()[0]) < eps);
                 if (isPeriodic != momentumGridGeometry->dofOnPeriodicBoundary(scv.dofIndex()))
                     DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
                 if (isPeriodic)
                 {
-                    const auto periodicScv = fvGeometry.outsidePeriodicScv(scv);
-                    const auto periodicDof = momentumGridGeometry->periodicallyMappedDof(scv.dofIndex());
-                    const auto distance = scv.dofPosition() - periodicScv.dofPosition();
-                    if (std::abs(distance[0]) > eps
-                            || std::abs(std::abs(distance[1]) - (bBoxMax[1]-bBoxMin[1]) ) > eps )
-                        DUNE_THROW(Dune::Exception, "Grid does not exhibit expected periodicity");
-                    if (std::abs(x[momentumIdx][periodicDof] - x[momentumIdx][scv.dofIndex()]) > eps)
-                        DUNE_THROW(Dune::Exception, "Periodicity constraints not enforced");
+                    const auto periodicallyMappedDofs =
+                        Dumux::Deprecated::rangeOfPeriodicallyMappedDofs(*momentumGridGeometry, scv.dofIndex());
+                    for (const auto periodicDof : periodicallyMappedDofs)
+                    {
+                        for (int i = 0; i < x[momentumIdx][periodicDof].size(); ++i)
+                            if (std::abs(x[momentumIdx][periodicDof][i] - x[momentumIdx][scv.dofIndex()][i]) > eps)
+                                DUNE_THROW(Dune::Exception, "Periodicity constraints not enforced");
+                    }
                 }
 
             }

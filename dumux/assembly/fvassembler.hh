@@ -12,6 +12,7 @@
 #ifndef DUMUX_FV_ASSEMBLER_HH
 #define DUMUX_FV_ASSEMBLER_HH
 
+#include <algorithm>
 #include <vector>
 #include <deque>
 #include <type_traits>
@@ -39,6 +40,8 @@
 #include "cvfelocalassembler.hh"
 #include "cclocalassembler.hh"
 #include "fclocalassembler.hh"
+
+#include <dumux/common/deprecated.hh>
 
 namespace Dumux::Detail {
 
@@ -516,36 +519,40 @@ private:
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
-                if (m.first < m.second)
+                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
+                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
                 {
-                    // add the second row to the first
-                    res[m.first] += res[m.second];
-                    const auto end = jac[m.second].end();
-                    for (auto it = jac[m.second].begin(); it != end; ++it)
-                        jac[m.first][it.index()] += (*it);
-
-                    // enforce constraint in second row
-                    res[m.second] = curSol[m.second] - curSol[m.first];
-
-                    // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
-                    auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                    for (const auto& second : periodicallyMappedDofs)
                     {
-                        for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
-                            matrixBlock[eIdx][eIdx] = diagValue;
-                    };
+                        // add the second row to the first
+                        res[m.first] += res[second];
+                        const auto end = jac[second].end();
+                        for (auto it = jac[second].begin(); it != end; ++it)
+                            jac[m.first][it.index()] += (*it);
 
-                    for (auto it = jac[m.second].begin(); it != end; ++it)
-                    {
-                        auto& matrixBlock = *it;
-                        matrixBlock = 0.0;
+                        // enforce constraint in second row
+                        res[second] = curSol[second] - curSol[m.first];
 
-                        assert(matrixBlock.N() == matrixBlock.M());
-                        if(it.index() == m.second)
-                            setMatrixBlock(matrixBlock, 1.0);
+                        // set derivatives accordingly in jacobian, i.e. id for second and -id for m.first
+                        auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                        {
+                            for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
+                                matrixBlock[eIdx][eIdx] = diagValue;
+                        };
 
-                        if(it.index() == m.first)
-                            setMatrixBlock(matrixBlock, -1.0);
+                        for (auto it = jac[second].begin(); it != end; ++it)
+                        {
+                            auto& matrixBlock = *it;
+                            matrixBlock = 0.0;
 
+                            assert(matrixBlock.N() == matrixBlock.M());
+                            if(it.index() == second)
+                                setMatrixBlock(matrixBlock, 1.0);
+
+                            if(it.index() == m.first)
+                                setMatrixBlock(matrixBlock, -1.0);
+
+                        }
                     }
                 }
             }
@@ -559,32 +566,36 @@ private:
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
-                if (m.first < m.second)
+                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
+                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
                 {
-                    // add the second row to the first
-                    const auto end = jac[m.second].end();
-                    for (auto it = jac[m.second].begin(); it != end; ++it)
-                        jac[m.first][it.index()] += (*it);
-
-                    // set derivatives accordingly in jacobian, i.e. id for m.second and -id for m.first
-                    auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                    for (const auto& second : periodicallyMappedDofs)
                     {
-                        for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
-                            matrixBlock[eIdx][eIdx] = diagValue;
-                    };
+                        // add the second row to the first
+                        const auto end = jac[second].end();
+                        for (auto it = jac[second].begin(); it != end; ++it)
+                            jac[m.first][it.index()] += (*it);
 
-                    for (auto it = jac[m.second].begin(); it != end; ++it)
-                    {
-                        auto& matrixBlock = *it;
-                        matrixBlock = 0.0;
+                        // set derivatives accordingly in jacobian, i.e. id for second and -id for m.first
+                        auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
+                        {
+                            for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
+                                matrixBlock[eIdx][eIdx] = diagValue;
+                        };
 
-                        assert(matrixBlock.N() == matrixBlock.M());
-                        if(it.index() == m.second)
-                            setMatrixBlock(matrixBlock, 1.0);
+                        for (auto it = jac[second].begin(); it != end; ++it)
+                        {
+                            auto& matrixBlock = *it;
+                            matrixBlock = 0.0;
 
-                        if(it.index() == m.first)
-                            setMatrixBlock(matrixBlock, -1.0);
+                            assert(matrixBlock.N() == matrixBlock.M());
+                            if(it.index() == second)
+                                setMatrixBlock(matrixBlock, 1.0);
 
+                            if(it.index() == m.first)
+                                setMatrixBlock(matrixBlock, -1.0);
+
+                        }
                     }
                 }
             }
@@ -598,13 +609,17 @@ private:
         {
             for (const auto& m : gridGeometry.periodicDofMap())
             {
-                if (m.first < m.second)
+                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
+                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
                 {
-                    // add the second row to the first
-                    res[m.first] += res[m.second];
+                    for (const auto& second : periodicallyMappedDofs)
+                    {
+                        // add the second row to the first
+                        res[m.first] += res[second];
 
-                    // enforce constraint in second row
-                    res[m.second] = curSol[m.second] - curSol[m.first];
+                        // enforce constraint in second row
+                        res[second] = curSol[second] - curSol[m.first];
+                    }
                 }
             }
         }

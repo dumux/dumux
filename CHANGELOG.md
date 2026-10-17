@@ -50,6 +50,10 @@ Tests: Cook's membrane (SPP 1748, 2D and 3D, MINI and Taylor-Hood elements) and 
 finite elements, Q2-Q1), each with a benchmark page.
 - __Hyperelastic model__: The hyperelastic model (`solidmechanics/hyperelastic`) is implemented on the new CVFE and finite element interface (`HyperelasticLocalResidual`, `HyperelasticVariables`) and works with the box, PQ2 hybrid and PQ2 finite element discretizations. Problems may provide an acceleration (inertia with lumped mass for control-volume dofs and consistent mass for the other dofs) and a velocity (rate-dependent stress laws). A dynamic manufactured-solution test checks the convergence rates.
 - __Newton__: `NewtonSolverLinesearchCubicbacktracking` (`dumux/nonlinear/newtonsolver_linesearch_cubicbacktracking.hh`) is a Newton solver with a backtracking line search based on the sufficient decrease (Armijo) condition. A rejected step size is replaced by the minimizer of a quadratic or cubic interpolation of the squared residual norm. The Armijo constant is set by the new parameter `Newton.LineSearchArmijoC1`.
+- __Periodic boundaries__: Degrees of freedom on edges and corners of domains that are periodic in several directions are now
+identified with all their periodic images, and all assemblers enforce the periodic constraints for each of them. The periodic
+partner detection of the box, pq1bubble, pq2, pq3 and finite-element discretizations compares the periodic shift instead of only
+the distance, which also accepted unrelated degrees of freedom at the distance of the domain length.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
@@ -57,11 +61,17 @@ coordinate type for the quadrature rule instead of the field type of the integra
 real type of that field type. `evalGradients` for CVFE schemes returns gradient entries in the field type of the primary variables
 instead of the coordinate type. For real-valued unknowns with the same precision as the grid coordinates nothing changes.
 - __Hyperelastic model__: The volume variables and the finite-volume local residual of the hyperelastic model have been replaced (see above). Problems derive from `Experimental::ProblemWithSpatialParams`, impose Dirichlet conditions as constraints, provide boundary terms via `boundaryFlux`, and are assembled with `Experimental::Assembler`; the spatial parameters derive from `Experimental::SpatialParams`.
+- __Periodic boundaries__: `periodicDofMap()` of the grid geometries maps each degree of freedom to a range of periodically
+identified degrees of freedom (`std::vector` for box, pq1bubble, pq2, pq3 and finite-element discretizations,
+`std::array` with one entry for face-centered schemes) instead of a single index.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 
 - __FreeFlow__: Headers in the `freeflow/navierstokes/momentum` that were only related to the `fcstaggered` discretization were moved into a new subdirectory `fcstaggered`. The old headers are deprecated and will be removed after `release/3.11`. Please also note that class names were partly adapted
 to the new subdirectory.
+- __Periodic boundaries__: `periodicallyMappedDof(dofIdx)` of the grid geometries is deprecated. Use `periodicallyMappedDofs(dofIdx)`,
+which returns a range of all periodically identified degrees of freedom. Grid geometries providing only `periodicallyMappedDof`
+or a single-index `periodicDofMap()` still work with the assemblers and trigger a deprecation warning.
 
 ### Removed
 - __FreeFlow__: The previous implementation of the staggered grid is moved to the new dumux-repository [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered). A newer implementation (introduced in DuMu<sup>x</sup> 3.5) of the staggered grid using the coupling manager is still available on [dumux](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux). While the newer implementation covers most of the models that were previously implemented for the old-staggered, turbulence models and higher order schemes are currently only available on [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered).

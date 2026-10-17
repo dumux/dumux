@@ -9,6 +9,8 @@ EnableInertiaTerms = true
 PrintMatrix = true
 UsePressureDifference = false
 TrivialSelector = true
+Radius = 0.25
+PeriodicInX = false
 Velocity = -1.0
 UseVelocityProfile = false
 UseMomentumInternalDirichlet = false
@@ -23,7 +25,7 @@ MaxSteps = 10
 MaxRelativeShift = 1e-5
 
 [Vtk]
-WriteFaceData = false
+WriteFaceData = true
 
 [Flux]
 UpwindWeight = 0.5
