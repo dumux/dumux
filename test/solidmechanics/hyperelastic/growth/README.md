@@ -160,3 +160,40 @@ orders 1 and 1/2.
 | `test_hyperelastic_growth_layered_shell_mixed_q2_2d` (Q2–Q1) | 0.1079 | 1.38e-3 | | 2.87e-2 | | 7.11e-2 | |
 | | 0.0545 | 6.73e-4 | 1.06 | 2.02e-2 | 0.51 | 5.02e-2 | 0.51 |
 | | 0.0274 | 3.32e-4 | 1.03 | 1.43e-2 | 0.50 | 3.55e-2 | 0.50 |
+
+## Onset of growth-induced wrinkling {#benchmark-hyperelastic-growth-wrinkling}
+
+A film of thickness \f$ h = 1 \f$ on a substrate of depth \f$ H = 30 \f$ grows along its length,
+\f$ \mathbf{F}_\mathrm{g} = \mathbf{I} + (\vartheta - 1)\mathbf{e}_x \otimes \mathbf{e}_x \f$, in plane
+strain. The substrate is clamped at the bottom, the sides \f$ x = 0 \f$ and \f$ x = L = 9 \f$ slide,
+the top is traction free. Film and substrate are compressible neo-Hookean with \f$ \mu = 10 \f$ and
+\f$ \mu = 1 \f$, \f$ \lambda = 1.5\mu \f$. The flat state, unstrained substrate and film compressed
+along \f$ x \f$, solves the problem for every \f$ \vartheta \f$, and is exactly represented by the
+discretization since its displacement is piecewise linear in \f$ y \f$ with a kink at a grid line.
+It loses stability where the Jacobian becomes singular: the test raises \f$ \vartheta \f$ along the
+flat solution until the smallest real eigenvalue of the Jacobian, computed with
+`ShiftInvertEigenSolver`, changes sign, and locates the critical stretch by the Illinois method.
+
+The reference solves the problem linearized about the flat state (`reference.py`): in each layer a
+perturbation \f$ u_x = U(y)\sin kx \f$, \f$ u_y = V(y)\cos kx \f$ satisfies a linear system of
+ordinary differential equations with constant coefficients, the incremental moduli
+\f$ \partial\mathbf{P}/\partial\mathbf{F} \f$ of the layer; propagating it from the clamped bottom
+to the top gives the critical stretch as a root of a determinant. The sliding sides admit
+\f$ k = m\pi/L \f$, and \f$ m = 2 \f$ wrinkles first, at \f$ \vartheta_c = 1.1430689262 \f$, before
+\f$ m = 3 \f$ at 1.1634791. The propagator reproduces the stiffness
+\f$ 4\mu k(1-\nu)/(3-4\nu) \f$ of a bonded half-space to \f$ 3 \cdot 10^{-11} \f$, and for a stiff
+film on a deep substrate the critical strain approaches the classical asymptote with the bonded
+substrate stiffness, with relative deviations of 3.2 %, 2.2 % and 1.4 % at stiffness ratios
+1000, 3000 and 10000.
+
+The meshes are tensor-product grids with the interface at a grid line, graded towards the film,
+with 18 × (12 + 2) to 72 × (48 + 8) cells.
+
+| Test | \f$ h_\mathrm{max} \f$ | \f$ \vartheta_c \f$ | error | rate | half wavelengths |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| `test_hyperelastic_growth_wrinkling_box` | 4.84 | 1.1623740 | 1.93e-2 | | 2 |
+| | 2.50 | 1.1478942 | 4.83e-3 | 2.10 | 2 |
+| | 1.27 | 1.1442753 | 1.21e-3 | 2.05 | 2 |
+| `test_hyperelastic_growth_wrinkling_pq2hybrid` (Q2) | 4.84 | 1.1448514 | 1.78e-3 | | 2 |
+| | 2.50 | 1.1435616 | 4.93e-4 | 1.95 | 2 |
+| | 1.27 | 1.1431998 | 1.31e-4 | 1.96 | 2 |

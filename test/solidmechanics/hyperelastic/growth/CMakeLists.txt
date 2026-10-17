@@ -8,3 +8,4 @@ dumux_add_test(SOURCES test_growth.cc
 
 add_subdirectory(bending_strip)
 add_subdirectory(layered_shell)
+add_subdirectory(wrinkling)

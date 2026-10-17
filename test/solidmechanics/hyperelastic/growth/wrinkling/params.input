@@ -1,0 +1,33 @@
+[Grid]
+Positions0 = 0.0 9.0
+Positions1 = 0.0 30.0 31.0
+Cells0 = 18
+Cells1 = 12 2
+Grading1 = -1.15 1.0
+
+[Problem]
+Name = test_hyperelastic_growth_wrinkling
+SubstrateDepth = 30.0
+FilmShearModulus = 10.0
+FilmLameLambda = 15.0
+SubstrateShearModulus = 1.0
+SubstrateLameLambda = 1.5
+GrowthStep = 0.05
+StretchTolerance = 1e-9
+
+[EigenSolver]
+NumEigenvalues = 6
+
+[Newton]
+MaxRelativeShift = 1e-12
+EnableResidualCriterion = true
+ResidualReduction = 1e-12
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-12
+SatisfyResidualAndShiftCriterion = false
+MaxSteps = 30
+Verbosity = 0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+NumericDifferenceMethod = 0
