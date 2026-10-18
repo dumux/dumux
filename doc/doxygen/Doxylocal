@@ -14,6 +14,7 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/porousmediumflow/2p/buckleyleverett/README.md \
                          @top_srcdir@/test/porousmediumflow/2p/mcwhortersunada/README.md \
                          @top_srcdir@/test/porousmediumflow/1pnc/1p2c/isothermal/hortonrogerslapwood/README.md \
+                         @top_srcdir@/test/porousmediumflow/1pnc/1p2c/isothermal/elder/README.md \
                          @top_srcdir@/test/freeflow/navierstokes/taylorcouette/README.md \
                          @top_srcdir@/test/porousmediumflow/richards/benchmarks/README.md \
                          @top_srcdir@/test/solidmechanics/plate/membrane/README.md \
