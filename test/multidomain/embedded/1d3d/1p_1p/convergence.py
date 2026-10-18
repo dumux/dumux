@@ -9,7 +9,10 @@
 # https://doi.org/10.1016/j.jcp.2020.109370
 #
 # The script also prints a table with errors and
-# convergence rates
+# convergence rates and fails if the mean rates differ
+# from the rates of the paper.
+#
+# Usage: python3 convergence.py [output directory of the figure]
 """
 
 import numpy as np
@@ -33,8 +36,7 @@ def run_simulation(params, filter=[]):
 
 executables = ["test_md_embedded_1d3d_1p1p_tpfatpfa_average", "test_md_embedded_1d3d_1p1p_tpfatpfa_surface", "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel"]
 method = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":1, "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":3, "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":5}
-label = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":"LS", "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":"CSS", "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":"DS"}
-marker = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":"o", "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":"^", "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":"d"}
+label = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":"line source (LS)", "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":"surface source (CSS)", "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":"kernel (DS)"}
 cells = [10, 20, 40, 80]
 radius = 0.1
 
@@ -131,45 +133,51 @@ for exec, result in res.items():
 #############################################
 # create plot from paper (Figure 5)
 #############################################
-try:
+if len(sys.argv) > 1:
     import matplotlib
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    plt.rcParams.update({"font.size": 13, "axes.titlesize": 13, "axes.labelsize": 13,
+                         "xtick.labelsize": 12, "ytick.labelsize": 12, "legend.fontsize": 12})
 
-    plt.style.use('ggplot')
-    font = {'family': 'sans-serif', 'weight': 'normal', 'size': 8}
-    matplotlib.rc('font', **font)
+    # color, marker and line style differ per method, so the figure also reads in black and white
+    style = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average": dict(color="#2a78d6", marker="o", linestyle="-"),
+             "test_md_embedded_1d3d_1p1p_tpfatpfa_surface": dict(color="#eb6834", marker="^", linestyle="--"),
+             "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel": dict(color="#1baf7a", marker="s", linestyle="-.")}
+    titles = [r"tissue pressure $p_t$", r"vessel pressure $p_v$", r"exchange rate $q$"]
+    orders = [(1.5, 2.0), (1.5, 2.0), (2.0, 2.5)]
 
-    dpi = 300.0
-    fig, axes = plt.subplots(1, 3, dpi=dpi, figsize=(8, 4))
-
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4.6), layout="constrained")
     for exec, result in res.items():
         p3d, p1d, q, h = get_errors(result=result)
         hR = np.array(h)/radius
-        axes[0].plot(hR, p3d, "--" + marker[exec], label=label[exec])
-        axes[0].set_title(r"$|| p^\mathbb{M}_{t,e} -p^\mathbb{M}_t ||_2$")
-        axes[1].plot(hR, p1d, "--" + marker[exec], label=label[exec])
-        axes[1].set_title(r"$|| p_{v,e} - p_v ||_2$")
-        axes[2].plot(hR, q, "--" + marker[exec], label=label[exec])
-        axes[2].set_title(r"$|| q_e - q ||_2$")
+        for ax, errors in zip(axes, [p3d, p1d, q]):
+            ax.loglog(hR, errors, markersize=7, linewidth=1.8, label=label[exec], **style[exec])
 
-    x = np.linspace(np.min(hR), np.max(hR), 10)
-    axes[0].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
-    axes[0].plot(x, np.power(x*radius*0.3, 2), "-.k", label=r"$\Delta$ 2")
-    axes[1].plot(x, np.power(x*radius*0.4, 1.5), "--k", label=r"$\Delta$ 1.5")
-    axes[1].plot(x, np.power(x*radius*0.3, 2), "-.k", label=r"$\Delta$ 2")
-    axes[2].plot(x, np.power(x*radius*2.5, 2), "--k", label=r"$\Delta$ 2")
-    axes[2].plot(x, np.power(x*radius*1.2, 2.5), "-.k", label=r"$\Delta$ 2.5")
+    def slope_triangle(ax, x_fine, y_low, order, width=1.5):
+        x_coarse = width*x_fine
+        y_high = y_low*width**order
+        ax.plot([x_coarse, x_fine, x_coarse, x_coarse], [y_high, y_low, y_low, y_high], color="0.2", linewidth=1.2)
+        ax.annotate(f"{order:g}", (x_coarse, np.sqrt(y_low*y_high)), textcoords="offset points", xytext=(-5, 0),
+                    ha="right", va="center", color="0.2")
+        ax.annotate("1", (np.sqrt(x_coarse*x_fine), y_low), textcoords="offset points", xytext=(0, -3),
+                    ha="center", va="top", color="0.2")
 
-    for ax in axes:
-        ax.set_xscale("log")
-        ax.set_xlabel("$h/r_v$")
-        ax.set_xlim([np.max(hR), np.min(hR)])
-        ax.xaxis.set_minor_formatter(plt.NullFormatter())
-        ax.set_yscale("log")
-        ax.legend()
+    for k, ax in enumerate(axes):
+        data = [line.get_ydata() for line in ax.get_lines()]
+        lows = []
+        for level, order in zip([-1, -2], sorted(orders[k], reverse=True)):
+            lows.append(0.3*min(y[level] for y in data))
+            slope_triangle(ax, hR[level], lows[-1], order)
+        ax.set_ylim(bottom=0.5*min(lows))
+        ax.invert_xaxis()
+        ax.set_xticks(hR, [f"{v:g}" for v in hR])
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.set_xlabel(r"$h / R$")
+        ax.set_title(titles[k])
+        ax.grid(True, which="major", color="0.9", linewidth=0.6)
+    axes[0].set_ylabel("error")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="outside lower center", ncol=len(labels), frameon=False)
 
-    fig.tight_layout(rect=[0.03, 0.07, 1, 0.93], pad=0.4, w_pad=2.0, h_pad=1.0)
-    fig.savefig("rates_r01.pdf")
-
-except ImportError:
-    print("Skipping plot: matplotlib has not been found.")
+    fig.savefig(os.path.join(sys.argv[1], "embedded1d3d_vessel_convergence.png"), dpi=150)
