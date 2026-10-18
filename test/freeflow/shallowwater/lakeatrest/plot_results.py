@@ -7,16 +7,17 @@ Usage:
   python3 plot_results.py <executable> [output directory of the figure]
 """
 
+import math
+import os
 import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from plotstyle import plt, series
 
 CASES = {
     "submerged": {"WaterLevel": 1.0, "MinWaterDepth": 0.0, "ErrorTolerance": 1e-10},
@@ -50,12 +51,13 @@ def main():
     imageDir = sys.argv[2] if len(sys.argv) > 2 else "."
 
     values = dict(re.findall(r"^\s*(\w+)\s*=\s*([^#\n]+)", open("params.input").read(), re.MULTILINE))
-    hump, sill = float(values["HumpHeight"]), float(values["SillHeight"])
+    hump, sill, g = float(values["HumpHeight"]), float(values["SillHeight"]), float(values["Gravity"])
 
-    print("| case | water level H (m) | film thickness (m) | max deviation free surface (m) | max deviation discharge (m^2/s) |")
+    print("| case | water level H (m) | film thickness (m) | max deviation free surface / H "
+          "| max deviation discharge / (H sqrt(g H)) |")
     print("|:--|--:|--:|--:|--:|")
-    fig, (axS, axD) = plt.subplots(1, 2, figsize=(10, 3.6), layout="constrained")
-    for case, params in CASES.items():
+    fig, (axS, axD) = plt.subplots(1, 2, figsize=(10, 4.0), layout="constrained")
+    for i, (case, params) in enumerate(CASES.items()):
         name = f"lakeatrest_{case}"
         args = [a for key, value in params.items() for a in (f"-Problem.{key}", str(value))]
         output = subprocess.run(
@@ -63,7 +65,9 @@ def main():
             check=True, capture_output=True, text=True,
         ).stdout
         surface, discharge = (float(v) for v in DEVIATION.search(output).groups())
-        print(f"| {case} | {params['WaterLevel']} | {params['MinWaterDepth']:g} | {surface:.1e} | {discharge:.1e} |")
+        level = params["WaterLevel"]
+        print(f"| {case} | {level} | {params['MinWaterDepth']:g} | {surface/level:.1e} "
+              f"| {discharge/(level*math.sqrt(g*level)):.1e} |")
 
         centers, data = read_cells(f"{name}-00001.vtu")
         yRow = centers[np.argmin(np.abs(centers[:, 1] - 0.5)), 1]
@@ -73,19 +77,20 @@ def main():
         depth = data["waterDepth"][row][order]
         z = bed(x, centers[row, 1][order], hump, sill)
         exactDepth = np.maximum(params["WaterLevel"] - z, params["MinWaterDepth"])
-        axS.plot(x, depth + z, lw=1.0, label=f"free surface, {case}")
-        axD.semilogy(x, np.maximum(np.abs(depth - exactDepth), 1e-17), lw=1.0, label=case)
+        axS.plot(x, depth + z, label=f"free surface, {case}", **series(i, len(x)))
+        axD.semilogy(x, np.maximum(np.abs(depth - exactDepth)/params["WaterLevel"], 1e-17), label=case,
+                     **series(i, len(x)))
 
     xFine = np.linspace(0.0, 2.0, 2001)
-    axS.fill_between(xFine, bed(xFine, yRow, hump, sill), color="0.8", label=f"bed at $y = {yRow:.2f}$ m")
+    axS.fill_between(xFine, bed(xFine, yRow, hump, sill), color="0.85", lw=0, label=f"bed at $y = {yRow:.2f}$ m")
     axS.set_xlabel("$x$ (m)")
     axS.set_ylabel("elevation (m)")
-    axS.set_ylim(0.0, 1.2)
-    axS.legend(fontsize=8, loc="upper left")
+    axS.set_ylim(0.0, 1.5)
+    axS.legend(loc="upper left", ncol=2)
     axD.set_xlabel("$x$ (m)")
-    axD.set_ylabel(r"$|h - h_\mathrm{exact}|$ (m)")
-    axD.legend(fontsize=8)
-    fig.savefig(f"{imageDir}/shallowwater_lakeatrest.png", dpi=130)
+    axD.set_ylabel(r"$|h - h_\mathrm{exact}| / H$")
+    axD.legend()
+    fig.savefig(f"{imageDir}/shallowwater_lakeatrest.png")
 
 
 if __name__ == "__main__":

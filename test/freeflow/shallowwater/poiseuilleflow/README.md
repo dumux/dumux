@@ -10,6 +10,8 @@ of the bed. The water depth $h$ and the depth-averaged velocity components $u$ a
 channel satisfy the shallow water equations with the bed slope source term and a friction term. The
 benchmark has two variants, which differ in the friction that balances gravity.
 
+![Setup of the Poiseuille flow: top view of the channel with friction at the side walls, with the bed descending along the channel, and side view of the film flow with friction at the bed, with exaggerated bed slope](shallowwater_poiseuille_setup.svg){html: width=70%}
+
 *Friction at the side walls.* The momentum balance contains the horizontal viscous flux
 $\nabla \cdot (\nu_t h \nabla u)$ with a constant eddy viscosity $\nu_t$, and the velocity vanishes at the
 side walls $y = \pm W/2$. For $h = h_0$, $v = 0$ and $u = u(y)$, the momentum balance along the channel
@@ -79,52 +81,68 @@ The figure and the tables are produced by running
 python3 plot_results.py ./test_shallowwater_poiseuilleflow vertical/test_shallowwater_poiseuilleflow_vertical
 ```
 in the build directory `test/freeflow/shallowwater/poiseuilleflow` (requires NumPy and Matplotlib).
-The errors are the discrete $L^2$ norms $\| e \|_2 = \left( \sum_i |V_i| \, e_i^2 / \sum_i |V_i| \right)^{1/2}$,
-where $e_i$ is the difference to the exact velocity at the center of the cell $V_i$ with area $|V_i|$.
-The flow with friction at the side walls is computed up to $t = 10^6$ s with time steps of up to
-$10^5$ s.
+The errors are the relative discrete $L^2$ errors of the velocity, $\| e \|_2 / \| u \|_2$ with
+$\| e \|_2 = \left( \sum_i |V_i| \, e_i^2 \right)^{1/2}$, where $e_i$ is the difference to the exact velocity
+at the center of the cell $V_i$ with area $|V_i|$, and $\| u \|_2$ the norm of the exact velocity evaluated
+in the same way. The flow with friction at the side walls is computed up to $t = 10^6$ s with time steps of
+up to $10^5$ s.
 
-![Error of the velocity profile in the middle of the channel (left), errors of the flow with friction at the side walls (center) and of the film flow (right) under grid refinement](shallowwater_poiseuille.png){html: width=100%}
+![Error of the velocity profile in the middle of the channel, and relative errors of the flow with friction at the side walls and of the film flow under grid refinement](shallowwater_poiseuille.png){html: width=100%}
 
 *Friction at the side walls.* The grid is refined along the channel with 320 cells across, and across
 the channel with 320 cells along.
 
-| grid (along × across) | $L^2$ error $u$ (m/s) | rate |
+| grid (along × across) | rel. $L^2$ error $u$ | rate |
 |--:|--:|--:|
-| 10 × 320 | 7.954e-04 | - |
-| 20 × 320 | 3.902e-04 | 1.03 |
-| 40 × 320 | 2.045e-04 | 0.93 |
-| 80 × 320 | 1.130e-04 | 0.86 |
+| 10 × 320 | 1.776e-04 | - |
+| 20 × 320 | 8.714e-05 | 1.03 |
+| 40 × 320 | 4.567e-05 | 0.93 |
+| 80 × 320 | 2.523e-05 | 0.86 |
 
-| grid (along × across) | $L^2$ error $u$ (m/s) | rate |
+| grid (along × across) | rel. $L^2$ error $u$ | rate |
 |--:|--:|--:|
-| 320 × 10 | 6.320e-03 | - |
-| 320 × 20 | 2.741e-03 | 1.21 |
-| 320 × 40 | 7.782e-04 | 1.82 |
-| 320 × 80 | 2.106e-04 | 1.89 |
+| 320 × 10 | 1.411e-03 | - |
+| 320 × 20 | 6.120e-04 | 1.21 |
+| 320 × 40 | 1.738e-04 | 1.82 |
+| 320 × 80 | 4.704e-05 | 1.89 |
 
-Along the channel the error converges with first order, across the channel with second order. The rates
-along the channel decrease as the error approaches that of the 320 cells across; with 160 cells across, the
-convergence test below obtains the rates 1.01 and 0.88. Across the channel, the largest errors are in the
-cells next to the walls.
+Across the channel, the error converges with approximately second order, the order of the two-point viscous
+flux. The
+largest errors are in the cells next to the walls. Along the channel, the exact solution does not vary, and
+the error converges with approximately first order. In the steady state, the mass flux over each face equals the discharge
+prescribed at the inflow. The bed is constant in each cell, so the hydrostatic reconstruction compares the
+depths $h$ and $h - S \Delta x$ at a face, where $\Delta x$ is the cell size along the channel. For these
+states, the mass flux of the exact Riemann solver exceeds $h u$ by $(c - u) S \Delta x / 2$, to first
+order in $S \Delta x$, with the celerity $c = \sqrt{g h_0}$. The velocity in the cells is therefore smaller than the exact one by
+$(c - u) S \Delta x / (2 h_0)$. The script compares the mean of this estimate over the width with the mean
+velocity error in the middle of the channel:
+
+| grid (along × across) | mean velocity error (m/s) | $-(c - u) S \Delta x / (2 h_0)$, mean over the width (m/s) |
+|--:|--:|--:|
+| 10 × 320 | -5.854e-04 | -5.817e-04 |
+| 20 × 320 | -2.926e-04 | -2.909e-04 |
+| 40 × 320 | -1.465e-04 | -1.454e-04 |
+| 80 × 320 | -7.339e-05 | -7.271e-05 |
+
+The rates along the channel decrease under refinement as the error approaches that of the 320 cells across.
 
 *Friction at the bed.* The grid is refined along the channel.
 
-| grid (along × across) | $L^2$ error $u$ (m/s) | rate |
+| grid (along × across) | rel. $L^2$ error $u$ | rate |
 |--:|--:|--:|
-| 20 × 2 | 1.947e-09 | - |
-| 40 × 2 | 1.001e-09 | 0.96 |
-| 80 × 2 | 5.063e-10 | 0.98 |
-| 160 × 2 | 2.545e-10 | 0.99 |
+| 20 × 2 | 1.191e-04 | - |
+| 40 × 2 | 6.119e-05 | 0.96 |
+| 80 × 2 | 3.097e-05 | 0.98 |
+| 160 × 2 | 1.556e-05 | 0.99 |
 
-The error converges with first order. On 20 cells, the relative error of the velocity is
-$1.19 \cdot 10^{-4}$, close to $S \Delta x / (2 h_0) = 1.25 \cdot 10^{-4}$, where $\Delta x$ is the cell
-size along the channel and $S \Delta x$ the step of the bed at a face. The script repeats the 20-cell run with
-the slope $10 S$ and with the depth $2 h_0$; the relative errors are $1.19 \cdot 10^{-3}$ and
-$6.04 \cdot 10^{-5}$, again 0.95 to 0.97 times $S \Delta x / (2 h_0)$.
+The error converges with approximately first order. Here, the depth is prescribed at both ends and the discharge results
+from the momentum balance. On 20 cells, the relative error of the velocity is $1.19 \cdot 10^{-4}$, close to
+$S \Delta x / (2 h_0) = 1.25 \cdot 10^{-4}$, the step of the bed at a face relative to twice the depth.
+The script repeats the 20-cell run with the slope $10 S$ and with the depth $2 h_0$; the relative errors are
+$1.19 \cdot 10^{-3}$ and $6.04 \cdot 10^{-5}$, again 0.95 to 0.97 times $S \Delta x / (2 h_0)$.
 
 The test `test_shallowwater_poiseuilleflow_convergence` refines the grid along the channel
 ($10, 20, 40$ cells, 160 cells across) and across the channel ($20, 40, 80$ cells, 160 cells along) and
-checks that the mean convergence rates are at least 0.85 and 1.6. The test
+checks that the mean convergence rates of the relative $L^2$ error are at least 0.85 and 1.6. The test
 `test_shallowwater_poiseuilleflow_vertical_convergence` runs the film flow on $20, 40, 80$ cells and checks
 that the mean rate is at least 0.9.
