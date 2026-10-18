@@ -20,13 +20,14 @@ At the outer radius, the brine pressure at the bottom of the aquifer is $P_w = 3
 the aquifer contains no CO<sub>2</sub>, $\bar S_n = 0$. The top and the bottom of the aquifer are
 impermeable, and gravity acts in the negative $z$ direction.
 
-The flow is simulated with the two-phase vertical-equilibrium model (@ref TwoPVEModel). On a coarse
-grid of vertical columns, the mass balance of each phase $\alpha \in \{w, n\}$ reads
+The flow is simulated with the two-phase vertical-equilibrium model (@ref TwoPVEModel). On a
+one-dimensional radial coarse grid, each cell of which represents a vertical column, the mass
+balance of each phase $\alpha \in \{w, n\}$ reads
 
 $$\frac{\partial (\bar\phi \varrho_\alpha \bar S_\alpha)}{\partial t}
-- \nabla \cdot \left\{ \varrho_\alpha \bar\lambda_\alpha \bar K \nabla P_\alpha \right\} = 0,$$
+- \nabla_h \cdot \left\{ \varrho_\alpha \bar\lambda_\alpha \bar K \nabla_h P_\alpha \right\} = 0,$$
 
-where $\bar\phi$ and $\bar K$ are the vertically averaged porosity and permeability, $\bar S_\alpha$ is
+where $\nabla_h$ is the horizontal gradient, $\bar\phi$ and $\bar K$ are the vertically averaged porosity and permeability, $\bar S_\alpha$ is
 the vertically averaged saturation, $\bar\lambda_\alpha$ the vertically averaged mobility and $P_\alpha$
 the pressure at the bottom of the column. The injected CO<sub>2</sub> is the phase $n$ and the brine the
 phase $w$. The vertical distribution of the saturations in each column is reconstructed from the
@@ -41,9 +42,10 @@ $$z_{p,\mathrm{eff}} = H \left( 1 - \frac{\bar S_n}{1 - S_{wr}} \right),$$
 
 which corresponds to a plume that contains the injected CO<sub>2</sub> at the saturation $1 - S_{wr}$,
 where $S_{wr}$ is the residual brine saturation. This is the definition that
-@cite NordbottenCelia2006 use for their numerical reference solutions. This effective gas plume distance equals the reconstructed
-`gasPlumeDistance` in the sharp-interface limit. With a finite capillary fringe,
-it can differ from the reconstructed mobile-gas boundary, which is output as `zp`.
+@cite NordbottenCelia2006 use for their numerical reference solutions. It is output as
+`effectiveGasPlumeDistance`. In the sharp-interface limit, it equals the gas plume distance $z_p$
+of the model, the lower boundary of the mobile CO<sub>2</sub>, which is output as `zp`. With a
+finite capillary fringe, the two differ.
 
 **Analytical Solution**
 
@@ -105,8 +107,8 @@ The injected volume is $1.2 \cdot 10^6$ m³ and the capillary fringe is 0.028 m 
 **Setup**
 
 The domain spans the radial and the vertical coordinate and is rotated about the axis of the well.
-The coarse grid consists of 400 radial cells and a single layer of cells, the fine grid of
-400 × 30 cells. Both fluids are incompressible with constant properties. The equations are
+The coarse grid is one-dimensional with 400 radial cells, extruded by the aquifer height, and the
+fine grid has 400 × 30 cells. Both fluids are incompressible with constant properties. The equations are
 discretized with the cell-centered two-point flux approximation (@ref CCTpfaDiscretization) and the
 implicit Euler method with a maximum time step size of 10 days.
 
@@ -126,10 +128,10 @@ python3 plot_convergence.py test_2pve_radialinjection_tpfa
 
 The script produces three figures:
 
-- **`profile.png`**: gas plume distance $1 - h/H$ over $\chi^{1/2}$ at the end of three simulations with
-  the injected volume of $1.2 \cdot 10^6$ m³ at the injection rate $Q$ above and at ten and a hundred
-  times $Q$, that is for $\Gamma = 0.141$, $0.0141$ and $0.00141$, compared to the similarity solution,
-  compare figure 2(a) in @cite NordbottenCelia2006;
+- **`profile.png`**: effective gas plume distance relative to the aquifer height, $z_{p,\mathrm{eff}}/H$,
+  over $\chi^{1/2}$ at the end of three simulations with the injected volume of $1.2 \cdot 10^6$ m³ at the
+  injection rate $Q$ above and at ten and a hundred times $Q$, that is for $\Gamma = 0.141$, $0.0141$ and
+  $0.00141$, compared to $1 - h/H$ of the similarity solution, compare figure 2(a) in @cite NordbottenCelia2006;
 - **`plume.png`**: fine-level CO<sub>2</sub> saturation at the end of the simulation with $\Gamma = 0.141$;
 - **`convergence.png`**: relative gas plume distance error over the radial cell size for $\Gamma = 1.4 \cdot 10^{-4}$
   and $p_e = 1$ Pa, where the maximum time step size is refined together with the radial cell size.
@@ -141,7 +143,7 @@ largest close to the well: with buoyancy, the CO<sub>2</sub> fills the aquifer d
 up to $\chi^{1/2} = 0.28$, the gas plume distance being below $0.01 H$, compared to
 $\chi^{1/2} = (2/\lambda)^{1/2} = 0.49$ in the similarity solution.
 
-![Interface height](2pve_radialinjection_profile.png)
+![Gas plume distance profile](2pve_radialinjection_profile.png)
 
 ![CO2 plume](2pve_radialinjection_plume.png)
 

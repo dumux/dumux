@@ -135,14 +135,16 @@ int main(int argc, char** argv)
             getParam<Scalar>("SpatialParams.Porosity"),
             getParam<Scalar>("SpatialParams.Swr"),
             problem->injectionRate());
-    const Scalar gravityNumber = 2.0*M_PI*densityDifference*spatialParamsFine->gravity(gridGeometryFine->bBoxMin()).two_norm()*permeability/viscosityResident*aquiferHeight*aquiferHeight/problem->injectionRate();
+    const Scalar gravity = spatialParamsFine->gravity(gridGeometryFine->bBoxMin()).two_norm();
+    const Scalar gravityNumber = 2.0*M_PI*densityDifference*gravity*permeability/viscosityResident
+                                 *aquiferHeight*aquiferHeight/problem->injectionRate();
     std::cout << "Mobility ratio: " << viscosityResident/viscosityInjected << ", gravity number: " << gravityNumber << std::endl;
 
     // The effective gas plume distance corresponds to a sharp-interface plume at saturation 1 - Swr.
     // With a finite capillary fringe it can differ from the reconstructed mobile-gas boundary (zp).
     const Scalar residualSaturation = getParam<Scalar>("SpatialParams.Swr");
     std::vector<Scalar> exactGasPlumeDistance(gridGeometryCoarse->gridView().size(0));
-    std::vector<Scalar> gasPlumeDistance(gridGeometryCoarse->gridView().size(0));
+    std::vector<Scalar> effectiveGasPlumeDistance(gridGeometryCoarse->gridView().size(0));
     const auto updateGasPlumeDistances = [&](Scalar time)
     {
         for (const auto& element : elements(gridGeometryCoarse->gridView()))
@@ -151,7 +153,7 @@ int main(int argc, char** argv)
             const Scalar radius = element.geometry().center()[0];
             exactGasPlumeDistance[elementIdx] = time > 0.0 ? similaritySolution.gasPlumeDistance(radius, time) : aquiferHeight;
             const Scalar saturationInjected = gridVariables->curGridVolVars().volVars(elementIdx).saturation(FluidSystem::phase1Idx);
-            gasPlumeDistance[elementIdx] = aquiferHeight*(1.0 - saturationInjected/(1.0 - residualSaturation));
+            effectiveGasPlumeDistance[elementIdx] = aquiferHeight*(1.0 - saturationInjected/(1.0 - residualSaturation));
         }
     };
 
@@ -161,8 +163,8 @@ int main(int argc, char** argv)
     vtkWriter.addVolumeVariable([](const auto& v){ return v.porosityIntegral(); }, "porosityIntegral");
     vtkWriter.addVolumeVariable([](const auto& v){ return v.permeabilityIntegral(); }, "permeabilityIntegral");
     vtkWriter.addVolumeVariable([](const auto& v){ return v.gasPlumeDist(); }, "zp");
-    vtkWriter.addField(gasPlumeDistance, "gasPlumeDistance");
-    vtkWriter.addField(exactGasPlumeDistance, "gasPlumeDistanceExact");
+    vtkWriter.addField(effectiveGasPlumeDistance, "effectiveGasPlumeDistance");
+    vtkWriter.addField(exactGasPlumeDistance, "exactGasPlumeDistance");
     updateGasPlumeDistances(0.0);
     vtkWriter.write(0.0);
 
@@ -198,7 +200,7 @@ int main(int argc, char** argv)
         if (timeLoop->isCheckPoint() || timeLoop->finished())
         {
             updateGasPlumeDistances(timeLoop->time());
-            error = gasPlumeDistanceError(*gridGeometryCoarse, gasPlumeDistance, exactGasPlumeDistance, aquiferHeight, similaritySolution.plumeExtent(timeLoop->time()));
+            error = gasPlumeDistanceError(*gridGeometryCoarse, effectiveGasPlumeDistance, exactGasPlumeDistance, aquiferHeight, similaritySolution.plumeExtent(timeLoop->time()));
             std::cout << "Relative gas plume distance error at t = " << timeLoop->time() << " s: " << error << std::endl;
             vtkWriter.write(timeLoop->time());
             vtkWriterFine.write(timeLoop->time());
