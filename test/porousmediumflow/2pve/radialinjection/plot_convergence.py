@@ -118,7 +118,7 @@ for factor, color in zip(profile_rate_factors, profile_colors):
     time, file_name = read_pvd(case_name + ".pvd")[-1]
     centers, cell_data = read_vtk(file_name)
     chi = 2.0*np.pi*height*porosity*(1.0 - residual_saturation)*centers[:, 0]**2/(injection_rate*factor*time)
-    ax.plot(np.sqrt(chi), cell_data["gasPlumeDistance"]/height, color=color, lw=1.5,
+    ax.plot(np.sqrt(chi), cell_data["effectiveGasPlumeDistance"]/height, color=color, lw=1.5,
             label=rf"VE model, $\Gamma = {gravity_number:.2g}$")
     if factor != 1:
         remove_outputs(case_name)
