@@ -259,7 +259,11 @@ public:
         // impose water depth at the right side
         else if (scvf.center()[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
-            boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(hBoundary_,
+            // the boundary state has the bed of the inside cell, so the depth prescribed at the face
+            // is shifted such that the free surface elevation at the face is matched
+            const auto waterDepth = hBoundary_
+                + this->spatialParams().bedSurfaceAtPos(scvf.center()) - insideVolVars.bedSurface();
+            boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(waterDepth,
                                                                             insideVolVars.waterDepth(),
                                                                             insideVolVars.velocity(0),
                                                                             insideVolVars.velocity(1),

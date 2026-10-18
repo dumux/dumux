@@ -135,8 +135,12 @@ public:
         else
         {
             // for inlet and outlet, the same water depth is prescribed
+            // the boundary state has the bed of the inside cell, so the depth prescribed at the face
+            // is shifted such that the free surface elevation at the face is matched
+            const auto waterDepth = waterDepthBoundary_
+                + this->spatialParams().bedSurfaceAtPos(globalPos) - insideVolVars.bedSurface();
             boundaryStateVariables = ShallowWater::fixedWaterDepthBoundary(
-                waterDepthBoundary_,
+                waterDepth,
                 insideVolVars.waterDepth(), insideVolVars.velocity(0), insideVolVars.velocity(1),
                 gravity, unitNormal
             );
