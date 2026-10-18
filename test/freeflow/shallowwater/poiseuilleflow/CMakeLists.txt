@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(vertical)
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES params.input convergencetest.py plot_results.py)
 
 dumux_add_test(NAME test_shallowwater_poiseuilleflow
                SOURCES main.cc
@@ -50,3 +50,10 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_unstructured_parallel
                           --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_poiseuilleflow_unstructured params.input -Problem.Name poiseuilleflow-unstructured-parallel -Grid.File grids/irregular_grid_10m.dgf")
 
 dune_symlink_to_source_files(FILES "grids")
+
+# convergence towards the parabolic velocity profile of the steady flow
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_convergence
+               TARGET test_shallowwater_poiseuilleflow
+               LABELS shallowwater
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
+               CMD_ARGS test_shallowwater_poiseuilleflow)
