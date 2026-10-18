@@ -148,7 +148,8 @@ public:
         if (densityW <= densityNw)
             DUNE_THROW(Dune::InvalidStateException, "The two-phase VE reconstruction requires the wetting phase to be denser than the nonwetting phase. Got rho_w=" << densityW << " and rho_n=" << densityNw);
 
-        // water content of the column minus the coarse-level water content, monotonically increasing in the gas plume distance. Computes the residual of the water content balance
+        // residual of the water balance: water content of the column minus the coarse-level water content,
+        // monotonically increasing in the gas plume distance
         using std::max; using std::min;
         const auto massConservation = [&](const Scalar gasPlumeDist)
         {
@@ -166,7 +167,7 @@ public:
         if (saturationWCoarse <= swr)
             DUNE_THROW(NumericalProblem, "The coarse-level wetting-phase saturation " << saturationWCoarse << " does not exceed the residual saturation " << swr);
 
-        // find height at which mass residual becomes negative
+        // move the lower end of the bracket downwards until the residual is no longer positive
         const Scalar fringeHeight = brooksCoreyParameters.entryPressure/((densityW - densityNw)*gravityNorm);
         Scalar lowerBound = 0.0;
         Scalar residualAtLowerBound = massConservation(lowerBound);

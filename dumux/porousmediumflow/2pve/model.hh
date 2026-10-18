@@ -14,8 +14,9 @@
  * a saline aquifer. The phases are assumed to be segregated by gravity and in hydrostatic equilibrium
  * in the vertical direction (vertical equilibrium) \cite Nordbotten2012. The mass balance equations
  * are solved on a horizontal grid of dimension one lower than the formation. Each coarse cell
- * represents a vertical column on a separate full-dimensional fine grid, and the vertical distribution of the saturations, pressures and mobilities is
- * reconstructed in each column on the fine grid.
+ * represents a vertical column on a separate full-dimensional fine grid, and the vertical
+ * distribution of the saturations, pressures and mobilities is reconstructed in each column
+ * on the fine grid.
  * See \cite Buntic2025 for a detailed description of the model.
  *
  * On the coarse level, the mass balance of each phase \f$\alpha \in \{ w, n \}\f$ reads
@@ -36,15 +37,19 @@
  * * \f$ P_\alpha \f$ is the pressure of phase \f$\alpha\f$ at the bottom of the column,
  * * \f$ q_\alpha \f$ is a vertically integrated source or sink per horizontal measure.
  *
- * Coarse cell volumes and face areas are horizontal measures. The column height H is
- * the extrusion factor for storage, fluxes and sources. Volume-variable porosity() and
- * permeability() are column averages with their usual units, so H times these averages
- * gives Phi and K_I. Integral diagnostics are available separately. No solid state or energy
- * equation is used; the prescribed temperature determines fluid properties. Standard velocity
- * output reports the column-average Darcy velocity in m/s.
+ * Coarse cell volumes and face areas are horizontal measures, and the column height \f$ H \f$
+ * is the extrusion factor of storage, fluxes and sources. The problem therefore returns height
+ * averages: `source` returns \f$ q_\alpha / H \f$, the source per unit volume of the formation,
+ * and `neumann` returns the boundary flux integrated over the column height divided by \f$ H \f$,
+ * the flux per unit area of the vertical boundary face. Accordingly, the volume variables
+ * return the column averages \f$ \Phi / H \f$ and \f$ K_I / H \f$ as `porosity()` and
+ * `permeability()`, and the integrals as `porosityIntegral()` and `permeabilityIntegral()`.
+ * No solid state or energy equation is used; the prescribed temperature determines the fluid
+ * properties. The velocity output is the column-average Darcy velocity in m/s.
  *
  * The coarse grid has only horizontal coordinates, so its gravity vector is zero. Vertical
- * gravity is supplied by the fine-level spatial parameters and enters through reconstruction. The primary variables are \f$ P_w \f$ and \f$ \bar S_n \f$.
+ * gravity is supplied by the fine-level spatial parameters and enters through the reconstruction.
+ * The primary variables are \f$ P_w \f$ and \f$ \bar S_n \f$.
  * Extrapolating the hydrostatic nonwetting-phase pressure to the bottom of the column gives the
  * coarse-level capillary pressure
  \f[

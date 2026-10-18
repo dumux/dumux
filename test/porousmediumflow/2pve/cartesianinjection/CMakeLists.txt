@@ -14,7 +14,7 @@ dumux_add_test(NAME test_2pve_immiscible_tpfa_2d
                                 ${CMAKE_CURRENT_BINARY_DIR}/2pve_lenses_2d_40x0x18-00010.vtp
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_2d params_2d.input -Problem.Name 2pve_lenses_2d_ -Grid.LowerLeft '0 0' -Grid.UpperRight '250 55' -Grid.Cells '40 18' -TimeLoop.TEnd 4e5 -TimeLoop.MaxTimeStepSize 10000 -BoundaryConditions.InjectionRate -5.835e-4")
 
-# Homogeneous shutoff experiment: 1 m vertical reconstruction, still only 40 VE columns.
+# Homogeneous formation, injection stops at 8e4 s: 40 columns, fine cells of 1 m height.
 # Prescribed startup ramp and fixed steps keep trapping history independent of Newton iteration counts.
 # Require at least 1% of the injected gas to remain residually trapped.
 dumux_add_test(NAME test_2pve_immiscible_tpfa_2d_trapping
