@@ -257,6 +257,55 @@ void testWithDurations()
         DUNE_THROW(Dune::InvalidStateException, "Setting periodic checkpoint failed");
 }
 
+// After many time steps of constant size, the time misses the check points by accumulated round-off.
+// Setting the time step size after every time step prevents the time loop from stretching
+// a time step to reach a check point exactly.
+void testCheckPointsAfterManyTimeSteps()
+{
+    std::cout << std::endl << "------- Test check points after many time steps ----------" << std::endl;
+    const double tEnd = 1.0;
+    for (const int numSteps : {4000, 10000})
+    {
+        for (const bool periodic : {false, true})
+        {
+            const double dt = tEnd/numSteps;
+            Dumux::CheckPointTimeLoop<double> timeLoop(0.0, dt, tEnd, /*verbose=*/false);
+            if (periodic)
+                timeLoop.setPeriodicCheckPoint(0.1*tEnd);
+            else
+                timeLoop.setCheckPoint({0.03*tEnd, 0.1*tEnd, 0.3*tEnd, tEnd});
+
+            int numCheckPoints = 0;
+            timeLoop.start();
+            while (!timeLoop.finished())
+            {
+                if (timeLoop.timeStepIndex() == numSteps)
+                    DUNE_THROW(Dune::InvalidStateException, "Time loop not finished after " << numSteps
+                                << " time steps of size " << dt << " (t = " << timeLoop.time() << ")");
+
+                timeLoop.advanceTimeStep();
+                timeLoop.setTimeStepSize(dt);
+                if (timeLoop.isCheckPoint())
+                    ++numCheckPoints;
+            }
+
+            if (timeLoop.timeStepIndex() != numSteps)
+                DUNE_THROW(Dune::InvalidStateException, "Time loop finished after " << timeLoop.timeStepIndex()
+                            << " instead of " << numSteps << " time steps");
+            if (!timeLoop.isCheckPoint())
+                DUNE_THROW(Dune::InvalidStateException, "Missed the check point at the end time");
+
+            const int expectedNumCheckPoints = periodic ? 10 : 4;
+            if (numCheckPoints != expectedNumCheckPoints)
+                DUNE_THROW(Dune::InvalidStateException, "Reached " << numCheckPoints << " instead of "
+                            << expectedNumCheckPoints << " check points");
+
+            std::cout << "Reached all " << numCheckPoints << (periodic ? " periodic" : "")
+                      << " check points in " << numSteps << " time steps" << std::endl;
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
     // maybe initialize MPI and/or multithreading backend
@@ -275,6 +324,8 @@ int main(int argc, char* argv[])
     testTimeLoops(0.0, 1.0e12, 0.1, {1e11});
 
     testWithDurations();
+
+    testCheckPointsAfterManyTimeSteps();
 
     return 0;
 }
