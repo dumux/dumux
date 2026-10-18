@@ -5,3 +5,4 @@ dumux_add_test(SOURCES test_contact.cc
                LABELS unit solidmechanics)
 
 add_subdirectory(hertz)
+add_subdirectory(ring)

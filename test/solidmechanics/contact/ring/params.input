@@ -1,0 +1,30 @@
+[Grid]
+Cells = 1280
+Layers = 8
+
+[Problem]
+Name = ring
+Radius = 1.0
+Thickness = 0.04
+YoungsModulus = 1.0
+PoissonRatio = 0.3
+Imperfection = 1e-2
+Pressures = 6 7 8 9 10 11
+PressureIncrement = 0.5
+
+[Contact]
+PenaltyStiffness = 10
+Offset = 2e-3
+SearchMargin = 0.1
+
+[Newton]
+MaxSteps = 20
+EnableShiftCriterion = true
+MaxRelativeShift = 1e-10
+EnableResidualCriterion = true
+ResidualReduction = 1e-10
+SatisfyResidualAndShiftCriterion = false
+Verbosity = 0
+
+[Vtk]
+AddProcessRank = false
