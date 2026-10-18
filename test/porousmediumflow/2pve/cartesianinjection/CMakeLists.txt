@@ -39,3 +39,14 @@ dumux_add_test(NAME test_2pve_immiscible_tpfa_3d
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2pve_immiscible_tpfa_3d-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/2pve_lenses_3d_15x8x3-00010.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_3d params_3d.input -Problem.Name 2pve_lenses_3d_ -Grid.LowerLeft '0 0 0' -Grid.UpperRight '250 100 25' -Grid.Cells '15 8 3' -TimeLoop.TEnd 2e6 -TimeLoop.MaxTimeStepSize 10000 -BoundaryConditions.InjectionRate -1.45875e-3")
+
+# the well lies at the center of the y-extent also if the domain does not start at y = 0
+dumux_add_test(NAME test_2pve_immiscible_tpfa_3d_shifted
+               TARGET test_2pve_immiscible_tpfa_3d
+               LABELS porousmediumflow 2pve
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_2pve_immiscible_tpfa_3d
+               CMD_ARGS params_3d.input
+                        -Problem.Name 2pve_shifted_3d_
+                        -Grid.LowerLeft "0 100 0"
+                        -Grid.UpperRight "250 200 25"
+                        -TimeLoop.TEnd 0.125)
