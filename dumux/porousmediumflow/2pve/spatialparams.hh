@@ -13,11 +13,13 @@
 #ifndef DUMUX_TWOPVE_SPATIAL_PARAMS_HH
 #define DUMUX_TWOPVE_SPATIAL_PARAMS_HH
 
+#include <cmath>
 #include <memory>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dumux/porousmediumflow/fvspatialparamsmp.hh>
@@ -32,7 +34,8 @@ namespace Dumux {
  * The vertical integrals of fine-level permeability and porosity are stored per horizontal
  * coarse element. The volume variables use column averages and the column height as extrusion factor.
  * The fine-level spatial parameters have to provide `permeabilityAtElement(fineElement)` and
- * `porosityAtElement(fineElement)`. The implementation has to provide
+ * `porosityAtElement(fineElement)`, and the porosity has to be uniform within each column.
+ * The implementation has to provide
  * `fluidMatrixInteractionAtPos(globalPos)` returning a Brooks-Corey material law and
  * `temperatureAtPos(globalPos)`.
  *
@@ -81,10 +84,17 @@ public:
         {
             const auto columnIdx = gridGeometry->elementMapper().index(element);
             const auto& column = columnMapping.column(columnIdx);
+            const Scalar columnPorosity = spatialParamsFine_->porosityAtElement(column.front());
             for (const auto& fineElement : column)
             {
+                using std::abs;
+                const Scalar porosityFine = spatialParamsFine_->porosityAtElement(fineElement);
+                // the gas plume distance follows from the water balance of the unweighted saturation profile
+                if (abs(porosityFine - columnPorosity) > 1e-10*abs(columnPorosity))
+                    DUNE_THROW(Dune::InvalidStateException, "The VE model requires a uniform porosity within each column, column " << columnIdx << " has porosities " << columnPorosity << " and " << porosityFine);
+
                 permeabilityIntegral_[columnIdx] += spatialParamsFine_->permeabilityAtElement(fineElement)*fineCellHeight;
-                porosityIntegral_[columnIdx] += spatialParamsFine_->porosityAtElement(fineElement)*fineCellHeight;
+                porosityIntegral_[columnIdx] += porosityFine*fineCellHeight;
             }
 
             const Scalar columnHeight = column.size()*fineCellHeight;
