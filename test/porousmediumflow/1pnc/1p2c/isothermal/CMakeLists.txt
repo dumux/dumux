@@ -3,6 +3,7 @@
 
 add_subdirectory(saltwaterintrusion)
 add_subdirectory(hortonrogerslapwood)
+add_subdirectory(elder)
 add_subdirectory(lockexchange)
 
 add_input_file_links()

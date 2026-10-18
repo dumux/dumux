@@ -1,0 +1,42 @@
+[TimeLoop]
+DimensionlessTimeStepSize = 2.5e-3
+DimensionlessOutputTimes = 0.03 0.1 0.3
+Method = DIRK3
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 300 150
+Cells = 64 32
+
+[Problem]
+Name = elder
+EnableGravity = true
+DensityDifference = 30 # [kg/m^3], Ra = 60
+SourceHalfWidth = 150 # [m]
+SourceTransitionLength = 7.5 # [m]
+
+[SpatialParams]
+Permeability = 4.845395854570167e-13 # [m^2], Ra = 2 DensityDifference / (kg/m^3)
+Porosity = 0.1
+Tortuosity = 1.0
+Temperature = 293.15 # [K]
+
+[1.Component]
+Name = Solvent
+MolarMass = 18e-3 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa s]
+
+[2.Component]
+Name = Solute
+MolarMass = 18e-3 # [kg/mol]
+LiquidDiffusionCoefficient = 3.565e-6 # [m^2/s]
+
+[Flux]
+UpwindWeight = 0.5
+
+[Newton]
+MaxRelativeShift = 1e-10
+
+[Vtk]
+AddVelocity = true
