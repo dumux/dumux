@@ -56,7 +56,7 @@ finite elements, Q2-Q1), each with a benchmark page.
 identified with all their periodic images, and all assemblers enforce the periodic constraints for each of them. The periodic
 partner detection of the box, pq1bubble, pq2, pq3 and finite-element discretizations compares the periodic shift instead of only
 the distance, which also accepted unrelated degrees of freedom at the distance of the domain length.
-- __Vertical equilibrium model__: Added the two-phase vertical-equilibrium model `2pve` for gravity-segregated two-phase flow. It solves the mass balance equations on a coarse grid and reconstructs the vertical distribution of saturations, pressures and mobilities on a fine grid.
+- __Vertical equilibrium model__: Added the two-phase vertical-equilibrium model `2pve` for gravity-segregated two-phase flow. It solves the vertically integrated mass balance equations on a horizontal grid of one dimension lower than the formation, with the column height as extrusion factor, and reconstructs the vertical distribution of saturations, pressures and mobilities on a full-dimensional fine grid, including residual trapping. Tests: injection into a heterogeneous formation in 2D and 3D, residual trapping after the end of injection, and the radial injection benchmark of Nordbotten and Celia (2006).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
