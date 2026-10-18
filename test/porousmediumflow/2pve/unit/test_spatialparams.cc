@@ -31,11 +31,16 @@
 
 namespace Dumux::TwoPVETest {
 
-// permeability and porosity are linear in both coordinates, so the midpoint rule integrates them exactly
+// permeability is linear in both coordinates, so the midpoint rule integrates it exactly,
+// porosity is uniform within a column unless a vertical gradient is given
 template<class Element>
 class FineSpatialParams
 {
 public:
+    explicit FineSpatialParams(double verticalPorosityGradient = 0.0)
+    : verticalPorosityGradient_(verticalPorosityGradient)
+    {}
+
     double permeabilityAtElement(const Element& element) const
     {
         const auto center = element.geometry().center();
@@ -45,8 +50,11 @@ public:
     double porosityAtElement(const Element& element) const
     {
         const auto center = element.geometry().center();
-        return 0.1 + 0.01*center[0] + 0.02*center[1];
+        return 0.1 + 0.01*center[0] + verticalPorosityGradient_*center[1];
     }
+
+private:
+    double verticalPorosityGradient_;
 };
 
 template<class GridGeometry, class FineGridGeometry, class SpatialParamsFine>
@@ -112,8 +120,7 @@ int main(int argc, char** argv)
         // Vertical integrals over the fine-level fields.
         const Scalar x = element.geometry().center()[0];
         const Scalar expectedPermeabilityIntegral = 1.0e-12*((1.0 + x)*height + (top*top - bottom*bottom));
-        const Scalar expectedPorosity = ((0.1 + 0.01*x)*height + 0.01*(top*top - bottom*bottom))/height;
-
+        const Scalar expectedPorosity = 0.1 + 0.01*x;
 
         TwoPVETest::checkClose(spatialParams.permeabilityIntegralAtElement(element), expectedPermeabilityIntegral, "permeability integral");
         TwoPVETest::checkClose(spatialParams.porosityIntegralAtElement(element), expectedPorosity*height, "porosity integral");
@@ -135,6 +142,20 @@ int main(int argc, char** argv)
 
     if (spatialParams.template wettingPhaseAtPos<TwoPVETest::FluidSystem>(coarseGridGeometry->bBoxMin()) != TwoPVETest::FluidSystem::phase0Idx)
         DUNE_THROW(Dune::Exception, "Expected the first phase to be the wetting phase");
+
+    bool rejectedNonuniformPorosity = false;
+    try
+    {
+        const TwoPVETest::SpatialParams<CoarseGridGeometry, GridGeometry, SpatialParamsFine> nonuniformSpatialParams(
+            coarseGridGeometry, columnMapping, std::make_shared<const SpatialParamsFine>(0.02), fineCellHeight
+        );
+    }
+    catch (const Dune::InvalidStateException&)
+    {
+        rejectedNonuniformPorosity = true;
+    }
+    if (!rejectedNonuniformPorosity)
+        DUNE_THROW(Dune::Exception, "Expected an exception for a porosity that varies within a column");
 
     return 0;
 }
