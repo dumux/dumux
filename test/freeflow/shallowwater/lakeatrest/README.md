@@ -22,6 +22,8 @@ $$
 
 with the hump height $a$ and the sill height $b$. All boundaries are walls and there is no friction.
 
+![Setup of the lake at rest: side view of the bed along y = 0.5 m with both water levels, and top view with the contours at 50 % (solid) and 10 % (dashed) of the hump height; the vertical scales differ](shallowwater_lakeatrest_setup.svg){html: width=70%}
+
 **Exact Solution**
 
 The exact solution is the initial state, $h = \max(H - z, 0)$ and $u = v = 0$, where $u$ and $v$ are the
@@ -70,12 +72,16 @@ python3 plot_results.py ./test_shallowwater_lakeatrest
 ```
 in the build directory `test/freeflow/shallowwater/lakeatrest` (requires NumPy and Matplotlib).
 
-![Bed and free surface along y = 0.49 m (left) and deviation of the water depth from the exact solution (right) at t = 100 s](shallowwater_lakeatrest.png){html: width=90%}
+![Bed and free surface along y = 0.49 m, and deviation of the water depth from the exact solution relative to the water level, at t = 100 s](shallowwater_lakeatrest.png){html: width=90%}
 
-| case | $H$ (m) | $h_\mathrm{min}$ (m) | max. deviation free surface (m) | max. deviation specific discharge (m<sup>2</sup>/s) |
+The table lists the maximum deviations at $t_\mathrm{end}$ relative to the scales of the problem: the
+deviation of the free surface elevation relative to $H$, and the deviation of the specific discharge
+relative to $H \sqrt{g H}$, the discharge of water of depth $H$ moving with the celerity $\sqrt{g H}$.
+
+| case | $H$ (m) | $h_\mathrm{min}$ (m) | max. deviation free surface / $H$ | max. deviation specific discharge / $H \sqrt{g H}$ |
 |:--|--:|--:|--:|--:|
-| submerged | 1.0 | 0 | 9.4e-15 | 3.2e-14 |
-| emerged | 0.5 | 1e-05 | 2.2e-07 | 4.3e-07 |
+| submerged | 1.0 | 0 | 9.4e-15 | 1.0e-14 |
+| emerged | 0.5 | 1e-05 | 4.4e-07 | 3.9e-07 |
 
 On the submerged bed the lake at rest is preserved to round-off. On the partially dry bed the deviation
-of the free surface is 2.2 % of the film thickness.
+of the free surface is $2.2 \cdot 10^{-7}$ m, 2.2 % of the film thickness.

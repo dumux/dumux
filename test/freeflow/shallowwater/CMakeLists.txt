@@ -8,3 +8,5 @@ add_subdirectory(iofields)
 add_subdirectory(lakeatrest)
 add_subdirectory(poiseuilleflow)
 add_subdirectory(roughchannel)
+
+dune_symlink_to_source_files(FILES plotstyle.py)

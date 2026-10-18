@@ -1,32 +1,25 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Flow in a rough channel: deviation from the normal flow and errors under grid refinement.
+"""Flow in a rough channel: deviation from the normal flow and relative errors under grid refinement.
 
 Usage:
   python3 plot_results.py <executable> [output directory of the figure]
 """
 
+import math
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.ticker
 import numpy as np
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from plotstyle import cell_ticks, plt, series, slope_triangle
 from convergencetest import rates, run
 
 CELLS = [250, 500, 1000, 2000]
-
-
-def cell_ticks(ax, cells):
-    """Label the logarithmic axis with the numbers of cells"""
-    ax.set_xticks(cells, [str(c) for c in cells])
-    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
 
 
 def read_cells(filename):
@@ -49,40 +42,50 @@ def main():
     imageDir = sys.argv[2] if len(sys.argv) > 2 else "."
 
     values = dict(re.findall(r"^\s*(\w+)\s*=\s*([^#\n]+)", open("params.input").read(), re.MULTILINE))
-    n, q, slope = float(values["ManningN"]), abs(float(values["Discharge"])), float(values["BedSlope"])
-    normalDepth = (n*q/slope**0.5)**0.6
-    print(f"Normal flow: h = {normalDepth:.6f} m, u = {q/normalDepth:.6f} m/s\n")
+    n, q, slopeS, g = float(values["ManningN"]), abs(float(values["Discharge"])), float(values["BedSlope"]), float(values["Gravity"])
+    length = float(values["Positions0"].split()[-1]) - float(values["Positions0"].split()[0])
+    normalDepth = (n*q/slopeS**0.5)**0.6
+    normalVelocity = q/normalDepth
+    celerity = math.sqrt(g*normalDepth)
+    print(f"Normal flow: h = {normalDepth:.6f} m, u = {normalVelocity:.6f} m/s\n")
 
     results = [run(executable, cells, ["-Vtk.Precision", "Float64"]) for cells in CELLS]
-    rh, ru = rates([r["L1(h)"] for r in results]), rates([r["L1(u)"] for r in results])
-    print("| cells | L1 error h (m) | rate | L1 error u (m/s) | rate |")
+    rh, ru = rates([r["h"] for r in results]), rates([r["u"] for r in results])
+    print("| cells | rel. L2 error h | rate | rel. L2 error u | rate |")
     print("|--:|--:|--:|--:|--:|")
     for i, (cells, r) in enumerate(zip(CELLS, results)):
-        rates_ = (f"{rh[i - 1]:.2f}", f"{ru[i - 1]:.2f}") if i > 0 else ("-", "-")
-        print(f"| {cells} | {r['L1(h)']:.3e} | {rates_[0]} | {r['L1(u)']:.3e} | {rates_[1]} |")
+        rate = (f"{rh[i - 1]:.2f}", f"{ru[i - 1]:.2f}") if i > 0 else ("-", "-")
+        print(f"| {cells} | {r['h']:.3e} | {rate[0]} | {r['u']:.3e} | {rate[1]} |")
 
-    print("\n| cells | min of h - h_n (m) | h - h_n in the outflow cell (m) |\n|--:|--:|--:|")
-    fig, (axP, axE) = plt.subplots(1, 2, figsize=(10, 3.6), layout="constrained")
-    for cells in CELLS:
+    # the Godunov mass flux between the reconstructed depths h and h - S dx exceeds h u by (c - u) S dx / 2
+    print("\n| cells | min of (h - h_n)/h_n | (h - h_n)/h_n in the outflow cell "
+          "| cell-centre discharge - q, 20 m < x < 120 m (m^2/s) | -(c - u_n) S dx / 2 (m^2/s) |")
+    print("|--:|--:|--:|--:|--:|")
+    fig, (axP, axE) = plt.subplots(1, 2, figsize=(10, 4.0), layout="constrained")
+    for i, cells in enumerate(CELLS):
         centers, data = read_cells(f"roughchannel_{cells}-00001.vtu")
         row = np.abs(centers[:, 1] - centers[:, 1].min()) < 1e-9
         order = np.argsort(centers[row, 0])
-        deviation = data["waterDepth"][row][order] - normalDepth
-        print(f"| {cells} | {deviation.min():.2e} | {deviation[-1]:.1e} |")
-        axP.plot(centers[row, 0][order], deviation, lw=1.0, label=f"{cells} cells")
-    axP.axhline(0.0, color="k", lw=0.8)
+        x = centers[row, 0][order]
+        deviation = (data["waterDepth"][row][order] - normalDepth)/normalDepth
+        discharge = (data["waterDepth"]*data["velocityX"])[row][order]
+        upstream = (x > 20.0) & (x < 120.0)
+        print(f"| {cells} | {deviation.min():.2e} | {deviation[-1]:.1e} | {discharge[upstream].mean() - q:+.4e} "
+              f"| {-(celerity - normalVelocity)*slopeS*(length/cells)/2.0:+.4e} |")
+        axP.plot(x, deviation, label=f"{cells} cells", **series(i, cells))
+    axP.axhline(0.0, color="black", lw=0.8)
     axP.set_xlabel("$x$ (m)")
-    axP.set_ylabel(r"$h - h_n$ (m)")
-    axP.legend(fontsize=8)
+    axP.set_ylabel(r"$(h - h_n) / h_n$")
+    axP.legend()
 
-    axE.loglog(CELLS, [r["L1(h)"] for r in results], "o-", label=r"$\|h - h_n\|_1$ (m)")
-    axE.loglog(CELLS, [r["L1(u)"] for r in results], "s-", label=r"$\|u - u_n\|_1$ (m/s)")
-    axE.loglog(CELLS, [results[0]["L1(u)"]*CELLS[0]/c for c in CELLS], "k--", lw=0.8, label="slope 1")
+    axE.loglog(CELLS, [r["h"] for r in results], label=r"$h$", **series(0))
+    axE.loglog(CELLS, [r["u"] for r in results], label=r"$u$", **series(1))
+    slope_triangle(axE, CELLS[-2], CELLS[-1], 0.6*results[-2]["h"], 1)
     cell_ticks(axE, CELLS)
     axE.set_xlabel("cells along the channel")
-    axE.set_ylabel("$L^1$ error")
-    axE.legend(fontsize=8)
-    fig.savefig(f"{imageDir}/shallowwater_roughchannel.png", dpi=130)
+    axE.set_ylabel(r"relative $L^2$ error at $t = 900$ s")
+    axE.legend()
+    fig.savefig(f"{imageDir}/shallowwater_roughchannel.png")
 
 
 if __name__ == "__main__":

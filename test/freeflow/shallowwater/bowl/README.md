@@ -11,6 +11,8 @@ a free surface that is a paraboloid raised by $\eta_0$ at the center. The free s
 shoreline, where the water depth $h$ vanishes, moves up and down the bed of the bowl. The shallow water
 equations hold in the wet part of the domain $[-2\,\mathrm{m}, 2\,\mathrm{m}]^2$.
 
+![Setup of the bowl, cross section through its center with exaggerated vertical scale](shallowwater_bowl_setup.svg){html: width=70%}
+
 **Exact Solution**
 
 Thacker @cite Thacker1981 (Section 4) gives the periodic, radially symmetric solution (see also the
@@ -56,28 +58,62 @@ grid study, the grid has $N \times N$ cells and the time step size is $\Delta t 
 
 **Results**
 
-The figure and the table are produced by running
+The figure and the tables are produced by running
 ```bash
 python3 plot_results.py ./test_shallowwater_bowl
 ```
 in the build directory `test/freeflow/shallowwater/bowl` (requires NumPy and Matplotlib). The script
 computes the exact solution independently of DuMux.
 
-![Free surface (left) and discharge (center) along the row of cells next to y = 0, and L1 error of the water depth over time (right)](shallowwater_bowl.png){html: width=100%}
+![Free surface and discharge along the row of cells next to y = 0, and relative L1 error of the water depth over time](shallowwater_bowl.png){html: width=100%}
 
-The table lists the discrete $L^1$ errors of the water depth,
-$\| e \|_1 = \sum_i |V_i| \, |e_i| / \sum_i |V_i|$, where $e_i$ is the difference to the exact solution
-at the center of the cell $V_i$ with area $|V_i|$, at the time step closest to $T$ and at $t_\mathrm{end}$.
+The table lists the relative discrete $L^1$ errors of the water depth, $\| e \|_1 / \| h \|_1$ with
+$\| e \|_1 = \sum_i |V_i| \, |e_i|$, where $e_i$ is the difference to the exact solution at the center of
+the cell $V_i$ with area $|V_i|$, and $\| h \|_1$ the norm of the exact depth evaluated in the same way, at the
+time step closest to $T$ and at $t_\mathrm{end}$. The $L^1$ norm is used because the solution is not smooth at
+the shoreline, where the depth has a kink and the velocity jumps to zero.
 
-| grid | $\Delta t$ (s) | $L^1$ error $h$, $t = T$ (m) | rate | $L^1$ error $h$, $t = 2 T$ (m) | rate |
+| grid | $\Delta t$ (s) | rel. $L^1$ error $h$, $t = T$ | rate | rel. $L^1$ error $h$, $t = 2 T$ | rate |
 |--:|--:|--:|--:|--:|--:|
-| 40 × 40 | 0.1000 | 8.736e-04 | - | 1.149e-03 | - |
-| 80 × 80 | 0.0500 | 5.674e-04 | 0.62 | 9.006e-04 | 0.35 |
-| 160 × 160 | 0.0250 | 3.218e-04 | 0.82 | 5.591e-04 | 0.69 |
-| 320 × 320 | 0.0125 | 1.701e-04 | 0.92 | 2.951e-04 | 0.92 |
+| 40 × 40 | 0.1000 | 1.159e-01 | - | 1.524e-01 | - |
+| 80 × 80 | 0.0500 | 7.525e-02 | 0.62 | 1.195e-01 | 0.35 |
+| 160 × 160 | 0.0250 | 4.269e-02 | 0.82 | 7.415e-02 | 0.69 |
+| 320 × 320 | 0.0125 | 2.256e-02 | 0.92 | 3.914e-02 | 0.92 |
 
-The rates increase towards one under refinement. The computed oscillation is damped: at $t = 11$ s, close to
-the largest velocity of the second period, the largest discharge $h u$ in the row of cells next to $y = 0$ is
-0.041, 0.209, 0.487 and 0.728 times the exact one on the four grids. An eight times smaller time step
-on the coarsest grid raises the ratio from 0.041 to 0.059, a refinement of the grid with half the time step
-to 0.209: the damping comes mainly from the spatial discretization.
+On the finer grids the error converges with approximately first order; on the coarser grids, and more so
+at $t = 2 T$ than at $t = T$, it converges more slowly. The reason is the damping of the oscillation. The next
+table lists the largest discharge $h u$ in the row of cells next to $y = 0$ relative to the exact one at
+$t = 11$ s, close to the largest velocity of the second period:
+
+| grid | $\Delta t$ (s) | peak discharge / exact peak discharge | logarithm |
+|--:|--:|--:|--:|
+| 40 × 40 | 0.1000 | 0.041 | -3.21 |
+| 80 × 80 | 0.0500 | 0.209 | -1.57 |
+| 160 × 160 | 0.0250 | 0.487 | -0.72 |
+| 320 × 320 | 0.0125 | 0.728 | -0.32 |
+| 40 × 40 | 0.0125 | 0.059 | -2.83 |
+
+The logarithm of the ratio approximately halves with each refinement: the oscillation decays exponentially,
+with a decay rate approximately proportional to the cell size. On the coarse grids the oscillation has
+almost decayed, and the error approaches the amplitude of the oscillation instead of decreasing in
+proportion to the cell size. An eight times smaller time step on the coarsest grid raises the ratio from 0.041
+to 0.059, a refinement of the grid with half the time step to 0.209: the damping comes mainly from the spatial
+discretization.
+
+The wet/dry front is not the cause of the slow convergence. The script splits the relative $L^1$ error
+of the depth into the contributions of the cells within 0.2 m of the exact shoreline, of the wet interior
+and of the dry bed:
+
+| $t$ (s) | grid | near the shoreline | rate | wet interior | rate | dry bed | rate |
+|--:|--:|--:|--:|--:|--:|--:|--:|
+| 7 | 40 × 40 | 3.875e-02 | - | 5.628e-02 | - | 5.467e-04 | - |
+| 7 | 80 × 80 | 2.087e-02 | 0.89 | 3.649e-02 | 0.63 | 5.653e-04 | -0.05 |
+| 7 | 160 × 160 | 8.716e-03 | 1.26 | 2.135e-02 | 0.77 | 5.604e-04 | 0.01 |
+| 7 | 320 × 320 | 3.612e-03 | 1.27 | 1.113e-02 | 0.94 | 4.721e-04 | 0.25 |
+| 13 | 40 × 40 | 6.419e-02 | - | 8.809e-02 | - | 5.144e-04 | - |
+| 13 | 80 × 80 | 5.072e-02 | 0.34 | 7.022e-02 | 0.33 | 5.035e-04 | 0.03 |
+| 13 | 160 × 160 | 3.124e-02 | 0.70 | 4.506e-02 | 0.64 | 4.003e-04 | 0.33 |
+| 13 | 320 × 320 | 1.614e-02 | 0.95 | 2.477e-02 | 0.86 | 2.502e-04 | 0.68 |
+
+The contribution of the wet interior is the larger one on all grids and converges like the total error. The
+contribution of the dry bed is the water film of initially $10^{-5}$ m and stays small.

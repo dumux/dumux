@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" font-family="'Times New Roman', Times, serif">
+  <defs>
+    <marker id="dimArrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#000" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="640" height="420" fill="white"/>
+
+  <!-- side view -->
+  <text x="60" y="40" font-size="19" fill="#000">side view</text>
+
+  <!-- water at t = 0 -->
+  <rect x="80" y="110" width="240" height="120" fill="#dce9f5"/>
+  <rect x="320" y="200" width="240" height="30" fill="#dce9f5"/>
+  <line x1="80" y1="110" x2="320" y2="110" stroke="#000" stroke-width="1.2"/>
+  <line x1="320" y1="200" x2="560" y2="200" stroke="#000" stroke-width="1.2"/>
+
+  <!-- bed and walls -->
+  <rect x="68" y="230" width="504" height="12" fill="url(#hatch)"/>
+  <line x1="80" y1="230" x2="560" y2="230" stroke="#000" stroke-width="1.5"/>
+  <rect x="68" y="70" width="12" height="160" fill="url(#hatch)"/>
+  <line x1="80" y1="70" x2="80" y2="230" stroke="#000" stroke-width="1.5"/>
+  <rect x="560" y="70" width="12" height="160" fill="url(#hatch)"/>
+  <line x1="560" y1="70" x2="560" y2="230" stroke="#000" stroke-width="1.5"/>
+
+  <!-- gate -->
+  <line x1="320" y1="80" x2="320" y2="230" stroke="#000" stroke-width="1.2" stroke-dasharray="6,4"/>
+  <text x="328" y="92" font-size="18" fill="#000">gate, removed at <tspan font-style="italic">t</tspan> = 0</text>
+
+  <!-- depths -->
+  <line x1="110" y1="112" x2="110" y2="228" stroke="#000" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+  <text x="118" y="176" font-size="21" font-style="italic" fill="#000">h<tspan font-style="normal" font-size="15" baseline-shift="sub">L</tspan></text>
+  <line x1="520" y1="202" x2="520" y2="228" stroke="#000" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+  <text x="528" y="221" font-size="21" font-style="italic" fill="#000">h<tspan font-style="normal" font-size="15" baseline-shift="sub">R</tspan></text>
+
+  <!-- walls -->
+  <text x="56" y="150" font-size="18" fill="#000" transform="rotate(-90 56 150)" text-anchor="middle">wall</text>
+  <text x="590" y="150" font-size="18" fill="#000" transform="rotate(-90 590 150)" text-anchor="middle">wall</text>
+
+  <!-- dimensions -->
+  <line x1="80" y1="262" x2="80" y2="300" stroke="#000" stroke-width="0.8"/>
+  <line x1="320" y1="250" x2="320" y2="272" stroke="#000" stroke-width="0.8"/>
+  <line x1="560" y1="262" x2="560" y2="300" stroke="#000" stroke-width="0.8"/>
+  <line x1="82" y1="266" x2="318" y2="266" stroke="#000" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+  <text x="194" y="260" font-size="21" font-style="italic" fill="#000">x<tspan font-style="normal" font-size="15" baseline-shift="sub">0</tspan></text>
+  <line x1="82" y1="292" x2="558" y2="292" stroke="#000" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+  <text x="314" y="286" font-size="21" font-style="italic" fill="#000">L</text>
+
+  <!-- plan view -->
+  <text x="60" y="330" font-size="19" fill="#000">top view</text>
+  <rect x="80" y="345" width="480" height="50" fill="#dce9f5" stroke="#000" stroke-width="2.5"/>
+  <line x1="320" y1="345" x2="320" y2="395" stroke="#000" stroke-width="1.2" stroke-dasharray="6,4"/>
+  <line x1="578" y1="347" x2="578" y2="393" stroke="#000" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+  <text x="586" y="376" font-size="21" font-style="italic" fill="#000">W</text>
+  <text x="200" y="376" font-size="18" fill="#000" text-anchor="middle">walls on all sides</text>
+</svg>
