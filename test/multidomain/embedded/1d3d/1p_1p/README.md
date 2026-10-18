@@ -159,3 +159,6 @@ of 0.01) or more circle points (2048 instead of 256) change the errors at $c = 6
 - `test_md_embedded_1d3d_1p1p_boxtpfa_kernel_unstructured` runs the kernel method with the box method on
   tetrahedral meshes generated from `box.geo` with Gmsh, and fails if the rate of $e_t$ between the two
   finest meshes is below 1.5.
+
+The benchmark @ref benchmark-embedded-1d3d-vessel-tip uses the same model with a vessel that ends inside the
+tissue.

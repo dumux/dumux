@@ -1,0 +1,45 @@
+[MixedDimension]
+NumCircleSegments = 256
+IntegrationOrder = 2
+KernelWidthFactor = 1.0
+KernelIntegrationCRL = 0.01
+
+[Vessel.Grid]
+LowerLeft = 0 0 0
+UpperRight = 0 0 0.6
+Cells = 6
+
+[Tissue.Grid]
+LowerLeft = -1 -1 0
+UpperRight = 1 1 1
+Cells = 20 20 10
+
+[Vessel.Problem]
+Name = 1d
+
+[Tissue.Problem]
+Name = 3d
+
+[Problem]
+EnableGravity = false
+ExchangeRate = 1.0 # [kg/(s m)]
+TipPressure = 1.0 # [Pa]
+
+[Vtk]
+OutputName = test_md_embedded_1d3d_1p1p_tip
+
+[Component]
+LiquidKinematicViscosity = 1 # [m^2/s]
+LiquidDensity = 1 # [kg/m^3]
+
+[SpatialParams]
+PermeabilityTissue = 1 # [m^2]
+Radius = 0.1 # [m]
+VesselConductivity = 1 # [m^4]
+
+[LinearSolver]
+ResidualReduction = 1e-14
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+BaseEpsilon = 1e5

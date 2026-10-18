@@ -57,7 +57,7 @@ identified with all their periodic images, and all assemblers enforce the period
 partner detection of the box, pq1bubble, pq2, pq3 and finite-element discretizations compares the periodic shift instead of only
 the distance, which also accepted unrelated degrees of freedom at the distance of the domain length.
 - __Embedded 1d-3d coupling__: The kernel coupling manager calls `fluxScalingFactor(distance, radius, kernelWidth, id)` of the bulk problem if the problem implements it. The identifier of the coupling source gives access to its position (`lowDimPointSources()[id]`) and the coupled elements (`pointSourceData()[id]`), e.g. for spatially varying coupling parameters. Otherwise `fluxScalingFactor(distance, radius, kernelWidth)` is called as before.
-- __Embedded 1d-3d coupling__: The benchmark with a vessel crossing a tissue block (`test/multidomain/embedded/1d3d/1p_1p`) is documented.
+- __Embedded 1d-3d coupling__: The benchmark with a vessel crossing a tissue block (`test/multidomain/embedded/1d3d/1p_1p`) is documented. A new benchmark (`test/multidomain/embedded/1d3d/1p_1p_tip`) has a vessel with a closed tip inside the tissue and compares the line source, surface source and kernel coupling with an exact solution for each method.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's

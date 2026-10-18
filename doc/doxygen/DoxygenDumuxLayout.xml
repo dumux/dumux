@@ -36,6 +36,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref benchmark-mcwhorter-sunada" visible="yes" title="McWhorter-Sunada" intro=""/>
       <tab type="user" url="@ref benchmark-horton-rogers-lapwood" visible="yes" title="Horton-Rogers-Lapwood" intro=""/>
       <tab type="user" url="@ref benchmark-embedded-1d3d-vessel" visible="yes" title="1D-3D Vessel" intro=""/>
+      <tab type="user" url="@ref benchmark-embedded-1d3d-vessel-tip" visible="yes" title="1D-3D Vessel with Closed Tip" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
       <tab type="user" url="@ref benchmark-taylor-couette" visible="yes" title="Taylor-Couette" intro=""/>
