@@ -176,6 +176,10 @@
 @copydoc dumux/solidmechanics/hyperelastic_voliso/model.hh
 @ingroup Hyperelastic
 
+@defgroup Contact Contact mechanics
+@brief Penalty contact between surface parts of deformable solids.
+@ingroup SolidMechanicsModels
+
 @defgroup Plate Plate mechanics
 @brief Models for thin-plate structural mechanics (Kirchhoff-Love and Mindlin-Reissner).
 @ingroup SolidMechanicsModels

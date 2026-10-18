@@ -1,0 +1,27 @@
+[Grid]
+File = hertz.msh
+
+[Problem]
+Name = hertz
+Radius = 1.0
+YoungsModulus = 1.0
+PoissonRatio = 0.3
+Approaches = 0.0025 0.005 0.01 0.02
+ApproachIncrement = 5e-4
+
+[Contact]
+PenaltyStiffness = 1e5
+Offset = 5e-4
+SearchMargin = 0.01
+
+[Newton]
+MaxSteps = 20
+EnableShiftCriterion = true
+MaxRelativeShift = 1e-10
+EnableResidualCriterion = true
+ResidualReduction = 1e-10
+SatisfyResidualAndShiftCriterion = false
+Verbosity = 0
+
+[Vtk]
+AddProcessRank = false

@@ -1,0 +1,23 @@
+// two half disks of radius R touching at the origin, mesh size hc within w of the origin
+SetFactory("OpenCASCADE");
+DefineConstant[ R = {1.0, Name "R"}, hc = {0.005, Name "hc"}, w = {0.15, Name "w"} ];
+Disk(1) = {0, R, 0, R, R};
+Rectangle(2) = {-R, -0.1*R, 0, 2*R, 1.1*R};
+BooleanIntersection(3) = { Surface{1}; Delete; }{ Surface{2}; Delete; };
+Disk(4) = {0, -R, 0, R, R};
+Rectangle(5) = {-R, -R, 0, 2*R, 1.1*R};
+BooleanIntersection(6) = { Surface{4}; Delete; }{ Surface{5}; Delete; };
+Point(100) = {0, 0, 0};
+Field[1] = Distance;
+Field[1].NodesList = {100};
+Field[2] = Threshold;
+Field[2].IField = 1;
+Field[2].LcMin = hc;
+Field[2].LcMax = R/10;
+Field[2].DistMin = w;
+Field[2].DistMax = 0.8*R;
+Background Field = 2;
+Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.MshFileVersion = 2.2;
