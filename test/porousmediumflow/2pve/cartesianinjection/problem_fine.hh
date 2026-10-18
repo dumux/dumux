@@ -108,11 +108,11 @@ public:
         {
             NumEqVector values(0.0);
             // put well at middle of y-direction boundary
-            const Scalar halfDepthBox = (spatialParams_->gridGeometry().bBoxMax()[1] - spatialParams_->gridGeometry().bBoxMin()[1])/2.0;
+            const Scalar wellPosition = (spatialParams_->gridGeometry().bBoxMax()[1] + spatialParams_->gridGeometry().bBoxMin()[1])/2.0;
 
             if (onLeftBoundary_(globalPos) &&
-               halfDepthBox <= (globalPos[1]+fineCellDepth_/2.0) &&
-               halfDepthBox >  (globalPos[1]-fineCellDepth_/2.0) )
+               wellPosition <= (globalPos[1]+fineCellDepth_/2.0) &&
+               wellPosition >  (globalPos[1]-fineCellDepth_/2.0) )
             {
                 values[contiGasEqIdx] = injectionRate_/fineCellDepth_;
             }
