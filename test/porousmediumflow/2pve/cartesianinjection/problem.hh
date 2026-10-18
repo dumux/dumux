@@ -1,0 +1,268 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+//
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+/*!
+ * \file
+ * \ingroup TwoPVETests
+ * \brief The immiscible 2p coarse-level VE test problem.
+ */
+
+#ifndef DUMUX_TEST_TWOPVE_PROBLEM_HH
+#define DUMUX_TEST_TWOPVE_PROBLEM_HH
+
+#include <limits>
+#include <memory>
+#include <string>
+
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
+#include <dumux/common/fvproblem.hh>
+#include <dumux/common/timeloop.hh>
+#include <dumux/porousmediumflow/2pve/finelevelview.hh>
+
+#include "problem_fine.hh"
+
+namespace Dumux {
+
+template<class TypeTag>
+class TwoPVETestProblem : public FVProblem<TypeTag>
+{
+    using ParentType = FVProblem<TypeTag>;
+    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
+    static constexpr int pressureH2OIdx = Indices::pressureIdx;
+    static constexpr int saturationGasIdx = Indices::saturationIdx;
+    using FineGridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    static constexpr int dim = FineGridGeometry::GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using FVElementGeometry = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+
+public:
+    using SpatialParams = GetPropType<TypeTag, Properties::SpatialParams>;
+    using FineProblem = TwoPVEFineProblem<TypeTag>;
+    using FineLevelView = TwoPVEFineLevelView<GridGeometry, FineGridGeometry, Scalar, FluidSystem, Indices, SolutionVector, typename FineProblem::SpatialParamsFine>;
+
+    TwoPVETestProblem(std::shared_ptr<const GridGeometry> gridGeometryCoarse,
+                      std::shared_ptr<FineLevelView> fineLevelView,
+                      std::shared_ptr<const FineProblem> fineProblem,
+                      const std::string& modelParamGroup = "")
+        : ParentType(gridGeometryCoarse, modelParamGroup),
+          problemName_(getParamFromGroup<std::string>(modelParamGroup, "Problem.Name")),
+          injectionEndTime_(getParamFromGroup<Scalar>(modelParamGroup, "BoundaryConditions.InjectionEndTime", std::numeric_limits<Scalar>::max())),
+          fineLevelView_(fineLevelView),
+          fineProblem_(fineProblem),
+          spatialParams_(std::make_shared<SpatialParams>(gridGeometryCoarse, fineLevelView_->columnMap(), fineLevelView_->spatialParamsPtr(), fineLevelView_->fineCellHeight()))
+    {}
+
+    /*!
+     * \brief Getter function for the problem name
+     */
+    const std::string& name() const
+    {
+        return problemName_;
+    }
+
+    /*!
+     * \brief Sets the time loop, which determines whether gas is injected in the current time step
+     *
+     * \param timeLoop the time loop of the coarse-level problem
+     */
+    void setTimeLoop(std::shared_ptr<const TimeLoop<Scalar>> timeLoop)
+    {
+        timeLoop_ = timeLoop;
+    }
+
+    /*!
+     * \brief Returns the time at which the gas injection stops
+     */
+    Scalar injectionEndTime() const
+    {
+        return injectionEndTime_;
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be used for which equation on a given boundary segment
+     *
+     * \param globalPos the global position
+     */
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
+    {
+        BoundaryTypes values;
+        if (onRightBoundary_(globalPos))
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment.
+     *
+     * \param element the element for which the Dirichlet boundary condition is set
+     * \param scvf    the boundary sub control volume face
+     */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        PrimaryVariables values(0.0);
+
+        const auto columnIdx = this->gridGeometry().elementMapper().index(element);
+        const Scalar deltaZ = fineLevelView_->fineCellHeight();
+        const auto& column = fineLevelView_->columnMap().column(columnIdx);
+
+        // evaluate pressure at bottom of column
+        auto globalPosFineElementBottom = column[0].geometry().center();
+        // shift by 0.5*cellHeight downwards, to evaluate p at the bottom of column and not center of fine cell
+        globalPosFineElementBottom[dim-1] -= 0.5*deltaZ;
+        values[pressureH2OIdx] = fineProblem_->dirichletAtPos(globalPosFineElementBottom)[pressureH2OIdx];
+
+        for (const auto& fineElement : column)
+        {
+            auto globalPosFineElement = fineElement.geometry().center();
+            globalPosFineElement[0] = scvf.center()[0];
+            // integration of fine-level saturation to obtain coarse-level saturation
+            values[saturationGasIdx] += (fineProblem_->dirichletAtPos(globalPosFineElement)[saturationGasIdx] * fineLevelView_->spatialParams().porosityAtElement(fineElement))*deltaZ;
+        }
+
+        // porosity-weighted average over the column
+        values[saturationGasIdx] /= this->spatialParams().porosityIntegralAtElement(element);
+
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann control volume.
+     *
+     * \param element           the element for which the Neumann boundary condition is set
+     * \param fvGeometry        the fvGeometry
+     * \param elemVolVars       the element volume variables
+     * \param elemFluxVarsCache flux variables caches for all faces in stencil
+     * \param scvf              the boundary sub control volume face
+     */
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const ElementFluxVariablesCache& elemFluxVarsCache,
+                        const SubControlVolumeFace& scvf) const
+    {
+        NumEqVector values(0.0);
+        const GlobalPosition globalPosCoarseScvf = scvf.center();
+        const Scalar deltaZ = fineLevelView_->fineCellHeight();
+        const auto columnIdx = this->gridGeometry().elementMapper().index(element);
+        const auto& column = fineLevelView_->columnMap().column(columnIdx);
+
+        if (onLeftBoundary_(globalPosCoarseScvf) && isInjecting_())
+        {
+            for (const auto& fineElement : column)
+            {
+                auto globalPosFineElement = fineElement.geometry().center();
+                globalPosFineElement[0] = scvf.center()[0];
+                values += fineProblem_->neumannAtPos(globalPosFineElement)*deltaZ;
+            }
+        }
+
+        // Assembly multiplies this height-average flux by the column extrusion.
+        values /= this->spatialParams().columnHeightAtElement(element);
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the initial values for a control volume.
+     *
+     * \param element the element for which the initial condition is set
+     */
+    PrimaryVariables initial(const Element &element) const
+    {
+        PrimaryVariables values(0.0);
+        const Scalar deltaZ = fineLevelView_->fineCellHeight();
+        const auto columnIdx = this->gridGeometry().elementMapper().index(element);
+        const auto& column = fineLevelView_->columnMap().column(columnIdx);
+
+        // evaluate pressure at bottom of column
+        auto globalPosFineElementBottom = column[0].geometry().center();
+        // shift by 0.5*cellHeight downwards, to evaluate p at the bottom of column and not center of fine cell
+        globalPosFineElementBottom[dim-1] -= 0.5*deltaZ;
+        values[pressureH2OIdx] = fineProblem_->dirichletAtPos(globalPosFineElementBottom)[pressureH2OIdx];
+
+        for (const auto& fineElement : column)
+        {
+            auto globalPosFineElement = fineElement.geometry().center();
+            // integration of fine-level saturation to obtain coarse-level saturation
+            values[saturationGasIdx] += (fineProblem_->initialAtPos(globalPosFineElement)[saturationGasIdx] * fineLevelView_->spatialParams().porosityAtElement(fineElement))*deltaZ;
+        }
+
+        // porosity-weighted average over the column
+        values[saturationGasIdx] /= this->spatialParams().porosityIntegralAtElement(element);
+
+        return values;
+    }
+
+    /*!
+     * \brief Returns the fine-level view of the VE model
+     */
+    const FineLevelView& fineLevelView() const
+    {
+        return *fineLevelView_;
+    }
+
+    /*!
+     * \brief Return a reference to the coarse-level spatial parameters
+     */
+    const SpatialParams& spatialParams() const
+    { return *spatialParams_; }
+
+    /*!
+     * \brief Return a reference to the coarse-level spatial parameters
+     */
+    SpatialParams& spatialParams()
+    { return *spatialParams_; }
+
+private:
+
+    static constexpr Scalar eps_ = 1e-6;
+
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] < this->gridGeometry().bBoxMin()[0] + eps_;
+    }
+
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_;
+    }
+
+    // the midpoint of a time step is unambiguous as long as no time step straddles the injection end time
+    bool isInjecting_() const
+    {
+        return timeLoop_->time() + 0.5*timeLoop_->timeStepSize() < injectionEndTime_;
+    }
+
+    std::string problemName_;
+    Scalar injectionEndTime_;
+    std::shared_ptr<const TimeLoop<Scalar>> timeLoop_;
+    std::shared_ptr<FineLevelView> fineLevelView_;
+    std::shared_ptr<const FineProblem> fineProblem_;
+    std::shared_ptr<SpatialParams> spatialParams_;
+};
+
+} // end namespace Dumux
+
+#endif

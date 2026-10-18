@@ -1,0 +1,184 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+//
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+/*!
+ * \file
+ * \ingroup TwoPVETests
+ * \brief The immiscible 2p fine-level VE test problem.
+ */
+
+#ifndef DUMUX_TEST_TWOPVE_FINE_PROBLEM_HH
+#define DUMUX_TEST_TWOPVE_FINE_PROBLEM_HH
+
+#include <algorithm>
+#include <memory>
+
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dumux/common/numeqvector.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+
+#include "spatialparams_fine.hh"
+
+namespace Dumux {
+
+template<class TypeTag>
+class TwoPVEFineProblem
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::FineGridGeometry>;
+    using GridView = typename GridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
+    using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
+    static constexpr int pressureH2OIdx = Indices::pressureIdx;
+    static constexpr int saturationGasIdx = Indices::saturationIdx;
+    static constexpr int contiGasEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx;
+    static constexpr int dim = GridView::dimension;
+    using WettingPhase = typename GetProp<TypeTag, Properties::FluidSystem>::WettingPhase;
+
+public:
+    using SpatialParamsFine = TwoPTestFineSpatialParams<GridGeometry, Scalar>;
+
+    TwoPVEFineProblem(std::shared_ptr<const GridGeometry> gridGeometryFine)
+    : spatialParams_(std::make_shared<SpatialParamsFine>(gridGeometryFine)),
+      fineCellDepth_(computeFineCellDepth_(*gridGeometryFine)),
+      injectionRate_(getParam<Scalar>("BoundaryConditions.InjectionRate"))
+    {}
+
+    /*!
+     * \brief Return a reference to the fine-level spatial parameters
+     */
+    const SpatialParamsFine& spatialParams() const
+    {
+        return *spatialParams_;
+    }
+
+    /*!
+     * \brief Return a pointer to the fine-level spatial parameters
+     */
+    std::shared_ptr<const SpatialParamsFine> spatialParamsPtr() const
+    {
+        return spatialParams_;
+    }
+
+    /*!
+     * \brief Evaluates the initial values for a control volume of the fine-level grid. Initial conditions only need to be changed here.
+     *
+     * \param globalPos the global position of the scv belonging to the fine-level grid
+     */
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values(0.0);
+
+        Scalar temperature = 326.0;
+        Scalar pressureWInit = 1.0e7;
+        Scalar densityW = WettingPhase::density(temperature,pressureWInit);
+
+        const auto z = globalPos[dim-1] - spatialParams_->gridGeometry().bBoxMin()[dim-1];
+        values[pressureH2OIdx] = pressureWInit - densityW * spatialParams_->gravity(globalPos).two_norm() * z;
+        values[saturationGasIdx] = 0.0;
+
+        return values;
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment on the fine-level grid. Neumann conditions only need to be changed here.
+     *
+     * \param globalPos the position of the integration point of the boundary segment belonging to the fine-level grid
+     */
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
+    {
+        if constexpr (dim == 2)
+        {
+            NumEqVector values(0.0);
+            if (onLeftBoundary_(globalPos))
+                values[contiGasEqIdx] = injectionRate_; // kg / (m * s)
+            return values;
+        }
+        else if constexpr (dim == 3)
+        {
+            NumEqVector values(0.0);
+            // put well at middle of y-direction boundary
+            const Scalar wellPosition = (spatialParams_->gridGeometry().bBoxMax()[1] + spatialParams_->gridGeometry().bBoxMin()[1])/2.0;
+
+            if (onLeftBoundary_(globalPos) &&
+               wellPosition <= (globalPos[1]+fineCellDepth_/2.0) &&
+               wellPosition >  (globalPos[1]-fineCellDepth_/2.0) )
+            {
+                values[contiGasEqIdx] = injectionRate_/fineCellDepth_;
+            }
+
+            return values;
+        }
+    }
+
+    /*!
+     * \brief Evaluates the boundary conditions for a Dirichlet boundary segment on the fine-level grid. Dirichlet conditions only need to be changed here.
+     *
+     * \param globalPos the global position of an element belonging to the fine level
+     */
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    {
+        PrimaryVariables values;
+
+        Scalar temperature = 326.0;
+        Scalar pressureWInit = 1.0e7;
+        Scalar densityW = WettingPhase::density(temperature,pressureWInit);
+
+        const auto z = globalPos[dim-1] - spatialParams_->gridGeometry().bBoxMin()[dim-1];
+        values[pressureH2OIdx] = pressureWInit - densityW * spatialParams_->gravity(globalPos).two_norm() * z;
+        values[saturationGasIdx] = 0.0;
+
+        return values;
+    }
+
+private:
+    static constexpr Scalar eps_ = 1e-6;
+
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] < spatialParams_->gridGeometry().bBoxMin()[0] + eps_;
+    }
+
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] > spatialParams_->gridGeometry().bBoxMax()[0] - eps_;
+    }
+
+    // extent of the uniform fine-level elements in the horizontal direction along the injection boundary
+    static Scalar computeFineCellDepth_(const GridGeometry& gridGeometry)
+    {
+        if constexpr (dim == 2)
+            return 1.0;
+        else
+        {
+            using std::max; using std::min;
+            const auto geometry = (*elements(gridGeometry.gridView()).begin()).geometry();
+            Scalar lower = geometry.corner(0)[1];
+            Scalar upper = lower;
+            for (int cornerIdx = 1; cornerIdx < geometry.corners(); ++cornerIdx)
+            {
+                lower = min(lower, geometry.corner(cornerIdx)[1]);
+                upper = max(upper, geometry.corner(cornerIdx)[1]);
+            }
+            return upper - lower;
+        }
+    }
+
+    std::shared_ptr<const SpatialParamsFine> spatialParams_;
+    Scalar fineCellDepth_;
+    Scalar injectionRate_;
+};
+
+} // end namespace Dumux
+
+#endif
