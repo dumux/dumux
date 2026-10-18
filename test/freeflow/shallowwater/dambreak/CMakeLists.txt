@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES params.input convergencetest.py plot_results.py)
 
 add_executable(test_shallowwater_dambreak EXCLUDE_FROM_ALL main.cc)
 
@@ -30,3 +30,10 @@ dumux_add_test(NAME test_shallowwater_dambreak_parallel
                              --ignore "process rank"
                              --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_dambreak params.input
                            -Problem.Name dambreak_parallel")
+
+# convergence towards the exact solution of the Riemann problem
+dumux_add_test(NAME test_shallowwater_dambreak_convergence
+               TARGET test_shallowwater_dambreak
+               LABELS shallowwater
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
+               CMD_ARGS test_shallowwater_dambreak)

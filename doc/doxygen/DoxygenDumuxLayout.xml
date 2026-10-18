@@ -38,6 +38,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
       <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
       <tab type="user" url="@ref benchmark-taylor-couette" visible="yes" title="Taylor-Couette" intro=""/>
+      <tab type="user" url="@ref benchmark-dam-break" visible="yes" title="Wet dam break" intro=""/>
+      <tab type="user" url="@ref benchmark-thacker-bowl" visible="yes" title="Thacker's bowl" intro=""/>
+      <tab type="user" url="@ref benchmark-lake-at-rest" visible="yes" title="Lake at rest" intro=""/>
+      <tab type="user" url="@ref benchmark-shallow-water-poiseuille" visible="yes" title="Shallow water Poiseuille flow" intro=""/>
+      <tab type="user" url="@ref benchmark-rough-channel" visible="yes" title="Rough channel" intro=""/>
       <tab type="user" url="@ref benchmark-membrane-plate" visible="yes" title="Membrane deformation" intro=""/>
       <tab type="user" url="@ref benchmark-kirchhoff-love-plate" visible="yes" title="Kirchhoff-Love Plate" intro=""/>
       <tab type="user" url="@ref benchmark-mindlin-reissner-plate" visible="yes" title="Mindlin-Reissner Plate" intro=""/>
