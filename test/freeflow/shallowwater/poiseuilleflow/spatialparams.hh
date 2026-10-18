@@ -53,13 +53,16 @@ public:
 
     //! Define the bed surface
     Scalar bedSurface(const Element& element, const SubControlVolume& scv) const
+    { return bedSurfaceAtPos(element.geometry().center()); }
+
+    //! The bed surface as a function of the position
+    Scalar bedSurfaceAtPos(const GlobalPosition& globalPos) const
     {
         const Scalar length = this->gridGeometry().bBoxMax()[0] - this->gridGeometry().bBoxMin()[0];
         // The bed level sloped downwards from the left boundary to the right boundary
         // The water level boundary condition hBoundary_ is specified at the right boundary
         const Scalar leftBedLevel = - hBoundary_ + length*bedSlope_;
-        // todo depends on index e.g. eIdx = scv.elementIndex();
-        return leftBedLevel - element.geometry().center()[0] * bedSlope_;
+        return leftBedLevel - globalPos[0]*bedSlope_;
     }
 
 private:

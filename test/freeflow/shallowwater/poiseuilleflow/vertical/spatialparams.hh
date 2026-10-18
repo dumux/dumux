@@ -53,7 +53,11 @@ public:
     { return gravity_; }
 
     Scalar bedSurface(const Element& element, const SubControlVolume& scv) const
-    { return bedSlope_*(channelLength_ - scv.center()[0]); }
+    { return bedSurfaceAtPos(scv.center()); }
+
+    //! The bed surface as a function of the position
+    Scalar bedSurfaceAtPos(const GlobalPosition& globalPos) const
+    { return bedSlope_*(channelLength_ - globalPos[0]); }
 
     const FrictionLaw<VolumeVariables>& frictionLaw(const Element& element, const SubControlVolume& scv) const
     { return *frictionLaw_; }

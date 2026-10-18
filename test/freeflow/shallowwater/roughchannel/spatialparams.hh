@@ -109,10 +109,11 @@ public:
     */
     Scalar bedSurface(const Element& element,
                       const SubControlVolume& scv) const
-    {
-        // todo depends on index e.g. eIdx = scv.elementIndex();
-        return 10.0 - element.geometry().center()[0] * bedSlope_;
-    }
+    { return bedSurfaceAtPos(element.geometry().center()); }
+
+    //! The bed surface as a function of the position
+    Scalar bedSurfaceAtPos(const GlobalPosition& globalPos) const
+    { return 10.0 - globalPos[0]*bedSlope_; }
 
 private:
     Scalar gravity_;

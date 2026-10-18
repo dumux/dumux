@@ -30,6 +30,16 @@ for more information.
 | [![lid-driven cavity](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/liddrivencavity/img/result.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | [↗️ Shear-Driven Cavity Flow](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | 2D, free flow, @ref NavierStokesModel, @ref FaceCenteredStaggeredDiscretization | Velocity profiles at Re = 1 and Re = 1000 compared against reference data from Ghia et al. (1982) and Jurjević (1999) |
 | ![taylor-couette](taylorcouette_comparison.png) | @ref benchmark-taylor-couette "↗️ Taylor-Couette Flow" | 2D, free flow, @ref NavierStokesModel, @ref DiamondDiscretization, @ref CCTpfaDiscretization | Circular Couette flow between two rotating cylinders at Re = 100; second-order convergence of velocity and pressure towards the analytical solution @cite taylor1923 |
 
+## Shallow water benchmarks
+
+| Image | Benchmark description | Topics | Comment |
+|:----------:|:----------:|:---------|:---------|
+| ![dam break](shallowwater_dambreak_setup.svg) | @ref benchmark-dam-break "↗️ Wet Dam Break" | Riemann problem, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Bore and rarefaction wave after the removal of a gate; the relative $L^1$ errors converge with approximately first order towards the exact solution @cite Stoker1957, with the same rates as a textbook first-order Godunov scheme |
+| ![paraboloid bowl](shallowwater_bowl_setup.svg) | @ref benchmark-thacker-bowl "↗️ Oscillation in a Paraboloid Bowl (Thacker)" | wetting and drying, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Oscillation of the free surface in a bowl without friction with a moving shoreline; the first-order scheme damps the oscillation, and the relative $L^1$ error of the water depth converges with approximately first order on fine grids towards the exact solution @cite Thacker1981 |
+| ![lake at rest](shallowwater_lakeatrest_setup.svg) | @ref benchmark-lake-at-rest "↗️ Lake at Rest" | well-balancing, wetting and drying, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Water at rest over a hump @cite LeVeque1998 and a sill with discontinuous flanks; preserved to round-off on a submerged bed |
+| ![Poiseuille flow](shallowwater_poiseuille_setup.svg) | @ref benchmark-shallow-water-poiseuille "↗️ Shallow Water Poiseuille Flow" | viscous flux, bed friction, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Steady channel flow with an eddy viscosity and no-slip side walls, and laminar film flow with viscous bed friction; approximately first-order convergence along the channel, caused by the bed being constant in each cell, and approximately second-order convergence across the channel towards the exact velocity |
+| ![rough channel](shallowwater_roughchannel_setup.svg) | @ref benchmark-rough-channel "↗️ Flow in a Rough Channel" | bed friction, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Normal flow with the friction law of Gauckler, Manning and Strickler; approximately first-order convergence towards the normal depth, caused by the bed being constant in each cell |
+
 ## Solid mechanics benchmarks
 
 | Image | Benchmark description | Topics | Comment |

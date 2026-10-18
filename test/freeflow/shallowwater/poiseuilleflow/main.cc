@@ -6,6 +6,7 @@
 //
 
 #include <config.h>
+#include <array>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -25,6 +26,8 @@
 
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
+
+#include <test/freeflow/shallowwater/errors.hh>
 
 #include "properties.hh"
 
@@ -131,6 +134,15 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    const auto errors = ShallowWaterTest::computeErrors(*gridGeometry, x, [&](const auto& element){
+        const auto eIdx = gridGeometry->elementMapper().index(element);
+        return std::array<Scalar, 3>{{
+            problem->getExactWaterDepth()[eIdx], problem->getExactVelocityX()[eIdx], problem->getExactVelocityY()[eIdx]
+        }};
+    });
+    if (mpiHelper.rank() == 0)
+        ShallowWaterTest::printErrors(errors, timeLoop->time());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

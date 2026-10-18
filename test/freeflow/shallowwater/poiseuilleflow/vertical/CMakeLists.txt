@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES params.input convergencetest.py)
 
 dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical
                SOURCES main.cc
@@ -13,3 +13,10 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical
                                       ${CMAKE_CURRENT_BINARY_DIR}/poiseuilleflow-00001.vtu
                               --zeroThreshold {"velocityY":1e-14}
                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_poiseuilleflow_vertical params.input")
+
+# convergence towards the exact mean velocity of the film flow
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical_convergence
+               TARGET test_shallowwater_poiseuilleflow_vertical
+               LABELS shallowwater
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
+               CMD_ARGS test_shallowwater_poiseuilleflow_vertical)
