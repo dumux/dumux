@@ -4,8 +4,8 @@
 """Grid convergence of the steady Poiseuille flow towards the parabolic velocity profile.
 
 Refines the grid along the channel with a fine grid across the channel, and across the channel
-with a fine grid along the channel, and checks the convergence rates of the L2 error of the
-velocity. The simulation runs until the flow is steady.
+with a fine grid along the channel, and checks the convergence rates of the relative L2 error of
+the velocity. The simulation runs until the flow is steady.
 
 Usage:
   python3 convergencetest.py <executable> [additional arguments passed to the executable]
@@ -24,20 +24,22 @@ SERIES = {
 
 STEADY_STATE = ["-TimeLoop.TEnd", "1e6", "-TimeLoop.MaxTimeStepSize", "1e5", "-TimeLoop.PrintoutTimes", "1e6"]
 
-ERRORS = re.compile(r"L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)")
+ERRORS = re.compile(r"L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)\nNorms of the exact solution \(h, u, v\):\n"
+                    r"\s*L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)")
 
 
 def run(executable, cells, args=()):
-    """Run the steady channel flow on a grid with the given numbers of cells and return the errors"""
+    """Run the steady channel flow on a grid with the given numbers of cells and return the relative errors"""
     output = subprocess.run(
         [executable, "params.input", *STEADY_STATE, *args,
          "-Problem.Name", f"poiseuilleflow_{cells[0]}x{cells[1]}", "-Grid.Cells", f"{cells[0]} {cells[1]}"],
         check=True, capture_output=True, text=True,
     ).stdout
-    errors = [float(e) for e in ERRORS.findall(output)[-1]]
-    if not all(math.isfinite(e) for e in errors):
-        raise RuntimeError(f"Non-finite errors for {cells} cells: {errors}")
-    return {"L2(h)": errors[3], "L2(u)": errors[4], "L2(v)": errors[5]}
+    values = [float(v) for v in ERRORS.findall(output)[-1]]
+    if not all(math.isfinite(v) for v in values):
+        raise RuntimeError(f"Non-finite errors for {cells} cells: {values}")
+    l2, exactL2 = values[3:6], values[9:12]
+    return {"u": l2[1]/exactL2[1]}
 
 
 def rates(values):
@@ -53,9 +55,9 @@ if __name__ == "__main__":
 
     failed = False
     for name, (grids, minRate) in SERIES.items():
-        errors = [run(executable, cells, sys.argv[2:])["L2(u)"] for cells in grids]
+        errors = [run(executable, cells, sys.argv[2:])["u"] for cells in grids]
         r = rates(errors)
-        print(f"\nL2(u), refined {name}:")
+        print(f"\nrelative L2 error of u, refined {name}:")
         for i, (cells, error) in enumerate(zip(grids, errors)):
             rate = f"{r[i - 1]:.2f}" if i > 0 else "   -"
             print(f"  {cells[0]:>4} x {cells[1]:<4} {error:.4e}  {rate}")
