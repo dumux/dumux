@@ -31,7 +31,8 @@ namespace Dumux::ShallowWaterTest {
  * Both norms are normalized with the area of the domain,
  * \f$ \| e \|_1 = \sum_i |V_i| \, |e_i| / \sum_i |V_i| \f$ and
  * \f$ \| e \|_2 = \left( \sum_i |V_i| \, e_i^2 / \sum_i |V_i| \right)^{1/2} \f$,
- * where \f$ e_i \f$ is the error at the center of the cell \f$ V_i \f$.
+ * where \f$ e_i \f$ is the error at the center of the cell \f$ V_i \f$. The norms of the exact
+ * solution, evaluated in the same way, give the relative errors.
  * The components are ordered as the primary variables \f$ (h, u, v) \f$.
  */
 template<class Scalar>
@@ -39,6 +40,8 @@ struct Errors
 {
     std::array<Scalar, 3> l1 = {};
     std::array<Scalar, 3> l2 = {};
+    std::array<Scalar, 3> exactL1 = {};
+    std::array<Scalar, 3> exactL2 = {};
     std::size_t numElements = 0;
 };
 
@@ -69,6 +72,8 @@ auto computeErrors(const GridGeometry& gridGeometry, const SolutionVector& x, co
                 const auto error = abs(x[scv.dofIndex()][i] - exact[i]);
                 errors.l1[i] += error*scv.volume();
                 errors.l2[i] += error*error*scv.volume();
+                errors.exactL1[i] += abs(exact[i])*scv.volume();
+                errors.exactL2[i] += exact[i]*exact[i]*scv.volume();
             }
             area += scv.volume();
         }
@@ -83,6 +88,8 @@ auto computeErrors(const GridGeometry& gridGeometry, const SolutionVector& x, co
         using std::sqrt;
         errors.l1[i] = comm.sum(errors.l1[i])/area;
         errors.l2[i] = sqrt(comm.sum(errors.l2[i])/area);
+        errors.exactL1[i] = comm.sum(errors.exactL1[i])/area;
+        errors.exactL2[i] = sqrt(comm.sum(errors.exactL2[i])/area);
     }
 
     return errors;
@@ -98,6 +105,9 @@ void printErrors(const Errors<Scalar>& errors)
     std::cout << Fmt::format("Errors (h, u, v) on {} elements:\n", errors.numElements)
               << Fmt::format("  L1: {:.8e} {:.8e} {:.8e}\n", errors.l1[0], errors.l1[1], errors.l1[2])
               << Fmt::format("  L2: {:.8e} {:.8e} {:.8e}\n", errors.l2[0], errors.l2[1], errors.l2[2])
+              << "Norms of the exact solution (h, u, v):\n"
+              << Fmt::format("  L1: {:.8e} {:.8e} {:.8e}\n", errors.exactL1[0], errors.exactL1[1], errors.exactL1[2])
+              << Fmt::format("  L2: {:.8e} {:.8e} {:.8e}\n", errors.exactL2[0], errors.exactL2[1], errors.exactL2[2])
               << std::flush;
 }
 
