@@ -32,6 +32,8 @@
 
 #include <dumux/assembly/fvassembler.hh>
 
+#include <test/freeflow/shallowwater/errors.hh>
+
 #include "properties.hh"
 
 template<class SolutionVector, int i>
@@ -57,57 +59,6 @@ SolutionVector computeAnalyticalSolution(const double t, const Problem& problem)
         exactSolution[eIdx] = problem.analyticalSolution(t, globalPos);
     }
     return exactSolution;
-}
-
-//! Compute L2 error wrt the analytical solution at time t
-template<class SolutionVector, class GridGeometry>
-typename SolutionVector::block_type
-computeL2Error(const double t,
-               const SolutionVector& exactSolution,
-               const SolutionVector& curSol,
-               const GridGeometry& gridGeometry)
-{
-    typename SolutionVector::block_type l2Error(0.0);
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView(), Dune::Partitions::interior))
-    {
-        fvGeometry.bindElement(element);
-
-        using std::pow;
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto localDiffSq = exactSolution[scv.dofIndex()] - curSol[scv.dofIndex()];
-            for (int i = 0; i < localDiffSq.size(); ++i)
-                localDiffSq[i] *= localDiffSq[i];
-            l2Error += localDiffSq;
-        }
-    }
-    // sum over processes if we are running with multiple processes in parallel
-    if (gridGeometry.gridView().comm().size() > 0)
-        l2Error = gridGeometry.gridView().comm().sum(l2Error);
-
-    // square root of sum of squared errors is our absolute discrete l2 error
-    for (int i = 0; i < l2Error.size(); ++i)
-        l2Error[i] = std::sqrt(l2Error[i]);
-    return l2Error;
-}
-
-//! Compute and print L2 error wrt the analytical solution at time t
-template<class SolutionVector, class GridGeometry>
-void computeAndPrintL2Error(const double t,
-                            const SolutionVector& exactSolution,
-                            const SolutionVector& curSol,
-                            const GridGeometry& gridGeometry)
-{
-    const auto l2Error = computeL2Error(t, exactSolution, curSol, gridGeometry);
-    auto numElements = gridGeometry.gridView().size(0);
-    // sum over processes if we are running with multiple processes in parallel
-    if (gridGeometry.gridView().comm().size() > 0)
-        numElements = gridGeometry.gridView().comm().sum(numElements);
-
-    if (gridGeometry.gridView().comm().rank() == 0)
-        std::cout << "L2 error in (h, u, v) at t = " <<  t << " seconds for " << numElements << " elements: "
-                  << std::scientific << l2Error << std::endl;
 }
 
 ////////////////////////
@@ -197,8 +148,17 @@ int main(int argc, char** argv)
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    //! Compute L2 error for the initial solution (should be zero because initial solution is exact)
-    computeAndPrintL2Error(0.0, exactSolution, x, *gridGeometry);
+    const auto exactSolutionOfElement = [&](const auto& element){
+        return exactSolution[gridGeometry->elementMapper().index(element)];
+    };
+    const auto printErrors = [&](const Scalar t){
+        const auto errors = ShallowWaterTest::computeErrors(*gridGeometry, x, exactSolutionOfElement);
+        if (mpiHelper.rank() == 0)
+            ShallowWaterTest::printErrors(errors, t);
+    };
+
+    // the initial solution is exact except for the thin water film on the dry bed
+    printErrors(0.0);
 
     // time loop
     timeLoop->start(); do
@@ -209,12 +169,12 @@ int main(int argc, char** argv)
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        // update the analytical solution and print current l2 error
-        exactSolution = computeAnalyticalSolution<SolutionVector>(timeLoop->time(), *problem);
-        computeAndPrintL2Error(timeLoop->time(), exactSolution, x, *gridGeometry);
-
         // advance the time loop to the next step
         timeLoop->advanceTimeStep();
+
+        // update the analytical solution and print the current errors
+        exactSolution = computeAnalyticalSolution<SolutionVector>(timeLoop->time(), *problem);
+        printErrors(timeLoop->time());
 
         // write vtk output every 10 time steps
         if (!(timeLoop->timeStepIndex() % 10))

@@ -12,6 +12,7 @@
 #include <config.h>
 
 
+#include <array>
 #include <ctime>
 #include <iostream>
 
@@ -33,6 +34,8 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
+
+#include <test/freeflow/shallowwater/errors.hh>
 
 #include "properties.hh"
 
@@ -152,6 +155,17 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // compare with the exact solution of the Riemann problem at the final time
+    problem->updateAnalyticalSolution(x, *gridVariables, timeLoop->time());
+    const auto& exactWaterDepth = problem->getExactWaterDepth();
+    const auto& exactVelocityX = problem->getExactVelocityX();
+    const auto errors = ShallowWaterTest::computeErrors(*gridGeometry, x, [&](const auto& element){
+        const auto eIdx = gridGeometry->elementMapper().index(element);
+        return std::array<Scalar, 3>{{ exactWaterDepth[eIdx], exactVelocityX[eIdx], 0.0 }};
+    });
+    if (mpiHelper.rank() == 0)
+        ShallowWaterTest::printErrors(errors, timeLoop->time());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
