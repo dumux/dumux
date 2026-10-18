@@ -47,6 +47,13 @@ class Embedded1d3dCouplingManager;
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        Point sources on each integration point are computed by an AABB tree.
  * \note Specialization for coupling method using a distributed kernel source with 3d quantities evaluated on the line
+ *
+ * The bulk problem provides the flux scaling factor of each coupling source with
+ * `fluxScalingFactor(distance, radius, kernelWidth)` or, if it also needs the identifier of the
+ * coupling source (e.g. for spatially varying coupling parameters), with
+ * `fluxScalingFactor(distance, radius, kernelWidth, id)`. When the latter is called, the low-dimensional
+ * point source `lowDimPointSources()[id]` (placed at the center of the coupling segment) and
+ * `pointSourceData()[id]` (with the indices of the coupled elements) are already available.
  */
 template<class MDTraits>
 class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
@@ -251,7 +258,7 @@ public:
 
                 const auto avgMinDist = averageDistanceSegmentGeometry(a, b, outside.geometry());
                 this->averageDistanceToBulkCell().push_back(avgMinDist);
-                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
+                fluxScalingFactor_.push_back(computeFluxScalingFactor_(avgMinDist, radius, kernelWidth, id));
 
                 // export the lowdim coupling stencil
                 // we insert all vertices / elements and make it unique later
@@ -554,6 +561,16 @@ private:
             return 0.0;
 
         return 1.0/(M_PI*rho*rho);
+    }
+
+    //! the flux scaling factor from the bulk problem, with the source id if the problem accepts it
+    Scalar computeFluxScalingFactor_(Scalar distance, Scalar radius, Scalar kernelWidth, std::size_t id) const
+    {
+        const auto& bulkProblem = this->problem(bulkIdx);
+        if constexpr (requires { bulkProblem.fluxScalingFactor(distance, radius, kernelWidth, id); })
+            return bulkProblem.fluxScalingFactor(distance, radius, kernelWidth, id);
+        else
+            return bulkProblem.fluxScalingFactor(distance, radius, kernelWidth);
     }
 
     /*!
