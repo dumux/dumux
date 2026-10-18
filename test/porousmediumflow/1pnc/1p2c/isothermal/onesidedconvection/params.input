@@ -1,0 +1,40 @@
+[TimeLoop]
+DimensionlessTimeStepSize = 2e-3
+DimensionlessEndTime = 2.0
+
+[Grid]
+Positions0 = 0 0.125
+Cells0 = 16
+Positions1 = 0 0.7 1
+Cells1 = 16 64
+Grading1 = 1 -1.03
+
+[Problem]
+Name = onesidedconvection
+EnableGravity = true
+DensityDifference = 500 # [kg/m^3]
+InitialTime = 0.01
+Amplitude = 1e-6
+
+[SpatialParams]
+Permeability = 4.0774719673802243e-14 # [m^2], Ra = 500
+Porosity = 0.4
+Tortuosity = 1.0
+Temperature = 293.15 # [K]
+
+[1.Component]
+Name = Solvent
+MolarMass = 18e-3 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa s]
+
+[2.Component]
+Name = Solute
+MolarMass = 18e-3 # [kg/mol]
+LiquidDiffusionCoefficient = 1e-9 # [m^2/s]
+
+[Newton]
+MaxRelativeShift = 1e-12
+
+[Vtk]
+AddVelocity = true
