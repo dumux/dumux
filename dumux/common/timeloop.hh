@@ -667,8 +667,17 @@ public:
     { return maxDtToCheckPoint_(this->time()); }
 
 private:
-    bool fuzzyEqual_(const Scalar t0, const Scalar t1) const
-    { return Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t0, t1, this->baseEps_*this->timeStepSize()); }
+    /*!
+     * \brief Compare two times at simulation time t
+     * \note The round-off in the time accumulates with the number of time steps, so the tolerance
+     *       grows with the elapsed time, as the tolerance for reaching the end time does
+     */
+    bool fuzzyEqual_(const Scalar t0, const Scalar t1, const Scalar t) const
+    {
+        using std::max;
+        const auto eps = this->baseEps_*max(this->timeStepSize(), t - this->startTime_);
+        return Dune::FloatCmp::eq<Scalar, Dune::FloatCmp::absolute>(t0, t1, eps);
+    }
 
     void setPeriodicCheckPoint_(Scalar interval, Scalar offset = 0.0)
     {
@@ -728,8 +737,8 @@ private:
     CheckPointType nextCheckPointType_(Scalar t)
     {
         return CheckPointType{}
-            .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_))
-            .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0));
+            .withPeriodic(periodicCheckPoints_ && fuzzyEqual_(t - lastPeriodicCheckPoint_, deltaPeriodicCheckPoint_, t))
+            .withManual(!checkPoints_.empty() && fuzzyEqual_(t - checkPoints_.front(), 0.0, t));
     }
 
     /*!
