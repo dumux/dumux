@@ -260,6 +260,24 @@ public:
         });
     }
 
+    /*!
+     * \brief If the boundary entity is on a coupling boundary
+     * \param domainI the domain index of domain i for which to compute the flux
+     * \param domainJ the domain index of domain j for which to compute the flux
+     * \param fvGeometry the finite volume element geometry
+     * \param iIdx the index of the intersection
+     */
+    template<std::size_t i, std::size_t j>
+    bool isCoupled(Dune::index_constant<i> domainI,
+                   Dune::index_constant<j> domainJ,
+                   const FVElementGeometry<i>& fvGeometry,
+                   std::size_t iIdx) const
+    {
+        return this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj){
+            return cm.isCoupled(ii, fvGeometry, iIdx);
+        });
+    }
+
     using ParentType::couplingStencil;
     /*!
      * \brief returns an iterable container of all indices of degrees of freedom of domain j
@@ -296,16 +314,50 @@ private:
 
         // initialize the binary sub coupling managers
         using FFMassPMSol = typename SubCouplingManager<freeFlowMassIndex, porousMediumIndex>::SolutionVectorStorage;
-        this->subCouplingManager(freeFlowMassIndex, porousMediumIndex).init(
-            freeFlowMassProblem, porousMediumProblem,
-            FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
-        );
+        auto& ffMassPmCouplingManager = this->subCouplingManager(freeFlowMassIndex, porousMediumIndex);
+
+        static constexpr bool isMassPMCVFE =
+            DiscretizationMethods::isCVFE<typename GridGeometry<freeFlowMassIndex>::DiscretizationMethod>
+            && DiscretizationMethods::isCVFE<typename GridGeometry<porousMediumIndex>::DiscretizationMethod>;
+
+        if constexpr (isMassPMCVFE)
+        {
+            ffMassPmCouplingManager.init(
+                freeFlowMassProblem, porousMediumProblem,
+                std::make_tuple(std::get<freeFlowMassIndex>(gridVarsTuple), std::get<porousMediumIndex>(gridVarsTuple)),
+                FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
+        else
+        {
+            ffMassPmCouplingManager.init(
+                freeFlowMassProblem, porousMediumProblem,
+                FFMassPMSol{ std::get<freeFlowMassIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
 
         using FFMomPMSol = typename SubCouplingManager<freeFlowMomentumIndex, porousMediumIndex>::SolutionVectorStorage;
-        this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).init(
-            freeFlowMomentumProblem, porousMediumProblem,
-            FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
-        );
+        auto& ffMomPmCouplingManager = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex);
+
+        static constexpr bool isCVFE =
+            DiscretizationMethods::isCVFE<typename GridGeometry<freeFlowMomentumIndex>::DiscretizationMethod>
+            && DiscretizationMethods::isCVFE<typename GridGeometry<porousMediumIndex>::DiscretizationMethod>;
+
+        if constexpr (isCVFE)
+        {
+            ffMomPmCouplingManager.init(
+                freeFlowMomentumProblem, porousMediumProblem,
+                std::make_tuple(std::get<freeFlowMomentumIndex>(gridVarsTuple), std::get<porousMediumIndex>(gridVarsTuple)),
+                FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
+        else
+        {
+            ffMomPmCouplingManager.init(
+                freeFlowMomentumProblem, porousMediumProblem,
+                FFMomPMSol{ std::get<freeFlowMomentumIndex>(this->curSol()), std::get<porousMediumIndex>(this->curSol()) }
+            );
+        }
     }
 };
 
