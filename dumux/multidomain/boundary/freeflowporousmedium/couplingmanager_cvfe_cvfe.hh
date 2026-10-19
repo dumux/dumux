@@ -13,13 +13,22 @@
 #ifndef DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_CVFE_CVFE_HH
 #define DUMUX_MULTIDOMAIN_BOUNDARY_FREEFLOW_POROUSMEDIUM_COUPLINGMANAGER_CVFE_CVFE_HH
 
+#include <algorithm>
+#include <array>
 #include <deque>
+#include <iostream>
+#include <utility>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/timer.hh>
 
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
+#include <dumux/io/format.hh>
 #include <dumux/multidomain/assemblytraits.hh>
 #include <dumux/parallel/parallel_for.hh>
 #include <dumux/assembly/coloring.hh>
@@ -60,8 +69,6 @@ class FreeFlowPorousMediumCouplingManagerCvfe
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using ElementSeed = typename GridView<id>::Grid::template Codim<0>::EntitySeed;
     using SolutionVector = typename MDTraits::SolutionVector;
-
-    using MomentumDiscretizationMethod = typename GridDiscretization<ParentType::freeFlowMomentumIndex>::DiscretizationMethod;
 
     using CouplingConditions = FFPMCouplingConditionsCvfe<MDTraits, FreeFlowPorousMediumCouplingManagerCvfe<MDTraits>>;
 
@@ -288,23 +295,16 @@ public:
 
     /*!
      * \brief Compute colors for multithreaded assembly
+     *
+     * Elements of the same color touch disjoint degrees of freedom: those of the element itself
+     * and the coupled ones in the other domains, which the numeric differentiation deflects in
+     * the solution vector shared by all threads. The free-flow momentum and mass domains are
+     * assembled with the same coloring of the free-flow grid.
      */
     void computeColorsForAssembly()
     {
-        if constexpr (MomentumDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
-        {
-            // use coloring of the mass discretization for both domains
-            // the diamond coloring is a subset (minimum amount of colors) of cctpfa/box coloring
-            elementSets_ = computeColoring(Dumux::gridDiscretization(this->problem(freeFlowMassIndex))).sets;
-        }
-        else
-        {
-            // use coloring of the momentum discretization for both domains
-            elementSets_ = computeColoring(Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex))).sets;
-        }
-
-        // color the porous medium domain independently
-        elementSetsPM_ = computeColoring(Dumux::gridDiscretization(this->problem(porousMediumIndex))).sets;
+        elementSets_ = computeColoring_(std::index_sequence<freeFlowMomentumIndex, freeFlowMassIndex>{});
+        elementSetsPM_ = computeColoring_(std::index_sequence<porousMediumIndex>{});
     }
 
     /*!
@@ -349,6 +349,79 @@ public:
     }
 
 private:
+    /*!
+     * \brief Greedy coloring of the elements of the grid shared by the given domains such that
+     *        no two elements of the same color touch the same degree of freedom of any domain
+     *        when they are assembled in any of the given domains
+     */
+    template<std::size_t i, std::size_t... is>
+    auto computeColoring_(std::index_sequence<i, is...> assembledDomains) const
+    {
+        Dune::Timer timer;
+
+        static constexpr std::size_t numSubDomains = MDTraits::numSubDomains;
+        std::array<std::size_t, numSubDomains+1> dofOffset{};
+        Dune::Hybrid::forEach(std::make_index_sequence<numSubDomains>{}, [&](auto domainJ)
+        { dofOffset[domainJ+1] = dofOffset[domainJ] + Dumux::gridDiscretization(this->problem(domainJ)).numDofs(); });
+
+        const auto& gridDiscretization = Dumux::gridDiscretization(this->problem(Dune::index_constant<i>{}));
+        const auto& gridView = gridDiscretization.gridView();
+        const auto& elementMapper = gridDiscretization.elementMapper();
+
+        // the touched degrees of freedom of each element, numbered consecutively over all domains
+        std::vector<std::vector<std::size_t>> touchedDofs(gridView.size(0));
+        for (const auto& element : elements(gridView))
+        {
+            auto& dofs = touchedDofs[elementMapper.index(element)];
+            Dune::Hybrid::forEach(assembledDomains, [&](auto domainI)
+            {
+                const auto elemDisc = localView(Dumux::gridDiscretization(this->problem(domainI))).bindElement(element);
+                for (const auto& localDof : localDofs(elemDisc))
+                    dofs.push_back(dofOffset[domainI] + localDof.dofIndex());
+
+                Dune::Hybrid::forEach(std::make_index_sequence<numSubDomains>{}, [&](auto domainJ)
+                {
+                    if constexpr (decltype(domainJ)::value != decltype(domainI)::value)
+                        for (const auto dofJ : this->couplingStencil(domainI, element, domainJ))
+                            dofs.push_back(dofOffset[domainJ] + dofJ);
+                });
+            });
+
+            std::sort(dofs.begin(), dofs.end());
+            dofs.erase(std::unique(dofs.begin(), dofs.end()), dofs.end());
+        }
+
+        std::vector<std::vector<std::size_t>> elementsTouchingDof(dofOffset.back());
+        for (std::size_t eIdx = 0; eIdx < touchedDofs.size(); ++eIdx)
+            for (const auto dof : touchedDofs[eIdx])
+                elementsTouchingDof[dof].push_back(eIdx);
+
+        std::deque<std::vector<ElementSeed<i>>> sets;
+        std::vector<int> colors(gridView.size(0), -1);
+        std::vector<int> neighborColors;
+        std::vector<bool> colorUsed;
+        for (const auto& element : elements(gridView))
+        {
+            const auto eIdx = elementMapper.index(element);
+            neighborColors.clear();
+            for (const auto dof : touchedDofs[eIdx])
+                for (const auto nIdx : elementsTouchingDof[dof])
+                    neighborColors.push_back(colors[nIdx]);
+
+            const auto color = Detail::smallestAvailableColor(neighborColors, colorUsed);
+            colors[eIdx] = color;
+            if (color < sets.size())
+                sets[color].push_back(element.seed());
+            else
+                sets.push_back(std::vector<ElementSeed<i>>{ element.seed() });
+        }
+
+        std::cout << Fmt::format("Colored {} elements with {} colors in {} seconds.\n",
+                                 gridView.size(0), sets.size(), timer.elapsed());
+
+        return sets;
+    }
+
     std::deque<std::vector<ElementSeed<freeFlowMomentumIndex>>> elementSets_;
     std::deque<std::vector<ElementSeed<porousMediumIndex>>> elementSetsPM_;
 };
