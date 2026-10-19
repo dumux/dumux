@@ -7,7 +7,8 @@
 /*!
  * \file
  * \ingroup HyperelasticVolIso
- * \brief Local residuals for the volumetric-isochoric split hyperelastic mixed u–p model.
+ * \brief Local residuals for the volumetric-isochoric split hyperelastic mixed
+ *        \f$ \mathbf{d} \f$–\f$ p_s \f$ model.
  *
  * Two local residual classes are provided:
  *
@@ -38,7 +39,7 @@ namespace Dumux {
 
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Momentum local residual for the mixed u–p hyperelastic model.
+ * \brief Momentum local residual for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * Assembles \f$ -\nabla_X \cdot \mathbf{P} = \mathbf{f} \f$ with the first Piola–Kirchhoff stress
  * \f[ \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p\, J\, \mathbf{F}^{-\top}. \f]
@@ -174,7 +175,7 @@ private:
 
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Pressure local residual for the mixed u–p hyperelastic model.
+ * \brief Pressure local residual for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * Enforces the algebraic pressure constraint
  * \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
@@ -215,10 +216,9 @@ public:
      * `evalSource` subtracts the source, so the residual contribution is
      * \f$ p_s^{\mathrm{eq}} - p_s = 0 \f$ at equilibrium).
      */
-    template<class SubControlVolume_>
     NumEqVector sourceIntegral(const ElementDiscretization& elemDisc,
                                const ElementVariables& elemVars,
-                               const SubControlVolume_& scv) const
+                               const auto& scv) const
     {
         NumEqVector source(0.0);
 

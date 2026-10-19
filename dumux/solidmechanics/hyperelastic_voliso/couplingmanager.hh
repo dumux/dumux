@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup HyperelasticVolIso
- * \brief Coupling manager for the mixed u–p hyperelastic model.
+ * \brief Coupling manager for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * Both subdomains (momentum and pressure) share the same grid.
  *
@@ -45,7 +45,7 @@ namespace Dumux {
 
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Coupling manager for the mixed u–p hyperelastic model.
+ * \brief Coupling manager for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * \tparam MDTraits MultiDomainTraits with subdomain 0 = momentum, subdomain 1 = pressure.
  */
@@ -105,7 +105,6 @@ public:
         else                        return stencilsPresTOMom_[eIdx];
     }
 
-    //! Evaluate \f$ p_s \f$ at an interpolation point (P1 interpolation from pressure solution).
     template<Concept::IpData IpData>
     Scalar pressure(const ElementDiscretization<momIdx_>& elemDisc,
                     const IpData& ipData) const
@@ -116,7 +115,6 @@ public:
                                       gridDisc, elemSol, ipData.local())[0];
     }
 
-    //! Evaluate \f$ \mathbf{F} \f$ at an interpolation point (displacement shape functions).
     template<Concept::IpData IpData>
     Tensor deformationGradient(const ElementDiscretization<presIdx_>& elemDisc,
                                const IpData& ipData) const
@@ -142,7 +140,7 @@ public:
                                .gridDiscretization().gridView().grid();
         for (const auto& elems : elementSets_)
             Dumux::parallelFor(elems.size(), [&](std::size_t n)
-            { f(grid.entity(elems[n])); });
+                { f(grid.entity(elems[n])); });
     }
 
     template<std::size_t i>
