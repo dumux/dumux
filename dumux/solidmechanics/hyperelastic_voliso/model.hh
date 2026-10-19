@@ -126,12 +126,12 @@ struct HyperelasticVolIsoPressureVVTraits
 namespace Dumux::Properties::TTag {
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Type tag for the momentum subdomain of the mixed u–p model.
+ * \brief Type tag for the momentum subdomain of the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ model.
  */
 struct HyperelasticVolIsoMomentumModel { using InheritsFrom = std::tuple<ModelProperties>; };
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Type tag for the pressure subdomain of the mixed u–p model.
+ * \brief Type tag for the pressure subdomain of the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ model.
  */
 struct HyperelasticVolIsoPressureModel { using InheritsFrom = std::tuple<ModelProperties>; };
 } // end namespace Dumux::Properties::TTag
