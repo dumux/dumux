@@ -1,0 +1,34 @@
+[Grid]
+File = ../../sphere_eighth.msh
+
+[Problem]
+Name = cryer
+# surface load p0 in Pa; p0/K = 1e-4, 0.25 and 0.5 for 100, 250000 and 500000
+PressureLoad = 100.0
+EnableGravity = false
+
+[SpatialParams]
+# Neo-Hookean skeleton with volumetric-isochoric split, Poisson's ratio 0
+ShearModulus = 1.5e6
+BulkModulus = 1.0e6
+BiotCoefficient = 1.0
+StorageCoefficient = 0.0
+InitialPorosity = 0.5
+InitialPermeability = 1.0e-12
+FluidViscosity = 1.0e-3
+# Constant or KozenyCarman; the particle diameter of Kozeny-Carman follows from the initial porosity and permeability
+PermeabilityModel = KozenyCarman
+
+[TimeLoop]
+# R0^2/cv in s
+TEnd = 333.33
+Dt = 1.0
+DtGrowthFactor = 1.3
+MaxTimeStepSize = 20.0
+Scheme = DIRK3
+
+[Newton]
+MaxRelativeShift = 1e-5
+
+[Assembly]
+NumericDifferenceMethod = 1
