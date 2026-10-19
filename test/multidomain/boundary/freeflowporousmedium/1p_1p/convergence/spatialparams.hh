@@ -55,15 +55,10 @@ public:
    /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
+     * \param globalPos The global position
      * \return the intrinsic permeability
      */
-    template<class SubControlVolume, class ElementSolution>
-    PermeabilityType permeability(const Element& element,
-                                  const SubControlVolume& scv,
-                                  const ElementSolution& elemSol) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         PermeabilityType K(0.0);
 
@@ -76,7 +71,7 @@ public:
             static constexpr Scalar c = 0.0;
             static constexpr Scalar omega = M_PI;
 
-            const Scalar x = scv.center()[0];
+            const Scalar x = globalPos[0];
             K[0][0] = 1.0;
             K[0][1] = -c/(2*omega) * sin(omega*x);
             K[1][0] = K[0][1];

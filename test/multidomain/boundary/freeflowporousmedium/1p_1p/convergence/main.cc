@@ -30,13 +30,18 @@
 #include <dumux/io/format.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
+#include <dumux/io/grid/gridmanager_alu.hh>
 
-#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
+#include <dumux/common/concepts/variables_.hh>
+#include <dumux/common/typetraits/problem.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
+#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "testcase.hh"
 #include "properties.hh"
@@ -49,8 +54,8 @@
 template<class Scalar, class Problem>
 auto createDarcyAnalyticalSolution(const Problem& problem)
 {
-    const auto& gridGeometry = problem.gridGeometry();
-    using GridView = typename std::decay_t<decltype(gridGeometry)>::GridView;
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    using GridView = typename std::decay_t<decltype(gridDiscretization)>::GridView;
 
     static constexpr auto dim = GridView::dimension;
     static constexpr auto dimWorld = GridView::dimensionworld;
@@ -60,12 +65,12 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
     std::vector<Scalar> analyticalPressure;
     std::vector<VelocityVector> analyticalVelocity;
 
-    analyticalPressure.resize(gridGeometry.numDofs());
-    analyticalVelocity.resize(gridGeometry.numDofs());
+    analyticalPressure.resize(gridDiscretization.numDofs());
+    analyticalVelocity.resize(gridDiscretization.numDofs());
 
-    for (const auto& element : elements(gridGeometry.gridView()))
+    for (const auto& element : elements(gridDiscretization.gridView()))
     {
-        auto fvGeometry = localView(gridGeometry);
+        auto fvGeometry = localView(gridDiscretization);
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
         {
@@ -82,6 +87,33 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
     return std::make_tuple(analyticalPressure, analyticalVelocity);
 }
 
+template<class GridDiscretization, class SolutionVector, class ExactSolution>
+double computeL2DofError(const GridDiscretization& gridDiscretization, const SolutionVector& x, ExactSolution&& exactSolution)
+{
+    double l2error = 0.0;
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        auto fvGeometry = localView(gridDiscretization);
+        fvGeometry.bindElement(element);
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            if constexpr (requires { scv.isOverlapping(); })
+            {
+                // We skip the overlapping SCVs, and only consider scvs that form a domain partition
+                if (scv.isOverlapping())
+                    continue;
+            }
+
+            const auto dofIdx = scv.dofIndex();
+            const auto delta = x[dofIdx] - exactSolution(scv.dofPosition());
+            l2error += scv.volume() * (delta * delta);
+        }
+    }
+    using std::sqrt;
+    return sqrt(l2error);
+}
+
 template<class MassP, class MomP, class SolutionVector>
 void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
                           std::shared_ptr<MassP> massProblem,
@@ -90,56 +122,171 @@ void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
     using namespace Dumux;
 
     NavierStokesTest::Errors errors(momentumProblem, massProblem, sol);
-    const int numCellCenterDofs = massProblem->gridGeometry().numDofs();
-    const int numFaceDofs = momentumProblem->gridGeometry().numDofs();
+    const int numCellCenterDofs = Dumux::gridDiscretization(*massProblem).numDofs();
+    const int numFaceDofs = Dumux::gridDiscretization(*momentumProblem).numDofs();
     const auto absL2 = errors.l2Absolute();
     const auto relL2 = errors.l2Relative();
 
-    std::cout << Fmt::format("** L2 error (abs/rel) for {} cc dofs and {} face dofs (total: {}): ",
+    std::cout << Fmt::format("** L2 dof error (abs/rel) for {} cc dofs and {} face dofs (total: {}): ",
                              numCellCenterDofs, numFaceDofs, numCellCenterDofs + numFaceDofs)
-              << Fmt::format("L2(p) = {:.8e} / {:.8e}", absL2[0], relL2[0])
-              << Fmt::format(", L2(vx) = {:.8e} / {:.8e}", absL2[1], relL2[1])
-              << Fmt::format(", L2(vy) = {:.8e} / {:.8e}", absL2[2], relL2[2])
+              << Fmt::format("L2dof(p) = {:.8e} / {:.8e}", absL2[0], relL2[0])
+              << Fmt::format(", L2dof(vx) = {:.8e} / {:.8e}", absL2[1], relL2[1])
+              << Fmt::format(", L2dof(vy) = {:.8e} / {:.8e}", absL2[2], relL2[2])
               << std::endl;
 
     // write the norm into a log file
     std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << absL2[0]
-            << " L2(vx) = " << absL2[1]
-            << " L2(vy) = " << absL2[2]
+    logFile << "[ConvergenceTest] L2dof(p) = " << absL2[0]
+            << " L2dof(v) = " << std::sqrt(absL2[1]*absL2[1] + absL2[2]*absL2[2])
             << std::endl;
 }
 
-template<class Problem, class SolutionVector>
-void printDarcyL2Error(std::shared_ptr<Problem> problem, const SolutionVector& x)
+template<class MomentumProblem, class MassProblem,
+         class MomentumGridVariables, class MassGridVariables,
+         class SolutionVector, class MomentumIdx, class MassIdx>
+void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
+                         std::shared_ptr<MassProblem> massProblem,
+                         const MomentumGridVariables& momentumGridVariables,
+                         const MassGridVariables& massGridVariables,
+                         const SolutionVector& x,
+                         const MomentumIdx momentumIdx,
+                         const MassIdx massIdx)
 {
-    using namespace Dumux;
-    using Scalar = double;
+    using MomentumGridGeometry = typename Dumux::ProblemTraits<MomentumProblem>::GridGeometry;
+    using MassGridGeometry = typename Dumux::ProblemTraits<MassProblem>::GridGeometry;
 
-    Scalar l2error = 0.0;
-    for (const auto& element : elements(problem->gridGeometry().gridView()))
+    const auto& momentumGridDiscretization = Dumux::gridDiscretization(*momentumProblem);
+    const auto& massGridDiscretization = Dumux::gridDiscretization(*massProblem);
+
+    constexpr auto hasProblemAnalyticalSolutionGradient = []<class Problem, class GlobalCoordinate>()
     {
-        auto fvGeometry = localView(problem->gridGeometry());
-        fvGeometry.bindElement(element);
-
-        for (auto&& scv : scvs(fvGeometry))
+        return requires (const Problem& p, const GlobalCoordinate& globalPos)
         {
-            const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx] - problem->fullAnalyticalSolution(scv.center())[2/*pressureIdx*/];
-            l2error += scv.volume()*(delta*delta);
+            p.gradAnalyticalSolution(globalPos);
+        };
+    };
+
+    constexpr bool hasMomentumGradAnalyticalSolution
+        = hasProblemAnalyticalSolutionGradient.template operator()<MomentumProblem, typename MomentumGridGeometry::GlobalCoordinate>();
+    constexpr bool hasMassGradAnalyticalSolution
+        = hasProblemAnalyticalSolutionGradient.template operator()<MassProblem, typename MassGridGeometry::GlobalCoordinate>();
+
+    if constexpr (Dumux::DiscretizationMethods::isCVFE<typename MomentumGridGeometry::DiscretizationMethod>
+                  && Dumux::DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>)
+    {
+        if constexpr (hasMomentumGradAnalyticalSolution && hasMassGradAnalyticalSolution)
+        {
+            const auto [totalVolumeMomentum, momentumErrors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massErrors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
+
+            const double massL2DofError = computeL2DofError(
+                massGridDiscretization, x[massIdx],
+                [&](const auto& pos) { return massProblem->analyticalSolution(pos); }
+            );
+            const double momentumL2DofError = computeL2DofError(
+                momentumGridDiscretization, x[momentumIdx],
+                [&](const auto& pos) { return momentumProblem->analyticalSolution(pos); }
+            );
+
+            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, H1(p) = {:.8e}, L2(v) = {:.8e}, H1(v) = {:.8e}, L2dof(p) = {:.8e}, L2dof(v) = {:.8e}",
+                                            massErrors[0], massErrors[1], momentumErrors[0], momentumErrors[1],
+                                            massL2DofError, momentumL2DofError)
+                      << std::endl;
+
+            std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
+            logFile << "[ConvergenceTest] L2(p) = " << massErrors[0]
+                    << " L2(v) = " << momentumErrors[0]
+                    << " H1(v) = " << momentumErrors[1]
+                    << " L2dof(p) = " << massL2DofError
+                    << " L2dof(v) = " << momentumL2DofError
+                    << std::endl;
+        }
+        else
+        {
+            const auto [totalVolumeMomentum, momentumL2Error] = calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massL2Error] = calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
+
+            const double massL2DofError = computeL2DofError(
+                massGridDiscretization, x[massIdx],
+                [&](const auto& pos) { return massProblem->analyticalSolution(pos); }
+            );
+            const double momentumL2DofError = computeL2DofError(
+                momentumGridDiscretization, x[momentumIdx],
+                [&](const auto& pos) { return momentumProblem->analyticalSolution(pos); }
+            );
+
+            std::cout << Dumux::Fmt::format("** CVFE free-flow errors: L2(p) = {:.8e}, L2(v) = {:.8e}, L2dof(p) = {:.8e}, L2dof(v) = {:.8e}",
+                                            massL2Error, momentumL2Error, massL2DofError, momentumL2DofError)
+                      << std::endl;
+
+            std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
+            logFile << "[ConvergenceTest] L2(p) = " << massL2Error
+                    << " L2(v) = " << momentumL2Error
+                    << " L2dof(p) = " << massL2DofError
+                    << " L2dof(v) = " << momentumL2DofError
+                    << std::endl;
         }
     }
-    using std::sqrt;
-    l2error = sqrt(l2error);
+    else
+        printFreeFlowL2Error(momentumProblem, massProblem, Dumux::partial(x, momentumIdx, massIdx));
+}
 
-    const auto numDofs = problem->gridGeometry().numDofs();
-    std::cout << Fmt::format("** L2 error (abs) for {} cc dofs", numDofs)
-              << Fmt::format("L2 error = {:.8e}", l2error)
-              << std::endl;
+/*!
+ * \brief Adds the Darcy velocity reconstruction to the output module.
+ * \note The reconstruction is only implemented for variables defined per sub-control volume.
+ */
+template<class TypeTag, class VtkWriter, class GridVariables>
+void addDarcyVelocityOutput(VtkWriter& vtkWriter, GridVariables& gridVariables)
+{
+    using namespace Dumux;
 
-    // write the norm into a log file
-    std::ofstream logFile(problem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2(p) = " << l2error << std::endl;
+    if constexpr (Dumux::Concept::FVGridVariables<GridVariables>)
+        vtkWriter.addVelocityOutput(std::make_shared<GetPropType<TypeTag, Properties::VelocityOutput>>(gridVariables));
+}
+
+template<class Problem, class GridVariables, class SolutionVector>
+void printDarcyL2Error(std::shared_ptr<Problem> problem,
+                       const GridVariables& gridVariables,
+                       const SolutionVector& x)
+{
+    using namespace Dumux;
+    using GridDiscretization = Dumux::GridDiscretization_t<GridVariables>;
+
+    if constexpr (Dumux::DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>)
+    {
+        const auto [totalVolume, cvfeL2Error] = calculateL2Error(*problem, gridVariables, x);
+        const double l2dofError = computeL2DofError(
+            Dumux::gridDiscretization(*problem), x,
+            [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }
+        );
+
+        const auto numDofs = Dumux::gridDiscretization(*problem).numDofs();
+        std::cout << Fmt::format("** L2 error (abs) for {} dofs ", numDofs)
+                    << Fmt::format("L2 error = {:.8e}", cvfeL2Error)
+                    << Fmt::format(", L2dof error = {:.8e}", l2dofError)
+                    << std::endl;
+
+        // write the norm into a log file
+        std::ofstream logFile(problem->name() + ".log", std::ios::app);
+        logFile << "[ConvergenceTest] L2(p) = " << cvfeL2Error
+                << " L2dof(p) = " << l2dofError << std::endl;
+    }
+    else
+    {
+        const double l2error = computeL2DofError(
+            Dumux::gridDiscretization(*problem), x,
+            [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }
+        );
+
+        const auto numDofs = Dumux::gridDiscretization(*problem).numDofs();
+        std::cout << Fmt::format("** L2 dof error (abs) for {} dofs ", numDofs)
+                    << Fmt::format("L2dof error = {:.8e}", l2error)
+                    << std::endl;
+
+        // write the norm into a log file
+        std::ofstream logFile(problem->name() + ".log", std::ios::app);
+        logFile << "[ConvergenceTest] L2dof(p) = " << l2error << std::endl;
+    }
 }
 
 int main(int argc, char** argv)
@@ -158,9 +305,9 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using FreeFlowMomentumTypeTag = Properties::TTag::FreeFlowOnePMomentum;
-    using FreeFlowMassTypeTag = Properties::TTag::FreeFlowOnePMass;
-    using DarcyTypeTag = Properties::TTag::DarcyOneP;
+    using FreeFlowMomentumTypeTag = Properties::TTag::TYPETAG_FFMOMENTUM;
+    using FreeFlowMassTypeTag = Properties::TTag::TYPETAG_FFMASS;
+    using DarcyTypeTag = Properties::TTag::TYPETAG_PMMASS;
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
@@ -252,14 +399,14 @@ int main(int argc, char** argv)
 
     VtkOutputModule darcyVtkWriter(*darcyGridVariables, sol[porousMediumIndex],  darcyProblem->name());
     GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
-    darcyVtkWriter.addVelocityOutput(std::make_shared<GetPropType<DarcyTypeTag, Properties::VelocityOutput>>(*darcyGridVariables));
+    addDarcyVelocityOutput<DarcyTypeTag>(darcyVtkWriter, *darcyGridVariables);
     const auto darcyAnalyticalSolution = createDarcyAnalyticalSolution<double>(*darcyProblem);
     darcyVtkWriter.addField(std::get<0>(darcyAnalyticalSolution), "pressureExact");
     darcyVtkWriter.addField(std::get<1>(darcyAnalyticalSolution), "velocityExact");
     darcyVtkWriter.write(0.0);
 
     // the assembler for a stationary problem
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(freeFlowMomentumProblem, freeFlowMassProblem, darcyProblem),
                                                  std::make_tuple(freeFlowMomentumGridGeometry,
                                                                  freeFlowMassGridGeometry,
@@ -285,6 +432,16 @@ int main(int argc, char** argv)
     std::cout << "Darcy pressure dofs: " << dofsPD << std::endl;
     std::cout << "Total number of dofs: " << dofsVS + dofsPS + dofsPD << std::endl;
 
+    const auto setConstraints = [](auto& problem)
+    {
+        if constexpr (requires { problem->setConstraints(); })
+            problem->setConstraints();
+    };
+
+    // set Dirichlet constraints
+    setConstraints(freeFlowMomentumProblem);
+    setConstraints(darcyProblem);
+
     // solve the non-linear system
     nonLinearSolver.solve(sol);
 
@@ -293,8 +450,14 @@ int main(int argc, char** argv)
     darcyVtkWriter.write(1.0);
 
     // print L2 errors
-    printFreeFlowL2Error(freeFlowMomentumProblem, freeFlowMassProblem, partial(sol, freeFlowMomentumIndex, freeFlowMassIndex));
-    printDarcyL2Error(darcyProblem, sol[porousMediumIndex]);
+    printFreeFlowErrors(freeFlowMomentumProblem,
+                        freeFlowMassProblem,
+                        *freeFlowMomentumGridVariables,
+                        *freeFlowMassGridVariables,
+                        sol,
+                        freeFlowMomentumIndex,
+                        freeFlowMassIndex);
+    printDarcyL2Error(darcyProblem, *darcyGridVariables, sol[porousMediumIndex]);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
