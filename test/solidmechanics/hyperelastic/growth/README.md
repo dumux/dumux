@@ -210,7 +210,7 @@ traces \f$ a = 0.01 \f$ to \f$ 0.16 \f$ on the coarsest mesh, fits
 \f$ c_2 > 0 \f$ (a supercritical pitchfork) and that \f$ \vartheta - \vartheta_c \f$ grows with
 the exponent 2 between \f$ a = 0.01 \f$ and \f$ 0.02 \f$ to within 0.02. On the three meshes of the
 onset test, the intercept deviates from the critical stretch by \f$ 1.2 \cdot 10^{-7} \f$ to
-\f$ 2.9 \cdot 10^{-7} \f$, and the exponent on the coarsest mesh is 2.0009.
+\f$ 2.8 \cdot 10^{-7} \f$, and the exponent on the coarsest mesh is 2.0009.
 
 | Discretization | \f$ c_2 \f$, coarsest mesh | middle mesh | finest mesh |
 | :--- | ---: | ---: | ---: |
