@@ -96,6 +96,14 @@ public:
         onlyNormalGradientForBeaversJoseph_ = getParamFromGroup<bool>(
             this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false
         );
+
+        const auto slipCondition = getParamFromGroup<std::string>(this->paramGroup(), "Problem.SlipCondition", "BJS");
+        if (slipCondition != "BJS" && slipCondition != "BJ")
+            DUNE_THROW(Dune::Exception, "Wrong slip condition choose: BJS or BJ");
+        useBeaversJoseph_ = slipCondition == "BJ";
+
+        if (useBeaversJoseph_ && (testCase_ == DarcyStokesTestCase::ShiueExampleTwo || testCase_ == DarcyStokesTestCase::Schneider))
+            DUNE_THROW(Dune::Exception, "The exact solution of this test case requires the BJS condition");
     }
 
     // Call this function after problem and coupling manager init(...) has been called
@@ -192,7 +200,12 @@ public:
                 t[0] = 1.0;
                 const auto vt = v*t;
                 const auto mu = this->effectiveViscosity(element, elemDisc, faceIpData);
-                Scalar tangentialFlux = mu*this->betaBJ(elemDisc, faceIpData, t)*vt;
+                const auto beta = this->betaBJ(elemDisc, faceIpData, t);
+                Scalar tangentialFlux = mu*beta*vt;
+
+                // the BJ condition involves the velocity relative to the tangential Darcy velocity
+                if (useBeaversJoseph_)
+                    tangentialFlux -= mu*beta*(couplingManager().darcyVelocity(elemDisc, faceIpData)*t);
 
                 // if the slip condition only involves the normal derivative of the tangential velocity,
                 // the tangential derivative of the normal velocity contributes to the viscous stress
@@ -280,6 +293,8 @@ public:
                 return select(Rybak::stokesRHS(globalPos));
             case DarcyStokesTestCase::Schneider:
                 return select(Schneider::stokesRHS(globalPos));
+            case DarcyStokesTestCase::BeaversJoseph:
+                return select(BeaversJoseph::stokesRHS(globalPos));
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -323,6 +338,8 @@ public:
                 return Rybak::stokes(globalPos);
             case DarcyStokesTestCase::Schneider:
                 return Schneider::stokes(globalPos);
+            case DarcyStokesTestCase::BeaversJoseph:
+                return BeaversJoseph::stokes(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -366,6 +383,9 @@ public:
                 break;
             case DarcyStokesTestCase::Schneider:
                 grad = Schneider::stokesGrad(globalPos);
+                break;
+            case DarcyStokesTestCase::BeaversJoseph:
+                grad = BeaversJoseph::stokesGrad(globalPos);
                 break;
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
@@ -473,6 +493,8 @@ private:
                 return Rybak::stokesStress(globalPos);
             case DarcyStokesTestCase::Schneider:
                 return Schneider::stokesStress(globalPos);
+            case DarcyStokesTestCase::BeaversJoseph:
+                return BeaversJoseph::stokesStress(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -487,6 +509,7 @@ private:
     DarcyStokesTestCase testCase_;
     BC boundaryConditions_;
     bool onlyNormalGradientForBeaversJoseph_;
+    bool useBeaversJoseph_;
     std::vector<DirichletConstraintData> constraints_;
 };
 } // end namespace Dumux

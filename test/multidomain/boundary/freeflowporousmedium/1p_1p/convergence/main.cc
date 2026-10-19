@@ -352,6 +352,8 @@ int main(int argc, char** argv)
             return DarcyStokesTestCase::Rybak;
         else if (testCaseName == "Schneider")
             return DarcyStokesTestCase::Schneider;
+        else if (testCaseName == "BeaversJoseph")
+            return DarcyStokesTestCase::BeaversJoseph;
         else
             DUNE_THROW(Dune::InvalidStateException, testCaseName + " is not a valid test case");
     }();

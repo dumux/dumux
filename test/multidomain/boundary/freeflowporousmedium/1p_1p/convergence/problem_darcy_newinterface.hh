@@ -201,6 +201,8 @@ public:
                 return Rybak::darcyRHS(globalPos);
             case DarcyStokesTestCase::Schneider:
                 return Schneider::darcyRHS(globalPos);
+            case DarcyStokesTestCase::BeaversJoseph:
+                return BeaversJoseph::darcyRHS(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }
@@ -232,6 +234,8 @@ public:
                 return Rybak::darcy(globalPos);
             case DarcyStokesTestCase::Schneider:
                 return Schneider::darcy(globalPos);
+            case DarcyStokesTestCase::BeaversJoseph:
+                return BeaversJoseph::darcy(globalPos);
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid test case");
         }

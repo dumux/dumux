@@ -17,7 +17,7 @@ namespace Dumux {
 
 enum class DarcyStokesTestCase
 {
-    ShiueExampleOne, ShiueExampleTwo, Rybak, Schneider
+    ShiueExampleOne, ShiueExampleTwo, Rybak, Schneider, BeaversJoseph
 };
 
 } // end namespace Dumux

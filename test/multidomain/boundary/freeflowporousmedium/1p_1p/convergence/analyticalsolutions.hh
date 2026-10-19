@@ -14,16 +14,48 @@
 #define DUMUX_CONVERGENCE_TEST_ANALYTICAL_SOLUTIONS_HH
 
 #include <cmath>
+#include <string>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux::Solution::DarcyStokes {
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// The slip condition at the interface, Beavers-Joseph (BJ) with the tangential Darcy velocity
+// or Beavers-Joseph-Saffman (BJS) without it, and the coefficient beta = alpha/sqrt(K).
+// The exact solutions of the test cases Rybak and BeaversJoseph depend on the slip condition.
+/////////////////////////////////////////////////////////////////////////////////////////////////
+struct SlipConditionParameters
+{
+    double permeability = getParam<double>("Darcy.SpatialParams.Permeability", 1.0);
+    double alpha = getParam<double>("Darcy.SpatialParams.AlphaBeaversJoseph");
+    bool beaversJoseph = getParamFromGroup<std::string>("FreeFlow", "Problem.SlipCondition", "BJS") == "BJ";
+
+    double beta() const
+    { return alpha/std::sqrt(permeability); }
+};
+
+inline const SlipConditionParameters& slipConditionParameters()
+{
+    static const SlipConditionParameters params;
+    return params;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // see Rybak et al., 2015: "Multirate time integration for coupled
 //   saturated/unsaturated porous medium and free flow systems"
 /////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Rybak {
+
+// For the BJ condition, the free-flow x-velocity contains delta = -beta Q(x) (y - 1)(2 - y), where
+// Q(x) = -pi/2 cos(pi x) is the tangential Darcy velocity at the interface y = 1. The term changes
+// neither the velocity at the interface nor the normal stress there.
+inline double betaBJ()
+{
+    const auto& params = slipConditionParameters();
+    return params.beaversJoseph ? params.beta() : 0.0;
+}
 
 // 0: velocity-x | 1: velocity-y | 2: pressure
 Dune::FieldVector<double, 3> darcy(const Dune::FieldVector<double, 2>& globalPos)
@@ -73,7 +105,7 @@ Dune::FieldVector<double, 3> stokes(const Dune::FieldVector<double, 2>& globalPo
     const double y = globalPos[1];
 
     using std::sin; using std::cos;
-    sol[0] = -cos(M_PI*x)*sin(M_PI*y);
+    sol[0] = -cos(M_PI*x)*sin(M_PI*y) + 0.5*M_PI*betaBJ()*(y - 1.0)*(2.0 - y)*cos(M_PI*x);
     sol[1] = sin(M_PI*x)*cos(M_PI*y);
     sol[2] = 0.5*y*sin(M_PI*x);
     return sol;
@@ -87,8 +119,9 @@ Dune::FieldMatrix<double, 3, 2> stokesGrad(const Dune::FieldVector<double, 2>& g
     using std::sin; using std::cos;
 
     Dune::FieldMatrix<double, 3, 2> grad(0.0);
-    grad[0][0] = M_PI*sin(M_PI*x)*sin(M_PI*y);
-    grad[0][1] = -M_PI*cos(M_PI*x)*cos(M_PI*y);
+    const double beta = betaBJ();
+    grad[0][0] = M_PI*sin(M_PI*x)*sin(M_PI*y) - 0.5*M_PI*M_PI*beta*(y - 1.0)*(2.0 - y)*sin(M_PI*x);
+    grad[0][1] = -M_PI*cos(M_PI*x)*cos(M_PI*y) + 0.5*M_PI*beta*(3.0 - 2.0*y)*cos(M_PI*x);
     grad[1][0] = M_PI*cos(M_PI*x)*cos(M_PI*y);
     grad[1][1] = -M_PI*sin(M_PI*x)*sin(M_PI*y);
     grad[2][0] = 0.5*M_PI*y*cos(M_PI*x);
@@ -103,8 +136,12 @@ Dune::FieldVector<double, 3> stokesRHS(const Dune::FieldVector<double, 2>& globa
     const double y = globalPos[1];
     Dune::FieldVector<double, 3> source(0.0);
     using std::sin; using std::cos;
-    source[0] = 0.5*M_PI*y*cos(M_PI*x) - 2*M_PI*M_PI*cos(M_PI*x)*sin(M_PI*y);
-    source[1] = 0.5*sin(M_PI*x) + 2*M_PI*M_PI*sin(M_PI*x)*cos(M_PI*y);
+    const double beta = betaBJ();
+    source[0] = 0.5*M_PI*y*cos(M_PI*x) - 2*M_PI*M_PI*cos(M_PI*x)*sin(M_PI*y)
+                - M_PI*beta*(M_PI*M_PI*(y - 1.0)*(y - 2.0) - 1.0)*cos(M_PI*x);
+    source[1] = 0.5*sin(M_PI*x) + 2*M_PI*M_PI*sin(M_PI*x)*cos(M_PI*y)
+                - 0.5*M_PI*M_PI*beta*(2.0*y - 3.0)*sin(M_PI*x);
+    source[2] = 0.5*M_PI*M_PI*beta*(y - 1.0)*(y - 2.0)*sin(M_PI*x);
     return source;
 }
 
@@ -117,8 +154,9 @@ Dune::FieldMatrix<double, 2, 2> stokesStress(const Dune::FieldVector<double, 2>&
     using std::exp; using std::sin; using std::cos;
 
     Dune::FieldMatrix<double, 2, 2> stress(0.0);
-    stress[0][0] = (0.5*y - 2*M_PI*sin(M_PI*y))*sin(M_PI*x);
-    stress[1][0] = 0.0;
+    const double beta = betaBJ();
+    stress[0][0] = (0.5*y - 2*M_PI*sin(M_PI*y))*sin(M_PI*x) - M_PI*M_PI*beta*(y - 1.0)*(y - 2.0)*sin(M_PI*x);
+    stress[1][0] = 0.5*M_PI*beta*(2.0*y - 3.0)*cos(M_PI*x);
     stress[0][1] = stress[1][0]; // symmetric
     stress[1][1] = (0.5*y + 2*M_PI*sin(M_PI*y))*sin(M_PI*x);
     return stress;
@@ -466,6 +504,68 @@ Dune::FieldMatrix<double, 2, 2> stokesStress(const Dune::FieldVector<double, 2>&
 }
 
 } // end namespace Schneider
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Pressure-driven flow in a channel of height 1 above a porous block (Beavers and Joseph 1967,
+// J. Fluid Mech. 30(1), 197-207) with mu = 1 and dp/dx = -1 in both subdomains. The tangential
+// velocity in the porous medium u_pm is the Darcy velocity K for the BJ condition and zero
+// for the BJS condition.
+/////////////////////////////////////////////////////////////////////////////////////////////////
+namespace BeaversJoseph {
+
+// u(y) = u_slip + beta (u_slip - u_pm) (y - 1) - (y - 1)^2/2 with u(2) = 0
+inline Dune::FieldVector<double, 2> velocityAndGradient(const double y)
+{
+    const auto& params = slipConditionParameters();
+    const double beta = params.beta();
+    const double uPM = params.beaversJoseph ? params.permeability : 0.0;
+    const double uSlip = (0.5 + beta*uPM)/(1.0 + beta);
+    const double eta = y - 1.0;
+    return { uSlip + beta*(uSlip - uPM)*eta - 0.5*eta*eta, beta*(uSlip - uPM) - eta };
+}
+
+// 0: velocity-x | 1: velocity-y | 2: pressure
+inline Dune::FieldVector<double, 3> darcy(const Dune::FieldVector<double, 2>& globalPos)
+{ return { slipConditionParameters().permeability, 0.0, 1.0 - globalPos[0] }; }
+
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+inline Dune::FieldMatrix<double, 3, 2> darcyGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[2][0] = -1.0;
+    return grad;
+}
+
+// 0: mass
+inline Dune::FieldVector<double, 1> darcyRHS(const Dune::FieldVector<double, 2>& globalPos)
+{ return { 0.0 }; }
+
+// 0: velocity-x | 1: velocity-y | 2: pressure
+inline Dune::FieldVector<double, 3> stokes(const Dune::FieldVector<double, 2>& globalPos)
+{ return { velocityAndGradient(globalPos[1])[0], 0.0, 1.0 - globalPos[0] }; }
+
+// row 0: grad(vx), row 1: grad(vy), row 2: grad(p)
+inline Dune::FieldMatrix<double, 3, 2> stokesGrad(const Dune::FieldVector<double, 2>& globalPos)
+{
+    Dune::FieldMatrix<double, 3, 2> grad(0.0);
+    grad[0][1] = velocityAndGradient(globalPos[1])[1];
+    grad[2][0] = -1.0;
+    return grad;
+}
+
+// 0: mom-x | 1: mom-y | 2: mass
+inline Dune::FieldVector<double, 3> stokesRHS(const Dune::FieldVector<double, 2>& globalPos)
+{ return { 0.0, 0.0, 0.0 }; }
+
+// momentum flux -(grad(v) + grad(v)^T) + pI
+inline Dune::FieldMatrix<double, 2, 2> stokesStress(const Dune::FieldVector<double, 2>& globalPos)
+{
+    const double p = 1.0 - globalPos[0];
+    const double dudy = velocityAndGradient(globalPos[1])[1];
+    return { { p, -dudy }, { -dudy, p } };
+}
+
+} // end namespace BeaversJoseph
 
 } // end namespace Dumux::Solution::DarcyStokes
 

@@ -13,11 +13,14 @@
 #ifndef DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_CVFE_CVFE_HH
 #define DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_CVFE_CVFE_HH
 
+#include <cstddef>
+#include <type_traits>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 
+#include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
@@ -59,6 +62,7 @@ class FFPMCouplingConditionsCvfeImplBase
     template<std::size_t id> using ElementDiscretization = typename GridDiscretization<id>::LocalView;
     template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
     template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
+    template<std::size_t id> using GlobalPosition = typename GridDiscretization<id>::GridView::template Codim<0>::Geometry::GlobalCoordinate;
 
 public:
     static constexpr auto freeFlowMomentumIndex = CouplingManager::freeFlowMomentumIndex;
@@ -104,30 +108,45 @@ public:
                                   const Context& context)
     {
         const auto& pmElemDisc = context.elemDisc;
-        const auto& pos = ipData.global();
+        return context.vars(pmElemDisc.scv(closestBoundaryScvIdx_(pmElemDisc, ipData.global()))).permeability();
+    }
 
-        Scalar minDistance = 0.0;
-        std::size_t closestScvfIdx = 0;
-        bool foundClosestScvf = false;
+    /*!
+     * \brief Returns the Darcy velocity at an interpolation point of the coupled Darcy element.
+     * \note The pressure gradient and the density of the gravity term are interpolated with the
+     *       shape functions of the element. The permeability and the viscosity are taken from the
+     *       sub-control volume of the boundary sub-control-volume face closest to the interpolation point.
+     */
+    template<class Context, class IpData>
+    static auto darcyVelocity(const Context& context, const IpData& ipData)
+    {
+        const auto pmPhaseIdx = couplingPhaseIdx(porousMediumIndex);
+        const auto& elemDisc = context.elemDisc;
+        const auto& localBasis = elemDisc.feLocalBasis();
+        using LocalBasis = std::decay_t<decltype(localBasis)>;
 
-        for (const auto& pmScvf : scvfs(pmElemDisc))
+        std::vector<typename LocalBasis::Traits::RangeType> shapeValues;
+        std::vector<typename LocalBasis::Traits::JacobianType> shapeJacobian;
+        localBasis.evaluateFunction(ipData.local(), shapeValues);
+        localBasis.evaluateJacobian(ipData.local(), shapeJacobian);
+        const auto jacInvT = elemDisc.elementGeometry().jacobianInverseTransposed(ipData.local());
+
+        GlobalPosition<porousMediumIndex> gradP(0.0);
+        GlobalPosition<porousMediumIndex> gradN(0.0);
+        Scalar density = 0.0;
+        for (const auto& localDof : localDofs(elemDisc))
         {
-            if(!pmScvf.boundary())
-                continue;
-
-            const auto distance = (pmScvf.ipGlobal() - pos).two_norm();
-            if (!foundClosestScvf || distance < minDistance)
-            {
-                minDistance = distance;
-                closestScvfIdx = pmScvf.index();
-                foundClosestScvf = true;
-            }
+            const auto vars = context.vars(localDof);
+            jacInvT.mv(shapeJacobian[localDof.index()][0], gradN);
+            gradP.axpy(vars.pressure(pmPhaseIdx), gradN);
+            density += vars.density(pmPhaseIdx)*shapeValues[localDof.index()][0];
         }
+        gradP.axpy(-density, context.problem.spatialParams().gravity(ipData.global()));
 
-        if (!foundClosestScvf)
-            DUNE_THROW(Dune::InvalidStateException, "Expected at least one SCVF in porous-medium element discretization");
-
-        return context.vars(pmElemDisc.scv(pmElemDisc.scvf(closestScvfIdx).insideScvIdx())).permeability();
+        const auto vars = context.vars(elemDisc.scv(closestBoundaryScvIdx_(elemDisc, ipData.global())));
+        auto velocity = mv(vars.permeability(), gradP);
+        velocity *= -1.0/vars.viscosity(pmPhaseIdx);
+        return velocity;
     }
 
     /*!
@@ -181,6 +200,36 @@ public:
      */
     static Scalar advectiveFlux(const Scalar insideQuantity, const Scalar outsideQuantity, const Scalar volumeFlow, bool insideIsUpstream)
     { return (insideIsUpstream ? insideQuantity : outsideQuantity) * volumeFlow; }
+
+private:
+    //! the index of the sub-control volume of the boundary sub-control-volume face closest to the given position
+    template<class PMElementDiscretization>
+    static std::size_t closestBoundaryScvIdx_(const PMElementDiscretization& elemDisc,
+                                              const GlobalPosition<porousMediumIndex>& pos)
+    {
+        Scalar minDistance = 0.0;
+        std::size_t closestScvfIdx = 0;
+        bool foundClosestScvf = false;
+
+        for (const auto& scvf : scvfs(elemDisc))
+        {
+            if (!scvf.boundary())
+                continue;
+
+            const auto distance = (scvf.ipGlobal() - pos).two_norm();
+            if (!foundClosestScvf || distance < minDistance)
+            {
+                minDistance = distance;
+                closestScvfIdx = scvf.index();
+                foundClosestScvf = true;
+            }
+        }
+
+        if (!foundClosestScvf)
+            DUNE_THROW(Dune::InvalidStateException, "Expected at least one boundary SCVF in porous-medium element discretization");
+
+        return elemDisc.scvf(closestScvfIdx).insideScvIdx();
+    }
 };
 
 /*!

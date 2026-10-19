@@ -153,6 +153,21 @@ public:
         return CouplingConditions::darcyPermeability(elemDisc, faceIpData, context);
     }
 
+    /*!
+     * \brief Returns the Darcy velocity of the coupled porous-medium element at a face interpolation
+     *        point of the free-flow momentum domain on the coupling interface.
+     */
+    template<class FaceIpData>
+    auto darcyVelocity(const ElementDiscretization<freeFlowMomentumIndex>& elemDisc,
+                       const FaceIpData& faceIpData) const
+    {
+        const auto& context = this->subCouplingManager(freeFlowMomentumIndex, porousMediumIndex).couplingContext(
+            Dune::index_constant<freeFlowMomentumIndex>(), elemDisc, faceIpData
+        );
+
+        return CouplingConditions::darcyVelocity(context, ipData(context.elemDisc, faceIpData.global()));
+    }
+
     //////////////////////// Conditions for FreeFlowMomentum - FreeFlowMass coupling //////////
     ///////////////////////////////////////////////////////////////////////////////////////////
 
