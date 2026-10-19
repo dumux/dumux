@@ -7,16 +7,19 @@ Convergence test script for coupled FreeFlow/DarcyFlow problems.
 
 The -Rates argument accepts one or more named error-type specifications:
 
-    -Rates "ErrorType minRate" ["ErrorType minRate" ...]
+    -Rates "ErrorType minRate maxRate" ["ErrorType minRate maxRate" ...]
 
 where ErrorType matches a key written to the log file by the simulation,
 e.g. L2(p), L2(v), H1(v), H1(p).  The script searches for each specified
-error type in ALL log files (freeflow and darcy).  If a specified type is
-not found in any log file the test exits with an error.  The last convergence
-rate must satisfy last_rate >= minRate.
+error type in ALL log files (freeflow and darcy), unless the error type is
+prefixed with "freeflow:" or "darcy:", which restricts the search to that log
+file.  If a specified type is not found in any log file the test exits with an
+error.  Every observed
+convergence rate must satisfy minRate <= rate <= maxRate.  The test also fails
+if a simulation fails or an error is not finite.
 
 Example:
-    -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 1.95"
+    -Rates "freeflow:L2(p) 1.4 1.6" "darcy:L2(p) 1.9 2.1" "L2(v) 1.95 2.1" "H1(v) 0.95 1.1"
 """
 
 import re
@@ -31,8 +34,11 @@ if len(sys.argv) < 2:
 executableName = str(sys.argv[1])
 testargs = [str(i) for i in sys.argv][2:]
 testname = testargs[testargs.index('-Problem.TestCase')+1]
-freeflowLogName = testname + "_" + testargs[testargs.index('-FreeFlow.Problem.Name')+1] + '.log'
-darcyLogName = testname + "_" + testargs[testargs.index('-Darcy.Problem.Name')+1] + '.log'
+def argument(args, key, default):
+    return args[args.index(key)+1] if key in args else default
+
+freeflowLogName = testname + "_" + argument(testargs, '-FreeFlow.Problem.Name', 'freeFlow') + '.log'
+darcyLogName = testname + "_" + argument(testargs, '-Darcy.Problem.Name', 'darcy') + '.log'
 
 # ---------------------------------------------------------------------------
 # Parse -Rates argument
@@ -42,7 +48,7 @@ def parse_rates(testargs):
 
     rate_specs is one of:
       None                                     -> use built-in defaults
-      dict { error_type: minRate }            -> named format
+      dict { error_type: (minRate, maxRate) } -> named format
     """
     if '-Rates' not in testargs:
         return None, testargs
@@ -60,16 +66,16 @@ def parse_rates(testargs):
         sys.stderr.write("ERROR: -Rates requires at least one argument.\n")
         sys.exit(1)
 
-    # named format: each entry is "ErrorType minRate"
+    # named format: each entry is "ErrorType minRate maxRate"
     rate_specs = {}
     for spec in specs_raw:
         parts = spec.split()
-        if len(parts) != 2:
+        if len(parts) != 3:
             sys.stderr.write(
-                f"ERROR: Each -Rates entry must be 'ErrorType minRate', got: '{spec}'\n")
+                f"ERROR: Each -Rates entry must be 'ErrorType minRate maxRate', got: '{spec}'\n")
             sys.exit(1)
-        error_type, min_rate = parts[0], float(parts[1])
-        rate_specs[error_type] = min_rate
+        error_type, min_rate, max_rate = parts[0], float(parts[1]), float(parts[2])
+        rate_specs[error_type] = (min_rate, max_rate)
     return rate_specs, cleaned
 
 
@@ -86,7 +92,7 @@ for logName in [freeflowLogName, darcyLogName]:
 # Run the simulations at three refinement levels
 # ---------------------------------------------------------------------------
 for i in [0, 1, 2]:
-    subprocess.call(['./' + executableName] + testargs + ['-Grid.Refinement', str(i)])
+    subprocess.run(['./' + executableName] + testargs + ['-Grid.Refinement', str(i)], check=True)
 
 # ---------------------------------------------------------------------------
 # Generic log-file parser
@@ -94,7 +100,7 @@ for i in [0, 1, 2]:
 #   [ConvergenceTest] L2(p) = 1.23e-04 L2(v) = 2.34e-04 H1(v) = 3.45e-04
 # Returns { error_type: [val_level0, val_level1, ...] }
 # ---------------------------------------------------------------------------
-_KV_PATTERN = re.compile(r'(\w+\(\w+\))\s*=\s*([0-9Ee+\-.]+)')
+_KV_PATTERN = re.compile(r'(\w+\(\w+\))\s*=\s*(\S+)')
 
 def parse_log_file(filename):
     """Parse a convergence log file.  Returns dict {error_type: [values]}."""
@@ -118,7 +124,8 @@ def compute_rates(error_values):
     rates = []
     for i in range(len(error_values) - 1):
         e0, e1 = float(error_values[i]), float(error_values[i + 1])
-        if math.isnan(e0) or math.isinf(e0):
+        if not (math.isfinite(e0) and math.isfinite(e1)):
+            rates.append(math.nan)
             continue
         if e0 < 1e-12 or e1 < 1e-12:
             continue  # effectively exact – skip
@@ -189,20 +196,26 @@ print()
 # ---------------------------------------------------------------------------
 # Convergence-rate checking helpers
 # ---------------------------------------------------------------------------
-def check_rate_in_log(error_type, min_rate, log_name, errors_dict):
+def check_rate_in_log(error_type, min_rate, max_rate, log_name, errors_dict):
     """Return True if error_type found (and passed), False if not found, exit on failure."""
     if error_type not in errors_dict:
         return False
-    rates = compute_rates(errors_dict[error_type])
+    errors = errors_dict[error_type]
+    if len(errors) != 3:
+        sys.stderr.write(f"ERROR: Expected 3 values of '{error_type}' in {log_name}, found {len(errors)}.\n")
+        sys.exit(1)
+    rates = compute_rates(errors)
     if not rates:
-        print(f"WARNING: No rates could be computed for '{error_type}' in {log_name}.")
-        return True  # found but nothing to check
-    last_rate = rates[-1]
-    if last_rate < min_rate:
+        if all(e < 1e-12 for e in errors):
+            print(f"'{error_type}' in {log_name} is at round-off level on all grids.")
+            return True
+        sys.stderr.write(f"ERROR: No rates could be computed for '{error_type}' in {log_name}: {errors}\n")
+        sys.exit(1)
+    if not all(min_rate <= rate <= max_rate for rate in rates):
         sys.stderr.write(
             "*" * 70 + "\n"
             f"Convergence rate check FAILED for '{error_type}' in {log_name}:\n"
-            f"  last rate = {last_rate:.4f}, expected >= {min_rate:.4f}\n"
+            f"  rates = {', '.join(f'{r:.4f}' for r in rates)}, expected in [{min_rate:.4f}, {max_rate:.4f}]\n"
             + "*" * 70 + "\n")
         sys.exit(1)
     return True
@@ -215,23 +228,27 @@ all_logs = [(freeflowLogName, ffErrors), (darcyLogName, darcyErrors)]
 
 if rate_specs is None:
     # Built-in defaults
-    defaults = {'L2dof(p)': 1.9, 'L2dof(v)': 1.9}
-    for et, lo in defaults.items():
+    defaults = {'L2dof(p)': (1.9, 2.1), 'L2dof(v)': (1.9, 2.1)}
+    for et, (lo, hi) in defaults.items():
         for log_name, errors_dict in all_logs:
-            check_rate_in_log(et, lo, log_name, errors_dict)
+            check_rate_in_log(et, lo, hi, log_name, errors_dict)
 
 else:
     # Named format – search all log files for each specified error type
-    for error_type, min_rate in rate_specs.items():
+    for error_type, (min_rate, max_rate) in rate_specs.items():
+        logs = all_logs
+        if ':' in error_type:
+            domain, error_type = error_type.split(':', 1)
+            logs = [{'freeflow': all_logs[0], 'darcy': all_logs[1]}[domain]]
         found_in_any = False
-        for log_name, errors_dict in all_logs:
-            if check_rate_in_log(error_type, min_rate, log_name, errors_dict):
+        for log_name, errors_dict in logs:
+            if check_rate_in_log(error_type, min_rate, max_rate, log_name, errors_dict):
                 found_in_any = True
         if not found_in_any:
             sys.stderr.write(
                 "*" * 70 + "\n"
                 f"ERROR: Specified error type '{error_type}' was not found in any log file.\n"
-                f"  Searched in: {[n for n, _ in all_logs]}\n"
+                f"  Searched in: {[n for n, _ in logs]}\n"
                 + "*" * 70 + "\n")
             sys.exit(1)
 
