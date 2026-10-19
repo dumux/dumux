@@ -174,6 +174,8 @@ It loses stability where the Jacobian becomes singular: the test raises \f$ \var
 flat solution until the smallest real eigenvalue of the Jacobian, computed with
 `ShiftInvertEigenSolver`, changes sign, and locates the critical stretch by the Illinois method.
 
+![A film of thickness h grows along x on a substrate of depth H, drawn shortened at the break; the substrate is clamped at the bottom and its sides slide, the top is traction free. The dashed curve above the film is the shape of the onset mode with two half wavelengths over the length L.](growth_wrinkling_setup.svg){html: width=80%}
+
 The reference solves the problem linearized about the flat state (`reference.py`): in each layer a
 perturbation \f$ u_x = U(y)\sin kx \f$, \f$ u_y = V(y)\cos kx \f$ satisfies a linear system of
 ordinary differential equations with constant coefficients, the incremental moduli
@@ -208,7 +210,7 @@ traces \f$ a = 0.01 \f$ to \f$ 0.16 \f$ on the coarsest mesh, fits
 \f$ \vartheta = \vartheta_0 + c_2 a^2 + c_4 a^4 \f$ and checks that the intercept
 \f$ \vartheta_0 \f$ agrees with the critical stretch from the eigenvalues to \f$ 10^{-6} \f$, that
 \f$ c_2 > 0 \f$ (a supercritical pitchfork) and that \f$ \vartheta - \vartheta_c \f$ grows with
-the exponent 2 between \f$ a = 0.01 \f$ and \f$ 0.02 \f$ to within 0.02. On the three meshes of the
+the exponent 2 between \f$ a = 0.01 \f$ and \f$ 0.02 \f$ to within 0.02. On the meshes of the
 onset test, the intercept deviates from the critical stretch by \f$ 1.2 \cdot 10^{-7} \f$ to
 \f$ 2.8 \cdot 10^{-7} \f$, and the exponent on the coarsest mesh is 2.0009.
 
@@ -216,3 +218,10 @@ onset test, the intercept deviates from the critical stretch by \f$ 1.2 \cdot 10
 | :--- | ---: | ---: | ---: |
 | box | 0.11843 | 0.12092 | 0.12140 |
 | Q2 hybrid | 0.11854 | 0.12075 | 0.12133 |
+
+`wrinkling/run_benchmark.py` runs the onset and the branch with the box and the Q2 hybrid scheme on
+the meshes above in the build directory `test/solidmechanics/hyperelastic/growth/wrinkling` (about
+two minutes) and prints the tables of this section; with the directory `doc/doxygen/images` of the
+DuMux sources as argument, it also writes the figure.
+
+![The film (shaded) and the top of the substrate on the box mesh with 36 cells along x at the largest traced amplitude, to scale; the growth stretch above the critical one on the branch against the amplitude for the box (hollow markers with lines) and the Q2 hybrid scheme (filled markers) on the meshes above, with the slope 2 of a supercritical pitchfork; the error of the critical stretch against the mesh size.](growth_wrinkling.png)

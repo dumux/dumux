@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input wrinklingtest.py branchtest.py reference.py)
+dune_symlink_to_source_files(FILES params.input wrinklingtest.py branchtest.py reference.py
+                                   run_benchmark.py)
 
 # critical growth stretch and number of half wavelengths from the linearized bilayer problem
 set(_reference_args 1.1430689262 2)
