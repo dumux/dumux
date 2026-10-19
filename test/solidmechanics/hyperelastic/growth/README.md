@@ -5,14 +5,15 @@ decomposition \f$ \mathbf{F} = \mathbf{F}_\mathrm{e}\mathbf{F}_\mathrm{g} \f$ of
 gradient into an elastic part and a growth tensor \f$ \mathbf{F}_\mathrm{g} \f$ @cite Rodriguez1994.
 For a strain energy density \f$ \psi(\mathbf{F}_\mathrm{e}) \f$ per unit grown volume, the first
 Piola-Kirchhoff stress is
-\f[
-    \mathbf{P} = J_\mathrm{g}\, \mathbf{P}_\mathrm{e}(\mathbf{F}\mathbf{F}_\mathrm{g}^{-1})\, \mathbf{F}_\mathrm{g}^{-T},
-    \quad J_\mathrm{g} = \det \mathbf{F}_\mathrm{g},
-\f]
+
+$$\mathbf{P} = J_\mathrm{g}\, \mathbf{P}_\mathrm{e}(\mathbf{F}\mathbf{F}_\mathrm{g}^{-1})\,
+\mathbf{F}_\mathrm{g}^{-T},
+\quad J_\mathrm{g} = \det \mathbf{F}_\mathrm{g},$$
+
 which the problems evaluate with `Growth::firstPiolaKirchhoffStressTensor` from
-`dumux/solidmechanics/hyperelastic/growth.hh`. The two benchmarks below have exact solutions:
-the first tests the kinematics of growth at large rotations, the second the stress pull-back
-with residual stress. The material is compressible neo-Hookean,
+`dumux/solidmechanics/hyperelastic/growth.hh`. The benchmarks below have exact solutions: the
+strip tests the kinematics of growth at large rotations, the two-layer cylinder and sphere the
+stress pull-back with residual stress. The material is compressible neo-Hookean,
 \f$ \mathbf{P}_\mathrm{e} = \mu \mathbf{F}_\mathrm{e} + (\lambda \ln J_\mathrm{e} - \mu)\mathbf{F}_\mathrm{e}^{-T} \f$,
 with shear modulus \f$ \mu \f$ and Lamé parameter \f$ \lambda \f$. The growth is raised in steps
 from zero, each solved with Newton's method from the previous solution. Each test runs three
@@ -22,6 +23,10 @@ central differences of \f$ J_\mathrm{g}\psi(\mathbf{F}\mathbf{F}_\mathrm{g}^{-1}
 growth tensor and checks that \f$ \mathbf{F} = \mathbf{R}\mathbf{F}_\mathrm{g} \f$ with a
 rotation \f$ \mathbf{R} \f$ is stress free.
 
+`run_benchmark.py` runs all convergence studies of this page in the build directory
+`test/solidmechanics/hyperelastic/growth` (about three minutes) and prints the tables; with the
+directory `doc/doxygen/images` of the DuMux sources as argument, it also writes the figures.
+
 ## Strip bent by growth {#benchmark-hyperelastic-growth-strip}
 
 The strip \f$ [0, L] \times [0, h] \f$ (3D: \f$ [0, L] \times [0, b] \times [0, h] \f$) is
@@ -29,15 +34,17 @@ clamped at \f$ X = 0 \f$ and traction free elsewhere. It grows along its axis wi
 that varies linearly with the distance \f$ T \f$ from the mid-surface,
 \f$ \mathbf{F}_\mathrm{g} = \mathbf{I} + \kappa T\, \mathbf{e}_X \otimes \mathbf{e}_X \f$. This
 growth is compatible: the deformation
-\f[
-    x_X = (\kappa^{-1} + T)\sin(\kappa X), \quad
-    x_T = \tfrac{h}{2} + (\kappa^{-1} + T)\cos(\kappa X) - \kappa^{-1}
-\f]
+
+$$x_X = (\kappa^{-1} + T)\sin(\kappa X), \quad
+x_T = \tfrac{h}{2} + (\kappa^{-1} + T)\cos(\kappa X) - \kappa^{-1}$$
+
 bends the strip into a circular arc of radius \f$ \kappa^{-1} \f$ and has
 \f$ \mathbf{F} = \mathbf{R}\mathbf{F}_\mathrm{g} \f$, so it is stress free for any objective
 material law and satisfies the boundary conditions. With \f$ L = 1 \f$, \f$ h = 0.1 \f$,
 \f$ b = 0.1 \f$ and \f$ \kappa = \pi \f$ the strip closes to a half circle; the curvature is
 raised in eight steps, \f$ \mu = 1 \f$, \f$ \lambda = 1.5 \f$.
+
+![The strip of length L and thickness h, clamped at X = 0, grows along X with the stretch 1 + kappa T, which increases with the distance T from the mid-surface (dash-dotted). The exact solution bends it into a half circle of radius 1/kappa (shaded, dashed outline).](growth_strip_setup.svg){html: width=80%}
 
 | Test | Discretization | Mesh |
 | :--- | :--- | :--- |
@@ -87,6 +94,8 @@ agrees to \f$ 10^{-11} \f$. The current radii of the inner surface, the interfac
 surface are 0.601108, 0.891269 and 1.138978 for the cylinder and 0.625936, 0.904834 and
 1.157005 for the sphere.
 
+![Cross section of the two-layer cylinder or sphere: the outer layer (shaded) grows, the inner one does not; the layer interface is dashed. The quarter has symmetry conditions on the coordinate axes and traction-free inner and outer surfaces.](growth_shell_setup.svg){html: width=70%}
+
 | Test | Discretization | Mesh (radial inner × radial outer × angular cells) |
 | :--- | :--- | :--- |
 | `test_hyperelastic_growth_layered_shell_box_2d` | box | 6 × 4 × 16 to 24 × 16 × 64 quadrilaterals |
@@ -109,10 +118,15 @@ The elements have straight edges, so the curved surfaces are approximated by pol
 hybrid scheme reaches \f$ H^1 \f$ rates of 1.59 and 1.55 on the cylinder against 1.97 on the
 strip, whose boundaries are straight.
 
+![Reference meshes (gray) and deformed meshes (black) of the strip and of the cylinder with the box method, and the exact boundaries and layer interface of the deformed bodies (dashed).](growth_shapes.png)
+
+![L2 and H1 errors of the displacement against the largest element diameter, for the strip and for the cylinder and sphere, with all discretizations of this page including the mixed formulation below; each discretization has its own marker and line style, and the triangles show the slopes of the orders written next to them.](growth_convergence.png)
+
 ## Mixed displacement-pressure formulation {#benchmark-hyperelastic-growth-mixed}
 
-Both benchmarks also run in the mixed formulation of @ref HyperelasticVolIso. The neo-Hookean
-law is split as \f$ \mathbf{P}_\mathrm{e} = \mu(\mathbf{F}_\mathrm{e} - \mathbf{F}_\mathrm{e}^{-T})
+The strip and the cylinder also run in the mixed formulation of @ref HyperelasticVolIso. The
+neo-Hookean law is split as
+\f$ \mathbf{P}_\mathrm{e} = \mu(\mathbf{F}_\mathrm{e} - \mathbf{F}_\mathrm{e}^{-T})
 + p_\mathrm{e} J_\mathrm{e}\mathbf{F}_\mathrm{e}^{-T} \f$ with
 \f$ p_\mathrm{e} = \lambda \ln J_\mathrm{e}/J_\mathrm{e} \f$. The first part is pulled back with
 `Growth::firstPiolaKirchhoffStressTensor`; the second becomes \f$ p J \mathbf{F}^{-T} \f$ with
@@ -140,9 +154,9 @@ orders 1 and 1/2.
 
 | Test | \f$ h_\mathrm{max} \f$ | \f$ L^2 \f$ error | rate | \f$ H^1 \f$ error | rate | pressure \f$ L^2 \f$ error | rate |
 | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `test_hyperelastic_growth_layered_shell_mixed_p1b_2d` (MINI) | 0.1079 | 1.28e-3 | | 2.87e-2 | | 7.03e-2 | |
+| `test_hyperelastic_growth_layered_shell_mixed_p1b_2d` (MINI) | 0.1079 | 1.27e-3 | | 2.87e-2 | | 7.03e-2 | |
 | | 0.0545 | 6.00e-4 | 1.10 | 1.98e-2 | 0.55 | 4.97e-2 | 0.51 |
 | | 0.0274 | 2.90e-4 | 1.06 | 1.38e-2 | 0.52 | 3.51e-2 | 0.50 |
-| `test_hyperelastic_growth_layered_shell_mixed_q2_2d` (Q2–Q1) | 0.1079 | 1.39e-3 | | 2.87e-2 | | 7.11e-2 | |
-| | 0.0545 | 6.73e-4 | 1.06 | 2.02e-2 | 0.51 | 5.03e-2 | 0.51 |
+| `test_hyperelastic_growth_layered_shell_mixed_q2_2d` (Q2–Q1) | 0.1079 | 1.38e-3 | | 2.87e-2 | | 7.11e-2 | |
+| | 0.0545 | 6.73e-4 | 1.06 | 2.02e-2 | 0.51 | 5.02e-2 | 0.51 |
 | | 0.0274 | 3.32e-4 | 1.03 | 1.43e-2 | 0.50 | 3.55e-2 | 0.50 |

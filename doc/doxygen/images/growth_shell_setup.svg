@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 680" font-family="'Times New Roman', Times, serif" font-size="21">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <marker id="small" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#000" stroke-width="1.2"/>
+    </pattern>
+  </defs>
+
+  <rect width="900" height="680" fill="white"/>
+
+  <!-- origin (150, 600); radii R_i = 240, R_c = 384, R_o = 480 px -->
+  <!-- outer layer, growing -->
+  <path d="M 150 120 A 480 480 0 0 1 630 600 L 534 600 A 384 384 0 0 0 150 216 Z" fill="#d9d9d9" stroke="none"/>
+  <!-- inner layer -->
+  <path d="M 150 216 A 384 384 0 0 1 534 600 L 390 600 A 240 240 0 0 0 150 360 Z" fill="white" stroke="none"/>
+  <!-- boundaries -->
+  <path d="M 150 120 A 480 480 0 0 1 630 600" fill="none" stroke="#000" stroke-width="2.5"/>
+  <path d="M 150 360 A 240 240 0 0 1 390 600" fill="none" stroke="#000" stroke-width="2.5"/>
+  <path d="M 150 216 A 384 384 0 0 1 534 600" fill="none" stroke="#000" stroke-width="1.5" stroke-dasharray="10 5"/>
+  <line x1="150" y1="120" x2="150" y2="360" stroke="#000" stroke-width="2.5"/>
+  <line x1="390" y1="600" x2="630" y2="600" stroke="#000" stroke-width="2.5"/>
+
+  <!-- symmetry conditions -->
+  <rect x="122" y="120" width="28" height="240" fill="url(#hatch)" stroke="none"/>
+  <rect x="390" y="600" width="240" height="28" fill="url(#hatch)" stroke="none"/>
+  <g fill="white" stroke="#000" stroke-width="1.2">
+    <circle cx="143" cy="150" r="6"/><circle cx="143" cy="210" r="6"/><circle cx="143" cy="270" r="6"/><circle cx="143" cy="330" r="6"/>
+    <circle cx="420" cy="607" r="6"/><circle cx="480" cy="607" r="6"/><circle cx="540" cy="607" r="6"/><circle cx="600" cy="607" r="6"/>
+  </g>
+  <text x="20" y="250"><tspan font-style="italic">u</tspan><tspan dy="5" font-size="15" font-style="italic">x</tspan><tspan dy="-5"> = 0</tspan></text>
+  <text x="470" y="660"><tspan font-style="italic">u</tspan><tspan dy="5" font-size="15" font-style="italic">y</tspan><tspan dy="-5"> = 0</tspan></text>
+
+  <!-- layers -->
+  <text x="640" y="235">outer layer: <tspan font-style="italic">F</tspan><tspan dy="5" font-size="15">g</tspan><tspan dy="-5"> = 1.2 </tspan><tspan font-weight="bold">I</tspan>,</text>
+  <text x="640" y="262"><tspan font-style="italic">μ</tspan> = 3, <tspan font-style="italic">λ</tspan> = 4.5</text>
+  <line x1="636" y1="245" x2="565" y2="300" stroke="#000" stroke-width="1"/>
+  <text x="640" y="400">inner layer: no growth,</text>
+  <text x="640" y="427"><tspan font-style="italic">μ</tspan> = 1, <tspan font-style="italic">λ</tspan> = 1.5</text>
+  <line x1="636" y1="410" x2="440" y2="465" stroke="#000" stroke-width="1"/>
+  <text x="640" y="110">traction free</text>
+  <line x1="660" y1="118" x2="395" y2="185" stroke="#000" stroke-width="1"/>
+  <text x="20" y="440">traction free</text>
+  <line x1="120" y1="425" x2="190" y2="366" stroke="#000" stroke-width="1"/>
+
+  <!-- radii -->
+  <circle cx="150" cy="600" r="3.5" fill="#000"/>
+  <line x1="150" y1="600" x2="212.1" y2="368.2" stroke="#000" stroke-width="1.3" marker-end="url(#small)"/>
+  <line x1="150" y1="600" x2="421.5" y2="328.5" stroke="#000" stroke-width="1.3" marker-end="url(#small)"/>
+  <line x1="150" y1="600" x2="613.6" y2="475.8" stroke="#000" stroke-width="1.3" marker-end="url(#small)"/>
+  <text x="158" y="470" font-style="italic">R<tspan dy="5" font-size="15" font-style="normal">i</tspan></text>
+  <text x="300" y="490" font-style="italic">R<tspan dy="5" font-size="15" font-style="normal">c</tspan></text>
+  <text x="445" y="566" font-style="italic">R<tspan dy="5" font-size="15" font-style="normal">o</tspan></text>
+
+  <!-- axes -->
+  <line x1="40" y1="600" x2="95" y2="600" stroke="#000" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="40" y1="600" x2="40" y2="545" stroke="#000" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="100" y="607" font-style="italic">x</text>
+  <text x="34" y="535" font-style="italic">y</text>
+</svg>
