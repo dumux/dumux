@@ -51,6 +51,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="user" url="@ref benchmark-cooks-membrane-hyperelastic" visible="yes" title="Cook's membrane, hyperelastic" intro=""/>
       <tab type="user" url="@ref benchmark-incompressible-block" visible="yes" title="Incompressible block" intro=""/>
       <tab type="user" url="https://st.bwpages.de/iws/dumux/appl/dumux-cardiac-benchmark/" visible="yes" title="Cardiac elastodynamics" intro=""/>
+      <tab type="user" url="@ref benchmark-contact-hertz" visible="yes" title="Hertz contact" intro=""/>
+      <tab type="user" url="@ref benchmark-contact-ring" visible="yes" title="Ring collapse" intro=""/>
       <tab type="user" url="@ref benchmark-mandel" visible="yes" title="Mandel's problem" intro=""/>
       <tab type="user" url="@ref benchmark-timestepping-methods" visible="yes" title="Multistep timestepping" intro=""/>
     </tab>

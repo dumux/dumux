@@ -56,6 +56,7 @@ finite elements, Q2-Q1), each with a benchmark page.
 identified with all their periodic images, and all assemblers enforce the periodic constraints for each of them. The periodic
 partner detection of the box, pq1bubble, pq2, pq3 and finite-element discretizations compares the periodic shift instead of only
 the distance, which also accepted unrelated degrees of freedom at the distance of the domain length.
+- __Contact__: `dumux/solidmechanics/contact/` implements frictionless penalty contact between parts of the boundary of a solid, both self-contact and contact between bodies of one mesh, for vertex-based discretizations such as the box method in 2D and 3D: `Contact::ContactSurface` (boundary facets, dual areas and normals), `Contact::PenaltyContact` (a continuously differentiable node-to-facet penalty energy with a tree search for the candidate facets) and `Contact::ContactAssembler`, which wraps an assembler and adds the contact forces and their Jacobian. New benchmarks: Hertz contact of two cylinders and the collapse of a ring under external pressure with self-contact.
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's

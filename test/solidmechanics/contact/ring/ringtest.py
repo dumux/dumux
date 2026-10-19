@@ -6,9 +6,10 @@
 The reference is the elastica ring of bending stiffness D under uniform external pressure p,
 symmetric about both axes, whose midline touches the opposite one at the half wall thickness
 h = t/2 (Flaherty, Keller, Rubinow, SIAM J. Appl. Math. 23, 1972, for h = 0). Its values for
-h/R = 0.02, from shooting on D theta' = C + p r^2/2 - Q x/2 over the quarter ring: the contact
-force is nearly linear in p for 6 <= pR^3/D <= 9, with slope dQ/dp = 1.566 R and zero at
-p = 5.137 D/R^3; line contact (zero curvature at the contact point) starts at p = 10.07 D/R^3.
+h/R = 0.02 (elastica.py, shooting on D theta' = C + p r^2/2 - Q x/2 over the quarter ring):
+the contact force is nearly linear in p for 6 <= pR^3/D <= 9, with slope dQ/dp = 1.566 R and
+zero at p = 5.137 D/R^3; line contact (zero curvature at the contact point) starts at
+p = 10.07 D/R^3.
 Checked: the midline stays outside h on the minor axis, the slope within 1 %, the zero of the
 linear fit within 3 %, and the largest contact pressure leaves the minor axis between the two
 listed pressures around 10.07.
