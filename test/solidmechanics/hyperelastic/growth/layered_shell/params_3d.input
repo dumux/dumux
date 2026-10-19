@@ -6,7 +6,7 @@ Name = test_hyperelastic_growth_layered_shell
 InnerRadius = 0.5
 InterfaceRadius = 0.8
 OuterRadius = 1.0
-GrowthSteps = 1
+GrowthSteps = 4
 
 [Problem.Inner]
 GrowthStretch = 1.0

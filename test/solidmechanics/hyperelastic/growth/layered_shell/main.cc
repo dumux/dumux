@@ -16,6 +16,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 #include <dune/geometry/quadraturerules.hh>
@@ -69,8 +70,17 @@ int main(int argc, char** argv)
     using Assembler = Experimental::Assembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearAlgebraTraits = LinearAlgebraTraitsFromAssembler<Assembler>;
+    using LinearSolver = std::conditional_t<dim == 3,
+        AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraits>,
+        UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraits>>;
+    auto linearSolver = [&]
+    {
+        if constexpr (dim == 3)
+            return std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+        else
+            return std::make_shared<LinearSolver>();
+    }();
     NewtonSolver<Assembler, LinearSolver> nonlinearSolver(assembler, linearSolver);
 
     // the growth is increased in steps, each starting from the previous solution

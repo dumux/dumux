@@ -33,7 +33,8 @@ dumux_add_test(NAME test_hyperelastic_growth_bending_strip_box_3d
                COMPILE_DEFINITIONS TYPETAG=BendingStripBox DIMENSION=3
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../convergencetest.py
-               CMD_ARGS test_hyperelastic_growth_bending_strip_box_3d params_3d.input "20 2 2" 1.6 0.9)
+               CMD_ARGS test_hyperelastic_growth_bending_strip_box_3d params_3d.input "20 2 2" 1.6 0.9
+               TIMEOUT 600)
 
 dumux_add_test(NAME test_hyperelastic_growth_bending_strip_mixed_p1b_2d
                LABELS solidmechanics
