@@ -23,3 +23,5 @@ dumux_add_test(NAME test_poroelastic_box_gridformat_io
                            --files ${CMAKE_SOURCE_DIR}/test/references/test_poroelastic_box-reference.vtu
                                    ${CMAKE_CURRENT_BINARY_DIR}/test_poroelastic_box_gridformat_io-00001.vtu
                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_poroelastic_box_gridformat_io params.input -Problem.Name test_poroelastic_box_gridformat_io")
+
+add_subdirectory(cryer)

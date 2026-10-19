@@ -1,0 +1,49 @@
+[Grid]
+File = ../../sphere_eighth.msh
+
+[Problem]
+# surface load p0 in Pa
+PressureLoad = 100.0
+EnableGravity = false
+
+[OneP.Problem]
+Name = flow
+
+[PoroElastic.Problem]
+Name = mech
+
+[SpatialParams]
+# linear elastic skeleton with Poisson's ratio 0
+ShearModulus = 1.5e6
+BulkModulus = 1.0e6
+BiotCoefficient = 1.0
+StorageCoefficient = 0.0
+InitialPorosity = 0.5
+InitialPermeability = 1.0e-12
+
+[Component]
+LiquidDensity = 1000.0
+LiquidDynamicViscosity = 1.0e-3
+SolidDensity = 2700.0
+
+[TimeLoop]
+# R0^2/cv in s
+TEnd = 333.33
+Dt = 1.0
+DtGrowthFactor = 1.3
+MaxTimeStepSize = 20.0
+Scheme = DIRK3
+
+# The model is linear, so perturbations of 1 Pa and 1e-6 m give an exact numeric Jacobian. The default
+# perturbation of the pressure changes the fluxes only at the level of the round-off of the storage term.
+[OneP.Assembly.NumericDifference]
+PriVarMagnitude = 1e10
+
+[PoroElastic.Assembly.NumericDifference]
+PriVarMagnitude = 1e4 1e4 1e4
+
+[Newton]
+MaxRelativeShift = 1e-10
+
+[Vtk]
+OutputName = cryer_small_deformation
