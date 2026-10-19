@@ -10,6 +10,7 @@
  */
 #include <config.h>
 
+#include <array>
 #include <vector>
 #include <random>
 #include <cmath>
@@ -262,6 +263,58 @@ void runTests()
     }
 }
 
+// checks the average distance of a line and of segments on the z-axis to a box
+template<class Hexahedron>
+void runAverageDistanceTests()
+{
+    using namespace Dumux;
+    using GlobalPosition = typename Hexahedron::GlobalCoordinate;
+
+    // the box [1, 2] x [0, 1] x [0, 2] next to the z-axis
+    std::vector<GlobalPosition> corners;
+    for (double z : {0.0, 2.0})
+        for (double y : {0.0, 1.0})
+            for (double x : {1.0, 2.0})
+                corners.push_back({x, y, z});
+    const Hexahedron box(Dune::GeometryTypes::cube(3), corners);
+
+    // the distance to the z-axis is r = sqrt(x^2 + y^2) for all z, so the exact average over the box
+    // is the average of r over the square [1, 2] x [0, 1], computed with the antiderivative F of r
+    const auto F = [](double x, double y){
+        using std::hypot; using std::log;
+        const auto r = hypot(x, y);
+        return (2.0*x*y*r + x*x*x*log(y + r) + y*y*y*log(x + r))/6.0;
+    };
+    const double expected = F(2.0, 1.0) - F(1.0, 1.0) - F(2.0, 0.0) + F(1.0, 0.0);
+
+    // segments on the z-axis: covering the box height, covering a part of it, and above the box
+    const auto onAxis = [](double z){ return GlobalPosition({0.0, 0.0, z}); };
+    const auto covering = std::array{onAxis(0.0), onAxis(2.0)};
+    const auto partial = std::array{onAxis(0.5), onAxis(1.0)};
+    const auto above = std::array{onAxis(3.0), onAxis(4.0)};
+
+    // the line distance does not depend on the segment: it matches the exact value with a high
+    // integration order (r is smooth on the box) and is identical for all segments with the default order
+    const auto lineDistance = averageDistanceLineGeometry(covering[0], covering[1], box);
+    for (const auto& [a, b] : {covering, partial, above})
+    {
+        const auto computed = averageDistanceLineGeometry(a, b, box, 15);
+        if (Dune::FloatCmp::ne(expected, computed, 1e-12))
+            DUNE_THROW(Dune::InvalidStateException, Fmt::format(
+                "Unexpected average line-box distance. Expected {}, got {}", expected, computed
+            ));
+        checkGeometryDistance(lineDistance, averageDistanceLineGeometry(a, b, box), "average line-box");
+    }
+
+    // the segment distance equals the line distance only if the segment covers the box height,
+    // otherwise the parts of the box beyond the segment ends are farther away
+    checkGeometryDistance(lineDistance, averageDistanceSegmentGeometry(covering[0], covering[1], box), "average segment-box");
+    for (const auto& [a, b] : {partial, above})
+        if (!(averageDistanceSegmentGeometry(a, b, box) > lineDistance))
+            DUNE_THROW(Dune::InvalidStateException,
+                "Average segment-box distance has to exceed the line distance if the segment does not cover the box height");
+}
+
 // alias to ignore fourth optional template argument of Dune::MultiLinearGeometry
 template<class ct, int mydim, int codim>
 using DuneMultiLinearGeometry = Dune::MultiLinearGeometry<ct, mydim, codim>;
@@ -287,6 +340,9 @@ int main(int argc, char** argv)
     // mixed types (3d)
     runTests< Dune::AffineGeometry, DuneMultiLinearGeometry, 3>();
     runTests< DuneMultiLinearGeometry, Dune::AffineGeometry, 3>();
+
+    // average distances of a line and of segments to a box
+    runAverageDistanceTests<Dune::MultiLinearGeometry<double, 3, 3>>();
 
     return 0;
 }

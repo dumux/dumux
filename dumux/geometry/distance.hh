@@ -276,6 +276,26 @@ averageDistanceSegmentGeometry(const typename Geometry::GlobalCoordinate& a,
 
 /*!
  * \ingroup Geometry
+ * \brief Compute the average distance from a line through the points a and b to a geometry by integration
+ * \note In contrast to averageDistanceSegmentGeometry, the result does not depend on where a and b
+ *       lie on the line, e.g. on the length of a segment of the line embedded in the geometry.
+ */
+template<class Geometry>
+static inline typename Geometry::ctype
+averageDistanceLineGeometry(const typename Geometry::GlobalCoordinate& a,
+                            const typename Geometry::GlobalCoordinate& b,
+                            const Geometry& geometry,
+                            std::size_t integrationOrder = 2)
+{
+    typename Geometry::ctype avgDist = 0.0;
+    const auto& quad = Dune::QuadratureRules<typename Geometry::ctype, Geometry::mydimension>::rule(geometry.type(), integrationOrder);
+    for (const auto& qp : quad)
+        avgDist += distancePointLine(geometry.global(qp.position()), a, b)*qp.weight()*geometry.integrationElement(qp.position());
+    return avgDist/geometry.volume();
+}
+
+/*!
+ * \ingroup Geometry
  * \brief Compute the shortest distance between two points
  */
 template<class ctype, int dimWorld>
