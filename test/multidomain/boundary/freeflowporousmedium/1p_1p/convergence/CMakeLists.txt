@@ -5,6 +5,27 @@ add_input_file_links()
 dune_symlink_to_source_files(FILES "convergencetest.py")
 
 add_executable(test_md_boundary_ff1p_pm1p_convtest EXCLUDE_FROM_ALL main.cc)
+add_executable(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box EXCLUDE_FROM_ALL main.cc)
+add_executable(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box EXCLUDE_FROM_ALL main.cc)
+add_executable(test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1Bubble
+                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
+
+target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
+                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1BubbleHybrid
+                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
+
+target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
+                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2Hybrid
+                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface
+                                  QUADRATURE_RULE_FFMASS=Dumux::QuadratureRules::DuneQuadrature<4>)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -14,8 +35,39 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1
               COMMAND ./convergencetest.py
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase ShiueExampleOne
+                        -Rates "L2dof(p) 1.7" "L2dof(v) 1.95"
                         -Darcy.Problem.BoundaryConditions Dirichlet
-                        -FreeFlow.Problem.BoundaryConditions Dirichlet)
+                        -FreeFlow.Problem.BoundaryConditions Dirichlet
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue1
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box params.input
+                        -Problem.TestCase ShiueExampleOne
+                        -Darcy.Problem.BoundaryConditions Dirichlet
+                        -FreeFlow.Problem.BoundaryConditions Dirichlet
+                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shiue1
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box params.input
+                        -Problem.TestCase ShiueExampleOne
+                        -Darcy.Problem.BoundaryConditions Dirichlet
+                        -FreeFlow.Problem.BoundaryConditions Dirichlet
+                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_hybrid_box
+                        -Darcy.Problem.Name darcy_pq1bubble_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue2
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -25,8 +77,55 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue2
               COMMAND ./convergencetest.py
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase ShiueExampleTwo
+                        -Rates "L2dof(p) 1.7" "L2dof(v) 1.95"
                         -Darcy.Problem.BoundaryConditions Mixed
-                        -FreeFlow.Problem.BoundaryConditions Mixed)
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue2
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box params.input
+                        -Problem.TestCase ShiueExampleTwo
+                        -Darcy.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shiue2
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box params.input
+                        -Problem.TestCase ShiueExampleTwo
+                        -Darcy.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_hybrid_box
+                        -Darcy.Problem.Name darcy_pq1bubble_hybrid_box)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_shiue2
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box params.input
+                        -Problem.TestCase ShiueExampleTwo
+                        -Darcy.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -Darcy.Grid.Cells "20 20"
+                        -FreeFlow.Grid.Cells "20 20"
+                        -Rates "L2(p) 1.9" "L2(v) 1.9" "H1(v) 1.9" "L2dof(p) 1.9" "L2dof(v) 1.9"
+                        -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
+                        -Darcy.Problem.Name darcy_pq2_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_rybak
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -37,7 +136,39 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_rybak
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase Rybak
                         -Darcy.Problem.BoundaryConditions Neumann
-                        -FreeFlow.Problem.BoundaryConditions Stress)
+                        -FreeFlow.Problem.BoundaryConditions Stress
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_rybak
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box params.input
+                        -Problem.TestCase Rybak
+                        -Darcy.Problem.BoundaryConditions Neumann
+                        -FreeFlow.Problem.BoundaryConditions Stress
+                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_rybak
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box params.input
+                        -Problem.TestCase Rybak
+                        -Darcy.Problem.BoundaryConditions Neumann
+                        -FreeFlow.Problem.BoundaryConditions Stress
+                        -Darcy.Grid.Cells "20 20"
+                        -FreeFlow.Grid.Cells "20 20"
+                        -Rates "L2(p) 1.95" "L2(v) 1.95" "H1(v) 1.95" "L2dof(p) 1.95" "L2dof(v) 1.95"
+                        -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
+                        -Darcy.Problem.Name darcy_pq2_hybrid_box)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
               TARGET test_md_boundary_ff1p_pm1p_convtest
@@ -50,4 +181,6 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
                         -FreeFlow.Problem.EnableInertiaTerms true
                         -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
                         -Darcy.Problem.BoundaryConditions Mixed
-                        -FreeFlow.Problem.BoundaryConditions Mixed)
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.Name freeflow_staggered
+                        -Darcy.Problem.Name darcy_staggered)
