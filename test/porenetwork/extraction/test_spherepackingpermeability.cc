@@ -83,11 +83,11 @@ struct FlowResult
 
 enum class GridSource { dgfFile, networkData };
 
+template<class TypeTag = Dumux::Properties::TTag::SpherePackingPermeability>
 FlowResult solveFlow(const std::string& paramGroup, const Network<double>& network, int axis,
                      GridSource source = GridSource::dgfFile)
 {
     using namespace Dumux;
-    using TypeTag = Properties::TTag::SpherePackingPermeability;
 
     PoreNetwork::GridManager<3> gridManager;
     if (source == GridSource::networkData)
@@ -154,8 +154,7 @@ FlowResult solveFlow(const std::string& paramGroup, const Network<double>& netwo
         const bool inletJ = network.pores[j].label == problem->inletLabel();
         if (inletI == inletJ)
             continue;
-        const double transmissibility = PoreNetwork::TransmissibilityChareyre<double>::singlePhaseTransmissibility(
-            throat.fluidArea, throat.hydraulicRadius, throat.length);
+        const double transmissibility = throatTransmissibility(throat);
         const double dp = inletI ? pressure[i] - pressure[j] : pressure[j] - pressure[i];
         result.networkFlux += transmissibility/viscosity*dp;
     }
@@ -344,6 +343,50 @@ void testWalls()
 }
 
 // three steps of uniform compression with a new triangulation before the third
+void testGivenTransmissibility()
+{
+    using GivenTransmissibility = Dumux::Properties::TTag::SpherePackingGivenTransmissibility;
+    const auto [centers, radii, boxLength] = randomPacking(1200, 0.25, 7);
+    ExtractionRegion<double> region;
+    region.lower = 1.5e-3;
+    region.upper = boxLength - 1.5e-3;
+    auto network = extractNetwork(regularTriangulation(centers, radii), centers, radii, region);
+    // inlet and outlet only, as walls x = min and x = max of the pore-scale flow
+    for (auto& pore : network.pores)
+        pore.label = pore.label == 1 || pore.label == 2 ? pore.label : -1;
+
+    const auto chareyre = solveFlow("Given", network, 0, GridSource::networkData);
+    const auto fromGeometry = solveFlow<GivenTransmissibility>("Given", network, 0, GridSource::networkData);
+    check(fromGeometry.modelInflux, chareyre.modelInflux, 1e-12, "given transmissibility: none given, Chareyre law");
+
+    std::mt19937 gen(11);
+    std::uniform_real_distribution<double> logFactor(std::log(0.25), std::log(4.0));
+    auto given = network;
+    for (auto& throat : given.throats)
+        throat.transmissibility = std::exp(logFactor(gen))*throatTransmissibility(throat);
+    const auto flow = solveFlow<GivenTransmissibility>("Given", given, 0, GridSource::networkData);
+    check(flow.modelOutflux, flow.modelInflux, 1e-10, "given transmissibility: outflow equals inflow");
+    check(flow.modelInflux, flow.networkFlux, 1e-10, "given transmissibility: model flux equals network flux");
+    checkTrue(std::abs(flow.modelInflux/chareyre.modelInflux - 1.0) > 1e-3, "given transmissibility: flux differs from Chareyre");
+
+    const double viscosity = Dumux::getParam<double>("Component.LiquidDynamicViscosity");
+    const double dp = Dumux::getParam<double>("Problem.InletPressure") - Dumux::getParam<double>("Problem.OutletPressure");
+    PoreScaleFlow<double> poreScaleFlow(given, viscosity, {Dumux::getParam<double>("Problem.InletPressure"),
+                                                           Dumux::getParam<double>("Problem.OutletPressure"),
+                                                           std::nullopt, std::nullopt, std::nullopt, std::nullopt});
+    const auto& p = poreScaleFlow.solve(std::vector<double>(given.pores.size(), 0.0));
+    double maxDifference = 0.0;
+    for (std::size_t i = 0; i < given.pores.size(); ++i)
+        maxDifference = std::max(maxDifference, std::abs(p[i] - flow.pressure[i]));
+    check(1.0 + maxDifference/dp, 1.0, 1e-10, "given transmissibility: pore-scale flow pressures equal the pore-network model");
+
+    auto doubled = network;
+    for (auto& throat : doubled.throats)
+        throat.transmissibility = 2.0*throatTransmissibility(throat);
+    const auto twice = solveFlow<GivenTransmissibility>("Given", doubled, 0, GridSource::networkData);
+    check(twice.modelInflux, 2.0*chareyre.modelInflux, 1e-12, "given transmissibility: doubled transmissibilities double the flux");
+}
+
 void testPoreScaleFiniteVolume()
 {
     const auto [centers, radii, boxLength] = randomPacking(800, 0.25, 6);
@@ -473,6 +516,7 @@ int main(int argc, char** argv)
     testCubicLattice();
     testRandomPacking();
     testWalls();
+    testGivenTransmissibility();
     testPoreScaleFiniteVolume();
     testCompressible();
 

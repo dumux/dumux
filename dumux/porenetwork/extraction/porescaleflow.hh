@@ -25,7 +25,6 @@
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/umfpack.hh>
 
-#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/porenetwork/extraction/spherepackingnetwork.hh>
 
 namespace Dumux::PoreNetwork::SpherePacking {
@@ -36,8 +35,8 @@ namespace Dumux::PoreNetwork::SpherePacking {
  * In every pore without imposed pressure the outflow balances the volume change of the pore, a volume
  * source and, for a fluid of finite bulk modulus K_f, the compression of the fluid in the pore:
  * (V_i/K_f) dp_i/dt + sum_j g_ij (p_i - p_j) = -dV_i/dt + q_i, with the void volume V_i, the conductances
- * g_ij = A R_h^2/(2 mu L) of the throats and the volume source q_i (pore-scale finite volume method,
- * Chareyre et al. 2012, Catalano et al. 2014). The storage term is discretised implicitly over the time
+ * g_ij of the throats, their throatTransmissibility over the viscosity mu (A R_h^2/(2 mu L) unless given),
+ * and the volume source q_i (pore-scale finite volume method, Chareyre et al. 2012, Catalano et al. 2014). The storage term is discretised implicitly over the time
  * step; without bulk modulus the fluid is incompressible. Pores touching a wall with an imposed pressure
  * take that pressure. The matrix depends on the network and the time step only; it is factorised once,
  * and each solve is a back substitution.
@@ -87,8 +86,7 @@ public:
 
         for (const auto& throat : network.throats)
         {
-            const Scalar g = TransmissibilityChareyre<Scalar>::singlePhaseTransmissibility(
-                throat.fluidArea, throat.hydraulicRadius, throat.length)/viscosity;
+            const Scalar g = throatTransmissibility(throat)/viscosity;
             const auto i = throat.pores[0], j = throat.pores[1];
             (*matrix_)[i][i] += g;
             (*matrix_)[j][j] += g;

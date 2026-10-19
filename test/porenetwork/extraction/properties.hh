@@ -62,6 +62,17 @@ template<class TypeTag>
 struct LocalResidual<TypeTag, TTag::SpherePackingPermeability>
 { using type = OnePIncompressibleLocalResidual<TypeTag>; };
 
+namespace TTag {
+struct SpherePackingGivenTransmissibility { using InheritsFrom = std::tuple<SpherePackingPermeability>; };
+} // end namespace TTag
+
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::SpherePackingGivenTransmissibility>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = PoreNetwork::CreepingFlow<Scalar, PoreNetwork::TransmissibilityFromSpatialParams<Scalar>>;
+};
+
 } // end namespace Dumux::Properties
 
 #endif

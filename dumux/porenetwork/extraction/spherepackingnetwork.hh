@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <map>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/io/grid/porenetwork/networkdata.hh>
+#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
 #include <dumux/porenetwork/extraction/spherepackinggeometry.hh>
 #include <dumux/porenetwork/extraction/spherepackingwalls.hh>
 
@@ -76,6 +78,7 @@ struct Network
         Scalar hydraulicRadius = 0.0;
         Scalar shapeFactor = 0.0;
         int label = -1;
+        std::optional<Scalar> transmissibility; //!< at unit viscosity if given, see throatTransmissibility
     };
 
     //! facet of the triangulation between two different pores, for the pressure forces on its vertices
@@ -658,11 +661,24 @@ std::vector<Point<Scalar>> fluidForces(const Network<Scalar>& network, const Pre
 }
 
 /*!
+ * \brief Single-phase transmissibility of a throat at unit viscosity: the given one, otherwise
+ *        TransmissibilityChareyre of the throat geometry
+ */
+template<class Throat>
+auto throatTransmissibility(const Throat& throat)
+{
+    using Scalar = decltype(throat.length);
+    return throat.transmissibility.value_or(
+        TransmissibilityChareyre<Scalar>::singlePhaseTransmissibility(throat.fluidArea, throat.hydraulicRadius, throat.length));
+}
+
+/*!
  * \brief The pores and throats of the network with their parameters, for PoreNetwork::GridManager::init
  *
  * Pore parameters: PoreInscribedRadius PoreVolume PoreLabel;
  * throat parameters: ThroatInscribedRadius ThroatLength ThroatCrossSectionalArea ThroatShapeFactor
- * ThroatHydraulicRadius ThroatLabel. The pore geometry is not included, set Grid.PoreGeometry.
+ * ThroatHydraulicRadius ThroatLabel ThroatTransmissibility (see throatTransmissibility).
+ * The pore geometry is not included, set Grid.PoreGeometry.
  */
 template<class Scalar>
 PoreNetwork::NetworkData<3, Scalar> networkData(const Network<Scalar>& network)
@@ -670,7 +686,7 @@ PoreNetwork::NetworkData<3, Scalar> networkData(const Network<Scalar>& network)
     PoreNetwork::NetworkData<3, Scalar> data;
     data.vertexParameterNames = {"PoreInscribedRadius", "PoreVolume", "PoreLabel"};
     data.elementParameterNames = {"ThroatInscribedRadius", "ThroatLength", "ThroatCrossSectionalArea",
-                                  "ThroatShapeFactor", "ThroatHydraulicRadius", "ThroatLabel"};
+                                  "ThroatShapeFactor", "ThroatHydraulicRadius", "ThroatLabel", "ThroatTransmissibility"};
     for (const auto& pore : network.pores)
     {
         data.porePositions.push_back(pore.position);
@@ -679,8 +695,9 @@ PoreNetwork::NetworkData<3, Scalar> networkData(const Network<Scalar>& network)
     for (const auto& throat : network.throats)
     {
         data.throatPores.push_back(throat.pores);
-        data.elementParameters.push_back({throat.inscribedRadius, throat.length, throat.fluidArea,
-                                          throat.shapeFactor, throat.hydraulicRadius, static_cast<Scalar>(throat.label)});
+        data.elementParameters.push_back({throat.inscribedRadius, throat.length, throat.fluidArea, throat.shapeFactor,
+                                          throat.hydraulicRadius, static_cast<Scalar>(throat.label),
+                                          throatTransmissibility(throat)});
     }
     return data;
 }

@@ -16,6 +16,8 @@
 #include <memory>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/porenetwork/1p/spatialparams.hh>
 
 namespace Dumux::PoreNetwork {
@@ -23,8 +25,9 @@ namespace Dumux::PoreNetwork {
 /*!
  * \ingroup SpatialParameters
  * \ingroup PNMOnePModel
- * \brief Single-phase spatial parameters with the throat hydraulic radius from the grid data,
- *        as required by TransmissibilityChareyre
+ * \brief Single-phase spatial parameters with the throat hydraulic radius from the grid data, as required by
+ *        TransmissibilityChareyre, and the throat transmissibility if the grid data has the element parameter
+ *        ThroatTransmissibility, as required by TransmissibilityFromSpatialParams
  */
 template<class GridGeometry, class Scalar>
 class SpherePackingOnePSpatialParams
@@ -39,16 +42,33 @@ public:
     : ParentType(gridGeometry)
     , hydraulicRadius_(gridGeometry->gridView().size(0))
     {
+        const bool hasTransmissibility = gridData.gridHasElementParameter("ThroatTransmissibility");
+        if (hasTransmissibility)
+            transmissibility_.resize(gridGeometry->gridView().size(0));
         for (const auto& element : elements(gridGeometry->gridView()))
-            hydraulicRadius_[gridGeometry->elementMapper().index(element)] = gridData.getParameter(element, "ThroatHydraulicRadius");
+        {
+            const auto eIdx = gridGeometry->elementMapper().index(element);
+            hydraulicRadius_[eIdx] = gridData.getParameter(element, "ThroatHydraulicRadius");
+            if (hasTransmissibility)
+                transmissibility_[eIdx] = gridData.getParameter(element, "ThroatTransmissibility");
+        }
     }
 
     template<class ElementVolumeVariables>
     Scalar throatHydraulicRadius(const Element& element, const ElementVolumeVariables& elemVolVars) const
     { return hydraulicRadius_[this->gridGeometry().elementMapper().index(element)]; }
 
+    template<class ElementVolumeVariables>
+    Scalar throatTransmissibility(const Element& element, const ElementVolumeVariables& elemVolVars) const
+    {
+        if (transmissibility_.empty())
+            DUNE_THROW(Dune::InvalidStateException, "The grid data has no element parameter ThroatTransmissibility");
+        return transmissibility_[this->gridGeometry().elementMapper().index(element)];
+    }
+
 private:
     std::vector<Scalar> hydraulicRadius_;
+    std::vector<Scalar> transmissibility_;
 };
 
 } // end namespace Dumux::PoreNetwork

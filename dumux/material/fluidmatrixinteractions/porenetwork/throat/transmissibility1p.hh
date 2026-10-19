@@ -255,6 +255,30 @@ public:
     { return 0.5*area*hydraulicRadius*hydraulicRadius/length; }
 };
 
+/*!
+ * \ingroup Fluidmatrixinteractions
+ * \brief Single-phase flow throat transmissibility given per throat by the spatial parameters
+ *        through throatTransmissibility(element, elemVolVars), e.g. computed from the flow through
+ *        the cross-section of the throat outside the pore-network model
+ */
+template<class Scalar>
+class TransmissibilityFromSpatialParams
+{
+public:
+
+    using SinglePhaseCache = EmptyCache;
+
+    template<class Problem, class Element, class FVElementGeometry, class ElementVolumeVariables, class FluxVariablesCache>
+    static Scalar singlePhaseTransmissibility(const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                                              const ElementVolumeVariables& elemVolVars,
+                                              const FluxVariablesCache& fluxVarsCache,
+                                              const int phaseIdx)
+    { return problem.spatialParams().throatTransmissibility(element, elemVolVars); }
+};
+
 } // end namespace Dumux::Porenetwork
 
 #endif
