@@ -23,7 +23,7 @@ restricting the deformation, which is symmetric about both axes. The inner surfa
 surface; the penalty law with stiffness $k$ and offset $\delta$ is described on the page
 @ref benchmark-contact-hertz.
 
-![Left: the ring of midline radius R and wall thickness t under the external pressure p (1 - epsilon cos 2 phi); the dash-dotted lines are the coordinate axes, on which the nodes stay. Right: the collapsed ring with its inner walls in contact along a flat segment of length 2b.](ring_setup.svg)
+![The ring of midline radius R and wall thickness t under the external pressure p (1 - epsilon cos 2 phi), with the coordinate axes (dash-dotted) on which the nodes stay, and the collapsed ring with its inner walls in contact along a flat segment of length 2b.](ring_setup.svg)
 
 **Reference solution**
 
@@ -85,11 +85,12 @@ The table and the figures are produced in the build directory by
 ```bash
 cd build-cmake/test/solidmechanics/contact/ring
 make test_contact_ring
-python3 run_benchmark.py ../../../../doc/doxygen/images
+python3 run_benchmark.py
 ```
 
-which runs three meshes in parallel (about 11 minutes; numpy, scipy and matplotlib) and computes
-the elastica for $h/R = 0.02$.
+which runs the meshes of the table in parallel (about 11 minutes; numpy, scipy and matplotlib)
+and computes the elastica for $h/R = 0.02$; with the directory `doc/doxygen/images` of the DuMux
+sources as argument, it also writes the figures.
 
 | Mesh $N \times L$ | $\mathrm{d}Q/\mathrm{d}p$ | deviation | zero of the fit $p R^3/D$ | deviation | line contact starts at $p R^3/D$ | smallest semi-minor axis $/R$ |
 | :--- | ---: | ---: | ---: | ---: | :--- | ---: |
@@ -98,19 +99,19 @@ the elastica for $h/R = 0.02$.
 | 1280 × 8 | 1.5739 | +0.48 % | 5.2049 | +1.32 % | 10.5 to 11 | 0.02072 |
 | 2560 × 16 | 1.5744 | +0.51 % | 5.1249 | −0.24 % | 10.5 to 11 | 0.02072 |
 
-![Left: contact force Q between the two halves of the ring against the pressure p, for the elastica (solid line, the diamond marks the onset of line contact) and three meshes (circles dashed, squares dotted, triangles dash-dotted). Right: the difference of the computed contact force from the elastica.](ring_contactforce.png)
+![Contact force Q between the two halves of the ring against the pressure p, for the elastica (solid line, the diamond marks the onset of line contact) and the meshes of the table (circles dashed, squares dotted, triangles dash-dotted), and the difference of the computed contact force from the elastica.](ring_contactforce.png)
 
-![The deformed ring on the finest mesh at three pressures: point contact at the lowest and line contact at the highest pressure; dots mark the nodes in contact.](ring_shapes.png)
+![The deformed ring on the finest mesh at p R^3/D = 6, 9 and 12: point contact at the lowest and line contact at the highest pressure; dots mark the nodes in contact.](ring_shapes.png)
 
 - The extrapolated pressure of first contact converges to the elastica: it deviates by
-  +7.54 %, +1.32 % and −0.24 % on the three meshes.
-- The slope $\mathrm{d}Q/\mathrm{d}p$ deviates from the elastica by 0.48 % and 0.51 % on the two
-  finer meshes, so the difference is not a discretization error. The elastica neglects the
+  +7.54 %, +1.32 % and −0.24 % on the meshes 640 × 4, 1280 × 8 and 2560 × 16.
+- The slope $\mathrm{d}Q/\mathrm{d}p$ deviates from the elastica by 0.48 % and 0.51 % on the meshes
+  1280 × 8 and 2560 × 16, so the difference is not a discretization error. The elastica neglects the
   extension and the shear of the wall and its compression in the contact.
 - The midline stays at least $0.02072\,R$ from the axis on all meshes, above $h = 0.02\,R$: the
   walls do not cross.
-- The largest contact pressure leaves the minor axis between $p R^3/D = 10.5$ and 11 on the two
-  finer meshes, after the elastica's onset of line contact at 10.07. The criteria differ: the
+- The largest contact pressure leaves the minor axis between $p R^3/D = 10.5$ and 11 on the meshes
+  1280 × 8 and 2560 × 16, after the elastica's onset of line contact at 10.07. The criteria differ: the
   elastica's line contact starts where the curvature of the midline at the contact point vanishes.
 
 The CTest `test_contact_ring` (`ringtest.py`) runs the mesh $1280 \times 8$ for

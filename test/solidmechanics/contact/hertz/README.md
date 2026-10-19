@@ -104,13 +104,14 @@ The tables and the figures are produced in the build directory by
 ```bash
 cd build-cmake/test/solidmechanics/contact/hertz
 make test_contact_hertz
-python3 run_benchmark.py $(which gmsh) ../../../../doc/doxygen/images
+python3 run_benchmark.py $(which gmsh)
 ```
 
-which meshes the geometry with three mesh sizes and runs them in parallel (about 16 minutes;
-numpy and matplotlib). The approaches $\Delta/R = 0.00125$, 0.0025, 0.005 and 0.01 give contact
-half-widths $a/R$ from 0.026 to 0.077. The force $F/(ER)$ agrees between the meshes to within
-0.04 %.
+which meshes the geometry with the mesh sizes of the tables and runs them in parallel (about 16
+minutes; numpy and matplotlib); with the directory `doc/doxygen/images` of the DuMux sources as
+second argument, it also writes the figures. The approaches $\Delta/R = 0.00125$, 0.0025, 0.005 and
+0.01 give contact half-widths $a/R$ from 0.026 to 0.077. The force $F/(ER)$ agrees between the
+meshes to within 0.04 %.
 
 Peak pressure, $p_\mathrm{max}/p_0 - 1$:
 
@@ -130,19 +131,20 @@ Relative $L^2$ error of the pressure profile:
 | 0.0523 | 0.0287 | 1.86 % | 1.88 % | 1.53 % |
 | 0.0771 | 0.0423 | 3.03 % | 2.66 % | 2.46 % |
 
-![Contact pressure over the current horizontal position on the finest mesh for two approaches (circles and squares) and Hertz's solution (solid line), both scaled with a and p0 of the computed force.](hertz_profiles.png){html: width=65%}
+![Contact pressure over the current horizontal position on the finest mesh for a/R = 0.036 and 0.077 (circles and squares) and Hertz's solution (solid line), both scaled with a and p0 of the computed force.](hertz_profiles.png){html: width=65%}
 
-![Left: peak error of the nodal pressure for three mesh sizes (circles solid, squares dashed, triangles dotted) and of the penalty pressure, a force per reference length, on the finest mesh (crosses dash-dotted). Right: relative L2 error of the pressure profile.](hertz_errors.png)
+![Peak error of the nodal pressure for the mesh sizes of the tables (circles solid, squares dashed, triangles dotted) and of the penalty pressure, a force per reference length, on the finest mesh (crosses dash-dotted), and the relative L2 error of the pressure profile.](hertz_errors.png)
 
-- The computed pressure follows Hertz's ellipse (first figure). The deviations do not decrease
-  under mesh refinement: the peak error changes by at most 0.08 percentage points between the two
-  finer meshes, and the $L^2$ error stays between 0.8 % and 2.5 % on the finest mesh.
-- The deviations grow with the load. They are of the size of the terms Hertz's small-strain
-  solution neglects: the peak of the penalty pressure, which is the same pressure per reference
-  instead of current length, lies 0.43 % to 0.54 % below $p_0$, and differs from the peak of the
-  nodal pressure by 0.71 %, 1.00 %, 1.44 % and 2.09 %, which is $p_0/(2E)$ to within 0.03
-  percentage points. Hertz's linear theory does not distinguish the two, and $p_0$ lies between
-  them for every load on the two finer meshes.
+- The computed pressure follows Hertz's ellipse (pressure profiles above). The deviations do not
+  decrease under mesh refinement: the peak error changes by at most 0.08 percentage points between
+  the meshes with $h_c = 0.0025\,R$ and $0.00125\,R$, and the $L^2$ error stays between 0.8 % and
+  2.5 % on the finest mesh.
+- The deviations grow with the load. They are of the size of the terms Hertz's small-strain solution
+  neglects: the peak of the penalty pressure, which is the same pressure per reference instead of
+  current length, lies 0.43 % to 0.54 % below $p_0$, and differs from the peak of the nodal pressure
+  by 0.71 %, 1.00 %, 1.44 % and 2.09 %, which is $p_0/(2E)$ to within 0.03 percentage points.
+  Hertz's linear theory does not distinguish the two, and $p_0$ lies between them for every load on
+  the meshes with $h_c = 0.0025\,R$ and $0.00125\,R$.
 
 The CTest `test_contact_hertz` (`hertztest.py`) meshes with $h_c = 0.005\,R$, runs the approaches
 0.0025 and 0.005, and checks that the peak pressure is within 2 % of $p_0$ and that the $L^2$

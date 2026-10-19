@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-Hertz contact of two cylinders: contact pressure against Hertz's solution for three meshes and
-four approaches of the platens. Prints the tables of the benchmark page and, if an output
-directory is given, writes the figures. Runs the meshes in parallel, about an hour in total.
+Hertz contact of two cylinders: contact pressure against Hertz's solution for the mesh sizes and
+approaches of the platens below. Prints the tables of the benchmark page and, if an output
+directory is given, writes the figures. Runs the meshes in parallel, about 16 minutes in total.
 
 usage: run_benchmark.py <gmsh> [output directory of the figures]
 """

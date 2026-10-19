@@ -4,7 +4,7 @@
 
 """
 Collapse of a thin ring under external pressure: contact force and onset of line contact for
-three meshes against the inextensible elastica (elastica.py). Prints the table of the benchmark
+the meshes below against the inextensible elastica (elastica.py). Prints the table of the benchmark
 page and, if an output directory is given, writes the figures. Runs the meshes in parallel,
 about twelve minutes in total.
 
