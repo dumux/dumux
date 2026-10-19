@@ -35,7 +35,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1
               COMMAND ./convergencetest.py
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase ShiueExampleOne
-                        -Rates "L2dof(p) 1.7" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2dof(p) 1.7 2.1" "freeflow:L2dof(v) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -Darcy.Problem.BoundaryConditions Dirichlet
                         -FreeFlow.Problem.BoundaryConditions Dirichlet
                         -FreeFlow.Problem.Name freeflow_staggered
@@ -51,7 +51,8 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue1
                         -Problem.TestCase ShiueExampleOne
                         -Darcy.Problem.BoundaryConditions Dirichlet
                         -FreeFlow.Problem.BoundaryConditions Dirichlet
-                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2(p) 1.4 1.7" "freeflow:L2dof(p) 1.4 1.7" "L2(v) 1.9 2.1" "H1(v) 0.9 1.1"
+                               "freeflow:L2dof(v) 1.9 2.1" "darcy:L2(p) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq1bubble_box
                         -Darcy.Problem.Name darcy_pq1bubble_box)
 
@@ -65,7 +66,8 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shi
                         -Problem.TestCase ShiueExampleOne
                         -Darcy.Problem.BoundaryConditions Dirichlet
                         -FreeFlow.Problem.BoundaryConditions Dirichlet
-                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2(p) 1.4 1.7" "freeflow:L2dof(p) 1.4 1.7" "L2(v) 1.9 2.1" "H1(v) 0.9 1.1"
+                               "freeflow:L2dof(v) 1.9 2.1" "darcy:L2(p) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq1bubble_hybrid_box
                         -Darcy.Problem.Name darcy_pq1bubble_hybrid_box)
 
@@ -77,7 +79,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue2
               COMMAND ./convergencetest.py
               CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest params.input
                         -Problem.TestCase ShiueExampleTwo
-                        -Rates "L2dof(p) 1.7" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2dof(p) 1.7 2.1" "freeflow:L2dof(v) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.Name freeflow_staggered
@@ -93,7 +95,8 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_shiue2
                         -Problem.TestCase ShiueExampleTwo
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed
-                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2(p) 1.4 1.7" "freeflow:L2dof(p) 1.4 1.7" "L2(v) 1.9 2.1" "H1(v) 0.9 1.1"
+                               "freeflow:L2dof(v) 1.9 2.1" "darcy:L2(p) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq1bubble_box
                         -Darcy.Problem.Name darcy_pq1bubble_box)
 
@@ -107,7 +110,8 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box_shi
                         -Problem.TestCase ShiueExampleTwo
                         -Darcy.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.BoundaryConditions Mixed
-                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2(p) 1.4 1.7" "freeflow:L2dof(p) 1.4 1.7" "L2(v) 1.9 2.1" "H1(v) 0.9 1.1"
+                               "freeflow:L2dof(v) 1.9 2.1" "darcy:L2(p) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq1bubble_hybrid_box
                         -Darcy.Problem.Name darcy_pq1bubble_hybrid_box)
 
@@ -123,7 +127,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_shiue2
                         -FreeFlow.Problem.BoundaryConditions Mixed
                         -Darcy.Grid.Cells "20 20"
                         -FreeFlow.Grid.Cells "20 20"
-                        -Rates "L2(p) 1.9" "L2(v) 1.9" "H1(v) 1.9" "L2dof(p) 1.9" "L2dof(v) 1.9"
+                        -Rates "L2(p) 1.9 2.1" "L2(v) 1.9 2.1" "H1(v) 1.9 2.1" "L2dof(p) 1.9 2.1" "L2dof(v) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
                         -Darcy.Problem.Name darcy_pq2_hybrid_box)
 
@@ -150,7 +154,8 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_rybak
                         -Problem.TestCase Rybak
                         -Darcy.Problem.BoundaryConditions Neumann
                         -FreeFlow.Problem.BoundaryConditions Stress
-                        -Rates "L2(p) 1.4" "L2(v) 1.95" "H1(v) 0.95" "L2dof(p) 1.4" "L2dof(v) 1.95"
+                        -Rates "freeflow:L2(p) 1.4 1.7" "freeflow:L2dof(p) 1.4 1.7" "L2(v) 1.9 2.1" "H1(v) 0.9 1.1"
+                               "freeflow:L2dof(v) 1.9 2.1" "darcy:L2(p) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq1bubble_box
                         -Darcy.Problem.Name darcy_pq1bubble_box)
 
@@ -166,7 +171,7 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_rybak
                         -FreeFlow.Problem.BoundaryConditions Stress
                         -Darcy.Grid.Cells "20 20"
                         -FreeFlow.Grid.Cells "20 20"
-                        -Rates "L2(p) 1.95" "L2(v) 1.95" "H1(v) 1.95" "L2dof(p) 1.95" "L2dof(v) 1.95"
+                        -Rates "L2(p) 1.9 2.1" "L2(v) 1.9 2.1" "H1(v) 1.9 2.1" "L2dof(p) 1.9 2.1" "L2dof(v) 1.9 2.1"
                         -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
                         -Darcy.Problem.Name darcy_pq2_hybrid_box)
 
