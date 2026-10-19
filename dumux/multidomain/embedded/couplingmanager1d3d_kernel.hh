@@ -249,7 +249,11 @@ public:
                 // publish point source data in the global vector
                 this->pointSourceData().emplace_back(std::move(psData));
 
-                const auto avgMinDist = averageDistanceSegmentGeometry(a, b, outside.geometry());
+                // the flux scaling factor assumes the radially symmetric solution around a straight
+                // line, so the distance is measured to the line through the segment. The distance to
+                // the segment itself would grow with the parts of the bulk element beyond the segment
+                // ends, e.g. if several lower-dimensional elements are embedded in one bulk element.
+                const auto avgMinDist = averageDistanceLineGeometry(a, b, outside.geometry());
                 this->averageDistanceToBulkCell().push_back(avgMinDist);
                 fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
 
