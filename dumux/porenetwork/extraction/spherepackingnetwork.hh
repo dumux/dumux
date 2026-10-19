@@ -26,6 +26,7 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/io/grid/porenetwork/networkdata.hh>
 #include <dumux/porenetwork/extraction/spherepackinggeometry.hh>
 #include <dumux/porenetwork/extraction/spherepackingwalls.hh>
 
@@ -657,11 +658,35 @@ std::vector<Point<Scalar>> fluidForces(const Network<Scalar>& network, const Pre
 }
 
 /*!
- * \brief Write the network as DGF file readable by PoreNetwork::GridManager
+ * \brief The pores and throats of the network with their parameters, for PoreNetwork::GridManager::init
  *
  * Pore parameters: PoreInscribedRadius PoreVolume PoreLabel;
  * throat parameters: ThroatInscribedRadius ThroatLength ThroatCrossSectionalArea ThroatShapeFactor
- * ThroatHydraulicRadius ThroatLabel. The pore geometry is not written, set Grid.PoreGeometry.
+ * ThroatHydraulicRadius ThroatLabel. The pore geometry is not included, set Grid.PoreGeometry.
+ */
+template<class Scalar>
+PoreNetwork::NetworkData<3, Scalar> networkData(const Network<Scalar>& network)
+{
+    PoreNetwork::NetworkData<3, Scalar> data;
+    data.vertexParameterNames = {"PoreInscribedRadius", "PoreVolume", "PoreLabel"};
+    data.elementParameterNames = {"ThroatInscribedRadius", "ThroatLength", "ThroatCrossSectionalArea",
+                                  "ThroatShapeFactor", "ThroatHydraulicRadius", "ThroatLabel"};
+    for (const auto& pore : network.pores)
+    {
+        data.porePositions.push_back(pore.position);
+        data.vertexParameters.push_back({pore.inscribedRadius, pore.volume, static_cast<Scalar>(pore.label)});
+    }
+    for (const auto& throat : network.throats)
+    {
+        data.throatPores.push_back(throat.pores);
+        data.elementParameters.push_back({throat.inscribedRadius, throat.length, throat.fluidArea,
+                                          throat.shapeFactor, throat.hydraulicRadius, static_cast<Scalar>(throat.label)});
+    }
+    return data;
+}
+
+/*!
+ * \brief Write the network as DGF file readable by PoreNetwork::GridManager, with the parameters of networkData
  */
 template<class Scalar>
 void writeDgf(const std::string& fileName, const Network<Scalar>& network)
@@ -670,22 +695,37 @@ void writeDgf(const std::string& fileName, const Network<Scalar>& network)
     if (!file)
         DUNE_THROW(Dune::IOError, "Could not open " << fileName);
 
-    file << std::setprecision(17);
-    file << "DGF\n"
-         << "% Vertex parameters: PoreInscribedRadius PoreVolume PoreLabel\n"
-         << "% Element parameters: ThroatInscribedRadius ThroatLength ThroatCrossSectionalArea ThroatShapeFactor ThroatHydraulicRadius ThroatLabel\n"
-         << "Vertex % pores of a sphere packing\n"
-         << "parameters 3\n";
-    for (const auto& pore : network.pores)
-        file << pore.position[0] << " " << pore.position[1] << " " << pore.position[2] << " "
-             << pore.inscribedRadius << " " << pore.volume << " " << pore.label << "\n";
+    const auto data = networkData(network);
+    const auto writeNames = [&](const std::string& entity, const std::vector<std::string>& names) {
+        file << "% " << entity << " parameters:";
+        for (const auto& name : names)
+            file << " " << name;
+        file << "\n";
+    };
+    const auto writeParameters = [&](const std::vector<Scalar>& parameters) {
+        for (const Scalar value : parameters)
+            file << " " << value;
+        file << "\n";
+    };
+
+    file << std::setprecision(17) << "DGF\n";
+    writeNames("Vertex", data.vertexParameterNames);
+    writeNames("Element", data.elementParameterNames);
+    file << "Vertex % pores of a sphere packing\n"
+         << "parameters " << data.vertexParameterNames.size() << "\n";
+    for (std::size_t i = 0; i < data.porePositions.size(); ++i)
+    {
+        file << data.porePositions[i][0] << " " << data.porePositions[i][1] << " " << data.porePositions[i][2];
+        writeParameters(data.vertexParameters[i]);
+    }
     file << "#\n"
          << "SIMPLEX % throats of a sphere packing\n"
-         << "parameters 6\n";
-    for (const auto& throat : network.throats)
-        file << throat.pores[0] << " " << throat.pores[1] << " "
-             << throat.inscribedRadius << " " << throat.length << " " << throat.fluidArea << " "
-             << throat.shapeFactor << " " << throat.hydraulicRadius << " " << throat.label << "\n";
+         << "parameters " << data.elementParameterNames.size() << "\n";
+    for (std::size_t t = 0; t < data.throatPores.size(); ++t)
+    {
+        file << data.throatPores[t][0] << " " << data.throatPores[t][1];
+        writeParameters(data.elementParameters[t]);
+    }
     file << "#\n";
 }
 

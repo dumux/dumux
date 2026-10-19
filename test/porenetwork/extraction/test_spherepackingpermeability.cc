@@ -81,13 +81,19 @@ struct FlowResult
     std::vector<double> pressure; //!< pressure of each pore of the network
 };
 
-FlowResult solveFlow(const std::string& paramGroup, const Network<double>& network, int axis)
+enum class GridSource { dgfFile, networkData };
+
+FlowResult solveFlow(const std::string& paramGroup, const Network<double>& network, int axis,
+                     GridSource source = GridSource::dgfFile)
 {
     using namespace Dumux;
     using TypeTag = Properties::TTag::SpherePackingPermeability;
 
     PoreNetwork::GridManager<3> gridManager;
-    gridManager.init(paramGroup);
+    if (source == GridSource::networkData)
+        gridManager.init(networkData(network), paramGroup);
+    else
+        gridManager.init(paramGroup);
     const auto& gridView = gridManager.grid().leafGridView();
     const auto gridData = gridManager.getGridData();
 
@@ -242,6 +248,13 @@ void testRandomPacking()
     const auto flow = solveFlow("Random", network, 0);
     check(flow.modelOutflux, flow.modelInflux, 1e-10, "random packing: outflow equals inflow");
     check(flow.modelInflux, flow.networkFlux, 1e-10, "random packing: model flux equals network flux");
+
+    const auto fromData = solveFlow("Random", network, 0, GridSource::networkData);
+    check(fromData.modelInflux, flow.modelInflux, 1e-12, "random packing: grid from network data, same flux as from the DGF file");
+    double maxDifference = 0.0;
+    for (std::size_t i = 0; i < network.pores.size(); ++i)
+        maxDifference = std::max(maxDifference, std::abs(fromData.pressure[i] - flow.pressure[i]));
+    check(1.0 + maxDifference, 1.0, 1e-12, "random packing: grid from network data, same pressures as from the DGF file");
 
     const double viscosity = Dumux::getParam<double>("Component.LiquidDynamicViscosity");
     const double dp = Dumux::getParam<double>("Problem.InletPressure") - Dumux::getParam<double>("Problem.OutletPressure");

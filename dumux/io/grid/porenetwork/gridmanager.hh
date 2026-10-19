@@ -31,6 +31,7 @@
 #include <dumux/common/exceptions.hh>
 
 #include "griddata.hh"
+#include "networkdata.hh"
 #include "structuredlatticegridcreator.hh"
 
 namespace Dumux::PoreNetwork {
@@ -83,6 +84,48 @@ public:
         const auto gridType = enableDgfGridPointer_ ?  "grid from dgf file" : "generic grid from structured lattice";
         std::cout << "Creating "  << gridType << " with " << grid().leafGridView().size(0) << " elements and "
                   << grid().leafGridView().size(1) << " vertices took " << timer.elapsed() << " seconds." << std::endl;
+    }
+
+    /*!
+     * \brief Make the grid from given pores and throats with their parameters, without a grid file
+     * \param data the pores and throats with their parameters
+     * \param paramGroup the parameter group of the grid parameters, e.g. Grid.Sanitize (default false)
+     * \note Only for sequential runs
+     */
+    void init(const NetworkData<dimWorld, typename GridType::ctype>& data, const std::string& paramGroup = "")
+    {
+        Dune::Timer timer;
+        paramGroup_ = paramGroup;
+        makeGridFromData(data);
+
+        timer.stop();
+        std::cout << "Creating grid from network data with " << grid().leafGridView().size(0) << " elements and "
+                  << grid().leafGridView().size(1) << " vertices took " << timer.elapsed() << " seconds." << std::endl;
+    }
+
+    /*!
+     * \brief Make a grid from given pores and throats with their parameters
+     */
+    void makeGridFromData(const NetworkData<dimWorld, typename GridType::ctype>& data)
+    {
+        if (Dune::MPIHelper::getCommunication().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "Grids from network data are only available for sequential runs");
+
+        Dune::GridFactory<Grid> factory;
+        for (const auto& position : data.porePositions)
+            factory.insertVertex(position);
+        for (const auto& pores : data.throatPores)
+        {
+            if (pores[0] >= data.porePositions.size() || pores[1] >= data.porePositions.size())
+                DUNE_THROW(Dune::InvalidStateException, "Throat connected to a pore that does not exist");
+            factory.insertElement(Dune::GeometryTypes::line, {static_cast<unsigned int>(pores[0]), static_cast<unsigned int>(pores[1])});
+        }
+
+        gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
+        gridData_ = std::make_shared<GridData>(gridPtr_, factory, data, paramGroup_);
+
+        if (getParamFromGroup<bool>(paramGroup_, "Grid.Sanitize", false))
+            sanitizeGrid();
     }
 
     /*!
@@ -219,8 +262,8 @@ public:
         grid().grow();
         grid().postGrow();
 
-        // resize the parameters for dgf grids
-        if (enableDgfGridPointer_)
+        // resize the parameters for dgf grids and given data
+        if (enableDgfGridPointer_ || gridData_->isGivenData())
             gridData_->resizeParameterContainers();
 
         if (numDeletedElements > 0)
@@ -241,6 +284,8 @@ public:
         {
             if (enableDgfGridPointer_)
                 return static_cast<int>(dgfGridPtr_.parameters(vertex)[gridData_->parameterIndex("PoreLabel")]);
+            else if (gridData_->isGivenData())
+                return static_cast<int>(gridData_->getParameter(vertex, "PoreLabel"));
             else
                 return static_cast<int>(gridData_->poreLabelAtPosForGenericGrid(vertex.geometry().center()));
         };

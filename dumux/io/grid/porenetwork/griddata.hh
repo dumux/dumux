@@ -31,6 +31,7 @@
 #include <dumux/common/indextraits.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
+#include "networkdata.hh"
 #include "parametersforgeneratedgrid.hh"
 
 namespace Dumux::PoreNetwork {
@@ -77,6 +78,36 @@ public:
         numSubregions_ = getParamFromGroup<std::size_t>(paramGroup_, "Grid.NumSubregions", 0);
         setParameterIndices_();
         parametersForGeneratedGrid_ = std::make_unique<ParametersForGeneratedGrid>(gridView_(), paramGroup);
+    }
+
+    /*!
+     * \brief Constructor for grid data given with the pores and throats
+     * \param grid the grid as created by the factory, before any modification
+     * \param factory the factory that created the grid from the pores and throats of data, in their order
+     * \param data the pores and throats with their parameters
+     * \param paramGroup the parameter group of the grid parameters
+     */
+    GridData(std::shared_ptr<Grid> grid, const Dune::GridFactory<Grid>& factory,
+             const NetworkData<dimWorld, Scalar>& data, const std::string& paramGroup)
+    : factoryGrid_(grid)
+    , isDgfData_(false)
+    , isGivenData_(true)
+    , paramGroup_(paramGroup)
+    , vertexParameterNames_(data.vertexParameterNames)
+    , elementParameterNames_(data.elementParameterNames)
+    , numSubregions_(0)
+    {
+        if (data.vertexParameters.size() != data.porePositions.size() || data.elementParameters.size() != data.throatPores.size())
+            DUNE_THROW(Dune::InvalidStateException, "Network data needs one parameter vector per pore and per throat");
+
+        setParameterIndices_();
+        vertexParameters_ = makeParamContainer_(*factoryGrid_, vertexParameterNames_.size(), dim);
+        elementParameters_ = makeParamContainer_(*factoryGrid_, elementParameterNames_.size(), 0);
+
+        for (const auto& vertex : vertices(gridView_()))
+            (*vertexParameters_)[vertex] = givenParameters_(data.vertexParameters, factory.insertionIndex(vertex), vertexParameterNames_);
+        for (const auto& element : elements(gridView_()))
+            (*elementParameters_)[element] = givenParameters_(data.elementParameters, factory.insertionIndex(element), elementParameterNames_);
     }
 
     /*!
@@ -160,8 +191,8 @@ public:
      */
     void assignParameters()
     {
-        if (isDgfData_)
-            DUNE_THROW(Dune::InvalidStateException, "Assigning parameter not possible for dgf gids");
+        if (isDgfData_ || isGivenData_)
+            DUNE_THROW(Dune::InvalidStateException, "Assigning parameters is only possible for generated grids");
 
         const auto numVertexParams = vertexParameterNames_.size();
         const auto numElementParams = elementParameterNames_.size();
@@ -281,7 +312,17 @@ public:
      *        This is needed by the grid creator in case not all parameters are initialized yet.
      */
     int poreLabelAtPosForGenericGrid(const GlobalPosition& pos) const
-    { return parametersForGeneratedGrid_->boundaryFaceMarkerAtPos(pos); }
+    {
+        if (!parametersForGeneratedGrid_)
+            DUNE_THROW(Dune::InvalidStateException, "Pore labels at a position are only available for generated grids");
+        return parametersForGeneratedGrid_->boundaryFaceMarkerAtPos(pos);
+    }
+
+    /*!
+     * \brief Returns if the parameters were given with the pores and throats of the network
+     */
+    bool isGivenData() const
+    { return isGivenData_; }
 
     /*!
      * \brief Returns the names of the vertex parameters
@@ -303,9 +344,17 @@ private:
     void setParameter_(const Vertex& vertex, const std::string& param, const Scalar value)
     { (*vertexParameters_)[vertex][parameterIndex(param)] = value; }
 
+    std::vector<Scalar> givenParameters_(const std::vector<std::vector<Scalar>>& parameters, std::size_t index,
+                                         const StringVector& names) const
+    {
+        if (index >= parameters.size() || parameters[index].size() != names.size())
+            DUNE_THROW(Dune::InvalidStateException, "Network data needs " << names.size() << " parameters per entity");
+        return parameters[index];
+    }
+
     void setParameterIndices_()
     {
-        if (!isDgfData_)
+        if (!isDgfData_ && !isGivenData_)
         {
             vertexParameterNames_ = StringVector{"PoreInscribedRadius", "PoreVolume", "PoreLabel"};
             elementParameterNames_ = StringVector{"ThroatInscribedRadius", "ThroatLength", "ThroatLabel"};
@@ -315,7 +364,7 @@ private:
                 elementParameterNames_.push_back("ThroatRegionId");
             }
         }
-        else // DGF grid data
+        else if (isDgfData_)
         {
             // treat vertex parameter names
             vertexParameterNames_ = dgfFileParameterNames_("Vertex");
@@ -402,6 +451,7 @@ private:
 
     bool isDgfData_ = false;
     bool useCopiedDgfData_ = false;
+    bool isGivenData_ = false;
     std::string paramGroup_;
 
     std::unique_ptr<ParametersForGeneratedGrid> parametersForGeneratedGrid_;
