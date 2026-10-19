@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Meshes the two half disks, runs the Hertz contact test and checks the contact pressure
 against Hertz's solution for the computed force: the peak pressure within 2 % of p0 and the
-L2 error of the pressure profile below a/R, the order to which Hertz's half-space solution
-describes disks of finite radius.
+L2 error of the pressure profile below a/R. Hertz's solution neglects terms of the order of the
+strain p0/E = a/(2R(1 - nu^2)), about a/(2R).
 
 usage: hertztest.py <gmsh> <executable> <parameter file> [arguments]
 """
