@@ -4,10 +4,11 @@
 """
 Plot the Cryer sphere consolidation benchmark results.
 
-Produces, for the Kozeny-Carman and constant permeability models:
+Produces, for the Kozeny-Carman and constant permeability models of the large-deformation model:
   - normalised pore pressure at the centre vs time
   - volume ratio J = V/V0 at the centre vs time
-plus a single-run comparison. Cryer's solution is taken from the CSV files.
+plus a single-run comparison. The centre pressure of the small-deformation model is added to the
+constant-permeability pressure plots. Cryer's solution is taken from the CSV files.
 
 Usage:
   python3 plot_cryer.py [--csv cryer_center_pressure.csv] [--outdir .]
@@ -35,6 +36,8 @@ LABELS = {
 }
 MARKERS = {"p0k_0.0001": "*", "p0k_0.25": "o", "p0k_0.5": "^"}
 COLORS = {"p0k_0.0001": "k", "p0k_0.25": "g", "p0k_0.5": "r"}
+SMALL_DEFORMATION_STYLE = {"color": "tab:purple", "linestyle": "-.", "marker": "s",
+                           "label": "linear poroelasticity"}
 
 
 def load_csv(path):
@@ -60,9 +63,12 @@ def load_csv(path):
     return {k: np.array(v) for k, v in data.items()}
 
 
-def plot_pressure_figure(datasets, xlabel, ylabel, outfile):
+def plot_pressure_figure(datasets, xlabel, ylabel, outfile, small=None):
     """Plot one normalised centre-pressure figure for the three loads."""
     fig, ax = plt.subplots(figsize=(7, 5))
+    if small is not None:
+        ax.semilogx(small["tNorm"], small["pfRel"], markevery=max(1, len(small["tNorm"]) // 40),
+                    linewidth=1, **SMALL_DEFORMATION_STYLE)
 
     ymax = 1.6
     for key, d in datasets.items():
@@ -118,7 +124,7 @@ def plot_volume_figure(datasets, xlabel, ylabel, outfile):
     print(f"Saved {outfile}")
 
 
-def plot_overview(datasets_by_perm, outfile, dpi=80):
+def plot_overview(datasets_by_perm, small, outfile, dpi=80):
     """Centre pressure and volume ratio for both permeability models in one figure."""
     colors = {"p0k_0.0001": "tab:blue", "p0k_0.25": "tab:green", "p0k_0.5": "tab:orange"}
     titles = {"Constant": "constant permeability", "KozenyCarman": "Kozeny-Carman permeability"}
@@ -128,6 +134,9 @@ def plot_overview(datasets_by_perm, outfile, dpi=80):
         reference = next(iter(datasets_by_perm[perm].values()))
         axP.semilogx(reference["tNorm"], reference["pAnalRel"], "k--", linewidth=1,
                      label="Cryer (1963)", zorder=3)
+        if perm == "Constant" and small is not None:
+            axP.semilogx(small["tNorm"], small["pfRel"], markersize=3, linewidth=1,
+                         **SMALL_DEFORMATION_STYLE)
         for key, d in datasets_by_perm[perm].items():
             axP.semilogx(d["tNorm"], d["pfRel"], color=colors[key], marker=MARKERS[key],
                          markersize=4, linewidth=1, label=LABELS[key])
@@ -211,6 +220,13 @@ def main():
         "Constant": "volume_constant.png",
     }
 
+    small = None
+    for fname in (f"{args.csv_prefix}_small_deformation.csv",
+                  os.path.join(args.outdir, f"{args.csv_prefix}_small_deformation.csv")):
+        if os.path.exists(fname):
+            small = load_csv(fname)
+            break
+
     all_datasets = {}
     for perm in perm_models:
         datasets = {}
@@ -232,6 +248,7 @@ def main():
             xlabel=r"$t \cdot c_v / R_0^2$",
             ylabel=r"$p / p_0$",
             outfile=os.path.join(args.outdir, fig_files[perm]),
+            small=small if perm == "Constant" else None,
         )
 
         plot_volume_figure(
@@ -242,7 +259,7 @@ def main():
         )
 
     if all(all_datasets.get(perm) for perm in perm_models):
-        plot_overview(all_datasets, os.path.join(args.outdir, "cryer_overview.png"))
+        plot_overview(all_datasets, small, os.path.join(args.outdir, "cryer_overview.png"))
 
     print("Done.")
 

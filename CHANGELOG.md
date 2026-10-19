@@ -60,7 +60,8 @@ the distance, which also accepted unrelated degrees of freedom at the distance o
 - __Time loop__: `CheckPointTimeLoop` matches check points within a tolerance that grows with the elapsed time, like the tolerance for reaching the end time. The previous tolerance, proportional to the time step size, fell below the round-off accumulated in the time after a few thousand time steps (e.g. 4000 steps of constant size to an end time of 1 s) if the time step size was capped by `setMaxTimeStepSize` or set after every time step: the check point at the end time was missed, an intermediate check point cost an additional time step as small as the accumulated round-off, and with periodic check points the time loop could get stuck with a zero time step size.
 - __Large-deformation poroelasticity__: The new model `poromechanics/poroelastic_large_deformations` solves finite-strain poroelasticity
 of a saturated porous solid with three coupled subdomains (displacement, solid pressure, fluid pressure).
-Tests: Cryer's sphere consolidation against Cryer's solution (`test/poromechanics/poroelastic_large_deformations/cryer`, with a benchmark page) and a plane-strain
+Tests: Cryer's sphere consolidation with this model and with linear poroelasticity against Cryer's solution
+(`test/poromechanics/poroelastic_large_deformations/cryer` with a benchmark page, `test/poromechanics/poroelastic/cryer`) and a plane-strain
 manufactured solution at finite strain with convergence rates (`test/poromechanics/poroelastic_large_deformations/manufactured_solution`).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
