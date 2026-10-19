@@ -24,6 +24,7 @@
 #include <dumux/freeflow/navierstokes/momentum/fluxhelper.hh>
 #include <dune/common/fmatrix.hh>
 
+#include <dumux/discretization/evalgradients.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
@@ -91,6 +92,10 @@ public:
             DUNE_THROW(Dune::Exception, "Wrong BC type choose: Dirichlet, Stress or Mixed");
 
         std::cout << "Free flow domain: Using " << bc << " boundary conditions" << std::endl;
+
+        onlyNormalGradientForBeaversJoseph_ = getParamFromGroup<bool>(
+            this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph", false
+        );
     }
 
     // Call this function after problem and coupling manager init(...) has been called
@@ -181,11 +186,30 @@ public:
                 const auto& element = elemDisc.element();
                 const auto elemSol = elementSolution(element, elemVars, elemDisc);
                 const auto v = evalSolution(element, element.geometry(), elemDisc.gridDiscretization(), elemSol, globalPos);
+                const auto& n = faceIpData.unitOuterNormal();
                 // Slip is in x orientation
                 GlobalPosition t(0.0);
                 t[0] = 1.0;
-                auto vt = v*t;
-                values.axpy((this->effectiveViscosity(element, elemDisc, faceIpData)*this->betaBJ(elemDisc, faceIpData, t))*vt, t);
+                const auto vt = v*t;
+                const auto mu = this->effectiveViscosity(element, elemDisc, faceIpData);
+                Scalar tangentialFlux = mu*this->betaBJ(elemDisc, faceIpData, t)*vt;
+
+                // if the slip condition only involves the normal derivative of the tangential velocity,
+                // the tangential derivative of the normal velocity contributes to the viscous stress
+                if (onlyNormalGradientForBeaversJoseph_)
+                {
+                    const auto gradV = evalGradients(element, element.geometry(), elemDisc.gridDiscretization(), elemSol, globalPos);
+                    Scalar tangentialDerivativeOfNormalVelocity = 0.0;
+                    for (int dirIdx = 0; dirIdx < GlobalPosition::dimension; ++dirIdx)
+                        tangentialDerivativeOfNormalVelocity += n[dirIdx]*(gradV[dirIdx]*t);
+                    tangentialFlux -= mu*tangentialDerivativeOfNormalVelocity;
+                }
+
+                // the boundary flux replaces the complete momentum flux including the advective part
+                if (this->enableInertiaTerms())
+                    tangentialFlux += this->density(element, elemDisc, faceIpData)*(v*n)*vt;
+
+                values.axpy(tangentialFlux, t);
             }
             else
             {
@@ -462,6 +486,7 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     DarcyStokesTestCase testCase_;
     BC boundaryConditions_;
+    bool onlyNormalGradientForBeaversJoseph_;
     std::vector<DirichletConstraintData> constraints_;
 };
 } // end namespace Dumux

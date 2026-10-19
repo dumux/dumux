@@ -189,3 +189,38 @@ dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_navierstokes
                         -FreeFlow.Problem.BoundaryConditions Mixed
                         -FreeFlow.Problem.Name freeflow_staggered
                         -Darcy.Problem.Name darcy_staggered)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box_navierstokes
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box params.input
+                        -Problem.TestCase Schneider
+                        -FreeFlow.Problem.EnableInertiaTerms true
+                        -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
+                        -Darcy.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -Rates "freeflow:L2(p) 1.4 1.7" "freeflow:L2dof(p) 1.4 1.7" "L2(v) 1.9 2.1" "H1(v) 0.9 1.1"
+                               "freeflow:L2dof(v) 1.9 2.1" "darcy:L2(p) 1.9 2.1" "darcy:L2dof(p) 1.9 2.1"
+                        -FreeFlow.Problem.Name freeflow_pq1bubble_box
+                        -Darcy.Problem.Name darcy_pq1bubble_box)
+
+dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box_navierstokes
+              TARGET test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
+              LABELS multidomain multidomain_boundary stokesdarcy
+              TIMEOUT 1000
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ./convergencetest.py
+              CMD_ARGS  test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box params.input
+                        -Problem.TestCase Schneider
+                        -FreeFlow.Problem.EnableInertiaTerms true
+                        -FreeFlow.EnableUnsymmetrizedVelocityGradientForBeaversJoseph true
+                        -Darcy.Problem.BoundaryConditions Mixed
+                        -FreeFlow.Problem.BoundaryConditions Mixed
+                        -Darcy.Grid.Cells "20 20"
+                        -FreeFlow.Grid.Cells "20 20"
+                        -Rates "L2(p) 1.9 2.1" "L2(v) 1.9 2.1" "H1(v) 1.9 2.1" "L2dof(p) 1.9 2.1" "L2dof(v) 1.9 2.1"
+                        -FreeFlow.Problem.Name freeflow_pq2_hybrid_box
+                        -Darcy.Problem.Name darcy_pq2_hybrid_box)
