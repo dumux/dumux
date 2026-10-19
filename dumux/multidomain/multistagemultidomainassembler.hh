@@ -220,12 +220,15 @@ public:
         couplingManager_->updateSolution(curSol);
     }
 
-    //! Reset the grid variables to the given solution (e.g. after a failed time step)
+    //! Reset the grid variables and the coupling manager to the given solution (e.g. after a failed time step)
     void resetTimeStep(const SolutionVector& curSol)
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(gridVariablesTuple_)), [&](const auto domainId)
         { this->gridVariables(domainId).resetTimeStep(curSol[domainId]); });
+
+        // the coupling manager keeps its own copy of the solution, so reset it as well
+        couplingManager_->updateSolution(curSol);
 
         this->clearStages();
     }
