@@ -72,6 +72,7 @@ class LakeAtRestProblem : public ShallowWaterProblem<TypeTag>
     using ElementVolumeVariables = typename GetPropType<TypeTag, Properties::GridVolumeVariables>::LocalView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
 public:
     LakeAtRestProblem(std::shared_ptr<const GridGeometry> gridGeometry)
@@ -134,21 +135,20 @@ public:
     {
         NeumannFluxes values(0.0);
 
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto inside = AdvectionType::insideFaceState(*this, fvGeometry, elemVolVars, scvf);
         const auto& nxy = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
 
-        const auto boundaryStateVariables = ShallowWater::wallBoundary(insideVolVars.waterDepth(),
-                                                                       insideVolVars.velocity(0),
-                                                                       insideVolVars.velocity(1),
+        const auto boundaryStateVariables = ShallowWater::wallBoundary(inside.waterDepth,
+                                                                       inside.velocityX,
+                                                                       inside.velocityY,
                                                                        nxy);
 
         const auto riemannFlux =
-            ShallowWater::riemannProblem(insideVolVars.waterDepth(), boundaryStateVariables[0],
-                                         insideVolVars.velocity(0), boundaryStateVariables[1],
-                                         insideVolVars.velocity(1), boundaryStateVariables[2],
-                                         insideVolVars.bedSurface(), insideVolVars.bedSurface(),
+            ShallowWater::riemannProblem(inside.waterDepth, boundaryStateVariables[0],
+                                         inside.velocityX, boundaryStateVariables[1],
+                                         inside.velocityY, boundaryStateVariables[2],
+                                         inside.bedSurface, inside.bedSurface,
                                          gravity, nxy);
 
         values[Indices::massBalanceIdx] = riemannFlux[0];

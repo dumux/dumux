@@ -15,6 +15,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <type_traits>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -95,7 +96,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::LakeAtRest;
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -158,9 +159,14 @@ int main(int argc, char** argv)
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     // the linear solver
-    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
-                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+    using LinearSolver = LINEARSOLVER<LinearSolverTraits<GridGeometry>,
+                                      LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = [&]{
+        if constexpr (std::is_constructible_v<LinearSolver, decltype(leafGridView), decltype(gridGeometry->dofMapper())>)
+            return std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+        else
+            return std::make_shared<LinearSolver>();
+    }();
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;

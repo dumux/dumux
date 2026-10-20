@@ -35,6 +35,7 @@ namespace Dumux::Properties {
  */
 namespace TTag {
 struct PoiseuilleFlow { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
+struct PoiseuilleFlowSecondOrder { using InheritsFrom = std::tuple<ShallowWaterSecondOrder, PoiseuilleFlow>; };
 } // namespace TTag
 
 template<class TypeTag>

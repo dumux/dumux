@@ -4,6 +4,7 @@
 dune_symlink_to_source_files(FILES params.input convergencetest.py plot_results.py)
 
 add_executable(test_shallowwater_dambreak EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_shallowwater_dambreak PUBLIC TYPETAG=DamBreakWet)
 
 dumux_add_test(NAME test_shallowwater_dambreak_sequential
                TARGET test_shallowwater_dambreak
@@ -37,3 +38,14 @@ dumux_add_test(NAME test_shallowwater_dambreak_convergence
                LABELS shallowwater
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
                CMD_ARGS test_shallowwater_dambreak)
+
+# second-order flux: water volume conserved, and the errors with respect to the exact solution
+# converge with the same minimum rate as with the first-order flux
+add_executable(test_shallowwater_dambreak_secondorder EXCLUDE_FROM_ALL main.cc)
+target_compile_definitions(test_shallowwater_dambreak_secondorder PUBLIC TYPETAG=DamBreakWetSecondOrder)
+
+dumux_add_test(NAME test_shallowwater_dambreak_secondorder_convergence
+               TARGET test_shallowwater_dambreak_secondorder
+               LABELS shallowwater
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
+               CMD_ARGS test_shallowwater_dambreak_secondorder)

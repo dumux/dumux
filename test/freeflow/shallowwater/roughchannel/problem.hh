@@ -59,6 +59,7 @@ class RoughChannelProblem : public ShallowWaterProblem<TypeTag>
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -240,8 +241,7 @@ public:
     {
         NeumannFluxes values(0.0);
 
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto inside = AdvectionType::insideFaceState(*this, fvGeometry, elemVolVars, scvf);
         const auto& nxy = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
         std::array<Scalar, 3> boundaryStateVariables;
@@ -250,42 +250,42 @@ public:
         if (scvf.center()[0] < this->gridGeometry().bBoxMin()[0] + eps_)
         {
             boundaryStateVariables = ShallowWater::fixedDischargeBoundary(discharge_,
-                                                                          insideVolVars.waterDepth(),
-                                                                          insideVolVars.velocity(0),
-                                                                          insideVolVars.velocity(1),
+                                                                          inside.waterDepth,
+                                                                          inside.velocityX,
+                                                                          inside.velocityY,
                                                                           gravity,
                                                                           nxy);
         }
         // impose water depth at the right side
         else if (scvf.center()[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
-            // the boundary state has the bed of the inside cell, so the depth prescribed at the face
+            // the boundary state has the bed of the inside state, so the depth prescribed at the face
             // is shifted such that the free surface elevation at the face is matched
             const auto waterDepth = hBoundary_
-                + this->spatialParams().bedSurfaceAtPos(scvf.center()) - insideVolVars.bedSurface();
+                + this->spatialParams().bedSurfaceAtPos(scvf.center()) - inside.bedSurface;
             boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(waterDepth,
-                                                                            insideVolVars.waterDepth(),
-                                                                            insideVolVars.velocity(0),
-                                                                            insideVolVars.velocity(1),
+                                                                            inside.waterDepth,
+                                                                            inside.velocityX,
+                                                                            inside.velocityY,
                                                                             gravity,
                                                                             nxy);
         }
         // no flow boundary
         else
         {
-            boundaryStateVariables[0] = insideVolVars.waterDepth();
-            boundaryStateVariables[1] = -insideVolVars.velocity(0);
-            boundaryStateVariables[2] = -insideVolVars.velocity(1);
+            boundaryStateVariables[0] = inside.waterDepth;
+            boundaryStateVariables[1] = -inside.velocityX;
+            boundaryStateVariables[2] = -inside.velocityY;
         }
 
-        auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
+        auto riemannFlux = ShallowWater::riemannProblem(inside.waterDepth,
                                                         boundaryStateVariables[0],
-                                                        insideVolVars.velocity(0),
+                                                        inside.velocityX,
                                                         boundaryStateVariables[1],
-                                                        insideVolVars.velocity(1),
+                                                        inside.velocityY,
                                                         boundaryStateVariables[2],
-                                                        insideVolVars.bedSurface(),
-                                                        insideVolVars.bedSurface(),
+                                                        inside.bedSurface,
+                                                        inside.bedSurface,
                                                         gravity,
                                                         nxy);
 

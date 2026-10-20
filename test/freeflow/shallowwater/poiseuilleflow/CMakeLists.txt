@@ -8,6 +8,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow
                SOURCES main.cc
                LABELS shallowwater
                COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2,Dune::EquidistantOffsetCoordinates<double,2>>
+                                   TYPETAG=PoiseuilleFlow LINEARSOLVER=AMGBiCGSTABIstlSolver
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_poiseuilleflow-reference.vtu
@@ -30,7 +31,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_unstructured
                SOURCES main.cc
                LABELS shallowwater
                CMAKE_GUARD dune-uggrid_FOUND
-               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2> TYPETAG=PoiseuilleFlow LINEARSOLVER=AMGBiCGSTABIstlSolver
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_poiseuilleflow_unstructured-reference.vtu
@@ -57,3 +58,29 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_convergence
                LABELS shallowwater
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
                CMD_ARGS test_shallowwater_poiseuilleflow)
+
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_secondorder
+               SOURCES main.cc
+               LABELS shallowwater
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2,Dune::EquidistantOffsetCoordinates<double,2>>
+                                   TYPETAG=PoiseuilleFlowSecondOrder LINEARSOLVER=UMFPackIstlSolver
+               CMD_ARGS params.input -Problem.Name poiseuilleflow_secondorder -Problem.ErrorTolerance 2e-3)
+
+# with the second-order flux the uniform flow along the channel is discretized exactly,
+# the error comes from the viscous flux across the channel
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_secondorder_convergence
+               TARGET test_shallowwater_poiseuilleflow_secondorder
+               LABELS shallowwater
+               CMAKE_GUARD HAVE_UMFPACK
+               TIMEOUT 600
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
+               CMD_ARGS test_shallowwater_poiseuilleflow_secondorder --exact-along-channel)
+
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_unstructured_secondorder
+               SOURCES main.cc
+               LABELS shallowwater
+               CMAKE_GUARD "( dune-uggrid_FOUND AND HAVE_UMFPACK )"
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2> TYPETAG=PoiseuilleFlowSecondOrder LINEARSOLVER=UMFPackIstlSolver
+               CMD_ARGS params.input -Problem.Name poiseuilleflow-unstructured-secondorder -Grid.File grids/irregular_grid_10m.dgf
+                        -Problem.ErrorTolerance 0.5)

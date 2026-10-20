@@ -42,6 +42,7 @@ class DamBreakProblem : public ShallowWaterProblem<TypeTag>
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -167,19 +168,18 @@ public:
         // we need the Riemann invariants to compute the values depending of the boundary type
         // since we use a weak imposition we do not have a dirichlet value. We impose fluxes
         // based on q,h, etc. computed with the Riemann invariants
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto inside = AdvectionType::insideFaceState(*this, fvGeometry, elemVolVars, scvf);
         const auto& nxy = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
 
-        auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
-                                                        insideVolVars.waterDepth(),
-                                                        insideVolVars.velocity(0),
-                                                        -insideVolVars.velocity(0),
-                                                        insideVolVars.velocity(1),
-                                                        -insideVolVars.velocity(1),
-                                                        insideVolVars.bedSurface(),
-                                                        insideVolVars.bedSurface(),
+        auto riemannFlux = ShallowWater::riemannProblem(inside.waterDepth,
+                                                        inside.waterDepth,
+                                                        inside.velocityX,
+                                                        -inside.velocityX,
+                                                        inside.velocityY,
+                                                        -inside.velocityY,
+                                                        inside.bedSurface,
+                                                        inside.bedSurface,
                                                         gravity,
                                                         nxy);
 

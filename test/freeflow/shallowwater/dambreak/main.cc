@@ -15,8 +15,11 @@
 #include <array>
 #include <ctime>
 #include <iostream>
+#include <cmath>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/grid/common/partitionset.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
@@ -47,7 +50,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::DamBreakWet;
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -119,6 +122,22 @@ int main(int argc, char** argv)
                                                LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>(gridGeometry->gridView(), gridGeometry->dofMapper());
 
+    // the domain is closed, so the water volume is conserved
+    // compensated summation, so that the round-off of the sum over many cells does not mask the conservation
+    auto waterVolume = [&](const SolutionVector& sol) {
+        Scalar volume = 0.0, compensation = 0.0;
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        {
+            const Scalar cellVolume = sol[gridGeometry->elementMapper().index(element)][0]*element.geometry().volume();
+            const Scalar sum = volume + cellVolume;
+            using std::abs;
+            compensation += abs(volume) >= abs(cellVolume) ? (volume - sum) + cellVolume : (cellVolume - sum) + volume;
+            volume = sum;
+        }
+        return leafGridView.comm().sum(volume + compensation);
+    };
+    const auto initialWaterVolume = waterVolume(x);
+
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
@@ -166,6 +185,12 @@ int main(int argc, char** argv)
     });
     if (mpiHelper.rank() == 0)
         ShallowWaterTest::printErrors(errors, timeLoop->time());
+
+    const auto relativeVolumeChange = std::abs(waterVolume(x) - initialWaterVolume)/initialWaterVolume;
+    if (mpiHelper.rank() == 0)
+        std::cout << "Relative change of the water volume: " << relativeVolumeChange << std::endl;
+    if (relativeVolumeChange > getParam<Scalar>("Problem.VolumeTolerance", 1e-12))
+        DUNE_THROW(Dune::Exception, "Water volume not conserved, relative change " << relativeVolumeChange);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

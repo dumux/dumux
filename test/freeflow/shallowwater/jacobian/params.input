@@ -1,0 +1,19 @@
+[Problem]
+Name = jacobian
+WaterLevel = 1.0 # [m] elevation of the undisturbed free surface
+HumpHeight = 0.8 # [m] amplitude of the smooth bed hump
+SillHeight = 0.0 # [m] height of the bed sill with discontinuous flanks
+MinWaterDepth = 0.0 # [m]
+Gravity = 9.81 # [m/s^2]
+
+[Grid]
+LowerLeft = 0.0 0.0
+UpperRight = 2.0 1.0
+Cells = 9 6
+
+[Assembly]
+NumericDifferenceMethod = 0 # central differences
+NumericDifference.BaseEpsilon = 1e-7
+
+[ShallowWater]
+Limiter = VanAlbada

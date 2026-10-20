@@ -73,6 +73,7 @@ class PoiseuilleFlowProblem
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -176,6 +177,7 @@ public:
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
+        const auto inside = AdvectionType::insideFaceState(*this, fvGeometry, elemVolVars, scvf);
         const auto& unitNormal = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(scvf.center());
         std::array<Scalar, 3> boundaryStateVariables;
@@ -196,23 +198,23 @@ public:
             const auto q_in1 = discharge_;
             const auto q_in  = (1.0-alphaWall_)*q_in1 + alphaWall_*q_in0;
             boundaryStateVariables = ShallowWater::fixedDischargeBoundary(q_in,
-                                                                          insideVolVars.waterDepth(),
-                                                                          insideVolVars.velocity(0),
-                                                                          insideVolVars.velocity(1),
+                                                                          inside.waterDepth,
+                                                                          inside.velocityX,
+                                                                          inside.velocityY,
                                                                           gravity,
                                                                           unitNormal);
         }
         // impose water depth at the right side
         else if (scvf.center()[0] > this->gridGeometry().bBoxMax()[0] - eps_)
         {
-            // the boundary state has the bed of the inside cell, so the depth prescribed at the face
+            // the boundary state has the bed of the inside state, so the depth prescribed at the face
             // is shifted such that the free surface elevation at the face is matched
             const auto waterDepth = hBoundary_
-                + this->spatialParams().bedSurfaceAtPos(scvf.center()) - insideVolVars.bedSurface();
+                + this->spatialParams().bedSurfaceAtPos(scvf.center()) - inside.bedSurface;
             boundaryStateVariables =  ShallowWater::fixedWaterDepthBoundary(waterDepth,
-                                                                            insideVolVars.waterDepth(),
-                                                                            insideVolVars.velocity(0),
-                                                                            insideVolVars.velocity(1),
+                                                                            inside.waterDepth,
+                                                                            inside.velocityX,
+                                                                            inside.velocityY,
                                                                             gravity,
                                                                             unitNormal);
         }
@@ -225,8 +227,8 @@ public:
             // Get inside velocity components in cell face coordinates (t,n) using normal vector unitNormal
             // Note that the first component is the normal component
             // since we are rotating to the normal vector coordinate system
-            const Scalar insideVelocityNWall =  insideVolVars.velocity(0)*unitNormal[0] + insideVolVars.velocity(1)*unitNormal[1];
-            const Scalar insideVelocityTWall = -insideVolVars.velocity(0)*unitNormal[1] + insideVolVars.velocity(1)*unitNormal[0];
+            const Scalar insideVelocityNWall =  inside.velocityX*unitNormal[0] + inside.velocityY*unitNormal[1];
+            const Scalar insideVelocityTWall = -inside.velocityX*unitNormal[1] + inside.velocityY*unitNormal[0];
 
             // Initialisation of outside velocities
             auto outsideVelocityNWall = insideVelocityNWall;
@@ -254,20 +256,20 @@ public:
             const Scalar outsideVelocityXWall = outsideVelocityNWall*unitNormal[0] - outsideVelocityTWall*unitNormal[1];
             const Scalar outsideVelocityYWall = outsideVelocityNWall*unitNormal[1] + outsideVelocityTWall*unitNormal[0];
 
-            boundaryStateVariables[0] = insideVolVars.waterDepth();
+            boundaryStateVariables[0] = inside.waterDepth;
             boundaryStateVariables[1] = outsideVelocityXWall;
             boundaryStateVariables[2] = outsideVelocityYWall;
 
         }
 
-        auto riemannFlux = ShallowWater::riemannProblem(insideVolVars.waterDepth(),
+        auto riemannFlux = ShallowWater::riemannProblem(inside.waterDepth,
                                                         boundaryStateVariables[0],
-                                                        insideVolVars.velocity(0),
+                                                        inside.velocityX,
                                                         boundaryStateVariables[1],
-                                                        insideVolVars.velocity(1),
+                                                        inside.velocityY,
                                                         boundaryStateVariables[2],
-                                                        insideVolVars.bedSurface(),
-                                                        insideVolVars.bedSurface(),
+                                                        inside.bedSurface,
+                                                        inside.bedSurface,
                                                         gravity,
                                                         unitNormal);
 

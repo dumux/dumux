@@ -8,6 +8,9 @@
 #include <config.h>
 #include <array>
 #include <iostream>
+#include <type_traits>
+
+#include <dune/common/exceptions.hh>
 
 #include <dune/common/parallel/mpihelper.hh>
 
@@ -43,7 +46,7 @@ int main(int argc, char** argv)
     Parameters::init(argc, argv);
 
     // the property tag
-    using TypeTag = Properties::TTag::PoiseuilleFlow;
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // create grid
     GridManager<GetPropType<TypeTag, Properties::Grid>> gridManager;
@@ -81,9 +84,14 @@ int main(int argc, char** argv)
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
-    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
-                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+    using LinearSolver = LINEARSOLVER<LinearSolverTraits<GridGeometry>,
+                                      LinearAlgebraTraitsFromAssembler<Assembler>>;
+    auto linearSolver = [&]{
+        if constexpr (std::is_constructible_v<LinearSolver, decltype(leafGridView), decltype(gridGeometry->dofMapper())>)
+            return std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
+        else
+            return std::make_shared<LinearSolver>();
+    }();
 
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
@@ -100,6 +108,10 @@ int main(int argc, char** argv)
     });
     if (mpiHelper.rank() == 0)
         ShallowWaterTest::printErrors(errors);
+
+    const auto errorTolerance = getParam<Scalar>("Problem.ErrorTolerance", -1.0);
+    if (errorTolerance > 0.0 && !(errors.l1[0] < errorTolerance && errors.l1[1] < errorTolerance))
+        DUNE_THROW(Dune::Exception, "L1 errors of water depth and velocity exceed " << errorTolerance);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

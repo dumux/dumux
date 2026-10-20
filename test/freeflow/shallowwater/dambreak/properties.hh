@@ -25,6 +25,7 @@ namespace Dumux::Properties {
 // Create new type tags
 namespace TTag {
 struct DamBreakWet { using InheritsFrom = std::tuple<ShallowWater, CCTpfaModel>; };
+struct DamBreakWetSecondOrder { using InheritsFrom = std::tuple<ShallowWaterSecondOrder, DamBreakWet>; };
 } // end namespace TTag
 
 template<class TypeTag>

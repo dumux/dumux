@@ -7,6 +7,7 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical
                SOURCES main.cc
                LABELS shallowwater
                COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2,Dune::EquidistantOffsetCoordinates<double,2>>
+                                   TYPETAG=PoiseuilleFlow LINEARSOLVER=AMGBiCGSTABIstlSolver
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzy
                               --files ${CMAKE_SOURCE_DIR}/test/references/test_shallowwater_poiseuilleflow_vertical-reference.vtu
@@ -20,3 +21,16 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical_convergence
                LABELS shallowwater
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
                CMD_ARGS test_shallowwater_poiseuilleflow_vertical)
+
+# with the second-order flux the uniform film is a discrete steady state (linear bed and free surface,
+# reconstructed boundary states)
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_vertical_secondorder
+               SOURCES main.cc
+               LABELS shallowwater
+               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2,Dune::EquidistantOffsetCoordinates<double,2>>
+                                   TYPETAG=PoiseuilleFlowSecondOrder LINEARSOLVER=AMGBiCGSTABIstlSolver
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_poiseuilleflow_vertical_secondorder
+               CMD_ARGS params.input -Problem.Name poiseuilleflow_secondorder
+                        -ShallowWater.ReconstructionLowerWaterDepth 1e-7
+                        -ShallowWater.ReconstructionUpperWaterDepth 1e-5
+                        -Problem.ErrorTolerance 1e-12)

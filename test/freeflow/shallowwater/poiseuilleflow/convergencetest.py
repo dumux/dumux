@@ -7,8 +7,12 @@ Refines the grid along the channel with a fine grid across the channel, and acro
 with a fine grid along the channel, and checks the convergence rates of the relative L2 error of
 the velocity. The simulation runs until the flow is steady.
 
+With the option --exact-along-channel, the flow is expected to be discretized exactly along the channel
+(second-order flux): refined along the channel, the error then stays at the level set by the resolution
+across the channel instead of converging.
+
 Usage:
-  python3 convergencetest.py <executable> [additional arguments passed to the executable]
+  python3 convergencetest.py <executable> [--exact-along-channel] [additional arguments passed to the executable]
 """
 
 import math
@@ -52,10 +56,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     executable = sys.argv[1] if "/" in sys.argv[1] else "./" + sys.argv[1]
+    args = sys.argv[2:]
+    exactAlongChannel = "--exact-along-channel" in args
+    args = [a for a in args if a != "--exact-along-channel"]
 
     failed = False
     for name, (grids, minRate) in SERIES.items():
-        errors = [run(executable, cells, sys.argv[2:])["u"] for cells in grids]
+        errors = [run(executable, cells, args)["u"] for cells in grids]
         r = rates(errors)
         print(f"\nrelative L2 error of u, refined {name}:")
         for i, (cells, error) in enumerate(zip(grids, errors)):
@@ -63,7 +70,13 @@ if __name__ == "__main__":
             print(f"  {cells[0]:>4} x {cells[1]:<4} {error:.4e}  {rate}")
         meanRate = sum(r)/len(r)
         print(f"  mean rate: {meanRate:.2f}")
-        if meanRate < minRate:
+        if exactAlongChannel and name == "along the channel":
+            spread = max(errors)/min(errors) - 1.0
+            print(f"  relative spread: {spread:.3f}")
+            if spread > 0.1:
+                sys.stderr.write(f"Error refined {name} changes by {spread:.3f}, expected a constant error.\n")
+                failed = True
+        elif meanRate < minRate:
             sys.stderr.write(f"Convergence rate refined {name} ({meanRate:.2f}) is below {minRate}.\n")
             failed = True
 

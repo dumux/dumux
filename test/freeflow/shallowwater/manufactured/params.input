@@ -1,0 +1,11 @@
+[Problem]
+Name = manufactured
+Gravity = 9.81 # [m/s^2]
+
+[Grid]
+LowerLeft = 0.0 0.0
+UpperRight = 1.0 1.0
+Cells = 16 16
+
+[Newton]
+MaxRelativeShift = 1e-12

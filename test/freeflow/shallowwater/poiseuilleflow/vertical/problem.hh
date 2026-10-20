@@ -49,6 +49,7 @@ class PoiseuilleFlowProblem
     using ParentType = ShallowWaterProblem<TypeTag>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
@@ -114,8 +115,7 @@ public:
         NeumannFluxes values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto inside = AdvectionType::insideFaceState(*this, fvGeometry, elemVolVars, scvf);
         const auto& unitNormal = scvf.unitOuterNormal();
         const auto gravity = this->spatialParams().gravity(globalPos);
         std::array<Scalar, 3> boundaryStateVariables;
@@ -124,33 +124,33 @@ public:
             || globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_)
         {
             // full slip for tangential part and reflection (no-flow) for normal part
-            const Scalar insideVelocityNormalWall =  insideVolVars.velocity(0)*unitNormal[0] + insideVolVars.velocity(1)*unitNormal[1];
-            const Scalar insideVelocityTangentWall = -insideVolVars.velocity(0)*unitNormal[1] + insideVolVars.velocity(1)*unitNormal[0];
+            const Scalar insideVelocityNormalWall =  inside.velocityX*unitNormal[0] + inside.velocityY*unitNormal[1];
+            const Scalar insideVelocityTangentWall = -inside.velocityX*unitNormal[1] + inside.velocityY*unitNormal[0];
             const Scalar outsideVelocityNormalWall = -insideVelocityNormalWall;
             const Scalar outsideVelocityTangentWall = insideVelocityTangentWall;
             const Scalar outsideVelocityXWall = outsideVelocityNormalWall*unitNormal[0] - outsideVelocityTangentWall*unitNormal[1];
             const Scalar outsideVelocityYWall = outsideVelocityNormalWall*unitNormal[1] + outsideVelocityTangentWall*unitNormal[0];
-            boundaryStateVariables = { insideVolVars.waterDepth(), outsideVelocityXWall, outsideVelocityYWall };
+            boundaryStateVariables = { inside.waterDepth, outsideVelocityXWall, outsideVelocityYWall };
         }
         else
         {
             // for inlet and outlet, the same water depth is prescribed
-            // the boundary state has the bed of the inside cell, so the depth prescribed at the face
+            // the boundary state has the bed of the inside state, so the depth prescribed at the face
             // is shifted such that the free surface elevation at the face is matched
             const auto waterDepth = waterDepthBoundary_
-                + this->spatialParams().bedSurfaceAtPos(globalPos) - insideVolVars.bedSurface();
+                + this->spatialParams().bedSurfaceAtPos(globalPos) - inside.bedSurface;
             boundaryStateVariables = ShallowWater::fixedWaterDepthBoundary(
                 waterDepth,
-                insideVolVars.waterDepth(), insideVolVars.velocity(0), insideVolVars.velocity(1),
+                inside.waterDepth, inside.velocityX, inside.velocityY,
                 gravity, unitNormal
             );
         }
 
         auto riemannFlux = ShallowWater::riemannProblem(
-            insideVolVars.waterDepth(), boundaryStateVariables[0],
-            insideVolVars.velocity(0), boundaryStateVariables[1],
-            insideVolVars.velocity(1), boundaryStateVariables[2],
-            insideVolVars.bedSurface(), insideVolVars.bedSurface(),
+            inside.waterDepth, boundaryStateVariables[0],
+            inside.velocityX, boundaryStateVariables[1],
+            inside.velocityY, boundaryStateVariables[2],
+            inside.bedSurface, inside.bedSurface,
             gravity, unitNormal
         );
 

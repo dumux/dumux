@@ -8,14 +8,23 @@
  * \file
  * \ingroup ShallowWaterTests
  * \brief A test for the shallow water model (bowl).
+ *
+ * The time integration scheme is `TimeLoop.Scheme`: `ImplicitEuler` (default) or `BDF2` (second-order backward
+ * differentiation formula with variable step sizes, see Experimental::MultiStep::BDF).
  */
 #include <config.h>
 
+#include <cmath>
 #include <ctime>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <type_traits>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dune/grid/common/partitionset.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
@@ -31,6 +40,9 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/experimental/assembly/multistagefvassembler.hh>
+#include <dumux/experimental/timestepping/multistepmethods.hh>
+#include <dumux/experimental/timestepping/multisteptimestepper.hh>
 
 #include <test/freeflow/shallowwater/errors.hh>
 
@@ -61,6 +73,18 @@ SolutionVector computeAnalyticalSolution(const double t, const Problem& problem)
     return exactSolution;
 }
 
+//! The linear solver for the given assembler
+template<class Assembler, class GridView, class GridGeometry>
+auto makeLinearSolver(const GridView& gridView, const GridGeometry& gridGeometry)
+{
+    using namespace Dumux;
+    using LinearSolver = LINEARSOLVER<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    if constexpr (std::is_constructible_v<LinearSolver, const GridView&, decltype(gridGeometry.dofMapper())>)
+        return std::make_shared<LinearSolver>(gridView, gridGeometry.dofMapper());
+    else
+        return std::make_shared<LinearSolver>();
+}
+
 ////////////////////////
 // the main function
 ////////////////////////
@@ -69,7 +93,7 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = Properties::TTag::Bowl;
+    using TypeTag = Properties::TTag::TYPETAG;
 
     // maybe initialize MPI and/or multithreading backend
     initialize(argc, argv);
@@ -135,19 +159,6 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
-
-    // the linear solver
-    using LinearSolver = AMGBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,
-                                               LinearAlgebraTraitsFromAssembler<Assembler>>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, gridGeometry->dofMapper());
-
-    // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
-
     const auto exactSolutionOfElement = [&](const auto& element){
         return exactSolution[gridGeometry->elementMapper().index(element)];
     };
@@ -155,41 +166,103 @@ int main(int argc, char** argv)
         const auto errors = ShallowWaterTest::computeErrors(*gridGeometry, x, exactSolutionOfElement);
         if (mpiHelper.rank() == 0)
             ShallowWaterTest::printErrors(errors, t);
+        return errors;
     };
+
+    // the bowl is closed, so the water volume is conserved
+    // compensated summation, so that the round-off of the sum over many cells does not mask the conservation
+    auto waterVolume = [&](const SolutionVector& sol) {
+        Scalar volume = 0.0, compensation = 0.0;
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        {
+            const Scalar cellVolume = sol[gridGeometry->elementMapper().index(element)][0]*element.geometry().volume();
+            const Scalar sum = volume + cellVolume;
+            using std::abs;
+            compensation += abs(volume) >= abs(cellVolume) ? (volume - sum) + cellVolume : (cellVolume - sum) + volume;
+            volume = sum;
+        }
+        return leafGridView.comm().sum(volume + compensation);
+    };
+    const auto initialWaterVolume = waterVolume(x);
 
     // the initial solution is exact except for the thin water film on the dry bed
     printErrors(0.0);
 
-    // time loop
-    timeLoop->start(); do
+    // time loop with a function that solves one time step and the non-linear solver suggesting the step size
+    const auto runTimeLoop = [&](auto&& solveTimeStep, auto& nonLinearSolver)
     {
-        nonLinearSolver.solve(x,*timeLoop);
+        timeLoop->start(); do
+        {
+            solveTimeStep();
 
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
+            // make the new solution the old solution
+            xOld = x;
+            gridVariables->advanceTimeStep();
 
-        // advance the time loop to the next step
-        timeLoop->advanceTimeStep();
+            // advance the time loop to the next step
+            timeLoop->advanceTimeStep();
 
-        // update the analytical solution and print the current errors
-        exactSolution = computeAnalyticalSolution<SolutionVector>(timeLoop->time(), *problem);
-        printErrors(timeLoop->time());
+            // update the analytical solution and print the current errors
+            exactSolution = computeAnalyticalSolution<SolutionVector>(timeLoop->time(), *problem);
+            printErrors(timeLoop->time());
 
-        // write vtk output every 10 time steps
-        if (!(timeLoop->timeStepIndex() % 10))
-            vtkWriter.write(timeLoop->time());
+            // write vtk output every 10 time steps
+            if (!(timeLoop->timeStepIndex() % 10))
+                vtkWriter.write(timeLoop->time());
 
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
+            // report statistics of this time step
+            timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+            // set new dt as suggested by newton controller
+            timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
+        } while (!timeLoop->finished());
+    };
 
-    } while (!timeLoop->finished());
+    const auto scheme = getParam<std::string>("TimeLoop.Scheme", "ImplicitEuler");
+    if (scheme == "ImplicitEuler")
+    {
+        using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+        auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
+        auto linearSolver = makeLinearSolver<Assembler>(leafGridView, *gridGeometry);
+        using NewtonSolver = Dumux::NewtonSolver<Assembler, typename decltype(linearSolver)::element_type>;
+        NewtonSolver nonLinearSolver(assembler, linearSolver);
+        runTimeLoop([&]{ nonLinearSolver.solve(x, *timeLoop); }, nonLinearSolver);
+    }
+    else if (scheme == "BDF2")
+    {
+        auto method = std::make_shared<Experimental::MultiStep::BDF<Scalar>>(2);
+        using Assembler = Experimental::MultiStageFVAssembler<TypeTag, DiffMethod::numeric>;
+        auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, method, xOld);
+        auto linearSolver = makeLinearSolver<Assembler>(leafGridView, *gridGeometry);
+        using NewtonSolver = Dumux::NewtonSolver<Assembler, typename decltype(linearSolver)::element_type>;
+        auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver);
+        Experimental::MultiStepTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, method);
+
+        // the first step and steps after a step size increase by more than a factor of two are taken with BDF1
+        std::size_t numFirstOrderSteps = 0;
+        runTimeLoop([&]{
+            timeStepper.step(x, *timeLoop);
+            numFirstOrderSteps += timeStepper.lastNumSteps() < 2;
+        }, *nonLinearSolver);
+        if (mpiHelper.rank() == 0)
+            std::cout << "Time steps taken with BDF1: " << numFirstOrderSteps << std::endl;
+    }
+    else
+        DUNE_THROW(ParameterException, "Unknown time integration scheme " << scheme << " (use ImplicitEuler or BDF2)");
 
     timeLoop->finalize(leafGridView.comm());
+
+    const auto relativeVolumeChange = std::abs(waterVolume(x) - initialWaterVolume)/initialWaterVolume;
+    if (mpiHelper.rank() == 0)
+        std::cout << "Relative change of the water volume: " << relativeVolumeChange << std::endl;
+    if (relativeVolumeChange > getParam<Scalar>("Problem.VolumeTolerance", 1e-12))
+        DUNE_THROW(Dune::Exception, "Water volume not conserved, relative change " << relativeVolumeChange);
+
+    const auto finalErrors = ShallowWaterTest::computeErrors(*gridGeometry, x, exactSolutionOfElement);
+    const auto errorTolerance = getParam<Scalar>("Problem.ErrorTolerance", -1.0);
+    if (errorTolerance > 0.0 && !(finalErrors.l1[0] < errorTolerance))
+        DUNE_THROW(Dune::Exception, "L1 error of the water depth " << finalErrors.l1[0] << " exceeds " << errorTolerance);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

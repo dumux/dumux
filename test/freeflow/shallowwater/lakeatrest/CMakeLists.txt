@@ -8,6 +8,7 @@ dune_symlink_to_source_files(FILES params.input plot_results.py)
 dumux_add_test(NAME test_shallowwater_lakeatrest
                SOURCES main.cc
                LABELS shallowwater
+               COMPILE_DEFINITIONS TYPETAG=LakeAtRest LINEARSOLVER=AMGBiCGSTABIstlSolver
                CMD_ARGS params.input
                         -Problem.ErrorTolerance 1e-10)
 
@@ -32,3 +33,25 @@ dumux_add_test(NAME test_shallowwater_lakeatrest_parallel
                         params.input
                         -Problem.Name lakeatrest-parallel
                         -Problem.ErrorTolerance 1e-10)
+
+# the second-order flux with limited linear reconstruction is well-balanced as well; at the large time steps
+# of this test, ILU- and AMG-preconditioned BiCGSTAB do not converge for its Jacobian
+dumux_add_test(NAME test_shallowwater_lakeatrest_secondorder
+               SOURCES main.cc
+               LABELS shallowwater
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS TYPETAG=LakeAtRestSecondOrder LINEARSOLVER=UMFPackIstlSolver
+               CMD_ARGS params.input
+                        -Problem.Name lakeatrest-secondorder
+                        -Problem.ErrorTolerance 1e-10)
+
+dumux_add_test(NAME test_shallowwater_lakeatrest_secondorder_emerged
+               TARGET test_shallowwater_lakeatrest_secondorder
+               LABELS shallowwater
+               CMAKE_GUARD HAVE_UMFPACK
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_lakeatrest_secondorder
+               CMD_ARGS params.input
+                        -Problem.Name lakeatrest-secondorder-emerged
+                        -Problem.WaterLevel 0.5
+                        -Problem.MinWaterDepth 1e-5
+                        -Problem.ErrorTolerance 1e-5)
