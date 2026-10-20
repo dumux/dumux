@@ -22,3 +22,7 @@ dumux_add_test(NAME test_cachedtpfafvgeometry_nonconforming
               COMPILE_DEFINITIONS ENABLE_CACHING=true
               CMAKE_GUARD dune-alugrid_FOUND
               LABELS unit discretization)
+
+dumux_add_test(NAME test_tworingconnectivitymap
+              SOURCES test_tworingconnectivitymap.cc
+              LABELS unit discretization)

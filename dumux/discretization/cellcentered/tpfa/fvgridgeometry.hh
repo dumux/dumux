@@ -25,6 +25,7 @@
 #include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
+#include <dumux/discretization/cellcentered/tworingconnectivitymap.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -58,6 +59,45 @@ struct CCTpfaDefaultGridGeometryTraits
     //! hanging node per scvf. Use different traits if you need more.
     static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 1<<(GridView::dimension-1);
 };
+
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Traits for the tpfa finite volume grid geometry where the flux over a face depends on
+ *        the two adjacent elements and on all face neighbors of both (e.g. for linear reconstruction)
+ * \note The extended stencil reaches elements that the element-local views do not bind,
+ *       so the grid geometry and the grid volume variables have to be cached.
+ */
+template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
+struct CCTpfaTwoRingGridGeometryTraits
+: public CCTpfaDefaultGridGeometryTraits<GridView, MapperTraits>
+{
+    template<class GridGeometry>
+    using ConnectivityMap = CCTwoRingConnectivityMap<GridGeometry>;
+
+    //! Every element has at most n = 2*dim*maxNumScvfNeighbors face neighbors,
+    //! so the two rings around an element contain at most n + n(n-1) = n^2 elements
+    static constexpr int maxElementStencilSize
+        = (2*GridView::dimension*CCTpfaDefaultGridGeometryTraits<GridView, MapperTraits>::maxNumScvfNeighbors)
+          *(2*GridView::dimension*CCTpfaDefaultGridGeometryTraits<GridView, MapperTraits>::maxNumScvfNeighbors) + 1;
+};
+
+namespace Detail::CCTpfa {
+
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The maximum admissible stencil size: `Traits::maxElementStencilSize` if the traits
+ *        define it, otherwise one plus the maximum number of neighbors through the element's scvfs
+ */
+template<class Traits, class LocalView>
+constexpr int maxElementStencilSize()
+{
+    if constexpr (requires { Traits::maxElementStencilSize; })
+        return Traits::maxElementStencilSize;
+    else
+        return LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
+}
+
+} // end namespace Detail::CCTpfa
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -110,7 +150,7 @@ public:
     static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
+    static constexpr int maxElementStencilSize = Detail::CCTpfa::maxElementStencilSize<Traits, LocalView>();
 
     //! export the grid view type
     using GridView = GV;
@@ -422,7 +462,7 @@ public:
     static constexpr DiscretizationMethod discMethod{};
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
+    static constexpr int maxElementStencilSize = Detail::CCTpfa::maxElementStencilSize<Traits, LocalView>();
 
     //! Export the type of the grid view
     using GridView = GV;

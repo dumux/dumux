@@ -17,15 +17,28 @@
 #include <iostream>
 #include <tuple>
 #include <algorithm>
+#include <type_traits>
+#include <utility>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 
 #include <dumux/io/format.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cellcentered/tworingconnectivitymap.hh>
 
 #ifndef DOXYGEN // hide from doxygen
 namespace Dumux::Detail {
+
+//! Whether a grid geometry uses the two-ring connectivity map
+template<class GridGeometry>
+inline constexpr bool hasTwoRingConnectivity = []{
+    if constexpr (requires (const GridGeometry& gg) { gg.connectivityMap(); })
+        return std::is_same_v<std::decay_t<decltype(std::declval<const GridGeometry&>().connectivityMap())>,
+                              CCTwoRingConnectivityMap<GridGeometry>>;
+    else
+        return false;
+}();
 
 //! Compute a map from dof indices to element indices (helper data for coloring algorithm)
 template <class GridGeometry>
@@ -132,7 +145,29 @@ void addNeighborColors(const GridGeometry& gg,
                        const ConnectedElements& connectedElements,
                        std::vector<int>& neighborColors)
 {
-    if constexpr (
+    if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa && hasTwoRingConnectivity<GridGeometry>)
+    {
+        // with the two-ring stencil, assembling an element deflects its volume variables, which are read
+        // by the fluxes evaluated for elements up to three face layers away, and updates flux variables
+        // caches on the faces of the elements up to two layers away, so elements up to four layers apart conflict
+        std::vector<std::size_t> layer{gg.elementMapper().index(element)}, nextLayer;
+        for (int distance = 1; distance <= 4; ++distance)
+        {
+            nextLayer.clear();
+            for (const auto eIdx : layer)
+                for (const auto nIdx : connectedElements[eIdx])
+                {
+                    nextLayer.push_back(nIdx);
+                    neighborColors.push_back(colors[nIdx]);
+                }
+
+            std::sort(nextLayer.begin(), nextLayer.end());
+            nextLayer.erase(std::unique(nextLayer.begin(), nextLayer.end()), nextLayer.end());
+            std::swap(layer, nextLayer);
+        }
+    }
+
+    else if constexpr (
         GridGeometry::discMethod == DiscretizationMethods::cctpfa
         || GridGeometry::discMethod == DiscretizationMethods::ccmpfa
         || GridGeometry::discMethod == DiscretizationMethods::fcstaggered
