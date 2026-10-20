@@ -12,8 +12,11 @@
 #ifndef DUMUX_FLUX_SHALLOW_WATER_FLUX_HH
 #define DUMUX_FLUX_SHALLOW_WATER_FLUX_HH
 
+#include <type_traits>
+
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/shallowwater/riemannproblem.hh>
+#include <dumux/flux/shallowwater/reconstruction.hh>
 
 namespace Dumux {
 
@@ -77,6 +80,20 @@ public:
         localFlux[2] = riemannFlux[2] * scvf.area();
 
         return localFlux;
+    }
+
+    /*!
+     * \brief The state of the inside cell at a boundary face, which is the cell state
+     */
+    template<class Problem, class FVElementGeometry, class ElementVolumeVariables>
+    static auto insideFaceState(const Problem& problem,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const typename FVElementGeometry::SubControlVolumeFace& scvf)
+    {
+        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+        using Scalar = std::decay_t<decltype(volVars.waterDepth())>;
+        return ShallowWater::FaceState<Scalar>{volVars.waterDepth(), volVars.velocity(0), volVars.velocity(1), volVars.bedSurface()};
     }
 };
 

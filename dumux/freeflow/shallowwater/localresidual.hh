@@ -41,6 +41,7 @@ class ShallowWaterResidual
     using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
+    using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
 
 public:
 
@@ -94,6 +95,36 @@ public:
         static const bool enableViscousFlux = getParamFromGroup<bool>(problem.paramGroup(), "ShallowWater.EnableViscousFlux", false);
         if (enableViscousFlux)
             flux += fluxVars.viscousFlux(problem, element, fvGeometry, elemVolVars, scvf);
+        return flux;
+    }
+
+    using ParentType::evalFlux;
+
+    /*!
+     * \brief Evaluate the flux over a face including boundary conditions
+     *
+     * At boundary faces, adds the contribution of the face to the bed slope source of the inside cell,
+     * if the advective flux has one (ShallowWaterSecondOrderFlux). At inner faces, the advective flux
+     * includes it.
+     *
+     * \param problem The problem
+     * \param element The current element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param elemFluxVarsCache the flux variable cache for the element stencil
+     * \param scvf The sub control volume face
+     */
+    NumEqVector evalFlux(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const SubControlVolumeFace& scvf) const
+    {
+        auto flux = ParentType::evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+        if constexpr (requires { AdvectionType::boundaryBedSlopeSource(problem, fvGeometry, elemVolVars, scvf); })
+            if (scvf.boundary())
+                flux += AdvectionType::boundaryBedSlopeSource(problem, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };

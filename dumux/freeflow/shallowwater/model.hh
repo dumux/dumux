@@ -45,6 +45,11 @@
  * within the flux computation and must therefore not be treated separately within the computation of the source terms.
  * On the contrary, the bottom friction source term must be implemented in the problem (have a look at <a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/shallowwaterfriction/README.md" target="_blank">the shallow water example</a>).
  *
+ * The type tag `ShallowWaterSecondOrder` switches a shallow water problem on the cell-centered tpfa discretization
+ * to the second-order flux with limited linear reconstruction (ShallowWaterSecondOrderFlux), e.g.
+ * `using InheritsFrom = std::tuple<ShallowWaterSecondOrder, MyShallowWaterProblem>`. Boundary fluxes should then
+ * be computed with the reconstructed inside state provided by `AdvectionType::insideFaceState`.
+ *
  * When using a fully implicit Euler time discretization, note the following:
  * Large time step sizes (CFL > 1) can lead to a strong smearing of sharp fronts.
  * This can be seen in the movement of fast traveling waves (e.g. dam break
@@ -62,7 +67,9 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/numeqvector.hh>
 
+#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/flux/shallowwaterflux.hh>
+#include <dumux/flux/shallowwatersecondorderflux.hh>
 #include <dumux/flux/shallowwaterviscousflux.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -114,6 +121,9 @@ namespace Properties {
 //! Type tag for shallow water equation model inherits from model properties
 namespace TTag {
 struct ShallowWater { using InheritsFrom = std::tuple<ModelProperties>; };
+
+//! Switches a shallow water problem on the cell-centered tpfa discretization to the second-order flux
+struct ShallowWaterSecondOrder {};
 }// end namespace TTag
 
 //////////////////////////////////////////////////////////////////
@@ -164,6 +174,27 @@ private:
 public:
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar>>;
 };
+
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::ShallowWaterSecondOrder>
+{ using type = ShallowWaterSecondOrderFlux< Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>> >; };
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::ShallowWaterSecondOrder>
+{
+private:
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+public:
+    using type = CCTpfaFVGridGeometry<GridView, true, CCTpfaTwoRingGridGeometryTraits<GridView>>;
+};
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::ShallowWaterSecondOrder>
+{ static constexpr bool value = true; };
+
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::ShallowWaterSecondOrder>
+{ static constexpr bool value = true; };
 
 } // end properties
 } // end namespace Dumux
