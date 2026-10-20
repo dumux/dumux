@@ -4,6 +4,7 @@
 add_subdirectory(boundaryfluxes)
 add_subdirectory(bowl)
 add_subdirectory(dambreak)
+add_subdirectory(fluxlimiter)
 add_subdirectory(iofields)
 add_subdirectory(lakeatrest)
 add_subdirectory(poiseuilleflow)

@@ -33,8 +33,8 @@ namespace ShallowWater {
  * \tparam Scalar the scalar type for scalar physical quantities
  * \param valueLeft The value on the left side
  * \param valueRight The value on the right side
- * \param upperH Where to start the limit the function (mobility < 1)
- * \param lowerH Where the limit should reach zero (mobility < 0)
+ * \param upperH Water depth below which the mobility is smaller than one
+ * \param lowerH Water depth at and below which the mobility is zero
  */
 template<class Scalar>
 static Scalar fluxLimiterLET(const Scalar valueLeft,
@@ -51,7 +51,7 @@ static Scalar fluxLimiterLET(const Scalar valueLeft,
     Scalar mobility = 1.0;
     if (h < upperH)
     {
-        const auto sw = max(min(h*(1.0/upperH) - lowerH, 1.0), 0.0);
+        const auto sw = max(min((h - lowerH)/(upperH - lowerH), 1.0), 0.0);
 
         // LET-model for mobility
         // constexpr Scalar krw = 1.0;
