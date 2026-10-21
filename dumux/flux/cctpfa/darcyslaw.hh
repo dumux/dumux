@@ -181,25 +181,26 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             const auto& tij = fluxVarsCache.advectionTij();
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
-            //! compute alpha := n^T*K*g
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
-
-            Scalar flux = tij*(pInside - pOutside) + rho*Extrusion::area(fvGeometry, scvf)*alpha_inside;
-
-            //! On interior faces we have to add K-weighted gravitational contributions
+            // Two-point flux on the difference of the potential p - rho*g*x between the inside
+            // and the outside cell centre (the face centre on boundaries). Like the pressure
+            // difference, the gravitational contribution is thus evaluated along the line
+            // connecting the two points, such that the flux vanishes for a hydrostatic pressure
+            // distribution on any grid. Evaluating the gravitational term with the face normal,
+            // i.e. as n^T K g, is only consistent with the two-point pressure difference on
+            // K-orthogonal grids and otherwise yields spurious fluxes (see issue #1127).
+            // Eliminating the face potential from the two one-sided fluxes yields this form
+            // for heterogeneous permeabilities, too.
+            auto distance = scvf.ipGlobal() - insideScv.center();
             if (!scvf.boundary())
             {
+                // on periodic boundaries, the outside centre is taken relative to its own face
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = fvGeometry.gridGeometry().isPeriodic()
-                    ? computeTpfaTransmissibility(fvGeometry, fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
-                    : -1.0*computeTpfaTransmissibility(fvGeometry, scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
-
-                flux -= rho*tij/outsideTi*(alpha_inside - alpha_outside);
+                const auto& outsideFaceCenter = fvGeometry.gridGeometry().isPeriodic()
+                    ? fvGeometry.flipScvf(scvf.index()).ipGlobal() : scvf.ipGlobal();
+                distance += outsideScv.center() - outsideFaceCenter;
             }
 
-            return flux;
+            return tij*(pInside - pOutside + rho*(g*distance));
         }
         else
         {
