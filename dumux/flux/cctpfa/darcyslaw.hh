@@ -364,61 +364,42 @@ public:
             const auto& tij = fluxVarsCache.advectionTij();
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
-            // Obtain inside and outside pressures
-            const auto pInside = insideVolVars.pressure(phaseIdx);
-            const auto pOutside = [&]()
-            {
-                // Dirichlet boundaries and inner faces with one neighbor
-                if (scvf.numOutsideScvs() == 1)
-                    return outsideVolVars.pressure(phaseIdx);
+            // The pressures are extrapolated hydrostatically from the cell centers to the face
+            // along the one-sided connections (cf. the specialization for dim == dimWorld).
+            // The flux thus vanishes for a hydrostatic pressure distribution on any grid,
+            // including surface grids whose center-to-face vectors are not parallel to the face
+            // normals (see issue #1127). On one-dimensional networks, these vectors are parallel
+            // to the normals and the results do not change.
+            const auto pInside = insideVolVars.pressure(phaseIdx) + rho*(g*(scvf.ipGlobal() - insideScv.center()));
 
-                // inner faces in networks (general case)
-                else
+            // Dirichlet boundaries and inner faces with one neighbor
+            if (scvf.numOutsideScvs() == 1)
+            {
+                auto pOutside = outsideVolVars.pressure(phaseIdx);
+                if (!scvf.boundary())
                 {
-                    Scalar sumTi(tij);
-                    Scalar sumPTi(tij*pInside);
-
-                    // add inside gravitational contribution
-                    sumPTi += rho*Extrusion::area(fvGeometry, scvf)
-                              *insideVolVars.extrusionFactor()
-                              *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
-
-                    for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-                    {
-                        const auto outsideScvIdx = scvf.outsideScvIdx(i);
-                        const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
-                        const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                        const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
-                        sumTi += outsideFluxVarsCache.advectionTij();
-                        sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
-
-                        // add outside gravitational contribution
-                        sumPTi += rho*Extrusion::area(fvGeometry, scvf)
-                                  *outsideVolVars.extrusionFactor()
-                                  *vtmv(flippedScvf.unitOuterNormal(), outsideVolVars.permeability(), g);
-                    }
-                    return sumPTi/sumTi;
+                    const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                    pOutside += rho*(g*(fvGeometry.flipScvf(scvf.index()).ipGlobal() - outsideScv.center()));
                 }
-            }();
-
-            //! precompute alpha := n^T*K*g
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
-
-            Scalar flux = tij*(pInside - pOutside) + Extrusion::area(fvGeometry, scvf)*rho*alpha_inside;
-
-            //! On interior faces with one neighbor we have to add K-weighted gravitational contributions
-            if (!scvf.boundary() && scvf.numOutsideScvs() == 1)
-            {
-                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                const auto& outsideScvf = fvGeometry.flipScvf(scvf.index());
-                const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = computeTpfaTransmissibility(fvGeometry, outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-                const auto alpha_outside = vtmv(outsideScvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
-
-                flux -= rho*tij/outsideTi*(alpha_inside + alpha_outside);
+                return tij*(pInside - pOutside);
             }
 
-            return flux;
+            // inner faces at branching points: eliminate the face pressure
+            Scalar sumTi(tij);
+            Scalar sumPTi(tij*pInside);
+            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+            {
+                const auto outsideScvIdx = scvf.outsideScvIdx(i);
+                const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+                const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+                const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+                const auto ti = elemFluxVarsCache[flippedScvf].advectionTij();
+                sumTi += ti;
+                sumPTi += ti*(outsideVolVars.pressure(phaseIdx)
+                              + rho*(g*(flippedScvf.ipGlobal() - outsideScv.center())));
+            }
+
+            return tij*(pInside - sumPTi/sumTi);
         }
         else
         {
