@@ -7,32 +7,45 @@
 /*!
  * \file
  * \ingroup HyperelasticVolIso
- * \brief Coupling manager for the mixed u–p hyperelastic model.
+ * \brief Coupling manager for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * Both subdomains (momentum and pressure) share the same grid.
  *
  * Services provided:
- * - `pressureAtPoint(fvGeom, ip)`:
- *   evaluates \f$ p_s \f$ at a global position from the stored pressure solution.
+ * - `pressure(elemDisc, ipData)`:
+ *   evaluates \f$ p_s \f$ at an interpolation point from the stored pressure solution.
  *   Called by the momentum residual.
- * - `deformationGradientAtPoint(fvGeom, ip)`:
- *   evaluates \f$ \mathbf{F} \f$ at a global position from the stored displacement solution.
+ * - `deformationGradient(elemDisc, ipData)`:
+ *   evaluates \f$ \mathbf{F} \f$ at an interpolation point from the stored displacement solution.
  *   Called by the pressure residual.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_COUPLING_MANAGER_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_COUPLING_MANAGER_HH
 
+#include <deque>
+#include <memory>
+#include <tuple>
+#include <type_traits>
 #include <vector>
+
+#include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/indices.hh>
+
+#include <dumux/assembly/coloring.hh>
+#include <dumux/common/concepts/ipdata_.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/multidomain/assemblytraits.hh>
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/parallel/parallel_for.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Coupling manager for the mixed u–p hyperelastic model.
+ * \brief Coupling manager for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * \tparam MDTraits MultiDomainTraits with subdomain 0 = momentum, subdomain 1 = pressure.
  */
@@ -42,8 +55,9 @@ class HyperelasticVolIsoCouplingManager : public CouplingManager<MDTraits>
     using ParentType = CouplingManager<MDTraits>;
 
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomain<id>::TypeTag;
-    template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
-    template<std::size_t id> using GridView = typename GridGeometry<id>::GridView;
+    template<std::size_t id> using GridDiscretization = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
+    template<std::size_t id> using ElementDiscretization = typename GridDiscretization<id>::LocalView;
+    template<std::size_t id> using GridView = typename GridDiscretization<id>::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
     template<std::size_t id> using ElementSeed = typename GridView<id>::Grid::template Codim<0>::EntitySeed;
 
@@ -54,6 +68,7 @@ class HyperelasticVolIsoCouplingManager : public CouplingManager<MDTraits>
     static constexpr std::size_t presIdx_ = 1;
 
     using GlobalPosition = typename Element<0>::Geometry::GlobalCoordinate;
+    using LocalPosition = typename Element<0>::Geometry::LocalCoordinate;
     using Tensor = Dune::FieldMatrix<Scalar, GridView<0>::dimension, GridView<0>::dimension>;
     static constexpr int dim = GridView<0>::dimension;
 
@@ -64,10 +79,10 @@ public:
     using CouplingStencilType = std::vector<std::size_t>;
 
     HyperelasticVolIsoCouplingManager(
-        std::shared_ptr<GridGeometry<momIdx_>> momGG,
-        std::shared_ptr<GridGeometry<presIdx_>> presGG)
+        std::shared_ptr<GridDiscretization<momIdx_>> momGridDisc,
+        std::shared_ptr<GridDiscretization<presIdx_>> presGridDisc)
     {
-        buildStencils_(*momGG, *presGG);
+        buildStencils_(*momGridDisc, *presGridDisc);
     }
 
     void init(std::shared_ptr<GetPropType<SubDomainTypeTag<momIdx_>, Properties::Problem>> momProblem,
@@ -90,23 +105,23 @@ public:
         else                        return stencilsPresTOMom_[eIdx];
     }
 
-    //! Evaluate \f$ p_s \f$ at a global position (P1 interpolation from pressure solution).
-    Scalar pressureAtPoint(const typename GridGeometry<momIdx_>::LocalView& fvGeom,
-                           const GlobalPosition& ip) const
+    template<Concept::IpData IpData>
+    Scalar pressure(const ElementDiscretization<momIdx_>& elemDisc,
+                    const IpData& ipData) const
     {
-        const auto& gg = this->problem(pressureIdx).gridDiscretization();
-        const auto elemSol = elementSolution(fvGeom.element(), this->curSol(pressureIdx), gg);
-        return evalSolution(fvGeom.element(), fvGeom.element().geometry(),
-                            gg, elemSol, ip)[0];
+        const auto& gridDisc = this->problem(pressureIdx).gridDiscretization();
+        const auto elemSol = elementSolution(elemDisc.element(), this->curSol(pressureIdx), gridDisc);
+        return evalSolutionAtLocalPos(elemDisc.element(), elemDisc.element().geometry(),
+                                      gridDisc, elemSol, ipData.local())[0];
     }
 
-    //! Evaluate \f$ \mathbf{F} \f$ at a global position (displacement shape functions).
-    Tensor deformationGradientAtPoint(const typename GridGeometry<presIdx_>::LocalView& fvGeom,
-                                      const GlobalPosition& ip) const
+    template<Concept::IpData IpData>
+    Tensor deformationGradient(const ElementDiscretization<presIdx_>& elemDisc,
+                               const IpData& ipData) const
     {
-        const auto& gg = this->problem(momentumIdx).gridDiscretization();
-        const auto fvGeomMom = localView(gg).bindElement(fvGeom.element());
-        return computeF_(fvGeom.element(), ip, fvGeomMom);
+        const auto& gridDisc = this->problem(momentumIdx).gridDiscretization();
+        const auto elemDiscMom = localView(gridDisc).bindElement(elemDisc.element());
+        return computeF_(elemDisc.element(), ipData.local(), elemDiscMom);
     }
 
     void computeColorsForAssembly()
@@ -125,7 +140,7 @@ public:
                                .gridDiscretization().gridView().grid();
         for (const auto& elems : elementSets_)
             Dumux::parallelFor(elems.size(), [&](std::size_t n)
-            { f(grid.entity(elems[n])); });
+                { f(grid.entity(elems[n])); });
     }
 
     template<std::size_t i>
@@ -135,19 +150,18 @@ public:
 
 private:
     Tensor computeF_(const Element<presIdx_>& element,
-                     const GlobalPosition& ip,
-                     const typename GridGeometry<momIdx_>::LocalView& fvGeomMom) const
+                     const LocalPosition& ipLocal,
+                     const ElementDiscretization<momIdx_>& elemDiscMom) const
     {
         const auto& geom = element.geometry();
-        const auto ipLocal = geom.local(ip);
-        const auto& localBasis = fvGeomMom.feLocalBasis();
+        const auto& localBasis = elemDiscMom.feLocalBasis();
         using ShapeJac = typename std::decay_t<decltype(localBasis)>::Traits::JacobianType;
         std::vector<ShapeJac> shapeJac;
         localBasis.evaluateJacobian(ipLocal, shapeJac);
         const auto jacInvT = geom.jacobianInverseTransposed(ipLocal);
 
         Tensor F(0.0);
-        for (const auto& localDof : localDofs(fvGeomMom))
+        for (const auto& localDof : localDofs(elemDiscMom))
         {
             GlobalPosition gradN;
             jacInvT.mv(shapeJac[localDof.index()][0], gradN);
@@ -158,25 +172,26 @@ private:
         return F;
     }
 
-    void buildStencils_(const GridGeometry<momIdx_>& momGG, const GridGeometry<presIdx_>& presGG)
+    void buildStencils_(const GridDiscretization<momIdx_>& momGridDisc,
+                        const GridDiscretization<presIdx_>& presGridDisc)
     {
-        const std::size_t n = presGG.gridView().size(0);
+        const std::size_t n = presGridDisc.gridView().size(0);
         stencilsMomToPres_.resize(n);
         stencilsPresTOMom_.resize(n);
 
-        auto fvMom  = localView(momGG);
-        auto fvPres = localView(presGG);
+        auto elemDiscMom = localView(momGridDisc);
+        auto elemDiscPres = localView(presGridDisc);
 
-        for (const auto& element : elements(presGG.gridView()))
+        for (const auto& element : elements(presGridDisc.gridView()))
         {
-            fvMom.bindElement(element);
-            fvPres.bindElement(element);
-            const std::size_t eIdx = presGG.elementMapper().index(element);
+            elemDiscMom.bindElement(element);
+            elemDiscPres.bindElement(element);
+            const std::size_t eIdx = presGridDisc.elementMapper().index(element);
 
-            for (const auto& localDof : localDofs(fvPres))
+            for (const auto& localDof : localDofs(elemDiscPres))
                 stencilsMomToPres_[eIdx].push_back(localDof.dofIndex());
             // Use localDofs (not scvs) to include non-SCV DOFs (e.g. PQ2 edge midpoints)
-            for (const auto& localDof : localDofs(fvMom))
+            for (const auto& localDof : localDofs(elemDiscMom))
                 stencilsPresTOMom_[eIdx].push_back(localDof.dofIndex());
         }
     }

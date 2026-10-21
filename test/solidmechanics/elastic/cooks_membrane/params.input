@@ -1,5 +1,5 @@
 [Grid]
-File = cooksmembrane.msh
+File = ../../cooksmembrane.msh
 
 [Problem]
 Name = test_cooks_membrane_box

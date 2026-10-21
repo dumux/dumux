@@ -7,7 +7,8 @@
 /*!
  * \file
  * \ingroup HyperelasticVolIso
- * \brief Local residuals for the volumetric-isochoric split hyperelastic mixed u–p model.
+ * \brief Local residuals for the volumetric-isochoric split hyperelastic mixed
+ *        \f$ \mathbf{d} \f$–\f$ p_s \f$ model.
  *
  * Two local residual classes are provided:
  *
@@ -23,22 +24,22 @@
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_LOCAL_RESIDUAL_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_LOCAL_RESIDUAL_HH
 
-#include <dune/common/fmatrix.hh>
-#include <dune/grid/common/intersectioniterator.hh>
+#include <vector>
 
-#include <dumux/common/math.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
-#include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Momentum local residual for the mixed u–p hyperelastic model.
+ * \brief Momentum local residual for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * Assembles \f$ -\nabla_X \cdot \mathbf{P} = \mathbf{f} \f$ with the first Piola–Kirchhoff stress
  * \f[ \mathbf{P} = \mathbf{P}_\text{iso}(\mathbf{F}) + p\, J\, \mathbf{F}^{-\top}. \f]
@@ -55,10 +56,9 @@ class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLoca
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using ElementDiscretization = typename GridGeometry::LocalView;
-    using GridView = typename GridGeometry::GridView;
-    using GlobalPosition = typename GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
+    using GridView = typename GridDiscretization::GridView;
     using Indices = typename GetPropType<TypeTag, Properties::ModelTraits>::Indices;
     using Tensor = Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension>;
     static constexpr int dim = GridView::dimension;
@@ -69,9 +69,6 @@ class HyperelasticVolIsoMomentumLocalResidual : public DiscretizationDefaultLoca
 public:
     using ParentType::ParentType;
     using ElementResidualVector = typename ParentType::ElementResidualVector;
-
-    NumEqVector computeStorage(const auto&, const auto&, const auto&) const
-    { return NumEqVector(0.0); }
 
     NumEqVector storageIntegral(const ElementDiscretization&, const ElementVariables&,
                                 const auto&, bool) const
@@ -92,10 +89,9 @@ public:
             for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
             {
                 const auto& ipCache = cache(elemVars, qpData.ipData());
-                const auto& ipGlobal = qpData.ipData().global();
 
                 const auto F = deformationGradient_(elemDisc, elemVars, ipCache);
-                const auto P = firstPiolaKirchhoffStressTensor_(problem, F, elemDisc, ipGlobal);
+                const auto P = firstPiolaKirchhoffStressTensor_(problem, F, elemDisc, qpData.ipData());
                 const auto f = problem.source(elemDisc, elemVars, qpData.ipData());
                 const auto& shapeValues = ipCache.shapeValues();
 
@@ -127,7 +123,7 @@ public:
         {
             const auto& ipCache = cache(elemVars, qpData.ipData());
             const auto F = deformationGradient_(elemDisc, elemVars, ipCache);
-            const auto P = firstPiolaKirchhoffStressTensor_(problem, F, elemDisc, qpData.ipData().global());
+            const auto P = firstPiolaKirchhoffStressTensor_(problem, F, elemDisc, qpData.ipData());
 
             for (int i = 0; i < dim; ++i)
                 for (int j = 0; j < dim; ++j)
@@ -137,10 +133,11 @@ public:
     }
 
     //! The scalar \f$ p \f$ of the volumetric stress \f$ p J \mathbf{F}^{-\top} \f$
+    template<class IpData>
     Scalar volumetricStressPressure(const Problem& problem,
                                     const ElementDiscretization& elemDisc,
-                                    const GlobalPosition& ipGlobal) const
-    { return problem.couplingManager().pressureAtPoint(elemDisc, ipGlobal); }
+                                    const IpData& ipData) const
+    { return problem.couplingManager().pressure(elemDisc, ipData); }
 
 private:
     template<class IpCache>
@@ -157,16 +154,17 @@ private:
         return F;
     }
 
+    template<class IpData>
     Tensor firstPiolaKirchhoffStressTensor_(const Problem& problem,
                                             const Tensor& F,
                                             const ElementDiscretization& elemDisc,
-                                            const GlobalPosition& ipGlobal) const
+                                            const IpData& ipData) const
     {
-        auto P = problem.isochoricFirstPiolaKirchhoffStressTensor(F, elemDisc, ipGlobal);
+        auto P = problem.isochoricFirstPiolaKirchhoffStressTensor(F, elemDisc, ipData.global());
 
         Tensor Finv(F);
         Finv.invert();
-        const Scalar pJ = this->asImp().volumetricStressPressure(problem, elemDisc, ipGlobal)*F.determinant();
+        const Scalar pJ = this->asImp().volumetricStressPressure(problem, elemDisc, ipData)*F.determinant();
         for (int i = 0; i < dim; ++i)
             for (int j = 0; j < dim; ++j)
                 P[i][j] += pJ*Finv[j][i];
@@ -177,7 +175,7 @@ private:
 
 /*!
  * \ingroup HyperelasticVolIso
- * \brief Pressure local residual for the mixed u–p hyperelastic model.
+ * \brief Pressure local residual for the mixed \f$ \mathbf{d} \f$–\f$ p_s \f$ hyperelastic model.
  *
  * Enforces the algebraic pressure constraint
  * \f[ p_s^{\mathrm{eq}}(J) - p_s = 0 \f]
@@ -191,9 +189,9 @@ class HyperelasticVolIsoPressureLocalResidual : public DiscretizationDefaultLoca
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    using ElementDiscretization = typename GridGeometry::LocalView;
-    using GridView = typename GridGeometry::GridView;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
+    using GridView = typename GridDiscretization::GridView;
     using Tensor = Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
@@ -202,9 +200,6 @@ class HyperelasticVolIsoPressureLocalResidual : public DiscretizationDefaultLoca
 public:
     using ParentType::ParentType;
     using ElementResidualVector = typename ParentType::ElementResidualVector;
-
-    NumEqVector computeStorage(const Problem&, const auto&, const auto&) const
-    { return NumEqVector(0.0); }
 
     NumEqVector storageIntegral(const ElementDiscretization&, const ElementVariables&,
                                 const auto&, bool) const
@@ -221,10 +216,9 @@ public:
      * `evalSource` subtracts the source, so the residual contribution is
      * \f$ p_s^{\mathrm{eq}} - p_s = 0 \f$ at equilibrium).
      */
-    template<class SubControlVolume_>
     NumEqVector sourceIntegral(const ElementDiscretization& elemDisc,
                                const ElementVariables& elemVars,
-                               const SubControlVolume_& scv) const
+                               const auto& scv) const
     {
         NumEqVector source(0.0);
 
@@ -234,8 +228,7 @@ public:
 
         for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv, QuadratureRules::DuneQuadrature<3>{}))
         {
-            const Tensor F = problem.couplingManager().deformationGradientAtPoint(
-                elemDisc, qpData.ipData().global());
+            const Tensor F = problem.couplingManager().deformationGradient(elemDisc, qpData.ipData());
             const Scalar J = F.determinant();
             const Scalar psEq = problem.volumetricPressure(J);
 
@@ -270,8 +263,7 @@ public:
 
             for (const auto& qpData : CVFE::quadratureRule(elemDisc, element, QuadratureRules::DuneQuadrature<3>{}))
             {
-                const Tensor F = problem.couplingManager().deformationGradientAtPoint(
-                    elemDisc, qpData.ipData().global());
+                const Tensor F = problem.couplingManager().deformationGradient(elemDisc, qpData.ipData());
                 const Scalar J = F.determinant();
                 const Scalar psEq = problem.volumetricPressure(J);
 

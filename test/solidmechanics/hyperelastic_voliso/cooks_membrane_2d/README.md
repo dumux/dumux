@@ -38,7 +38,7 @@ in thickness direction.
 | `test_hyperelastic_cooks_membrane_mini`, `test_hyperelastic_cooks_membrane_mini_3d` | P1 with bubble | P1 |
 | `test_hyperelastic_cooks_membrane_taylorhood`, `test_hyperelastic_cooks_membrane_taylorhood_3d` | P2 | P1 |
 
-The 2D mesh `cooksmembrane.msh` has 233 triangles, the 3D mesh `cooksmembrane3d.msh` 714 tetrahedra.
+The 2D mesh `test/solidmechanics/cooksmembrane.msh` has 233 triangles, the 3D mesh `cooksmembrane3d.msh` 714 tetrahedra.
 `Grid.Refinement` refines them by conforming bisection, which roughly doubles the number of elements
 per level (535 and 1166 triangles on levels 1 and 2). The full load is applied in one Newton solve
 with line search for each \f$ \lambda \f$.

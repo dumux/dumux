@@ -7,7 +7,8 @@
 /*!
  * \file
  * \ingroup HyperelasticVolIso
- * \brief Volume variables for the volumetric-isochoric split hyperelastic mixed u–p model.
+ * \brief Volume variables for the volumetric-isochoric split hyperelastic mixed
+ *        \f$ \mathbf{d} \f$–\f$ p_s \f$ model.
  */
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_VARIABLES_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_VOLISO_VARIABLES_HH
