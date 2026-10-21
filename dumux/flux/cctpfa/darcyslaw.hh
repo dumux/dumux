@@ -33,6 +33,46 @@ class DarcysLawImplementation;
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridGeometry the grid geometry
  * \tparam isNetwork whether we are computing on a network grid embedded in a higher world dimension
+ *
+ * With gravity enabled, the flux across a face \f$\sigma\f$ between the cells
+ * \f$K\f$ and \f$L\f$ is computed as a two-point approximation of the difference
+ * of the potential \f$\Phi = p - \varrho\,\mathbf{g}\cdot\mathbf{x}\f$:
+ * \f[
+ *   F_{K,\sigma} = t_\sigma \left( p_K - p_L + \varrho\,\mathbf{g}\cdot(\mathbf{x}_L - \mathbf{x}_K) \right),
+ * \f]
+ * where \f$t_\sigma\f$ is the harmonic mean of the one-sided transmissibilities and
+ * \f$\varrho\f$ is the arithmetic mean of the cell densities. On boundaries,
+ * \f$\mathbf{x}_L\f$ is the face centre. On periodic boundaries, the distance is taken
+ * through each cell's own face, so the periodic shift drops out.
+ *
+ * Each one-sided flux is approximated as
+ * \f$-|\sigma|\,\mathbf{n}^T\mathbf{K}_K\nabla\Phi \approx |\sigma|\,t_K(\Phi_K - \Phi_\sigma)\f$,
+ * with \f$t_K = \mathbf{n}^T\mathbf{K}_K\mathbf{d}_K / |\mathbf{d}_K|^2\f$ and
+ * \f$\mathbf{d}_K = \mathbf{x}_\sigma - \mathbf{x}_K\f$. Requiring flux continuity and
+ * eliminating the face potential \f$\Phi_\sigma\f$ gives the expression above, also
+ * for heterogeneous permeabilities.
+ *
+ * A two-point approximation only captures the component of a gradient along
+ * \f$\mathbf{d}_K\f$. Writing \f$\mathbf{K}_K\mathbf{n} = t_K\mathbf{d}_K + \mathbf{t}_K\f$
+ * with \f$\mathbf{t}_K \perp \mathbf{d}_K\f$, the neglected part of the one-sided flux is
+ * \f$-|\sigma|\,\mathbf{t}_K\cdot\nabla\Phi\f$.
+ *
+ * An alternative is to evaluate the gravitational term with the face normal, i.e. as
+ * \f$\varrho\,\mathbf{n}^T\mathbf{K}\mathbf{g}\f$. That captures the gravitational
+ * contribution exactly, but the pressure gradient is still only approximated along
+ * \f$\mathbf{d}_K\f$. The neglected part then becomes \f$-|\sigma|\,\mathbf{t}_K\cdot\nabla p\f$.
+ *
+ * Both variants coincide on K-orthogonal grids, where \f$\mathbf{t}_K = 0\f$. On other
+ * grids, the alternative treats pressure and gravity differently, so they cannot cancel
+ * discretely. For a hydrostatic pressure distribution, \f$\nabla p = \varrho\mathbf{g}\f$,
+ * it yields a spurious flux \f$|\sigma|\,\varrho\,\mathbf{t}_K\cdot\mathbf{g} \neq 0\f$,
+ * while the potential-based form vanishes exactly. More generally, the potential-based
+ * form is preferable whenever pressure and gravity are close to balance.
+ *
+ * \note Treating both terms the same way only ensures that they balance discretely.
+ *       Neither variant is consistent on grids that are not K-orthogonal: the
+ *       discrete flux does not converge to the continuous one. This requires a
+ *       multi-point flux approximation (e.g. CCMpfa).
  */
 template<class Scalar, class GridGeometry, bool isNetwork>
 class CCTpfaDarcysLaw;
@@ -181,15 +221,10 @@ class CCTpfaDarcysLaw<ScalarType, GridGeometry, /*isNetwork*/ false>
             const auto& tij = fluxVarsCache.advectionTij();
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
-            // Two-point flux on the difference of the potential p - rho*g*x between the inside
-            // and the outside cell centre (the face centre on boundaries). Like the pressure
-            // difference, the gravitational contribution is thus evaluated along the line
-            // connecting the two points, such that the flux vanishes for a hydrostatic pressure
-            // distribution on any grid. Evaluating the gravitational term with the face normal,
-            // i.e. as n^T K g, is only consistent with the two-point pressure difference on
-            // K-orthogonal grids and otherwise yields spurious fluxes (see issue #1127).
-            // Eliminating the face potential from the two one-sided fluxes yields this form
-            // for heterogeneous permeabilities, too.
+            // Two-point flux on the difference of the potential p - rho*g*x between the
+            // inside and outside cell centres (the face centre on boundaries), such that
+            // pressure and gravity are approximated the same way and the flux vanishes
+            // for hydrostatic pressure distributions on any grid (see class documentation).
             auto distance = scvf.ipGlobal() - insideScv.center();
             if (!scvf.boundary())
             {
@@ -364,12 +399,12 @@ public:
             const auto& tij = fluxVarsCache.advectionTij();
             const auto& g = problem.spatialParams().gravity(scvf.ipGlobal());
 
-            // The pressures are extrapolated hydrostatically from the cell centers to the face
-            // along the one-sided connections (cf. the specialization for dim == dimWorld).
-            // The flux thus vanishes for a hydrostatic pressure distribution on any grid,
-            // including surface grids whose center-to-face vectors are not parallel to the face
-            // normals (see issue #1127). On one-dimensional networks, these vectors are parallel
-            // to the normals and the results do not change.
+            // The pressures are extrapolated hydrostatically from the cell centres to the face
+            // along the one-sided connections, such that pressure and gravity are approximated
+            // the same way and the flux vanishes for hydrostatic pressure distributions on any
+            // grid (see the class documentation of CCTpfaDarcysLaw). On one-dimensional networks,
+            // the centre-to-face vectors are parallel to the face normals and this coincides
+            // with evaluating the gravitational term with the face normals.
             const auto pInside = insideVolVars.pressure(phaseIdx) + rho*(g*(scvf.ipGlobal() - insideScv.center()));
 
             // Dirichlet boundaries and inner faces with one neighbor
