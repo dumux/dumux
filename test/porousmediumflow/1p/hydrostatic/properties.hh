@@ -13,7 +13,12 @@
 #ifndef DUMUX_TEST_ONEP_HYDROSTATIC_PROPERTIES_HH
 #define DUMUX_TEST_ONEP_HYDROSTATIC_PROPERTIES_HH
 
+#if HAVE_DUNE_UGGRID
 #include <dune/grid/uggrid.hh>
+#endif
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
@@ -34,11 +39,27 @@ namespace TTag {
 struct OnePHydrostatic { using InheritsFrom = std::tuple<OneP>; };
 struct OnePHydrostaticTpfa { using InheritsFrom = std::tuple<OnePHydrostatic, CCTpfaModel>; };
 struct OnePHydrostaticBox { using InheritsFrom = std::tuple<OnePHydrostatic, BoxModel>; };
+struct OnePHydrostaticSurfaceTpfa { using InheritsFrom = std::tuple<OnePHydrostatic, CCTpfaModel>; };
+struct OnePHydrostaticNetworkTpfa { using InheritsFrom = std::tuple<OnePHydrostatic, CCTpfaModel>; };
 } // end namespace TTag
 
+#if HAVE_DUNE_UGGRID
 template<class TypeTag>
 struct Grid<TypeTag, TTag::OnePHydrostatic>
 { using type = Dune::UGGrid<2>; };
+#endif
+
+#if HAVE_DUNE_FOAMGRID
+// two-dimensional surface grid embedded in 3D
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePHydrostaticSurfaceTpfa>
+{ using type = Dune::FoamGrid<2, 3>; };
+
+// one-dimensional network embedded in 2D
+template<class TypeTag>
+struct Grid<TypeTag, TTag::OnePHydrostaticNetworkTpfa>
+{ using type = Dune::FoamGrid<1, 2>; };
+#endif
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePHydrostatic>

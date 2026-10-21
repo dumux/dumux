@@ -21,7 +21,7 @@ namespace Dumux {
 /*!
  * \ingroup OnePTests
  * \brief Spatial parameters for the hydrostatic one-phase test.
- *        The permeability jumps between the elements left and right of x = 1.
+ *        The permeability jumps between the elements left and right of x = SpatialParams.PermeabilityJumpX.
  */
 template<class GridGeometry, class Scalar>
 class OnePHydrostaticSpatialParams
@@ -42,13 +42,14 @@ public:
     {
         permeabilityLeft_ = getParam<Scalar>("SpatialParams.PermeabilityLeft");
         permeabilityRight_ = getParam<Scalar>("SpatialParams.PermeabilityRight");
+        jumpX_ = getParam<Scalar>("SpatialParams.PermeabilityJumpX", 1.0);
     }
 
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
-    { return element.geometry().center()[0] < 1.0 ? permeabilityLeft_ : permeabilityRight_; }
+    { return element.geometry().center()[0] < jumpX_ ? permeabilityLeft_ : permeabilityRight_; }
 
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.2; }
@@ -57,7 +58,7 @@ public:
     { return 283.15; }
 
 private:
-    Scalar permeabilityLeft_, permeabilityRight_;
+    Scalar permeabilityLeft_, permeabilityRight_, jumpX_;
 };
 
 } // end namespace Dumux

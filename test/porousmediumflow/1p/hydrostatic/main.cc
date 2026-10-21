@@ -7,8 +7,8 @@
 /*!
  * \file
  * \ingroup OnePTests
- * \brief Hydrostatic test for the one-phase model on a grid whose cell-centre connections
- *        are not parallel to the face normals. The discrete solution has to reproduce the
+ * \brief Hydrostatic test for the one-phase model on grids whose cell-centre connections
+ *        are not parallel to the face normals (volume and surface grids) and on a branching network. The discrete solution has to reproduce the
  *        hydrostatic pressure and vanishing fluxes (up to round-off).
  */
 
@@ -31,6 +31,7 @@
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
+#include <dumux/io/grid/gridmanager_foam.hh>
 
 #include "properties.hh"
 
@@ -79,7 +80,8 @@ int main(int argc, char** argv)
     const Scalar rho = FluidSystem::density(T, 1.0e5);
     const Scalar mu = FluidSystem::viscosity(T, 1.0e5);
     const Scalar g = problem->spatialParams().gravity(bBoxMin).two_norm();
-    const Scalar pressureScale = rho*g*(bBoxMax[1] - bBoxMin[1]);
+    constexpr int dimWorld = GridGeometry::GridView::dimensionworld;
+    const Scalar pressureScale = rho*g*(bBoxMax[dimWorld-1] - bBoxMin[dimWorld-1]);
     const Scalar kMax = std::max(getParam<Scalar>("SpatialParams.PermeabilityLeft"),
                                  getParam<Scalar>("SpatialParams.PermeabilityRight"));
     const Scalar velocityScale = kMax/mu*rho*g;
