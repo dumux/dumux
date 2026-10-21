@@ -1,0 +1,13 @@
+[Grid]
+File = grids/twoskewedcells.dgf
+
+[Problem]
+Name = hydrostatic
+EnableGravity = true
+
+[SpatialParams]
+PermeabilityLeft = 1e-10 # [m^2]
+PermeabilityRight = 1e-12 # [m^2]
+
+[LinearSolver]
+ResidualReduction = 1e-15

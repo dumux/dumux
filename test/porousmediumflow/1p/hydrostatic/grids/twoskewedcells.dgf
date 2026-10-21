@@ -1,0 +1,18 @@
+DGF
+% SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+% SPDX-License-Identifier: CC-BY-4.0
+% Two parallelograms sheared upwards in x-direction. The line connecting the cell
+% centres is not parallel to the normal of the shared (vertical) face, and the line
+% from the left cell centre to the left boundary face centre is not parallel to its normal.
+Vertex
+0.0 0.0
+1.0 0.5
+2.0 1.0
+0.0 1.0
+1.0 1.5
+2.0 2.0
+#
+CUBE
+0 1 3 4
+1 2 4 5
+#

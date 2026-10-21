@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(convergence)
+add_subdirectory(hydrostatic)
 add_subdirectory(pointsources)
 add_subdirectory(incompressible)
 add_subdirectory(internaldirichlet)
