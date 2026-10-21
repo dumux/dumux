@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Flow in a rough channel: deviation from the normal flow and relative errors under grid refinement.
 
+With --second-order, the grids are also run with the executable with the second-order flux.
+
 Usage:
-  python3 plot_results.py <executable> [output directory of the figure]
+  python3 plot_results.py <executable> [--second-order <executable>] [output directory of the figure]
 """
 
 import math
@@ -35,11 +37,21 @@ def read_cells(filename):
     return centers, {array.get("Name"): values(array) for array in piece.find("CellData")}
 
 
+def executable_path(name):
+    return name if "/" in name else "./" + name
+
+
 def main():
-    if len(sys.argv) < 2:
+    args = sys.argv[1:]
+    secondOrder = None
+    if "--second-order" in args:
+        i = args.index("--second-order")
+        secondOrder = executable_path(args[i + 1])
+        del args[i:i + 2]
+    if not args:
         sys.exit(__doc__)
-    executable = sys.argv[1] if "/" in sys.argv[1] else "./" + sys.argv[1]
-    imageDir = sys.argv[2] if len(sys.argv) > 2 else "."
+    executable = executable_path(args[0])
+    imageDir = args[1] if len(args) > 1 else "."
 
     values = dict(re.findall(r"^\s*(\w+)\s*=\s*([^#\n]+)", open("params.input").read(), re.MULTILINE))
     n, q, slopeS, g = float(values["ManningN"]), abs(float(values["Discharge"])), float(values["BedSlope"]), float(values["Gravity"])
@@ -86,6 +98,14 @@ def main():
     axE.set_ylabel(r"relative $L^2$ error at $t = 900$ s")
     axE.legend()
     fig.savefig(f"{imageDir}/shallowwater_roughchannel.png")
+
+    if secondOrder:
+        print("\nSecond-order flux:\n")
+        print("| cells | rel. L2 error h | rel. L2 error u |")
+        print("|--:|--:|--:|")
+        for cells in CELLS:
+            r = run(secondOrder, cells, ["-Vtk.Precision", "Float64"], name="roughchannel_secondorder")
+            print(f"| {cells} | {r['h']:.1e} | {r['u']:.1e} |")
 
 
 if __name__ == "__main__":

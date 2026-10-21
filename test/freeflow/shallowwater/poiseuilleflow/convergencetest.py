@@ -32,11 +32,11 @@ ERRORS = re.compile(r"L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)\nNorms of 
                     r"\s*L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)")
 
 
-def run(executable, cells, args=()):
+def run(executable, cells, args=(), name="poiseuilleflow"):
     """Run the steady channel flow on a grid with the given numbers of cells and return the relative errors"""
     output = subprocess.run(
         [executable, "params.input", *STEADY_STATE, *args,
-         "-Problem.Name", f"poiseuilleflow_{cells[0]}x{cells[1]}", "-Grid.Cells", f"{cells[0]} {cells[1]}"],
+         "-Problem.Name", f"{name}_{cells[0]}x{cells[1]}", "-Grid.Cells", f"{cells[0]} {cells[1]}"],
         check=True, capture_output=True, text=True,
     ).stdout
     values = [float(v) for v in ERRORS.findall(output)[-1]]

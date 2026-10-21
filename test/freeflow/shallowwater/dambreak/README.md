@@ -77,11 +77,18 @@ resolved with $N$ cells along and one cell across the channel, and the time step
 $\Delta t = 0.5\,\mathrm{s}/N$, such that the Courant number $c_L \Delta t / \Delta x = 0.16$, with the
 cell size $\Delta x = L/N$, is the same on all grids.
 
+*Second-order flux.* With the type tag `ShallowWaterSecondOrder` (@ref Dumux::ShallowWaterSecondOrderFlux),
+the states of both cells are reconstructed linearly at each face before the Riemann problem is solved. Water
+depth, free surface elevation and velocity get least-squares gradients over the face neighbors, limited at each
+face with a smooth van Albada average (@ref Dumux::ShallowWater::CellReconstruction). The test
+`test_shallowwater_dambreak_secondorder_convergence` runs the grids with 100, 200 and 400 cells with this flux,
+checks the same minimum convergence rate, and checks that the water volume is conserved to $10^{-12}$.
+
 **Results**
 
-The figure and the tables are produced by running
+The figures and the tables are produced by running
 ```bash
-python3 plot_results.py ./test_shallowwater_dambreak
+python3 plot_results.py ./test_shallowwater_dambreak --second-order ./test_shallowwater_dambreak_secondorder
 ```
 in the build directory `test/freeflow/shallowwater/dambreak` (requires NumPy, SciPy and Matplotlib).
 The script computes the exact solution independently of DuMux. It agrees with the exact solution written by
@@ -118,3 +125,22 @@ on 1600 cells.
 
 The test `test_shallowwater_dambreak_convergence` runs the grids with 100, 200 and 400 cells and checks
 that the mean convergence rates of the relative $L^1$ errors of depth and velocity are at least 0.7.
+
+*Second-order flux.* The script runs the same grids and time step sizes with the second-order flux.
+
+![Water depth and velocity at t = 1 s on 400 cells with the first- and the second-order flux, and relative L1 errors of both under grid refinement](shallowwater_dambreak_secondorder.png){html: width=100%}
+
+| $N$ | rel. $L^1$ error $h$ | rate | rel. $L^1$ error $u$ | rate | error $h$ / first order | $\max h - h_L$ (m) | $h_R - \min h$ (m) |
+|--:|--:|--:|--:|--:|--:|--:|--:|
+| 100 | 9.649e-03 | - | 3.527e-02 | - | 0.34 | 1.3e-03 | 1.6e-04 |
+| 200 | 4.733e-03 | 1.03 | 1.614e-02 | 1.13 | 0.29 | 1.2e-03 | 1.4e-04 |
+| 400 | 2.526e-03 | 0.91 | 8.474e-03 | 0.93 | 0.27 | 9.0e-04 | 1.3e-04 |
+| 800 | 1.364e-03 | 0.89 | 4.477e-03 | 0.92 | 0.25 | 4.9e-04 | 1.4e-04 |
+| 1600 | 7.523e-04 | 0.86 | 2.569e-03 | 0.80 | 0.25 | 1.8e-04 | 1.7e-04 |
+
+The errors of the depth are 25 % to 34 % of those of the first-order flux, and both errors converge with
+approximately first order, as the discontinuity of the bore permits. In the profiles on 400 cells, the head of
+the rarefaction wave is resolved more sharply. The depth leaves the range $[h_R, h_L]$ of the exact solution by
+at most $1.3 \cdot 10^{-3}$ m. These over- and undershoots are smaller than the smoothing scale of the limiter,
+$10^{-3}$ times the depth of the cell (`ShallowWater.LimiterRelativeEpsilon`), below which increments are not
+limited.

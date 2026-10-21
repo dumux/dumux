@@ -64,24 +64,40 @@ if the maximum deviation of the free surface elevation or of the specific discha
 from the exact solution exceeds $10^{-10}$ at $t_\mathrm{end}$. The test
 `test_shallowwater_lakeatrest_emerged` runs the emerged case with the tolerance $10^{-5}$.
 
+*Second-order flux.* With the type tag `ShallowWaterSecondOrder` (@ref Dumux::ShallowWaterSecondOrderFlux),
+the states of both cells are reconstructed linearly at each face before the Riemann problem is solved. Water
+depth, free surface elevation and velocity get least-squares gradients over the face neighbors, limited at each
+face with a smooth van Albada average (@ref Dumux::ShallowWater::CellReconstruction). The bed at a face follows
+as the difference of the reconstructed free surface elevation and depth @cite Audusse2004, and the bed slope
+source term is split into the contributions $g h_i (z_{i,f} - z_i) - \frac{g}{2} (h_{i,f} - h_i)^2$ of the faces
+$f$ of each cell $i$, where $h_{i,f}$ and $z_{i,f}$ are the depth and bed of cell $i$ reconstructed at the face. For a lake at rest the free surface elevation is constant, so it is reconstructed exactly, and
+the face contributions of the source term cancel the pressure terms of the fluxes. Next to dry cells the
+reconstruction falls back to the cell values. The tests `test_shallowwater_lakeatrest_secondorder` and
+`test_shallowwater_lakeatrest_secondorder_emerged` run both cases with this flux and the same tolerances. At the
+time step size of the tests, the Jacobian of the second-order scheme is not diagonally dominant, and the tests
+use a direct linear solver.
+
 **Results**
 
 The figure and the table are produced by running
 ```bash
-python3 plot_results.py ./test_shallowwater_lakeatrest
+python3 plot_results.py ./test_shallowwater_lakeatrest --second-order ./test_shallowwater_lakeatrest_secondorder
 ```
 in the build directory `test/freeflow/shallowwater/lakeatrest` (requires NumPy and Matplotlib).
 
-![Bed and free surface along y = 0.49 m, and deviation of the water depth from the exact solution relative to the water level, at t = 100 s](shallowwater_lakeatrest.png){html: width=90%}
+![Bed and free surface along y = 0.49 m, and deviation of the water depth from the exact solution relative to the water level with the first- and the second-order flux, at t = 100 s](shallowwater_lakeatrest.png){html: width=100%}
 
 The table lists the maximum deviations at $t_\mathrm{end}$ relative to the scales of the problem: the
 deviation of the free surface elevation relative to $H$, and the deviation of the specific discharge
 relative to $H \sqrt{g H}$, the discharge of water of depth $H$ moving with the celerity $\sqrt{g H}$.
 
-| case | $H$ (m) | $h_\mathrm{min}$ (m) | max. deviation free surface / $H$ | max. deviation specific discharge / $H \sqrt{g H}$ |
-|:--|--:|--:|--:|--:|
-| submerged | 1.0 | 0 | 9.4e-15 | 1.0e-14 |
-| emerged | 0.5 | 1e-05 | 4.4e-07 | 3.9e-07 |
+| case | flux | $H$ (m) | $h_\mathrm{min}$ (m) | max. deviation free surface / $H$ | max. deviation specific discharge / $H \sqrt{g H}$ |
+|:--|:--|--:|--:|--:|--:|
+| submerged | first order | 1.0 | 0 | 9.4e-15 | 1.0e-14 |
+| submerged | second order | 1.0 | 0 | 8.0e-15 | 1.5e-13 |
+| emerged | first order | 0.5 | 1e-05 | 9.6e-08 | 3.8e-07 |
+| emerged | second order | 0.5 | 1e-05 | 1.2e-07 | 3.8e-07 |
 
-On the submerged bed the lake at rest is preserved to round-off. On the partially dry bed the deviation
-of the free surface is $2.2 \cdot 10^{-7}$ m, 2.2 % of the film thickness.
+On the submerged bed the lake at rest is preserved to round-off with both fluxes. On the partially dry bed the
+deviation of the free surface is $4.8 \cdot 10^{-8}$ m with the first-order and $6.0 \cdot 10^{-8}$ m with the
+second-order flux, 0.48 % and 0.60 % of the film thickness.

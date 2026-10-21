@@ -4,10 +4,12 @@
 """Poiseuille flow in a channel: velocity profile and relative errors under grid refinement.
 
 Runs the channel with lateral viscous friction (executable of this folder) and the film flow with
-viscous bottom friction (executable of the folder vertical).
+viscous bottom friction (executable of the folder vertical). With --second-order, both are also run with
+the executables with the second-order flux.
 
 Usage:
-  python3 plot_results.py <executable> <executable of the folder vertical> [output directory of the figure]
+  python3 plot_results.py <executable> <executable of the folder vertical>
+                          [--second-order <executable> <executable of the folder vertical>] [output directory of the figure]
 """
 
 import importlib.util
@@ -27,6 +29,8 @@ ALONG = [(10, 320), (20, 320), (40, 320), (80, 320)]
 ACROSS = [(320, 10), (320, 20), (320, 40), (320, 80)]
 PROFILES = [(320, 10), (320, 20), (320, 40)]
 FILM_CELLS = [20, 40, 80, 160]
+# the film is thinner than the default depth below which the reconstruction falls back to first order
+FILM_SECOND_ORDER = ["-ShallowWater.ReconstructionLowerWaterDepth", "1e-7", "-ShallowWater.ReconstructionUpperWaterDepth", "1e-5"]
 
 
 def read_cells(filename):
@@ -63,10 +67,16 @@ def table(title, grids, errors):
 
 
 def main():
-    if len(sys.argv) < 3:
+    args = sys.argv[1:]
+    secondOrder = None
+    if "--second-order" in args:
+        i = args.index("--second-order")
+        secondOrder = [os.path.abspath(e) for e in args[i + 1:i + 3]]
+        del args[i:i + 3]
+    if len(args) < 2:
         sys.exit(__doc__)
-    executable, filmExecutable = (os.path.abspath(e) for e in sys.argv[1:3])
-    imageDir = sys.argv[3] if len(sys.argv) > 3 else "."
+    executable, filmExecutable = (os.path.abspath(e) for e in args[0:2])
+    imageDir = args[2] if len(args) > 2 else "."
     vtk = ["-Vtk.Precision", "Float64"]
 
     values = parameters()
@@ -82,6 +92,11 @@ def main():
     across = [run(executable, cells, vtk)["u"] for cells in ACROSS]
     table("Refinement along the channel", ALONG, along)
     table("Refinement across the channel", ACROSS, across)
+    if secondOrder:
+        alongSecondOrder = [run(secondOrder[0], cells, vtk, name="poiseuilleflow_secondorder")["u"] for cells in ALONG]
+        acrossSecondOrder = [run(secondOrder[0], cells, vtk, name="poiseuilleflow_secondorder")["u"] for cells in ACROSS]
+        table("Second-order flux, refinement along the channel", ALONG, alongSecondOrder)
+        table("Second-order flux, refinement across the channel", ACROSS, acrossSecondOrder)
 
     # the Godunov mass flux between the reconstructed depths h and h - S dx exceeds h u by (c - u) S dx / 2
     print("\nMean velocity deficit in the middle of the channel\n"
@@ -99,6 +114,12 @@ def main():
     os.chdir("vertical")
     filmErrors = [film.run(filmExecutable, cells)["u"] for cells in FILM_CELLS]
     table("Film flow, refinement along the channel", [(n, 2) for n in FILM_CELLS], filmErrors)
+    if secondOrder:
+        filmSecondOrder = [film.run(secondOrder[1], cells, FILM_SECOND_ORDER, name="filmflow_secondorder")["u"]
+                           for cells in FILM_CELLS]
+        print("\nFilm flow, second-order flux\n| grid | rel. L2 error u |\n|--:|--:|")
+        for cells, error in zip(FILM_CELLS, filmSecondOrder):
+            print(f"| {cells} x 2 | {error:.1e} |")
 
     filmValues = parameters()
     filmLength = float(filmValues["UpperRight"].split()[0]) - float(filmValues["LowerLeft"].split()[0])
@@ -119,15 +140,25 @@ def main():
     axP.set_ylabel(r"$(u - u_\mathrm{exact}) / u_\mathrm{max}$ at $x = L/2$")
     axP.legend()
 
-    axE.loglog([c[0] for c in ALONG], along, label=f"along, {ALONG[0][1]} cells across", **series(0))
-    axE.loglog([c[1] for c in ACROSS], across, label=f"across, {ACROSS[0][0]} cells along", **series(1))
+    if secondOrder:
+        labels = ("along, first order", "across, first order")
+    else:
+        labels = (f"along, {ALONG[0][1]} cells across", f"across, {ACROSS[0][0]} cells along")
+    axE.loglog([c[0] for c in ALONG], along, label=labels[0], **series(0))
+    axE.loglog([c[1] for c in ACROSS], across, label=labels[1], **series(1))
+    if secondOrder:
+        axE.loglog([c[0] for c in ALONG], alongSecondOrder, label="along, second order", **series(2))
+        axE.loglog([c[1] for c in ACROSS], acrossSecondOrder, label="across, second order", **series(3))
     cells = [c[0] for c in ALONG]
     slope_triangle(axE, cells[-2], cells[-1], 0.6*along[-2], 1)
     slope_triangle(axE, cells[-2], cells[-1], 1.8*across[-2], 2, above=True)
     cell_ticks(axE, cells)
     axE.set_xlabel("number of cells in the refined direction")
     axE.set_ylabel(r"relative $L^2$ error of $u$")
-    axE.legend(loc="lower left")
+    if secondOrder:
+        axE.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, fontsize=11)
+    else:
+        axE.legend(loc="lower left")
 
     axF.loglog(FILM_CELLS, filmErrors, label="film flow", **series(0))
     slope_triangle(axF, FILM_CELLS[-2], FILM_CELLS[-1], 0.6*filmErrors[-2], 1)

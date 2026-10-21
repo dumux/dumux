@@ -22,10 +22,10 @@ ERRORS = re.compile(r"L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)\nNorms of 
                     r"\s*L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)")
 
 
-def run(executable, cells, args=()):
+def run(executable, cells, args=(), name="roughchannel"):
     """Run the channel flow on a grid with the given number of cells along the channel and return the relative errors"""
     output = subprocess.run(
-        [executable, "params.input", *args, "-Problem.Name", f"roughchannel_{cells}", "-Grid.Cells0", str(cells)],
+        [executable, "params.input", *args, "-Problem.Name", f"{name}_{cells}", "-Grid.Cells0", str(cells)],
         check=True, capture_output=True, text=True,
     ).stdout
     values = [float(v) for v in ERRORS.findall(output)[-1]]

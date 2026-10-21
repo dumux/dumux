@@ -47,8 +47,8 @@ The @ref ShallowWaterModels "shallow water model" is discretized with cell-cente
 solution of the Riemann problem with hydrostatic reconstruction of the bed @cite Audusse2004. The bed
 elevation is constant in each cell and is evaluated at the cell center. The boundaries are walls.
 Where the bed is dry at $t = 0$, the initial depth is a film of $10^{-5}$ m. The mass flux over a face is
-multiplied by a factor that decreases from one to zero as the upwind depth falls below
-$10^{-5}$ m (`FluxLimiterLET`).
+multiplied by a factor that decreases from one at an upwind depth of $10^{-5}$ m to zero at $10^{-7}$ m
+(`FluxLimiterLET`).
 
 The grid of `params.input` has $40 \times 40$ cells and the time step size is $\Delta t = 0.1$ s. The
 test `test_shallowwater_bowl` (and `_parallel` on two processes) compares the solution at $t = 13$ s with
@@ -56,11 +56,24 @@ a reference solution. The test prints the errors with respect to the exact solut
 writes the exact solution to the output (`exactWaterDepth`, `exactVelocityX`, `exactVelocityY`). For the
 grid study, the grid has $N \times N$ cells and the time step size is $\Delta t = 4\,\mathrm{s}/N$.
 
+*Second-order flux.* With the type tag `ShallowWaterSecondOrder` (@ref Dumux::ShallowWaterSecondOrderFlux),
+the states of both cells are reconstructed linearly at each face before the Riemann problem is solved. Water
+depth, free surface elevation and velocity get least-squares gradients over the face neighbors, limited at each
+face with a smooth van Albada average (@ref Dumux::ShallowWater::CellReconstruction), and next to dry cells the
+reconstruction falls back to the cell values. The bed at a face follows from the reconstructed depth and free
+surface elevation @cite Audusse2004, and the bed slope source term is split into contributions of the faces of
+each cell. The time integration is the implicit Euler method or, with `TimeLoop.Scheme = BDF2`, the
+second-order backward differentiation formula (@ref Dumux::Experimental::MultiStep::BDF), which takes a step
+with the implicit Euler method at the start and whenever the time step size grows by more than a factor of two.
+The tests `test_shallowwater_bowl_secondorder` and `test_shallowwater_bowl_secondorder_bdf2` run the grid of
+`params.input` with the second-order flux and the implicit Euler method or BDF2, and check the $L^1$ error of
+the water depth at $t_\mathrm{end}$ and the conservation of the water volume to $10^{-12}$.
+
 **Results**
 
-The figure and the tables are produced by running
+The figures and the tables are produced by running
 ```bash
-python3 plot_results.py ./test_shallowwater_bowl
+python3 plot_results.py ./test_shallowwater_bowl --second-order ./test_shallowwater_bowl_secondorder
 ```
 in the build directory `test/freeflow/shallowwater/bowl` (requires NumPy and Matplotlib). The script
 computes the exact solution independently of DuMux.
@@ -113,7 +126,39 @@ and of the dry bed:
 | 13 | 40 × 40 | 6.419e-02 | - | 8.809e-02 | - | 5.144e-04 | - |
 | 13 | 80 × 80 | 5.072e-02 | 0.34 | 7.022e-02 | 0.33 | 5.035e-04 | 0.03 |
 | 13 | 160 × 160 | 3.124e-02 | 0.70 | 4.506e-02 | 0.64 | 4.003e-04 | 0.33 |
-| 13 | 320 × 320 | 1.614e-02 | 0.95 | 2.477e-02 | 0.86 | 2.502e-04 | 0.68 |
+| 13 | 320 × 320 | 1.613e-02 | 0.95 | 2.477e-02 | 0.86 | 2.511e-04 | 0.67 |
 
 The contribution of the wet interior is the larger one on all grids and converges like the total error. The
 contribution of the dry bed is the water film of initially $10^{-5}$ m and stays small.
+
+*Second-order flux.* The script runs the second-order flux with the implicit Euler method and with BDF2 on
+the grids up to $160 \times 160$, with the same time step sizes.
+
+![Free surface and discharge along the row of cells next to y = 0 on 160 x 160 cells, and relative L1 error of the water depth over time, with the first-order flux and with the second-order flux and the implicit Euler method or BDF2](shallowwater_bowl_secondorder.png){html: width=100%}
+
+| grid | $\Delta t$ (s) | scheme | rel. $L^1$ error $h$, $t = T$ | rate | rel. $L^1$ error $h$, $t = 2 T$ | rate |
+|--:|--:|:--|--:|--:|--:|--:|
+| 40 × 40 | 0.1000 | implicit Euler | 7.378e-02 | - | 1.124e-01 | - |
+| 80 × 80 | 0.0500 | implicit Euler | 3.709e-02 | 0.99 | 6.515e-02 | 0.79 |
+| 160 × 160 | 0.0250 | implicit Euler | 1.878e-02 | 0.98 | 3.434e-02 | 0.92 |
+| 40 × 40 | 0.1000 | BDF2 | 4.818e-02 | - | 7.637e-02 | - |
+| 80 × 80 | 0.0500 | BDF2 | 1.922e-02 | 1.33 | 3.421e-02 | 1.16 |
+| 160 × 160 | 0.0250 | BDF2 | 8.919e-03 | 1.11 | 1.531e-02 | 1.16 |
+
+The peak discharge at $t = 11$ s relative to the exact one:
+
+| grid | $\Delta t$ (s) | first-order flux | second-order flux, implicit Euler | second-order flux, BDF2 |
+|--:|--:|--:|--:|--:|
+| 40 × 40 | 0.1000 | 0.041 | 0.360 | 0.587 |
+| 80 × 80 | 0.0500 | 0.209 | 0.661 | 0.830 |
+| 160 × 160 | 0.0250 | 0.487 | 0.834 | 0.923 |
+| 40 × 40 | 0.0125 | 0.059 | 0.562 | 0.599 |
+
+The second-order flux damps the oscillation less. With the implicit Euler method, the errors on a grid are
+close to those of the first-order flux on the twice finer grid; with BDF2, the error at $t_\mathrm{end}$ on
+$160 \times 160$ cells is less than half of that of the first-order flux on $320 \times 320$ cells, and the
+peak discharge ratio of 0.923 exceeds the 0.728 of the first-order flux on the finer grid. With the
+second-order flux, a part of the damping comes from the time discretization: an eight times smaller time step
+on the coarsest grid raises the ratio from 0.360 to 0.562 with the implicit Euler method, but only from 0.587 to
+0.599 with BDF2. With the constant time step sizes of the study, BDF2 takes only its first step with the
+implicit Euler method. The errors converge with approximately first order on these grids.

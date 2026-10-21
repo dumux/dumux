@@ -57,11 +57,24 @@ the depth at $t = 900$ s differs from that of the steady state by $3 \cdot 10^{-
 [shallowwaterfriction](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/shallowwaterfriction/README.md)
 explains the implementation of this setup, there starting from a depth of 1 m and water at rest.
 
+*Second-order flux.* With the type tag `ShallowWaterSecondOrder` (@ref Dumux::ShallowWaterSecondOrderFlux),
+the states of both cells are reconstructed linearly at each face before the Riemann problem is solved. Water
+depth, free surface elevation and velocity get least-squares gradients over the face neighbors, limited at each
+face with a smooth van Albada average (@ref Dumux::ShallowWater::CellReconstruction). The bed at a face follows
+as the difference of the reconstructed free surface elevation and depth @cite Audusse2004, and the bed slope
+source term is split into the contributions $g h_i (z_{i,f} - z_i) - \frac{g}{2} (h_{i,f} - h_i)^2$ of the faces
+$f$ of each cell $i$, where $h_{i,f}$ and $z_{i,f}$ are the depth and bed of cell $i$ reconstructed at the face. In normal flow, bed and free surface are linear and the velocity is uniform. The reconstruction is
+exact for such fields, also at the boundary faces, where depth, free surface elevation and the normal velocity
+are extrapolated, and the face contributions of the source term sum to $g h |V| \nabla z$ for a cell with
+area $|V|$. The normal flow is therefore a steady state of the discrete equations. The tests
+`test_shallowwater_roughchannel_secondorder` (and `_coarse` with 50 cells along the channel) check that the
+$L^1$ errors of depth and velocity at $t = 900$ s are below $10^{-12}$.
+
 **Results**
 
 The figure and the tables are produced by running
 ```bash
-python3 plot_results.py ./test_shallowwater_roughchannel
+python3 plot_results.py ./test_shallowwater_roughchannel --second-order ./test_shallowwater_roughchannel_secondorder
 ```
 in the build directory `test/freeflow/shallowwater/roughchannel` (requires NumPy and Matplotlib).
 The grid is refined along the channel.
@@ -100,3 +113,12 @@ The script compares both in the cells between $x = 20$ m and $x = 120$ m:
 
 The test `test_shallowwater_roughchannel_convergence` runs the grids with 250, 500 and 1000 cells and checks
 that the mean convergence rates of the relative $L^2$ errors of depth and velocity are at least 0.95.
+
+*Second-order flux.* With the second-order flux, the normal flow is preserved to round-off on all grids:
+
+| cells along the channel | rel. $L^2$ error $h$ | rel. $L^2$ error $u$ |
+|--:|--:|--:|
+| 250 | 3.5e-15 | 4.2e-15 |
+| 500 | 3.8e-15 | 6.8e-15 |
+| 1000 | 1.2e-14 | 1.3e-14 |
+| 2000 | 6.9e-14 | 7.9e-14 |

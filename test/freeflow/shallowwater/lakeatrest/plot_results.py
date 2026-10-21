@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Lake at rest over a bed with a smooth hump and a discontinuous sill, submerged and partially dry.
 
+With --second-order, the cases are also run with the executable with the second-order flux.
+
 Usage:
-  python3 plot_results.py <executable> [output directory of the figure]
+  python3 plot_results.py <executable> [--second-order <executable>] [output directory of the figure]
 """
 
 import math
@@ -44,30 +46,50 @@ def read_cells(filename):
     return centers, {array.get("Name"): values(array) for array in piece.find("CellData")}
 
 
+def executable_path(name):
+    return name if "/" in name else "./" + name
+
+
 def main():
-    if len(sys.argv) < 2:
+    args = sys.argv[1:]
+    executables = {}
+    if "--second-order" in args:
+        i = args.index("--second-order")
+        executables["second order"] = executable_path(args[i + 1])
+        del args[i:i + 2]
+    if not args:
         sys.exit(__doc__)
-    executable = sys.argv[1] if "/" in sys.argv[1] else "./" + sys.argv[1]
-    imageDir = sys.argv[2] if len(sys.argv) > 2 else "."
+    executables = {"first order": executable_path(args[0]), **executables}
+    imageDir = args[1] if len(args) > 1 else "."
 
     values = dict(re.findall(r"^\s*(\w+)\s*=\s*([^#\n]+)", open("params.input").read(), re.MULTILINE))
     hump, sill, g = float(values["HumpHeight"]), float(values["SillHeight"]), float(values["Gravity"])
 
-    print("| case | water level H (m) | film thickness (m) | max deviation free surface / H "
+    print("| case | flux | water level H (m) | film thickness (m) | max deviation free surface / H "
           "| max deviation discharge / (H sqrt(g H)) |")
-    print("|:--|--:|--:|--:|--:|")
-    fig, (axS, axD) = plt.subplots(1, 2, figsize=(10, 4.0), layout="constrained")
+    print("|:--|:--|--:|--:|--:|--:|")
+    fig, (axS, axD) = plt.subplots(1, 2, figsize=(10 if len(executables) == 1 else 12.5, 4.0), layout="constrained")
     for i, (case, params) in enumerate(CASES.items()):
-        name = f"lakeatrest_{case}"
         args = [a for key, value in params.items() for a in (f"-Problem.{key}", str(value))]
-        output = subprocess.run(
-            [executable, "params.input", "-Problem.Name", name, "-Vtk.Precision", "Float64", *args],
-            check=True, capture_output=True, text=True,
-        ).stdout
-        surface, discharge = (float(v) for v in DEVIATION.search(output).groups())
         level = params["WaterLevel"]
-        print(f"| {case} | {level} | {params['MinWaterDepth']:g} | {surface/level:.1e} "
-              f"| {discharge/(level*math.sqrt(g*level)):.1e} |")
+        for j, (flux, executable) in enumerate(executables.items()):
+            name = f"lakeatrest_{case}" if j == 0 else f"lakeatrest_{case}_secondorder"
+            output = subprocess.run(
+                [executable, "params.input", "-Problem.Name", name, "-Vtk.Precision", "Float64", *args],
+                check=True, capture_output=True, text=True,
+            ).stdout
+            surface, discharge = (float(v) for v in DEVIATION.search(output).groups())
+            print(f"| {case} | {flux} | {level} | {params['MinWaterDepth']:g} | {surface/level:.1e} "
+                  f"| {discharge/(level*math.sqrt(g*level)):.1e} |")
+            if j > 0:
+                centers, data = read_cells(f"{name}-00001.vtu")
+                row = np.abs(centers[:, 1] - centers[np.argmin(np.abs(centers[:, 1] - 0.5)), 1]) < 1e-9
+                order = np.argsort(centers[row, 0])
+                x, depth = centers[row, 0][order], data["waterDepth"][row][order]
+                exactDepth = np.maximum(level - bed(x, centers[row, 1][order], hump, sill), params["MinWaterDepth"])
+                axD.semilogy(x, np.maximum(np.abs(depth - exactDepth)/level, 1e-17), label=f"{case}, {flux}",
+                             **series(len(CASES) + i, len(x)))
+        name = f"lakeatrest_{case}"
 
         centers, data = read_cells(f"{name}-00001.vtu")
         yRow = centers[np.argmin(np.abs(centers[:, 1] - 0.5)), 1]
@@ -78,8 +100,8 @@ def main():
         z = bed(x, centers[row, 1][order], hump, sill)
         exactDepth = np.maximum(params["WaterLevel"] - z, params["MinWaterDepth"])
         axS.plot(x, depth + z, label=f"free surface, {case}", **series(i, len(x)))
-        axD.semilogy(x, np.maximum(np.abs(depth - exactDepth)/params["WaterLevel"], 1e-17), label=case,
-                     **series(i, len(x)))
+        axD.semilogy(x, np.maximum(np.abs(depth - exactDepth)/params["WaterLevel"], 1e-17),
+                     label=case if len(executables) == 1 else f"{case}, first order", **series(i, len(x)))
 
     xFine = np.linspace(0.0, 2.0, 2001)
     axS.fill_between(xFine, bed(xFine, yRow, hump, sill), color="0.85", lw=0, label=f"bed at $y = {yRow:.2f}$ m")
@@ -89,7 +111,9 @@ def main():
     axS.legend(loc="upper left", ncol=2)
     axD.set_xlabel("$x$ (m)")
     axD.set_ylabel(r"$|h - h_\mathrm{exact}| / H$")
-    axD.legend()
+    handles, labels = axD.get_legend_handles_labels()
+    order = sorted(range(len(labels)), key=lambda k: labels[k])
+    axD.legend([handles[k] for k in order], [labels[k] for k in order], loc="center left", bbox_to_anchor=(1.02, 0.5))
     fig.savefig(f"{imageDir}/shallowwater_lakeatrest.png")
 
 

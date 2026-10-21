@@ -26,11 +26,11 @@ ERRORS = re.compile(r"L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)\nNorms of 
                     r"\s*L1: (\S+) (\S+) (\S+)\n\s*L2: (\S+) (\S+) (\S+)")
 
 
-def run(executable, cells, args=()):
+def run(executable, cells, args=(), name="dambreak"):
     """Run the dam break on a grid with the given number of cells along the channel and return the relative errors"""
     dt = TIME_STEP_SIZE_100*100/cells
     output = subprocess.run(
-        [executable, "params.input", *args, "-Problem.Name", f"dambreak_{cells}",
+        [executable, "params.input", *args, "-Problem.Name", f"{name}_{cells}",
          "-Grid.Cells0", str(cells), "-Grid.Cells1", "1",
          "-TimeLoop.MaxTimeStepSize", str(dt), "-TimeLoop.DtInitial", str(dt)],
         check=True, capture_output=True, text=True,

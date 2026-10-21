@@ -74,11 +74,25 @@ inflow and outflow, and the side walls are free of friction. The bed shear stres
 balance as a source term. The stationary problem is solved directly, starting from the exact solution. The
 test `test_shallowwater_poiseuilleflow_vertical` compares the solution with a reference solution.
 
+*Second-order flux.* With the type tag `ShallowWaterSecondOrder` (@ref Dumux::ShallowWaterSecondOrderFlux),
+the states of both cells are reconstructed linearly at each face before the Riemann problem is solved. Water
+depth, free surface elevation and velocity get least-squares gradients over the face neighbors, limited at each
+face with a smooth van Albada average (@ref Dumux::ShallowWater::CellReconstruction). The bed at a face follows
+as the difference of the reconstructed free surface elevation and depth @cite Audusse2004, and the bed slope
+source term is split into the contributions $g h_i (z_{i,f} - z_i) - \frac{g}{2} (h_{i,f} - h_i)^2$ of the faces
+$f$ of each cell $i$, where $h_{i,f}$ and $z_{i,f}$ are the depth and bed of cell $i$ reconstructed at the face. In both flows bed and free surface are linear, so the bed reconstructed at the faces is
+exact, and the error caused by a bed that is constant in each cell vanishes. At boundary faces, depth, free
+surface elevation and the normal velocity are extrapolated, and the tangential velocity is that of the cell.
+The tests `test_shallowwater_poiseuilleflow_secondorder` (and `_unstructured_secondorder` on the triangular grid)
+and `test_shallowwater_poiseuilleflow_vertical_secondorder` use this flux; the film flow test checks that the
+$L^1$ errors are below $10^{-12}$.
+
 **Results**
 
 The figure and the tables are produced by running
 ```bash
-python3 plot_results.py ./test_shallowwater_poiseuilleflow vertical/test_shallowwater_poiseuilleflow_vertical
+python3 plot_results.py ./test_shallowwater_poiseuilleflow vertical/test_shallowwater_poiseuilleflow_vertical \
+    --second-order ./test_shallowwater_poiseuilleflow_secondorder vertical/test_shallowwater_poiseuilleflow_vertical_secondorder
 ```
 in the build directory `test/freeflow/shallowwater/poiseuilleflow` (requires NumPy and Matplotlib).
 The errors are the relative discrete $L^2$ errors of the velocity, $\| e \|_2 / \| u \|_2$ with
@@ -87,7 +101,7 @@ at the center of the cell $V_i$ with area $|V_i|$, and $\| u \|_2$ the norm of t
 in the same way. The flow with friction at the side walls is computed up to $t = 10^6$ s with time steps of
 up to $10^5$ s.
 
-![Error of the velocity profile in the middle of the channel, and relative errors of the flow with friction at the side walls and of the film flow under grid refinement](shallowwater_poiseuille.png){html: width=100%}
+![Error of the velocity profile in the middle of the channel, relative errors of the flow with friction at the side walls with the first- and the second-order flux, and of the film flow under grid refinement](shallowwater_poiseuille.png){html: width=100%}
 
 *Friction at the side walls.* The grid is refined along the channel with 320 cells across, and across
 the channel with 320 cells along.
@@ -126,6 +140,24 @@ velocity error in the middle of the channel:
 
 The rates along the channel decrease under refinement as the error approaches that of the 320 cells across.
 
+With the second-order flux, the error caused by the bed vanishes. Refined along the channel, the error stays at
+the level set by the 320 cells across; refined across the channel, it is close to that of the first-order flux,
+since the two-point viscous flux determines it:
+
+| grid (along × across) | rel. $L^2$ error $u$, second-order flux | rate |
+|--:|--:|--:|
+| 10 × 320 | 2.699e-06 | - |
+| 20 × 320 | 2.772e-06 | -0.04 |
+| 40 × 320 | 2.821e-06 | -0.03 |
+| 80 × 320 | 2.852e-06 | -0.02 |
+
+| grid (along × across) | rel. $L^2$ error $u$, second-order flux | rate |
+|--:|--:|--:|
+| 320 × 10 | 9.753e-04 | - |
+| 320 × 20 | 5.616e-04 | 0.80 |
+| 320 × 40 | 1.699e-04 | 1.73 |
+| 320 × 80 | 4.456e-05 | 1.93 |
+
 *Friction at the bed.* The grid is refined along the channel.
 
 | grid (along × across) | rel. $L^2$ error $u$ | rate |
@@ -139,10 +171,14 @@ The error converges with approximately first order. Here, the depth is prescribe
 from the momentum balance. On 20 cells, the relative error of the velocity is $1.19 \cdot 10^{-4}$, close to
 $S \Delta x / (2 h_0) = 1.25 \cdot 10^{-4}$, the step of the bed at a face relative to twice the depth.
 The script repeats the 20-cell run with the slope $10 S$ and with the depth $2 h_0$; the relative errors are
-$1.19 \cdot 10^{-3}$ and $6.04 \cdot 10^{-5}$, again 0.95 to 0.97 times $S \Delta x / (2 h_0)$.
+$1.19 \cdot 10^{-3}$ and $6.04 \cdot 10^{-5}$, again 0.95 to 0.97 times $S \Delta x / (2 h_0)$. With the
+second-order flux, the film flow is a steady state of the discrete equations, and the relative errors on the
+grids above are between $3.5 \cdot 10^{-15}$ and $3.5 \cdot 10^{-12}$.
 
 The test `test_shallowwater_poiseuilleflow_convergence` refines the grid along the channel
 ($10, 20, 40$ cells, 160 cells across) and across the channel ($20, 40, 80$ cells, 160 cells along) and
 checks that the mean convergence rates of the relative $L^2$ error are at least 0.85 and 1.6. The test
 `test_shallowwater_poiseuilleflow_vertical_convergence` runs the film flow on $20, 40, 80$ cells and checks
-that the mean rate is at least 0.9.
+that the mean rate is at least 0.9. The test `test_shallowwater_poiseuilleflow_secondorder_convergence` runs the
+grids of `test_shallowwater_poiseuilleflow_convergence` with the second-order flux and checks that the error
+refined along the channel changes by less than 10 % and that the mean rate across the channel is at least 1.6.
