@@ -19,11 +19,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
-
 #include <dumux/solidmechanics/hyperelastic_voliso/model.hh>
 #include <dumux/solidmechanics/hyperelastic_voliso/couplingmanager.hh>
 #include "spatialparams.hh"
@@ -127,51 +122,6 @@ struct SpatialParams<TypeTag, TTag::IncompressibleBlockCommon>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using type = IncompressibleBlockSpatialParams<GridGeometry, Scalar>;
-};
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::IncompressibleBlockMomentumP1B>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::IncompressibleBlockMomentumPQ2>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::IncompressibleBlockPressure>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
 };
 
 #ifndef MOMENTUM_DISCRETIZATION

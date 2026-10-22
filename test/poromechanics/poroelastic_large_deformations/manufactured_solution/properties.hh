@@ -19,14 +19,8 @@
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/fem/gridvariablescache.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/multidomain/traits.hh>
-
-#include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include <dumux/poromechanics/poroelastic_large_deformations/model.hh>
 #include <dumux/poromechanics/poroelastic_large_deformations/couplingmanager.hh>
@@ -70,50 +64,6 @@ struct Problem<TypeTag, TTag::PoroElasticLargeDefMMSSolidPressure>
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PoroElasticLargeDefMMSFluidPressure>
 { using type = PoroElasticLargeDefMMSFluidPressureProblem<TypeTag>; };
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::PoroElasticLargeDefMMSMomentum>
-{
-private:
-    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
-#if MOMENTUM_PQ2FE
-    using Traits = Experimental::FEDefaultGridVariablesCacheTraits<
-        GetPropType<TypeTag, Properties::Problem>,
-        GetPropType<TypeTag, Properties::VolumeVariables>,
-        CVFE::LocalBasisInterpolationPointData<GridDiscretization>>;
-    using Cache = Experimental::FEGridVariablesCache<Traits, true>;
-#else
-    using Traits = Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<
-        GetPropType<TypeTag, Properties::Problem>,
-        GetPropType<TypeTag, Properties::VolumeVariables>,
-        CVFE::LocalBasisInterpolationPointData<GridDiscretization>>;
-    using Cache = Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, true>;
-#endif
-public:
-    using type = Experimental::GridVariables<GridDiscretization, Cache>;
-};
-
-template<class TypeTag>
-struct PoroElasticLargeDefMMSBoxGridVariables
-{
-private:
-    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Traits = Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<
-        GetPropType<TypeTag, Properties::Problem>,
-        GetPropType<TypeTag, Properties::VolumeVariables>,
-        CVFE::LocalBasisInterpolationPointData<GridDiscretization>>;
-    using Cache = Experimental::CVFE::CVFEGridVariablesCache<Traits, true>;
-public:
-    using type = Experimental::GridVariables<GridDiscretization, Cache>;
-};
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::PoroElasticLargeDefMMSSolidPressure>
-{ using type = typename PoroElasticLargeDefMMSBoxGridVariables<TypeTag>::type; };
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::PoroElasticLargeDefMMSFluidPressure>
-{ using type = typename PoroElasticLargeDefMMSBoxGridVariables<TypeTag>::type; };
 
 using PoroElasticLargeDefMMSTraits = MultiDomainTraits<
     TTag::PoroElasticLargeDefMMSMomentum,

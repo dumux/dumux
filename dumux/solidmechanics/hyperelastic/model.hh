@@ -51,17 +51,9 @@
 #ifndef DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
 #define DUMUX_SOLIDMECHANICS_HYPERELASTIC_MODEL_HH
 
-#include <type_traits>
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
-#include <dumux/discretization/concepts.hh>
-#include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
-#include <dumux/discretization/cvfe/variablesadapter.hh>
-#include <dumux/discretization/fem/gridvariablescache.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 
 #include "spatialparams.hh"
 #include "localresidual.hh"
@@ -117,31 +109,10 @@ struct VolumeVariables<TypeTag, TTag::Hyperelastic>
     using type = HyperelasticVariables<Traits>;
 };
 
-//! The general grid variables, with the cache matching the discretization scheme
+//! The general grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::Hyperelastic>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using ElementDiscretization = typename GG::LocalView;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-
-    using FECache = Dumux::Experimental::FEGridVariablesCache<
-        Dumux::Experimental::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
-    using HybridCache = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<
-        Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
-    using CVFECache = Dumux::Experimental::CVFE::CVFEGridVariablesCache<
-        Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
-
-    using Cache = std::conditional_t<Dumux::Experimental::Concepts::FEElementDiscretization<ElementDiscretization>, FECache,
-                  std::conditional_t<Dumux::Experimental::Concepts::HybridElementDiscretization<ElementDiscretization>, HybridCache,
-                                     CVFECache>>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, Cache>;
-};
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
 
 // Set the default spatial parameters
 template<class TypeTag>

@@ -21,11 +21,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
-
 #include <dumux/poromechanics/poroelastic_large_deformations/model.hh>
 #include <dumux/poromechanics/poroelastic_large_deformations/couplingmanager.hh>
 
@@ -37,36 +32,6 @@
 namespace Dumux::Properties {
 
 using CryerGrid = Dune::ALUGrid<3, 3, Dune::simplex, Dune::conforming>;
-
-template<class TypeTag>
-struct CVFEGridVariablesSetting
-{
-private:
-    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GridDiscretization>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GridDiscretization, GVC>;
-};
-
-template<class TypeTag>
-struct HybridCVFEGridVariablesSetting
-{
-private:
-    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GridDiscretization>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GridDiscretization, GVC>;
-};
 
 namespace TTag {
 struct CryerMomentum
@@ -96,10 +61,6 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::CryerMomentum>
 { static constexpr bool value = true; };
 
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::CryerMomentum>
-{ using type = typename HybridCVFEGridVariablesSetting<TypeTag>::type; };
-
 namespace TTag {
 struct CryerSolidPressure
 {
@@ -128,10 +89,6 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::CryerSolidPressure>
 { static constexpr bool value = true; };
 
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::CryerSolidPressure>
-{ using type = typename CVFEGridVariablesSetting<TypeTag>::type; };
-
 namespace TTag {
 struct CryerFluidPressure
 {
@@ -159,10 +116,6 @@ struct EnableGridGeometryCache<TypeTag, TTag::CryerFluidPressure>
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::CryerFluidPressure>
 { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::CryerFluidPressure>
-{ using type = typename CVFEGridVariablesSetting<TypeTag>::type; };
 
 using CryerMDTraits = MultiDomainTraits<
     TTag::CryerMomentum,
