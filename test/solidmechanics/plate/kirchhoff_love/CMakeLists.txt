@@ -4,6 +4,7 @@
 dune_symlink_to_source_files(FILES params.input params_submanager.input)
 
 dumux_add_test(NAME test_kirchhoff_love_plate
+              THREADS 4
               LABELS solidmechanics plate
               SOURCES main.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND Gmsh_FOUND )"

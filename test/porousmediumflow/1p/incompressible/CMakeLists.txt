@@ -18,6 +18,7 @@ target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=On
 
 # using tpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_tpfa
+              THREADS 4
               TARGET test_1p_incompressible_tpfa_anadiff
               LABELS porousmediumflow 1p
               COMMAND ${DUMUX_RUNTEST}
@@ -40,6 +41,7 @@ dumux_add_test(NAME test_1p_incompressible_tpfa_quad
 
 # using mpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_mpfa
+              THREADS 4
               TARGET test_1p_incompressible_mpfa_anadiff
               LABELS porousmediumflow 1p
               COMMAND ${DUMUX_RUNTEST}
@@ -52,6 +54,7 @@ dumux_add_test(NAME test_1p_incompressible_mpfa
 
 # using box and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_box
+              THREADS 4
               TARGET test_1p_incompressible_box_anadiff
               LABELS porousmediumflow 1p
               COMMAND ${DUMUX_RUNTEST}
@@ -86,6 +89,7 @@ dumux_add_test(NAME test_1p_incompressible_box_numdiff
 
 # using fc diamond and numeric differentiation
 dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff
+               THREADS 4
                LABELS porousmediumflow 1p
                SOURCES main.cc
                COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleFCDiamond NUMDIFFMETHOD=DiffMethod::numeric
@@ -113,6 +117,7 @@ dumux_add_test(NAME test_1p_incompressible_fcdiamond_numdiff_ug
 
 # using fc diamond and numeric differentiation
 dumux_add_test(NAME test_1p_incompressible_pq1bubble_numdiff
+               THREADS 4
                LABELS porousmediumflow 1p
                SOURCES main.cc
                COMPILE_DEFINITIONS LINEARSOLVER=ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>,LinearAlgebraTraitsFromAssembler<Assembler>>

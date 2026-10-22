@@ -16,6 +16,7 @@ dumux_add_test(
 )
 dumux_add_test(
     NAME test_hyperelastic_cooks_membrane_taylorhood
+    THREADS 4
     LABELS geomechanics elastic
     SOURCES main_taylorhood.cc
     CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
