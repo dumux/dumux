@@ -82,7 +82,7 @@ A test-local fluid system on top of `FluidSystems::TwoPOneC` with a constant com
 To run the convergence study and produce the figures, run in the build directory of the test:
 
 ```bash
-python3 plot_convergence.py test_2p1cni_heatpipe_box test_2p1cni_heatpipe_tpfa
+python3 plot_results.py test_2p1cni_heatpipe_box test_2p1cni_heatpipe_tpfa
 ```
 
 The script runs both schemes with full upwinding of the mobilities (`Flux.UpwindWeight = 1`, the default) and with central weighting (`Flux.UpwindWeight = 0.5`) and produces two figures:
