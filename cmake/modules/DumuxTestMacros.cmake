@@ -84,13 +84,26 @@
 #       :multi:
 #       :argname: ranks
 #
-#       The numbers of cores that this test should be executed with.
+#       The numbers of MPI processes that this test should be executed with.
 #       Note that one test (in the ctest sense) is created for each number
 #       given here. Any number exceeding the user-specified processor maximum
 #       :ref:`DUNE_MAX_TEST_CORES` will be ignored. Tests with a
 #       processor number :code:`n` higher than one will have the suffix
 #       :code:`-mpi-n` appended to their name. You need to specify the
 #       TIMEOUT option when specifying the MPI_RANKS option.
+#       If the CMD_ARGS contain :code:`--command` (the test runs through
+#       :code:`dumux_runtest.py`), the MPI launcher is put in front of the
+#       command given after :code:`--command`. Start MPI processes through
+#       this option only, so that ctest knows how many processors a test uses.
+#
+#    .. cmake_param:: THREADS
+#       :single:
+#
+#       The number of threads per process of this test, defaults to
+#       :ref:`DUMUX_TEST_NUM_THREADS`. The test runs with the environment variables
+#       :code:`DUMUX_NUM_THREADS`, :code:`OMP_NUM_THREADS`, :code:`OPENBLAS_NUM_THREADS`,
+#       :code:`MKL_NUM_THREADS` and :code:`VECLIB_MAXIMUM_THREADS` set to this number,
+#       and ctest reserves the number of processes times this number of processors for it.
 #
 #    .. cmake_param:: CMAKE_GUARD
 #       :multi:
@@ -116,7 +129,7 @@
 #       added by dumux_add_test for this test. Note that if you specify both CMD_ARGS
 #       and COMMAND, the given CMD_ARGS will be put behind your COMMAND. If you use
 #       this in combination with the MPI_RANKS parameter, the call to mpi will still be
-#       wrapped around the given commands.
+#       wrapped around the given commands, unless the CMD_ARGS contain :code:`--command`.
 #
 #    .. cmake_param:: COMPILE_ONLY
 #       :option:
@@ -173,8 +186,14 @@
 #
 # .. cmake_variable:: DUNE_MAX_TEST_CORES
 #
-#    You may set this variable to give an upperbound to the number of processors, that
+#    You may set this variable to give an upperbound to the number of MPI processes, that
 #    a single test may use. Defaults to 2, when MPI is found and to 1 otherwise.
+#    For the tests of DuMux itself, the default is 4, the largest number of processes they use.
+#
+# .. cmake_variable:: DUMUX_TEST_NUM_THREADS
+#
+#    The number of threads per process of tests that do not specify :code:`THREADS`.
+#    Defaults to 1. Set it, e.g. in your opts file, to run all tests multithreaded.
 #
 # .. cmake_variable:: DUNE_BUILD_TESTS_ON_MAKE_ALL
 #
@@ -204,16 +223,32 @@
 #
 include_guard(GLOBAL)
 
+set(DUMUX_TEST_NUM_THREADS 1 CACHE STRING "Number of threads per process of tests that do not specify THREADS")
+
+# The arguments of the calling dumux_add_test for dune_add_test, without the keywords given to this function
+function(_dumux_add_test_forward_args result)
+  set(args ${ADDTEST_UNPARSED_ARGUMENTS})
+  foreach(keyword IN LISTS OPTIONS)
+    if(ADDTEST_${keyword} AND NOT keyword IN_LIST ARGN)
+      list(APPEND args ${keyword})
+    endif()
+  endforeach()
+  foreach(keyword IN LISTS SINGLEARGS MULTIARGS)
+    if(DEFINED ADDTEST_${keyword} AND NOT keyword IN_LIST ARGN)
+      list(APPEND args ${keyword} ${ADDTEST_${keyword}})
+    endif()
+  endforeach()
+  set(${result} ${args} PARENT_SCOPE)
+endfunction()
+
 # Note: This forwards to dune_add_test but enables another layer in case we need to support
 # future Dune features with older Dune versions supported by Dumux
 function(dumux_add_test)
-  dune_add_test(${ARGV})
-
   include(CMakeParseArguments)
-  set(OPTIONS EXPECT_COMPILE_FAIL EXPECT_FAIL SKIP_ON_77 COMPILE_ONLY)
-  set(SINGLEARGS NAME TARGET TIMEOUT)
+  set(OPTIONS EXPECT_COMPILE_FAIL EXPECT_FAIL SKIP_ON_77 COMPILE_ONLY PYTHON_TEST)
+  set(SINGLEARGS NAME TARGET TIMEOUT WORKING_DIRECTORY)
   set(MULTIARGS SOURCES COMPILE_DEFINITIONS COMPILE_FLAGS LINK_LIBRARIES CMD_ARGS MPI_RANKS COMMAND CMAKE_GUARD LABELS)
-  cmake_parse_arguments(ADDTEST "${OPTIONS}" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
+  cmake_parse_arguments(ADDTEST "${OPTIONS}" "${SINGLEARGS};THREADS" "${MULTIARGS}" ${ARGN})
 
   if(NOT ADDTEST_NAME)
     # try deducing the test name from the executable name
@@ -231,52 +266,99 @@ function(dumux_add_test)
       get_filename_component(ADDTEST_NAME ${ADDTEST_SOURCES} NAME_WE)
     endif()
   endif()
-  if(NOT ADDTEST_COMMAND)
-    set(ADDTEST_COMMAND ${ADDTEST_NAME})
+
+  if(NOT DEFINED ADDTEST_THREADS)
+    set(ADDTEST_THREADS ${DUMUX_TEST_NUM_THREADS})
+  endif()
+  if(NOT ADDTEST_THREADS MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR "dumux_add_test: THREADS of ${ADDTEST_NAME} has to be a positive integer, not \"${ADDTEST_THREADS}\".")
   endif()
 
-  # Find out whether this test should be a dummy
-  set(SHOULD_SKIP_TEST FALSE)
-  set(FAILED_CONDITION_PRINTING "")
-  foreach(condition ${ADDTEST_CMAKE_GUARD})
-    separate_arguments(condition)
-    if(NOT (${condition}))
-      set(SHOULD_SKIP_TEST TRUE)
-      set(FAILED_CONDITION_PRINTING "${FAILED_CONDITION_PRINTING}std::cout << \"  ${condition}\" << std::endl;\n")
+  if(MPIEXEC)
+    foreach(arg IN LISTS ADDTEST_COMMAND ADDTEST_CMD_ARGS)
+      string(FIND "${arg}" "${MPIEXEC}" position)
+      if(NOT position EQUAL -1)
+        message(AUTHOR_WARNING "dumux_add_test: ${ADDTEST_NAME} starts ${MPIEXEC} itself, "
+                               "so ctest counts it as one process. Use MPI_RANKS instead.")
+        break()
+      endif()
+    endforeach()
+  endif()
+
+  dumux_evaluate_cmake_guard(should_run_test CMAKE_GUARD ${ADDTEST_CMAKE_GUARD})
+  list(FIND ADDTEST_CMD_ARGS "--command" command_index)
+  if(ADDTEST_MPI_RANKS AND NOT command_index EQUAL -1 AND should_run_test AND NOT ADDTEST_COMPILE_ONLY)
+    # dune_add_test would start the test script with MPI, so the launcher goes into the command run by the script
+    _dumux_add_test_forward_args(build_args CMD_ARGS COMMAND)
+    dune_add_test(${build_args} COMPILE_ONLY)
+    set(executable ${ADDTEST_TARGET})
+    if(ADDTEST_SOURCES)
+      set(executable ${ADDTEST_NAME})
     endif()
-  endforeach()
 
-  # If we do nothing, switch the sources for a dummy source
-  if(SHOULD_SKIP_TEST)
-    dune_module_path(MODULE dune-common RESULT scriptdir SCRIPT_DIR)
-    set(ADDTEST_TARGET)
-    set(dummymain ${CMAKE_CURRENT_BINARY_DIR}/main77_${ADDTEST_NAME}.cc)
-    configure_file(${scriptdir}/main77.cc.in ${dummymain})
-    set(ADDTEST_SOURCES ${dummymain})
+    set(max_ranks ${DUNE_MAX_TEST_CORES})
+    if(NOT HAVE_MPI)
+      set(max_ranks 1)
+    endif()
+
+    math(EXPR command_index "${command_index} + 1")
+    list(GET ADDTEST_CMD_ARGS ${command_index} wrapped_command)
+    string(STRIP "${wrapped_command}" wrapped_command)
+    if(MPIEXEC_POSTFLAGS)
+      list(JOIN MPIEXEC_POSTFLAGS " " postflags)
+      string(REGEX REPLACE "^([^ \t\r\n]+)" "\\1 ${postflags}" wrapped_command "${wrapped_command}")
+    endif()
+
+    _dumux_add_test_forward_args(test_args NAME TARGET SOURCES COMPILE_DEFINITIONS COMPILE_FLAGS LINK_LIBRARIES CMD_ARGS MPI_RANKS COMPILE_ONLY)
+    foreach(procnum ${ADDTEST_MPI_RANKS})
+      if(NOT "${procnum}" GREATER "${max_ranks}")
+        set(test_name ${ADDTEST_NAME})
+        set(cmd_args ${ADDTEST_CMD_ARGS})
+        if(NOT ${procnum} STREQUAL "1")
+          set(test_name "${test_name}-mpi-${procnum}")
+          set(launcher ${MPIEXEC} ${MPIEXEC_PREFLAGS} ${MPIEXEC_NUMPROC_FLAG} ${procnum})
+          list(JOIN launcher " " launcher)
+          list(REMOVE_AT cmd_args ${command_index})
+          list(INSERT cmd_args ${command_index} "${launcher} ${wrapped_command}")
+        endif()
+        dune_add_test(${test_args} NAME ${test_name} TARGET ${executable} CMD_ARGS ${cmd_args})
+      endif()
+    endforeach()
+  else()
+    _dumux_add_test_forward_args(forward_args)
+    dune_add_test(${forward_args})
   endif()
 
-  # Add the executable if it is not already present
-  if(ADDTEST_SOURCES)
+  if(ADDTEST_SOURCES OR NOT should_run_test)
     set(ADDTEST_TARGET ${ADDTEST_NAME})
   endif()
-
-  # link the dumux library to the test target
   target_link_libraries(${ADDTEST_TARGET} PRIVATE Dumux::Dumux)
-
-  # enable all dune registered packages on the test target
   dune_target_enable_all_packages(${ADDTEST_TARGET})
+
+  set(thread_environment)
+  foreach(variable DUMUX_NUM_THREADS OMP_NUM_THREADS OPENBLAS_NUM_THREADS MKL_NUM_THREADS VECLIB_MAXIMUM_THREADS)
+    list(APPEND thread_environment "${variable}=${ADDTEST_THREADS}")
+  endforeach()
 
   if(NOT ADDTEST_MPI_RANKS)
     set(ADDTEST_MPI_RANKS 1)
   endif()
 
   foreach(procnum ${ADDTEST_MPI_RANKS})
-    if((NOT "${procnum}" GREATER "${DUNE_MAX_TEST_CORES}") AND (NOT ADDTEST_COMPILE_ONLY))
-      set(ACTUAL_NAME ${ADDTEST_NAME})
-      # add suffix
-      if(NOT ${procnum} STREQUAL "1")
-        set(ACTUAL_NAME "${ACTUAL_NAME}-mpi-${procnum}")
+    set(ACTUAL_NAME ${ADDTEST_NAME})
+    # add suffix
+    if(NOT ${procnum} STREQUAL "1")
+      set(ACTUAL_NAME "${ACTUAL_NAME}-mpi-${procnum}")
+    endif()
+
+    if(TEST ${ACTUAL_NAME})
+      set(ranks 1)
+      if(should_run_test)
+        set(ranks ${procnum})
       endif()
+      math(EXPR processors "${ranks} * ${ADDTEST_THREADS}")
+      set_tests_properties(${ACTUAL_NAME} PROPERTIES PROCESSORS ${processors})
+      set_property(TEST ${ACTUAL_NAME} APPEND PROPERTY ENVIRONMENT ${thread_environment})
 
       file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/TestMetaData")
       file(WRITE "${CMAKE_BINARY_DIR}/TestMetaData/${ACTUAL_NAME}.json"
@@ -289,7 +371,7 @@ endfunction()
 function(dumux_evaluate_cmake_guard GUARD_LETS_YOU_PASS)
   include(CMakeParseArguments)
   set(MULTIARGS CMAKE_GUARD)
-  cmake_parse_arguments(EVALGUARD "${OPTIONS}" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
+  cmake_parse_arguments(EVALGUARD "" "" "${MULTIARGS}" ${ARGN})
 
   # Check whether the parser produced any errors
   if(EVALGUARD_UNPARSED_ARGUMENTS)
@@ -298,7 +380,6 @@ function(dumux_evaluate_cmake_guard GUARD_LETS_YOU_PASS)
 
   # determine if all condition of the guard are met
   set(${GUARD_LETS_YOU_PASS} TRUE PARENT_SCOPE)
-  set(FAILED_CONDITION_PRINTING "")
   foreach(condition ${EVALGUARD_CMAKE_GUARD})
     separate_arguments(condition)
     if(NOT (${condition}))
