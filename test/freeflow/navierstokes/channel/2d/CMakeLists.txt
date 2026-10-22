@@ -107,11 +107,13 @@ dumux_add_test(NAME test_ff_stokes_channel_transient_stokessolver_parallel
               TARGET test_ff_stokes_channel_transient_stokessolver
               LABELS freeflow navierstokes
               CMAKE_GUARD "( HAVE_UMFPACK AND HAVE_MPI )"
+              MPI_RANKS 4
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy --ignore "process rank"
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_channel_transient_stokessolver-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0004-test_ff_stokes_channel_transient_stokessolver_parallel-00003.pvtu
-                             --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_transient_stokessolver params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_transient_stokessolver params.input
                              -Problem.Name test_ff_stokes_channel_transient_stokessolver_parallel
                              -TimeLoop.DtInitial 1e-3 -TimeLoop.TEnd 3e-3
                              -LinearSolver.PressureOperator Transient

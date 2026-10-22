@@ -65,22 +65,24 @@ dumux_add_test(NAME test_co2_box_parallel
                LABELS porousmediumflow co2 parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank" "porosity"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2_box_parallel-00028.pvtu
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_box params.input -Problem.Name test_co2_box_parallel")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_box params.input -Problem.Name test_co2_box_parallel")
 
 dumux_add_test(NAME test_co2_tpfa_parallel
                TARGET test_co2_tpfa
                LABELS porousmediumflow co2 parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2_tpfa_parallel-00028.pvtu
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2_tpfa params.input -Problem.Name test_co2_tpfa_parallel")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2_tpfa params.input -Problem.Name test_co2_tpfa_parallel")
 
 
 dumux_add_test(NAME test_co2ni_box
@@ -113,19 +115,21 @@ dumux_add_test(NAME test_co2ni_box_parallel
                LABELS porousmediumflow co2 co2ni parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank" "porosity"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_box-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2ni_box_parallel-00028.pvtu
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box paramsni.input -Problem.Name test_co2ni_box_parallel")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_box paramsni.input -Problem.Name test_co2ni_box_parallel")
 
 dumux_add_test(NAME test_co2ni_tpfa_parallel
                TARGET test_co2ni_tpfa
                LABELS porousmediumflow co2 co2ni parallel
                TIMEOUT 3600
                CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_co2ni_tpfa-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_co2ni_tpfa_parallel-00028.pvtu
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_tpfa paramsni.input -Problem.Name test_co2ni_tpfa_parallel")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_co2ni_tpfa paramsni.input -Problem.Name test_co2ni_tpfa_parallel")
