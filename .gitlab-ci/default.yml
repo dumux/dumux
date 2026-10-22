@@ -29,6 +29,8 @@ variables:
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
   DUMUX_ENABLE_DUNE_CHECKS: "ON"
   DUMUX_NDEBUG: 0
+  # cores of a runner, the number of processors ctest distributes to the tests
+  DUMUX_CI_NUM_CORES: 4
 
 
 configure:
@@ -243,15 +245,17 @@ test cpp:
   variables:
     OMPI_ALLOW_RUN_AS_ROOT: 1
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-    DUMUX_NUM_THREADS: 4
+    # Open MPI binds the processes of every two-process test to cores 0 and 1, so concurrent tests would share them
+    OMPI_MCA_hwloc_base_binding_policy: none
   script:
     - |
       source build-cmake/ci-env/bin/activate
       pushd build-cmake
+        TESTFLAGS="-j${DUMUX_CI_NUM_CORES} --output-on-failure -LE python"
         if [ -s ../affectedtests.json ]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
+          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t --testflags="${TESTFLAGS}"
         else
-          python3 ../bin/testing/runselectedtests.py --all -t
+          python3 ../bin/testing/runselectedtests.py --all -t --testflags="${TESTFLAGS}"
         fi
       popd
   needs:
