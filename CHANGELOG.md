@@ -64,8 +64,18 @@ Tests: Cryer's sphere consolidation with this model and with linear poroelastici
 (`test/poromechanics/poroelastic_large_deformations/cryer` with a benchmark page, `test/poromechanics/poroelastic/cryer`) and a plane-strain
 manufactured solution at finite strain with convergence rates (`test/poromechanics/poroelastic_large_deformations/manufactured_solution`).
 - __Embedded 1d-3d kernel coupling__: The average distance between a coupling segment and a bulk element, which enters the flux scaling factor, is now measured to the line through the segment (new function `averageDistanceLineGeometry` in `dumux/geometry/distance.hh`) instead of to the segment. Before, the distance grew with the parts of the bulk element beyond the segment ends, so the exchange flux was underestimated if a bulk element contains several lower-dimensional elements in a row (e.g. by a factor of about two for two elements of a straight vessel per bulk element). Results change for such setups and are unchanged if each segment spans its bulk element.
+- __Testing__: Tests declare the processors they use, so that `ctest -j` schedules them without oversubscribing the machine.
+`dumux_add_test` sets the test property `PROCESSORS` to the number of MPI processes times the number of threads per process,
+and runs the test with `DUMUX_NUM_THREADS`, `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` and `VECLIB_MAXIMUM_THREADS`
+set to the number of threads. The number of threads is given by the new argument `THREADS` and defaults to the new cache variable
+`DUMUX_TEST_NUM_THREADS` (default 1). `MPI_RANKS` also works for tests run by `dumux_runtest.py`: the MPI launcher is put in front of
+the command after `--command`. All parallel tests of DuMux start MPI through `MPI_RANKS`, and `DUNE_MAX_TEST_CORES` defaults to 4
+for DuMux, the largest number of processes of its tests. `dumux_add_test` warns about tests that start `mpiexec` themselves.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+- __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
+specify more; a `DUMUX_NUM_THREADS` set when calling ctest no longer reaches them. The parallel tests of DuMux are named
+`<name>-mpi-<n>` for n processes, like all tests using `MPI_RANKS`.
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
 - __Quadrature and L2 norms__: `integrateGridFunction` and `integrateL2Error` in `dumux/common/integrate.hh` now use the grid's
 coordinate type for the quadrature rule instead of the field type of the integrated function, and `integrateL2Error` returns the
