@@ -38,9 +38,7 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
-#include <dumux/discretization/gridvariables.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -116,18 +114,7 @@ public:
 
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::SincosTestMassBox>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
 #endif
 
 // the momentum problem without coupling to a mass problem
