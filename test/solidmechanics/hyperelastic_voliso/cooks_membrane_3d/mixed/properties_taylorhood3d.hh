@@ -8,18 +8,11 @@
 #ifndef DUMUX_COOKS_MEMBRANE_TAYLORHOOD_3D_PROPERTIES_HH
 #define DUMUX_COOKS_MEMBRANE_TAYLORHOOD_3D_PROPERTIES_HH
 
-#include <type_traits>
-
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/pq2.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/multidomain/traits.hh>
-
-#include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
 #include <dumux/solidmechanics/hyperelastic_voliso/model.hh>
 #include <dumux/solidmechanics/hyperelastic_voliso/couplingmanager.hh>
@@ -57,21 +50,6 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::CooksMembraneTHMomentum3D>
 { static constexpr bool value = true; };
 
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::CooksMembraneTHMomentum3D>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
 // ---- Pressure type tag (Box/P1, 3D) ----
 namespace TTag {
 struct CooksMembraneTHPressure3D
@@ -99,21 +77,6 @@ struct EnableGridGeometryCache<TypeTag, TTag::CooksMembraneTHPressure3D>
 template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::CooksMembraneTHPressure3D>
 { static constexpr bool value = true; };
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::CooksMembraneTHPressure3D>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Variables = GetPropType<TypeTag, Properties::VolumeVariables>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
 
 // ---- Coupling manager ----
 using CooksMembraneTHMDTraits3D = MultiDomainTraits<
