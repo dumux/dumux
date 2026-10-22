@@ -19,6 +19,10 @@ dumux_add_test(NAME test_interpolate
                LABELS unit discretization
                SOURCES test_interpolate.cc)
 
+dumux_add_test(NAME test_defaultgridvariables
+               LABELS unit discretization
+               SOURCES test_defaultgridvariables.cc)
+
 dumux_add_test(NAME test_periodicdofmap
                LABELS unit discretization
                SOURCES test_periodicdofmap.cc
