@@ -29,6 +29,8 @@ variables:
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
   DUMUX_ENABLE_DUNE_CHECKS: "ON"
   DUMUX_NDEBUG: 0
+  # cores of a runner, the number of make jobs and of the processors ctest distributes to the tests
+  DUMUX_CI_NUM_CORES: 8
 
 
 configure:
@@ -39,7 +41,7 @@ configure:
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DDUMUX_ENABLE_GRIDFORMAT=${DUMUX_ENABLE_GRIDFORMAT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCMAKE_CXX_FLAGS='-DDUNE_CHECK_BOUNDS=${DUMUX_ENABLE_DUNE_CHECKS} -DNDEBUG=${DUMUX_NDEBUG} -DDUNE_ISTL_WITH_CHECKING=${DUMUX_ENABLE_DUNE_CHECKS}'\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current cmake
-    - dunecontrol --opts=opts_file.opts --current make -j8
+    - dunecontrol --opts=opts_file.opts --current make -j${DUMUX_CI_NUM_CORES}
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
     - |
       if [ -d "/dune/modules/dune-common/build-cmake/dune-env" ]; then
@@ -216,11 +218,12 @@ compile cpp:
     - |
       pushd build-cmake
         make clean && make all
+        BUILDFLAGS="-j${DUMUX_CI_NUM_CORES} --keep-going"
         if [ -s ../affectedtests.json ]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b
+          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -b --buildflags="${BUILDFLAGS}"
           make build_cmake_tests
         else
-          python3 ../bin/testing/runselectedtests.py --all -b
+          python3 ../bin/testing/runselectedtests.py --all -b --buildflags="${BUILDFLAGS}"
         fi
       popd
   artifacts:
@@ -243,15 +246,17 @@ test cpp:
   variables:
     OMPI_ALLOW_RUN_AS_ROOT: 1
     OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
-    DUMUX_NUM_THREADS: 4
+    # Open MPI binds the processes of every two-process test to cores 0 and 1, so concurrent tests would share them
+    OMPI_MCA_hwloc_base_binding_policy: none
   script:
     - |
       source build-cmake/ci-env/bin/activate
       pushd build-cmake
+        TESTFLAGS="-j${DUMUX_CI_NUM_CORES} --output-on-failure -LE python"
         if [ -s ../affectedtests.json ]; then
-          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t
+          python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t --testflags="${TESTFLAGS}"
         else
-          python3 ../bin/testing/runselectedtests.py --all -t
+          python3 ../bin/testing/runselectedtests.py --all -t --testflags="${TESTFLAGS}"
         fi
       popd
   needs:
