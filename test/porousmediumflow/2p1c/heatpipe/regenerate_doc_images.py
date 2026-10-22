@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Regenerate the heat pipe benchmark images for the Doxygen documentation.
 
-Builds and runs the box and TPFA tests through plot_convergence.py, then copies
+Builds and runs the box and TPFA tests through plot_results.py, then copies
 profile.png and convergence.png into doc/doxygen/images/.
 
 Usage:
@@ -26,7 +26,7 @@ test_build_dir = os.path.join(build_dir, "test", "porousmediumflow", "2p1c", "he
 executables = ["test_2p1cni_heatpipe_box", "test_2p1cni_heatpipe_tpfa"]
 
 subprocess.check_call(["make", *executables], cwd=test_build_dir)
-subprocess.check_call([sys.executable, os.path.join(script_dir, "plot_convergence.py"), *executables], cwd=test_build_dir)
+subprocess.check_call([sys.executable, os.path.join(script_dir, "plot_results.py"), *executables], cwd=test_build_dir)
 
 for image, destination in [("profile.png", "heatpipe2p1c_profile.png"),
                            ("convergence.png", "heatpipe2p1c_convergence.png")]:

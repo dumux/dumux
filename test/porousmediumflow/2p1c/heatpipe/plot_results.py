@@ -5,7 +5,7 @@
 with full upwinding and with central weighting of the mobilities.
 
 Usage (run from the test directory in the build tree):
-  python3 plot_convergence.py <executable> [<executable> ...]
+  python3 plot_results.py <executable> [<executable> ...]
 """
 
 import os
@@ -25,8 +25,8 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 executables = sys.argv[1:]
-weightings = [("upwind", "1.0", "#eb6834"), ("central", "0.5", "#1baf7a")]
-markers = ["o", "s"]
+weightings = [("upwind", "1.0", "o"), ("central", "0.5", "s")]
+schemeColors = {"box": "#eb6834", "tpfa": "#1baf7a"}
 referenceColor = "#2a78d6"
 inkColor = "#52514e"
 columns = ["saturation", "temperature", "gas_pressure", "liquid_pressure"]
@@ -60,13 +60,13 @@ def style(ax):
     ax.tick_params(colors=inkColor)
 
 
-configurations = [(k, executable, weighting, upwindWeight, color)
-                  for weighting, upwindWeight, color in weightings
+configurations = [(k, executable, weighting, upwindWeight, schemeColors[scheme(executable)], marker)
+                  for weighting, upwindWeight, marker in weightings
                   for k, executable in enumerate(executables)]
 
 # grid convergence of the discrete L2 errors, the finest central run also provides the reference profile
 results = []
-for k, executable, weighting, upwindWeight, color in configurations:
+for k, executable, weighting, upwindWeight, color, marker in configurations:
     name = f"{os.path.basename(executable)}-{weighting}"
     hs, errors = collect_data(executable, refinements=range(7), name=name,
                               extra_args=["-Flux.UpwindWeight", upwindWeight])
@@ -78,9 +78,9 @@ reference = np.genfromtxt(name + "-profile.csv", delimiter=",", names=True)
 xRef, uniqueRef = np.unique(reference["x"], return_index=True)
 
 fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=True)
-for (k, executable, weighting, _, color), (hs, errors) in zip(configurations, results):
+for (k, executable, weighting, _, color, marker), (hs, errors) in zip(configurations, results):
     for ax, field in zip(axes.flat, ["saturation", "temperature", "gas pressure", "liquid pressure"]):
-        ax.loglog(hs, errors[field], marker=markers[k], markersize=8 - 3*k, linewidth=2 - 0.5*k, color=color,
+        ax.loglog(hs, errors[field], marker=marker, markersize=8 - 3*k, linewidth=2 - 0.5*k, color=color,
                   markeredgecolor="white", markeredgewidth=1, label=f"{scheme(executable)}, {weighting}", zorder=2 + k)
 for ax, field in zip(axes.flat, ["saturation", "temperature", "gas pressure", "liquid pressure"]):
     for (hs, errors), order, i in ((results[0], 1, 3), (results[-1], 2, 2)):
@@ -102,7 +102,7 @@ print("Saved convergence.png")
 fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex=True)
 for ax, column in zip(axes.flat, columns):
     ax.plot(xRef, profileScale[column][0]*reference[column + "_exact"][uniqueRef], color=referenceColor, linewidth=1.5, label="Udell (1985)", zorder=3)
-for k, executable, weighting, upwindWeight, color in configurations:
+for k, executable, weighting, upwindWeight, color, marker in configurations:
     exe = executable if os.path.isabs(executable) else "./" + executable
     name = f"{os.path.basename(executable)}-{weighting}-coarse"
     subprocess.run([exe, "params.input", "-Problem.Name", name, "-Grid.Refinement", "0",
@@ -110,7 +110,7 @@ for k, executable, weighting, upwindWeight, color in configurations:
     data = np.genfromtxt(name + "-profile.csv", delimiter=",", names=True)
     x, unique = np.unique(data["x"], return_index=True)
     for ax, column in zip(axes.flat, columns):
-        ax.plot(x, profileScale[column][0]*data[column][unique], linestyle="none", marker=markers[k], markersize=6, color=color,
+        ax.plot(x, profileScale[column][0]*data[column][unique], linestyle="none", marker=marker, markersize=6, color=color,
                 markeredgecolor="white", markeredgewidth=1, label=f"{scheme(executable)}, {weighting}, {len(x)} dofs",
                 zorder=2)
 

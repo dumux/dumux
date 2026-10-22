@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
-dune_symlink_to_source_files(FILES "convergencetest.py" "plot_convergence.py")
+dune_symlink_to_source_files(FILES "convergencetest.py" "plot_results.py")
 
 add_executable(test_2p1cni_heatpipe_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_2p1cni_heatpipe_box PUBLIC "TYPETAG=TwoPOneCHeatPipeBox")
