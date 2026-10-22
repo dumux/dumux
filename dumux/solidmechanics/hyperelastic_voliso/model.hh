@@ -54,6 +54,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 
 #include "localresidual.hh"
 #include "variables.hh"
@@ -158,6 +159,11 @@ struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
         HyperelasticVolIsoMomentumVVTraits<PV, MT>>;
 };
 
+//! The grid variables, with the cache selected depending on the discretization scheme
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::HyperelasticVolIsoPressureModel>
 { using type = HyperelasticVolIsoPressureModelTraits; };
@@ -174,6 +180,11 @@ struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoPressureModel>
     using type = HyperelasticVolIsoPressureVariables<
         HyperelasticVolIsoPressureVVTraits<PV, MT>>;
 };
+
+//! The grid variables, with the cache selected depending on the discretization scheme
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::HyperelasticVolIsoPressureModel>
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
 
 } // end namespace Dumux::Properties
 

@@ -58,6 +58,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 
 #include "localresidual.hh"
 #include "variables.hh"
@@ -175,6 +176,11 @@ struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefMomentumModel>
         PoroElasticLargeDefMomentumVVTraits<PV, MT>>;
 };
 
+//! The grid variables, with the cache selected depending on the discretization scheme
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::PoroElasticLargeDefMomentumModel>
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
 { using type = PoroElasticLargeDefSolidPressureModelTraits; };
@@ -192,6 +198,11 @@ struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
         PoroElasticLargeDefSolidPressureVVTraits<PV, MT>>;
 };
 
+//! The grid variables, with the cache selected depending on the discretization scheme
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+
 template<class TypeTag>
 struct ModelTraits<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
 { using type = PoroElasticLargeDefFluidPressureModelTraits; };
@@ -208,6 +219,11 @@ struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
     using type = PoroElasticLargeDefFluidPressureVariables<
         PoroElasticLargeDefFluidPressureVVTraits<PV, MT>>;
 };
+
+//! The grid variables, with the cache selected depending on the discretization scheme
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
 
 } // end namespace Dumux::Properties
 
