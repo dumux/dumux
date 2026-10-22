@@ -5,6 +5,7 @@ dune_symlink_to_source_files(FILES "convergencetest.py")
 dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_ff_navierstokes_sincos
+              THREADS 4
               SOURCES main.cc
               LABELS freeflow
               TIMEOUT 3600
@@ -54,6 +55,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_uzawapreconditioner_factory
                              -Component.LiquidKinematicViscosity 0.1")
 
 dumux_add_test(NAME test_ff_navierstokes_sincos_hybrid_pq1bubble
+              THREADS 4
               SOURCES main.cc
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
@@ -147,6 +149,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_multistage_pq1bubble
                        -MultiStageTest.RateTolerance 0.2)
 
 dumux_add_test(NAME test_ff_navierstokes_sincos_momentum_multistage_pq2
+              THREADS 4
               SOURCES main_momentum_multistage.cc
               LABELS freeflow navierstokes
               CMAKE_GUARD HAVE_UMFPACK
