@@ -125,11 +125,13 @@ foreach(disc tpfa box)
                       TARGET test_tracer_implicit_${disc}_mumps
                       LABELS porousmediumflow tracer parallel
                       CMAKE_GUARD MUMPS_FOUND
+                      MPI_RANKS 2
+                      TIMEOUT 1200
                       COMMAND ${DUMUX_RUNTEST}
                       CMD_ARGS --script fuzzy --ignore "process rank" "velocity_Groundwater (m/s)"
                                --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_${disc}-reference.vtu
                                        ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_tracer_implicit_${disc}_mumps_parallel_ovlp_${overlap}-00010.pvtu
-                               --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_${disc}_mumps params.input
+                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_${disc}_mumps params.input
                                -Problem.Name test_tracer_implicit_${disc}_mumps_parallel_ovlp_${overlap} -Grid.Overlap ${overlap}
                                -Vtk.AddVelocity false")
     endforeach()
