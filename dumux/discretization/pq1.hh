@@ -41,14 +41,11 @@
 #include <dumux/discretization/cvfe/gridvolumevariables.hh>
 #include <dumux/discretization/cvfe/fluxvariablescache.hh>
 #include <dumux/discretization/cvfe/elementsolution.hh>
-#include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/pq1/fegriddiscretization.hh>
 
 #include <dumux/discretization/fem/elementvariables.hh>
-#include <dumux/discretization/fem/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
-#include <dumux/discretization/gridvariables.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/flux/fluxvariablescaching.hh>
 
@@ -146,18 +143,7 @@ public:
 
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::PQ1FEModel>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::FEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
+{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
 
 //! Set the default for the ElementBoundaryTypes for PQ1FEModel
 template<class TypeTag>
