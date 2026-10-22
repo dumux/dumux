@@ -21,13 +21,8 @@
 #include <dumux/discretization/pq1.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/concepts.hh>
-#include <dumux/discretization/gridvariables.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
-#include <dumux/discretization/fem/gridvariablescache.hh>
 #include <dumux/solidmechanics/elastic/model.hh>
 #include <dumux/solidmechanics/elastic/variables.hh>
 
@@ -56,35 +51,19 @@ struct SpatialParams<TypeTag, TTag::CooksMembrane>
                                             GetPropType<TypeTag, Properties::Scalar>>;
 };
 
-//! Grid variables for the assembly with local degrees of freedom, with the cache matching the scheme
+//! Grid variables for the assembly with local degrees of freedom, with the cache selected depending on the scheme
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::CooksMembrane>
 {
 private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using ElementDiscretization = typename GG::LocalView;
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    static constexpr int dim = GG::GridView::dimension;
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Traits = ElasticVolumeVariablesTraits<PV, Dune::FieldVector<typename PV::value_type, dim>,
                                                 GetPropType<TypeTag, Properties::ModelTraits>,
                                                 GetPropType<TypeTag, Properties::SolidState>,
                                                 GetPropType<TypeTag, Properties::SolidSystem>>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<ElasticVariables<Traits>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-
-    using FECache = Dumux::Experimental::FEGridVariablesCache<
-        Dumux::Experimental::FEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
-    using HybridCache = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<
-        Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
-    using CVFECache = Dumux::Experimental::CVFE::CVFEGridVariablesCache<
-        Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>, enableCache>;
-    using Cache = std::conditional_t<Dumux::Experimental::Concepts::FEElementDiscretization<ElementDiscretization>, FECache,
-                  std::conditional_t<Dumux::Experimental::Concepts::HybridElementDiscretization<ElementDiscretization>, HybridCache,
-                                     CVFECache>>;
 public:
-    using type = Dumux::Experimental::GridVariables<GG, Cache>;
+    using type = Dumux::Experimental::DefaultGridVariables<TypeTag, Dumux::Detail::CVFE::VariablesAdapter<ElasticVariables<Traits>>>;
 };
 
 } // end namespace Dumux::Properties
