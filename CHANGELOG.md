@@ -63,6 +63,7 @@ of a saturated porous solid with three coupled subdomains (displacement, solid p
 Tests: Cryer's sphere consolidation with this model and with linear poroelasticity against Cryer's solution
 (`test/poromechanics/poroelastic_large_deformations/cryer` with a benchmark page, `test/poromechanics/poroelastic/cryer`) and a plane-strain
 manufactured solution at finite strain with convergence rates (`test/poromechanics/poroelastic_large_deformations/manufactured_solution`).
+- __Embedded 1d-3d kernel coupling__: The average distance between a coupling segment and a bulk element, which enters the flux scaling factor, is now measured to the line through the segment (new function `averageDistanceLineGeometry` in `dumux/geometry/distance.hh`) instead of to the segment. Before, the distance grew with the parts of the bulk element beyond the segment ends, so the exchange flux was underestimated if a bulk element contains several lower-dimensional elements in a row (e.g. by a factor of about two for two elements of a straight vessel per bulk element). Results change for such setups and are unchanged if each segment spans its bulk element.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Grid Capabilities__: The custom `canCommunicate` grid capability has been removed in favor of the equivalent `Dune::Capabilities::canCommunicate<Grid, codim>::v` from DUNE-Grid.
