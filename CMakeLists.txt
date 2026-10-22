@@ -20,6 +20,11 @@ list(APPEND CMAKE_MODULE_PATH ${dune-common_MODULE_PATH}
 # include the dune macros
 include(DuneMacros)
 
+# the parallel tests of DuMux run with up to 4 processes
+if(NOT DEFINED CACHE{DUNE_MAX_TEST_CORES})
+  set(DUNE_MAX_TEST_CORES 4)
+endif()
+
 # option for enabling Python bindings
 # The default is OFF, however, note that this does not affect upstream modules
 # since they are configured already before Dumux is configured. We set this option
