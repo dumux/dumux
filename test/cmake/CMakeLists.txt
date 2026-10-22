@@ -74,6 +74,6 @@ if (MPI_FOUND)
   )
 
   set_tests_properties(test_dumux_dependent_app_test_parallel
-    PROPERTIES LABELS cmake
+    PROPERTIES LABELS cmake PROCESSORS 2
   )
 endif()

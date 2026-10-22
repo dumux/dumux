@@ -67,9 +67,11 @@ dumux_add_test(NAME test_walldistance_3dcube_parallel
                TARGET test_walldistance
                LABELS unit
                CMAKE_GUARD MPI_FOUND
+               MPI_RANKS 2
+               TIMEOUT 1200
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy --ignore "wallElementIndex"
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DCube"
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_walldistance params_walldistance.input -TestCase 3DCube"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_element-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-result_aabb_tree_3dcube_box_element.pvtu
                                 ${CMAKE_SOURCE_DIR}/test/references/test_walldistance_3dcube_box_vertex-reference.vtu

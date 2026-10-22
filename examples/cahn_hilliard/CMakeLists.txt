@@ -18,13 +18,14 @@ dumux_add_test(NAME example_cahn_hilliard_parallel
                LABELS example
                TARGET example_cahn_hilliard
                CMAKE_GUARD MPI_FOUND
+               MPI_RANKS 2
+               TIMEOUT 1200
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_cahn_hilliard_parallel_p0-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-cahn_hilliard_parallel-00102.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/example_cahn_hilliard_parallel_p1-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-cahn_hilliard_parallel-00102.vtu
-                        --command "${MPIEXEC} -np 2
-                        ${CMAKE_CURRENT_BINARY_DIR}/example_cahn_hilliard params.input
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/example_cahn_hilliard params.input
                         -Problem.Name cahn_hilliard_parallel
                         -Grid.Cells \" 10 10\" -Problem.Mobility 0.01 -Problem.SurfaceTension 0.5")

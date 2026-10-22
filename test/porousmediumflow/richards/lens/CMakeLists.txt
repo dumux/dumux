@@ -73,49 +73,57 @@ dumux_add_test(NAME test_richards_lens_box_parallel_yasp
               TARGET test_richards_lens_box
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_parallel_yasp-00007.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_yasp-00007.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp -Grid.Overlap 0")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp -Grid.Overlap 0")
 
 dumux_add_test(NAME test_richards_lens_box_parallel_yasp_ovlp_2
               TARGET test_richards_lens_box
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_parallel_yasp_ovlp_2-00007.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_yasp_ovlp_2-00007.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp_ovlp_2 -Grid.Overlap 2")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box params.input -Problem.Name test_richards_lens_box_parallel_yasp_ovlp_2 -Grid.Overlap 2")
 
 dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp
               TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_parallel_yasp-00007.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_yasp-00007.pvtu
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa_parallel_yasp -Grid.Overlap 1")
+                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa_parallel_yasp -Grid.Overlap 1")
 
 dumux_add_test(NAME test_richards_lens_mpfa_parallel_yasp
               TARGET test_richards_lens_mpfa
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_mpfa_parallel_yasp-00007.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_mpfa_parallel_yasp-00007.pvtu
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_mpfa params.input -Problem.Name test_richards_lens_mpfa_parallel_yasp -Grid.Overlap 1")
+                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_mpfa params.input -Problem.Name test_richards_lens_mpfa_parallel_yasp -Grid.Overlap 1")
 
 # TODO: there is a small difference because of the precision loss when writing and reading to and from vtk with single precision
 # This is why we need a bit higher saturation threshold since pc-sw is very sensitive to pressure for saturations close to 0
@@ -123,60 +131,72 @@ dumux_add_test(NAME test_richards_lens_tpfa_parallel_yasp_restart
               TARGET test_richards_lens_tpfa
               LABELS porousmediumflow richards parallel
               CMAKE_GUARD MPI_FOUND
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank" --zeroThreshold {"S_liq":1e-3,"water content":1e-3}
                       --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa_parallel-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_tpfa_parallel_yasp_restart-00004.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_yasp_restart-00004.pvtu
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa_parallel_yasp_restart -Grid.Overlap 1 -Restart.Time 536.797 -Restart.File s0002-test_richards_lens_tpfa_parallel_yasp-00003.pvtu -TimeLoop.DtInitial 408.68")
+                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa params.input -Problem.Name test_richards_lens_tpfa_parallel_yasp_restart -Grid.Overlap 1 -Restart.Time 536.797 -Restart.File s0002-test_richards_lens_tpfa_parallel_yasp-00003.pvtu -TimeLoop.DtInitial 408.68")
 
 # the restart test has to run after the test that produces the corresponding vtu file
-set_tests_properties(test_richards_lens_tpfa_parallel_yasp_restart PROPERTIES DEPENDS test_richards_lens_tpfa_parallel_yasp)
+if(TEST test_richards_lens_tpfa_parallel_yasp_restart-mpi-2)
+  set_tests_properties(test_richards_lens_tpfa_parallel_yasp_restart-mpi-2 PROPERTIES DEPENDS test_richards_lens_tpfa_parallel_yasp-mpi-2)
+endif()
 
 dumux_add_test(NAME test_richards_lens_box_parallel_ug
               LABELS porousmediumflow richards parallel
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::UGGrid<2>
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_ug-00007.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_ug params.input -Problem.Name test_richards_lens_box_parallel_ug")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_ug params.input -Problem.Name test_richards_lens_box_parallel_ug")
 
 dumux_add_test(NAME test_richards_lens_tpfa_parallel_ug
               LABELS porousmediumflow richards parallel
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-uggrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::UGGrid<2>
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_ug-00007.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_ug params.input -Problem.Name test_richards_lens_tpfa_parallel_ug")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_ug params.input -Problem.Name test_richards_lens_tpfa_parallel_ug")
 
 dumux_add_test(NAME test_richards_lens_box_parallel_alu
               LABELS porousmediumflow richards parallel
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensBox GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_parallel_alu-00007.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_alu params.input -Problem.Name test_richards_lens_box_parallel_alu")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_parallel_alu params.input -Problem.Name test_richards_lens_box_parallel_alu")
 
 dumux_add_test(NAME test_richards_lens_tpfa_parallel_alu
               LABELS porousmediumflow richards parallel
               SOURCES main.cc
               CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS TYPETAG=RichardsLensCC GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy --ignore "process rank"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_tpfa-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_tpfa_parallel_alu-00007.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_alu params.input -Problem.Name test_richards_lens_tpfa_parallel_alu")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_tpfa_parallel_alu params.input -Problem.Name test_richards_lens_tpfa_parallel_alu")
 
 # the direct solver MUMPS, sequentially and on a non-overlapping and an overlapping decomposition
 dumux_add_test(NAME test_richards_lens_box_mumps
@@ -194,11 +214,13 @@ foreach(overlap 0 2)
                 TARGET test_richards_lens_box_mumps
                 LABELS porousmediumflow richards parallel
                 CMAKE_GUARD MUMPS_FOUND
+                MPI_RANKS 2
+                TIMEOUT 1200
                 COMMAND ${DUMUX_RUNTEST}
                 CMD_ARGS --script fuzzy --ignore "process rank"
                          --files ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box_parallel-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap}-00007.vtu
                                  ${CMAKE_SOURCE_DIR}/test/references/test_richards_lens_box-reference.vtu
                                  ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap}-00007.pvtu
-                         --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_mumps params.input -Problem.Name test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap} -Grid.Overlap ${overlap}")
+                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_lens_box_mumps params.input -Problem.Name test_richards_lens_box_mumps_parallel_yasp_ovlp_${overlap} -Grid.Overlap ${overlap}")
 endforeach()

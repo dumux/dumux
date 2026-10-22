@@ -27,8 +27,8 @@ dumux_add_test(NAME test_shallowwater_lakeatrest_parallel
                TARGET test_shallowwater_lakeatrest
                LABELS shallowwater
                CMAKE_GUARD MPI_FOUND
-               COMMAND ${MPIEXEC}
-               CMD_ARGS -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_lakeatrest
-                        params.input
+               MPI_RANKS 2
+               TIMEOUT 1200
+               CMD_ARGS params.input
                         -Problem.Name lakeatrest-parallel
                         -Problem.ErrorTolerance 1e-10)
