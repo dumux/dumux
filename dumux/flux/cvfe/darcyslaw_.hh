@@ -47,12 +47,9 @@ public:
 
     /*!
      * \brief Returns the flux term of a fluid phase at an interpolation point
-     * \note This term is \f$-\mathbf{T} \left( \nabla p - \rho \mathbf{g} \right)\f$, where the
-     *       tensor \f$\mathbf{T}\f$ is given per local dof and interpolated alongside the potential
-     *       gradient. A scheme that upwinds the mobility passes the permeability only.
+     * \note Looks up the cache of the interpolation point, see the overloads below.
      */
     template<class Problem, class ElementVariables, Concept::IpData IpData, class Tensor>
-        requires std::invocable<Tensor, const typename ElementVariables::Variables&>
     static GlobalPosition fluxTerm(const Problem& problem,
                                    const Element& element,
                                    const ElementDiscretization& elemDisc,
@@ -60,10 +57,27 @@ public:
                                    const int phaseIdx,
                                    const IpData& ipData,
                                    const Tensor& tensor)
+    { return fluxTerm(problem, element, elemDisc, elemVars, phaseIdx, ipData, cache(elemVars, ipData), tensor); }
+
+    /*!
+     * \brief Returns the flux term of a fluid phase at an interpolation point
+     * \note This term is \f$-\mathbf{T} \left( \nabla p - \rho \mathbf{g} \right)\f$, where the
+     *       tensor \f$\mathbf{T}\f$ is given per local dof and interpolated alongside the potential
+     *       gradient. A scheme that upwinds the mobility passes the permeability only.
+     */
+    template<class Problem, class ElementVariables, Concept::IpData IpData, class IpCache, class Tensor>
+        requires std::invocable<Tensor, const typename ElementVariables::Variables&>
+    static GlobalPosition fluxTerm(const Problem& problem,
+                                   const Element& element,
+                                   const ElementDiscretization& elemDisc,
+                                   const ElementVariables& elemVars,
+                                   const int phaseIdx,
+                                   const IpData& ipData,
+                                   const IpCache& ipCache,
+                                   const Tensor& tensor)
     {
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
-        const auto& ipCache = cache(elemVars, ipData);
         const auto& shapeValues = ipCache.shapeValues();
 
         std::decay_t<decltype(tensor(elemVars[0]))> interpolatedTensor(0.0);
@@ -95,7 +109,7 @@ public:
      * \note Overload for a tensor that is a property of the interpolation point rather than of
      *       the local dofs, for instance an average over the face being integrated.
      */
-    template<class Problem, class ElementVariables, Concept::IpData IpData, class Tensor>
+    template<class Problem, class ElementVariables, Concept::IpData IpData, class IpCache, class Tensor>
         requires std::invocable<Tensor, const ElementDiscretization&, const ElementVariables&, const IpData&>
     static GlobalPosition fluxTerm(const Problem& problem,
                                    const Element& element,
@@ -103,11 +117,11 @@ public:
                                    const ElementVariables& elemVars,
                                    const int phaseIdx,
                                    const IpData& ipData,
+                                   const IpCache& ipCache,
                                    const Tensor& tensor)
     {
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
-        const auto& ipCache = cache(elemVars, ipData);
         const auto& shapeValues = ipCache.shapeValues();
 
         GlobalPosition gradP(0.0);
