@@ -121,9 +121,10 @@ public:
         for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scvf))
         {
             const auto& faceIpData = qpData.ipData();
+            const auto& ipCache = cache(elemVars, faceIpData);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 flux[conti0EqIdx + phaseIdx] += qpData.weight()*(faceIpData.unitOuterNormal()*AdvectionType::fluxTerm(
-                    problem, elemDisc.element(), elemDisc, elemVars, phaseIdx, faceIpData, tensor
+                    problem, elemDisc.element(), elemDisc, elemVars, phaseIdx, faceIpData, ipCache, tensor
                 ));
         }
 
@@ -219,7 +220,7 @@ public:
                     };
 
                     const auto fluxTerm = AdvectionType::fluxTerm(
-                        problem, element, elemDisc, elemVars, phaseIdx, ipData, tensor
+                        problem, element, elemDisc, elemVars, phaseIdx, ipData, ipCache, tensor
                     );
 
                     const auto eqIdx = conti0EqIdx + phaseIdx;
