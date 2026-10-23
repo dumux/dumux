@@ -89,7 +89,7 @@ class NavierStokesMomentumCVFELocalResidual
     using FluxHelper = NavierStokesMomentumFluxCVFE<GridGeometry, NumEqVector>;
     using FeResidual = NavierStokesMomentumFELocalResidualTerms<Scalar, NumEqVector, LocalBasis, Extrusion>;
 
-    using FluxFunctionHelper = NavierStokesMomentumFluxFunctionCVFE<GridGeometry, NumEqVector>;
+    using FluxTerms = Experimental::CVFENavierStokesMomentumFluxAtIp<Scalar, GridGeometry>;
 
 public:
     //! Use the parent type's constructor
@@ -278,22 +278,42 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         const auto& problem = this->asImp().problem();
+        const auto& element = elemDisc.element();
 
         NumEqVector flux(0.0);
-        GlobalPosition velIntegral(0.0);
-        FluxFunctionHelper fluxFunctionHelper;
-        using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, ElementDiscretization, ElementVariables, typename GridVariablesCache::InterpolationPointData>;
-
+        GlobalPosition velocityIntegral(0.0);
         for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf))
         {
-            const auto& ipCache = cache(elemVars, qpData.ipData());
-            FluxFunctionContext context(this->problem(), elemDisc, elemVars, ipCache);
+            const auto& faceIpData = qpData.ipData();
+            const auto& ipCache = cache(elemVars, faceIpData);
+            if (problem.enableInertiaTerms())
+                velocityIntegral.axpy(qpData.weight(), FluxTerms::velocity(elemDisc, elemVars, ipCache));
 
-            velIntegral += context.velocity() * qpData.weight();
-            flux += qpData.weight() * ( fluxFunctionHelper.diffusiveMomentumFluxIntegrand(context, qpData.ipData())
-                                      + fluxFunctionHelper.pressureFluxIntegrand(context, qpData.ipData()) );
+            const auto& normal = faceIpData.unitOuterNormal();
+            FluxTerms::diffusiveFluxTerm(problem, element, elemDisc, elemVars, faceIpData, ipCache).usmv(qpData.weight(), normal, flux);
+            FluxTerms::pressureFluxTerm(problem, element, elemDisc, faceIpData).usmv(qpData.weight(), normal, flux);
         }
-        flux += fluxFunctionHelper.advectiveMomentumFluxIntegral(problem, elemDisc, elemVars, scvf, velIntegral);
+
+        // the transported momentum is upwinded on the integrated volume flux over the face
+        if (problem.enableInertiaTerms())
+        {
+            static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+
+            const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
+            const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
+            const bool insideIsUpwind = velocityIntegral*scvf.unitOuterNormal() > 0;
+            const auto& upwindVelocity = insideIsUpwind ? insideVars.velocity() : outsideVars.velocity();
+            const auto& downwindVelocity = insideIsUpwind ? outsideVars.velocity() : insideVars.velocity();
+
+            // both are face quantities here, the density is evaluated at the face center
+            const auto faceIpData = ipData(elemDisc, scvf);
+            const Scalar density = problem.density(element, elemDisc, faceIpData);
+            const auto momentum = [&](const auto&, const auto&, const auto&)
+            { return density*(upwindWeight*upwindVelocity + (1.0 - upwindWeight)*downwindVelocity); };
+            const auto transportingVelocity = [&](const auto&, const auto&, const auto&) { return velocityIntegral; };
+            FluxTerms::advectiveFluxTerm(elemDisc, elemVars, faceIpData, momentum, transportingVelocity)
+                .umv(scvf.unitOuterNormal(), flux);
+        }
 
         flux *= elemVars[elemDisc.scv(scvf.insideScvIdx())].extrusionFactor();
 

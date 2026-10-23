@@ -113,53 +113,47 @@ public:
                     DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
             }
 
-            static const bool enableUnsymmetrizedVelocityGradient
-                = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+            using GridDiscretization = typename ElementDiscretization::GridGeometry;
+            using FluxTerms = Experimental::CVFENavierStokesMomentumFluxAtIp<Scalar, GridDiscretization>;
 
             const auto& element = elemDisc.element();
-            using Cache = typename ElementVariables::InterpolationPointData;
-            using FluxFunctionContext = NavierStokesMomentumFluxFunctionContext<Problem, ElementDiscretization, ElementVariables, Cache>;
             for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
             {
                 const auto& ipData = qpData.ipData();
-                // Obtain and store shape function values and gradients at the current quad point
                 const auto& ipCache = cache(elemVars, ipData);
-                FluxFunctionContext context(problem, elemDisc, elemVars, ipCache);
-                const auto& v = context.velocity();
-                const auto& gradV = context.gradVelocity();
+                const auto& shapeValues = ipCache.shapeValues();
 
-                // get viscosity from the problem
-                const Scalar mu = problem.effectiveViscosity(element, elemDisc, ipData);
-                // get density from the problem
+                auto fluxTerm = FluxTerms::diffusiveFluxTerm(problem, element, elemDisc, elemVars, ipData, ipCache);
+
+                // the density enters both the advective and the gravity term
                 const Scalar density = problem.density(element, elemDisc, ipData);
 
+                // there is no face to upwind across, so the advective term is interpolated as well
+                if (problem.enableInertiaTerms())
+                {
+                    const auto velocity = FluxTerms::velocity(elemDisc, elemVars, ipCache);
+                    const auto momentum = [&](const auto&, const auto&, const auto&) { return density*velocity; };
+                    const auto transportingVelocity = [&](const auto&, const auto&, const auto&) { return velocity; };
+                    fluxTerm += FluxTerms::advectiveFluxTerm(elemDisc, elemVars, ipData, momentum, transportingVelocity);
+                }
+
+                // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
+                auto source = problem.source(elemDisc, elemVars, ipData);
+                source.axpy(density, problem.gravity());
+
+                const auto pressureFluxTerm = FluxTerms::pressureFluxTerm(problem, element, elemDisc, ipData);
+
+                // the weak form -F grad N_i - N_i q
                 for (const auto& localDof : nonCVLocalDofs(elemDisc))
                 {
                     const auto localDofIdx = localDof.index();
                     NumEqVector fluxAndSourceTerm(0.0);
-                    // add advection term
-                    if (problem.enableInertiaTerms())
-                        fluxAndSourceTerm -= density*(v*ipCache.gradN(localDofIdx))*v;
+                    fluxTerm.mmv(ipCache.gradN(localDofIdx), fluxAndSourceTerm);
+                    pressureFluxTerm.mmv(ipCache.gradN(localDofIdx), fluxAndSourceTerm);
+                    fluxAndSourceTerm.axpy(-shapeValues[localDofIdx][0], source);
 
-                    // add diffusion term
-                    fluxAndSourceTerm += enableUnsymmetrizedVelocityGradient ?
-                                            mu*mv(gradV, ipCache.gradN(localDofIdx))
-                                            : mu*mv(gradV + getTransposed(gradV), ipCache.gradN(localDofIdx));
-
-                    // add pressure term
-                    fluxAndSourceTerm -= problem.pressure(element, elemDisc, ipData) * ipCache.gradN(localDofIdx);
-
-                    // finally add source and flux boundary term and add everything to residual
-                    auto sourceAtIp = problem.source(elemDisc, elemVars, ipData);
-                    // add gravity term rho*g (note that gravity might be zero in case it's disabled in the problem)
-                    sourceAtIp += density * problem.gravity();
-
-                    const auto& shapeValues = ipCache.shapeValues();
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    {
-                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx] * sourceAtIp[eqIdx];
                         residual[localDofIdx][eqIdx] += qpData.weight()*fluxAndSourceTerm[eqIdx];
-                    }
                 }
             }
         }
