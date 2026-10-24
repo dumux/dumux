@@ -681,7 +681,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().pressureAtPos(scvf.ipGlobal());
         else
-            return couplingManager_->pressure(element, fvGeometry, scvf);
+            return couplingManager_->pressure(element, fvGeometry, ipData(fvGeometry, scvf));
     }
 
     /*!
@@ -696,7 +696,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().pressureAtPos(scv.dofPosition());
         else
-            return couplingManager_->pressure(element, fvGeometry, scv, isPreviousTimeStep);
+            return couplingManager_->pressure(element, fvGeometry, ipData(fvGeometry, scv), isPreviousTimeStep);
     }
 
     /*!
@@ -734,7 +734,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scvf.ipGlobal());
         else
-            return couplingManager_->density(element, fvGeometry, scvf);
+            return couplingManager_->density(element, fvGeometry, ipData(fvGeometry, scvf));
     }
 
     /*!
@@ -749,7 +749,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().densityAtPos(scv.dofPosition());
         else
-            return couplingManager_->density(element, fvGeometry, scv, isPreviousTimeStep);
+            return couplingManager_->density(element, fvGeometry, ipData(fvGeometry, scv), isPreviousTimeStep);
     }
 
     /*!
@@ -787,7 +787,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().effectiveViscosityAtPos(scvf.ipGlobal());
         else
-            return couplingManager_->effectiveViscosity(element, fvGeometry, scvf);
+            return couplingManager_->effectiveViscosity(element, fvGeometry, ipData(fvGeometry, scvf));
     }
 
     /*!
@@ -802,7 +802,7 @@ public:
         if constexpr (std::is_empty_v<CouplingManager>)
             return asImp_().effectiveViscosityAtPos(scv.dofPosition());
         else
-            return couplingManager_->effectiveViscosity(element, fvGeometry, scv, isPreviousTimeStep);
+            return couplingManager_->effectiveViscosity(element, fvGeometry, ipData(fvGeometry, scv), isPreviousTimeStep);
     }
 
     /*!

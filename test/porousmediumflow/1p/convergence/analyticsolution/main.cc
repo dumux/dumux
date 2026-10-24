@@ -25,6 +25,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #if DUMUX_HAVE_GRIDFORMAT
@@ -50,8 +51,8 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
     using Scalar = double;
 
     Scalar l2error = 0.0;
-    auto fvGeometry = localView(problem.gridGeometry());
-    for (const auto& element : elements(problem.gridGeometry().gridView()))
+    auto fvGeometry = localView(gridDiscretization(problem));
+    for (const auto& element : elements(gridDiscretization(problem).gridView()))
     {
         fvGeometry.bindElement(element);
         for (auto&& scv : scvs(fvGeometry))
@@ -64,7 +65,7 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
     using std::sqrt;
     l2error = sqrt(l2error);
 
-    const auto numDofs = problem.gridGeometry().numDofs();
+    const auto numDofs = gridDiscretization(problem).numDofs();
     std::ostream tmp(std::cout.rdbuf());
     tmp << std::setprecision(8) << "** L2 error (abs) for "
             << std::setw(6) << numDofs << " dofs "

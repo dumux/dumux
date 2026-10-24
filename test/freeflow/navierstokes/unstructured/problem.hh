@@ -130,7 +130,7 @@ public:
                 {
                     // advective term: vv*n
                     const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, scvf.ipGlobal());
+                    const auto v = evalSolution(element, element.geometry(), fvGeometry.gridDiscretization(), elemSol, scvf.ipGlobal());
                     values.axpy(density_*(v*scvf.unitOuterNormal()), v);
                 }
             }
@@ -221,7 +221,7 @@ public:
                         {
                             const auto ipGlobal = isgeometry.global(qp.position());
                             const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-                            auto stressLocal = evalGradients(element, geometry, fvGeometry.gridGeometry(), elemSol, ipGlobal);
+                            auto stressLocal = evalGradients(element, geometry, fvGeometry.gridDiscretization(), elemSol, ipGlobal);
                             stressLocal *= qp.weight()*isgeometry.integrationElement(qp.position());
                             stress = stress + stressLocal;
                         }

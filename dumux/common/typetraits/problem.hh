@@ -27,10 +27,10 @@ struct ProblemGridGeometryHelper
 {
 private:
     template<class P>
-    static auto deduce(int) -> std::decay_t<decltype(std::declval<const P&>().gridGeometry())>;
+    static auto deduce(int) -> std::decay_t<decltype(std::declval<const P&>().gridDiscretization())>;
 
     template<class P>
-    static auto deduce(long) -> std::decay_t<decltype(std::declval<const P&>().gridDiscretization())>;
+    static auto deduce(long) -> std::decay_t<decltype(std::declval<const P&>().gridGeometry())>;
 
 public:
     using type = decltype(deduce<Problem>(0));
