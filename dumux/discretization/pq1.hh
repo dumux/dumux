@@ -99,6 +99,11 @@ public:
     using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
+//! The grid variables, with the variables per local dof if the type tag sets Transition::UseVariables
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::PQ1FVModel>
+{ using type = Dumux::Detail::CVFEGridVariables_t<TypeTag>; };
+
 //! The flux variables cache type
 template<class TypeTag>
 struct FluxVariablesCache<TypeTag, TTag::PQ1FVModel>

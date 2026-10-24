@@ -60,6 +60,7 @@ DUMUX_DEFINE_PROPERTY(ElementBoundaryTypes)           //!< Stores the boundary t
 DUMUX_DEFINE_PROPERTY(GridGeometry)                   //!< Grid wrapper creating finite volume geometry and connectivity
 DUMUX_DEFINE_PROPERTY(GridVariables)                  //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
 DUMUX_DEFINE_PROPERTY(VolumeVariables)                //!< The secondary variables within a sub-control volume
+DUMUX_DEFINE_PROPERTY(Variables) //!< The variables per local degree of freedom
 DUMUX_DEFINE_PROPERTY(GridVolumeVariables)            //!< The type for a global container for the volume variables
 DUMUX_DEFINE_PROPERTY(FluxVariables)                  //!< Container storing the different types of flux variables
 DUMUX_DEFINE_PROPERTY(FluxVariablesCache)             //!< Stores data associated with flux vars
@@ -178,6 +179,33 @@ DUMUX_DEFINE_PROPERTY(CouplingManager)
 // Do not use this unless you are dealing with such old code
 ////////////////////////////////////////////////////////////
 DUMUX_DEFINE_PROPERTY(TimeManager)
+
+} // end namespace Dumux::Properties
+
+namespace Dumux::Properties::Transition {
+
+/*!
+ * \ingroup Properties
+ * \brief Whether the box, PQ1-bubble and face-centered diamond schemes assemble with the
+ *        variables per local degree of freedom (`Variables`) instead of the volume variables
+ * \note The other control-volume finite element schemes and the finite element schemes always
+ *       assemble with the variables per local degree of freedom.
+ */
+template<class TypeTag, class MyTypeTag>
+struct UseVariables { using type = UndefinedProperty; };
+
+} // end namespace Dumux::Properties::Transition
+
+namespace Dumux::Properties {
+
+#ifndef DOXYGEN
+template<class ...Args>
+struct PropertyAlias<Transition::UseVariables<Args...>>
+{
+    template <class MyTypeTag> using Alias = typename MyTypeTag::UseVariables;
+    template <class MyTypeTag, class TypeTag> using TemplateAlias = typename MyTypeTag::template UseVariables<TypeTag>;
+};
+#endif // DOXYGEN
 
 } // end namespace Dumux::Properties
 

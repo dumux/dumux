@@ -43,6 +43,10 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
+//! Assemble with the volume variables
+template<class TypeTag>
+struct Transition::UseVariables<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
+
 //! We do not store the FVGeometry by default
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::FiniteVolumeModel> { static constexpr bool value = false; };
