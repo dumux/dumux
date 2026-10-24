@@ -180,7 +180,7 @@ public:
 
             const auto p = project(tmp, params);
             for (std::size_t i = 0; i < p.size(); ++i)
-                result[i][pvIdx] = p[i];
+                result[i][pvIdx] = p[i][0];
         }
 
         return result;

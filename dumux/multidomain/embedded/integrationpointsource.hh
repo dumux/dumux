@@ -163,7 +163,7 @@ public:
 
                         // adjust the integration element
                         auto& s = pointSourceMap.at(key).back();
-                        s.setIntegrationElement(shapeValues[scv.indexInElement()]*s.integrationElement());
+                        s.setIntegrationElement(shapeValues[scv.indexInElement()][0]*s.integrationElement());
                     }
                 }
             }

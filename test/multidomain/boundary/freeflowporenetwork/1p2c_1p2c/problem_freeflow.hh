@@ -160,7 +160,7 @@ public:
                 values[scvf.normalAxis()] += couplingManager_->momentumCouplingCondition(
                     CouplingManager::freeFlowMomentumIndex, CouplingManager::poreNetworkIndex,
                     fvGeometry, scvf, elemVolVars
-                );
+                )[0];
 
                 values += FluxHelper::slipVelocityMomentumFlux(
                     *this, fvGeometry, scvf, elemVolVars, elemFluxVarsCache

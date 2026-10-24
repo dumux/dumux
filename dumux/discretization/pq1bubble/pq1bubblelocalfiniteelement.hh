@@ -20,6 +20,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
+#include <dune/common/typetraits.hh>
 
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -116,7 +117,7 @@ public:
 
         for (std::size_t i = 0; i < numVertexDofs; ++i)
             for (int k = 0; k < dim; ++k)
-                out[i][0][k] -= pq1AtCenter_[i]*bubbleJacobian[0][k];
+                out[i][0][k] -= pq1AtCenter_[i][0]*bubbleJacobian[0][k];
 
         out.resize(size());
         out[numVertexDofs] = bubbleJacobian;
@@ -302,10 +303,19 @@ public:
 
         const auto refElement = Dune::referenceElement<typename LocalBasis::Traits::DomainFieldType,dim>(LocalBasis::type());
 
+        // f may return a scalar or a vector with a single entry
+        const auto coefficient = [](const auto& value) -> C
+        {
+            if constexpr (Dune::IsNumber<std::decay_t<decltype(value)>>::value)
+                return value;
+            else
+                return value[0];
+        };
+
         // Evaluate at the vertices and at the center
         for (int i = 0; i < refElement.size(dim); ++i)
-            out[i] = f(refElement.position(i, dim));
-        out.back() = f(refElement.position(0, 0));
+            out[i] = coefficient(f(refElement.position(i, dim)));
+        out.back() = coefficient(f(refElement.position(0, 0)));
     }
 };
 

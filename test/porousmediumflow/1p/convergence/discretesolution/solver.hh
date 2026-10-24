@@ -120,7 +120,7 @@ SolutionStorage<TypeTag> solveRefinementLevel(int numCells)
         {
             fvGeometry.bindElement(element);
             for (const auto& scv : scvs(fvGeometry))
-                exact[scv.dofIndex()] = problem->exact(scv.dofPosition(), periodLength);
+                exact[scv.dofIndex()] = problem->exact(scv.dofPosition(), periodLength)[0];
         }
 
         vtkWriter.addField(exact, "p_exact");

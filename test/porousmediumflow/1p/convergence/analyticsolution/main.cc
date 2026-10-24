@@ -57,7 +57,7 @@ void printL2Error(const Problem& problem, const SolutionVector& x)
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto dofIdx = scv.dofIndex();
-            const Scalar delta = x[dofIdx] - problem.analyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
+            const Scalar delta = x[dofIdx][0] - problem.analyticalSolution(scv.dofPosition())[2/*pressureIdx*/];
             l2error += scv.volume()*(delta*delta);
         }
     }

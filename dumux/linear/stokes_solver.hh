@@ -1255,7 +1255,7 @@ private:
 
                     for (const auto& scvI : scvs(fvGeometry))
                     {
-                        const auto valueIJ = values[scvI.localDofIndex()]*qWeightJ/(2.0*viscosity_);
+                        const auto valueIJ = values[scvI.localDofIndex()][0]*qWeightJ/(2.0*viscosity_);
                         (*massMatrix)[scvI.dofIndex()][globalJ][0][0] += valueIJ;
                     }
                 }
