@@ -168,13 +168,18 @@ struct LocalResidual<TypeTag, TTag::PoroElasticLargeDefMomentumModel>
 { using type = PoroElasticLargeDefMomentumLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefMomentumModel>
+struct Variables<TypeTag, TTag::PoroElasticLargeDefMomentumModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using type = PoroElasticLargeDefMomentumVariables<
         PoroElasticLargeDefMomentumVVTraits<PV, MT>>;
 };
+
+//! Code asking for the volume variables gets the variables per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefMomentumModel>
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
 
 //! The grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>
@@ -190,13 +195,18 @@ struct LocalResidual<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
 { using type = PoroElasticLargeDefSolidPressureLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
+struct Variables<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using type = PoroElasticLargeDefSolidPressureVariables<
         PoroElasticLargeDefSolidPressureVVTraits<PV, MT>>;
 };
+
+//! Code asking for the volume variables gets the variables per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefSolidPressureModel>
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
 
 //! The grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>
@@ -212,13 +222,18 @@ struct LocalResidual<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
 { using type = PoroElasticLargeDefFluidPressureLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
+struct Variables<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using type = PoroElasticLargeDefFluidPressureVariables<
         PoroElasticLargeDefFluidPressureVVTraits<PV, MT>>;
 };
+
+//! Code asking for the volume variables gets the variables per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::PoroElasticLargeDefFluidPressureModel>
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
 
 //! The grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>
