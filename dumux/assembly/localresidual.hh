@@ -263,7 +263,7 @@ public:
         NumEqVector source(0.0);
 
         const auto& problem = this->asImp().problem();
-        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv))
+        for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scv))
             source += qpData.weight() * problem.source(elemDisc, elemVars, qpData.ipData());
 
         source *= elemVars[scv].extrusionFactor();
