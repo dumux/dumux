@@ -102,7 +102,7 @@ public:
 
         const auto& volVars = elemVolVars[scvf.insideScvIdx()];
         const Scalar pw = volVars.pressure(0);
-        const auto K = this->spatialParams().permeability(element);
+        const auto K = this->spatialParams().permeability(element)[0][0];
 
         const auto middleX = 0.5*(this->gridGeometry().bBoxMin()[0] + this->gridGeometry().bBoxMax()[0]);
         if (scvf.ipGlobal()[0] < middleX)

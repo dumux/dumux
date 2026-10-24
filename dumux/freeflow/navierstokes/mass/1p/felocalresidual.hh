@@ -138,7 +138,7 @@ public:
                 {
                     const auto localDofIdx = localDof.index();
                     residual[localDofIdx][Indices::conti0EqIdx]
-                        += qpData.weight() * shapeValues[localDofIdx]
+                        += qpData.weight() * shapeValues[localDofIdx][0]
                            * (divMassFlux - source[Indices::conti0EqIdx]);
                 }
             }

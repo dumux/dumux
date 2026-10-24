@@ -323,7 +323,7 @@ public:
         std::for_each(velocity.begin(), velocity.end(), [](auto& v){ v = abs(v); });
 
         // create the actual velocity vector
-        velocity *= this->curSol(freeFlowMomentumIndex)[freeFlowMomentumDofIdx];
+        velocity *= this->curSol(freeFlowMomentumIndex)[freeFlowMomentumDofIdx][0];
 
         return velocity;
     }

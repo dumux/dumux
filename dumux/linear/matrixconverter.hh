@@ -238,7 +238,7 @@ public:
 
             for(std::size_t i = 0; i < subVector.size(); ++i)
                 for(std::size_t j = 0; j < numEq; ++j)
-                    subVector[i][j] = y[startIndex + i*numEq + j];
+                    subVector[i][j] = y[startIndex + i*numEq + j][0];
 
             startIndex += numEq*subVector.size();
         });

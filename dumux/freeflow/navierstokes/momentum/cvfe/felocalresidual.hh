@@ -82,7 +82,7 @@ public:
                 const auto momentum = density*elemVars[localDofIdx].velocity();
 
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    storage[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx]*momentum[eqIdx];
+                    storage[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx][0]*momentum[eqIdx];
             }
         }
     }
@@ -157,7 +157,7 @@ public:
                     const auto& shapeValues = ipCache.shapeValues();
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
-                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx] * sourceAtIp[eqIdx];
+                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx][0] * sourceAtIp[eqIdx];
                         residual[localDofIdx][eqIdx] += qpData.weight()*fluxAndSourceTerm[eqIdx];
                     }
                 }

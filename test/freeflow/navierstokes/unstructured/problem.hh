@@ -186,7 +186,7 @@ public:
             const auto fvGeometry = localView(gg).bindElement(element);
             const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, p);
             const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-            return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos);
+            return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos)[0];
         };
 
         return evalPressure(evalPoint1, true) - evalPressure(evalPoint2, false);

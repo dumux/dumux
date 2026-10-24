@@ -210,7 +210,7 @@ public:
                     const auto& localFiniteElement = feCache_.get(geometry.type());
                     localFiniteElement.localBasis().evaluateFunction(qp.position(), shapeValues);
                     for (unsigned int i = 0; i < shapeValues.size(); ++i)
-                        p += shapeValues[i]*solution[gg.dofMapper().subIndex(element, i, dim)][pressureIdx];
+                        p += shapeValues[i][0]*solution[gg.dofMapper().subIndex(element, i, dim)][pressureIdx];
                 }
                 lTwoNorm += (p - pe)*(p - pe)*qp.weight()*integrationElement;
             }

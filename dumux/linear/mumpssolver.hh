@@ -711,7 +711,7 @@ private:
             block.resize(nBlock);
             for (std::size_t b = 0; b < nBlock; ++b)
                 for (std::size_t k = 0; k < scalarBS; ++k)
-                    block[b][k] = v[offset + scalarBS * b + k];
+                    block[b][k] = v[offset + scalarBS * b + k][0];
         };
         auto pack = [offset, nBlock](const SubBlockVec& block, ScalarBlockVector& v) {
             for (std::size_t b = 0; b < nBlock; ++b)

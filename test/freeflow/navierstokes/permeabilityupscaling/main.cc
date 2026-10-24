@@ -360,7 +360,7 @@ int main(int argc, char** argv)
     // viscosity, density, and pressure gradient are 1.0
     // With the pressure difference across the domain defined as 1/m,
     // the permeability can be determined by dividing the flux at the outlet by the area of the outlet.
-    const auto K = std::abs(flux.flux("outlet")/totalAreaOutlet)*1e-12; // domain is in µm
+    const auto K = std::abs(flux.flux("outlet")[0]/totalAreaOutlet)*1e-12; // domain is in µm
     // The porosity can be calculated for uniform sized grid cells by dividing
     // the number of cells in the leafGridView by the number of cells used in the original hostgrid.
     const auto phi = double(leafGridView.size(0))/double(cells[0]*cells[1]*cells[2]);
