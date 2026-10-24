@@ -44,6 +44,9 @@ DUMUX_DEFINE_PROPERTY(SolutionVector)         //!< Vector containing all primary
 //! The type of the local residual function, i.e. the equation to be solved
 DUMUX_DEFINE_PROPERTY(LocalResidual)
 
+//! The variables per local degree of freedom
+DUMUX_DEFINE_PROPERTY(Variables)
+
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////
@@ -178,6 +181,33 @@ DUMUX_DEFINE_PROPERTY(CouplingManager)
 // Do not use this unless you are dealing with such old code
 ////////////////////////////////////////////////////////////
 DUMUX_DEFINE_PROPERTY(TimeManager)
+
+} // end namespace Dumux::Properties
+
+namespace Dumux::Properties::Transition {
+
+/*!
+ * \ingroup Properties
+ * \brief Whether the box, PQ1-bubble and face-centered diamond schemes assemble with the
+ *        variables per local degree of freedom (`Variables`) instead of the volume variables
+ * \note The other control-volume finite element schemes and the finite element schemes always
+ *       assemble with the variables per local degree of freedom.
+ */
+template<class TypeTag, class MyTypeTag>
+struct UseVariables { using type = UndefinedProperty; };
+
+} // end namespace Dumux::Properties::Transition
+
+namespace Dumux::Properties {
+
+#ifndef DOXYGEN
+template<class ...Args>
+struct PropertyAlias<Transition::UseVariables<Args...>>
+{
+    template <class MyTypeTag> using Alias = typename MyTypeTag::UseVariables;
+    template <class MyTypeTag, class TypeTag> using TemplateAlias = typename MyTypeTag::template UseVariables<TypeTag>;
+};
+#endif // DOXYGEN
 
 } // end namespace Dumux::Properties
 

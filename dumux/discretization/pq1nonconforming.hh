@@ -28,7 +28,6 @@
 #include <dumux/discretization/fvproperties.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/elementboundarytypes.hh>
-#include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 
 #include <dumux/common/boundaryflag.hh>
@@ -96,17 +95,10 @@ public:
     using type = CVFEGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
-//! Set the grid variables (volume, flux and face variables)
+//! The grid variables for the volume variables, or for the variables per local dof if the type tag sets Transition::UseVariables
 template<class TypeTag>
 struct GridVariables<TypeTag, TTag::PQ1NonconformingFVModel>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    using GVV = GetPropType<TypeTag, Properties::GridVolumeVariables>;
-    using GFVC = GetPropType<TypeTag, Properties::GridFluxVariablesCache>;
-public:
-    using type = FVGridVariables<GG, GVV, GFVC>;
-};
+{ using type = Dumux::Detail::CVFEGridVariables_t<TypeTag>; };
 
 //! The flux variables cache type
 template<class TypeTag>
