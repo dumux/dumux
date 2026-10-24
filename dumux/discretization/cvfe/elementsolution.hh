@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <dune/common/reservedvector.hh>
 
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
@@ -150,12 +151,12 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const Gr
 
 //!  Make an element solution for control-volume finite element schemes
 template<class Element, class ElementVariables, class FVElementGeometry>
+    requires ((requires { typename FVElementGeometry::GridDiscretization; }
+               || requires { typename FVElementGeometry::GridGeometry; })
+              && DiscretizationMethods::isCVFE<typename GridDiscretization_t<FVElementGeometry>::DiscretizationMethod>
+              && !std::is_void_v<Detail::PrimaryVariables_t<ElementVariables>>)
 auto elementSolution(const Element& element, const ElementVariables& elemVars, const FVElementGeometry& gg)
--> std::enable_if_t<DiscretizationMethods::isCVFE<typename FVElementGeometry::GridGeometry::DiscretizationMethod>
-                    && !std::is_void_v<Detail::PrimaryVariables_t<ElementVariables>>,
-                    CVFEElementSolution<FVElementGeometry,
-                                        Detail::PrimaryVariables_t<ElementVariables>>
-                    >
+-> CVFEElementSolution<FVElementGeometry, Detail::PrimaryVariables_t<ElementVariables>>
 {
     using PrimaryVariables = Detail::PrimaryVariables_t<ElementVariables>;
     return CVFEElementSolution<FVElementGeometry, PrimaryVariables>(element, elemVars, gg);

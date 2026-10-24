@@ -27,18 +27,18 @@ struct GridDiscretizationType
     static_assert(AlwaysFalse<T>::value, "Type exports neither GridGeometry nor GridDiscretization");
 };
 
-//! classic types, which export GridGeometry
+//! new interfaces, which export GridDiscretization
 template<class T>
-    requires requires { typename T::GridGeometry; }
-struct GridDiscretizationType<T>
-{ using type = typename T::GridGeometry; };
-
-//! new interfaces, which only export GridDiscretization
-template<class T>
-    requires (requires { typename T::GridDiscretization; }
-              && !requires { typename T::GridGeometry; })
+    requires requires { typename T::GridDiscretization; }
 struct GridDiscretizationType<T>
 { using type = typename T::GridDiscretization; };
+
+//! classic types, which only export GridGeometry
+template<class T>
+    requires (!requires { typename T::GridDiscretization; }
+              && requires { typename T::GridGeometry; })
+struct GridDiscretizationType<T>
+{ using type = typename T::GridGeometry; };
 
 } // end namespace Detail
 #endif // DOXYGEN

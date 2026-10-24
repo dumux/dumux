@@ -17,6 +17,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 
 #include <dumux/discretization/extrusion.hh>
 
@@ -100,8 +101,8 @@ class NavierStokesMomentumFluxFunctionContext
     using Element = typename ElementDiscretization::Element;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr int dim = ElementDiscretization::GridGeometry::GridView::dimension;
-    static constexpr int dimWorld = ElementDiscretization::GridGeometry::GridView::dimensionworld;
+    static constexpr int dim = GridDiscretization_t<ElementDiscretization>::GridView::dimension;
+    static constexpr int dimWorld = GridDiscretization_t<ElementDiscretization>::GridView::dimensionworld;
 
     using Tensor = Dune::FieldMatrix<typename GlobalPosition::value_type, dim, dimWorld>;
 
