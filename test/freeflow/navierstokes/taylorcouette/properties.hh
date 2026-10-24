@@ -16,7 +16,6 @@
 
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
@@ -73,8 +72,7 @@ public:
 };
 
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::TaylorCouetteTestMomentum>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::TaylorCouetteTestMomentum> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::TaylorCouetteTest> { static constexpr bool value = true; };

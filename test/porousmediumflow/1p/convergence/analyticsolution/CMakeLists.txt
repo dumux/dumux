@@ -10,15 +10,18 @@ dune_symlink_to_source_files(FILES "convergencetest.py")
 add_executable(test_1p_convergence_analytic_tpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_mpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_box EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_box_variables EXCLUDE_FROM_ALL main.cc)
 
 if (dune-uggrid_FOUND)
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
+    target_compile_definitions(test_1p_convergence_analytic_box_variables PUBLIC "TYPETAG=OnePConvergenceBoxNewInterface" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
 else()
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
     target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
+    target_compile_definitions(test_1p_convergence_analytic_box_variables PUBLIC "TYPETAG=OnePConvergenceBoxNewInterface" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
 endif()
 
 # using tpfa and structured grid with zero off-diagonal permeability entries
@@ -42,6 +45,13 @@ dumux_add_test(NAME test_1p_convergence_analytic_box_structured
                LABELS porousmediumflow 1p
                COMMAND ./convergencetest.py
                CMD_ARGS test_1p_convergence_analytic_box box_structured)
+
+# using box assembled with the variables per local dof and structured grid
+dumux_add_test(NAME test_1p_convergence_analytic_box_variables_structured
+               TARGET test_1p_convergence_analytic_box_variables
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_box_variables box_variables_structured)
 
 # tests on ustructured grids in case UG is found
 if (dune-uggrid_FOUND)
