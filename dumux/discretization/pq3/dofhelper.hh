@@ -204,7 +204,7 @@ private:
         if (i_min == 0) return 0u | (unsigned(vg[2] < vg[1]) << 2);
         if (i_min == 1) return 3u | (unsigned(vg[0] < vg[3]) << 2);
         if (i_min == 2) return 1u | (unsigned(vg[3] < vg[0]) << 2);
-        /*i_min==3*/    return 2u | (unsigned(vg[1] < vg[2]) << 2);
+        return 2u | (unsigned(vg[1] < vg[2]) << 2); // i_min == 3
     }
 
     template<class LocalKey>
