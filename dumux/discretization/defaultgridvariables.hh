@@ -17,11 +17,26 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/concepts.hh>
 #include <dumux/discretization/gridvariables.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 #include <dumux/discretization/cvfe/gridvariablescache_.hh>
 #include <dumux/discretization/cvfe/hybrid/gridvariablescache.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 #include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/discretization/fem/gridvariablescache.hh>
+
+#ifndef DOXYGEN
+namespace Dumux::Detail {
+
+template<class TypeTag, bool = Properties::hasDefinedType<TypeTag, Properties::Variables>()>
+struct DefaultVariables
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
+
+template<class TypeTag>
+struct DefaultVariables<TypeTag, false>
+{ using type = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>; };
+
+} // end namespace Dumux::Detail
+#endif // DOXYGEN
 
 namespace Dumux::Experimental {
 
@@ -59,10 +74,11 @@ using DefaultGridVariablesCache = std::conditional_t<
  * are taken from the type tag.
  *
  * \tparam TypeTag The type tag of the model
- * \tparam Variables The variables per local degree of freedom
+ * \tparam Variables The variables per local degree of freedom, by default the property `Variables`
+ *         or, for models that do not define it, the volume variables
  */
 template<class TypeTag,
-         class Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>>
+         class Variables = typename Dumux::Detail::DefaultVariables<TypeTag>::type>
 using DefaultGridVariables = GridVariables<
     GetPropType<TypeTag, Properties::GridGeometry>,
     DefaultGridVariablesCache<
@@ -74,5 +90,52 @@ using DefaultGridVariables = GridVariables<
 >;
 
 } // end namespace Dumux::Experimental
+
+namespace Dumux::Detail {
+
+/*!
+ * \ingroup Discretization
+ * \brief Whether a type tag assembles with the variables per local degree of freedom
+ *
+ * This holds for all element discretizations with degrees of freedom without a sub-control
+ * volume, and for the others if `Properties::Transition::UseVariables` is set.
+ */
+template<class TypeTag>
+constexpr bool usesVariables()
+{
+    using ElementDiscretization = typename GetPropType<TypeTag, Properties::GridGeometry>::LocalView;
+    if constexpr (Experimental::Concepts::HybridElementDiscretization<ElementDiscretization>
+                  || Experimental::Concepts::FEElementDiscretization<ElementDiscretization>)
+        return true;
+    else if constexpr (Properties::hasDefinedType<TypeTag, Properties::Transition::UseVariables>())
+        return getPropValue<TypeTag, Properties::Transition::UseVariables>();
+    else
+        return false;
+}
+
+#ifndef DOXYGEN
+template<class TypeTag, bool = usesVariables<TypeTag>()>
+struct CVFEGridVariables
+{
+    using type = FVGridVariables<GetPropType<TypeTag, Properties::GridGeometry>,
+                                 GetPropType<TypeTag, Properties::GridVolumeVariables>,
+                                 GetPropType<TypeTag, Properties::GridFluxVariablesCache>>;
+};
+
+template<class TypeTag>
+struct CVFEGridVariables<TypeTag, true>
+{ using type = Experimental::DefaultGridVariables<TypeTag>; };
+#endif // DOXYGEN
+
+/*!
+ * \ingroup Discretization
+ * \brief The grid variables of a control-volume finite element type tag:
+ *        `Experimental::DefaultGridVariables` if `usesVariables<TypeTag>()`,
+ *        otherwise `FVGridVariables` with the volume variables
+ */
+template<class TypeTag>
+using CVFEGridVariables_t = typename CVFEGridVariables<TypeTag>::type;
+
+} // end namespace Dumux::Detail
 
 #endif
