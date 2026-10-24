@@ -45,6 +45,7 @@
 #include <dumux/freeflow/navierstokes/momentum/cvfe/localresidual.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/felocalresidual.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/volumevariables.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/indices.hh>
 
 namespace Dumux {
@@ -197,6 +198,20 @@ private:
     using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
     using type = NavierStokesMomentumCVFEVolumeVariables<Traits>;
+};
+
+//! The variables per local dof
+template<class TypeTag>
+struct Variables<TypeTag, TTag::NavierStokesMomentumCVFEBase>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMomentumCVFEVariables<Traits>;
 };
 
 // This is the default (model not coupled with a mass (pressure) discretization)

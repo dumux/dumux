@@ -151,13 +151,18 @@ struct LocalResidual<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
 { using type = HyperelasticVolIsoMomentumLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
+struct Variables<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using type = HyperelasticVolIsoMomentumVariables<
         HyperelasticVolIsoMomentumVVTraits<PV, MT>>;
 };
+
+//! Code asking for the volume variables gets the variables per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoMomentumModel>
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
 
 //! The grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>
@@ -173,13 +178,18 @@ struct LocalResidual<TypeTag, TTag::HyperelasticVolIsoPressureModel>
 { using type = HyperelasticVolIsoPressureLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoPressureModel>
+struct Variables<TypeTag, TTag::HyperelasticVolIsoPressureModel>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using type = HyperelasticVolIsoPressureVariables<
         HyperelasticVolIsoPressureVVTraits<PV, MT>>;
 };
+
+//! Code asking for the volume variables gets the variables per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::HyperelasticVolIsoPressureModel>
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
 
 //! The grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>

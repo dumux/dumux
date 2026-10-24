@@ -176,6 +176,20 @@ public:
     using type = NavierStokesMassOnePVolumeVariables<Traits>;
 };
 
+//! The variables per local dof
+template<class TypeTag>
+struct Variables<TypeTag, TTag::NavierStokesMassOneP>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using Traits = NavierStokesMassOnePVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMassOnePVariables<Traits>;
+};
+
 // Set the default spatial parameters for the finite element variant, which are
 // evaluated at interpolation points rather than at sub-control volumes
 template<class TypeTag>
