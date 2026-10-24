@@ -81,6 +81,19 @@ struct FieldTypeImpl<T, typename std::enable_if<(sizeof(std::declval<T>()[0]) > 
 template<class T>
 using FieldType = typename FieldTypeImpl<T>::type;
 
+// a scalar integrand, which may be given as a vector with a single entry
+template<class T>
+auto scalarIntegrand(const T& t)
+{
+    if constexpr (Dune::IsNumber<T>::value)
+        return t;
+    else
+    {
+        static_assert(T::size() == 1, "The integrand has to be a scalar or a vector with a single entry");
+        return t[0];
+    }
+}
+
 // squared Euclidean norm, real-valued also for complex-valued entries
 template<class T>
 auto squaredNorm(const T& t)
@@ -123,7 +136,7 @@ auto integrateGridFunction(const GridGeometry& gg,
         {
             auto value = evalSolution(element, geometry, gg, elemSol, geometry.global(qp.position()));
             value *= qp.weight()*geometry.integrationElement(qp.position());
-            integral += value;
+            integral += Detail::scalarIntegrand(value);
         }
     }
     return integral;
@@ -201,7 +214,7 @@ auto integrateGridFunction(const GridView& gv,
         {
             auto value = fLocal(qp.position());
             value *= qp.weight()*geometry.integrationElement(qp.position());
-            integral += value;
+            integral += Detail::scalarIntegrand(value);
         }
 
         fLocal.unbind();

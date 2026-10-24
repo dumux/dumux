@@ -118,7 +118,7 @@ public:
             0.5 * 0.03 * (1 - 1e-3) * cos(f * M_PI / maxConcentration_) +
             0.5 * 0.03 * (1 + 1e-3);
 
-        const Scalar Ncv = permeability(element, scv, elemSol) * gradPNorm / sigma;
+        const Scalar Ncv = permeability(element, scv, elemSol)[0][0] * gradPNorm / sigma;
         return MaterialLaw(Ncv, sMinKr_, sMaxKr_, srwSurf_, sroSurf_);
     }
 
