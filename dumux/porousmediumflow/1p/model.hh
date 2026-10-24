@@ -33,6 +33,8 @@
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
+#include <type_traits>
+
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
@@ -40,11 +42,15 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/immiscible/localresidual_.hh>
+#include <dumux/flux/cvfe/darcyslaw_.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
+#include "variables.hh"
 #include "iofields.hh"
 
 namespace Dumux {
@@ -105,8 +111,14 @@ struct OnePNI { using InheritsFrom = std::tuple<OneP>; };
 ///////////////////////////////////////////////////////////////////////////
 template<class TypeTag>
 struct IOFields<TypeTag, TTag::OneP> { using type = OnePIOFields; };                          //!< default I/O fields specific to this model
+//! the local residual function, at the integration points of the scheme for the variables per local dof
 template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::OneP> { using type = ImmiscibleLocalResidual<TypeTag>; }; //!< the local residual function
+struct LocalResidual<TypeTag, TTag::OneP>
+{
+    using type = std::conditional_t<Dumux::Detail::usesVariables<TypeTag>(),
+                                    Experimental::ImmiscibleLocalResidual<TypeTag>,
+                                    ImmiscibleLocalResidual<TypeTag>>;
+};
 template<class TypeTag>
 struct BaseModelTraits<TypeTag, TTag::OneP> { using type = OnePModelTraits; };                //!< states some specifics of the one-phase model
 template<class TypeTag>
@@ -128,6 +140,34 @@ private:
     using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = OnePVolumeVariables<Traits>;
+};
+
+//! The variables per local dof
+template<class TypeTag>
+struct Variables<TypeTag, TTag::OneP>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    using Traits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+public:
+    using type = Experimental::OnePVariables<Traits>;
+};
+
+//! Darcy's law, at the integration points of the scheme for the variables per local dof
+template<class TypeTag>
+struct AdvectionType<TypeTag, TTag::OneP>
+{
+    using type = std::conditional_t<Dumux::Detail::usesVariables<TypeTag>(),
+                                    Experimental::CVFEDarcysLawAtIp<GetPropType<TypeTag, Properties::Scalar>,
+                                                                    GetPropType<TypeTag, Properties::GridGeometry>>,
+                                    DarcysLaw<TypeTag>>;
 };
 
 /*!
