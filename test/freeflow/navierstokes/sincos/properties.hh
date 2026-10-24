@@ -38,7 +38,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -113,8 +112,7 @@ public:
 };
 
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::SincosTestMassBox>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::SincosTestMassBox> { static constexpr bool value = true; };
 #endif
 
 // the momentum problem without coupling to a mass problem

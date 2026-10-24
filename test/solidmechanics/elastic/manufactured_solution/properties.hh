@@ -12,14 +12,10 @@
 #ifndef DUMUX_ELASTIC_PROPERTIES_HH
 #define DUMUX_ELASTIC_PROPERTIES_HH
 
-#include <dune/common/fvector.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
-#include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/solidmechanics/elastic/model.hh>
-#include <dumux/solidmechanics/elastic/variables.hh>
 
 #include "spatialparams.hh"
 #include "problem.hh"
@@ -43,20 +39,9 @@ struct SpatialParams<TypeTag, TTag::TestElastic>
                                                           GetPropType<TypeTag, Properties::GridGeometry>>;
 };
 
-//! Grid variables for the assembly with local degrees of freedom, with the cache selected depending on the scheme
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::TestElastic>
-{
-private:
-    static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using Traits = ElasticVolumeVariablesTraits<PV, Dune::FieldVector<typename PV::value_type, dim>,
-                                                GetPropType<TypeTag, Properties::ModelTraits>,
-                                                GetPropType<TypeTag, Properties::SolidState>,
-                                                GetPropType<TypeTag, Properties::SolidSystem>>;
-public:
-    using type = Dumux::Experimental::DefaultGridVariables<TypeTag, Dumux::Detail::CVFE::VariablesAdapter<ElasticVariables<Traits>>>;
-};
+struct Transition::UseVariables<TypeTag, TTag::TestElastic> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 

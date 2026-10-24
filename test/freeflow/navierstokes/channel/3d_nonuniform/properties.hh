@@ -45,7 +45,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
@@ -83,15 +82,13 @@ struct FluidSystem<TypeTag, TTag::ThreeDChannelTest>
 };
 
 #if NEW_PROBLEM_INTERFACE
-//! The grid variables for the PQ1Bubble momentum TypeTag
+//! Assemble the PQ1Bubble momentum with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ1Bubble>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ1Bubble> { static constexpr bool value = true; };
 
-//! The grid variables for the Box mass TypeTag
+//! Assemble the box mass with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::ThreeDChannelTestMassBox>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::ThreeDChannelTestMassBox> { static constexpr bool value = true; };
 #endif
 
 #if NEW_VARIABLES_INTERFACE
