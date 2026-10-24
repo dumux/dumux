@@ -17,6 +17,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/discretization/fem/fedofhelper.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
@@ -62,7 +63,7 @@ public:
                 return CVFE::LocalDof(
                     static_cast<LocalIndexType>(localDofIdx),
                     static_cast<GridIndexType>(Dumux::Experimental::FEDofHelper<GridView>::dofIndex(
-                        elemDisc.gridGeometry().dofMapper(),
+                        gridDiscretization(elemDisc).dofMapper(),
                         elemDisc.element(),
                         elemDisc.feLocalCoefficients().localKey(localDofIdx))),
                     static_cast<GridIndexType>(elemDisc.elementIndex())

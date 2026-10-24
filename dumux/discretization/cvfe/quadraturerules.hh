@@ -19,6 +19,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
@@ -160,7 +161,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolume& scv,
                     QuadratureRules::MidpointQuadrature)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using QIpData = IndexedQuadratureInterpolationPointData<Detail::LocalDofIpData<GridView>>;
@@ -181,7 +182,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolume& scv,
                     QuadratureRules::DuneQuadrature<order>)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using QIpData = IndexedQuadratureInterpolationPointData<Detail::LocalDofIpData<GridView>>;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -209,7 +210,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolumeFace& scvf,
                     QuadratureRules::MidpointQuadrature)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using FaceIpData = FaceInterpolationPointData<Detail::BaseIpData<GridView>, typename IndexTraits<GridView>::LocalIndex>;
@@ -230,7 +231,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolumeFace& scvf,
                     QuadratureRules::DuneQuadrature<order>)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FaceIpData = FaceInterpolationPointData<Detail::BaseIpData<GridView>, typename IndexTraits<GridView>::LocalIndex>;
     using QFaceIpData = IndexedQuadratureInterpolationPointData<FaceIpData>;
@@ -261,7 +262,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::Element& element,
                     QuadratureRules::MidpointQuadrature)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using QIpData = IndexedQuadratureInterpolationPointData<Detail::BaseIpData<GridView>>;
@@ -282,7 +283,7 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::Element& element,
                     QuadratureRules::DuneQuadrature<order>)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using QIpData = IndexedQuadratureInterpolationPointData<Detail::BaseIpData<GridView>>;
     using Extrusion = Extrusion_t<GridGeometry>;
@@ -305,11 +306,11 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 //! Midpoint quadrature for intersection
 template<class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry,
-                    const typename FVElementGeometry::GridGeometry::GridView::Intersection& is,
+                    const typename GridDiscretization_t<FVElementGeometry>::GridView::Intersection& is,
                     QuadratureRules::MidpointQuadrature)
 {
     // per default we don't add any intersection information to the ipData
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using BFlag = Dumux::BoundaryFlag<typename GridView::Grid>;
@@ -333,11 +334,11 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 //! Dune quadrature for intersection
 template<int order, class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry,
-                    const typename FVElementGeometry::GridGeometry::GridView::Intersection& is,
+                    const typename GridDiscretization_t<FVElementGeometry>::GridView::Intersection& is,
                     QuadratureRules::DuneQuadrature<order>)
 {
     // per default we don't add any intersection information to the ipData
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using BFlag = Dumux::BoundaryFlag<typename GridView::Grid>;
     using FaceIpData = FEFaceInterpolationPointData<Detail::BaseIpData<GridView>,
@@ -370,10 +371,10 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 //! Midpoint quadrature for boundary face
 template<class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry,
-                    const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
+                    const typename GridDiscretization_t<FVElementGeometry>::BoundaryFace& boundaryFace,
                     QuadratureRules::MidpointQuadrature)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using Extrusion = Extrusion_t<GridGeometry>;
     using LocalIndex = typename IndexTraits<GridView>::LocalIndex;
@@ -393,10 +394,10 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
 //! Dune quadrature for boundary face
 template<int order, class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry,
-                    const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace,
+                    const typename GridDiscretization_t<FVElementGeometry>::BoundaryFace& boundaryFace,
                     QuadratureRules::DuneQuadrature<order>)
 {
-    using GridGeometry = typename FVElementGeometry::GridGeometry;
+    using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using LocalIndex = typename IndexTraits<GridView>::LocalIndex;
     using BFIpData = FEBoundaryFaceInterpolationPointData<Detail::BaseIpData<GridView>, LocalIndex>;
@@ -444,14 +445,14 @@ auto quadratureRule(const FVElementGeometry& fvGeometry, const typename FVElemen
 
 //! Generic quadrature rule for intersection that uses IntersectionQuadratureRule type of FVElementGeometry
 template<class FVElementGeometry>
-auto quadratureRule(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::GridGeometry::GridView::Intersection& intersection)
+auto quadratureRule(const FVElementGeometry& fvGeometry, const typename GridDiscretization_t<FVElementGeometry>::GridView::Intersection& intersection)
 {
     return quadratureRule(fvGeometry, intersection, typename Detail::IntersectionQuadratureRuleType<FVElementGeometry>{});
 }
 
 //! Generic quadrature rule for boundary face that uses BoundaryFaceQuadratureRule type of FVElementGeometry
 template<class FVElementGeometry>
-auto quadratureRule(const FVElementGeometry& fvGeometry, const typename FVElementGeometry::GridGeometry::BoundaryFace& boundaryFace)
+auto quadratureRule(const FVElementGeometry& fvGeometry, const typename GridDiscretization_t<FVElementGeometry>::BoundaryFace& boundaryFace)
 {
     return quadratureRule(fvGeometry, boundaryFace, typename Detail::BoundaryFaceQuadratureRuleType<FVElementGeometry>{});
 }
