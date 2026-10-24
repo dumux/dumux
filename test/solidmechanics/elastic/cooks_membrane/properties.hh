@@ -12,19 +12,13 @@
 #ifndef DUMUX_TEST_ELASTIC_COOKS_MEMBRANE_PROPERTIES_HH
 #define DUMUX_TEST_ELASTIC_COOKS_MEMBRANE_PROPERTIES_HH
 
-#include <type_traits>
-
 #include <dune/alugrid/grid.hh>
-#include <dune/common/fvector.hh>
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
-#include <dumux/discretization/cvfe/variablesadapter.hh>
 #include <dumux/solidmechanics/elastic/model.hh>
-#include <dumux/solidmechanics/elastic/variables.hh>
 
 #include "spatialparams.hh"
 #include "problem.hh"
@@ -51,20 +45,9 @@ struct SpatialParams<TypeTag, TTag::CooksMembrane>
                                             GetPropType<TypeTag, Properties::Scalar>>;
 };
 
-//! Grid variables for the assembly with local degrees of freedom, with the cache selected depending on the scheme
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::CooksMembrane>
-{
-private:
-    static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using Traits = ElasticVolumeVariablesTraits<PV, Dune::FieldVector<typename PV::value_type, dim>,
-                                                GetPropType<TypeTag, Properties::ModelTraits>,
-                                                GetPropType<TypeTag, Properties::SolidState>,
-                                                GetPropType<TypeTag, Properties::SolidSystem>>;
-public:
-    using type = Dumux::Experimental::DefaultGridVariables<TypeTag, Dumux::Detail::CVFE::VariablesAdapter<ElasticVariables<Traits>>>;
-};
+struct Transition::UseVariables<TypeTag, TTag::CooksMembrane> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 

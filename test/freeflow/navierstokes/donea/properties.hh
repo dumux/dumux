@@ -66,7 +66,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
@@ -119,20 +118,17 @@ struct Problem<TypeTag, TTag::TYPETAG_MASS>
 };
 
 #if NEW_PROBLEM_INTERFACE
-//! The grid variables
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumPQ1Bubble>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::DoneaTestMomentumPQ1Bubble> { static constexpr bool value = true; };
 
-//! The grid variables
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMomentumBox>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::DoneaTestMomentumBox> { static constexpr bool value = true; };
 
-//! The grid variables
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DoneaTestMassBox>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::DoneaTestMassBox> { static constexpr bool value = true; };
 
 #endif
 

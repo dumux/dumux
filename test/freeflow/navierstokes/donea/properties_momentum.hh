@@ -73,7 +73,6 @@
 #include <dumux/discretization/pq1bubble/fvelementgeometry.hh>
 #include <dumux/discretization/pq2.hh>
 #include <dumux/discretization/pq3.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
 
 #include "problem.hh"
 #include "problem_newinterface.hh"
@@ -103,10 +102,9 @@ struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
 };
 
 #if NEW_PROBLEM_INTERFACE && !KEEP_DEFAULT_GRIDVARIABLES
-//! The grid variables
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::TYPETAG_MOMENTUM> { static constexpr bool value = true; };
 
 #endif
 
