@@ -63,7 +63,7 @@ configure:
   artifacts:
     paths:
       - build-cmake
-    expire_in: 3 hours
+    expire_in: 1 day
 
 
 linters:
@@ -177,7 +177,7 @@ select tests:
     paths:
       - affectedtests.json
       - changedfiles.txt
-    expire_in: 3 hours
+    expire_in: 1 day
   needs:
     - job: configure
       artifacts: true
@@ -206,7 +206,7 @@ doxygen:
   artifacts:
     paths:
       - build-cmake/doc/doxygen
-    expire_in: 3 hours
+    expire_in: 1 day
 
 
 compile cpp:
@@ -234,7 +234,7 @@ compile cpp:
     paths:
       - build-cmake
       - affectedtests.json
-    expire_in: 3 hours
+    expire_in: 1 day
   needs:
     - job: configure
       artifacts: true
@@ -269,7 +269,7 @@ test cpp:
   artifacts:
     reports:
       junit: junit/dumux-cmake.xml
-    expire_in: 3 hours
+    expire_in: 1 day
 
 
 test cmake:
