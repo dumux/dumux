@@ -167,8 +167,6 @@ class PQ3FVGridGeometry
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
-    static_assert(dim > 1, "Only implemented for dim > 1");
-
 public:
     //! export the discretization method this geometry belongs to
     using DiscretizationMethod = DiscretizationMethods::PQ3;

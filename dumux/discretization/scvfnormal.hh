@@ -26,7 +26,8 @@ namespace Dumux::Detail {
  * The face is a codimension-one sub-entity of the element-local dual grid, so its
  * normal is normal to the face and tangential to the element. For a surface grid
  * (dim < dimWorld) the second condition is a restriction: the normal is not the
- * surface normal but lies in the plane of the element. Callers orient the result
+ * surface normal but lies in the plane of the element. On a line element the face is a
+ * point and the normal is the unit tangent of the element. Callers orient the result
  * themselves, since the point pair defining the sign differs between schemes.
  */
 template<class ElementGeometry, class CornerStorage>
@@ -35,11 +36,14 @@ inline auto scvfUnitNormal(const ElementGeometry& geo, const CornerStorage& corn
     using GlobalPosition = typename ElementGeometry::GlobalCoordinate;
     static constexpr int dim = ElementGeometry::mydimension;
     static constexpr int dimWorld = ElementGeometry::coorddimension;
-    static_assert(dim > 1 && dim <= 3 && dimWorld <= 3);
+    static_assert(dim >= 1 && dim <= 3 && dimWorld <= 3);
 
     const auto normalize = [](GlobalPosition n){ n /= n.two_norm(); return n; };
 
-    if constexpr (dim == 2 && dimWorld == 2)
+    if constexpr (dim == 1)
+        return normalize(GlobalPosition(geo.corner(1) - geo.corner(0)));
+
+    else if constexpr (dim == 2 && dimWorld == 2)
         return Dumux::unitNormal(GlobalPosition(corners[1] - corners[0]));
 
     else if constexpr (dim == 2 && dimWorld == 3)
