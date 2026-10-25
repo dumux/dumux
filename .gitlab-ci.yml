@@ -14,7 +14,6 @@ variables:
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
   DUMUX_ENABLE_GRIDFORMAT: "ON"
-  DUMUX_ENABLE_DUNE_CHECKING: "ON"
 
 # Cases in which to create pipelines at all. The trigger jobs may further
 # specify how exactly they should be created in different situations.
@@ -88,6 +87,8 @@ check-pipeline-status:
   rules:
   - if: $CI_PIPELINE_SOURCE == "schedule"
     when: always
+    variables:
+      DUMUX_ENABLE_DUNE_BOUNDS_CHECK: "ON"
   - if: $CI_PIPELINE_SOURCE == "pipeline"
     when: always
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -98,6 +99,8 @@ check-pipeline-status:
   extends: .base-trigger
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
+      variables:
+        DUMUX_ENABLE_DUNE_BOUNDS_CHECK: "ON"
 
 #############################################
 # pipelines to be created in merge requests #
