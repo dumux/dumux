@@ -381,7 +381,7 @@ public:
         velocity[scvJ.dofAxis()] = 1.0;
 
         // create the actual velocity vector
-        velocity *= this->curSol(freeFlowMomentumIndex)[scvJ.dofIndex()];
+        velocity *= this->curSol(freeFlowMomentumIndex)[scvJ.dofIndex()][0];
 
         return velocity;
     }

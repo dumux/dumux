@@ -344,7 +344,7 @@ public:
     {
         const auto& solidSol = this->curSol(solidDomainIdx);
         const auto& voidSol = this->curSol(voidDomainIdx);
-        const Scalar tSolid = solidSol[connection.solidVertexIdx];
+        const Scalar tSolid = solidSol[connection.solidVertexIdx][Indices<solidDomainIdx>::temperatureIdx];
         Scalar resultConvection = 0.0;
 
         // iterate over all convection void elements

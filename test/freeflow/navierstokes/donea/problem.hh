@@ -187,7 +187,7 @@ public:
             const auto insideDensity = elemVolVars[scvf.insideScvIdx()].density();
             values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf) * insideDensity * scvf.unitOuterNormal();
             if (addBoxStabilization_)
-                values[Indices::conti0EqIdx] += stabilizationFlux_(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+                values[Indices::conti0EqIdx] += stabilizationFlux_(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf)[Indices::conti0EqIdx];
         }
 
         return values;

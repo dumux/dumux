@@ -87,7 +87,7 @@ computeL2Norm(const GridView& gridView,
 
             // exact and discrete solution at integration point
             const auto u = problem.exact(ip);
-            const auto uh = evalSolution(element, eg, elemSol, ip);
+            const auto uh = evalSolution(element, eg, elemSol, ip)[0];
 
             using std::min;
             using std::max;

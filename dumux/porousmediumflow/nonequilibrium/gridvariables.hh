@@ -116,7 +116,7 @@ public:
      */
     const Scalar volumeDarcyMagVelocity(const unsigned int phaseIdx,
                                         const unsigned int dofIdxGlobal) const
-    { return velocityNorm_[phaseIdx][dofIdxGlobal]; }
+    { return velocityNorm_[phaseIdx][dofIdxGlobal][0]; }
 
 private:
     std::array<std::vector<Dune::FieldVector<Scalar, 1> > , numPhases> velocityNorm_;

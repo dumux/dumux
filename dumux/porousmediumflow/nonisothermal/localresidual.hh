@@ -226,7 +226,7 @@ public:
 
         if constexpr (ModelTraits::enableThermalDispersion())
         {
-            flux[energyEqIdx] += fluxVars.thermalDispersionFlux();
+            flux[energyEqIdx] += fluxVars.thermalDispersionFlux()[0];
         }
     }
 

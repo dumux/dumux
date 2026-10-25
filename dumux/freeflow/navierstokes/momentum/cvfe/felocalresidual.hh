@@ -13,6 +13,7 @@
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FE_LOCAL_RESIDUAL_HELPER_HH
 
 #include <dune/geometry/quadraturerules.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/extrusion.hh>
@@ -60,7 +61,7 @@ public:
             // We apply mass lumping such that we only need to calculate the integral of basis functions
             const auto& geometry = elemDisc.elementGeometry();
             const auto& element = elemDisc.element();
-            using GlobalPosition = typename ElementDiscretization::GridGeometry::GlobalCoordinate;
+            using GlobalPosition = typename GridDiscretization_t<ElementDiscretization>::GlobalCoordinate;
             using FeIpData = FEInterpolationPointData<GlobalPosition, LocalBasis>;
 
             for (const auto& qpData : CVFE::quadratureRule(elemDisc, element))
@@ -82,7 +83,7 @@ public:
                 const auto momentum = density*elemVars[localDofIdx].velocity();
 
                 for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
-                    storage[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx]*momentum[eqIdx];
+                    storage[localDofIdx][eqIdx] += integralShapeFunctions[localDofIdx][0]*momentum[eqIdx];
             }
         }
     }
@@ -157,7 +158,7 @@ public:
                     const auto& shapeValues = ipCache.shapeValues();
                     for (int eqIdx = 0; eqIdx < NumEqVector::dimension; ++eqIdx)
                     {
-                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx] * sourceAtIp[eqIdx];
+                        fluxAndSourceTerm[eqIdx] -= shapeValues[localDofIdx][0] * sourceAtIp[eqIdx];
                         residual[localDofIdx][eqIdx] += qpData.weight()*fluxAndSourceTerm[eqIdx];
                     }
                 }

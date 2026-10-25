@@ -17,7 +17,6 @@
 
 #include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/reservedvector.hh>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/common.hh>
@@ -134,7 +133,7 @@ public:
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
-        return interpolation.global(xi);
+        return interpolation.global(xi)[0];
     }
 
     //! get output precision for the field
@@ -201,7 +200,7 @@ public:
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
-        return interpolation.global(xi);
+        return interpolation.global(xi)[0];
     }
 
     //! get output precision for the field
@@ -273,22 +272,14 @@ public:
     //! evaluate
     double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& localPos) const final
     {
-        const unsigned int dim = Element::mydimension;
-        const unsigned int nFaces = e.subEntities(1);
-
-        // assemble coefficient vector
-        using Coefficients = Dune::ReservedVector<ctype, 2*dim>;
-        Coefficients faceValues;
-        faceValues.resize(nFaces);
-        for (int i = 0; i < nFaces; ++i)
-            faceValues[i] = accessEntry_(mycomp, mapper_.index(e), i);
-
         using ShapeValues = std::vector<Dune::FieldVector<ctype, 1>>;
         ShapeValues N;
         feCache_.get(e.type()).localBasis().evaluateFunction(localPos, N);
+
+        const auto eIdx = mapper_.index(e);
         double result = 0.0;
         for (int i = 0; i < N.size(); ++i)
-            result += faceValues[i]*N[i];
+            result += accessEntry_(mycomp, eIdx, i)*N[i][0];
         return result;
     }
 
