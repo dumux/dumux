@@ -71,6 +71,7 @@ set to the number of threads. The number of threads is given by the new argument
 `DUMUX_TEST_NUM_THREADS` (default 1). `MPI_RANKS` also works for tests run by `dumux_runtest.py`: the MPI launcher is put in front of
 the command after `--command`. All parallel tests of DuMux start MPI through `MPI_RANKS`, and `DUNE_MAX_TEST_CORES` defaults to 8
 for DuMux. `dumux_add_test` warns about tests that start `mpiexec` themselves.
+Tests without `TIMEOUT` time out after 1200 s instead of the 300 s of `dune_add_test`, so `MPI_RANKS` no longer requires a `TIMEOUT`.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
