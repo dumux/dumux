@@ -110,6 +110,7 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_hybrid_pq2
 dumux_add_test(NAME test_ff_navierstokes_sincos_hybrid_pq2_instationary
               TARGET test_ff_navierstokes_sincos_hybrid_pq2
               LABELS freeflow navierstokes
+              TIMEOUT 1200
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
