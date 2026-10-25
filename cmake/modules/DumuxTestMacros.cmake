@@ -89,8 +89,7 @@
 #       given here. Any number exceeding the user-specified processor maximum
 #       :ref:`DUNE_MAX_TEST_CORES` will be ignored. Tests with a
 #       processor number :code:`n` higher than one will have the suffix
-#       :code:`-mpi-n` appended to their name. You need to specify the
-#       TIMEOUT option when specifying the MPI_RANKS option.
+#       :code:`-mpi-n` appended to their name.
 #       If the CMD_ARGS contain :code:`--command` (the test runs through
 #       :code:`dumux_runtest.py`), the MPI launcher is put in front of the
 #       command given after :code:`--command`. Start MPI processes through
@@ -143,9 +142,8 @@
 #    .. cmake_param:: TIMEOUT
 #       :single:
 #
-#       If set, the test will time out after the given number of seconds. This supersedes
-#       any timeout setting in ctest (see `cmake --help-property TIMEOUT`). If you
-#       specify the MPI_RANKS option, you need to specify a TIMEOUT.
+#       The test will time out after the given number of seconds, defaults to 1200.
+#       This supersedes any timeout setting in ctest (see `cmake --help-property TIMEOUT`).
 #
 #    .. cmake_param:: LABELS
 #       :multi:
@@ -188,7 +186,7 @@
 #
 #    You may set this variable to give an upperbound to the number of MPI processes, that
 #    a single test may use. Defaults to 2, when MPI is found and to 1 otherwise.
-#    For the tests of DuMux itself, the default is 4, the largest number of processes they use.
+#    For the tests of DuMux itself, the default is 8.
 #
 # .. cmake_variable:: DUMUX_TEST_NUM_THREADS
 #
@@ -265,6 +263,10 @@ function(dumux_add_test)
       # strip file extension
       get_filename_component(ADDTEST_NAME ${ADDTEST_SOURCES} NAME_WE)
     endif()
+  endif()
+
+  if(NOT ADDTEST_TIMEOUT)
+    set(ADDTEST_TIMEOUT 1200)
   endif()
 
   if(NOT DEFINED ADDTEST_THREADS)

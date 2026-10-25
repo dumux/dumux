@@ -27,8 +27,7 @@ variables:
   DUMUX_ENABLE_CPPCHECK: ""
   DUMUX_ENABLE_DOXYGEN_BUILD: ""
   DUMUX_ENABLE_GRIDFORMAT: "OFF"
-  DUMUX_ENABLE_DUNE_CHECKS: "ON"
-  DUMUX_NDEBUG: 0
+  DUMUX_ENABLE_DUNE_BOUNDS_CHECK: "OFF"
   # cores of a runner, the number of make jobs and of the processors ctest distributes to the tests
   DUMUX_CI_NUM_CORES: 8
 
@@ -37,9 +36,14 @@ configure:
   stage: configure
   script:
     - |
+      # DUNE checks whether these macros are defined, not their value
+      CHECK_FLAGS="-DDUNE_ISTL_WITH_CHECKING"
+      if [ "${DUMUX_ENABLE_DUNE_BOUNDS_CHECK}" = "ON" ]; then
+        CHECK_FLAGS="${CHECK_FLAGS} -DDUNE_CHECK_BOUNDS"
+      fi
       echo "source ${DUNE_OPTS_FILE}" > opts_file.opts
       echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DDUMUX_ENABLE_GRIDFORMAT=${DUMUX_ENABLE_GRIDFORMAT} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\"" >> opts_file.opts
-      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCMAKE_CXX_FLAGS='-DDUNE_CHECK_BOUNDS=${DUMUX_ENABLE_DUNE_CHECKS} -DNDEBUG=${DUMUX_NDEBUG} -DDUNE_ISTL_WITH_CHECKING=${DUMUX_ENABLE_DUNE_CHECKS}'\"" >> opts_file.opts
+      echo "CMAKE_FLAGS=\"\${CMAKE_FLAGS} -DCMAKE_CXX_FLAGS='${CHECK_FLAGS}'\"" >> opts_file.opts
     - dunecontrol --opts=opts_file.opts --current cmake
     - dunecontrol --opts=opts_file.opts --current make -j${DUMUX_CI_NUM_CORES}
     # cache state of the Dune virtual env for Python if it exists (Dune 2.9)
@@ -59,7 +63,7 @@ configure:
   artifacts:
     paths:
       - build-cmake
-    expire_in: 3 hours
+    expire_in: 1 day
 
 
 linters:
@@ -173,7 +177,7 @@ select tests:
     paths:
       - affectedtests.json
       - changedfiles.txt
-    expire_in: 3 hours
+    expire_in: 1 day
   needs:
     - job: configure
       artifacts: true
@@ -202,7 +206,7 @@ doxygen:
   artifacts:
     paths:
       - build-cmake/doc/doxygen
-    expire_in: 3 hours
+    expire_in: 1 day
 
 
 compile cpp:
@@ -230,7 +234,7 @@ compile cpp:
     paths:
       - build-cmake
       - affectedtests.json
-    expire_in: 3 hours
+    expire_in: 1 day
   needs:
     - job: configure
       artifacts: true
@@ -265,7 +269,7 @@ test cpp:
   artifacts:
     reports:
       junit: junit/dumux-cmake.xml
-    expire_in: 3 hours
+    expire_in: 1 day
 
 
 test cmake:
