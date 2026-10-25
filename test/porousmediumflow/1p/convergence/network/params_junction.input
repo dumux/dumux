@@ -1,0 +1,12 @@
+[Grid]
+File = junction.dgf
+Refinement = 0
+
+[Problem]
+EnableGravity = false
+Name = network_convergence
+FluxAtEnd = true
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
