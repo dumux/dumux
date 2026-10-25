@@ -188,7 +188,7 @@
 #
 #    You may set this variable to give an upperbound to the number of MPI processes, that
 #    a single test may use. Defaults to 2, when MPI is found and to 1 otherwise.
-#    For the tests of DuMux itself, the default is 4, the largest number of processes they use.
+#    For the tests of DuMux itself, the default is 8.
 #
 # .. cmake_variable:: DUMUX_TEST_NUM_THREADS
 #
