@@ -59,5 +59,6 @@ dune_symlink_to_source_files(FILES "grids")
 dumux_add_test(NAME test_shallowwater_poiseuilleflow_convergence
                TARGET test_shallowwater_poiseuilleflow
                LABELS shallowwater
+               TIMEOUT 1200
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
                CMD_ARGS test_shallowwater_poiseuilleflow)
