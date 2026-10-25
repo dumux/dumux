@@ -15,6 +15,11 @@ dumux_add_test(NAME test_scvfnormal_surface
                SOURCES test_scvfnormal_surface.cc
                CMAKE_GUARD dune-foamgrid_FOUND)
 
+dumux_add_test(NAME test_hybridcvfe_line
+               LABELS unit discretization
+               SOURCES test_hybridcvfe_line.cc
+               CMAKE_GUARD dune-foamgrid_FOUND)
+
 dumux_add_test(NAME test_interpolate
                LABELS unit discretization
                SOURCES test_interpolate.cc)
