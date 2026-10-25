@@ -13,6 +13,7 @@
 #define DUMUX_LINEAR_PRECONDITIONERS_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/common/indices.hh>
 #include <dune/istl/preconditioners.hh>
@@ -316,7 +317,37 @@ private:
     const bool useDirectVelocitySolverForA_;
 };
 
+#if DUNE_VERSION_LT(DUNE_ISTL,2,11)
 DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dune::defaultPreconditionerBlockLevelCreator<Dumux::SeqUzawa, 1>());
+#else
+namespace Detail {
+
+/*!
+ * \brief Creator of the Uzawa preconditioner for the solver factory
+ * \note The default creators of Dune reject matrices without row and column iterators,
+ *       such as the multi-type block matrices the Uzawa preconditioner operates on.
+ */
+inline auto uzawaPreconditionerCreator()
+{
+    return [](auto opInfo, const auto& linearOperator, const Dune::ParameterTree& config)
+    {
+        using OpInfo = std::decay_t<decltype(opInfo)>;
+        using Matrix = typename OpInfo::matrix_type;
+        using Domain = typename OpInfo::domain_type;
+        using Range = typename OpInfo::range_type;
+        std::shared_ptr<Dune::Preconditioner<Domain, Range>> preconditioner;
+        if constexpr (OpInfo::isAssembled)
+            preconditioner = std::make_shared<SeqUzawa<Matrix, Domain, Range>>(opInfo.getAssembledOpOrThrow(linearOperator), config);
+        else
+            DUNE_THROW(Dune::NoAssembledOperator, "The Uzawa preconditioner requires an assembled linear operator.");
+        return preconditioner;
+    };
+}
+
+} // end namespace Detail
+
+DUMUX_REGISTER_PRECONDITIONER("uzawa", Dumux::MultiTypeBlockMatrixPreconditionerTag, Dumux::Detail::uzawaPreconditionerCreator());
+#endif
 
 
 /*! \brief Multi-threaded Jacobi preconditioner

@@ -141,6 +141,11 @@ cmake --build --target build_2p_tests -- -j8
 ctest -j8 -L ^2p$
 ```
 
+Each test declares the processors it uses, its number of MPI processes (`MPI_RANKS`) times its number of threads per process
+(`THREADS`, by default one), and `ctest -j<n>` runs as many tests at a time as fit into `<n>` processors.
+Configure with `-DDUMUX_TEST_NUM_THREADS=<threads>` (see `cmake.opts`) to run the tests without `THREADS` multithreaded,
+and with `-DDUNE_MAX_TEST_CORES=2` to leave out the tests with more than two MPI processes.
+
 ## Individual tests
 
 To find out how to build a test inspect the `CMakeLists.txt` file in the respective test folder.

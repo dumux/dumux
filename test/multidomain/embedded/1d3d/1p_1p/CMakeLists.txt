@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_average
+              THREADS 4
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Average

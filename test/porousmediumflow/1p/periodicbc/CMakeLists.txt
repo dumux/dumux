@@ -19,12 +19,14 @@ dumux_add_test(NAME test_1p_periodic_tpfa_parallel
               TARGET test_1p_periodic_tpfa
               LABELS porousmediumflow 1p parallel
               CMAKE_GUARD "( MPI_FOUND AND dune-spgrid_FOUND )"
+              MPI_RANKS 2
+              TIMEOUT 1200
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --ignore "process rank"
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_tpfa_periodic-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_1p_periodic_tpfa_parallel-00001.pvtu
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_parallel")
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa params.input -Problem.Name test_1p_periodic_tpfa_parallel")
 
 dumux_add_test(NAME test_1p_periodic_tpfa_caching
               LABELS porousmediumflow 1p

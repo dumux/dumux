@@ -22,13 +22,14 @@ dumux_add_test(NAME test_shallowwater_dambreak_parallel
                LABELS shallowwater parallel
                TIMEOUT 1500
                CMAKE_GUARD MPI_FOUND
+               MPI_RANKS 2
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_shallowwater_dambreak-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/s0002-dambreak_parallel-00001.pvtu
                              --zeroThreshold {"velocityY":1e-14}
                              --ignore "process rank"
-                             --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_dambreak params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_dambreak params.input
                            -Problem.Name dambreak_parallel")
 
 # convergence towards the exact solution of the Riemann problem

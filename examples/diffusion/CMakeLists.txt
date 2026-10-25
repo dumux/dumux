@@ -22,11 +22,13 @@ dumux_add_test(NAME example_diffusion_parallel
                LABELS example
                CMAKE_GUARD MPI_FOUND
                TARGET example_diffusion
+               MPI_RANKS 2
+               TIMEOUT 1200
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_diffusion_parallel_p0-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-diffusion_parallel-00050.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/example_diffusion_parallel_p1-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-diffusion_parallel-00050.vtu
-                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/example_diffusion params.input
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/example_diffusion params.input
                                    -Grid.Cells \"6 6\" -Problem.DiffusionCoefficient 0.001 -Problem.Name diffusion_parallel")

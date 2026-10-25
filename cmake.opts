@@ -53,6 +53,11 @@ DUMUX_ENABLE_PYTHON_BINDINGS="-DDUNE_ENABLE_PYTHONBINDINGS=ON -DBUILD_SHARED_LIB
 DUMUX_MULTITHREADING_BACKEND=""
 #DUMUX_MULTITHREADING_BACKEND="-DDUMUX_MULTITHREADING_BACKEND=OpenMP"
 
+# number of threads per process of the tests that do not set THREADS
+# if left empty, these tests run with one thread
+DUMUX_TEST_NUM_THREADS=""
+#DUMUX_TEST_NUM_THREADS="-DDUMUX_TEST_NUM_THREADS=4"
+
 # for debug opts you can set DCMAKE_BUILD_TYPE to "Debug" or "RelWithDebInfo"
 # you can also do this in any of the CMakeLists.txt in Dumux
 # just rerun cmake again afterwards (run cmake <path-to-build-dir>)
@@ -65,4 +70,5 @@ CMAKE_FLAGS="$SPECIFIC_COMPILER $SPECIFIC_GENERATOR $OPM_FLAGS
 -DENABLE_HEADERCHECK=$DUMUX_ENABLE_HEADERCHECK
 $DUMUX_ENABLE_PYTHON_BINDINGS
 $DUMUX_MULTITHREADING_BACKEND
+$DUMUX_TEST_NUM_THREADS
 "

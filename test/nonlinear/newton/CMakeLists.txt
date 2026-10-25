@@ -13,8 +13,8 @@ dumux_add_test(NAME test_newton_linesearch
 
 dumux_add_test(SOURCES test_newton_parallel.cc
                LABELS unit nonlinear parallel
-               COMMAND ${MPIEXEC}
-               CMD_ARGS -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_newton_parallel
+               MPI_RANKS 2
+               TIMEOUT 1200
                CMAKE_GUARD HAVE_MPI)
 
 # cubic backtracking line search
