@@ -918,17 +918,21 @@ public:
     {
         if constexpr (codim <= GridView::dimension)
         {
-            for (const auto& element : elements(gridView_))
+            // the mapper only provides indices for the codims carrying dofs
+            if (!mapper_.types(codim).empty())
             {
-                for (int i = 0; i < element.subEntities(codim); ++i)
+                for (const auto& element : elements(gridView_))
                 {
-                    const auto entity = element.template subEntity<codim>(i);
-                    if (entity.partitionType() == Dune::BorderEntity)
+                    for (int i = 0; i < element.subEntities(codim); ++i)
                     {
-                        const auto localIdx = mapper_.index(entity);
-                        const DofIdKey key{codim, gridView_.grid().globalIdSet().id(entity)};
-                        idToIndex_.emplace(key, localIdx);
-                        indexToID_.emplace(localIdx, key);
+                        const auto entity = element.template subEntity<codim>(i);
+                        if (entity.partitionType() == Dune::BorderEntity)
+                        {
+                            const auto localIdx = mapper_.index(entity);
+                            const DofIdKey key{codim, gridView_.grid().globalIdSet().id(entity)};
+                            idToIndex_.emplace(key, localIdx);
+                            indexToID_.emplace(localIdx, key);
+                        }
                     }
                 }
             }
