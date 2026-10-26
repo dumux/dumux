@@ -24,10 +24,6 @@
 #define NEW_PROBLEM_INTERFACE 0
 #endif
 
-#ifndef NEW_VARIABLES_INTERFACE
-#define NEW_VARIABLES_INTERFACE 0
-#endif
-
 #include <dune/grid/uggrid.hh>
 
 #include <dumux/common/boundaryflag.hh>
@@ -48,7 +44,6 @@
 
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
-#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 
@@ -89,27 +84,6 @@ struct Transition::UseVariables<TypeTag, TTag::ThreeDChannelTestMomentumPQ1Bubbl
 //! Assemble the box mass with the variables per local dof
 template<class TypeTag>
 struct Transition::UseVariables<TypeTag, TTag::ThreeDChannelTestMassBox> { static constexpr bool value = true; };
-#endif
-
-#if NEW_VARIABLES_INTERFACE
-// the variables
-template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-
-    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
-    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
-
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumCVFEVariables<Traits>;
-};
 #endif
 
 // Set the grid type

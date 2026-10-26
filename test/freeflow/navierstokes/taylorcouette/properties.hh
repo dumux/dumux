@@ -18,7 +18,6 @@
 #include <dumux/discretization/cctpfa.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -57,19 +56,6 @@ struct Problem<TypeTag, TTag::TaylorCouetteTestMomentum>
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TaylorCouetteTestMass>
 { using type = TaylorCouetteProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>; };
-
-template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::TaylorCouetteTestMomentum>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumCVFEVariables<Traits>;
-};
 
 template<class TypeTag>
 struct Transition::UseVariables<TypeTag, TTag::TaylorCouetteTestMomentum> { static constexpr bool value = true; };
