@@ -12,12 +12,17 @@
 #ifndef DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_MOMENTUM_CVFE_FLUXVARIABLES_HH
 
+#include <concepts>
+
 #include <dune/common/fmatrix.hh>
+#include <dune/istl/scaledidmatrix.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/typetraits/griddiscretization.hh>
+#include <dumux/common/concepts/ipdata_.hh>
+
+#include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/discretization/extrusion.hh>
 
@@ -81,93 +86,6 @@ private:
     const ElementVariables& elemVars_;
     const ElementFluxVariablesCache& elemFluxVarsCache_;
     const SubControlVolumeFace& scvf_;
-};
-
-/*!
- * \ingroup NavierStokesModel
- * \brief Context for interpolating data on interpolation points
- *
- * \tparam Problem the problem type to solve
- * \tparam ElementDiscretization the element geometry type
- * \tparam ElementVariables the element variables type
- * \tparam IpData the interpolation point data type
- */
-template<class Problem,
-         class ElementDiscretization,
-         class ElementVariables,
-         class IpData>
-class NavierStokesMomentumFluxFunctionContext
-{
-    using Element = typename ElementDiscretization::Element;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    static constexpr int dim = GridDiscretization_t<ElementDiscretization>::GridView::dimension;
-    static constexpr int dimWorld = GridDiscretization_t<ElementDiscretization>::GridView::dimensionworld;
-
-    using Tensor = Dune::FieldMatrix<typename GlobalPosition::value_type, dim, dimWorld>;
-
-public:
-
-    //! Initialize the flux variables storing some temporary pointers
-    NavierStokesMomentumFluxFunctionContext(
-        const Problem& problem,
-        const ElementDiscretization& elemDisc,
-        const ElementVariables& elemVars,
-        const IpData& ipData
-    )
-    : problem_(problem)
-    , elemDisc_(elemDisc)
-    , elemVars_(elemVars)
-    , ipData_(ipData)
-    , velocity_(0.0)
-    , gradVelocity_(0.0)
-    {
-        calculateVelocity_();
-        calculateGradVelocity();
-    }
-
-    const Problem& problem() const
-    { return problem_; }
-
-    const Element& element() const
-    { return elemDisc_.element(); }
-
-    const ElementDiscretization& elemDisc() const
-    { return elemDisc_; }
-
-    const ElementVariables& elemVars() const
-    { return elemVars_; }
-
-    const GlobalPosition& velocity() const
-    { return velocity_; }
-
-    const Tensor& gradVelocity() const
-    { return gradVelocity_; }
-
-private:
-    void calculateVelocity_()
-    {
-        const auto& shapeValues = ipData_.shapeValues();
-        for (const auto& localDof : localDofs(elemDisc_))
-            velocity_.axpy(shapeValues[localDof.index()][0], elemVars_[localDof.index()].velocity());
-    }
-
-    void calculateGradVelocity()
-    {
-        for (const auto& localDof : localDofs(elemDisc_))
-        {
-            const auto& vars = elemVars_[localDof.index()];
-            for (int dir = 0; dir < dim; ++dir)
-                gradVelocity_[dir].axpy(vars.velocity(dir), ipData_.gradN(localDof.index()));
-        }
-    }
-
-    const Problem& problem_;
-    const ElementDiscretization& elemDisc_;
-    const ElementVariables& elemVars_;
-    const IpData& ipData_;
-    GlobalPosition velocity_;
-    Tensor gradVelocity_;
 };
 
 /*!
@@ -291,105 +209,203 @@ public:
     }
 };
 
+} // end namespace Dumux
+
+namespace Dumux::Experimental {
+
 /*!
  * \ingroup NavierStokesModel
- * \brief The flux function class for the Navier-Stokes model using control-volume finite element schemes
+ * \brief Momentum flux of the Navier-Stokes equations for control-volume finite element schemes,
+ *        evaluated at an interpolation point
+ *
+ * \tparam Scalar the scalar type for scalar physical quantities
+ * \tparam GridDiscretization the grid discretization
  */
-template<class GridGeometry, class NumEqVector>
-class NavierStokesMomentumFluxFunctionCVFE
+template<class Scalar, class GridDiscretization>
+class CVFENavierStokesMomentumFluxAtIp
 {
-    using GridView = typename GridGeometry::GridView;
+    using GridView = typename GridDiscretization::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Scalar = typename NumEqVector::value_type;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using ElementDiscretization = typename GridDiscretization::LocalView;
 
-    using Extrusion = Extrusion_t<GridGeometry>;
-
-    static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
-    static_assert(NumEqVector::dimension == dimWorld, "Wrong dimension of velocity vector");
-
 public:
+    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using PressureTensor = Dune::ScaledIdentityMatrix<Scalar, dimWorld>;
+
     /*!
-     * \brief Returns the advective momentum flux contribution for a given integrated velocity at the face
+     * \brief Returns the velocity at an interpolation point
+     *
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipData The interpolation point data
      */
-    template<class Problem, class ElementDiscretization, class ElementVariables,
-             class SubControlVolumeFace, class VelocityVector>
-    NumEqVector advectiveMomentumFluxIntegral(const Problem& problem,
-                                              const ElementDiscretization& elemDisc,
-                                              const ElementVariables& elemVars,
-                                              const SubControlVolumeFace& scvf,
-                                              const VelocityVector& integratedVelocity) const
+    template<class ElementVariables, Concept::IpData IpData>
+    static GlobalPosition velocity(const ElementDiscretization& elemDisc,
+                                   const ElementVariables& elemVars,
+                                   const IpData& ipData)
+    { return velocity(elemDisc, elemVars, cache(elemVars, ipData)); }
+
+    /*!
+     * \brief Returns the velocity at an interpolation point
+     *
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipCache The interpolation point cache
+     */
+    template<class ElementVariables, class IpCache>
+    static GlobalPosition velocity(const ElementDiscretization& elemDisc,
+                                   const ElementVariables& elemVars,
+                                   const IpCache& ipCache)
     {
-        if (!problem.enableInertiaTerms())
-            return NumEqVector(0.0);
+        const auto& shapeValues = ipCache.shapeValues();
 
-        // get density from the problem
-        const Scalar density = problem.density(elemDisc.element(), elemDisc, ipData(elemDisc, scvf));
+        GlobalPosition velocity(0.0);
+        for (const auto& localDof : localDofs(elemDisc))
+            velocity.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
 
-        const auto vn_integral = integratedVelocity*scvf.unitOuterNormal();
-        const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
-        const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
-        const auto upwindVelocity = vn_integral > 0 ? insideVars.velocity() : outsideVars.velocity();
-        const auto downwindVelocity = vn_integral > 0 ? outsideVars.velocity() : insideVars.velocity();
-        static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
-        const auto advectiveFlux = density*vn_integral * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
-
-        return advectiveFlux;
+        return velocity;
     }
 
     /*!
-     * \brief Returns the diffusive momentum flux due to viscous forces
+     * \brief Returns the velocity gradient at an interpolation point
+     *
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipData The interpolation point data
      */
-    template<class Context, class IpData>
-    NumEqVector diffusiveMomentumFluxIntegrand(const Context& context, const IpData& ipData) const
+    template<class ElementVariables, Concept::IpData IpData>
+    static Tensor velocityGradient(const ElementDiscretization& elemDisc,
+                                   const ElementVariables& elemVars,
+                                   const IpData& ipData)
+    { return velocityGradient(elemDisc, elemVars, cache(elemVars, ipData)); }
+
+    /*!
+     * \brief Returns the velocity gradient at an interpolation point
+     *
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipCache The interpolation point cache
+     */
+    template<class ElementVariables, class IpCache>
+    static Tensor velocityGradient(const ElementDiscretization& elemDisc,
+                                   const ElementVariables& elemVars,
+                                   const IpCache& ipCache)
     {
-        const auto& element = context.element();
-        const auto& elemDisc = context.elemDisc();
+        Tensor gradV(0.0);
+        for (const auto& localDof : localDofs(elemDisc))
+        {
+            const auto& vars = elemVars[localDof.index()];
+            for (int dir = 0; dir < dimWorld; ++dir)
+                gradV[dir].axpy(vars.velocity(dir), ipCache.gradN(localDof.index()));
+        }
 
-        // get viscosity from the problem
-        const auto mu = context.problem().effectiveViscosity(element, elemDisc, ipData);
+        return gradV;
+    }
 
+    /*!
+     * \brief Returns the diffusive part of the flux tensor at an interpolation point
+     *
+     * \param problem The problem
+     * \param element The element
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipData The interpolation point data
+     */
+    template<class Problem, class ElementVariables, Concept::IpData IpData>
+    static Tensor diffusiveFluxTerm(const Problem& problem,
+                                    const Element& element,
+                                    const ElementDiscretization& elemDisc,
+                                    const ElementVariables& elemVars,
+                                    const IpData& ipData)
+    { return diffusiveFluxTerm(problem, element, elemDisc, elemVars, ipData, cache(elemVars, ipData)); }
+
+    /*!
+     * \brief Returns the diffusive part of the flux tensor at an interpolation point
+     *
+     * \param problem The problem
+     * \param element The element
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipData The interpolation point data
+     * \param ipCache The interpolation point cache
+     */
+    template<class Problem, class ElementVariables, Concept::IpData IpData, class IpCache>
+    static Tensor diffusiveFluxTerm(const Problem& problem,
+                                    const Element& element,
+                                    const ElementDiscretization& elemDisc,
+                                    const ElementVariables& elemVars,
+                                    const IpData& ipData,
+                                    const IpCache& ipCache)
+    {
         static const bool enableUnsymmetrizedVelocityGradient
-            = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+        static const bool enableDilatationTerm
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableDilatationTerm", false);
 
-        // compute -mu*gradV*n*dA
-        const auto& gradV = context.gradVelocity();
-        NumEqVector diffusiveFluxIntegrand = enableUnsymmetrizedVelocityGradient ?
-                mv(gradV, ipData.unitOuterNormal())
-                : mv(gradV + getTransposed(gradV), ipData.unitOuterNormal());
+        const auto gradV = velocityGradient(elemDisc, elemVars, ipCache);
+        const Scalar mu = problem.effectiveViscosity(element, elemDisc, ipData);
 
-        diffusiveFluxIntegrand *= -mu;
+        Tensor fluxTerm = enableUnsymmetrizedVelocityGradient ? gradV : gradV + getTransposed(gradV);
+        fluxTerm *= -mu;
 
-        static const bool enableDilatationTerm = getParamFromGroup<bool>(context.problem().paramGroup(), "FreeFlow.EnableDilatationTerm", false);
         if (enableDilatationTerm)
-            diffusiveFluxIntegrand += 2.0/3.0 * mu * trace(gradV) * ipData.unitOuterNormal();
+        {
+            const Scalar dilatation = 2.0/3.0 * mu * trace(gradV);
+            for (int dir = 0; dir < dimWorld; ++dir)
+                fluxTerm[dir][dir] += dilatation;
+        }
 
-        return diffusiveFluxIntegrand;
+        return fluxTerm;
     }
 
-    template<class Context, class IpData>
-    NumEqVector pressureFluxIntegrand(const Context& context, const IpData& ipData) const
+    /*!
+     * \brief Returns the pressure part of the flux tensor at an interpolation point
+     *
+     * \param problem The problem
+     * \param element The element
+     * \param elemDisc The element discretization
+     * \param ipData The interpolation point data
+     */
+    template<class Problem, Concept::IpData IpData>
+    static PressureTensor pressureFluxTerm(const Problem& problem,
+                                           const Element& element,
+                                           const ElementDiscretization& elemDisc,
+                                           const IpData& ipData)
+    { return PressureTensor(problem.pressure(element, elemDisc, ipData) - problem.referencePressure()); }
+
+    /*!
+     * \brief Returns the advective part of the flux tensor at an interpolation point
+     *
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     * \param ipData The interpolation point data
+     * \param transportedMomentum The transported momentum
+     * \param transportingVelocity The transporting velocity
+     */
+    template<class ElementVariables, Concept::IpData IpData,
+             class TransportedMomentum, class TransportingVelocity>
+        requires std::invocable<TransportedMomentum, const ElementDiscretization&, const ElementVariables&, const IpData&>
+              && std::invocable<TransportingVelocity, const ElementDiscretization&, const ElementVariables&, const IpData&>
+    static Tensor advectiveFluxTerm(const ElementDiscretization& elemDisc,
+                                    const ElementVariables& elemVars,
+                                    const IpData& ipData,
+                                    const TransportedMomentum& transportedMomentum,
+                                    const TransportingVelocity& transportingVelocity)
     {
-        const auto& element = context.element();
-        const auto& elemDisc = context.elemDisc();
+        const GlobalPosition momentum = transportedMomentum(elemDisc, elemVars, ipData);
+        const GlobalPosition velocity = transportingVelocity(elemDisc, elemVars, ipData);
 
-        // The pressure force integrand
-        const auto pressure = context.problem().pressure(element, elemDisc, ipData);
+        Tensor fluxTerm(0.0);
+        for (int i = 0; i < dimWorld; ++i)
+            fluxTerm[i].axpy(momentum[i], velocity);
 
-        // The pressure contribution calculated above might have a much larger numerical value compared to the viscous or inertial forces.
-        // This may lead to numerical inaccuracies due to loss of significance (cancellation) for the final residual value.
-        // Subtracting a constant reference value from the actual pressure contribution helps improving cancellation issues.
-        const auto referencePressure = context.problem().referencePressure();
-
-        NumEqVector pn(ipData.unitOuterNormal());
-        pn *= (pressure-referencePressure);
-
-        return pn;
+        return fluxTerm;
     }
 };
 
-} // end namespace Dumux
+} // end namespace Dumux::Experimental
 
 #endif
