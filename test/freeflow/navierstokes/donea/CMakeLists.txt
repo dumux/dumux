@@ -14,7 +14,6 @@ dumux_add_test(NAME test_ff_stokes_donea_taylorhood
                COMPILE_DEFINITIONS NAVIER_STOKES_MASS_MODEL=NavierStokesMassOnePFE
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ1FEModel
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=true
                COMMAND ./convergencetest.py
                CMD_ARGS test_ff_stokes_donea_taylorhood params_taylorhood.input)
@@ -190,7 +189,6 @@ dumux_add_test(NAME test_ff_stokes_donea_box_stabilized
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_box_stabilized-reference.vtu
@@ -233,7 +231,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_quad
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_quad-reference.vtu
@@ -263,7 +260,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_diamond_simplex
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=FaceCenteredDiamondModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_diamond_simplex-reference.vtu
@@ -293,7 +289,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq1nonconforming_cube
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1NonconformingFEModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -311,7 +306,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_quad
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumCVFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_quad-reference.vtu
@@ -339,7 +333,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_pq1bubble_simplex
                 COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                 COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
                 COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                 COMMAND ${DUMUX_RUNTEST}
                 CMD_ARGS    --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_pq1bubble_simplex-reference.vtu
@@ -367,7 +360,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_box_simplex
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
                            --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_box_simplex-reference.vtu
@@ -395,7 +387,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
                            --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum_hybrid_pq1bubble_simplex-reference.vtu
@@ -424,7 +415,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq1bubble_simplex
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ1BubbleFEModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -441,7 +431,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq2_cube
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ2FEModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -457,7 +446,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_quadrature_pq1bubble_si
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS QUADRATURE_RULE=Dumux::QuadratureRules::DuneQuadrature<2>
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -477,7 +465,6 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
                COMMAND ${DUMUX_RUNTEST}
@@ -547,7 +534,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
                COMMAND ${DUMUX_RUNTEST}
@@ -617,7 +603,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_cube
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -635,7 +620,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_simplex
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -653,7 +637,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq1bubble_simplex
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<2>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::MidpointQuadrature
@@ -673,7 +656,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_simplex
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -703,7 +685,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -722,7 +703,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_cube_nocaching
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS ENABLEGRIDVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -753,7 +733,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_simplex
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -773,7 +752,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq3_cube
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ3Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMMAND ${DUMUX_RUNTEST}
@@ -828,7 +806,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq3_cube
                COMPILE_DEFINITIONS DISCRETIZATION_MODEL=PQ3FEModel
                COMPILE_DEFINITIONS NAVIER_STOKES_MODEL=NavierStokesMomentumFE
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS KEEP_DEFAULT_GRIDVARIABLES=1
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS    --script fuzzy
@@ -849,7 +826,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::DuneQuadrature<4>
@@ -908,7 +884,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_cube
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::DuneQuadrature<4>
@@ -933,7 +908,6 @@ dumux_add_test(NAME test_ff_stokes_donea_pq1bubble_simplex_mumps
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1Bubble
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS USE_MUMPS_SOLVER=1
                COMMAND ${DUMUX_RUNTEST}
@@ -970,7 +944,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_pq1bubble_yasp_mumps_parallel
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ1BubbleHybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS USE_MUMPS_SOLVER=1
                MPI_RANKS 2
@@ -993,7 +966,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_hybrid_pq2_simplex_mumps
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS ENABLEFLUXVARSCACHING=0
                COMPILE_DEFINITIONS USE_MUMPS_SOLVER=1
@@ -1029,7 +1001,6 @@ dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex_mumps
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DoneaTestMomentumPQ2Hybrid
                COMPILE_DEFINITIONS TYPETAG_MASS=DoneaTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=1
                COMPILE_DEFINITIONS QUADRATURE_RULE_MOMENTUM=Dumux::QuadratureRules::DuneQuadrature<4>
                COMPILE_DEFINITIONS QUADRATURE_RULE_MASS=Dumux::QuadratureRules::DuneQuadrature<4>

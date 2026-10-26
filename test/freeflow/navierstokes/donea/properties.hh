@@ -52,10 +52,6 @@
 #define NEW_PROBLEM_INTERFACE 0
 #endif
 
-#ifndef NEW_VARIABLES_INTERFACE
-#define NEW_VARIABLES_INTERFACE 0
-#endif
-
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #endif
@@ -71,7 +67,6 @@
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
-#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
@@ -138,27 +133,6 @@ struct FluidSystem<TypeTag, TTag::DoneaTest>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
-
-#if NEW_VARIABLES_INTERFACE
-// the variables
-template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-
-    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
-    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
-
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumCVFEVariables<Traits>;
-};
-#endif
 
 #ifdef QUADRATURE_RULE_MOMENTUM
 // use custom quadrature rules for hybrid pq1bubble scheme
