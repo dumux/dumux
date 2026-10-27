@@ -25,6 +25,7 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq3.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/flux/cvfe/darcyslaw_.hh>
 #include <dumux/porousmediumflow/1p/variables.hh>
@@ -103,10 +104,6 @@ template<class TypeTag>
 struct GridVariables<TypeTag, TTag::OnePConvergenceNewInterface>
 {
 private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-
     using VariablesTraits = OnePVolumeVariablesTraits<
         GetPropType<TypeTag, Properties::PrimaryVariables>,
         GetPropType<TypeTag, Properties::FluidSystem>,
@@ -116,14 +113,8 @@ private:
         typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType,
         GetPropType<TypeTag, Properties::ModelTraits>
     >;
-    using Variables = Dumux::Experimental::OnePVariables<VariablesTraits>;
-
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::HybridCVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::HybridCVFEGridVariablesCache<Traits, enableCache>;
-
 public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
+    using type = Dumux::Experimental::DefaultGridVariables<TypeTag, Dumux::Experimental::OnePVariables<VariablesTraits>>;
 };
 
 //! Evaluate Darcy's law at the interpolation points
