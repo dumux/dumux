@@ -74,6 +74,14 @@ set to the number of threads. The number of threads is given by the new argument
 the command after `--command`. All parallel tests of DuMux start MPI through `MPI_RANKS`, and `DUNE_MAX_TEST_CORES` defaults to 8
 for DuMux. `dumux_add_test` warns about tests that start `mpiexec` themselves.
 Tests without `TIMEOUT` time out after 1200 s instead of the 300 s of `dune_add_test`, so `MPI_RANKS` no longer requires a `TIMEOUT`.
+- __CVFE__: Element variables that do not store the interpolation point data for the whole grid compute them on the first access
+after binding, in place and without a heap allocation per element, so that a time level whose residual terms read no interpolation
+point data does not compute them. The grid variables caches of control-volume, hybrid and finite element schemes
+(`CVFEGridVariablesCache`, `HybridCVFEGridVariablesCache`, `FEGridVariablesCache`) take a third template argument that stores the
+interpolation point data for the whole grid independently of the variables (default: as the variables).
+- __Immiscible local residual__: For the variables per local degree of freedom, `Flux.ScvfPermeability = FaceTensorAverage` uses
+the average of the permeabilities of the two sub-control volumes sharing a face (`faceTensorAverage`, as `CVFEDarcysLaw`) instead of
+interpolating the permeability from the local degrees of freedom to the integration point (`Interpolation`, default).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
