@@ -102,6 +102,30 @@ check_language(Fortran)
 if(CMAKE_Fortran_COMPILER)
   enable_language(Fortran)
   find_package(MUMPS QUIET COMPONENTS d)
+  if(MUMPS_FOUND)
+    # The MUMPS package config may bake absolute paths to the open-mpi build it was
+    # compiled against. If that open-mpi has since been upgraded, those paths no longer
+    # exist and break linking. Re-point any non-existent absolute library dependency of
+    # the MUMPS targets to this build's MPI::MPI_Fortran (which tracks the current MPI).
+    find_package(MPI QUIET COMPONENTS C Fortran)
+    foreach(_mumps_target MUMPS::COMMON MUMPS::DMUMPS)
+      if(TARGET ${_mumps_target})
+        get_target_property(_mumps_deps ${_mumps_target} INTERFACE_LINK_LIBRARIES)
+        if(_mumps_deps)
+          set(_mumps_fixed "")
+          foreach(_dep IN LISTS _mumps_deps)
+            if(IS_ABSOLUTE "${_dep}" AND NOT EXISTS "${_dep}")
+              list(APPEND _mumps_fixed MPI::MPI_Fortran)
+            else()
+              list(APPEND _mumps_fixed "${_dep}")
+            endif()
+          endforeach()
+          list(REMOVE_DUPLICATES _mumps_fixed)
+          set_target_properties(${_mumps_target} PROPERTIES INTERFACE_LINK_LIBRARIES "${_mumps_fixed}")
+        endif()
+      endif()
+    endforeach()
+  endif()
 endif()
 
 # Create the dumux library target exported as Dumux::Dumux
