@@ -106,3 +106,13 @@ dumux_add_test(NAME test_1p_convergence_analytic_pq1bubble
                CMD_ARGS test_1p_convergence_analytic_pq1bubble pq1bubble_structured
                         --expected-rate 2
                         params.input)
+
+# the permeability on the faces between control volumes averaged instead of interpolated
+dumux_add_test(NAME test_1p_convergence_analytic_pq1bubble_facetensoraverage
+               TARGET test_1p_convergence_analytic_pq1bubble
+               CMAKE_GUARD dune-alugrid_FOUND
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_pq1bubble pq1bubble_facetensoraverage_structured
+                        --expected-rate 2
+                        params.input -Flux.ScvfPermeability FaceTensorAverage)

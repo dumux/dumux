@@ -13,13 +13,16 @@
 #ifndef DUMUX_IMMISCIBLE_LOCAL_RESIDUAL__HH
 #define DUMUX_IMMISCIBLE_LOCAL_RESIDUAL__HH
 
+#include <string>
 #include <vector>
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/flux/facetensoraverage.hh>
 #include <dumux/flux/upwindscheme.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 #include <dumux/discretization/defaultlocaloperator.hh>
@@ -96,6 +99,10 @@ public:
      * \param elemDisc The element discretization
      * \param elemVars The variables for all local dofs of the element
      * \param scvf The sub control volume face
+     *
+     * \note The permeability on the face is interpolated from the local dofs by default.
+     *       With `Flux.ScvfPermeability = FaceTensorAverage`, it is the average of the
+     *       values of the two sub control volumes sharing the face (see faceTensorAverage).
      */
     NumEqVector fluxIntegral(const ElementDiscretization& elemDisc,
                              const ElementVariables& elemVars,
@@ -103,13 +110,14 @@ public:
     {
         const auto& problem = this->asImp().problem();
         static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
+        static const bool useFaceTensorAverage = useFaceTensorAverage_(problem.paramGroup());
 
         const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
         const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
 
         // The mobility is a control volume quantity here, so it is upwinded on the
         // integrated flux and the tensor carries the permeability alone.
-        const auto tensor = [] (const auto& vars)
+        const auto permeability = [] (const auto& vars)
         {
             auto permeability = vars.permeability();
             permeability *= vars.extrusionFactor();
@@ -118,15 +126,26 @@ public:
 
         // K (grad p - rho g) · n integrated over the face, per phase
         NumEqVector flux(0.0);
-        for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scvf))
+        const auto addFluxTerms = [&] (const auto& tensor)
         {
-            const auto& faceIpData = qpData.ipData();
-            const auto& ipCache = cache(elemVars, faceIpData);
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                flux[conti0EqIdx + phaseIdx] += qpData.weight()*(faceIpData.unitOuterNormal()*AdvectionType::fluxTerm(
-                    problem, elemDisc.element(), elemDisc, elemVars, phaseIdx, faceIpData, ipCache, tensor
-                ));
+            for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scvf))
+            {
+                const auto& faceIpData = qpData.ipData();
+                const auto& ipCache = cache(elemVars, faceIpData);
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    flux[conti0EqIdx + phaseIdx] += qpData.weight()*(faceIpData.unitOuterNormal()*AdvectionType::fluxTerm(
+                        problem, elemDisc.element(), elemDisc, elemVars, phaseIdx, faceIpData, ipCache, tensor
+                    ));
+            }
+        };
+
+        if (useFaceTensorAverage)
+        {
+            const auto K = faceTensorAverage(permeability(insideVars), permeability(outsideVars), scvf.unitOuterNormal());
+            addFluxTerms([&] (const auto&, const auto&, const auto&) { return K; });
         }
+        else
+            addFluxTerms(permeability);
 
         // the phase mass flux, including the upwind term (mobility and density)
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -236,6 +255,18 @@ public:
         }
     }
 
+private:
+    static bool useFaceTensorAverage_(const std::string& paramGroup)
+    {
+        const auto method = getParamFromGroup<std::string>(paramGroup, "Flux.ScvfPermeability", "Interpolation");
+        if (method == "Interpolation")
+            return false;
+        else if (method == "FaceTensorAverage")
+            return true;
+        else
+            DUNE_THROW(ParameterException, "Unknown Flux.ScvfPermeability " << method
+                                            << ", use Interpolation or FaceTensorAverage");
+    }
 };
 
 } // end namespace Dumux::Experimental
