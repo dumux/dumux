@@ -9,7 +9,7 @@ variables:
   UBUNTU_VERSION: "24.04"
   UBUNTU_VERSION_NEWEST: "24.04"
   DUMUX_DOCKER_CI_BRANCH: master
-  IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
+  IMAGE_REGISTRY_URL: registry.bwgit.de/st/iws/dumux/dumux-docker-ci
   DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
