@@ -297,6 +297,28 @@ public:
     }
 
     /*!
+     * \brief Assemble the residual of one sub-domain into the internal residual
+     *
+     * The grid variables of that sub-domain have to be up to date with curSol. The residuals
+     * of the other sub-domains are left as they are.
+     */
+    template<std::size_t i>
+    void assembleResidual(Dune::index_constant<i> domainId, const SolutionVector& curSol)
+    {
+        checkAssemblerState_();
+        if (!residual_)
+            resetResidual_();
+
+        auto& subRes = (*residual_)[domainId];
+        subRes = 0.0;
+        this->assembleResidual_(domainId, subRes, curSol);
+
+        const auto gridGeometry = std::get<domainId>(gridGeometryTuple_);
+        enforcePeriodicConstraints_(domainId, subRes, *gridGeometry, curSol[domainId]);
+        enforceProblemConstraints_(domainId, subRes, *gridGeometry, curSol[domainId]);
+    }
+
+    /*!
      * \brief Tells the assembler which jacobian and residual to use.
      *        This also resizes the containers to the required sizes and sets the
      *        sparsity pattern of the jacobian matrix.

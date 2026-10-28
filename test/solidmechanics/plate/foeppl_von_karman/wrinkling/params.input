@@ -1,0 +1,55 @@
+[Grid]
+LowerLeft = 0 0
+UpperRight = 2.96875 1
+Cells = 152 52
+CellType = Simplex
+
+[Problem]
+Name = test_fvk_wrinkling
+Loading = Shear
+# Lengths in the width W, deflections in the thickness t, in-plane displacements in t^2/W,
+# so that E = 12(1-nu^2) gives D = 1 and C = 12 and the system carries no parameter but the
+# load, the aspect ratio and the Poisson ratio. The Kapton sheet of Wong and Pellegrino
+# (380 mm x 128 mm x 25 um, E = 3500 N/mm^2, nu = 0.31) has L/W = 2.96875, and its shear
+# displacement converts as delta W/t^2 = 2.048e5 per mm: 0.5 mm is 1.024e5.
+Length = 2.96875
+Width = 1.0
+Thickness = 1.0
+E = 10.8468
+PoissonRatio = 0.31
+LoadSteps = 1.024e5
+# the continuation starts from the tension-field state of the expected wavelength and
+# orientation, whose amplitude absorbs the compressive strain
+SeedTensionField = true
+Imperfection = 0.0
+Damping = 1.0
+
+# The relaxation integrates c dw/dtau = -dE/dw implicitly and stops once the deflection
+# moves by less than SteadyStateTolerance thicknesses in a step of the largest size allowed,
+# after LoadStepDuration of pseudo-time if that is set (the damped sheet is then loaded at a
+# constant rate), and at the latest after MaxSteps steps.
+# The pattern can slide along its own normal at almost no cost, so the undamped tangent is
+# nearly singular at the wrinkled state and a static solve is not attempted from it.
+# The stiffest wrinkle modes relax on the scale 1/(D k^4), about 1e-7 here, so the first
+# step from the seed has to be smaller than that to be a damped step at all; the step
+# controller then grows it by about 1.5 per step.
+[Relaxation]
+InitialTimeStepSize = 1e-9
+ContinuationTimeStepSize = 1e-5
+MaxTimeStepSize = 0.05
+MaxSteps = 150
+SteadyStateTolerance = 1e-2
+
+[Vtk]
+Precision = Float64
+CoordPrecision = Float64
+
+[Newton]
+EnableDynamicOutput = false
+MaxRelativeShift = 1e-8
+MaxSteps = 16
+TargetSteps = 18
+UseLineSearch = false
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-8
