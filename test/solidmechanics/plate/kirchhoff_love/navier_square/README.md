@@ -66,3 +66,31 @@ Build and run from the build directory:
 cmake --build . --target test_kirchhoff_love_navier_square
 ctest -V -R '^test_kirchhoff_love_navier_square$'
 ```
+
+## Clamped square
+
+`-Problem.Mapping clamped` clamps all four edges: $w = 0$, $\boldsymbol{\theta} = \mathbf{0}$,
+$\varphi = 0$, and $\psi$ is pinned at the centre. Both potentials are then non-trivial:
+$\varphi$ solves $\Delta\varphi = F$ with $\varphi = 0$ on the edges, and $\psi$, odd under every
+reflection of the square, is harmonic, vanishes on the axes and the diagonals and reaches
+$0.0195\,FL^2$ on the edges. The reference is a Legendre-Galerkin solution
+(`fvp/dev/clamped_square_reference.py`, converged to the digits given): $w_c = -0.0012653191\,FL^4/D$,
+$M_{11} = -0.02290509\,FL^2$ at the centre and $0.0513338\,FL^2$ at the middle of an edge,
+$\varphi_c = -0.07367135\,FL^2$, $\psi = 0.0191960\,FL^2$ at the quarter point of an edge and
+$-0.00592058\,FL^2$ at $(L/4, L/8)$.
+
+The edge moment is read twice: as the average of the element gradients at the edge node, and as
+the reaction of the rotation sub-problem, the residual of the edge node with the edges natural and
+free of traction, per unit edge length. `test_kirchhoff_love_clamped_square` (`run_clamped_square.py`),
+relative deviations:
+
+| cells | $w$ centre | $M_{11}$ centre | $M_{11}$ edge, gradients | $M_{11}$ edge, reaction | $\varphi$ centre | $\psi$ edge | $\psi$ interior |
+|---|---|---|---|---|---|---|---|
+| 8 | $6.1\times10^{-2}$ | $8.5\times10^{-2}$ | $4.6\times10^{-1}$ | $2.4\times10^{-2}$ | $1.2\times10^{-2}$ | $1.3\times10^{-1}$ | $2.6\times10^{-1}$ |
+| 32 | $4.1\times10^{-3}$ | $5.4\times10^{-3}$ | $1.3\times10^{-1}$ | $1.5\times10^{-3}$ | $7.7\times10^{-4}$ | $4.1\times10^{-2}$ | $1.1\times10^{-2}$ |
+| 128 | $2.6\times10^{-4}$ | $3.4\times10^{-4}$ | $3.3\times10^{-2}$ | $9.6\times10^{-5}$ | $4.8\times10^{-5}$ | $1.0\times10^{-2}$ | $1.6\times10^{-4}$ |
+| order | 2.00 | 2.00 | 0.99 | 1.99 | 2.00 | 1.01 | 1.9 (256 cells) |
+
+The curl potential converges at order one on the clamped edges, where it is the multiplier of the
+prescribed rotations, and at order two inside, where its error changes sign between 64 and 128
+cells and is $2.5\times10^{-7}$ (absolute) on 256.
