@@ -197,8 +197,6 @@ public:
         update_(fvGeometry, ipData.local());
     }
 
-    //! returns the shape function gradients in local coordinates at the interpolation point
-    const std::vector<JacobianType>& shapeJacobian() const { return shapeJacobian_; }
     //! returns the shape function values at the interpolation point
     const std::vector<RangeType>& shapeValues() const { return shapeValues_; }
     //! returns the shape function gradients in global coordinates at the interpolation point
@@ -214,18 +212,17 @@ private:
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         // evaluate shape functions and gradients at the interpolation point
-        const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
-        localBasis.evaluateJacobian(localPos, shapeJacobian_);
-        localBasis.evaluateFunction(localPos, shapeValues_); // shape values for rho
+        thread_local std::vector<JacobianType> shapeJacobian;
+        localBasis.evaluateJacobian(localPos, shapeJacobian);
+        localBasis.evaluateFunction(localPos, shapeValues_);
 
-        // compute the gradN for every local dof
+        const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
         gradN_.resize(Dumux::Detail::LocalDofs::numLocalDofs(fvGeometry));
         for (const auto& localDof: localDofs(fvGeometry))
-            jacInvT.mv(shapeJacobian_[localDof.index()][0], gradN_[localDof.index()]);
+            jacInvT.mv(shapeJacobian[localDof.index()][0], gradN_[localDof.index()]);
     }
 
     Gradients gradN_;
-    std::vector<JacobianType> shapeJacobian_;
     std::vector<RangeType> shapeValues_;
 };
 

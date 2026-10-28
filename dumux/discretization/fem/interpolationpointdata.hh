@@ -47,14 +47,14 @@ public:
         localBasis.evaluateFunction(local, shapeValues_);
 
         // the local shape function gradients
-        shapeJacobians_.resize(numLocalDofs);
-        localBasis.evaluateJacobian(local, shapeJacobians_);
+        thread_local ShapeJacobians shapeJacobians;
+        localBasis.evaluateJacobian(local, shapeJacobians);
 
         // the global shape function gradients
         const auto jacInvT = geometry.jacobianInverseTransposed(local);
         gradients_.resize(numLocalDofs, GlobalPosition(0.0));
         for (unsigned int i = 0; i < numLocalDofs; ++i)
-            jacInvT.umv(shapeJacobians_[i][0], gradients_[i]);
+            jacInvT.umv(shapeJacobians[i][0], gradients_[i]);
     }
 
     // The constructor
@@ -73,10 +73,6 @@ public:
     const RangeType& shapeValue(int i) const
     { return shapeValues_[i]; }
 
-    //! The shape value gradients at the quadrature point
-    const ShapeJacobians& shapeJacobians() const
-    { return shapeJacobians_; }
-
     //! The shape value gradient of a local dof at the quadrature point
     const GlobalPosition& gradN(int i) const
     { return gradients_[i]; }
@@ -94,7 +90,6 @@ private:
     GlobalPosition global_;
 
     ShapeValues shapeValues_;
-    ShapeJacobians shapeJacobians_;
     Gradients gradients_;
 };
 
