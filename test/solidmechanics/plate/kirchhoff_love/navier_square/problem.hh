@@ -23,7 +23,7 @@
 
 namespace Dumux {
 
-enum class SimplySupportedMapping { traction, tangential };
+enum class SimplySupportedMapping { traction, tangential, clamped };
 
 inline SimplySupportedMapping simplySupportedMapping()
 {
@@ -32,6 +32,8 @@ inline SimplySupportedMapping simplySupportedMapping()
         return SimplySupportedMapping::traction;
     if (name == "tangential")
         return SimplySupportedMapping::tangential;
+    if (name == "clamped")
+        return SimplySupportedMapping::clamped;
     DUNE_THROW(Dune::InvalidStateException, "Unknown mapping " << name);
 }
 
@@ -75,12 +77,19 @@ public:
     Scalar D(const GlobalPosition& globalPos) const { return stiffness_; }
     Scalar poissonRatio(const GlobalPosition& globalPos) const { return poissonRatio_; }
 
+    //! Natural edges without traction, so that the residual of an edge node is its reaction
+    void setNaturalEdges(bool value) { naturalEdges_ = value; }
+
     //! On the edges of the square the tangential rotation is one Cartesian component
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolume& scv) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (mapping_ == SimplySupportedMapping::tangential)
+        if (naturalEdges_)
+            return values;
+        if (mapping_ == SimplySupportedMapping::clamped)
+            values.setAllDirichlet();
+        else if (mapping_ == SimplySupportedMapping::tangential)
         {
             const auto& pos = scv.dofPosition();
             if (pos[1] < eps_ || pos[1] > length_ - eps_)
@@ -99,6 +108,8 @@ public:
                         const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
+        if (naturalEdges_)
+            return values;
         const auto vars = this->couplingManager().deformationAndPotentials(fvGeometry, scvf);
         const auto phi = vars[this->couplingManager().shearGradPotentialIdx()];
         values.axpy(phi, scvf.unitOuterNormal());
@@ -117,6 +128,7 @@ private:
     std::shared_ptr<CouplingManager> couplingManager_;
     SimplySupportedMapping mapping_;
     Scalar poissonRatio_, length_, eps_, stiffness_;
+    bool naturalEdges_ = false;
 };
 
 /*!
@@ -177,7 +189,7 @@ public:
         BoundaryTypes values;
         values.setAllNeumann();
         values.setDirichlet(Indices::verticalDeformationIdx, Indices::shearGradPotentialEqIdx);
-        if (mapping_ == SimplySupportedMapping::tangential || scv.dofIndex() == edgePinDof_)
+        if (mapping_ != SimplySupportedMapping::traction || scv.dofIndex() == edgePinDof_)
             values.setDirichlet(Indices::shearGradPotentialIdx, Indices::deformationEqIdx);
         return values;
     }
@@ -219,7 +231,7 @@ public:
     hasInternalDirichletConstraint(const Element& element, const SubControlVolume& scv) const
     {
         std::bitset<NumEqVector::dimension> values;
-        if (mapping_ == SimplySupportedMapping::tangential && scv.dofIndex() == centrePinDof_)
+        if (mapping_ != SimplySupportedMapping::traction && scv.dofIndex() == centrePinDof_)
             values.set(Indices::shearCurlPotentialIdx);
         return values;
     }
