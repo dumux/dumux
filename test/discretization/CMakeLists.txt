@@ -28,6 +28,10 @@ dumux_add_test(NAME test_defaultgridvariables
                LABELS unit discretization
                SOURCES test_defaultgridvariables.cc)
 
+dumux_add_test(NAME test_elementvariables_ipdatacache
+               LABELS unit discretization
+               SOURCES test_elementvariables_ipdatacache.cc)
+
 dumux_add_test(NAME test_periodicdofmap
                LABELS unit discretization
                SOURCES test_periodicdofmap.cc

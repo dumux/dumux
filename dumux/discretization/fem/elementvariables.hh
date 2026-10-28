@@ -17,13 +17,14 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/common/concepts/localdofs_.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
+#include <dumux/discretization/cvfe/elementinterpolationpointdatacache.hh>
+#include <dumux/discretization/cvfe/lazyelementcache.hh>
 #include <dumux/discretization/cvfe/variablesdeflectionpolicy.hh>
 
 namespace Dumux::Experimental {
@@ -125,12 +126,12 @@ public:
     template<Concept::BoundaryFaceQpIpData IpData>
     friend const InterpolationPointData& cache(const FEElementVariables& elemVars,
                                                const IpData& ipData)
-    { return elemVars.gridVariablesCache().boundaryFaceCache(elemVars.eIdx_, ipData.boundaryFaceIndex(), ipData.qpIndex()); }
+    { return elemVars.ipDataCache().boundaryFaceCache(ipData.boundaryFaceIndex(), ipData.qpIndex()); }
 
     template<Concept::QIpData IpData>
     friend const InterpolationPointData& cache(const FEElementVariables& elemVars,
                                                const IpData& ipData)
-    { return elemVars.gridVariablesCache().elementCache(elemVars.eIdx_, ipData.qpIndex()); }
+    { return elemVars.ipDataCache().elementCache(ipData.qpIndex()); }
 
     /*!
     * \brief bind the local view (r-value overload)
@@ -178,6 +179,8 @@ public:
     {
         const auto& gridDiscretization = elemDisc.gridDiscretization();
         eIdx_ = gridDiscretization.elementMapper().index(element);
+        if constexpr (!GridVariablesCache::interpolationPointDataCachingEnabled)
+            ipDataCache_.bind(elemDisc);
     }
 
     //! The grid variables cache object we are a restriction of
@@ -192,8 +195,19 @@ public:
    { return { gridVars }; }
 
 private:
+    using ElementInterpolationPointDataCache = Dumux::Detail::CVFE::ElementAndBoundaryInterpolationPointDataCache<InterpolationPointData>;
+
+    const ElementInterpolationPointDataCache& ipDataCache() const
+    {
+        if constexpr (GridVariablesCache::interpolationPointDataCachingEnabled)
+            return gridVariablesCache().cache(eIdx_);
+        else
+            return ipDataCache_.get(gridVariablesCache().problem(), gridVariablesCache().localDofVariables(eIdx_));
+    }
+
     const GridVariablesCache* gridVariablesCachePtr_;
     std::size_t eIdx_;
+    Dumux::Detail::CVFE::LazyElementCache<ElementInterpolationPointDataCache, typename GridVariablesCache::Problem, std::vector<Variables>> ipDataCache_;
 };
 
 /*!
@@ -233,7 +247,7 @@ class FEElementVariables<GVC, /*cachingEnabled*/false>
         { return view_[localDof]; }
 
         auto& cache(std::size_t) const
-        { return *view_.ipDataCache_; }
+        { return view_.ipDataCache_.get(view_.gridVariablesCache().problem(), view_.variables_); }
 
     private:
         ThisType& view_;
@@ -267,7 +281,6 @@ public:
     //! Constructor
     FEElementVariables(const GridVariablesCache& gridVarsCache)
     : gridVariablesCachePtr_(&gridVarsCache)
-    , ipDataCache_(std::make_shared<InterpolationPointDataCache>())
     {}
 
     /*!
@@ -314,7 +327,8 @@ public:
                      const SolutionVector& sol) &
     {
         // get the solution at the dofs of the element
-        auto elemSol = elementSolution(element, sol, elemDisc.gridDiscretization());
+        const auto& gridDiscretization = elemDisc.gridDiscretization();
+        auto elemSol = elementSolution(element, sol, gridDiscretization);
 
         // resize variables to the required size
         variables_.resize(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
@@ -323,14 +337,14 @@ public:
         for (const auto& localDof : localDofs(elemDisc))
             variables_[localDof.index()].update(elemSol, gridVariablesCache().problem(), elemDisc, ipData(elemDisc, localDof));
 
-        if constexpr (InterpolationPointData::isSolDependent)
-        {
-            auto newIpDataCache = std::make_shared<InterpolationPointDataCache>(*ipDataCache_);
-            newIpDataCache->update(gridVariablesCache().problem(), element, elemDisc, variables_);
-            ipDataCache_ = std::move(newIpDataCache);
-        }
+        if constexpr (GridVariablesCache::interpolationPointDataCachingEnabled)
+            eIdx_ = gridDiscretization.elementMapper().index(element);
         else
-            ipDataCache_->update(gridVariablesCache().problem(), element, elemDisc, variables_);
+        {
+            ipDataCache_.bind(elemDisc);
+            if constexpr (InterpolationPointData::isSolDependent)
+                ipDataCache_.get(gridVariablesCache().problem(), variables_);
+        }
     }
     const Variables& operator [](std::size_t localIdx) const
     { return variables_[localIdx]; }
@@ -359,12 +373,12 @@ public:
     template<Concept::BoundaryFaceQpIpData IpData>
     friend const InterpolationPointData& cache(const FEElementVariables& elemVars,
                                                const IpData& ipData)
-    { return elemVars.ipDataCache_->boundaryFaceCache(ipData.boundaryFaceIndex(), ipData.qpIndex()); }
+    { return elemVars.ipDataCache().boundaryFaceCache(ipData.boundaryFaceIndex(), ipData.qpIndex()); }
 
     template<Concept::QIpData IpData>
     friend const InterpolationPointData& cache(const FEElementVariables& elemVars,
                                                const IpData& ipData)
-    { return elemVars.ipDataCache_->elementCache(ipData.qpIndex()); }
+    { return elemVars.ipDataCache().elementCache(ipData.qpIndex()); }
 
     //! The grid variables cache object we are a restriction of
     const GridVariablesCache& gridVariablesCache() const
@@ -378,71 +392,20 @@ public:
    { return { *this }; }
 
 private:
-    class InterpolationPointDataCache
+    using ElementInterpolationPointDataCache = Dumux::Detail::CVFE::ElementAndBoundaryInterpolationPointDataCache<InterpolationPointData>;
+
+    const ElementInterpolationPointDataCache& ipDataCache() const
     {
-    public:
-        InterpolationPointDataCache()
-        {}
-
-        template<class Problem, class ElementDiscretization, class ElementVariables>
-        void update(const Problem& problem,
-                    const typename ElementDiscretization::Element& element,
-                    const ElementDiscretization& elemDisc,
-                    const ElementVariables& elemVars)
-        {
-            updateElementCache_(problem, element, elemDisc, elemVars);
-        }
-
-        // access operator
-        const InterpolationPointData& elementCache(std::size_t qpIdx) const
-        { return elementCache_[qpIdx]; }
-
-        // access operator
-        InterpolationPointData& elementCache(std::size_t qpIdx)
-        { return elementCache_[qpIdx]; }
-
-        // access operator
-        const InterpolationPointData& boundaryFaceCache(std::size_t bfIdx, std::size_t qpIdx) const
-        { return boundaryFaceCache_[bfIdx][qpIdx]; }
-
-        // access operator
-        InterpolationPointData& boundaryFaceCache(std::size_t bfIdx, std::size_t qpIdx)
-        { return boundaryFaceCache_[bfIdx][qpIdx]; }
-
-    private:
-        template<class Problem, class ElementDiscretization, class ElementVariables>
-        void updateElementCache_(const Problem& problem,
-                                 const typename ElementDiscretization::Element& element,
-                                 const ElementDiscretization& elemDisc,
-                                 const ElementVariables& elemVars)
-        {
-            const auto elemQuadRule = Dumux::CVFE::quadratureRule(elemDisc, element);
-            elementCache_.resize(std::ranges::size(elemQuadRule));
-            for (const auto& qpData : elemQuadRule)
-                elementCache_[qpData.ipData().qpIndex()].update(problem, element, elemDisc, elemVars, qpData.ipData());
-
-            boundaryFaceCache_.resize(std::ranges::size(boundaryFaces(elemDisc)));
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
-            {
-                auto& bfCache = boundaryFaceCache_[boundaryFace.index()];
-                const auto quadRule = Dumux::CVFE::quadratureRule(elemDisc, boundaryFace);
-                bfCache.resize(std::ranges::size(quadRule));
-                for (const auto& qpData : quadRule)
-                    bfCache[qpData.ipData().qpIndex()].update(problem,
-                                                              element,
-                                                              elemDisc,
-                                                              elemVars,
-                                                              qpData.ipData());
-            }
-        }
-
-        std::vector<InterpolationPointData> elementCache_;
-        std::vector<std::vector<InterpolationPointData>> boundaryFaceCache_;
-    };
+        if constexpr (GridVariablesCache::interpolationPointDataCachingEnabled)
+            return gridVariablesCache().cache(eIdx_);
+        else
+            return ipDataCache_.get(gridVariablesCache().problem(), variables_);
+    }
 
     const GridVariablesCache* gridVariablesCachePtr_;
     std::vector<Variables> variables_;
-    std::shared_ptr<InterpolationPointDataCache> ipDataCache_;
+    std::size_t eIdx_ = 0;
+    Dumux::Detail::CVFE::LazyElementCache<ElementInterpolationPointDataCache, typename GridVariablesCache::Problem, std::vector<Variables>> ipDataCache_;
 };
 
 } // end namespace Dumux::Experimental
