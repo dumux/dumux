@@ -15,6 +15,7 @@
 
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
@@ -89,20 +90,31 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity at an interpolation point, for degrees of
-     *        freedom that own no sub-control volume.
-     * \param fvGeometry The finite-volume geometry
+     * \brief Function for defining the porosity at an interpolation point.
+     * \note There is no default. A local dof on an element face belongs to the elements on both sides,
+     *       so a porosity given as a function of the position is ambiguous where it jumps.
+     *       Overload this function using the position of the interpolation point for a smooth
+     *       porosity and the element of the element discretization for a porosity that is
+     *       constant per element.
+     * \param elemDisc The element discretization
      * \param ipData The interpolation point data
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
-    template<class IpData, class ElementSolution>
-    Scalar porosity(const FVElementGeometry& fvGeometry,
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar porosity(const ElementDiscretization& elemDisc,
                     const IpData& ipData,
                     const ElementSolution& elemSol) const
     {
-        // forward to generic interface
-        return this->asImp_().porosityAtPos(ipData.global());
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         Scalar porosity(const ElementDiscretization& elemDisc,\n"
+        "                         const IpData& ipData,\n"
+        "                         const ElementSolution& elemSol) const\n\n"
+        "   returning e.g. porosityAtPos(ipData.global()) for a smooth porosity\n"
+        "   or a value determined by elemDisc.element() for a porosity that is constant per element.\n\n");
+        return 0.0;
     }
 
     /*!

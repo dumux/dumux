@@ -55,6 +55,21 @@ public:
 
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
+
+    using ParentType::permeability;
+    using ParentType::porosity;
+
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    PermeabilityType permeability(const ElementDiscretization& elemDisc,
+                                  const IpData& ipData,
+                                  const ElementSolution& elemSol) const
+    { return permeabilityAtPos(ipData.global()); }
+
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar porosity(const ElementDiscretization& elemDisc,
+                    const IpData& ipData,
+                    const ElementSolution& elemSol) const
+    { return porosityAtPos(ipData.global()); }
 };
 
 } // end namespace Dumux
