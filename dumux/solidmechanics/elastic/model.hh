@@ -52,6 +52,7 @@
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
+#include "variables.hh"
 #include "stressvariablescache.hh"
 
 namespace Dumux {
@@ -132,6 +133,22 @@ private:
     using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
 public:
     using type = ElasticVolumeVariables<Traits>;
+};
+
+//! The variables per local dof
+template<class TypeTag>
+struct Variables<TypeTag, TTag::Elastic>
+{
+private:
+    static constexpr int dim = GetPropType<TypeTag, Properties::GridGeometry>::GridView::dimension;
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using DV = Dune::FieldVector<typename PV::value_type, dim>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
+public:
+    using type = ElasticVariables<Traits>;
 };
 
 //! By default, we use hooke's law for stress evaluations

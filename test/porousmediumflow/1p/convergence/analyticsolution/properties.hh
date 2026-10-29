@@ -25,11 +25,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq3.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
-
-#include <dumux/flux/cvfe/darcyslaw_.hh>
-#include <dumux/porousmediumflow/1p/variables.hh>
-#include <dumux/porousmediumflow/immiscible/localresidual_.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -54,6 +49,7 @@ struct OnePConvergenceBox { using InheritsFrom = std::tuple<OnePConvergence, Box
 
 //! Everything the schemes assembled with the new interfaces have in common
 struct OnePConvergenceNewInterface { using InheritsFrom = std::tuple<OnePConvergence>; };
+struct OnePConvergenceBoxNewInterface { using InheritsFrom = std::tuple<OnePConvergenceNewInterface, BoxModel>; };
 struct OnePConvergencePQ1Bubble { using InheritsFrom = std::tuple<OnePConvergenceNewInterface, PQ1BubbleHybridModel>; };
 struct OnePConvergencePQ3 { using InheritsFrom = std::tuple<OnePConvergenceNewInterface, PQ3HybridModel>; };
 } // end namespace TTag
@@ -95,40 +91,9 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePConvergenceNewInterface>
 { using type = Dumux::ConvergenceProblemNewInterface<TypeTag>; };
 
-/*!
- * \brief The grid variables holding the quantities per local dof
- * \note The variables are asked for at an interpolation point, which is what the degrees
- *       of freedom owning no sub-control volume require.
- */
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::OnePConvergenceNewInterface>
-{
-private:
-    using VariablesTraits = OnePVolumeVariablesTraits<
-        GetPropType<TypeTag, Properties::PrimaryVariables>,
-        GetPropType<TypeTag, Properties::FluidSystem>,
-        GetPropType<TypeTag, Properties::FluidState>,
-        GetPropType<TypeTag, Properties::SolidSystem>,
-        GetPropType<TypeTag, Properties::SolidState>,
-        typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType,
-        GetPropType<TypeTag, Properties::ModelTraits>
-    >;
-public:
-    using type = Dumux::Experimental::DefaultGridVariables<TypeTag, Dumux::Experimental::OnePVariables<VariablesTraits>>;
-};
-
-//! Evaluate Darcy's law at the interpolation points
-template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::OnePConvergenceNewInterface>
-{
-    using type = Experimental::CVFEDarcysLawAtIp<GetPropType<TypeTag, Properties::Scalar>,
-                                                 GetPropType<TypeTag, Properties::GridGeometry>>;
-};
-
-//! Assemble with the local residual that leaves the quadrature to the scheme
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::OnePConvergenceNewInterface>
-{ using type = Experimental::ImmiscibleLocalResidual<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::OnePConvergenceNewInterface> { static constexpr bool value = true; };
 
 } // end namespace Dumux::Properties
 

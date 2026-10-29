@@ -33,7 +33,6 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq1bubble_simplex
                 COMPILE_DEFINITIONS TYPETAG_MOMENTUM=ThreeDChannelTestMomentumPQ1Bubble
                 COMPILE_DEFINITIONS TYPETAG_MASS=ThreeDChannelTestMassBox
                 COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-                COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                 COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
                 LABELS freeflow navierstokes
                 CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
@@ -50,7 +49,6 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq2
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=ThreeDChannelTestMomentumPQ2
                COMPILE_DEFINITIONS TYPETAG_MASS=ThreeDChannelTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                LABELS freeflow navierstokes
                TIMEOUT 1200
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
@@ -80,7 +78,6 @@ dumux_add_test(NAME test_ff_stokes_channel_3d_nonuniform_pq3_simplex
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=ThreeDChannelTestMomentumPQ3
                COMPILE_DEFINITIONS TYPETAG_MASS=ThreeDChannelTestMassBox
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
-               COMPILE_DEFINITIONS NEW_VARIABLES_INTERFACE=1
                COMPILE_DEFINITIONS USE_STOKES_SOLVER=1
                LABELS freeflow navierstokes
                TIMEOUT 1200

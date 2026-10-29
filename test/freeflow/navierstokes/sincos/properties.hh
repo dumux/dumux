@@ -28,7 +28,6 @@
 
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -38,7 +37,6 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
-#include <dumux/discretization/defaultgridvariables.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -100,40 +98,13 @@ struct Problem<TypeTag, TTag::TYPETAG_MASS>
 
 #if NEW_PROBLEM_INTERFACE
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumCVFEVariables<Traits>;
-};
-
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::SincosTestMassBox>
-{ using type = Dumux::Experimental::DefaultGridVariables<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::SincosTestMassBox> { static constexpr bool value = true; };
 #endif
 
 // the momentum problem without coupling to a mass problem
 template<class TypeTag>
 struct Problem<TypeTag, TTag::SincosTestMomentumOnly>
 { using type = SincosTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
-
-template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::SincosTestMomentumOnly>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumCVFEVariables<Traits>;
-};
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::SincosTestMomentumOnly>

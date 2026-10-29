@@ -101,13 +101,18 @@ struct LocalResidual<TypeTag, TTag::Hyperelastic>
 { using type = HyperelasticLocalResidual<TypeTag>; };
 
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::Hyperelastic>
+struct Variables<TypeTag, TTag::Hyperelastic>
 {
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using MT = GetPropType<TypeTag, Properties::ModelTraits>;
     using Traits = HyperelasticVolumeVariablesTraits<PV, MT>;
     using type = HyperelasticVariables<Traits>;
 };
+
+//! Code asking for the volume variables gets the variables per local dof
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::Hyperelastic>
+{ using type = GetPropType<TypeTag, Properties::Variables>; };
 
 //! The general grid variables, with the cache selected depending on the discretization scheme
 template<class TypeTag>
