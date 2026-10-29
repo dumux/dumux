@@ -10,7 +10,7 @@ to reproduce the results.
 Help expanding the documentation of implemented benchmarks: see [issue tracker](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/issues/1417)
 for more information.
 
-## Porous medium flow benchmarks
+## Porous medium flow benchmarks {#porous-medium-flow-benchmarks}
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
@@ -25,14 +25,14 @@ for more information.
 | [![SPE10 Case 2 Fluvial](https://www.spe.org/web/csp/images/img2.gif)](https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10) | [↗️ SPE10](https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10) | Upscaling, @ref TwoPModel | A DuMux module for running the benchmark scenarios of the [10th Society of Petroleum Engineers' Comparative Solution Project (SPE10) from 2001 (organized by M. Christie and M. Blunt)](https://www.spe.org/web/csp/index.html). |
 | ![radial injection](2pve_radialinjection_profile.png) | @ref benchmark-2pve-radial-injection "↗️ Radial Injection into a Confined Aquifer" | CO<sub>2</sub> storage, vertical equilibrium, @ref TwoPVEModel, @ref CCTpfaDiscretization | Interface of a CO<sub>2</sub> plume injected into a confined aquifer; comparison with the similarity solution of Nordbotten and Celia (2006) @cite NordbottenCelia2006 |
 
-## Free flow benchmarks
+## Free flow benchmarks {#free-flow-benchmarks}
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
 | [![lid-driven cavity](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/liddrivencavity/img/result.svg)](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | [↗️ Shear-Driven Cavity Flow](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md) | 2D, free flow, @ref NavierStokesModel, @ref FaceCenteredStaggeredDiscretization | Velocity profiles at Re = 1 and Re = 1000 compared against reference data from Ghia et al. (1982) and Jurjević (1999) |
 | ![taylor-couette](taylorcouette_comparison.png) | @ref benchmark-taylor-couette "↗️ Taylor-Couette Flow" | 2D, free flow, @ref NavierStokesModel, @ref DiamondDiscretization, @ref CCTpfaDiscretization | Circular Couette flow between two rotating cylinders at Re = 100; second-order convergence of velocity and pressure towards the analytical solution @cite taylor1923 |
 
-## Shallow water benchmarks
+## Shallow water benchmarks {#shallow-water-benchmarks}
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
@@ -42,7 +42,7 @@ for more information.
 | ![Poiseuille flow](shallowwater_poiseuille_setup.svg) | @ref benchmark-shallow-water-poiseuille "↗️ Shallow Water Poiseuille Flow" | viscous flux, bed friction, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Steady channel flow with an eddy viscosity and no-slip side walls, and laminar film flow with viscous bed friction; approximately first-order convergence along the channel, caused by the bed being constant in each cell, and approximately second-order convergence across the channel towards the exact velocity |
 | ![rough channel](shallowwater_roughchannel_setup.svg) | @ref benchmark-rough-channel "↗️ Flow in a Rough Channel" | bed friction, @ref ShallowWaterModels, @ref CCTpfaDiscretization | Normal flow with the friction law of Gauckler, Manning and Strickler; approximately first-order convergence towards the normal depth, caused by the bed being constant in each cell |
 
-## Solid mechanics benchmarks
+## Solid mechanics benchmarks {#solid-mechanics-benchmarks}
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
@@ -55,14 +55,14 @@ for more information.
 | ![incompressible block](incompressible_block_deformation.png) | @ref benchmark-incompressible-block "↗️ Incompressible Block (SPP 1748)" | solid mechanics, hyperelasticity, locking, mixed formulation, @ref HyperelasticVolIso, MINI, Taylor–Hood and Q2–Q1 elements | Nearly incompressible block under a partial surface load; displacement of the load centre compared with @cite Schroeder2021 |
 | [![cardiac elastodynamics](https://bwgit.de/st/iws/dumux/appl/dumux-cardiac-benchmark/-/raw/main/doc/media/biventricle_heartbeat_thumbnail.gif)](https://st.bwpages.de/iws/dumux/appl/dumux-cardiac-benchmark/) | [↗️ Cardiac Elastodynamics](https://st.bwpages.de/iws/dumux/appl/dumux-cardiac-benchmark/) | solid mechanics, hyperelasticity, elastodynamics, @ref Hyperelastic, PQ2 finite elements | A DuMux module for the heartbeat of an idealized left ventricle and biventricle (anisotropic, nearly incompressible, viscous, actively contracting material); probe displacements compared with the participants of @cite Arostica2025 ([code](https://bwgit.de/st/iws/dumux/appl/dumux-cardiac-benchmark)) |
 
-## Poromechanics benchmarks
+## Poromechanics benchmarks {#poromechanics-benchmarks}
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|
 | ![mandel](mandel_pressure.png) | @ref benchmark-mandel "↗️ Mandel's Problem" | poromechanics, consolidation, @ref OnePModel, @ref PoroElastic, @ref CCTpfaDiscretization, @ref BoxDiscretization, @ref MultiDomain | Consolidation of a poroelastic slab between rigid plates (Mandel-Cryer effect), also with compressible solid grains; comparison with the analytical solution @cite Abousleiman1996 |
 | ![cryer sphere](cryer_overview.png) | @ref benchmark-cryer "↗️ Cryer Sphere Consolidation" | poromechanics, consolidation, large deformation, @ref OnePModel, @ref PoroElastic, @ref PoroElasticLargeDef, @ref CCMpfaDiscretization, @ref PQ2Discretization, @ref BoxDiscretization, @ref MultiDomain | Mandel–Cryer effect: the centre pore pressure of a drained poroelastic sphere overshoots the surface load; linear and large-deformation poroelasticity, comparison with Cryer's solution @cite Cryer1963 |
 
-## Time integration benchmarks
+## Time integration benchmarks {#time-integration-benchmarks}
 
 | Image | Benchmark description | Topics | Comment |
 |:----------:|:----------:|:---------|:---------|

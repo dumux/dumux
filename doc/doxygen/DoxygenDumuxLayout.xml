@@ -31,29 +31,44 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <tab type="topics" visible="yes" title="User documentation by topics" intro="" />
     <!-- Add subpages here manually if they are supposed to appear in the navigation sidebar -->
     <tab type="usergroup" url="@ref benchmarks" visible="yes" title="Benchmarks" intro="">
-      <tab type="user" url="@ref benchmark-richards-benchmarks" visible="yes" title="Richards Infiltration &amp; Evaporation" intro=""/>
-      <tab type="user" url="@ref benchmark-buckley-leverett" visible="yes" title="Buckley-Leverett" intro=""/>
-      <tab type="user" url="@ref benchmark-mcwhorter-sunada" visible="yes" title="McWhorter-Sunada" intro=""/>
-      <tab type="user" url="@ref benchmark-horton-rogers-lapwood" visible="yes" title="Horton-Rogers-Lapwood" intro=""/>
-      <tab type="user" url="@ref benchmark-heatpipe-udell" visible="yes" title="Udell's Heat Pipe" intro=""/>
-      <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
-      <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
-      <tab type="user" url="@ref benchmark-taylor-couette" visible="yes" title="Taylor-Couette" intro=""/>
-      <tab type="user" url="@ref benchmark-dam-break" visible="yes" title="Wet dam break" intro=""/>
-      <tab type="user" url="@ref benchmark-thacker-bowl" visible="yes" title="Thacker's bowl" intro=""/>
-      <tab type="user" url="@ref benchmark-lake-at-rest" visible="yes" title="Lake at rest" intro=""/>
-      <tab type="user" url="@ref benchmark-shallow-water-poiseuille" visible="yes" title="Shallow water Poiseuille flow" intro=""/>
-      <tab type="user" url="@ref benchmark-rough-channel" visible="yes" title="Rough channel" intro=""/>
-      <tab type="user" url="@ref benchmark-membrane-plate" visible="yes" title="Membrane deformation" intro=""/>
-      <tab type="user" url="@ref benchmark-kirchhoff-love-plate" visible="yes" title="Kirchhoff-Love Plate" intro=""/>
-      <tab type="user" url="@ref benchmark-mindlin-reissner-plate" visible="yes" title="Mindlin-Reissner Plate" intro=""/>
-      <tab type="user" url="@ref benchmark-cooks-membrane-elastic" visible="yes" title="Cook's membrane" intro=""/>
-      <tab type="user" url="@ref benchmark-turekhron-csm" visible="yes" title="Turek Hron CSM" intro=""/>
-      <tab type="user" url="@ref benchmark-cooks-membrane-hyperelastic" visible="yes" title="Cook's membrane, hyperelastic" intro=""/>
-      <tab type="user" url="@ref benchmark-incompressible-block" visible="yes" title="Incompressible block" intro=""/>
-      <tab type="user" url="https://st.bwpages.de/iws/dumux/appl/dumux-cardiac-benchmark/" visible="yes" title="Cardiac elastodynamics" intro=""/>
-      <tab type="user" url="@ref benchmark-mandel" visible="yes" title="Mandel's problem" intro=""/>
-      <tab type="user" url="@ref benchmark-timestepping-methods" visible="yes" title="Multistep timestepping" intro=""/>
+      <tab type="usergroup" url="@ref porous-medium-flow-benchmarks" visible="yes" title="Porous medium flow" intro="">
+        <tab type="user" url="@ref benchmark-richards-benchmarks" visible="yes" title="Richards Infiltration &amp; Evaporation" intro=""/>
+        <tab type="user" url="@ref benchmark-buckley-leverett" visible="yes" title="Buckley-Leverett" intro=""/>
+        <tab type="user" url="@ref benchmark-mcwhorter-sunada" visible="yes" title="McWhorter-Sunada" intro=""/>
+        <tab type="user" url="@ref benchmark-horton-rogers-lapwood" visible="yes" title="Horton-Rogers-Lapwood" intro=""/>
+        <tab type="user" url="@ref benchmark-heatpipe-udell" visible="yes" title="Udell's Heat Pipe" intro=""/>
+        <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
+        <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
+        <tab type="user" url="@ref benchmark-2pve-radial-injection" visible="yes" title="Radial injection" intro=""/>
+      </tab>
+      <tab type="usergroup" url="@ref free-flow-benchmarks" visible="yes" title="Free flow" intro="">
+        <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md" visible="yes" title="Shear-driven cavity" intro=""/>
+        <tab type="user" url="@ref benchmark-taylor-couette" visible="yes" title="Taylor-Couette" intro=""/>
+      </tab>
+      <tab type="usergroup" url="@ref shallow-water-benchmarks" visible="yes" title="Shallow water" intro="">
+        <tab type="user" url="@ref benchmark-dam-break" visible="yes" title="Wet dam break" intro=""/>
+        <tab type="user" url="@ref benchmark-thacker-bowl" visible="yes" title="Thacker's bowl" intro=""/>
+        <tab type="user" url="@ref benchmark-lake-at-rest" visible="yes" title="Lake at rest" intro=""/>
+        <tab type="user" url="@ref benchmark-shallow-water-poiseuille" visible="yes" title="Shallow water Poiseuille flow" intro=""/>
+        <tab type="user" url="@ref benchmark-rough-channel" visible="yes" title="Rough channel" intro=""/>
+      </tab>
+      <tab type="usergroup" url="@ref solid-mechanics-benchmarks" visible="yes" title="Solid mechanics" intro="">
+        <tab type="user" url="@ref benchmark-membrane-plate" visible="yes" title="Membrane deformation" intro=""/>
+        <tab type="user" url="@ref benchmark-kirchhoff-love-plate" visible="yes" title="Kirchhoff-Love Plate" intro=""/>
+        <tab type="user" url="@ref benchmark-mindlin-reissner-plate" visible="yes" title="Mindlin-Reissner Plate" intro=""/>
+        <tab type="user" url="@ref benchmark-cooks-membrane-elastic" visible="yes" title="Cook's membrane" intro=""/>
+        <tab type="user" url="@ref benchmark-turekhron-csm" visible="yes" title="Turek Hron CSM" intro=""/>
+        <tab type="user" url="@ref benchmark-cooks-membrane-hyperelastic" visible="yes" title="Cook's membrane, hyperelastic" intro=""/>
+        <tab type="user" url="@ref benchmark-incompressible-block" visible="yes" title="Incompressible block" intro=""/>
+        <tab type="user" url="https://st.bwpages.de/iws/dumux/appl/dumux-cardiac-benchmark/" visible="yes" title="Cardiac elastodynamics" intro=""/>
+      </tab>
+      <tab type="usergroup" url="@ref poromechanics-benchmarks" visible="yes" title="Poromechanics" intro="">
+        <tab type="user" url="@ref benchmark-mandel" visible="yes" title="Mandel's problem" intro=""/>
+        <tab type="user" url="@ref benchmark-cryer" visible="yes" title="Cryer's sphere" intro=""/>
+      </tab>
+      <tab type="usergroup" url="@ref time-integration-benchmarks" visible="yes" title="Time integration" intro="">
+        <tab type="user" url="@ref benchmark-timestepping-methods" visible="yes" title="Time-stepping methods" intro=""/>
+      </tab>
     </tab>
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
     <tab type="user" url="@ref contribution-guidelines" visible="yes" title="Contribute to DuMux" intro=""/>
