@@ -82,6 +82,12 @@ interpolation point data for the whole grid independently of the variables (defa
 - __Immiscible local residual__: For the variables per local degree of freedom, `Flux.ScvfPermeability = FaceTensorAverage` uses
 the average of the permeabilities of the two sub-control volumes sharing a face (`faceTensorAverage`, as `CVFEDarcysLaw`) instead of
 interpolating the permeability from the local degrees of freedom to the integration point (`Interpolation`, default).
+- __Spatial parameters__: For the variables per local degree of freedom, `permeability` and `porosity` taking interpolation
+point data have no default; the spatial parameters overload them. A local dof on an element face belongs to the elements on
+both sides, so a function of the position (`permeabilityAtPos`) is ambiguous where it jumps. A smooth function is
+evaluated at the position of the interpolation point (`ipData.global()`), as `evaluatePermeabilityAtScvfIP()` does for the
+volume variables, and a parameter constant per element is determined by the element (`elemDisc.element()`), which is what the
+volume variables assume by default (see `test/porousmediumflow/1p/layered`).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
