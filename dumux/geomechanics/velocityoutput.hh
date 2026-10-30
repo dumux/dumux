@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsModels
+ * \ingroup Elastic
  * \brief Velocity output for geomechanical models
  */
 #ifndef DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
@@ -20,7 +20,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsModels
+ * \ingroup Elastic
  * \brief Velocity output for geomechanical models.
  *        This class could be used to compute the temporal derivative
  *        of the displacement. Currently this is not implemented and

@@ -129,7 +129,7 @@ linters:
 reuse:
   stage: linting
   image:
-    name: fsfe/reuse:latest
+    name: fsfe/reuse:6.2.0
     entrypoint: [""]
   script:
     - reuse lint
