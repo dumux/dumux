@@ -13,6 +13,7 @@
 #define DUMUX_ONEP_VARIABLES_HH
 
 #include <dumux/common/concepts/ipdata_.hh>
+#include <dumux/porousmediumflow/nonisothermal/variables.hh>
 
 namespace Dumux::Experimental {
 
@@ -26,12 +27,14 @@ namespace Dumux::Experimental {
  */
 template<class Traits>
 class OnePVariables
+: public EnergyVariables<Traits, OnePVariables<Traits>>
 {
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
+    using EnergyVars = EnergyVariables<Traits, OnePVariables<Traits>>;
 
-    static_assert(!ModelTraits::enableEnergyBalance(),
-                  "The energy balance is currently not implemented for variables defined per local dof");
+    static_assert(Traits::SolidSystem::isInert() && Traits::SolidSystem::numComponents == 1,
+                  "Only a single inert solid component is implemented for variables defined per local dof");
 
 public:
     //! export the type used for the primary variables
@@ -42,6 +45,10 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! export the underlying solid system
+    using SolidSystem = typename Traits::SolidSystem;
+    //! export the solid state type
+    using SolidState = typename Traits::SolidState;
     //! export the type of the intrinsic permeability
     using PermeabilityType = typename Traits::PermeabilityType;
 
@@ -71,7 +78,11 @@ public:
         porosity_ = spatialParams.porosity(elemDisc, ipData, elemSol);
         permeability_ = spatialParams.permeability(elemDisc, ipData, elemSol);
 
-        completeFluidState(elemSol, problem, elemDisc, ipData, fluidState_);
+        completeFluidState(elemSol, problem, elemDisc, ipData, fluidState_, solidState_);
+
+        solidState_.setVolumeFraction(/*compIdx=*/0, 1.0 - porosity_);
+        EnergyVars::updateSolidEnergyParams(elemSol, problem, elemDisc, ipData, solidState_);
+        EnergyVars::updateEffectiveThermalConductivity();
     }
 
     /*!
@@ -82,15 +93,17 @@ public:
      * \param elemDisc The element discretization
      * \param ipData The interpolation point data of the local dof
      * \param fluidState A container with the current (physical) state of the fluid
+     * \param solidState A container with the current (physical) state of the solid
      */
     template<class ElementSolution, class Problem, class ElementDiscretization, Concept::LocalDofIpData IpData>
     void completeFluidState(const ElementSolution& elemSol,
                             const Problem& problem,
                             const ElementDiscretization& elemDisc,
                             const IpData& ipData,
-                            FluidState& fluidState) const
+                            FluidState& fluidState,
+                            SolidState& solidState)
     {
-        fluidState.setTemperature(/*phaseIdx=*/0, problem.spatialParams().temperature(elemDisc, ipData, elemSol));
+        EnergyVars::updateTemperature(elemSol, problem, elemDisc, ipData, fluidState, solidState);
         fluidState.setPressure(/*phaseIdx=*/0, elemSol[ipData.localDofIndex()][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant to set. But since we use
@@ -106,8 +119,8 @@ public:
         value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setViscosity(/*phaseIdx=*/0, value);
 
-        // the enthalpy is zero for isothermal models
-        fluidState.setEnthalpy(/*phaseIdx=*/0, 0.0);
+        value = EnergyVars::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
+        fluidState.setEnthalpy(/*phaseIdx=*/0, value);
     }
 
     /*!
@@ -177,6 +190,12 @@ public:
     { return fluidState_; }
 
     /*!
+     * \brief Returns the solid state.
+     */
+    const SolidState& solidState() const
+    { return solidState_; }
+
+    /*!
      * \brief Return a component of the primary variable vector
      * \param pvIdx The index of the primary variable of interest
      */
@@ -192,6 +211,7 @@ public:
 private:
     PrimaryVariables priVars_;
     FluidState fluidState_;
+    SolidState solidState_;
     PermeabilityType permeability_;
     Scalar extrusionFactor_;
     Scalar porosity_;

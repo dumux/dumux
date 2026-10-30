@@ -44,6 +44,8 @@
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual_.hh>
 #include <dumux/flux/cvfe/darcyslaw_.hh>
+#include <dumux/flux/cvfe/fourierslaw_.hh>
+#include <dumux/flux/fourierslaw.hh>
 #include <dumux/discretization/defaultgridvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/iofields.hh>
@@ -219,6 +221,38 @@ private:
 
 public:
     using type = OnePVolumeVariables<NITraits<BaseTraits, ETCM>>;
+};
+
+//! The variables per local dof
+template<class TypeTag>
+struct Variables<TypeTag, TTag::OnePNI>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using SSY = GetPropType<TypeTag, Properties::SolidSystem>;
+    using SST = GetPropType<TypeTag, Properties::SolidState>;
+    using PT = typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+    using BaseTraits = OnePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+
+    using ETCM = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
+    template<class BaseTraits, class ETCM>
+    struct NITraits : public BaseTraits { using EffectiveThermalConductivityModel = ETCM; };
+
+public:
+    using type = Experimental::OnePVariables<NITraits<BaseTraits, ETCM>>;
+};
+
+//! Fourier's law, at the integration points of the scheme for the variables per local dof
+template<class TypeTag>
+struct HeatConductionType<TypeTag, TTag::OnePNI>
+{
+    using type = std::conditional_t<Dumux::Detail::usesVariables<TypeTag>(),
+                                    Experimental::CVFEFouriersLawAtIp<GetPropType<TypeTag, Properties::Scalar>,
+                                                                      GetPropType<TypeTag, Properties::GridGeometry>>,
+                                    FouriersLaw<TypeTag>>;
 };
 
 //! Use the average for effective conductivities
