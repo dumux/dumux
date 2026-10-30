@@ -7,121 +7,127 @@
 /*!
  * \file
  *
- * \brief Upscaling using pore network model
-*/
+ * \brief Two-phase relative-permeability upscaling with a pore network model.
+ *
+ * A quasi-static two-phase invasion-percolation sweep (TwoPStatic, driven by
+ * PNMProblemStatic) determines, over a full capillary-pressure cycle (drainage from
+ * Problem.InitialPc up to Problem.FinalPc, then imbibition back down), the invasion state and
+ * phase conductance of every throat at each step. For each step, a single-phase Darcy
+ * (CreepingFlow) solve is then run separately for the wetting and the non-wetting phase on that
+ * frozen conductance field, and the resulting mass fluxes are converted into apparent phase
+ * permeabilities, giving relative-permeability curves that capture drainage/imbibition
+ * hysteresis.
+ */
 #include <config.h>
-#include <ctime>
 #include <iostream>
+
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
+#include <dune/foamgrid/foamgrid.hh>
+
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/common/properties/model.hh>
-#include <dumux/common/properties/grid.hh>
 #include <dumux/discretization/porenetwork/gridgeometry.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforplatonicbody.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
-#include <dune/foamgrid/foamgrid.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility1p.hh>
-#include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
-#include <dumux/porenetwork/common/throatproperties.hh>
-
-#include <dumux/porenetwork/2p/static/staticpnm.hh>
-#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/porenetwork/common/boundaryflux.hh>
+#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
-#include <dumux/linear/pdesolver.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
-
-#include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
-
-#include <dumux/io/grid/gridmanager_yasp.hh>
-#include <dumux/io/grid/porenetwork/gridmanager.hh> // for pore-network grid
-#include <dumux/porenetwork/common/boundaryflux.hh>
 
 #include "upscalinghelper.hh"
 #include "properties.hh"
 
-// [[/codeblock]]
-// [[/details]]
-//
-// ### The driver function
-//
-// The template argument `TypeTag` determines if we run the example assuming
-// a creeping flow regime or not. Which regime is selected is set with the parameter
-// `Problem.AssumeCreepingFlow` in the input file.
 namespace Dumux {
 
-template<class TypeTag, class GridManager, class StaticProperties>
-void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& staticProperties)
+/*!
+ * \brief Runs the quasi-static two-phase invasion-percolation sweep for the whole saturation
+ *        range, caching the per-throat phase transmissibilities of every step.
+ *
+ * \param gridManager The pore-network grid manager
+ * \param upscalingHelper Receives the network's total pore volume for the porosity report
+ */
+template<class GridManager>
+auto runStaticProblem(GridManager& gridManager,
+                      UpscalingHelper<GetPropType<Properties::TTag::PNMTWOPStatic, Properties::Scalar>>& upscalingHelper)
 {
-    constexpr int phaseIdx = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlowLiquid> ? 0:1;
-    const auto& staticFlowProperties = staticProperties;
-    // ### Create the grid and the grid geometry
-    // [[codeblock]]
-    // The grid manager can be used to create a grid from the input file
-    // using GridManager = PoreNetwork::GridManager<3>;
-    // GridManager gridManager;
-    // gridManager.init();
+    using TypeTag = Properties::TTag::PNMTWOPStatic;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    // We compute on the leaf grid view.
     const auto& leafGridView = gridManager.grid().leafGridView();
-
-    // instantiate the grid geometry
     auto gridData = gridManager.getGridData();
+    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
+
+    Problem problem(*gridGeometry);
+
+    auto sequenceWriter = problem.sequenceWriter();
+
+    for (int step = 0; step < problem.totalNumberOfSteps(); ++step)
+    {
+        problem.pcSwStatic(step);
+        sequenceWriter.write(step);
+    }
+
+    if (getParam<bool>("Problem.PlotPcS", false))
+        problem.plot();
+
+    upscalingHelper.setTotalPoreVolume(problem.totalPoreVolume());
+    upscalingHelper.setApexStep(problem.numberOfSteps());
+    return problem.staticProperties();
+}
+
+/*!
+ * \brief Runs the single-phase Darcy upscaling solve for one fluid (liquid or gas), looking
+ *        up the throat conductances precomputed by the two-phase model at every saturation step.
+ *
+ * \tparam TypeTag Selects liquid or gas via its FluidSystem
+ * \param gridManager The pore-network grid manager
+ * \param staticFlowProperties The per-step results of the two-phase sweep (see runStaticProblem)
+ * \param upscalingHelper Collects the resulting apparent-permeability-vs-saturation data
+ */
+template<class TypeTag, class GridManager, class StaticProperties>
+void runSinglePhaseUpscaling(GridManager& gridManager,
+                             const StaticProperties& staticFlowProperties,
+                             UpscalingHelper<GetPropType<TypeTag, Properties::Scalar>>& upscalingHelper)
+{
+    constexpr int phaseIdx = std::is_same_v<TypeTag, Properties::TTag::PNMUpscalingCreepingFlowLiquid> ? 0 : 1;
+
+    const auto& leafGridView = gridManager.grid().leafGridView();
+    auto gridData = gridManager.getGridData();
+
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
-    // [[/codeblock]]
 
-    // ### Initialize the problem and grid variables
-    // [[codeblock]]
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
-    problem->importTransmissibility(staticFlowProperties[0].throatTransmissibility);
-
-    // instantiate and initialize the discrete and exact solution vectors
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
     SolutionVector x(gridGeometry->numDofs()); // zero-initializes
 
-    // instantiate and initialize the grid variables
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
     auto gridVariables = std::make_shared<GridVariables>(problem, gridGeometry);
     gridVariables->init(x);
-    // [[/codeblock]]
 
-    // ### Instantiate the solver
-    // We use the `NewtonSolver` class, which is instantiated on the basis
-    // of an assembler and a linear solver. When the `solve` function of the
-    // `NewtonSolver` is called, it uses the assembler and linear
-    // solver classes to assemble and solve the non-linear system.
-    // [[codeblock]]
+    // The `NewtonSolver` is instantiated on the basis of an assembler and a linear solver; its
+    // `solve()` function uses them to assemble and solve the (here: linear) system.
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
-
 
     using LinearSolver = Dumux::UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
-    // [[/codeblock]]
 
-    // ### Initialize VTK output
     using VtkOutputFields = GetPropType<TypeTag, Properties::IOFields>;
     using VtkWriter = PoreNetwork::VtkOutputModule<GridVariables, GetPropType<TypeTag, Properties::FluxVariables>, SolutionVector>;
-    auto name = phaseIdx ? "Upscaling_gas":"Upscaling_water";
+    const std::string name = phaseIdx == 0 ? "upscaling_liquid" : "upscaling_gas";
     VtkWriter vtkWriter(*gridVariables, x, name);
     VtkOutputFields::initOutputModule(vtkWriter);
     // specify the field type explicitly since it may not be possible
@@ -129,50 +135,26 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
     vtkWriter.addField(gridGeometry->poreVolume(), "poreVolume", Vtk::FieldType::vertex);
     vtkWriter.addField(gridGeometry->throatCrossSectionalArea(), "throatCrossSectionalArea", Vtk::FieldType::element);
 
-    // ### Prepare the upscaling procedure.
-    // Set up a helper class to determine the total mass flux leaving the network
+    // set up a helper to determine the total mass flux leaving the network
     const auto boundaryFlux = PoreNetwork::BoundaryFlux(*gridVariables, assembler->localResidual(), x);
 
-    // // ### The actual upscaling procedure
-    // // #### Instantiate the upscaling helper
-    // // [[codeblock]]
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using UpscalingHelper = UpscalingHelper<Scalar>;
-    UpscalingHelper upscalingHelper;
-    // // [[/codeblock]]
-
-    // Get the maximum and minimum pressure gradient and the population of sample points specified in the input file
-    // [[codeblock]]
     const Scalar minPressureGradient = getParam<Scalar>("Problem.MinimumPressureGradient", 1e1);
     const Scalar maxPressureGradient = getParam<Scalar>("Problem.MaximumPressureGradient", 1e10);
-
     if (!(minPressureGradient < maxPressureGradient))
         DUNE_THROW(Dune::InvalidStateException, "Maximum pressure gradient must be greater than minimum pressure gradient");
 
-    const int numberOfSamples = getParam<int>("Problem.NumberOfPressureGradients", 1);
-    // [[/codeblock]]
-
-    // Iterate over all directions specified before, apply several pressure gradients, calculate the mass flux
-    // and finally determine the the upscaled properties.
-    // [[codeblock]]
-    const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0, 1, 2});
-    // upscalingHelper.setDirections(directions);
-
+    // only the flow direction matters here (relative permeability is upscaled along the same
+    // direction the two-phase sweep used to establish the saturation state)
+    const auto directions = getParam<std::vector<std::size_t>>("Problem.Directions", std::vector<std::size_t>{0});
     for (int dimIdx : directions)
     {
-        // set the direction in which the pressure gradient will be applied
         problem->setDirection(dimIdx);
-        // ### The actual upscaling procedure
-        // #### Instantiate the upscaling helper
-        // [[codeblock]]
 
-        upscalingHelper.setDirections(directions);
-        // [[/codeblock]]
-
-        // Set the side lengths used for applying the pressure gradient and calculating the REV outflow area.
-        // One can either specify these values manually (usually more accurate) or let the UpscalingHelper struct
-        // determine it automatically based on the network's bounding box.
-        // [[codeblock]]
+        // Set the side lengths used for applying the pressure gradient and calculating the REV
+        // outflow area. One can either specify these values manually (usually more accurate) or
+        // let the UpscalingHelper struct determine them automatically from the network's
+        // bounding box.
         const auto sideLengths = [&]()
         {
             using GlobalPosition = typename GridGeometry::GlobalCoordinate;
@@ -181,74 +163,36 @@ void runSinglePhaseUpscaling(GridManager& gridManager, const StaticProperties& s
             else
                 return upscalingHelper.getSideLengths(*gridGeometry);
         }();
-
         problem->setSideLengths(sideLengths);
 
-        for (std::size_t step = 0; step<staticFlowProperties.size(); ++step)
+        // start this phase's data for this direction fresh (the helper instance is shared
+        // across both phases, see runSinglePhaseUpscaling's doc comment)
+        upscalingHelper.resetDataPoints(dimIdx);
+
+        for (std::size_t step = 0; step < staticFlowProperties.size(); ++step)
         {
             problem->importTransmissibility(staticFlowProperties[step].throatTransmissibility);
-            int i = 0;
             x = 0.0;
 
-            // set the pressure gradient to be applied
-            Scalar pressureGradient = maxPressureGradient * std::exp(i + 1 - numberOfSamples);
-            if (i == 0)
-                pressureGradient = std::min(minPressureGradient, pressureGradient);
+            // apply the smallest available pressure gradient: for the creeping-flow regime used
+            // here, the apparent permeability is independent of the pressure gradient, so a
+            // single, small sample point per saturation step is sufficient
+            problem->setPressureGradient(std::min(minPressureGradient, maxPressureGradient));
 
-            problem->setPressureGradient(pressureGradient);
-
-            // solve problem
             nonLinearSolver.solve(x);
 
-            // set the sample points
-            const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{ problem->outletPoreLabel() })[0];
+            const Scalar totalFluidMassFlux = boundaryFlux.getFlux(std::vector<int>{problem->outletPoreLabel()})[0];
             upscalingHelper.setDataPoints(*problem, totalFluidMassFlux, staticFlowProperties[step]);
 
-            // write a vtu file for the given direction for the last sample
             vtkWriter.write(step);
         }
 
         upscalingHelper.networkPorosity(*problem);
-        // calculate and save the upscaled properties
-        upscalingHelper.writePlotDataToFile(dimIdx, phaseIdx);
+        upscalingHelper.writePlotDataToFile(dimIdx, phaseIdx, getParam<std::string>("Problem.Name"));
     }
-};
-
-template<class GridManager>
-const auto runStaticProblem(GridManager& gridManager, std::vector<bool> invasionState = {})
-{
-    using TypeTag = Properties::TTag::PNMTWOPStatic;
-    constexpr bool isDrainage = DRAINAGE;
-
-    const auto& leafGridView = gridManager.grid().leafGridView();
-    auto gridData = gridManager.getGridData();
-
-    // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
-    auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
-
-
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    Problem problem(*gridGeometry, isDrainage, invasionState);
-
-    Dune::VTKSequenceWriter<GridGeometry::GridView> sequenceWriter = problem.sequenceWriter();
-
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    PoreNetwork::TwoPStatic<GridGeometry, Scalar, isDrainage> staticModel = problem.staticModel<isDrainage>();
-
-    auto numSteps = problem.numberOfSteps();
-    for (int step = 0; step < numSteps + 1; ++step)
-    {
-        problem.pcSwStatic(staticModel, step);
-        sequenceWriter.write(step);
-    }
-
-    UpscalingHelper<Scalar>::setTotalPoreVolume(problem.totalPoreVolume());
-    return problem.staticProperties();
 }
 
 } // end namespace Dumux
-// [[/codeblock]]
 
 int main(int argc, char** argv)
 {
@@ -256,7 +200,6 @@ int main(int argc, char** argv)
 
     using TypeTagLiquid = Properties::TTag::PNMUpscalingCreepingFlowLiquid;
     using TypeTagGas = Properties::TTag::PNMUpscalingCreepingFlowGas;
-
     using Scalar = GetPropType<TypeTagGas, Properties::Scalar>;
 
     // maybe initialize MPI and/or multithreading backend
@@ -267,25 +210,21 @@ int main(int argc, char** argv)
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    ////////////////////////////////////////////////////////////
-    // parse the command line arguments and input file
-    ////////////////////////////////////////////////////////////
-    // parse command line arguments
+    // parse command line arguments and the input file
     Parameters::init(argc, argv);
 
     using GridManager = PoreNetwork::GridManager<3>;
     GridManager gridManager;
     gridManager.init();
 
-    const auto flowPropertiesStatic = runStaticProblem(gridManager);
-    runSinglePhaseUpscaling<TypeTagLiquid>(gridManager, flowPropertiesStatic);
-    runSinglePhaseUpscaling<TypeTagGas>(gridManager, flowPropertiesStatic);
+    UpscalingHelper<Scalar> upscalingHelper;
+    const auto staticFlowProperties = runStaticProblem(gridManager, upscalingHelper);
+    runSinglePhaseUpscaling<TypeTagLiquid>(gridManager, staticFlowProperties, upscalingHelper);
+    runSinglePhaseUpscaling<TypeTagGas>(gridManager, staticFlowProperties, upscalingHelper);
 
-    UpscalingHelper<Scalar>::plot();
-    UpscalingHelper<Scalar>::reportPorosity();
-    ////////////////////////////////////////////////////////////
-    // finalize, print dumux message to say goodbye
-    ////////////////////////////////////////////////////////////
+    upscalingHelper.reportPorosity();
+    if (getParam<bool>("Problem.PlotPcS", false))
+        upscalingHelper.plot();
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
@@ -293,4 +232,6 @@ int main(int argc, char** argv)
         Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
     }
+
+    return 0;
 }
