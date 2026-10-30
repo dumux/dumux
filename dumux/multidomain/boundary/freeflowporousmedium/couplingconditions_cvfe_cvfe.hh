@@ -14,7 +14,6 @@
 #define DUMUX_MD_FREEFLOW_POROUSMEDIUM_COUPLINGCONDITIONS_CVFE_CVFE_HH
 
 #include <cstddef>
-#include <type_traits>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
@@ -22,6 +21,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 #include <dumux/multidomain/boundary/freeflowporousmedium/traits.hh>
@@ -62,6 +62,8 @@ class FFPMCouplingConditionsCvfeImplBase
     template<std::size_t id> using ElementDiscretization = typename GridDiscretization<id>::LocalView;
     template<std::size_t id> using FluidSystem = GetPropType<SubDomainTypeTag<id>, Properties::FluidSystem>;
     template<std::size_t id> using ModelTraits = GetPropType<SubDomainTypeTag<id>, Properties::ModelTraits>;
+    template<std::size_t id> using GridVariables = GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
+    template<std::size_t id> using AdvectionType = GetPropType<SubDomainTypeTag<id>, Properties::AdvectionType>;
     template<std::size_t id> using GlobalPosition = typename GridDiscretization<id>::GridView::template Codim<0>::Geometry::GlobalCoordinate;
 
 public:
@@ -113,40 +115,34 @@ public:
 
     /*!
      * \brief Returns the Darcy velocity at an interpolation point of the coupled Darcy element.
-     * \note The pressure gradient and the density of the gravity term are interpolated with the
-     *       shape functions of the element. The permeability and the viscosity are taken from the
+     * \note The velocity is the flux term of the advection type of the porous-medium model with
+     *       the tensor \f$\mathbf{K}/\mu\f$. The permeability and the viscosity are taken from the
      *       sub-control volume of the boundary sub-control-volume face closest to the interpolation point.
      */
     template<class Context, class IpData>
     static auto darcyVelocity(const Context& context, const IpData& ipData)
     {
+        static_assert(!Concept::FVGridVariables<GridVariables<porousMediumIndex>>,
+                      "The Darcy velocity requires the porous-medium model to use the general grid variables");
+
         const auto pmPhaseIdx = couplingPhaseIdx(porousMediumIndex);
         const auto& elemDisc = context.elemDisc;
-        const auto& localBasis = elemDisc.feLocalBasis();
-        using LocalBasis = std::decay_t<decltype(localBasis)>;
 
-        std::vector<typename LocalBasis::Traits::RangeType> shapeValues;
-        std::vector<typename LocalBasis::Traits::JacobianType> shapeJacobian;
-        localBasis.evaluateFunction(ipData.local(), shapeValues);
-        localBasis.evaluateJacobian(ipData.local(), shapeJacobian);
-        const auto jacInvT = elemDisc.elementGeometry().jacobianInverseTransposed(ipData.local());
+        // the coupling context provides the variables per local dof like the element variables,
+        // but holds no interpolation point cache, so the cache is evaluated here
+        typename Concept::GridVariablesCache_t<GridVariables<porousMediumIndex>>::InterpolationPointData ipCache;
+        ipCache.update(context.problem, elemDisc.element(), elemDisc, context, ipData);
 
-        GlobalPosition<porousMediumIndex> gradP(0.0);
-        GlobalPosition<porousMediumIndex> gradN(0.0);
-        Scalar density = 0.0;
-        for (const auto& localDof : localDofs(elemDisc))
+        const auto mobilityTensor = [&](const auto& pmElemDisc, const auto& pmElemVars, const auto& pmIpData)
         {
-            const auto vars = context.vars(localDof);
-            jacInvT.mv(shapeJacobian[localDof.index()][0], gradN);
-            gradP.axpy(vars.pressure(pmPhaseIdx), gradN);
-            density += vars.density(pmPhaseIdx)*shapeValues[localDof.index()][0];
-        }
-        gradP.axpy(-density, context.problem.spatialParams().gravity(ipData.global()));
+            const auto vars = pmElemVars[pmElemDisc.scv(closestBoundaryScvIdx_(pmElemDisc, pmIpData.global()))];
+            auto tensor = vars.permeability();
+            tensor /= vars.viscosity(pmPhaseIdx);
+            return tensor;
+        };
 
-        const auto vars = context.vars(elemDisc.scv(closestBoundaryScvIdx_(elemDisc, ipData.global())));
-        auto velocity = mv(vars.permeability(), gradP);
-        velocity *= -1.0/vars.viscosity(pmPhaseIdx);
-        return velocity;
+        return AdvectionType<porousMediumIndex>::fluxTerm(context.problem, elemDisc.element(), elemDisc,
+                                                          context, pmPhaseIdx, ipData, ipCache, mobilityTensor);
     }
 
     /*!
