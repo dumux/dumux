@@ -3,7 +3,11 @@ UpperRight = 4e-4 4e-4 4e-4
 NumPores = 20 20 20
 ParameterType = lognormal
 MeanPoreInscribedRadius = 1e-5
-StandardDeviationPoreInscribedRadius = 4e-6
+# a pore-size distribution this wide (standard deviation 1.6x the mean) is what gives this
+# network a realistically broad range of throat snap-off thresholds -- and hence genuine,
+# spread-out imbibition trapping -- instead of all throats snapping off within a narrow pc
+# window near the end of the cycle; see "Why network heterogeneity matters" in the README
+StandardDeviationPoreInscribedRadius = 1.6e-5
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
 ParameterRandomNumberSeed = 1
