@@ -589,8 +589,8 @@ public:
                         subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, ipData(fvGeometry, scv)).update(std::move(elemSol), problem, deflectedElement, scv);
                 }
             }
-            // finite element discretizations have local dofs but no sub-control volumes
-            else if constexpr (!requires (FVElementGeometry<freeFlowMassIndex>& lv) { scvs(lv); })
+            // all other schemes provide local dofs, including those owning no sub-control volume
+            else
             {
                 if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
                 {
@@ -603,42 +603,23 @@ public:
 
                     for (const auto& localDof : localDofs(fvGeometry))
                     {
-                        if (localDof.dofIndex() == dofIdxGlobalJ)
-                            this->subDomainVariables_(
-                                Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, localDof
-                            ).update(std::move(elemSol), problem, fvGeometry, ipData(fvGeometry, localDof));
-                    }
-                }
-            }
-            else if constexpr (MassDiscretizationMethod{} == DiscretizationMethods::box
-                               || MassDiscretizationMethod{} == DiscretizationMethods::fcdiamond)
-            {
-                if constexpr (domainI == freeFlowMomentumIndex && domainJ == freeFlowMassIndex)
-                {
-                    const auto& problem = this->problem(domainJ);
-                    const auto deflectedElementIdx = Dumux::gridDiscretization(problem).elementMapper().index(localAssemblerI.element());
-                    const auto& deflectedElement = Dumux::gridDiscretization(problem).element(deflectedElementIdx);
-                    const auto elemSol = elementSolution(deflectedElement, this->curSol(domainJ), Dumux::gridDiscretization(problem));
-                    auto fvGeometry = localView(Dumux::gridDiscretization(problem));
-                    fvGeometry.bind(deflectedElement);
+                        if (localDof.dofIndex() != dofIdxGlobalJ)
+                            continue;
 
-                    // ToDo: Replace once all mass models are also working with local dofs
-                    for (const auto& scv : scvs(fvGeometry))
-                    {
-                        if (scv.dofIndex() == dofIdxGlobalJ)
+                        if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
                         {
-                            if constexpr (Concept::FVGridVariables<GridVariables<freeFlowMassIndex>>)
-                                this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, deflectedElement, scv);
-                            else
-                                this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv).update(std::move(elemSol), problem, fvGeometry, ipData(fvGeometry, scv));
+                            const auto& scv = fvGeometry.scv(localDof.index());
+                            auto& variables = this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, scv);
+                            variables.update(elemSol, problem, deflectedElement, scv);
+                        }
+                        else
+                        {
+                            auto& variables = this->subDomainVariables_(Dune::index_constant<freeFlowMassIndex>{}, /*current*/true, localDof);
+                            variables.update(elemSol, problem, fvGeometry, ipData(fvGeometry, localDof));
                         }
                     }
                 }
             }
-            else
-                DUNE_THROW(Dune::NotImplemented,
-                    "Context update for discretization scheme " << MassDiscretizationMethod{}
-                );
         }
     }
 
