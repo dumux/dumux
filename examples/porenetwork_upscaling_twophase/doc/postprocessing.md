@@ -24,10 +24,18 @@ same technique applies here; only the fields of interest differ, as described be
 
 ## Fields specific to this example
 
-**`static.pvd`** (stage 1, same fields as the [pc-saturation example](../../porenetwork_pcsaturation/doc/postprocessing.md#fields-specific-to-this-example)):
-`invaded`, `trapped`, `pcEntry`, `pcSnapOff` (cell data, per throat), `pc`, `sw` (point data, per
-pore). Coloring throats by `trapped` and stepping through the imbibition leg is the most direct
-way to see non-wetting-phase trapping develop.
+**`static.pvd`** (stage 1) writes the following per-timestep fields, which are the ones most
+relevant for inspecting drainage/imbibition/trapping:
+
+* **`invaded`** (cell data, per throat) -- `1` if the throat currently carries non-wetting phase, `0` otherwise.
+* **`trapped`** (cell data, per throat) -- `1` if the throat is invaded but has lost its connected path back to the inlet (i.e. is part of a non-wetting-phase cluster whose local capillary pressure is frozen). Only ever `1` where `invaded` is also `1`.
+* **`pc`** / **`sw`** (point data, per pore) -- the local capillary pressure and wetting-phase saturation of each pore body.
+* **`pcEntry`** / **`pcSnapOff`** (cell data, per throat) -- the precomputed entry and snap-off threshold capillary pressures.
+
+A useful way to see trapping directly in ParaView: color the throats (e.g. as tubes, see the
+linked instructions above) by `trapped`, and step through the time series with the animation
+controls -- invaded-but-trapped clusters (value `1`) appear as isolated red pockets once the
+imbibition leg starts retreating.
 
 **`upscaling_liquid.pvd` / `upscaling_gas.pvd`** (stage 2, one sequence per fluid, one frame per
 saturation step): the standard single-phase pore-network output fields (pressure at every pore,

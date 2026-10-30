@@ -34,7 +34,7 @@ __Table of contents__. This description is structured as follows:
 
 ## Problem setup
 
-We consider the same kind of randomly generated pore network (log-normally distributed pore radii, [randomly deleted throats](https://doi.org/10.1029/2010WR010180)) as the [pc-saturation example](../porenetwork_pcsaturation/README.md), but instead of stopping at the $`p_c`$-$`S_w`$ curve itself, we use the sequence of invasion states it produces to upscale **relative permeability**. The network is a 20x20x20-pore cube with the inlet and outlet on opposite boundaries along the $`x`$-direction (Fig. 0); drainage/imbibition capillary pressure is applied globally across the network in stage 1, and the same $`x`$-direction is the one single-phase flow is driven through in stage 2.
+We consider a randomly generated pore network (log-normally distributed pore radii, [randomly deleted throats](https://doi.org/10.1029/2010WR010180)) and use the sequence of invasion states obtained from a quasi-static two-phase sweep to upscale **relative permeability**. The network is a 20x20x20-pore cube with the inlet and outlet on opposite boundaries along the $`x`$-direction (Fig. 0); drainage/imbibition capillary pressure is applied globally across the network in stage 1, and the same $`x`$-direction is the one single-phase flow is driven through in stage 2.
 
 <figure>
     <center>
@@ -45,7 +45,7 @@ We consider the same kind of randomly generated pore network (log-normally distr
 
 The simulation runs in two stages:
 
-1. **Quasi-static two-phase sweep** (`runStaticProblem`, driven by `TwoPStatic` -- see the [pc-saturation example](../porenetwork_pcsaturation/README.md#mathematical-and-numerical-model) for the invasion/snap-off/trapping algorithm itself). A full drainage-imbibition $`p_c`$ cycle is swept, and at every step the resulting per-throat wetting- and non-wetting-phase conductances are cached (they depend only on which throats are currently invaded/trapped, not on any pressure field, since this stage never actually solves for flow).
+1. **Quasi-static two-phase sweep** (`runStaticProblem`, driven by `TwoPStatic`, see below for the invasion/snap-off/trapping algorithm itself). A full drainage-imbibition $`p_c`$ cycle is swept, and at every step the resulting per-throat wetting- and non-wetting-phase conductances are cached (they depend only on which throats are currently invaded/trapped, not on any pressure field, since this stage never actually solves for flow).
 2. **Single-phase upscaling, once per fluid** (`runSinglePhaseUpscaling`). For each saturation step cached in stage 1, a single-phase `CreepingFlow` Darcy problem is solved on the pore network using that step's frozen conductances -- re-solving stage 1's network as if it only contained one fluid (whichever one is being upscaled), at that step's saturation state. The resulting mass flux is converted into an apparent permeability for that fluid at that saturation, exactly as in the [single-phase upscaling example](../porenetwork_upscaling/README.md), just repeated once per step of the cycle instead of once for the whole (single-phase) network.
 
 Because both fluids are upscaled from the very same cached conductance sequence, their resulting curves share one consistent saturation axis, which is what makes plotting both $`k_{r,w}(S_w)`$ and $`k_{r,n}(S_w)`$ -- for both the drainage and imbibition legs -- on the same plot meaningful.
@@ -54,7 +54,49 @@ Because both fluids are upscaled from the very same cached conductance sequence,
 
 ### Stage 1: invasion, snap-off and trapping
 
-The invasion-percolation algorithm driving the quasi-static sweep is the same as in the [pc-saturation example](../porenetwork_pcsaturation/README.md#mathematical-and-numerical-model): a throat is invaded once $`p_{c,\text{global}}`$ reaches its entry pressure $`p_{c,\text{entry}}`$ and it is connected to the inlet, and de-invaded once $`p_{c,\text{global}}`$ drops to its snap-off pressure $`p_{c,\text{snapoff}}`$; invaded clusters disconnected from the inlet are *trapped* and excluded from further updates. `TwoPStatic` (`dumux/porenetwork/2p/static/staticpnm.hh`) implements both $`p_{c,\text{entry}}`$ and $`p_{c,\text{snapoff}}`$ exactly as described there.
+At each capillary-pressure step, throat-by-throat invasion percolation decides whether the non-wetting phase can enter a not-yet-invaded throat, or whether the wetting phase reconnects behind an already-invaded throat (snap-off):
+
+* **Drainage (invasion).** A throat is invaded once the global capillary pressure $`p_{c,\text{global}}`$ reaches its entry (threshold) capillary pressure $`p_{c,\text{entry}}`$, *and* the throat is topologically connected to the inlet through already-invaded throats (or sits on the inlet boundary itself).
+* **Imbibition (snap-off).** An already-invaded throat is de-invaded once $`p_{c,\text{global}}`$ drops to or below its snap-off capillary pressure $`p_{c,\text{snapoff}}`$ (Roof snap-off, driven by wetting-phase corner films).
+* **Trapping.** Snap-off can disconnect part of the invaded cluster from the inlet -- the only true non-wetting-phase pressure source in this model. Once disconnected, that cluster's local capillary pressure can no longer respond to changes in $`p_{c,\text{global}}`$: it is *trapped*, and is excluded from further invasion and snap-off checks. This is what produces the residual non-wetting-phase saturation and the hysteresis between the drainage and imbibition legs of the $`p_c`$-$`S_w`$ curve, and hence of the upscaled relative-permeability curves.
+
+The saturation of each pore body is obtained by inverting its own local $`p_c`$-$`S_w`$ relation (a closed-form expression for "platonic body" pore shapes, see `dumux/material/fluidmatrixinteractions/porenetwork/pore/2p`) at whatever capillary pressure it currently carries, and pore-volume-averaging over the network gives the network-averaged saturation reported in the $`p_c`$-$`S_w`$ curve. `TwoPStatic` (`dumux/porenetwork/2p/static/staticpnm.hh`) implements the invasion/snap-off/trapping logic described above.
+
+#### Threshold capillary pressures
+
+Both threshold pressures are Mayer-Stowe-Princen (MS-P)-type expressions evaluated from each throat's inscribed radius $`r`$, cross-sectional shape factor $`G`$ (drainage) or corner half-angle $`\beta`$ (snap-off), surface tension $`\sigma`$ and contact angle $`\theta`$; both are implemented in [`dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh`](../../dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh).
+
+**Entry capillary pressure** (drainage). Following Mason and Morrow's MS-P theory as given in Eq. 11 of Rabbani et al. (2016)[^rabbani2016] (equivalently Eq. A-7 of Øren et al. (1998)[^oren1998]):
+
+```math
+D = \pi - 3\theta + 3\sin\theta\cos\theta - \frac{\cos^2\theta}{4G},
+```
+```math
+F = \frac{1 + \sqrt{1 + \dfrac{4GD}{\cos^2\theta}}}{1 + 2\sqrt{\pi G}},
+```
+```math
+p_{c,\text{entry}} = \frac{\sigma \cos\theta}{r}\left(1 + 2\sqrt{\pi G}\right) F .
+```
+
+**Snap-off capillary pressure** (imbibition), for a throat with regular cross section (equal corner half-angles $`\beta`$), Eq. 4.8 of Blunt (2017)[^blunt2017]:
+
+```math
+p_{c,\text{snapoff}} = \frac{\sigma}{r}\left(\cos\theta - \sin\theta \tan\beta\right),
+```
+valid only while $`\beta + \theta < \pi/2`$ (otherwise snap-off cannot occur and $`p_{c,\text{snapoff}} \to -\infty`$ is used so the throat never snaps off).
+
+Symbols used above:
+
+| Symbol | Meaning | Set from |
+|---|---|---|
+| $`p_{c,\text{entry}}`$ | entry (threshold) capillary pressure of a throat: the $`p_c`$ at which the non-wetting phase can first displace the wetting phase through it | computed, drives drainage |
+| $`p_{c,\text{snapoff}}`$ | snap-off (threshold) capillary pressure of a throat: the $`p_c`$ at or below which the wetting phase reconnects and displaces the non-wetting phase back out | computed, drives imbibition |
+| $`\sigma`$ | interfacial surface tension between the wetting and non-wetting phase | `Problem.SurfaceTension` |
+| $`\theta`$ | contact angle | `Problem.ContactAngle` |
+| $`r`$ | inscribed radius of the throat's cross section | pore-network geometry (`Grid` parameters) |
+| $`G`$ | cross-sectional shape factor of the throat (area / perimeter$`^2`$; enters the entry-pressure formula only) | pore-network geometry, from `Grid.ThroatCrossSectionShape` |
+| $`\beta`$ | corner half-angle of the throat's (regular) cross section (enters the snap-off formula only) | pore-network geometry, from `Grid.ThroatCrossSectionShape` |
+| $`D`$, $`F`$ | dimensionless intermediate quantities of the MS-P entry-pressure formula (no independent physical meaning on their own) | computed from $`\theta`$, $`G`$ |
 
 ### Stage 2: single-phase upscaling
 
@@ -72,13 +114,13 @@ Repeating this independently for every cached saturation step and for both fluid
 
 ### Algorithm
 
-The driver loop in `main.cc` mirrors the pc-saturation example's loop for stage 1, then adds stage 2:
+**Workflow.** The driver loop in `main.cc` runs stage 1's full drainage-imbibition cycle, caching conductances at every step, then stage 2 once per fluid. Within stage 1, each step calls into `TwoPStatic` (`updateInvasionState`, then, after the saturation update, `updateTrappedState`) and then advances `pcGlobal` -- up while draining, back down while imbibing:
 
 ```mermaid
 flowchart TD
-    S0(["Stage 1 -- step = 0, pcGlobal = InitialPc"]) --> Inv["update invasion state<br/>(entry / snap-off)"]
-    Inv --> Sat["update pore saturations,<br/>gated on previous step's trapped flags"]
-    Sat --> Trap["recompute trapped throats"]
+    S0(["Stage 1 -- step = 0, pcGlobal = InitialPc"]) --> Inv["(a) update invasion state<br/>(entry / snap-off)"]
+    Inv --> Sat["(b) update pore saturations,<br/>gated on previous step's trapped flags"]
+    Sat --> Trap["(c) recompute trapped throats"]
     Trap --> Cache["cache this step's per-throat<br/>wetting/non-wetting conductances"]
     Cache --> Last{"step reached 2&nbsp;&times;&nbsp;NumSteps?"}
     Last -- no --> Adv["advance pcGlobal<br/>(up while draining, down while imbibing)"]
@@ -89,13 +131,38 @@ flowchart TD
     Solve --> Perm["convert outlet mass flux<br/>to apparent permeability"]
 ```
 
-**Snap-off decision**, applied to every already-invaded, non-trapped throat `t` at the current `pcGlobal` (see the [pc-saturation example](../porenetwork_pcsaturation/README.md#algorithm) for the full per-throat invasion/snap-off decision, including seeding and flood-fill on the drainage side):
+The ordering (a) &rarr; (b) &rarr; (c) within stage 1 matters: gating the saturation update (b) on the *previous* step's trapped flags lets a pore that becomes newly trapped in this very step still receive its last legitimate update before being frozen. Swapping (b) and (c) would silently discard that last increment.
+
+**Per-throat invasion/snap-off decision.** This is the decision applied to every throat `t` at the current `pcGlobal`:
 
 ```mermaid
 flowchart TD
-    T0(["throat t: invaded, not trapped"]) --> Q1{"pcGlobal at or below pcSnapOff[t]?"}
-    Q1 -- yes --> DeInvade["de-invade t (snap-off)"]
-    Q1 -- no --> Keep(["stays invaded"])
+    T0(["for each throat t"]) --> Q1{"invaded[t]?"}
+    Q1 -- yes --> Q2{"trapped[t]?"}
+    Q2 -- yes --> Skip(["skip: pc is frozen"])
+    Q2 -- no --> Q3{"pcGlobal at or below pcSnapOff[t]?"}
+    Q3 -- yes --> DeInvade["de-invade t&nbsp;(snap-off)"]
+    Q3 -- no --> Keep(["stays invaded"])
+    Q1 -- no --> Q4{"t on inlet boundary AND<br/>pcGlobal at or above pcEntry[t]?"}
+    Q4 -- yes --> Seed(["t is a seed"])
+    Q4 -- no --> Q5{"an untrapped, invaded neighbor n exists AND<br/>pcGlobal at or above pcEntry[t] AND<br/>t is not a disallowed outlet throat?"}
+    Q5 -- yes --> Seed
+    Q5 -- no --> NoInvade(["stays un-invaded"])
+    Seed --> Invade["invade t"]
+    Invade --> Flood["flood-fill (stack-based DFS):<br/>invade every reachable, not-yet-invaded<br/>neighbor n with pcGlobal at or above pcEntry[n]<br/>and n not a disallowed outlet throat"]
+```
+
+A trapped neighbor is deliberately excluded from the seed search (`Q5`): its non-wetting phase is disconnected from the inlet, so it must not be allowed to "restart" invasion elsewhere.
+
+**Trapped-state connectivity search.** After the saturation update, every invaded throat that has lost its connected path back to the inlet is marked trapped:
+
+```mermaid
+flowchart TD
+    S1(["recompute trapped throats"]) --> Seed2["seed a BFS/DFS at every invaded throat<br/>on the inlet boundary"]
+    Seed2 --> Grow["grow the reachable set,<br/>only ever stepping through invaded throats"]
+    Grow --> Mark{"for each throat t:<br/>invaded[t] AND not reached by the search?"}
+    Mark -- yes --> SetTrap["trapped[t] = true"]
+    Mark -- no --> SetFree["trapped[t] = false"]
 ```
 
 ## Why network heterogeneity matters
@@ -116,6 +183,10 @@ Fig. 3 compares the same network and the same drainage-imbibition cycle, run wit
 </figure>
 
 In practice this means `Grid.StandardDeviationPoreInscribedRadius` is not just a cosmetic network-generation knob here -- it determines whether the upscaled hysteresis loop is physically meaningful at all. Pushing the heterogeneity too far in the other direction is also undesirable: an excessively wide distribution leaves too many throats with very high snap-off thresholds, so an unrealistically large fraction of the non-wetting phase never gets displaced again, inflating the residual saturation beyond what the chosen value (CoV = 1.6) was found to give.
+
+[^rabbani2016]: Rabbani, H.S., Joekar-Niasar, V., Shokri, N. (2016). *Effects of intermediate wettability on entry capillary pressure in angular pores.* Journal of Colloid and Interface Science, 473, 34-43. Eq. 11. https://doi.org/10.1016/j.jcis.2016.03.053
+[^oren1998]: Øren, P.E., Bakke, S., Arntzen, O.J. (1998). *Extending Predictive Capabilities to Network Models.* SPE Journal, 3(4), 324-336. Eq. A-7. https://doi.org/10.2118/52052-PA
+[^blunt2017]: Blunt, M.J. (2017). *Multiphase Flow in Permeable Media: A Pore-Scale Perspective.* Cambridge University Press. Eq. 4.8. https://doi.org/10.1017/9781316145098
 
 # Implementation & Post processing
 
