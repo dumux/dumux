@@ -83,14 +83,14 @@ $$
 | Initial temperature                          | $T_{\mathrm{init}}$ | 290                     | K     |
 | Surface (left) temperature                   | $T_{\mathrm{high}}$ | 300                     | K     |
 | Pressure (initial & boundary)                   | $p_{\mathrm{init}}$       | 1e5                     | Pa    |
+| Fluid density                                | $\rho_f$ | 1000                    | kg m$^{-3}$ |
+| Fluid thermal conductivity                    | $\lambda_f$ | 0.679                 | W m$^{-1}$ K$^{-1}$ |
+| Fluid heat capacity                           | $c_f$     | 4180                    | J kg$^{-1}$ K$^{-1}$ |
 | Solid density                                | $\rho_s$ | 2700                    | kg m$^{-3}$ |
 | Solid thermal conductivity                    | $\lambda_s$ | 2.8                   | W m$^{-1}$ K$^{-1}$ |
 | Solid heat capacity                           | $c_s$     | 790                     | J kg$^{-1}$ K$^{-1}$ |
 
-Further, the fluid is water. The fluid properties (density, thermal conductivity and heat capacity) are temperature- and pressure-dependent and are evaluated using the IAPWS Industrial Formulation 1997 for the thermodynamic properties of water and steam @cite IAPWS1997.
-In DuMux, it is implemented by the component `Dumux::Components::H2O` (@ref Components), which builds on the region formulations in `dumux/material/components/iapws/` (@ref IAPWS).
-
-Although the analytical derivation assumes constant fluid properties, the analytical profile used for comparison is evaluated with fluid properties depending on the pressure and temperature of the numerical simulation for each evaluated time $t$.
+All fluid and solid properties are constant, as assumed by the analytical solution. The fluid values are those of liquid water in `Dumux::Components::SimpleH2O` (@ref Components).
 
 
 ##  Simulation Setup

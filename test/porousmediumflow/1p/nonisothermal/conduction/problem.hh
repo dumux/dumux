@@ -16,14 +16,15 @@
 #define DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 
 #include <cmath>
+#include <type_traits>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 
-#include <dumux/material/components/h2o.hh>
 namespace Dumux {
 
 /*!
@@ -48,11 +49,14 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using SolidSystem = GetPropType<TypeTag, Properties::SolidSystem>;
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using ThermalConductivityModel = GetPropType<TypeTag, Properties::ThermalConductivityModel>;
-    using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using IapwsH2O = Components::H2O<Scalar>;
+
+    // the analytical solution uses the volume-averaged effective thermal conductivity
+    static_assert(std::is_same_v<ThermalConductivityModel, ThermalConductivityAverage<Scalar>>,
+                  "The analytical solution assumes ThermalConductivityAverage");
 
     enum { dimWorld = GridView::dimensionworld };
 
@@ -78,6 +82,19 @@ public:
         name_ = getParam<std::string>("Problem.Name");
         temperatureHigh_ = 300.0;
         temperatureExact_.resize(gridGeometry->numDofs());
+
+        // all fluid and solid properties are constant, so the total volumetric heat capacity
+        // and the effective thermal conductivity are constant in space and time
+        const auto initValues = initial_();
+        const Scalar temperature = initValues[temperatureIdx];
+        const Scalar pressure = initValues[pressureIdx];
+        const Scalar porosity = this->spatialParams().porosityAtPos(gridGeometry->bBoxMin());
+
+        totalHeatCapacity_ = porosity*FluidSystem::density(temperature, pressure)*FluidSystem::heatCapacity(temperature, pressure)
+                             + (1.0 - porosity)*SolidSystem::density(temperature)*SolidSystem::heatCapacity(temperature);
+        // same as in volvars effectiveThermalConductivity() method, but with const properties, this just needs to be computed once
+        effectiveThermalConductivity_ = porosity*FluidSystem::thermalConductivity(temperature, pressure)
+                                        + (1.0 - porosity)*SolidSystem::thermalConductivity(temperature);
     }
 
     //! Get the analytical temperature
@@ -90,44 +107,26 @@ public:
      * \brief Update the analytical temperature
      * The results are compared to an analytical solution for a diffusion process:
       \f[
-         T =T_{high} + (T_{init} - T_{high})erf \left(0.5\sqrt{\frac{x^2 S_{total}}{t \lambda_{eff}}}\right)
+         T = T_{high} + (T_{init} - T_{high})\,\mathrm{erf} \left(0.5\sqrt{\frac{x^2 C_{tot}}{t \lambda_{eff}}}\right)
       \f]
+     * The solution vector is not needed, as all properties are constant.
      */
-    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
+    void updateExactTemperature(const SolutionVector&, Scalar time)
     {
-        const auto someElement = *(elements(this->gridGeometry().gridView()).begin());
-
-        auto someElemSol = elementSolution(someElement, curSol, this->gridGeometry());
-        const auto someInitSol = initialAtPos(someElement.geometry().center());
-
-        const auto someFvGeometry = localView(this->gridGeometry()).bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
-
-        VolumeVariables volVars;
-        volVars.update(someElemSol, *this, someElement, someScv);
-
-        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
-        const auto densityW = volVars.density();
-        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto densityS = volVars.solidDensity();
-        const auto heatCapacityS = volVars.solidHeatCapacity();
-        const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
-        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars);
         using std::max;
         time = max(time, 1e-10);
+        const Scalar temperatureInit = initial_()[temperatureIdx];
         auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
-               auto globalIdx = scv.dofIndex();
-               const auto& globalPos = scv.dofPosition();
-               using std::erf;
-               using std::sqrt;
-               temperatureExact_[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
-                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
-
+                const auto x = scv.dofPosition()[0];
+                using std::erf;
+                using std::sqrt;
+                temperatureExact_[scv.dofIndex()] = temperatureHigh_ + (temperatureInit - temperatureHigh_)
+                                                    *erf(0.5*sqrt(x*x*totalHeatCapacity_/time/effectiveThermalConductivity_));
             }
         }
     }
@@ -222,6 +221,8 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     std::vector<Scalar> temperatureExact_;
+    Scalar totalHeatCapacity_;
+    Scalar effectiveThermalConductivity_;
 };
 
 } // end namespace Dumux
