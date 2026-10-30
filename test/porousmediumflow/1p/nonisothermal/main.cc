@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \brief Test for the 1pni CC model
+ * \brief Main file shared by the 1pni conduction and convection tests
  */
 
 #include <config.h>
@@ -17,6 +17,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
+// the properties of the test (conduction or convection) found via the include path set in its CMakeLists.txt
 #include "properties.hh"
 
 #include <dumux/common/initialize.hh>
