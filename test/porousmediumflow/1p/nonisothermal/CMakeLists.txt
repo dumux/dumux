@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+add_subdirectory(convergence)
+add_subdirectory(layered)
 add_subdirectory(simple)
 dune_symlink_to_source_files(FILES "params_conduction.input" "params_convection.input")
 

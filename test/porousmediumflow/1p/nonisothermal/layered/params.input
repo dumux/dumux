@@ -1,0 +1,29 @@
+[Grid]
+UpperRight = 1 1
+Cells = 16 16
+
+[Problem]
+Name = onepni_layered
+EnableGravity = false
+Pressure = 1e5
+TemperatureLeft = 300
+HeatFlux = 10
+
+[SpatialParams]
+Permeability = 1.0
+InterfacePosition = 0.46875 # the face of the box control volumes between the vertices at x = 7/16 and x = 8/16
+PorosityLeft = 0.1
+PorosityRight = 0.9
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+LiquidHeatCapacity = 1.0
+LiquidThermalConductivity = 0.6
+SolidDensity = 2.0
+SolidHeatCapacity = 1.0
+SolidThermalConductivity = 2.0
+
+[Flux]
+UpwindWeight = 0.5
+ScvfThermalConductivity = FaceTensorAverage
