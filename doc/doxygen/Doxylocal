@@ -88,6 +88,7 @@ HTML_INDEX_NUM_ENTRIES = 1
 
 USE_MATHJAX            = YES
 MATHJAX_VERSION        = MathJax_4
+MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@4
 
 EXCLUDE_PATTERNS       = *_.hh
 
