@@ -13,6 +13,7 @@
 #define DUMUX_TEST_HENRY_FAHS_PROBLEM_HH
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/numeqvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -35,6 +36,7 @@ class HenryFahsProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = Dumux::BoundaryTypes<GetPropType<TypeTag, Properties::ModelTraits>::numEq()>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using VolumeVariables = GetPropType<TypeTag, Properties::VolumeVariables>;
+    using NumEqVector = Dumux::NumEqVector<PrimaryVariables>;
 
     static constexpr int soluteIdx = FluidSystem::comp1Idx;
     static_assert(!getPropValue<TypeTag, Properties::UseMoles>(), "This test uses mass fractions");
@@ -53,16 +55,15 @@ public:
         density_ = FluidSystem::density(temperature, referencePressure_);
         gravity_ = -this->spatialParams().gravity(pos)[1];
 
-        // with div q = 0, this inlet pressure gives the inflow for any solute distribution
-        const Scalar inflow = getParam<Scalar>("Problem.FreshwaterInflow");
-        const Scalar mobility = this->spatialParams().permeabilityAtPos(pos)/FluidSystem::viscosity(temperature, referencePressure_);
-        inletPressure_ = referencePressure_ + inflow*length_/(mobility*depth_) + 0.5*densityDifference_*gravity_*depth_;
+        // uniform freshwater inflow (mass flux, depth is the length of the inflow boundary)
+        inflowFlux_ = density_*getParam<Scalar>("Problem.FreshwaterInflow")/depth_;
     }
 
+    //! Sea: seawater at rest (Dirichlet), elsewhere Neumann
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (onLeft_(globalPos) || onRight_(globalPos))
+        if (onRight_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -70,13 +71,14 @@ public:
     }
 
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    {
-        if (!onLeft_(globalPos))
-            return initialAtPos(globalPos);
+    { return initialAtPos(globalPos); }
 
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = inletPressure_ + density_*gravity_*depthBelowTop_(globalPos);
-        values[soluteIdx] = 0.0;
+    //! Uniform inflow of freshwater (negative: into the domain) on the left, no flow elsewhere
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
+    {
+        NumEqVector values(0.0);
+        if (onLeft_(globalPos))
+            values[FluidSystem::comp0Idx] = -inflowFlux_;
         return values;
     }
 
@@ -105,7 +107,7 @@ private:
 
     static constexpr Scalar eps_ = 1e-8;
     static constexpr Scalar referencePressure_ = 1e5;
-    Scalar densityDifference_, length_, depth_, density_, gravity_, inletPressure_;
+    Scalar densityDifference_, length_, depth_, density_, gravity_, inflowFlux_;
 };
 
 } // end namespace Dumux
