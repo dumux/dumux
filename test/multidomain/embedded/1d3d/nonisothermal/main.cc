@@ -6,8 +6,14 @@
 //
 #include <config.h>
 
-#include <iostream>
+#include <algorithm>
+#include <cmath>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -27,6 +33,7 @@
 
 #include <dumux/linear/seqsolverbackend.hh>
 
+#include "analyticalsolution.hh"
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -117,6 +124,12 @@ int main(int argc, char** argv)
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize", episodeLength);
+    // a smaller maximum time step size until the time EarlyPeriod, which resolves the flushing of
+    // the initial pipe content and the fast early cooling of the rock around the wellbore
+    const auto earlyPeriod = getParam<Scalar>("TimeLoop.EarlyPeriod", 0.0);
+    const auto maxDtEarly = getParam<Scalar>("TimeLoop.MaxTimeStepSizeEarly", maxDt);
+    const auto maxTimeStepSize = [&](const Scalar time)
+    { return time < earlyPeriod ? maxDtEarly : maxDt; };
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // initialize the vtk output module
@@ -139,7 +152,7 @@ int main(int argc, char** argv)
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setMaxTimeStepSize(maxTimeStepSize(0.0));
 
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -156,8 +169,53 @@ int main(int argc, char** argv)
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
     NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // initialize the custom output to the csv file
-    lowDimProblem->initializeOutput();
+    // the reference solution, the radii are the same in all elements of the well
+    using Reference = WellboreReferenceSolution<Scalar>;
+    using Variant = Reference::Variant;
+    const Reference reference(lowDimSpatialParams->innerRadius(0), lowDimSpatialParams->radius(0));
+    const auto referenceCelsius = [&](const Scalar l, const Scalar t, const Variant variant)
+    { return reference.temperature(l, t, variant) - 273.15; };
+
+    // the distance from the inlet at the top and the index of all vertices of the well, sorted
+    // along the well, so that the last one is the outlet
+    std::vector<std::pair<Scalar, std::size_t>> wellDofs(lowDimFvGridGeometry->numDofs());
+    for (const auto& element : elements(lowDimGridView))
+    {
+        const auto fvGeometry = localView(*lowDimFvGridGeometry).bindElement(element);
+        for (const auto& scv : scvs(fvGeometry))
+            wellDofs[scv.dofIndex()] = {lowDimFvGridGeometry->bBoxMax()[2] - scv.dofPosition()[2], scv.dofIndex()};
+    }
+    std::sort(wellDofs.begin(), wellDofs.end());
+    const Scalar outletDistance = wellDofs.back().first;
+    const std::size_t outletDof = wellDofs.back().second;
+
+    using LowDimIndices = GetPropType<LowDimTypeTag, Properties::ModelTraits>::Indices;
+    const auto wellCelsius = [&](const std::size_t dofIdx)
+    { return sol[lowDimIdx][dofIdx][LowDimIndices::temperatureIdx] - 273.15; };
+
+    // the reference solutions at the outlet, independent of the output interval and dense
+    // around the arrival of the first inlet water, where the outlet temperature has a kink
+    const std::string outputName = getParam<std::string>("Vtk.OutputName");
+    std::ofstream outletReferenceFile(outputName + "_outlet_reference.csv");
+    outletReferenceFile << "time [d], T reference (a) [°C], T reference (b) [°C]\n" << std::setprecision(15);
+    const auto writeOutletReference = [&](const Scalar t)
+    {
+        outletReferenceFile << t/86400 << "," << referenceCelsius(outletDistance, t, Variant::benchmark)
+                            << "," << referenceCelsius(outletDistance, t, Variant::embedded) << "\n";
+    };
+    const Scalar denseEnd = 4.0*reference.travelTime(outletDistance);
+    for (int i = 1; i <= 200; ++i)
+        writeOutletReference(i*denseEnd/200);
+    for (int i = 1; i <= 400; ++i)
+        writeOutletReference(denseEnd + i*(tEnd - denseEnd)/400);
+    outletReferenceFile.close();
+
+    // the outlet temperature over time. The errors are measured against the embedded variant (b),
+    // the exact solution of the continuous problem that the surface coupling discretizes
+    std::ofstream outletFile(lowDimProblem->name() + ".csv");
+    outletFile << "time [d], T [°C], T reference (a) [°C], T reference (b) [°C]\n" << std::setprecision(15);
+    Scalar maxOutletError = 0.0;
+    Scalar maxOutletErrorAfterOneDay = 0.0;
 
     // time loop
     timeLoop->setPeriodicCheckPoint(episodeLength);
@@ -187,18 +245,62 @@ int main(int argc, char** argv)
                 bulkVtkWriter.write(timeLoop->time());
             lowDimVtkWriter.write(timeLoop->time());
 
-            lowDimProblem->writeOutput(lowDimGridVariables,timeLoop, sol[lowDimIdx]);
+            // compare the outlet temperature with the reference solution
+            const Scalar time = timeLoop->time();
+            const Scalar outletTemperature = wellCelsius(outletDof);
+            const Scalar outletReference = referenceCelsius(outletDistance, time, Variant::embedded);
+            const Scalar outletError = std::abs(outletTemperature - outletReference);
+            maxOutletError = std::max(maxOutletError, outletError);
+            if (time >= 86400.0)
+                maxOutletErrorAfterOneDay = std::max(maxOutletErrorAfterOneDay, outletError);
+
+            outletFile << time/86400 << "," << outletTemperature << ","
+                       << referenceCelsius(outletDistance, time, Variant::benchmark) << ","
+                       << outletReference << std::endl;
+            std::cout << std::setprecision(8) << "Outlet temperature [°C]: " << outletTemperature
+                      << ", reference (b): " << outletReference << '\n';
         }
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
+        timeLoop->setMaxTimeStepSize(maxTimeStepSize(timeLoop->time()));
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
     timeLoop->finalize(mpiHelper.getCommunication());
+
+    // the reference solutions along the well at the final time, independent of the grid
+    std::ofstream profileReferenceFile(outputName + "_profile_reference.csv");
+    profileReferenceFile << "distance from the inlet [m], T reference (a) [°C], T reference (b) [°C]\n" << std::setprecision(15);
+    for (int i = 0; i <= 200; ++i)
+    {
+        const Scalar distance = i*outletDistance/200;
+        profileReferenceFile << distance << "," << referenceCelsius(distance, tEnd, Variant::benchmark)
+                             << "," << referenceCelsius(distance, tEnd, Variant::embedded) << "\n";
+    }
+    profileReferenceFile.close();
+
+    // compare the temperature along the well at the final time with the reference solution
+    std::ofstream profileFile(outputName + "_profile.csv");
+    profileFile << "distance from the inlet [m], T [°C], T reference (a) [°C], T reference (b) [°C]\n" << std::setprecision(15);
+    Scalar maxProfileError = 0.0;
+    for (const auto& [distance, dofIdx] : wellDofs)
+    {
+        const Scalar temperature = wellCelsius(dofIdx);
+        const Scalar profileReference = referenceCelsius(distance, tEnd, Variant::embedded);
+        maxProfileError = std::max(maxProfileError, std::abs(temperature - profileReference));
+        profileFile << distance << "," << temperature << ","
+                    << referenceCelsius(distance, tEnd, Variant::benchmark) << "," << profileReference << "\n";
+    }
+
+    std::cout << std::setprecision(8)
+              << "\nMaximum error with regard to the reference solution (b) [K]\n"
+              << "  outlet temperature, all outputs:        " << maxOutletError << "\n"
+              << "  outlet temperature, outputs from 1 d on: " << maxOutletErrorAfterOneDay << "\n"
+              << "  temperature along the well at the end:  " << maxProfileError << "\n";
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

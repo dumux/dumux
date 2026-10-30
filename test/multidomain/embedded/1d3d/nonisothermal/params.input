@@ -1,7 +1,9 @@
 [TimeLoop]
 DtInitial = 1         # [s]
-EpisodeLength = 14400 # [s] = 4 hours
+EpisodeLength = 1200  # [s] = 20 minutes
 TEnd = 432000         # [s] = 5 days
+EarlyPeriod = 21600   # [s] = 6 hours, MaxTimeStepSizeEarly applies until this time
+MaxTimeStepSizeEarly = 120 # [s]
 
 [Well.Grid]
 File = ./grids/pipe.dgf

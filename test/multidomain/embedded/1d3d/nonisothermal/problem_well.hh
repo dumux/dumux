@@ -301,43 +301,6 @@ public:
         std::cout << std::setprecision(12) << "Global integrated source (1D): " << source << '\n';
     }
 
-    void initializeOutput()
-    {
-        std::ofstream ToutLog;
-        ToutLog.open (name_ + ".csv", std::ios::out);
-        ToutLog <<"time [d], T [°C]" << std::endl;
-        ToutLog.close();
-    }
-
-    template <class GridVariables, class TimeLoop, class SolutionVector>
-    void writeOutput(const GridVariables& gridVars, const TimeLoop& timeLoop, const SolutionVector& x)
-    {
-        // obtain current time.
-        const Scalar time = timeLoop->time()/3600/24; // convert to days
-
-        for (const auto& element: elements(this->gridGeometry().gridView() ) )
-        {
-            // we will obtain the current elements local view to get access to the elementVolumeVariables.
-            auto fvGeometry = localView(this->gridGeometry() );
-            fvGeometry.bind(element);
-            auto elemVolVars = localView(gridVars->curGridVolVars() );
-            elemVolVars.bindElement(element,fvGeometry,x);
-            // we can now iterate over the scvs:
-            for (auto&& scv: scvs(fvGeometry))
-            {
-                // log the outlet temperature at the bottom of the wellbore
-                if(scv.dofPosition()[2] < this->gridGeometry().bBoxMin()[2] + eps_)
-                {
-                    const auto& volVars = elemVolVars[scv];
-                    std::ofstream ToutLog;
-                    ToutLog.open (name_ + ".csv", std::ios::app);
-                    ToutLog << time << "," << volVars.temperature() - 273.15 << std::endl;
-                    ToutLog.close();
-                }
-            }
-        }
-    }
-
     void updateNusseltNumbers()
     {
         for(const auto& source : this->couplingManager().lowDimPointSources())
