@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dune_symlink_to_source_files(FILES params_diffusion.input params_dispersion.input
-                                   fahs2016_table_d1.csv fahs2016_table_d2.csv plot_profiles.py)
+                                   fahs2016_table_d1.csv fahs2016_table_d2.csv post_processing.py
+                                   convergence.py)
 
 dumux_add_test(NAME test_1p2c_henry_diffusion_box
               LABELS porousmediumflow 1p2c 1pnc
