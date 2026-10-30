@@ -83,7 +83,7 @@ public:
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(LocalIndexType scvfIdx) const
-    { return ggCache_->scvf(eIdx_)[scvfIdx]; }
+    { return ggCache_->scvfs(eIdx_)[scvfIdx]; }
 
     //! iterator range for sub control volumes. Iterates over
     //! all scvs of the bound element (not including neighbor scvs)
