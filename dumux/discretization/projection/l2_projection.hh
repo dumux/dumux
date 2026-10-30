@@ -67,6 +67,22 @@ auto makeLocalFunction(Function&& f, const GridView& gridView)
 #endif
 }
 
+/*!
+ * \brief The global index of the dof of a local key
+ * \note Schemes with several dofs on a sub-entity shared by elements of different orientation
+ *       (e.g. PQ3 edges) provide their own orientation-aware mapping.
+ */
+template<class GridDiscretization, class Element, class LocalKey>
+auto dofIndex(const GridDiscretization& gridDiscretization,
+              const Element& element,
+              const LocalKey& localKey)
+{
+    if constexpr (requires { gridDiscretization.dofIndex(element, localKey); })
+        return gridDiscretization.dofIndex(element, localKey);
+    else
+        return gridDiscretization.dofMapper().subIndex(element, localKey.subEntity(), localKey.codim()) + localKey.index();
+}
+
 } // end namespace Detail
 
 /*!
@@ -111,9 +127,7 @@ public:
         std::size_t index(std::size_t index) const
         {
             const auto& localKey = tree_.fe_->localCoefficients().localKey(index);
-            // TODO: Currently we assume that this is the default dof mapping when having multiple dofs per sub-entity
-            // meaning that they are localKey.index() larger than 0
-            return gg_.dofMapper().subIndex(*element_, localKey.subEntity(), localKey.codim()) + localKey.index();
+            return Detail::dofIndex(gg_, *element_, localKey);
         }
 
     private:

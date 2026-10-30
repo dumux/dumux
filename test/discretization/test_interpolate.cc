@@ -14,20 +14,6 @@
  *     and L2 projection must reproduce it exactly (L2 error ≈ 0).
  *   - A function not in the approximation space (sin/cos/exp): the L2 projection
  *     error must be smaller than the dof interpolation error.
- *
- * Schemes and grids tested:
- *   - Box          – affine on a cube grid
- *   - Box          – affine on a simplex grid (requires dune-alugrid)
- *   - PQ1Bubble    – affine on a cube grid
- *   - PQ1Bubble    – affine on a simplex grid (requires dune-alugrid)
- *   - PQ2          – quadratic on a cube grid
- *   - PQ2          – quadratic on a simplex grid (requires dune-alugrid)
- *   - FCDiamond    – affine on a cube grid
- *   - FCDiamond    – affine on a simplex grid (requires dune-alugrid)
- *   - CCTpfa       – affine on a cube grid (dof interpolation only; dofs at cell centroids)
- *
- * Additionally, vector-valued (2-component) functions are tested on Box and PQ2
- * cube grids to verify that multi-component L2 projection works correctly.
  */
 #include <config.h>
 
@@ -52,6 +38,7 @@
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/pq1bubble/fvgridgeometry.hh>
 #include <dumux/discretization/pq2/fvgridgeometry.hh>
+#include <dumux/discretization/pq3/fvgridgeometry.hh>
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cvfe/interpolate.hh>
@@ -189,6 +176,15 @@ int main(int argc, char* argv[])
         return val;
     };
 
+    // cubic test function: f(x) = x[0]³ + 2·x[1]³ + 3·x[2]³
+    auto fCubic = [](const GlobalPosition& x) -> Scalar
+    {
+        Scalar val = 0.0;
+        for (int i = 0; i < 3; ++i)
+            val += Scalar(i + 1) * x[i] * x[i] * x[i];
+        return val;
+    };
+
     // complex function not in any low-order approximation space
     auto fNotInSpace = [](const GlobalPosition& x) -> Scalar
     {
@@ -208,6 +204,10 @@ int main(int argc, char* argv[])
     {   using GG = PQ2FVGridGeometry<Scalar, GridView, true>;
         GG gg(leafGridView);
         runTests(gg, fQuadratic, fNotInSpace, "PQ2-Cube", "x2 + 2y2 + 3z2", "sin(px)cos(py)exp(z)"); }
+
+    {   using GG = PQ3FVGridGeometry<Scalar, GridView, true>;
+        GG gg(leafGridView);
+        runTests(gg, fCubic, fNotInSpace, "PQ3-Cube", "x3 + 2y3 + 3z3", "sin(px)cos(py)exp(z)"); }
 
     {   using GG = FaceCenteredDiamondFVGridGeometry<GridView, true>;
         GG gg(leafGridView);
@@ -234,6 +234,11 @@ int main(int argc, char* argv[])
         {   using GG = PQ2FVGridGeometry<Scalar, SimplexGridView, true>;
             GG gg(simplexGridView);
             runTests(gg, fQuadratic, fNotInSpace, "PQ2-Simplex", "x2 + 2y2 + 3z2", "sin(px)cos(py)exp(z)"); }
+
+        // two dofs per edge, ordered consistently between elements of different edge orientation
+        {   using GG = PQ3FVGridGeometry<Scalar, SimplexGridView, true>;
+            GG gg(simplexGridView);
+            runTests(gg, fCubic, fNotInSpace, "PQ3-Simplex", "x3 + 2y3 + 3z3", "sin(px)cos(py)exp(z)"); }
 
         {   using GG = FaceCenteredDiamondFVGridGeometry<SimplexGridView, true>;
             GG gg(simplexGridView);
