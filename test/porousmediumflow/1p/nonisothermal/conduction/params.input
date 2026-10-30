@@ -21,6 +21,12 @@ AddVelocity = true
 AddVelocity = false
 
 [Component]
-SolidDensity = 2700
-SolidThermalConductivity = 2.8
-SolidHeatCapacity = 790
+# constant fluid properties (same values as Components::SimpleH2O)
+LiquidDensity = 1000 # [kg/m^3]
+LiquidHeatCapacity = 4180 # [J/(kg K)]
+LiquidThermalConductivity = 0.679 # [W/(m K)]
+LiquidDynamicViscosity = 1e-3 # [Pa s]
+# solid properties
+SolidDensity = 2700 # [kg/m^3]
+SolidThermalConductivity = 2.8 # [W/(m K)]
+SolidHeatCapacity = 790 # [J/(kg K)]

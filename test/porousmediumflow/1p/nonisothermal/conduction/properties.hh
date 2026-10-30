@@ -18,14 +18,13 @@
 #include <cmath>
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
-#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "problem.hh"
@@ -48,12 +47,13 @@ struct Grid<TypeTag, TTag::OnePNIConduction> { using type = Dune::YaspGrid<2>; }
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePNIConduction> { using type = OnePNIConductionProblem<TypeTag>; };
 
-// Set the fluid system
+// Set the fluid system: a liquid with constant properties (set in params.input, group [Component]),
+// as assumed by the analytical solution
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::OnePNIConduction>
 {
-    using type = FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
-                                          Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar>>;
 };
 
 // Set the spatial parameters
