@@ -329,3 +329,32 @@ __Discretization method:__ Cell-centered finite volumes with two-point flux appr
 <img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/embedded_network_1d3d/img/network.png" alt="blood vessel network"/>
 </a></td>
 </tr></table>
+
+## Example 12: Upscaling two-phase relative permeability with a pore network
+
+<table class="markdownTable">
+
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">
+[↗️ Go to Example 12: Upscaling two-phase relative permeability with a pore network](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/porenetwork_upscaling_twophase/README.md?ref_type=heads)
+</th><th class="markdownTableHeadLeft"></th></tr>
+
+<tr><td>
+
+In this example, we drive a pore network through a full drainage-imbibition capillary-pressure cycle and use the
+resulting invasion states to upscale relative permeability via a sequence of single-phase Darcy solves.
+
+__You learn how to__
+
+* simulate quasi-static drainage and imbibition on a pore network using invasion percolation with snap-off and non-wetting-phase trapping
+* upscale relative permeability from per-saturation-step single-phase Darcy solves
+* see how pore-network heterogeneity controls the amount of non-wetting-phase trapping and relative-permeability hysteresis
+
+__Model equations:__ Quasi-static two-phase invasion percolation (`TwoPStatic`) and single-phase creeping flow (`PNMOneP`)<br />
+__Discretization method:__ Pore-network (`PoreNetworkModel`)
+
+</td>
+<td width="35%"><a href="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/porenetwork_upscaling_twophase/README.md?ref_type=heads">
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/raw/master/examples/porenetwork_upscaling_twophase/img/kr_curve.png" alt="relative permeability hysteresis"/>
+</a></td>
+</tr></table>
