@@ -35,7 +35,7 @@ class FFPMCouplingConditionsCvfeImpl;
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
  * \brief Coupling conditions for a Darcy model and a (Navier-)Stokes model,
- *        both discretized with control-volume finite element schemes.
+ *        both discretized with control-volume finite element or finite element schemes.
  *
  * The porous-medium quantities at the interface are interpolated with the
  * shape functions of the coupled porous-medium element.
@@ -99,25 +99,21 @@ public:
     { return IndexHelper::couplingCompIdx(id, coupledCompIdx); }
 
     /*!
-     * \brief Returns the intrinsic permeability of the coupled Darcy element.
-     * \note The permeability is taken from the sub-control volume of the boundary
-     *       sub-control-volume face closest to the interpolation point, because the
-     *       permeability is defined per sub-control volume.
+     * \brief Returns the intrinsic permeability of the coupled Darcy element at an interpolation point.
+     * \note The permeability is interpolated from the local dofs.
      */
     template<class IpData, class Context>
     static auto darcyPermeability(const ElementDiscretization<freeFlowMomentumIndex>& elemDisc,
                                   const IpData& ipData,
                                   const Context& context)
     {
-        const auto& pmElemDisc = context.elemDisc;
-        return context.vars(pmElemDisc.scv(closestBoundaryScvIdx_(pmElemDisc, ipData.global()))).permeability();
+        return interpolate_(context, ipData.global(), [](const auto& vars) { return vars.permeability(); });
     }
 
     /*!
      * \brief Returns the Darcy velocity at an interpolation point of the coupled Darcy element.
      * \note The velocity is the flux term of the advection type of the porous-medium model with
-     *       the tensor \f$\mathbf{K}/\mu\f$. The permeability and the viscosity are taken from the
-     *       sub-control volume of the boundary sub-control-volume face closest to the interpolation point.
+     *       the tensor \f$\mathbf{K}/\mu\f$, which is interpolated from the local dofs.
      */
     template<class Context, class IpData>
     static auto darcyVelocity(const Context& context, const IpData& ipData)
@@ -135,10 +131,12 @@ public:
 
         const auto mobilityTensor = [&](const auto& pmElemDisc, const auto& pmElemVars, const auto& pmIpData)
         {
-            const auto vars = pmElemVars[pmElemDisc.scv(closestBoundaryScvIdx_(pmElemDisc, pmIpData.global()))];
-            auto tensor = vars.permeability();
-            tensor /= vars.viscosity(pmPhaseIdx);
-            return tensor;
+            return interpolate_(context, pmIpData.global(), [&](const auto& vars)
+            {
+                auto tensor = vars.permeability();
+                tensor /= vars.viscosity(pmPhaseIdx);
+                return tensor;
+            });
         };
 
         return AdvectionType<porousMediumIndex>::fluxTerm(context.problem, elemDisc.element(), elemDisc,
@@ -198,33 +196,29 @@ public:
     { return (insideIsUpstream ? insideQuantity : outsideQuantity) * volumeFlow; }
 
 private:
-    //! the index of the sub-control volume of the boundary sub-control-volume face closest to the given position
-    template<class PMElementDiscretization>
-    static std::size_t closestBoundaryScvIdx_(const PMElementDiscretization& elemDisc,
-                                              const GlobalPosition<porousMediumIndex>& pos)
+    //! a quantity of the porous-medium variables interpolated from the local dofs at a position on the coupling interface
+    template<class Context, class Quantity>
+    static auto interpolate_(const Context& context,
+                             const GlobalPosition<porousMediumIndex>& globalPos,
+                             const Quantity& quantity)
     {
-        Scalar minDistance = 0.0;
-        std::size_t closestScvfIdx = 0;
-        bool foundClosestScvf = false;
+        const auto& pmElemDisc = context.elemDisc;
 
-        for (const auto& scvf : scvfs(elemDisc))
+        // the position lies on the face of the free-flow element, so its local position
+        // in the coupled porous-medium element is needed
+        const auto pmLocalPos = pmElemDisc.elementGeometry().local(globalPos);
+
+        std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+        pmElemDisc.feLocalBasis().evaluateFunction(pmLocalPos, shapeValues);
+
+        std::decay_t<decltype(quantity(context.vars(*localDofs(pmElemDisc).begin())))> value(0.0);
+        for (const auto& localDof : localDofs(pmElemDisc))
         {
-            if (!scvf.boundary())
-                continue;
-
-            const auto distance = (scvf.ipGlobal() - pos).two_norm();
-            if (!foundClosestScvf || distance < minDistance)
-            {
-                minDistance = distance;
-                closestScvfIdx = scvf.index();
-                foundClosestScvf = true;
-            }
+            auto localValue = quantity(context.vars(localDof));
+            localValue *= shapeValues[localDof.index()][0];
+            value += localValue;
         }
-
-        if (!foundClosestScvf)
-            DUNE_THROW(Dune::InvalidStateException, "Expected at least one boundary SCVF in porous-medium element discretization");
-
-        return elemDisc.scvf(closestScvfIdx).insideScvIdx();
+        return value;
     }
 };
 
