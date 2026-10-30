@@ -39,12 +39,8 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
-#include <dune/foamgrid/foamgrid.hh>
 
 #include <dumux/common/initialize.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
-#include <dumux/common/properties/grid.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
@@ -59,37 +55,6 @@
 // [[/codeblock]]
 // [[/details]]
 //
-// ### Compile-time settings
-// We create a new type tag for our simulation and inherit the properties needed
-// for a pore-network grid. `TwoPStatic` (used further down) is not a full-fledged
-// DuMu<sup>x</sup> model -- it does not need `Problem`/`GridVariables`/assembler
-// property specializations -- so only the `Grid` and `GridGeometry` properties
-// are set here.
-// [[codeblock]]
-namespace Dumux::Properties {
-
-namespace TTag {
-struct PNMTwoPStatic { using InheritsFrom = std::tuple<GridProperties, ModelProperties>; };
-} // end namespace TTag
-
-// the throats (elements) of the pore-network grid live on a 1d network embedded in 3d space
-template<class TypeTag>
-struct Grid<TypeTag, TTag::PNMTwoPStatic> { using type = Dune::FoamGrid<1, 3>; };
-
-template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::PNMTwoPStatic>
-{
-private:
-    static constexpr bool enableCache = false;
-    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = Dumux::PoreNetwork::GridGeometry<Scalar, GridView, enableCache>;
-};
-
-} // end namespace Dumux::Properties
-// [[/codeblock]]
-//
 // ### Inverting a pore's local pc-Sw law for its actual shape
 // The pore-local pc-Sw closed-form relation (`TwoPLocalRulesPlatonicBodyDefault`) is only
 // implemented for "platonic body" pore shapes (tetrahedron, cube, octahedron, dodecahedron,
@@ -101,18 +66,16 @@ public:
 // an implemented pc-Sw relation (e.g. Sphere, Circle, Cylinder), rather than silently
 // defaulting to some other shape's curve.
 // [[codeblock]]
-namespace {
+namespace Dumux::PoreNetwork {
 
 template<class Scalar>
-Scalar poreSaturation(Dumux::PoreNetwork::Pore::Shape shape,
+Scalar poreSaturation(Pore::Shape shape,
                       const Scalar poreRadius, const Scalar surfaceTension, const Scalar pc)
 {
-    using namespace Dumux;
-
     auto invert = [&](auto shapeTag)
     {
         constexpr auto s = decltype(shapeTag)::value;
-        using MaterialLaw = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<s>;
+        using MaterialLaw = FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<s>;
         using BasicParams = typename MaterialLaw::BasicParams;
         using RegularizationParams = typename MaterialLaw::RegularizationParams;
 
@@ -121,7 +84,7 @@ Scalar poreSaturation(Dumux::PoreNetwork::Pore::Shape shape,
         return fluidMatrixInteraction.sw(pc);
     };
 
-    using PoreNetwork::Pore::Shape;
+    using Pore::Shape;
     switch (shape)
     {
         case Shape::tetrahedron:  return invert(std::integral_constant<Shape, Shape::tetrahedron>{});
@@ -131,13 +94,13 @@ Scalar poreSaturation(Dumux::PoreNetwork::Pore::Shape shape,
         case Shape::icosahedron:  return invert(std::integral_constant<Shape, Shape::icosahedron>{});
         default:
             DUNE_THROW(Dune::NotImplemented,
-                       "No pc-Sw relation available for pore shape '" << PoreNetwork::Pore::shapeToString(shape)
+                       "No pc-Sw relation available for pore shape '" << Pore::shapeToString(shape)
                        << "'. Supported shapes: Tetrahedron, Cube, Octahedron, Dodecahedron, Icosahedron "
                        << "(see dumux/material/fluidmatrixinteractions/porenetwork/pore/2p).");
     }
 }
 
-} // end anonymous namespace
+} // end namespace Dumux::PoreNetwork
 // [[/codeblock]]
 //
 // ### The main function
@@ -147,7 +110,10 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using TypeTag = Properties::TTag::PNMTwoPStatic;
+    // `TwoPStatic` (used further down) is not a full-fledged DuMu<sup>x</sup> model -- it
+    // needs no `Problem`/`GridVariables`/assembler -- so instead of setting up a type tag
+    // and the property system, the few types needed are defined directly
+    using Scalar = double;
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
@@ -171,16 +137,17 @@ int main(int argc, char** argv)
     GridManager gridManager;
     gridManager.init();
 
+    // the throats (elements) of the pore-network grid live on a 1d network embedded in 3d space
+    using GridView = typename GridManager::Grid::LeafGridView;
     const auto& leafGridView = gridManager.grid().leafGridView();
     auto gridData = gridManager.getGridData();
 
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = PoreNetwork::GridGeometry<Scalar, GridView, /*enableCache=*/false>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
     // [[/codeblock]]
 
     // ### Read fluid and process parameters
     // [[codeblock]]
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar surfaceTension = getParam<Scalar>("Problem.SurfaceTension");
     const Scalar contactAngle = getParam<Scalar>("Problem.ContactAngle");
     const int inletPoreLabel = getParam<int>("Problem.InletPoreLabel");
@@ -242,7 +209,6 @@ int main(int argc, char** argv)
     std::vector<int> poreLabel(leafGridView.size(1));
 
     static const auto name = getParam<std::string>("Problem.Name");
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     auto writer = std::make_shared<Dune::VTKWriter<GridView>>(leafGridView);
     Dune::VTKSequenceWriter<GridView> sequenceWriter(writer, name);
     sequenceWriter.addCellData(pcEntry, "pcEntry");
@@ -362,7 +328,7 @@ int main(int argc, char** argv)
                 {
                     const Scalar poreRadius = gridGeometry->poreInscribedRadius(dofIdx);
                     const auto poreShape = gridGeometry->poreGeometry(dofIdx);
-                    sw[dofIdx] = poreSaturation(poreShape, poreRadius, surfaceTension, pc[dofIdx]);
+                    sw[dofIdx] = PoreNetwork::poreSaturation(poreShape, poreRadius, surfaceTension, pc[dofIdx]);
                 }
                 else
                     sw[dofIdx] = 1.0;
