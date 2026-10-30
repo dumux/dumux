@@ -4,20 +4,18 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-/*!
- * \file
- *
- * \brief Two-phase relative-permeability upscaling with a pore network model.
- *
- * A quasi-static two-phase invasion-percolation sweep (TwoPStatic, driven by
- * PNMProblemStatic) determines, over a full capillary-pressure cycle (drainage from
- * Problem.InitialPc up to Problem.FinalPc, then imbibition back down), the invasion state and
- * phase conductance of every throat at each step. For each step, a single-phase Darcy
- * (CreepingFlow) solve is then run separately for the wetting and the non-wetting phase on that
- * frozen conductance field, and the resulting mass fluxes are converted into apparent phase
- * permeabilities, giving relative-permeability curves that capture drainage/imbibition
- * hysteresis.
- */
+// ## The main program (`main.cc`)
+// This file contains the main program flow. The upscaling procedure runs in two stages: a
+// quasi-static two-phase invasion-percolation sweep over a full drainage-imbibition pc cycle
+// (`runStaticProblem`), followed by one single-phase Darcy upscaling solve per fluid, re-run at
+// every saturation step of that cycle on the frozen conductance field it produced
+// (`runSinglePhaseUpscaling`). See the [equations and algorithm in the main
+// description](../README.md#mathematical-and-numerical-model) for the physics behind both
+// stages.
+// [[content]]
+// ### Includes
+// [[details]] includes
+// [[codeblock]]
 #include <config.h>
 #include <iostream>
 
@@ -42,16 +40,17 @@
 
 #include "upscalinghelper.hh"
 #include "properties.hh"
-
+// [[/codeblock]]
+// [[/details]]
+//
 namespace Dumux {
 
-/*!
- * \brief Runs the quasi-static two-phase invasion-percolation sweep for the whole saturation
- *        range, caching the per-throat phase transmissibilities of every step.
- *
- * \param gridManager The pore-network grid manager
- * \param upscalingHelper Receives the network's total pore volume for the porosity report
- */
+// ### Stage 1: the quasi-static two-phase sweep
+// Builds the pore-network grid once, then drives `PNMProblemStatic` (see
+// [`problem_static.hh`](../../dumux/porenetwork/2p/static/staticpnm.hh) and
+// [problem_static.hh](problem_static.hh)) through every step of the drainage-imbibition cycle,
+// caching the per-throat phase transmissibilities of each step for stage 2.
+// [[codeblock]]
 template<class GridManager>
 auto runStaticProblem(GridManager& gridManager,
                       UpscalingHelper<GetPropType<Properties::TTag::PNMTWOPStatic, Properties::Scalar>>& upscalingHelper)
@@ -77,20 +76,22 @@ auto runStaticProblem(GridManager& gridManager,
     if (getParam<bool>("Problem.PlotPcS", false))
         problem.plot();
 
+    // the single-phase upscaling solves of stage 2 need the total pore volume (for the
+    // porosity report) and the step index at which drainage ends and imbibition begins (to
+    // plot the two legs separately)
     upscalingHelper.setTotalPoreVolume(problem.totalPoreVolume());
     upscalingHelper.setApexStep(problem.numberOfSteps());
     return problem.staticProperties();
 }
+// [[/codeblock]]
 
-/*!
- * \brief Runs the single-phase Darcy upscaling solve for one fluid (liquid or gas), looking
- *        up the throat conductances precomputed by the two-phase model at every saturation step.
- *
- * \tparam TypeTag Selects liquid or gas via its FluidSystem
- * \param gridManager The pore-network grid manager
- * \param staticFlowProperties The per-step results of the two-phase sweep (see runStaticProblem)
- * \param upscalingHelper Collects the resulting apparent-permeability-vs-saturation data
- */
+// ### Stage 2: single-phase upscaling for one fluid
+// Re-solves single-phase Darcy flow once per saturation step of the cycle produced by stage 1,
+// each time importing that step's precomputed throat conductances
+// (`problem->importTransmissibility(...)`) instead of recomputing them from a two-phase
+// assembly -- this is what makes it a *single*-phase solve despite varying saturation. The
+// `TypeTag` selects which fluid (liquid or gas) via its `FluidSystem`.
+// [[codeblock]]
 template<class TypeTag, class GridManager, class StaticProperties>
 void runSinglePhaseUpscaling(GridManager& gridManager,
                              const StaticProperties& staticFlowProperties,
@@ -191,9 +192,15 @@ void runSinglePhaseUpscaling(GridManager& gridManager,
         upscalingHelper.writePlotDataToFile(dimIdx, phaseIdx, getParam<std::string>("Problem.Name"));
     }
 }
+// [[/codeblock]]
 
 } // end namespace Dumux
 
+// ### The main function
+// Initializes the grid once, runs stage 1, then stage 2 for both fluids on the same
+// `UpscalingHelper` instance so both end up in the same plot and porosity report.
+// [[details]] main
+// [[codeblock]]
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -235,3 +242,6 @@ int main(int argc, char** argv)
 
     return 0;
 }
+// [[/codeblock]]
+// [[/details]]
+// [[/content]]
