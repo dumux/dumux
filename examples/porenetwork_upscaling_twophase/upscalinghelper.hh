@@ -4,90 +4,118 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-
 #ifndef DUMUX_PNM_ONEP_PERMEABILITY_UPSCALING_HELPER_HH
 #define DUMUX_PNM_ONEP_PERMEABILITY_UPSCALING_HELPER_HH
 
-// ## Upscaling helper struct (`upscalinghelper.hh`)
-//
-// This file contains the __upscaling helper struct__ which considers the volume flux leaving
-// the pore network in flow direction in order to find the upscaled Darcy permeability.
-// [[content]]
+/*!
+ * \file
+ * \ingroup PoreNetworkModels
+ * \brief A helper class that determines the volume flux leaving the pore network in the flow
+ *        direction, converts it into an apparent permeability, and collects/plots the
+ *        resulting relative-permeability curves versus saturation.
+ *
+ * \note The pc-Sw curve itself (common to both phases) is plotted once per cycle directly from
+ *       the quasi-static two-phase sweep, see PNMProblemStatic::plot() in problem_static.hh --
+ *       it is not duplicated here.
+ */
 #include <iostream>
-#include <ostream>
-#include <iomanip>
+#include <fstream>
+#include <string>
 #include <numeric>
 #include <functional>
-#include <filesystem>
-
-#include <dune/common/float_cmp.hh>
+#include <array>
+#include <vector>
 
 #include <dumux/io/gnuplotinterface.hh>
-#include <dumux/io/format.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux {
 
+/*!
+ * \ingroup PoreNetworkModels
+ * \brief Collects, writes and plots apparent permeability vs. saturation data gathered over
+ *        the course of an upscaling run.
+ *
+ * One instance is shared across both single-phase (wetting/non-wetting) upscaling solves, so
+ * that both end up in the same plot; see main.cc.
+ */
 template<class Scalar>
 class UpscalingHelper
 {
 public:
-    // ### Set data points to calculate intrinsic permeability
-    // This function first evaluates the mass flux leaving the network in the direction of the applied pressure gradient.
-    // Afterwards, the mass flux is converted into an volume flux which is used to calculate the apparent velocity.
-    // Then apparent permeability of the network is computed and stored for furthure calculations.
-    // [[codeblock]]
-    template <class Problem, class StaticProperties>
-    void setDataPoints(const Problem &problem, const Scalar totalMassFlux, const StaticProperties staticProperties)
+    //! Records the total pore volume of the network (needed for the porosity report).
+    void setTotalPoreVolume(Scalar totalPoreVolume)
+    { totalPoreVolume_ = totalPoreVolume; }
+
+    /*!
+     * \brief Records the row index at which the drainage leg ends and the imbibition leg
+     *        begins in the collected data (i.e. the number of pc steps of the drainage leg),
+     *        so the two legs can later be plotted as separate, distinctly styled curves.
+     */
+    void setApexStep(std::size_t apexStep)
+    { apexStep_ = apexStep; }
+
+    /*!
+     * \brief Clears the collected data of the given direction.
+     *
+     * Since one UpscalingHelper instance is shared across the wetting- and non-wetting-phase
+     * upscaling runs (see main.cc) so that both end up in the same plot/porosity report, this
+     * must be called before starting a new phase's step loop for a given direction -- otherwise
+     * that phase's data would be appended to, rather than replace, the previous phase's.
+     */
+    void resetDataPoints(std::size_t dirIdx)
     {
-        // get the domain side lengths from the problem
+        effectivePermeability_[dirIdx].clear();
+        averageSaturation_[dirIdx].clear();
+    }
+
+    /*!
+     * \brief Evaluates the mass flux leaving the network in the direction of the applied
+     *        pressure gradient, converts it into an apparent permeability, and stores it
+     *        together with the corresponding saturation.
+     */
+    template<class Problem, class StaticProperties>
+    void setDataPoints(const Problem& problem, const Scalar totalMassFlux, const StaticProperties& staticProperties)
+    {
+        // only the permeability in flow direction (set via Problem.Directions, x by default)
+        // is upscaled; side lengths of the other directions are needed for the outflow area only
         auto sideLengths = problem.sideLengths();
-        std::cout<<"side lengths:  "<<sideLengths[0]<<"   "<<sideLengths[1]<<"   "<<sideLengths[2]<<std::endl;
+        const auto direction = problem.direction();
 
-        // get the applied pressure gradient
-        const auto pressureGradient = problem.pressureGradient();
-
-        // get the fluid properties
         const auto density = problem.density();
         const auto dynamicViscosity = problem.dynamicViscosity();
+        const auto pressureGradient = problem.pressureGradient();
 
         // convert mass to volume flux
         const auto volumeFlux = totalMassFlux / density;
-        ;
 
-        // calculate apparent velocity
-        assert(problem.direction() == 0); // for this application, only the premeability in x-direction is calculated
+        // outflow area of a cylindrical representative elementary volume perpendicular to
+        // the flow direction
+        sideLengths[direction] = 1.0;
+        const auto outflowArea = M_PI/4 * std::accumulate(sideLengths.begin(), sideLengths.end(), Scalar(1.0), std::multiplies<Scalar>());
+        const auto apparentVelocity = volumeFlux / outflowArea;
+        const auto apparentPermeability = apparentVelocity / pressureGradient * dynamicViscosity;
 
-        sideLengths[problem.direction()] = 1.0;
-        const auto outflowArea = M_PI/4 * std::accumulate(sideLengths.begin(), sideLengths.end(), 1.0, std::multiplies<Scalar>()); //for a cylinder
-        const auto vApparent = volumeFlux / outflowArea;
-
-        // compute apparent permeability
-        const auto KApparent = vApparent / pressureGradient * dynamicViscosity;
-
-        // store the required data for further calculations
-        EffectivePermeability_[problem.direction()].push_back(KApparent);
-        averageSaturation_[problem.direction()].push_back(staticProperties.averageSaturation);
-        pc_[problem.direction()].push_back(staticProperties.pcGlobal);
+        effectivePermeability_[direction].push_back(apparentPermeability);
+        averageSaturation_[direction].push_back(staticProperties.averageSaturation);
     }
 
-    template <class Problem>
-    void networkPorosity(const Problem &problem)
+    //! Computes and stores the porosity of the network (pore volume over REV volume).
+    template<class Problem>
+    void networkPorosity(const Problem& problem)
     {
-        auto sideLengths = problem.sideLengths();
-
-        auto networkTotalVolume = M_PI/4 * std::accumulate(std::begin(sideLengths), std::end(sideLengths), 1.0, std::multiplies<Scalar>()); // for a cylinder
-        std::cout<<" networkTotalVolume:  "<<networkTotalVolume<<" totalPoreVolume_:  "<<totalPoreVolume_<<std::endl;
+        const auto& sideLengths = problem.sideLengths();
+        const auto networkTotalVolume = M_PI/4 * std::accumulate(sideLengths.begin(), sideLengths.end(), Scalar(1.0), std::multiplies<Scalar>());
         networkPorosity_ = totalPoreVolume_ / networkTotalVolume;
     }
-    // [[/codeblock]]
 
-    // ### Determine the domain's side lengths
-    //
-    // We determine the domain side length by using the bounding box of the network
-    // [[codeblock]]
+    //! Reports the previously computed network porosity to the terminal.
+    void reportPorosity() const
+    { std::cout << "the porosity of the network is: " << networkPorosity_ << std::endl; }
+
+    // We determine the domain side lengths by using the bounding box of the network.
     template<class GridGeometry>
-    auto getSideLengths(const GridGeometry& gridGeometry)
+    auto getSideLengths(const GridGeometry& gridGeometry) const
     {
         using GlobalPosition = typename GridGeometry::GlobalCoordinate;
         GlobalPosition result(0.0);
@@ -98,149 +126,74 @@ public:
 
         return result;
     }
-    // [[/codeblock]]
 
-    // ### Plot the data using Gnuplot
-    //
-    // [[codeblock]]
-    static void plot()
+    //! Plots the collected effective permeability vs. saturation data.
+    void plot() const
+    { plotEffPermeabilityVsSw_(); }
+
+    /*!
+     * \brief Writes the collected effective-permeability data of the given direction and phase
+     *        to disk.
+     * \param dirIdx The spatial direction (0:x, 1:y, 2:z)
+     * \param phaseIdx The phase (0: wetting, 1: non-wetting)
+     * \param namePrefix A prefix (e.g. the run name) used to keep output files of different
+     *                   runs from overwriting each other
+     */
+    void writePlotDataToFile(std::size_t dirIdx, int phaseIdx, const std::string& namePrefix)
     {
-        // // plot effective permeability and capillary pressure vs. wetting phase saturation
-        plotEffPermeabilityVsSw_();
-        plotCapillaryPressureVsSw_();
-    }
-    // [[/codeblock]]
-    //
-    // ### Save the relevant data for plot
-    // [[codeblock]]
-    void writePlotDataToFile(std::size_t dirIdx, int phaseIdx)
-    {
-        writeEffPermeabilityVsAverageSaturation_(dirIdx, phaseIdx );
-        writeCapillaryPressureVsAverageSaturation_(dirIdx);
-    }
-    // [[/codeblock]]
+        const std::string fileName = namePrefix + "_" + dirName_[dirIdx] + "-dir-" + phaseName_[phaseIdx] + "-EffPermeabilityVsAverageSaturation.dat";
+        std::ofstream logfile(fileName);
+        for (std::size_t i = 0; i < effectivePermeability_[dirIdx].size(); ++i)
+            logfile << averageSaturation_[dirIdx][i] << " " << effectivePermeability_[dirIdx][i] << std::endl;
 
-    // ### Set the directions that need to be considered
-    //
-    // [[codeblock]]
-    void setDirections(std::vector<std::size_t> directions)
-    {
-        directions_ = directions;
+        filesToPlot_.push_back(fileName);
     }
-    // [[/codeblock]]
-
-    static void setTotalPoreVolume( Scalar totalPoreVolume)
-    { totalPoreVolume_ = totalPoreVolume; }
-
-    static void reportPorosity()
-    {   std::cout<<"the porosity of the network is:  "<<networkPorosity_<<std::endl; }
 
 private:
-    void writeEffPermeabilityVsAverageSaturation_(std::size_t dirIdx, int phaseIdx)
+    /*!
+     * \brief Adds the drainage and imbibition legs of one data file to a gnuplot plot as two
+     *        separate, distinctly styled and labeled curves (solid circles for drainage,
+     *        dashed squares for imbibition; color picked per curve index so different files,
+     *        e.g. different phases, remain visually distinguishable).
+     */
+    template<class Gnuplot>
+    void addHysteresisLegsToPlot_(Gnuplot& gnuplot, const std::string& fileName, const std::string& curveLabel, int colorIndex) const
     {
-        // open a logfile
-        std::string fileName = dirName_[dirIdx] + "-dir-" + phaseName_[phaseIdx] +"-EffPermeabilityVsAverageSaturation.dat";
-        std::ofstream logfile(fileName);
-
-        // save the data needed to be plotted in logfile
-        for (int i = 0; i < EffectivePermeability_[dirIdx].size(); i++)
-            logfile << averageSaturation_[dirIdx][i] << " " << EffectivePermeability_[dirIdx][i] << std::endl;
-
-        filesToPlot_[0].push_back(fileName);
+        const std::string color = colorIndex % 2 == 0 ? "#1f77b4" : "#d62728";
+        gnuplot.addFileToPlot(fileName, "every ::0::" + std::to_string(apexStep_) +
+                              " u 1:2 title \"" + curveLabel + " (drainage)\" with linespoints lc rgb '" + color + "' pt 7 ps 0.6");
+        gnuplot.addFileToPlot(fileName, "every ::" + std::to_string(apexStep_) +
+                              " u 1:2 title \"" + curveLabel + " (imbibition)\" with linespoints lc rgb '" + color + "' dt 2 pt 5 ps 0.6");
     }
 
-    void writeCapillaryPressureVsAverageSaturation_(std::size_t dirIdx)
+    void plotEffPermeabilityVsSw_() const
     {
-        if(filesToPlot_[1].size())
-            return;
-        // open a logfile
-        std::string fileName = dirName_[dirIdx] + "-dir-CapillaryPressureVsAverageSaturation.dat";
-
-        std::ofstream logfile(fileName);
-
-        // save the data needed to be plotted in logfile
-        for (int i = 0; i < EffectivePermeability_[dirIdx].size(); i++)
-            logfile << averageSaturation_[dirIdx][i] << " " << pc_[dirIdx][i] << std::endl;
-
-        filesToPlot_[1].push_back(fileName);
-    }
-
-    static void plotEffPermeabilityVsSw_()
-    {
-        // using gnuplot interface
         Dumux::GnuplotInterface<Scalar> gnuplot(true);
         gnuplot.setOpenPlotWindow(true);
         gnuplot.resetAll();
-        std::string title{}, option{};
 
-        int count = 1;
-        using std::to_string;
-        for (const auto& fileName : filesToPlot_[0])
+        int colorIndex = 0;
+        for (const auto& fileName : filesToPlot_)
         {
-            std::size_t isWetting = fileName.find("Wetting");
-
-            std::string legend = isWetting != std::string::npos ? "u 1:2 title \" Wetting\" with lines" :
-                                                                  "u 1:2 title \" Non-wetting\" with lines";
-            // add the data in each direction for plot
-            gnuplot.addFileToPlot(fileName, legend);
-
-            // set the properties of lines to be plotted
-            option += "set linetype " + to_string(count) + " linecolor " + to_string(count) + " linewidth 5\n";
-            count++;
+            const bool isWetting = fileName.find(phaseName_[0]) != std::string::npos;
+            addHysteresisLegsToPlot_(gnuplot, fileName, isWetting ? "Wetting" : "Non-wetting", colorIndex++);
         }
 
-        // report the darcy permeability in each direction as the title of the plot
-        title += Fmt::format("Effective permeability vs. Sw");
-
-        option += "set title \"" + title + "\"\n";
-
+        gnuplot.setOption("set title \"Effective permeability vs. Sw\"\n");
         gnuplot.setXlabel("Sw [-]");
         gnuplot.setYlabel("Effective Permeability [m2]");
-        gnuplot.setOption(option);
         gnuplot.plot("Effective Permeability vs. Sw");
     }
 
-    static void plotCapillaryPressureVsSw_()
-    {
-        // using gnuplot interface
-        Dumux::GnuplotInterface<Scalar> gnuplot(true);
-        gnuplot.setOpenPlotWindow(true);
-        gnuplot.resetAll();
-        std::string title{}, option{};
-        for (const auto& fileName : filesToPlot_[1])
-        {
-            std::string legend = "u 1:2 title \" \" with lines";
-            // add the data in each direction for plot
-            gnuplot.addFileToPlot(fileName, legend);
-
-            // set the properties of lines to be plotted
-            option += "set linetype 1 linecolor 1 linewidth 5\n";
-        }
-
-        // report the darcy permeability in each direction as the title of the plot
-        title += Fmt::format("Capillary Pressure vs. Sw");
-
-        option += "set title \"" + title + "\"\n";
-
-        gnuplot.setXlabel("Sw [-]");
-        gnuplot.setYlabel("Capillary Pressure [Pa]");
-        gnuplot.setOption(option);
-        gnuplot.plot("Capillary Pressure vs. Sw");
-    }
-
-    std::array<std::vector<Scalar>, 3> samplePointsX_;
-    std::array<std::vector<Scalar>, 3> samplePointsY_;
-    std::array<std::vector<Scalar>, 3> EffectivePermeability_;
+    std::array<std::vector<Scalar>, 3> effectivePermeability_;
     std::array<std::vector<Scalar>, 3> averageSaturation_;
-    std::array<std::vector<Scalar>, 3> pc_;
     const std::array<std::string, 3> dirName_ = {"X", "Y", "Z"};
     const std::array<std::string, 2> phaseName_{"Wetting", "Non-wetting"};
-    std::vector<std::size_t> directions_;
-    inline static std::array<std::vector<std::string>, 2> filesToPlot_; // 0 index for rel perm vs. sw and 1 index for pc vs. sw
-    inline static Scalar totalPoreVolume_;
-    inline static Scalar networkPorosity_;
+    std::vector<std::string> filesToPlot_;
+    std::size_t apexStep_ = 0;
+    Scalar totalPoreVolume_;
+    Scalar networkPorosity_;
 };
 
 } // end namespace Dumux
-// [[/content]]
 #endif
