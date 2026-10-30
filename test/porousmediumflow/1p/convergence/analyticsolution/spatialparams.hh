@@ -81,6 +81,23 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
+    using ParentType::permeability;
+    using ParentType::porosity;
+
+    //! The permeability at an interpolation point, evaluated at its position since it is smooth
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    PermeabilityType permeability(const ElementDiscretization& elemDisc,
+                                  const IpData& ipData,
+                                  const ElementSolution& elemSol) const
+    { return permeabilityAtPos(ipData.global()); }
+
+    //! The porosity at an interpolation point
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar porosity(const ElementDiscretization& elemDisc,
+                    const IpData& ipData,
+                    const ElementSolution& elemSol) const
+    { return porosityAtPos(ipData.global()); }
+
 private:
     static constexpr Scalar omega_ = M_PI;
     Scalar permeability_;

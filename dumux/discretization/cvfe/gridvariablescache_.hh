@@ -42,15 +42,18 @@ struct CVFEDefaultGridVariablesCacheTraits
 /*!
  * \ingroup CVFEDiscretization
  * \brief The grid variables cache class for control-volume finite element methods
+ * \tparam Traits the traits
+ * \tparam enableCaching whether the variables are stored for the whole grid
+ * \tparam enableIpDataCaching whether the interpolation point data are stored for the whole grid
  */
-template<class Traits, bool enableCaching>
+template<class Traits, bool enableCaching, bool enableIpDataCaching = enableCaching>
 class CVFEGridVariablesCache;
 
 // specialization in case of storing the local variables
-template<class Traits>
-class CVFEGridVariablesCache<Traits, /*cachingEnabled*/true>
+template<class Traits, bool enableIpDataCaching>
+class CVFEGridVariablesCache<Traits, /*cachingEnabled*/true, enableIpDataCaching>
 {
-    using ThisType = CVFEGridVariablesCache<Traits, true>;
+    using ThisType = CVFEGridVariablesCache<Traits, true, enableIpDataCaching>;
 public:
     //! export the problem type
     using Problem = typename Traits::Problem;
@@ -64,6 +67,12 @@ public:
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
+    //! make it possible to query if the interpolation point data are stored for the whole grid
+    static constexpr bool interpolationPointDataCachingEnabled = enableIpDataCaching;
+
+    static_assert(enableIpDataCaching || !InterpolationPointData::isSolDependent,
+                  "Solution-dependent interpolation point data are stored together with the variables");
+
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
@@ -76,8 +85,8 @@ public:
     void init(const GridDiscretization& gridDiscretization, const SolutionVector& sol)
     {
         variables_.resize(gridDiscretization.gridView().size(0));
-        ipDataCache_ = std::make_shared<InterpolationPointDataCache>();
-        ipDataCache_->resize(gridDiscretization.gridView().size(0));
+        if constexpr (enableIpDataCaching)
+            ipDataCache_ = std::make_shared<std::vector<ElementInterpolationPointDataCache>>(gridDiscretization.gridView().size(0));
 
         Dumux::parallelFor(gridDiscretization.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
         {
@@ -91,7 +100,8 @@ public:
             for (const auto& localDof : localDofs(elemDisc))
                 variables_[eIdx][localDof.index()].update(elemSol, problem, elemDisc, ipData(elemDisc, localDof));
 
-            ipDataCache_->update(problem, element, elemDisc, variables_[eIdx]);
+            if constexpr (enableIpDataCaching)
+                (*ipDataCache_)[eIdx].update(problem, element, elemDisc, variables_[eIdx]);
         });
     }
 
@@ -100,7 +110,7 @@ public:
     {
         if constexpr (InterpolationPointData::isSolDependent)
         {
-            auto newIpDataCache = std::make_shared<InterpolationPointDataCache>(*ipDataCache_);
+            auto newIpDataCache = std::make_shared<std::vector<ElementInterpolationPointDataCache>>(*ipDataCache_);
 
             Dumux::parallelFor(gridDiscretization.gridView().size(0), [&, &problem = problem(), newIpDataCache](const std::size_t eIdx)
             {
@@ -113,7 +123,7 @@ public:
                 for (const auto& localDof : localDofs(elemDisc))
                     variables_[eIdx][localDof.index()].update(elemSol, problem, elemDisc, ipData(elemDisc, localDof));
 
-                newIpDataCache->update(problem, element, elemDisc, variables_[eIdx]);
+                (*newIpDataCache)[eIdx].update(problem, element, elemDisc, variables_[eIdx]);
             });
 
             ipDataCache_ = std::move(newIpDataCache);
@@ -158,118 +168,38 @@ public:
     Variables& variables(const std::size_t eIdx, const std::size_t localIdx)
     { return variables_[eIdx][localIdx]; }
 
+    //! The variables of all local dofs of an element
+    const std::vector<Variables>& localDofVariables(const std::size_t eIdx) const
+    { return variables_[eIdx]; }
+
     const InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
-    { return ipDataCache_->scvfCache(eIdx, scvfIdx, qpIdx); }
+    { return (*ipDataCache_)[eIdx].scvfCache(scvfIdx, qpIdx); }
 
     InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
-    { return ipDataCache_->scvfCache(eIdx, scvfIdx, qpIdx); }
+    { return (*ipDataCache_)[eIdx].scvfCache(scvfIdx, qpIdx); }
+
+    const auto& cache(std::size_t eIdx) const
+    { return (*ipDataCache_)[eIdx]; }
+
+    auto& cache(std::size_t eIdx)
+    { return (*ipDataCache_)[eIdx]; }
 
     const Problem& problem() const
     { return *problemPtr_; }
 
 private:
-    class InterpolationPointDataCache
-    {
-        struct ElementCache
-        {
-            std::vector<InterpolationPointData> scvfCache;
-            std::vector<std::size_t> qpsOffset;
+    using ElementInterpolationPointDataCache = Dumux::Detail::CVFE::ScvfInterpolationPointDataCache<InterpolationPointData>;
 
-            template<class Problem, class ElementDiscretization, class ElementVariables>
-            void update(const Problem& problem,
-                        const typename ElementDiscretization::Element& element,
-                        const ElementDiscretization& elemDisc,
-                        const ElementVariables& elemVars)
-            {
-                qpsOffset.resize(elemDisc.numScvf() + 1, 0);
-                for (const auto& scvf : scvfs(elemDisc))
-                {
-                    const auto numQps = std::ranges::size(Dumux::CVFE::quadratureRule(elemDisc, scvf));
-                    qpsOffset[scvf.index() + 1] = numQps;
-                }
-                for (std::size_t i = 2; i < qpsOffset.size(); ++i)
-                    qpsOffset[i] += qpsOffset[i-1];
-
-                scvfCache.resize(qpsOffset.back());
-                for (const auto& scvf : scvfs(elemDisc))
-                {
-                    for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scvf))
-                    {
-                        const auto scvfIdx = qpData.ipData().scvfIndex();
-                        const auto qpIdx = qpData.ipData().qpIndex();
-                        scvfCache[qpsOffset[scvfIdx] + qpIdx].update(problem,
-                                                                     element,
-                                                                     elemDisc,
-                                                                     elemVars,
-                                                                     qpData.ipData());
-                    }
-                }
-            }
-        };
-
-    public:
-
-        InterpolationPointDataCache()
-        {}
-
-        void resize(const std::size_t numElements)
-        {
-            elementCaches_.resize(numElements);
-        }
-
-        template<class Problem, class ElementDiscretization, class ElementVariables>
-        void update(const Problem& problem,
-                    const typename ElementDiscretization::Element& element,
-                    const ElementDiscretization& elemDisc,
-                    const ElementVariables& elemVars)
-        {
-            const auto& gridDiscretization = elemDisc.gridDiscretization();
-            const auto eIdx = gridDiscretization.elementMapper().index(element);
-            elementCaches_[eIdx].update(problem, element, elemDisc, elemVars);
-        }
-
-        // access operator
-        const InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
-        {
-            const auto& elementCache = elementCaches_[eIdx];
-            return elementCache.scvfCache[elementCache.qpsOffset[scvfIdx] + qpIdx];
-        }
-
-        // access operator
-        InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx)
-        {
-            auto& elementCache = elementCaches_[eIdx];
-            return elementCaches_[eIdx].scvfCache[elementCache.qpsOffset[scvfIdx] + qpIdx];
-        }
-
-        const ElementCache& cache(std::size_t eIdx) const
-        { return elementCaches_[eIdx]; }
-
-        ElementCache& cache(std::size_t eIdx)
-        { return elementCaches_[eIdx]; }
-
-    private:
-        std::vector<ElementCache> elementCaches_; //! storage per element
-    };
-
-public:
-    const auto& cache(std::size_t eIdx) const
-    { return ipDataCache_->cache(eIdx); }
-
-    auto& cache(std::size_t eIdx)
-    { return ipDataCache_->cache(eIdx); }
-
-private:
     const Problem* problemPtr_;
     std::vector<std::vector<Variables>> variables_;
-    std::shared_ptr<InterpolationPointDataCache> ipDataCache_;
+    std::shared_ptr<std::vector<ElementInterpolationPointDataCache>> ipDataCache_;
 };
 
 // Specialization when the current local variables are not stored
-template<class Traits>
-class CVFEGridVariablesCache<Traits, /*cachingEnabled*/false>
+template<class Traits, bool enableIpDataCaching>
+class CVFEGridVariablesCache<Traits, /*cachingEnabled*/false, enableIpDataCaching>
 {
-    using ThisType = CVFEGridVariablesCache<Traits, false>;
+    using ThisType = CVFEGridVariablesCache<Traits, false, enableIpDataCaching>;
 
 public:
     //! export the problem type
@@ -284,6 +214,12 @@ public:
     //! export interpolation point data type
     using InterpolationPointData = typename Traits::InterpolationPointData;
 
+    //! make it possible to query if the interpolation point data are stored for the whole grid
+    static constexpr bool interpolationPointDataCachingEnabled = enableIpDataCaching;
+
+    static_assert(!enableIpDataCaching || !InterpolationPointData::isSolDependent,
+                  "Solution-dependent interpolation point data are stored together with the variables");
+
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
@@ -293,16 +229,44 @@ public:
     CVFEGridVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     template<class GridDiscretization, class SolutionVector>
-    void init(const GridDiscretization& gridDiscretization, const SolutionVector& sol) {}
+    void init(const GridDiscretization& gridDiscretization, const SolutionVector& sol)
+    {
+        if constexpr (enableIpDataCaching)
+        {
+            auto ipDataCache = std::make_shared<std::vector<ElementInterpolationPointDataCache>>(gridDiscretization.gridView().size(0));
+            Dumux::parallelFor(gridDiscretization.gridView().size(0), [&, &problem = problem()](const std::size_t eIdx)
+            {
+                const auto element = gridDiscretization.element(eIdx);
+                const auto elemDisc = localView(gridDiscretization).bindElement(element);
+                const auto elemSol = elementSolution(element, sol, gridDiscretization);
+
+                std::vector<Variables> variables(Dumux::Detail::LocalDofs::numLocalDofs(elemDisc));
+                for (const auto& localDof : localDofs(elemDisc))
+                    variables[localDof.index()].update(elemSol, problem, elemDisc, ipData(elemDisc, localDof));
+
+                (*ipDataCache)[eIdx].update(problem, element, elemDisc, variables);
+            });
+            ipDataCache_ = std::move(ipDataCache);
+        }
+    }
 
     template<class GridDiscretization, class SolutionVector>
     void update(const GridDiscretization& gridDiscretization, const SolutionVector& sol) {}
+
+    const InterpolationPointData& scvfCache(std::size_t eIdx, std::size_t scvfIdx, std::size_t qpIdx) const
+    { return (*ipDataCache_)[eIdx].scvfCache(scvfIdx, qpIdx); }
+
+    const auto& cache(std::size_t eIdx) const
+    { return (*ipDataCache_)[eIdx]; }
 
     const Problem& problem() const
     { return *problemPtr_;}
 
 private:
+    using ElementInterpolationPointDataCache = Dumux::Detail::CVFE::ScvfInterpolationPointDataCache<InterpolationPointData>;
+
     const Problem* problemPtr_;
+    std::shared_ptr<const std::vector<ElementInterpolationPointDataCache>> ipDataCache_;
 };
 
 } // end namespace Dumux

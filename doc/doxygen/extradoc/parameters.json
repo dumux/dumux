@@ -785,6 +785,11 @@
             "Whether to print warning by flow reversal"
         ]
     },
+    "Flux.ScvfPermeability": {
+        "explanation": [
+            "Permeability on the sub-control-volume faces in the immiscible local residual for variables per local dof: \"Interpolation\" from the local dofs at the integration point, or \"FaceTensorAverage\" of the two sub-control volumes sharing the face."
+        ]
+    },
     "Flux.TvdApproach": {
         "explanation": [
             "If you use a staggered grid with a TVD approach: For a uniform grid \"Uniform\" is fine. For a nonuniform grid decide between \"Li\" and \"Hou\" (two literature-based methods)."

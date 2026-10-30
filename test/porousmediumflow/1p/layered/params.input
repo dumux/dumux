@@ -1,0 +1,16 @@
+[Grid]
+UpperRight = 1 1
+Cells = 16 16
+
+[Problem]
+EnableGravity = false
+Name = layered
+
+[SpatialParams]
+InterfacePosition = 0.5
+PermeabilityLeft = 1.0
+PermeabilityRight = 10.0
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0

@@ -19,6 +19,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/fvporousmediumspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
@@ -98,19 +99,30 @@ public:
 
     /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$ at an
-     *        interpolation point, for degrees of freedom that own no sub-control volume.
-     * \param fvGeometry The finite-volume geometry
+     *        interpolation point.
+     * \note There is no default. A local dof on an element face belongs to the elements on both sides,
+     *       so a permeability given as a function of the position is ambiguous where it jumps.
+     *       Overload this function using the position of the interpolation point for a smooth
+     *       permeability and the element of the element discretization for a permeability that is
+     *       constant per element.
+     * \param elemDisc The element discretization
      * \param ipData The interpolation point data
      * \param elemSol The solution at the dofs connected to the element.
      * \return the intrinsic permeability
      */
-    template<class IpData, class ElementSolution>
-    decltype(auto) permeability(const FVElementGeometry& fvGeometry,
-                                const IpData& ipData,
-                                const ElementSolution& elemSol) const
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    void permeability(const ElementDiscretization& elemDisc,
+                      const IpData& ipData,
+                      const ElementSolution& elemSol) const
     {
-        // forward to generic interface
-        return this->asImp_().permeabilityAtPos(ipData.global());
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         PermeabilityType permeability(const ElementDiscretization& elemDisc,\n"
+        "                                       const IpData& ipData,\n"
+        "                                       const ElementSolution& elemSol) const\n\n"
+        "   returning e.g. permeabilityAtPos(ipData.global()) for a smooth permeability\n"
+        "   or a value determined by elemDisc.element() for a permeability that is constant per element.\n\n");
     }
 
     /*!
