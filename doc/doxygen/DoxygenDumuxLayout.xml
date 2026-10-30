@@ -27,12 +27,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </tab>
     <tab type="modules" visible="yes" title="Module documentation" intro=""/>
     <tab type="user" url="@ref flow-and-transport-in-porous-media" visible="yes" title="Flow and transport in porous media" intro=""/>
-    <tab type="user" url="@ref python-bindings" visible="yes" title="Python bindings" intro=""/>
     <tab type="user" url="@ref external-libraries" visible="yes" title="External libraries" intro=""/>
     <tab type="usergroup" title="Developer documentation">
       <tab type="user" url="@ref dumux-and-dune" visible="yes" title="Dumux and Dune" intro=""/>
       <tab type="user" url="@ref developing-dumux" visible="yes" title="Developing Dumux" intro=""/>
-      <tab type="user" url="@ref building-the-documentation" visible="yes" title="Build doxygen documentation" intro=""/>
       <tab type="user" url="@ref changing-property-name" visible="yes" title="Changing property name" intro=""/>
       <tab type="user" url="@ref custom-input-data" visible="yes" title="Custom input data" intro=""/>
       <tab type="user" url="@ref gmsh-with-alugrid" visible="yes" title="Gmsh with ALUGrid" intro=""/>

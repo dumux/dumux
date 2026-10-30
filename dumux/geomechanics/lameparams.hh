@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsModels
+ * \ingroup Elastic
  * \brief \copydoc Dumux::LameParams
  */
 #ifndef DUMUX_GEOMECHANICS_LAME_PARAMS_HH

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsModels
+ * \ingroup Elastic
  * \brief Base class for the stress variables cache
  */
 #ifndef DUMUX_GEOMECHANICS_STRESSVARIABLESCACHE_HH
