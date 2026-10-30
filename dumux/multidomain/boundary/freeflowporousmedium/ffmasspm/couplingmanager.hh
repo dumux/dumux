@@ -38,6 +38,14 @@ template<class MDTraits>
 struct FreeFlowMassPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::Box, DiscretizationMethods::Box>
 { using type = CouplingManagerBinaryCvfe<MDTraits>; };
 
+template<class MDTraits>
+struct FreeFlowMassPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::PQ2, DiscretizationMethods::PQ2>
+{ using type = CouplingManagerBinaryCvfe<MDTraits>; };
+
+template<class MDTraits>
+struct FreeFlowMassPorousMediumCouplingManagerSelector<MDTraits, DiscretizationMethods::PQ2, DiscretizationMethods::PQ3>
+{ using type = CouplingManagerBinaryCvfe<MDTraits>; };
+
 } // end namespace FreeFlowMassPorousMediumDetail
 #endif // DOXYGEN
 
