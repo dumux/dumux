@@ -39,6 +39,8 @@
 #ifndef DUMUX_SOLIDMECHANICS_ELASTIC_MODEL_HH
 #define DUMUX_SOLIDMECHANICS_ELASTIC_MODEL_HH
 
+#include <type_traits>
+
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/properties.hh>
@@ -47,7 +49,9 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/solidstates/inertsolidstate.hh>
 #include <dumux/material/solidsystems/1csolid.hh>
+#include <dumux/discretization/defaultgridvariables.hh>
 #include <dumux/flux/hookeslaw.hh>
+#include <dumux/flux/cvfe/hookeslaw_.hh>
 
 #include "indices.hh"
 #include "localresidual.hh"
@@ -151,12 +155,15 @@ public:
     using type = ElasticVariables<Traits>;
 };
 
-//! By default, we use hooke's law for stress evaluations
+//! By default, we use hooke's law for stress evaluations, at the integration points of the scheme for the variables per local dof
 template<class TypeTag>
 struct StressType<TypeTag, TTag::Elastic>
 {
-    using type = HookesLaw< GetPropType<TypeTag, Properties::Scalar>,
-                            GetPropType<TypeTag, Properties::GridGeometry> >;
+    using type = std::conditional_t<Dumux::Detail::usesVariables<TypeTag>(),
+                                    Experimental::CVFEHookesLawAtIp<GetPropType<TypeTag, Properties::Scalar>,
+                                                                    GetPropType<TypeTag, Properties::GridGeometry>>,
+                                    HookesLaw<GetPropType<TypeTag, Properties::Scalar>,
+                                              GetPropType<TypeTag, Properties::GridGeometry>>>;
 };
 
 //! The flux variables cache class for models involving flow in porous media
