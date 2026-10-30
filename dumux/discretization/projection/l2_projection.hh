@@ -13,7 +13,6 @@
 #define DUMUX_DISCRETIZATION_L2_PROJECTION_HH
 
 #include <array>
-#include <optional>
 #include <type_traits>
 #include <vector>
 
@@ -67,6 +66,11 @@ auto makeLocalFunction(Function&& f, const GridView& gridView)
 #endif
 }
 
+//! The local view (element discretization) of a grid discretization
+template<class GridDiscretization>
+auto elementDiscretization(const GridDiscretization& gridDiscretization)
+{ return localView(gridDiscretization); }
+
 } // end namespace Detail
 
 /*!
@@ -98,27 +102,31 @@ public:
     {
         using Tree = LocalTree;
 
-        explicit LocalView(const GridDiscretization& gg) : gg_(gg) {}
+        explicit LocalView(const GridDiscretization& gg)
+        : gg_(gg)
+        , elemDisc_(Detail::elementDiscretization(gg))
+        {}
 
+        // the dof indices of the local dofs of the scheme, which order several dofs on a shared
+        // sub-entity consistently between the elements sharing it
         void bind(const Element& element)
         {
-            element_ = element;
             tree_.fe_ = &gg_.feCache().get(element.type());
+            elemDisc_.bindElement(element);
+            dofIndices_.resize(tree_.fe_->size());
+            for (const auto& localDof : localDofs(elemDisc_))
+                dofIndices_[localDof.index()] = localDof.dofIndex();
         }
 
         const Tree& tree() const { return tree_; }
 
         std::size_t index(std::size_t index) const
-        {
-            const auto& localKey = tree_.fe_->localCoefficients().localKey(index);
-            // TODO: Currently we assume that this is the default dof mapping when having multiple dofs per sub-entity
-            // meaning that they are localKey.index() larger than 0
-            return gg_.dofMapper().subIndex(*element_, localKey.subEntity(), localKey.codim()) + localKey.index();
-        }
+        { return dofIndices_[index]; }
 
     private:
         const GridDiscretization& gg_;
-        std::optional<Element> element_;
+        typename GridDiscretization::LocalView elemDisc_;
+        std::vector<std::size_t> dofIndices_;
         Tree tree_;
     };
 
