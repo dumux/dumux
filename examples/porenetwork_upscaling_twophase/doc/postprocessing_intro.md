@@ -1,0 +1,31 @@
+# Part 2: Postprocessing/Visualization of a pore-network model
+
+After compiling and running the code, both the quasi-static two-phase sweep's invasion/trapping
+state and each single-phase upscaling solve's pressure field can be visualized with the open
+source visualization application ParaView.
+
+Three separate `.pvd`/`.vtp` sequences are written, one per stage/fluid:
+```bash
+paraview build-cmake/examples/porenetwork_upscaling_twophase/static.pvd &            # stage 1: invasion/trapping
+paraview build-cmake/examples/porenetwork_upscaling_twophase/upscaling_liquid.pvd &  # stage 2: wetting-phase solve
+paraview build-cmake/examples/porenetwork_upscaling_twophase/upscaling_gas.pvd &     # stage 2: non-wetting-phase solve
+```
+
+For general instructions on how to represent pore bodies as spheres/boxes and pore throats as
+lines/tubes (with radii scaled by `poreInscribedRadius`/`throatInscribedRadius`), see [Part 4 of
+the pore-network upscaling example](../../porenetwork_upscaling/doc/postprocessing.md) -- the
+same technique applies here; only the fields of interest differ, as described below.
+
+## Fields specific to this example
+
+**`static.pvd`** (stage 1, same fields as the [pc-saturation example](../../porenetwork_pcsaturation/doc/postprocessing.md#fields-specific-to-this-example)):
+`invaded`, `trapped`, `pcEntry`, `pcSnapOff` (cell data, per throat), `pc`, `sw` (point data, per
+pore). Coloring throats by `trapped` and stepping through the imbibition leg is the most direct
+way to see non-wetting-phase trapping develop.
+
+**`upscaling_liquid.pvd` / `upscaling_gas.pvd`** (stage 2, one sequence per fluid, one frame per
+saturation step): the standard single-phase pore-network output fields (pressure at every pore,
+flow rate through every throat), computed on that step's frozen, imported conductance field.
+Comparing the pressure field's spatial pattern between early (nearly all-conductive) and late
+(mostly zero-conductance) steps of a given fluid's sequence illustrates why its apparent
+permeability drops as that fluid's connected pathway shrinks.
