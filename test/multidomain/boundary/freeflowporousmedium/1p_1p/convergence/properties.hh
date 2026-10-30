@@ -33,13 +33,9 @@
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
-#include <dumux/porousmediumflow/1p/variables.hh>
-#include <dumux/porousmediumflow/immiscible/localresidual_.hh>
-#include <dumux/flux/cvfe/darcyslaw_.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
-#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/discretization/cctpfa.hh>
@@ -48,9 +44,6 @@
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
-#include <dumux/discretization/cvfe/gridvariablescache_.hh>
-#include <dumux/discretization/cvfe/interpolationpointdata.hh>
-#include <dumux/discretization/gridvariables.hh>
 
 #include <dumux/multidomain/boundary/freeflowporousmedium/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
@@ -109,50 +102,9 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::DarcyOnePBoxNewInterface>
 { using type = DarcySubProblemNewInterface<TypeTag>; };
 
-/*!
- * \brief The grid variables holding the quantities per local dof
- * \note The variables are asked for at an interpolation point, which is what the degrees
- *       of freedom owning no sub-control volume require.
- */
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::DarcyOnePBoxNewInterface>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-
-    using VariablesTraits = OnePVolumeVariablesTraits<
-        GetPropType<TypeTag, Properties::PrimaryVariables>,
-        GetPropType<TypeTag, Properties::FluidSystem>,
-        GetPropType<TypeTag, Properties::FluidState>,
-        GetPropType<TypeTag, Properties::SolidSystem>,
-        GetPropType<TypeTag, Properties::SolidState>,
-        typename GetPropType<TypeTag, Properties::SpatialParams>::PermeabilityType,
-        GetPropType<TypeTag, Properties::ModelTraits>
-    >;
-    using Variables = Dumux::Experimental::OnePVariables<VariablesTraits>;
-
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! Evaluate Darcy's law at the interpolation points
-template<class TypeTag>
-struct AdvectionType<TypeTag, TTag::DarcyOnePBoxNewInterface>
-{
-    using type = Experimental::CVFEDarcysLawAtIp<GetPropType<TypeTag, Properties::Scalar>,
-                                                 GetPropType<TypeTag, Properties::GridGeometry>>;
-};
-
-//! Assemble with the local residual that leaves the quadrature to the scheme
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::DarcyOnePBoxNewInterface>
-{ using type = Experimental::ImmiscibleLocalResidual<TypeTag>; };
+struct Transition::UseVariables<TypeTag, TTag::DarcyOnePBoxNewInterface> { static constexpr bool value = true; };
 
 // Create new type tags
 namespace TTag {
@@ -211,56 +163,13 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::FreeFlowOnePMassBox>
 { using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>; };
 
-// the variables (all CVFE momentum schemes directly use the new variables interface)
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::FreeFlowOnePMomentumCVFE>
-{
-private:
-    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
-    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
-    using FST = GetPropType<TypeTag, Properties::FluidState>;
-    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+struct Transition::UseVariables<TypeTag, TTag::FreeFlowOnePMomentumPQ1Bubble> { static constexpr bool value = true; };
 
-    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
-    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
-    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
-
-    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
-public:
-    using type = NavierStokesMomentumCVFEVariables<Traits>;
-};
-
-//! The grid variables
+//! Assemble with the variables per local dof
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::FreeFlowOnePMomentumPQ1Bubble>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
-
-//! The grid variables
-template<class TypeTag>
-struct GridVariables<TypeTag, TTag::FreeFlowOnePMassBox>
-{
-private:
-    using GG = GetPropType<TypeTag, Properties::GridGeometry>;
-    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>();
-    using Problem = GetPropType<TypeTag, Properties::Problem>;
-    using Variables = Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>;
-    using IPDataCache = Dumux::CVFE::LocalBasisInterpolationPointData<GG>;
-    using Traits = Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<Problem, Variables, IPDataCache>;
-    using GVC = Dumux::Experimental::CVFE::CVFEGridVariablesCache<Traits, enableCache>;
-public:
-    using type = Dumux::Experimental::GridVariables<GG, GVC>;
-};
+struct Transition::UseVariables<TypeTag, TTag::FreeFlowOnePMassBox> { static constexpr bool value = true; };
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::FreeFlowOneP> { static constexpr bool value = true; };
