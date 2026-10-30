@@ -17,8 +17,15 @@
 #include <dumux/porenetwork/common/throatproperties.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
 
-namespace Dumux::PoreNetwork{
+namespace Dumux::PoreNetwork {
 
+/*!
+ * \ingroup PoreNetwork
+ * \ingroup PoreNetworkModels
+ * \brief A minimal flux variables cache used to evaluate throat transmissibilities
+ *        for a given, externally imposed pair of pore-body capillary pressures,
+ *        independent of a full two-phase flow assembly.
+ */
 template<class Scalar>
 class SimpleFluxVariablesCache
 {
@@ -26,7 +33,7 @@ class SimpleFluxVariablesCache
     {
         using CreviceResistanceFactor = WettingLayerTransmissibility::CreviceResistanceFactorZhou;
         WettingLayerCache(const SimpleFluxVariablesCache& fluxVariablesCache)
-        :fluxVariablesCache_(fluxVariablesCache)
+        : fluxVariablesCache_(fluxVariablesCache)
         {}
 
         Scalar creviceResistanceFactor(const int cornerIdx) const
@@ -39,10 +46,11 @@ class SimpleFluxVariablesCache
     using NumCornerVector = Dune::ReservedVector<Scalar, 4>;
 
 public:
-    template< class GridGeometry, class Element>
-    void update(const GridGeometry& gridGeometry, const Element& element, std::array<Scalar,2> pc)
-    {   const auto eIdx = gridGeometry.elementMapper().index(element);
-        throatCrossSectionShape_ = gridGeometry.throatCrossSectionShape(/*eIdx*/0);
+    template<class GridGeometry, class Element>
+    void update(const GridGeometry& gridGeometry, const Element& element, const std::array<Scalar, 2>& pc)
+    {
+        const auto eIdx = gridGeometry.elementMapper().index(element);
+        throatCrossSectionShape_ = gridGeometry.throatCrossSectionShape(eIdx);
         throatShapeFactor_ = gridGeometry.throatShapeFactor(eIdx);
         throatLength_ = gridGeometry.throatLength(eIdx);
         throatInscribedRadius_ = gridGeometry.throatInscribedRadius(eIdx);
@@ -72,7 +80,8 @@ public:
     { return surfaceTension_; }
 
     Scalar curvatureRadius() const
-    {   if (pc_)
+    {
+        if (pc_)
             return surfaceTension_ / pc_;
         return 0.0;
     }
@@ -92,7 +101,7 @@ public:
     std::size_t nPhaseIdx() const
     { return nPhaseIdx_; }
 
-    Scalar wettingLayerCrossSectionalArea( int cornerIdx) const
+    Scalar wettingLayerCrossSectionalArea(int cornerIdx) const
     { return wettingLayerArea_[cornerIdx]; }
 
     Scalar throatCrossSectionalArea(const int phaseIdx) const
@@ -117,16 +126,28 @@ private:
     Scalar throatShapeFactor_{};
     Throat::Shape throatCrossSectionShape_;
     Scalar pc_{};
-    Scalar wettingLayerCrossSectionalArea_{};
     Scalar cornerHalfAngle_{};
     Scalar contactAngle_{};
     std::size_t nPhaseIdx_ = 1;
     std::array<Scalar, 2> throatCrossSectionalArea_{};
     NumCornerVector wettingLayerArea_;
     WettingLayerCache wettingLayerCache_ = WettingLayerCache(*this);
-
 };
 
+/*!
+ * \ingroup PoreNetwork
+ * \ingroup PoreNetworkModels
+ * \brief A single-phase throat transmissibility law that looks up a precomputed,
+ *        per-throat conductance table instead of evaluating a closed-form expression.
+ *
+ * The table is filled once per saturation step via importTransmissibility() from the
+ * quasi-static two-phase invasion-percolation model (see problem_static.hh), which already
+ * determined, for every throat and at the current global capillary pressure, whether it is
+ * water- or gas-filled and what its effective hydraulic conductance is. The two phase-specific
+ * single-phase Darcy solves of the upscaling procedure (one per fluid, see main.cc) then each
+ * look up their own column of this table via FluidSystem::isGas(), rather than recomputing the
+ * conductance from throat geometry.
+ */
 template<class Scalar>
 class SinglePhaseTransmissibility
 {
@@ -149,16 +170,14 @@ public:
         return throatTransmissibility_[eIdx][isGas];
     }
 
-    static void importTransmissibility(const std::vector<std::array<Scalar, 2>> throatTransmissibility)
+    static void importTransmissibility(const std::vector<std::array<Scalar, 2>>& throatTransmissibility)
     {
         throatTransmissibility_ = throatTransmissibility;
     }
 
 private:
-
     inline static std::vector<std::array<Scalar, 2>> throatTransmissibility_;
-
 };
 
-}
+} // end namespace Dumux::PoreNetwork
 #endif

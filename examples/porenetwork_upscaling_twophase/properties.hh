@@ -38,7 +38,7 @@
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/transmissibility2p.hh>
 #include <dumux/porenetwork/common/throatproperties.hh>
 
-#include <dumux/porenetwork/2p/static/staticdrainge.hh>
+#include <dumux/porenetwork/2p/static/staticpnm.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
 #include <dumux/porenetwork/1p/model.hh>// for `TTag::PNMOneP`
@@ -97,11 +97,8 @@ public:
 template<class TypeTag>
 struct Problem<TypeTag, TTag::PNMTWOPStatic> { using type = Dumux::PoreNetwork::PNMProblemStatic<TypeTag>; };
 
-// ### Property specializations
-//
-// In the following piece of code, mandatory `properties` for which no meaningful
-// default can be set, are specialized for our type tag `PNMUpscaling`.
-// [[codeblock]]
+// Mandatory properties for which no meaningful default can be set are specialized
+// for our type tag `PNMUpscalingCreepingFlowLiquid` below.
 // We use `dune-foamgrid`, which is especially tailored for 1D networks.
 template<class TypeTag>
 struct Grid<TypeTag, TTag::PNMUpscalingCreepingFlowLiquid>
@@ -147,7 +144,6 @@ struct FluidSystem<TypeTag, TTag::PNMUpscalingCreepingFlowGas>
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = FluidSystems::OnePGas<Scalar, Components::Constant<1, Scalar> >;
 };
-// [[/codeblock]]
 
 // Moreover, here we use a local residual specialized for incompressible flow
 // that contains functionality related to analytic differentiation.
