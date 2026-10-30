@@ -19,6 +19,41 @@ dumux_add_test(NAME test_ff_stokes_donea_taylorhood
                CMD_ARGS test_ff_stokes_donea_taylorhood params_taylorhood.input
                         -Rates "L2(v) 2.85 3.15" "H1(v) 1.85 2.15" "L2(p) 1.85 2.15" "H1(p) 0.85 1.15")
 
+# PQ3 hybrid momentum / PQ2 hybrid mass tests
+# The PQ2 pressure space contains the exact (quadratic) pressure, so the pressure errors
+# only stem from the velocity errors and converge faster than the PQ2 order.
+dumux_add_test(NAME test_ff_stokes_donea_pq3_pq2_hybrid
+               LABELS freeflow navierstokes donea
+               SOURCES main.cc
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
+               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumCVFE
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ3HybridModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MASS_MODEL=NavierStokesMassOneP
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ2HybridModel
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=true
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_ff_stokes_donea_pq3_pq2_hybrid params_taylorhood.input
+                        -Rates "L2(v) 3.85 4.15" "H1(v) 2.85 3.6" "L2(p) 2.85 3.6" "H1(p) 1.85 2.6")
+
+# PQ3 fe momentum / PQ2 fe mass tests
+# The PQ2 pressure space contains the exact (quadratic) pressure, so the pressure errors
+# only stem from the velocity errors and converge faster than the PQ2 order.
+dumux_add_test(NAME test_ff_stokes_donea_pq3_pq2_fe
+               LABELS freeflow navierstokes donea
+               SOURCES main.cc
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND AND DUMUX_HAVE_GRIDFORMAT )"
+               COMPILE_DEFINITIONS ALUGRID_CELL_TYPE=simplex
+               COMPILE_DEFINITIONS NAVIER_STOKES_MOMENTUM_MODEL=NavierStokesMomentumFE
+               COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION_MODEL=PQ3FEModel
+               COMPILE_DEFINITIONS NAVIER_STOKES_MASS_MODEL=NavierStokesMassOnePFE
+               COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ2FEModel
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               COMPILE_DEFINITIONS ENABLECACHING=true
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_ff_stokes_donea_pq3_pq2_fe params_taylorhood.input
+                        -Rates "L2(v) 3.85 4.15" "H1(v) 2.85 3.15" "L2(p) 2.85 3.6" "H1(p) 1.85 2.6")
+
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                LABELS freeflow navierstokes donea
                SOURCES main_momentum.cc
@@ -817,7 +852,6 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_fe_pq3_cube
                            -Problem.UseNeumann false
                            -FreeFlow.EnableUnsymmetrizedVelocityGradient false
                            -Grid.Cells \"8 8\"")
-
 
 dumux_add_test(NAME test_ff_stokes_donea_hybrid_quadrature_pq2_simplex
                SOURCES main.cc

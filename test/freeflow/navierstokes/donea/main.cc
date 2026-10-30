@@ -304,7 +304,12 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
 
     NavierStokesTest::AnalyticalSolutionVectors analyticalSolVectors(momentumProblem, massProblem);
-    vtkWriter.addField(analyticalSolVectors.analyticalPressureSolution(), "pressureExact");
+    // the writer deduces the field type from the size, so it takes the exact pressure only
+    // for schemes whose pressure dofs sit on the vertices or in the elements
+    const auto& massGridView = massGridGeometry->gridView();
+    const auto numMassDofs = massGridGeometry->numDofs();
+    if (numMassDofs == massGridView.size(MassGridGeometry::GridView::dimension) || numMassDofs == massGridView.size(0))
+        vtkWriter.addField(analyticalSolVectors.analyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(analyticalSolVectors.analyticalVelocitySolution(), "velocityExact");
     //vtkWriter.addFaceField(analyticalSolVectors.analyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
