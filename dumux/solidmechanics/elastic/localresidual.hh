@@ -15,8 +15,6 @@
 
 #include <ranges>
 
-#include <dune/common/fmatrix.hh>
-
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
@@ -59,9 +57,6 @@ class ElasticLocalResidual
     using StressType = GetPropType<TypeTag, Properties::StressType>;
 
     static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using Tensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
 public:
     using ParentType::ParentType;
@@ -174,7 +169,7 @@ public:
         for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf))
         {
             const auto& ipData = qpData.ipData();
-            const auto sigma = stressTensor_(problem, elemDisc, elemVars, ipData);
+            const auto sigma = StressType::stressTensor(problem, elemDisc.element(), elemDisc, elemVars, ipData);
             for (int dir = 0; dir < dim; ++dir)
                 flux[Indices::momentum(dir)] -= qpData.weight()*(sigma[dir]*scvf.unitOuterNormal());
         }
@@ -202,7 +197,7 @@ public:
             {
                 const auto& ipData = qpData.ipData();
                 const auto& ipCache = cache(elemVars, ipData);
-                const auto sigma = stressTensor_(problem, elemDisc, elemVars, ipData);
+                const auto sigma = StressType::stressTensor(problem, element, elemDisc, elemVars, ipData, ipCache);
                 const auto bodyForce = problem.source(elemDisc, elemVars, ipData);
                 const auto& shapeValues = ipCache.shapeValues();
                 for (const auto& localDof : nonCVLocalDofs(elemDisc))
@@ -217,34 +212,6 @@ public:
                 }
             }
         }
-    }
-
-private:
-    //! The stress \f$ \boldsymbol{\sigma} = \lambda \operatorname{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2\mu \boldsymbol{\varepsilon} \f$ at an interpolation point
-    template<class ElementDiscretization, class ElementVariables, class IpData>
-    Tensor stressTensor_(const Problem& problem,
-                         const ElementDiscretization& elemDisc,
-                         const ElementVariables& elemVars,
-                         const IpData& ipData) const
-    {
-        const auto& ipCache = cache(elemVars, ipData);
-        Tensor gradU(0.0);
-        for (const auto& localDof : localDofs(elemDisc))
-            for (int dir = 0; dir < dim; ++dir)
-                gradU[dir].axpy(elemVars[localDof].displacement(dir), ipCache.gradN(localDof.index()));
-
-        const auto& lame = problem.spatialParams().lameParams(elemDisc, ipData);
-        Tensor sigma(0.0);
-        Scalar trace = 0.0;
-        for (int i = 0; i < dim; ++i)
-            trace += gradU[i][i];
-        for (int i = 0; i < dim; ++i)
-        {
-            for (int j = 0; j < dimWorld; ++j)
-                sigma[i][j] = lame.mu()*(gradU[i][j] + gradU[j][i]);
-            sigma[i][i] += lame.lambda()*trace;
-        }
-        return sigma;
     }
 };
 
