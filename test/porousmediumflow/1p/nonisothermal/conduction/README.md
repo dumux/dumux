@@ -138,17 +138,17 @@ The numerical temperature profile is compared to the analytical error-function s
 To reproduce the benchmark results, run one of the tests from the build directory:
 
 ```bash
-cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal
+cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal/conduction
 make test_1pni_conduction_tpfa
-./test_1pni_conduction_tpfa params_conduction.input
+./test_1pni_conduction_tpfa params.input
 ```
 
 or
 
 ```bash
-cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal
+cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal/conduction
 make test_1pni_conduction_box
-./test_1pni_conduction_box params_conduction.input
+./test_1pni_conduction_box params.input
 ```
 
 The output includes the VTK field `temperatureExact` for direct comparison with the numerical temperature field `T`.
