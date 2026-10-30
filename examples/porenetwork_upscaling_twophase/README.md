@@ -76,21 +76,17 @@ The driver loop in `main.cc` mirrors the pc-saturation example's loop for stage 
 
 ```mermaid
 flowchart TD
-    subgraph Stage1["Stage 1: runStaticProblem"]
-    S0(["step = 0, pcGlobal = InitialPc"]) --> Inv["update invasion state<br/>(entry / snap-off)"]
+    S0(["Stage 1 -- step = 0, pcGlobal = InitialPc"]) --> Inv["update invasion state<br/>(entry / snap-off)"]
     Inv --> Sat["update pore saturations,<br/>gated on previous step's trapped flags"]
     Sat --> Trap["recompute trapped throats"]
     Trap --> Cache["cache this step's per-throat<br/>wetting/non-wetting conductances"]
     Cache --> Last{"step reached 2&nbsp;&times;&nbsp;NumSteps?"}
     Last -- no --> Adv["advance pcGlobal<br/>(up while draining, down while imbibing)"]
     Adv --> Inv
-    end
-    Last -- yes --> S2Start
-    subgraph Stage2["Stage 2: runSinglePhaseUpscaling, once per fluid"]
-    S2Start(["for each cached step"]) --> Import["import that step's conductances"]
+    Last -- yes --> S2Start["Stage 2 -- for each cached step"]
+    S2Start --> Import["import that step's conductances"]
     Import --> Solve["solve single-phase Darcy<br/>(fixed small pressure gradient)"]
     Solve --> Perm["convert outlet mass flux<br/>to apparent permeability"]
-    end
 ```
 
 **Snap-off decision**, applied to every already-invaded, non-trapped throat `t` at the current `pcGlobal` (see the [pc-saturation example](../porenetwork_pcsaturation/README.md#algorithm) for the full per-throat invasion/snap-off decision, including seeding and flood-fill on the drainage side):
