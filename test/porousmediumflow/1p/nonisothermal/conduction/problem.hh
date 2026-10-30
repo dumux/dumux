@@ -16,12 +16,20 @@
 #define DUMUX_1PNI_CONDUCTION_PROBLEM_HH
 
 #include <cmath>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <type_traits>
+
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/discretization/method.hh>
+#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/evalsolution.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidmatrixinteractions/thermalconductivityaverage.hh>
 
@@ -104,31 +112,60 @@ public:
     }
 
     /*!
-     * \brief Update the analytical temperature
-     * The results are compared to an analytical solution for a diffusion process:
+     * \brief The analytical temperature for a diffusion process in a semi-infinite domain:
       \f[
          T = T_{high} + (T_{init} - T_{high})\,\mathrm{erf} \left(0.5\sqrt{\frac{x^2 C_{tot}}{t \lambda_{eff}}}\right)
       \f]
+     */
+    Scalar exactTemperature(const GlobalPosition& globalPos, Scalar time) const
+    {
+        using std::max;
+        using std::erf;
+        using std::sqrt;
+        time = max(time, 1e-10);
+        const Scalar x = globalPos[0];
+        const Scalar temperatureInit = initial_()[temperatureIdx];
+        return temperatureHigh_ + (temperatureInit - temperatureHigh_)
+                                  *erf(0.5*sqrt(x*x*totalHeatCapacity_/time/effectiveThermalConductivity_));
+    }
+
+    /*!
+     * \brief Update the analytical temperature at the degrees of freedom for the output
      * The solution vector is not needed, as all properties are constant.
      */
     void updateExactTemperature(const SolutionVector&, Scalar time)
     {
-        using std::max;
-        time = max(time, 1e-10);
-        const Scalar temperatureInit = initial_()[temperatureIdx];
         auto fvGeometry = localView(this->gridGeometry());
         for (const auto& element : elements(this->gridGeometry().gridView()))
         {
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto x = scv.dofPosition()[0];
-                using std::erf;
-                using std::sqrt;
-                temperatureExact_[scv.dofIndex()] = temperatureHigh_ + (temperatureInit - temperatureHigh_)
-                                                    *erf(0.5*sqrt(x*x*totalHeatCapacity_/time/effectiveThermalConductivity_));
-            }
+                temperatureExact_[scv.dofIndex()] = exactTemperature(scv.dofPosition(), time);
         }
+    }
+
+    /*!
+     * \brief Print the temperature error with respect to the analytical solution
+     *        and append it to the file <name>-errors.csv (columns: cell size, maximum time step size, error)
+     *
+     * The error is normalized with the domain volume, so it is a root mean square error in K:
+     * - box: continuous L2 norm of the error of the piecewise linear solution, integrated with a quadrature rule
+     * - cell-centered schemes: discrete L2 norm with the values at the cell centers, weighted with the cell volumes
+     */
+    void writeErrors(const SolutionVector& curSol, Scalar time) const
+    {
+        const Scalar error = temperatureError_(curSol, time);
+
+        // uniform grid: the cell size in x-direction
+        const auto firstGeometry = (*elements(this->gridGeometry().gridView()).begin()).geometry();
+        const Scalar cellSize = firstGeometry.corner(1)[0] - firstGeometry.corner(0)[0];
+        const Scalar maxTimeStepSize = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+
+        std::cout << "Temperature error at t = " << time << " s (cell size " << cellSize
+                  << " m, maximum time step size " << maxTimeStepSize << " s): " << error << " K" << std::endl;
+
+        std::ofstream errorFile(name_ + "-errors.csv", std::ios::app);
+        errorFile << std::setprecision(15) << cellSize << "," << maxTimeStepSize << "," << error << "\n";
     }
 
     /*!
@@ -215,6 +252,51 @@ private:
         priVars[pressureIdx] = 1.0e5;
         priVars[temperatureIdx] = 290.0;
         return priVars;
+    }
+
+    // the temperature error normalized with the domain volume (see writeErrors())
+    Scalar temperatureError_(const SolutionVector& curSol, Scalar time) const
+    {
+        Scalar squaredError = 0.0;
+        Scalar volume = 0.0;
+        if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+        {
+            // continuous L2 norm of the error of the piecewise linear solution
+            static constexpr int quadratureOrder = 4;
+            for (const auto& element : elements(this->gridGeometry().gridView()))
+            {
+                const auto elemSol = elementSolution(element, curSol, this->gridGeometry());
+                const auto geometry = element.geometry();
+                const auto& rule = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), quadratureOrder);
+                for (const auto& qp : rule)
+                {
+                    const auto globalPos = geometry.global(qp.position());
+                    const Scalar temperature = evalSolution(element, geometry, this->gridGeometry(), elemSol, globalPos)[temperatureIdx];
+                    const Scalar error = temperature - exactTemperature(globalPos, time);
+                    const Scalar weight = qp.weight()*geometry.integrationElement(qp.position());
+                    squaredError += error*error*weight;
+                    volume += weight;
+                }
+            }
+        }
+        else
+        {
+            // discrete L2 norm with the values at the cell centers
+            auto fvGeometry = localView(this->gridGeometry());
+            for (const auto& element : elements(this->gridGeometry().gridView()))
+            {
+                fvGeometry.bindElement(element);
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    const Scalar error = curSol[scv.dofIndex()][temperatureIdx] - exactTemperature(scv.dofPosition(), time);
+                    squaredError += error*error*scv.volume();
+                    volume += scv.volume();
+                }
+            }
+        }
+
+        using std::sqrt;
+        return sqrt(squaredError/volume);
     }
 
     Scalar temperatureHigh_;
