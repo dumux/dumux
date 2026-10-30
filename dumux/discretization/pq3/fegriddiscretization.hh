@@ -163,6 +163,17 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
+    /*!
+     * \brief The global dof index of a local key
+     * \note An edge carries two dofs, and the local finite element numbers them in the
+     *       orientation of the element. The global index needs to take the orientation of the edge
+     *       for getting the correct global index.
+     */
+    template<class LocalKey>
+    auto dofIndex(const typename GV::template Codim<0>::Entity& element,
+                  const LocalKey& localKey) const
+    { return Traits::DofHelper::dofIndex(dofMapper_, element, localKey, this->gridView().grid().globalIdSet()); }
+
     //! If a d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
