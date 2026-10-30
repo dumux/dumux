@@ -22,46 +22,18 @@
  #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
  #include <dumux/common/initialize.hh>
- #include <dumux/common/properties.hh>
  #include <dumux/common/parameters.hh>
  #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/common/properties/model.hh>
-#include <dumux/common/properties/grid.hh>
-#include <dumux/discretization/porenetwork/gridgeometry.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/throat/thresholdcapillarypressures.hh>
 #include <dumux/material/fluidmatrixinteractions/porenetwork/pore/2p/localrulesforplatonicbody.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
-#include <dune/foamgrid/foamgrid.hh>
+#include <dumux/discretization/porenetwork/gridgeometry.hh>
 
 #include <dumux/porenetwork/2p/static/staticpnm.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
-namespace Dumux::Properties {
-
-// Create new type tags
-namespace TTag {
-struct DrainageProblem { using InheritsFrom = std::tuple<GridProperties, ModelProperties>; };
-} // end namespace TTag
-
-// Set the grid type
-template<class TypeTag>
-struct Grid<TypeTag, TTag::DrainageProblem> { using type = Dune::FoamGrid<1, 3>; };
-
-template<class TypeTag>
-struct GridGeometry<TypeTag, TTag::DrainageProblem>
-{
-private:
-    static constexpr bool enableCache = false;
-    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-public:
-    using type = Dumux::PoreNetwork::GridGeometry<Scalar, GridView, enableCache>;
-};
-
-} // end namespace Dumux::Properties
-
-namespace {
+namespace Dumux::PoreNetwork {
 
 /*!
  * \brief Inverts a pore's local pc-Sw curve for the given pore shape.
@@ -71,15 +43,13 @@ namespace {
  * other shape (e.g. Sphere, Circle, Cylinder) throws Dune::NotImplemented.
  */
 template<class Scalar>
-Scalar poreSaturation(Dumux::PoreNetwork::Pore::Shape shape,
+Scalar poreSaturation(Pore::Shape shape,
                       const Scalar poreRadius, const Scalar surfaceTension, const Scalar pc)
 {
-    using namespace Dumux;
-
     auto invert = [&](auto shapeTag)
     {
         constexpr auto s = decltype(shapeTag)::value;
-        using MaterialLaw = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<s>;
+        using MaterialLaw = FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<s>;
         using BasicParams = typename MaterialLaw::BasicParams;
         using RegularizationParams = typename MaterialLaw::RegularizationParams;
 
@@ -88,7 +58,7 @@ Scalar poreSaturation(Dumux::PoreNetwork::Pore::Shape shape,
         return fluidMatrixInteraction.sw(pc);
     };
 
-    using PoreNetwork::Pore::Shape;
+    using Pore::Shape;
     switch (shape)
     {
         case Shape::tetrahedron:  return invert(std::integral_constant<Shape, Shape::tetrahedron>{});
@@ -98,19 +68,19 @@ Scalar poreSaturation(Dumux::PoreNetwork::Pore::Shape shape,
         case Shape::icosahedron:  return invert(std::integral_constant<Shape, Shape::icosahedron>{});
         default:
             DUNE_THROW(Dune::NotImplemented,
-                       "No pc-Sw relation available for pore shape '" << PoreNetwork::Pore::shapeToString(shape)
+                       "No pc-Sw relation available for pore shape '" << Pore::shapeToString(shape)
                        << "'. Supported shapes: Tetrahedron, Cube, Octahedron, Dodecahedron, Icosahedron "
                        << "(see dumux/material/fluidmatrixinteractions/porenetwork/pore/2p).");
     }
 }
 
-} // end anonymous namespace
+} // end namespace Dumux::PoreNetwork
 
 int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using TypeTag = Properties::TTag::DrainageProblem;
+    using Scalar = double;
 
     // maybe initialize MPI and/or multithreading backend
     Dumux::initialize(argc, argv);
@@ -136,15 +106,15 @@ int main(int argc, char** argv)
     gridManager.init();
 
     // we compute on the leaf grid view
+    using GridView = typename GridManager::Grid::LeafGridView;
     const auto& leafGridView = gridManager.grid().leafGridView();
     auto gridData = gridManager.getGridData();
 
     // create the finite volume grid geometry
-    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GridGeometry = PoreNetwork::GridGeometry<Scalar, GridView, /*enableCache=*/false>;
     auto gridGeometry = std::make_shared<GridGeometry>(leafGridView, *gridData);
 
     // get some network properties
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     const Scalar surfaceTension = getParam<Scalar>("Problem.SurfaceTension");
     const Scalar contactAngle = getParam<Scalar>("Problem.ContactAngle");
     const int inletPoreLabel = getParam<int>("Problem.InletPoreLabel");
@@ -194,7 +164,6 @@ int main(int argc, char** argv)
 
     // add vtk output
     static const auto name = getParam<std::string>("Problem.Name");
-    using GridView = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView;
     auto writer = std::make_shared<Dune::VTKWriter<GridView>>(leafGridView);
     Dune::VTKSequenceWriter<GridView> sequenceWriter(writer, name);
     sequenceWriter.addCellData(pcEntry , "pcEntry");
@@ -300,7 +269,7 @@ int main(int argc, char** argv)
                 {
                     const Scalar poreRadius = gridGeometry->poreInscribedRadius(dofIdx);
                     const auto poreShape = gridGeometry->poreGeometry(dofIdx);
-                    sw[dofIdx] = poreSaturation(poreShape, poreRadius, surfaceTension, pc[dofIdx]);
+                    sw[dofIdx] = PoreNetwork::poreSaturation(poreShape, poreRadius, surfaceTension, pc[dofIdx]);
                 }
                 else
                     sw[dofIdx] = 1.0;
