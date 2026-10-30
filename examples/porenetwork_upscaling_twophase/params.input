@@ -1,27 +1,36 @@
 [Grid]
-File = ./grids/network.dgf
+UpperRight = 4e-4 4e-4 4e-4
+NumPores = 20 20 20
+ParameterType = lognormal
+MeanPoreInscribedRadius = 1e-5
+StandardDeviationPoreInscribedRadius = 4e-6
 PoreGeometry = Cube
 ThroatCrossSectionShape = Square
-AddThroatVolumeToPoreVolume = false
+ParameterRandomNumberSeed = 1
+BoundaryPoreLabels = xMin:1 xMax:2 yMin:3 yMax:4 zMin:5 zMax:6
+MinThroatLength = 1e-10
+DeletionProbability = 0.0 0.6 0.98 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+CapPoresOnBoundaries = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
 
 [Problem]
 Name = pnm_2p_upscaling
-InitialPc = 1.2e3 # [Pa]
-FinalPc = 4.7e3 # [Pa]
-IsDraingeProcess = false
-NumSteps = 30 # the number of episodes to run
+InitialPc = 1000 # [Pa]
+FinalPc = 80000 # [Pa]
+NumSteps = 60 # the number of pc increments for the drainage (and, reversed, the imbibition) leg
 PlotPcS = true
 SurfaceTension = 0.0725
 ContactAngle = 0.0
-InletPoreLabel = 2
-OutletPoreLabel = 1
+InletPoreLabel = 1
+OutletPoreLabel = 2
 Directions = 0 # the directions to be plotted 0 1 2
 AllowDraingeOfOutlet = true
 EnableGravity = 0 # disable gravity
 MaximumPressureGradient = 1e10 #Pa/m
-NumberOfPressureGradients = 10 # the number of sample points for regression process
+MinimumPressureGradient = 1e1 #Pa/m
 Epsilon = 1e-13
-AssumeCreepingFlow = true
 
 [SpatialParams]
 HighSwRegularizationMethod = Spline
@@ -36,4 +45,12 @@ GasDensity = 1.184
 [Assembly.NumericDifference]
 PriVarMagnitude = 1e5
 
-
+[Newton]
+# the gas-phase single-phase solve sees throat conductances spanning ~10 orders of magnitude
+# (real non-wetting-phase conductances for invaded throats vs. the artificially tiny 1e-10
+# scaled placeholder used for not-yet-invaded throats, see transmissibilityhelper.hh), which
+# pushes the direct linear solver to its precision floor (observed residual plateau around
+# 1e-7) before the default MaxRelativeShift (1e-8) can be reached; loosen it to a still-tight
+# but reliably achievable tolerance instead of letting Newton run out of (and raise) MaxSteps
+MaxRelativeShift = 1e-6
+MaxSteps = 25
