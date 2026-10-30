@@ -1,4 +1,4 @@
-# Udell's Heat Pipe {#benchmark-heatpipe-udell}
+# 2p1c Heatpipe {#benchmark-heatpipe-udell}
 
 ## Steady counter-current flow of liquid water and vapor in a horizontal porous column
 
