@@ -37,6 +37,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <tab type="user" url="@ref benchmark-mcwhorter-sunada" visible="yes" title="McWhorter-Sunada" intro=""/>
         <tab type="user" url="@ref benchmark-horton-rogers-lapwood" visible="yes" title="Horton-Rogers-Lapwood" intro=""/>
         <tab type="user" url="@ref benchmark-heatpipe-udell" visible="yes" title="Udell's Heat Pipe" intro=""/>
+        <tab type="user" url="@ref benchmark-heatpipe" visible="yes" title="Heatpipe" intro=""/>
         <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe11" visible="yes" title="SPE 11 CSP" intro=""/>
         <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-appl/dumux-spe10" visible="yes" title="SPE 10 CSP" intro=""/>
         <tab type="user" url="@ref benchmark-2pve-radial-injection" visible="yes" title="Radial injection" intro=""/>
