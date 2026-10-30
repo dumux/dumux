@@ -19,9 +19,7 @@ Assumptions:
 - homogeneous domain (constant porosity)
 - fixed temperatures at left and right boundary
 
-The benchmark solves the transient energy conservation equation for a porous medium:
-
-With those assumptions, we solve the following energy balance for the porous meidum:
+With those assumptions, we solve the following energy balance for the porous medium:
 
 $$ \phi \rho_f\frac{\partial u_f}{\partial t} + (1-\phi) \rho_s \frac{\partial u_s}{\partial t}
 = \nabla \cdot \left(\lambda_{\text{eff}} \nabla T\right) \, ,
@@ -32,7 +30,7 @@ where
 - $T$ the overall porous medium temperature
 - $\rho_f$, $\rho_s$ is the density of the fluid/solid,
 - $c_f$, $c_s$ is the mass-specific heat capacities of the fluid and solid phase,
-- $\lambda_{\text{eff}}$ the effective thermal conductivtiy of the porous medium.
+- $\lambda_{\text{eff}}$ the effective thermal conductivity of the porous medium.
 
 
 The effective thermal conductivity of the porous medium is hereby obtained as a volume-fraction average of the liquid and solid thermal conductivities with
@@ -100,7 +98,7 @@ Although the analytical derivation assumes constant fluid properties, the analyt
 We solve the heat conduction equation using the single phase, non-isothermal model in DuMux @ref OnePModel @ref NIModel. For the spatial discretization we choose a finite volume discretization with a cell-centered TPFA (@ref CCTpfaDiscretization) or MPFA (@ref CCMpfaDiscretization) scheme, or use the vertex-centered box scheme (@ref BoxDiscretization).
 
 **Simulation Domain**
-The computational domain is represented by a two-dimensional `Dune::YaspGrid` with $5 \times 1$ m with $200 \times 1$ discretization cell. Hence, this is a finite quasi-1D domain. For the chosen simulation times the thermal front remains sufficiently far from the right boundary, so the finite-domain is suitable to be compared to the semi-infinite analytical solution.
+The computational domain is represented by a two-dimensional `Dune::YaspGrid` with $5 \times 1$ m with $200 \times 1$ cells. Hence, this is a finite quasi-1D domain. For the chosen simulation times the thermal front remains sufficiently far from the right boundary, so the finite-domain is suitable to be compared to the semi-infinite analytical solution.
 
 **Initial and Boundary Conditions**
 Initially, the temperature and pressure are set to:
@@ -109,7 +107,7 @@ T(x,0)=T_{\text{init}} = 290\ \text{K} \, , \\
 p(x,0)=p_{\text{init}} = 10^5\ \text{Pa}.
 $$
 
-At the left boundary the tmeperature is set to
+At the left boundary the temperature is set to
 $$
 T(0,t) = T_{\text{high}} = 300\ \text{K},
 $$
@@ -138,17 +136,17 @@ The numerical temperature profile is compared to the analytical error-function s
 To reproduce the benchmark results, run one of the tests from the build directory:
 
 ```bash
-cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal
+cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal/conduction
 make test_1pni_conduction_tpfa
-./test_1pni_conduction_tpfa params_conduction.input
+./test_1pni_conduction_tpfa params.input
 ```
 
 or
 
 ```bash
-cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal
+cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal/conduction
 make test_1pni_conduction_box
-./test_1pni_conduction_box params_conduction.input
+./test_1pni_conduction_box params.input
 ```
 
 The output includes the VTK field `temperatureExact` for direct comparison with the numerical temperature field `T`.
