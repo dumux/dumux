@@ -7,14 +7,13 @@
 /**
  * \file
  * \ingroup OnePTests
- * \brief Test for the OnePModel in combination with the NI model for a convection problem.
+ * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
  *
- * The simulation domain is a tube where water with an elevated temperature is injected
- * at a constant rate on the left hand side.
+ * The simulation domain is a tube with an elevated temperature on the left hand side.
  */
 
-#ifndef DUMUX_1PNI_CONVECTION_PROBLEM_PROPERTIES_HH
-#define DUMUX_1PNI_CONVECTION_PROBLEM_PROPERTIES_HH
+#ifndef DUMUX_1PNI_CONDUCTION_PROBLEM_PROPERTIES_HH
+#define DUMUX_1PNI_CONDUCTION_PROBLEM_PROPERTIES_HH
 
 #include <cmath>
 #include <dune/grid/yaspgrid.hh>
@@ -23,35 +22,35 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/ccmpfa.hh>
+#include <dumux/discretization/box.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include "problem_convection.hh"
-#include "spatialparams.hh"
+#include "problem.hh"
+#include "../spatialparams.hh"
 
 namespace Dumux::Properties {
-
 // Create new type tags
 namespace TTag {
-struct OnePNIConvection { using InheritsFrom = std::tuple<OnePNI>; };
-struct OnePNIConvectionBox { using InheritsFrom = std::tuple<OnePNIConvection, BoxModel>; };
-struct OnePNIConvectionCCTpfa { using InheritsFrom = std::tuple<OnePNIConvection, CCTpfaModel>; };
-struct OnePNIConvectionCCMpfa { using InheritsFrom = std::tuple<OnePNIConvection, CCMpfaModel>; };
+struct OnePNIConduction { using InheritsFrom = std::tuple<OnePNI>; };
+struct OnePNIConductionBox { using InheritsFrom = std::tuple<OnePNIConduction, BoxModel>; };
+struct OnePNIConductionCCTpfa { using InheritsFrom = std::tuple<OnePNIConduction, CCTpfaModel>; };
+struct OnePNIConductionCCMpfa { using InheritsFrom = std::tuple<OnePNIConduction, CCMpfaModel>; };
 } // end namespace TTag
 
 // Set the grid type
 template<class TypeTag>
-struct Grid<TypeTag, TTag::OnePNIConvection> { using type = Dune::YaspGrid<1>; };
+struct Grid<TypeTag, TTag::OnePNIConduction> { using type = Dune::YaspGrid<2>; };
 
 // Set the problem property
 template<class TypeTag>
-struct Problem<TypeTag, TTag::OnePNIConvection> { using type = OnePNIConvectionProblem<TypeTag>; };
+struct Problem<TypeTag, TTag::OnePNIConduction> { using type = OnePNIConductionProblem<TypeTag>; };
 
 // Set the fluid system
 template<class TypeTag>
-struct FluidSystem<TypeTag, TTag::OnePNIConvection>
+struct FluidSystem<TypeTag, TTag::OnePNIConduction>
 {
     using type = FluidSystems::OnePLiquid<GetPropType<TypeTag, Properties::Scalar>,
                                           Components::H2O<GetPropType<TypeTag, Properties::Scalar>> >;
@@ -59,12 +58,12 @@ struct FluidSystem<TypeTag, TTag::OnePNIConvection>
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::OnePNIConvection>
+struct SpatialParams<TypeTag, TTag::OnePNIConduction>
 {
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using type = OnePNISpatialParams<GridGeometry, Scalar>;
 };
-} // end namespace Dumux::Properties
+} // end namespace Dumux
 
 #endif

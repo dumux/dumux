@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 TARGET = "test_1pni_conduction_tpfa"
-INPUT_FILE = "params_conduction.input"
+INPUT_FILE = "params.input"
 BASE_NAME = "1pni_1d_conduction_benchmark"
 NUM_PROFILES = 5
 TEMPERATURE_FIELD = "T"
@@ -33,11 +33,11 @@ class Result:
 
 
 def root_dir() -> Path:
-    return Path(__file__).resolve().parents[4]
+    return Path(__file__).resolve().parents[5]
 
 
 def case_build_dir() -> Path:
-    return root_dir() / "build-cmake/test/porousmediumflow/1p/nonisothermal"
+    return root_dir() / "build-cmake/test/porousmediumflow/1p/nonisothermal/conduction"
 
 
 def run(command: list[str], cwd: Path | None = None) -> None:
