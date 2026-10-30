@@ -163,6 +163,12 @@ public:
     const FeCache& feCache() const
     { return feCache_; }
 
+    //! The global index of the d.o.f. of a local key, ordering several d.o.f.s on an edge or face
+    //! consistently between the elements sharing it
+    template<class LocalKey>
+    auto dofIndex(const typename GV::template Codim<0>::Entity& element, const LocalKey& localKey) const
+    { return Traits::DofHelper::dofIndex(dofMapper_, element, localKey, this->gridView().grid().globalIdSet()); }
+
     //! If a d.o.f. is on the boundary
     bool dofOnBoundary(GridIndexType dofIdx) const
     { return boundaryDofIndices_[dofIdx]; }
