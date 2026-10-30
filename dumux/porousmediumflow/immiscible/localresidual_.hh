@@ -18,6 +18,7 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
@@ -48,8 +49,8 @@ class ImmiscibleLocalResidual : public DiscretizationDefaultLocalOperator<TypeTa
 
     using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementDiscretization = typename GridDiscretization::LocalView;
-    using SubControlVolume = typename ElementDiscretization::SubControlVolume;
-    using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
+    using SubControlVolume = SubControlVolume_t<ElementDiscretization>;
+    using SubControlVolumeFace = SubControlVolumeFace_t<ElementDiscretization>;
     using Extrusion = Extrusion_t<GridDiscretization>;
 
     using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
