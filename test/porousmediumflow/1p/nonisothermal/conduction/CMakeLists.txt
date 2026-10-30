@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_input_file_links()
+dune_symlink_to_source_files(FILES "convergencetest.py" "plot_results.py")
 
 dumux_add_test(NAME test_1pni_conduction_box
               LABELS porousmediumflow 1p 1pni
@@ -38,4 +39,22 @@ dumux_add_test(NAME test_1pni_conduction_mpfa
 # the shared main.cc in the parent folder includes the properties.hh of this folder
 foreach(target test_1pni_conduction_box test_1pni_conduction_tpfa test_1pni_conduction_mpfa)
   target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+endforeach()
+
+# convergence of the temperature error at the end time towards the analytical solution:
+# second order in space (time step size scaled with the squared cell size) and first order in time
+foreach(scheme box tpfa mpfa)
+  dumux_add_test(NAME test_1pni_conduction_${scheme}_convergence_space
+                TARGET test_1pni_conduction_${scheme}
+                LABELS porousmediumflow 1p 1pni
+                COMMAND ./convergencetest.py
+                CMD_ARGS test_1pni_conduction_${scheme} params.input --study space)
+endforeach()
+
+foreach(scheme box tpfa)
+  dumux_add_test(NAME test_1pni_conduction_${scheme}_convergence_time
+                TARGET test_1pni_conduction_${scheme}
+                LABELS porousmediumflow 1p 1pni
+                COMMAND ./convergencetest.py
+                CMD_ARGS test_1pni_conduction_${scheme} params.input --study time)
 endforeach()

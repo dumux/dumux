@@ -152,21 +152,90 @@ make test_1pni_conduction_box
 ```
 
 The output includes the VTK field `temperatureExact` for direct comparison with the numerical temperature field `T`.
+The temperature field `T` over the whole domain at the end of the simulation ($t = 10^5\ \mathrm{s} \approx 1.16\ \mathrm{d}$), rendered with ParaView from this output:
 
-To build and run the test and produce the plot below in one step, execute:
+![Temperature field](1pni_1d_conduction_benchmark.png){html: width=80%}
+
+To produce the figures below, build the tests and run the plot script in the build directory:
 
 ```bash
-python3 plot_conduction.py
+cd dumux/build-cmake/test/porousmediumflow/1p/nonisothermal/conduction
+make test_1pni_conduction_box test_1pni_conduction_tpfa test_1pni_conduction_mpfa
+python3 plot_results.py test_1pni_conduction_box test_1pni_conduction_tpfa test_1pni_conduction_mpfa
 ```
 
 The script expects PyVista and Matplotlib to be available for post-processing.
-
-The script produces one figure in the `build-cmake` directory:
+It writes the figures to the current directory; the images of this page are regenerated with
+`--output-dir <dumux source directory>/doc/doxygen/images`. The script produces:
 
 - `1pni_1d_conduction_benchmark_lineplot.png`: 1D comparison of the exact solution with the numerical solution for five representative output times, along the first $1.5\ \mathrm{m}$ of the domain, which the thermal front does not leave
+- `1pni_1d_conduction_convergence_box.png` and `1pni_1d_conduction_convergence_cc.png`: convergence of the temperature error at the end time $t = 10^5\ \mathrm{s}$ in space and in time, for the box scheme and the cell-centered schemes
 
 ![Line plot](1pni_1d_conduction_benchmark_lineplot.png)
 
-The temperature field over the whole domain at the end of the simulation ($t = 10^5\ \mathrm{s}$), rendered with ParaView:
+**Convergence**
 
-![Temperature field](1pni_1d_conduction_benchmark.png){html: width=80%}
+The temperature error is evaluated at the end time $t = 10^5\ \mathrm{s} \approx 1.16\ \mathrm{d}$ in two separate studies:
+
+- *Space convergence*: the cell size $h$ is halved from 25 to 400 cells. The time step size is fixed in each run and decreases with $h^2$ ($\Delta t = 2000\ \mathrm{s} \cdot (25/N)^2$ for $N$ cells), so that the time discretization error decreases at the same rate as the expected spatial error and stays a small part of the total error.
+- *Time convergence*: the time step size $\Delta t$ is halved from $2 \cdot 10^4\ \mathrm{s}$ to $625\ \mathrm{s}$ on a fine grid with 3200 cells ($h = 1.5625\ \mathrm{mm}$), on which the spatial error is negligible.
+
+The box scheme and the cell-centered schemes evaluate the error in different norms and are therefore shown separately.
+For the box scheme, the solution is piecewise linear and the error is measured in the (continuous) $L^2$ norm, normalized with the domain volume,
+$\left( \int_\Omega (T_h - T_\mathrm{exact})^2 \, \mathrm{d}x \, / \, |\Omega| \right)^{1/2}$, integrated with a quadrature rule.
+For the cell-centered schemes, the error is measured in the discrete $L^2$ norm
+$\left( \sum_i |V_i| \, (T_i - T_\mathrm{exact}(x_i))^2 \, / \, \sum_i |V_i| \right)^{1/2}$,
+with the cell-center values $T_i$ and the cell volumes $|V_i|$.
+In all tables, the rates are computed between successive rows.
+
+*Box scheme*
+
+![Convergence of the box scheme](1pni_1d_conduction_convergence_box.png)
+
+Space convergence of the box scheme ($L^2$ norm of the error):
+
+| cells | $h$ (m) | $\Delta t$ (s) | error (K) | rate |
+|------:|--------:|---------------:|----------:|-----:|
+| 25    | 0.2     | 2000           | 5.07e-2   | -    |
+| 50    | 0.1     | 500            | 1.26e-2   | 2.01 |
+| 100   | 0.05    | 125            | 3.15e-3   | 2.00 |
+| 200   | 0.025   | 31.25          | 7.88e-4   | 2.00 |
+| 400   | 0.0125  | 7.8125         | 1.97e-4   | 2.00 |
+
+Time convergence of the box scheme ($L^2$ norm of the error, 3200 cells):
+
+| $\Delta t$ (s) | error (K) | rate |
+|---------------:|----------:|-----:|
+| 20000          | 6.68e-2   | -    |
+| 10000          | 3.40e-2   | 0.97 |
+| 5000           | 1.72e-2   | 0.99 |
+| 2500           | 8.63e-3   | 0.99 |
+| 1250           | 4.32e-3   | 1.00 |
+| 625            | 2.16e-3   | 1.00 |
+
+*Cell-centered schemes*
+
+![Convergence of the cell-centered schemes](1pni_1d_conduction_convergence_cc.png)
+
+On this quasi one-dimensional grid, the MPFA fluxes reduce to the TPFA fluxes, so both schemes give the same errors.
+
+Space convergence of the cell-centered schemes (discrete $L^2$ norm of the error):
+
+| cells | $h$ (m) | $\Delta t$ (s) | error (K), TPFA | rate | error (K), MPFA | rate |
+|------:|--------:|---------------:|----------------:|-----:|----------------:|-----:|
+| 25    | 0.2     | 2000           | 6.18e-2         | -    | 6.18e-2         | -    |
+| 50    | 0.1     | 500            | 1.45e-2         | 2.09 | 1.45e-2         | 2.09 |
+| 100   | 0.05    | 125            | 3.58e-3         | 2.02 | 3.58e-3         | 2.02 |
+| 200   | 0.025   | 31.25          | 8.92e-4         | 2.00 | 8.92e-4         | 2.00 |
+| 400   | 0.0125  | 7.8125         | 2.23e-4         | 2.00 | 2.23e-4         | 2.00 |
+
+Time convergence of the cell-centered schemes (discrete $L^2$ norm of the error, 3200 cells):
+
+| $\Delta t$ (s) | error (K), TPFA | rate | error (K), MPFA | rate |
+|---------------:|----------------:|-----:|----------------:|-----:|
+| 20000          | 6.68e-2         | -    | 6.68e-2         | -    |
+| 10000          | 3.40e-2         | 0.97 | 3.40e-2         | 0.97 |
+| 5000           | 1.72e-2         | 0.99 | 1.72e-2         | 0.99 |
+| 2500           | 8.63e-3         | 0.99 | 8.63e-3         | 0.99 |
+| 1250           | 4.33e-3         | 1.00 | 4.33e-3         | 1.00 |
+| 625            | 2.17e-3         | 1.00 | 2.17e-3         | 1.00 |

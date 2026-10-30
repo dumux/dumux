@@ -1,7 +1,7 @@
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 1e5 # [s]
-MaxTimeStepSize = 1e10
+MaxTimeStepSize = 50 # [s] keeps the time discretization error below the spatial error
 
 [Grid]
 LowerLeft = 0 0
@@ -10,7 +10,7 @@ Cells = 200 1
 
 [Problem]
 Name = 1pnifv_conduction # name passed to the output routines
-OutputInterval = 5 # every n-th timestep an output file is written
+OutputInterval = 100 # every n-th timestep an output file is written
 DarcyVelocity = 1e-4 # [m/s] inflow at the left boundary
 EnableGravity = false
 

@@ -40,6 +40,18 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
 
+namespace Dumux {
+
+//! Write the errors with respect to the analytical solution, if the problem provides them (conduction test)
+template<class Problem, class SolutionVector, class Scalar>
+void writeErrorsIfAvailable(const Problem& problem, const SolutionVector& x, Scalar time)
+{
+    if constexpr (requires { problem.writeErrors(x, time); })
+        problem.writeErrors(x, time);
+}
+
+} // end namespace Dumux
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -163,6 +175,9 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // errors at the end time with respect to the analytical solution
+    writeErrorsIfAvailable(*problem, x, timeLoop->time());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
