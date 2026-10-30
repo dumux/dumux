@@ -42,6 +42,7 @@ class ImmiscibleLocalResidual : public DiscretizationDefaultLocalOperator<TypeTa
     using Element = typename GetPropType<TypeTag, Properties::GridGeometry>::GridView::template Codim<0>::Entity;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using AdvectionType = GetPropType<TypeTag, Properties::AdvectionType>;
+    using HeatConductionType = GetPropType<TypeTag, Properties::HeatConductionType>;
 
     using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
     using ElementDiscretization = typename GridDiscretization::LocalView;
@@ -56,8 +57,7 @@ class ImmiscibleLocalResidual : public DiscretizationDefaultLocalOperator<TypeTa
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
     static constexpr int numPhases = ModelTraits::numFluidPhases();
     static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx; //!< first index for the mass balance
-
-    static_assert(!ModelTraits::enableEnergyBalance(), "The energy balance is not implemented yet");
+    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -84,6 +84,9 @@ public:
             storage[conti0EqIdx + phaseIdx] = vars.porosity()
                                               * vars.density(phaseIdx)
                                               * vars.saturation(phaseIdx);
+
+        if constexpr (enableEnergyBalance)
+            storage[energyEqIdx_()] = energyStorage_(vars, scv.dofPosition());
 
         storage *= Extrusion::volume(elemDisc, scv) * vars.extrusionFactor();
 
@@ -128,15 +131,39 @@ public:
                 ));
         }
 
-        // the phase mass flux, including the upwind term (mobility and density)
+        // the phase mass flux, including the upwind term (mobility and density),
+        // and the advective heat flux with the same upwind direction
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
+            const auto volumeFlux = flux[conti0EqIdx + phaseIdx];
             const auto upwindTerm = [phaseIdx] (const auto& vars)
                                     { return vars.density(phaseIdx)*vars.mobility(phaseIdx); };
 
             flux[conti0EqIdx + phaseIdx] *= Dumux::Detail::upwindSchemeMultiplier(
-                insideVars, outsideVars, upwindTerm, flux[conti0EqIdx + phaseIdx], phaseIdx, upwindWeight
+                insideVars, outsideVars, upwindTerm, volumeFlux, phaseIdx, upwindWeight
             );
+
+            if constexpr (enableEnergyBalance)
+            {
+                const auto gravityPotential = scvf.ipGlobal()*problem.spatialParams().gravity(scvf.ipGlobal());
+                const auto heatUpwindTerm = [phaseIdx, gravityPotential] (const auto& vars)
+                { return vars.density(phaseIdx)*vars.mobility(phaseIdx)*(vars.enthalpy(phaseIdx) - gravityPotential); };
+
+                flux[energyEqIdx_()] += volumeFlux*Dumux::Detail::upwindSchemeMultiplier(
+                    insideVars, outsideVars, heatUpwindTerm, volumeFlux, phaseIdx, upwindWeight
+                );
+            }
+        }
+
+        if constexpr (enableEnergyBalance)
+        {
+            for (const auto& qpData : Dumux::CVFE::quadratureRule(elemDisc, scvf))
+            {
+                const auto& faceIpData = qpData.ipData();
+                flux[energyEqIdx_()] += qpData.weight()*(faceIpData.unitOuterNormal()*HeatConductionType::fluxTerm(
+                    problem, elemDisc.element(), elemDisc, elemVars, faceIpData, cache(elemVars, faceIpData), conductivity_
+                ));
+            }
         }
 
         return flux;
@@ -179,6 +206,10 @@ public:
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     storage[localDofIdx][conti0EqIdx + phaseIdx]
                         += integralShapeFunctions[localDofIdx]*vars.porosity()*vars.density(phaseIdx)*vars.saturation(phaseIdx);
+
+                if constexpr (enableEnergyBalance)
+                    storage[localDofIdx][energyEqIdx_()]
+                        += integralShapeFunctions[localDofIdx]*energyStorage_(vars, ipData(elemDisc, localDof).global());
             }
         }
     }
@@ -231,9 +262,68 @@ public:
                         residual[localDofIdx][eqIdx]
                             += qpData.weight()*(flux - shapeValues[localDofIdx][0]*source[eqIdx]);
                     }
+
+                    // the advective heat flux, with the enthalpy interpolated like the other coefficients
+                    if constexpr (enableEnergyBalance)
+                    {
+                        const auto enthalpyTensor = [phaseIdx, &tensor] (const auto& vars)
+                        {
+                            auto t = tensor(vars);
+                            t *= vars.enthalpy(phaseIdx);
+                            return t;
+                        };
+
+                        auto heatFluxTerm = AdvectionType::fluxTerm(
+                            problem, element, elemDisc, elemVars, phaseIdx, ipData, ipCache, enthalpyTensor
+                        );
+                        heatFluxTerm.axpy(-(ipData.global()*problem.spatialParams().gravity(ipData.global())), fluxTerm);
+
+                        for (const auto& localDof : nonCVLocalDofs(elemDisc))
+                            residual[localDof.index()][energyEqIdx_()] -= qpData.weight()*(heatFluxTerm*ipCache.gradN(localDof.index()));
+                    }
+                }
+
+                if constexpr (enableEnergyBalance)
+                {
+                    const auto conductiveFluxTerm = HeatConductionType::fluxTerm(
+                        problem, element, elemDisc, elemVars, ipData, ipCache, conductivity_
+                    );
+
+                    for (const auto& localDof : nonCVLocalDofs(elemDisc))
+                    {
+                        const auto localDofIdx = localDof.index();
+                        residual[localDofIdx][energyEqIdx_()]
+                            -= qpData.weight()*(conductiveFluxTerm*ipCache.gradN(localDofIdx)
+                                                + shapeValues[localDofIdx][0]*source[energyEqIdx_()]);
+                    }
                 }
             }
         }
+    }
+
+private:
+    static constexpr int energyEqIdx_()
+    { return ModelTraits::Indices::energyEqIdx; }
+
+    //! The effective thermal conductivity per local dof, including the extrusion
+    static constexpr auto conductivity_ = [] (const auto& vars)
+    {
+        auto conductivity = vars.effectiveThermalConductivity();
+        conductivity *= vars.extrusionFactor();
+        return conductivity;
+    };
+
+    //! The internal energy of the fluid phases, including the gravity potential, and of the solid per volume
+    template<class Variables, class GlobalPosition>
+    Scalar energyStorage_(const Variables& vars, const GlobalPosition& x) const
+    {
+        const auto gravityPotential = x*this->asImp().problem().spatialParams().gravity(x);
+
+        Scalar storage = vars.temperature()*vars.solidHeatCapacity()*vars.solidDensity()*(1.0 - vars.porosity());
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            storage += vars.porosity()*vars.density(phaseIdx)*vars.saturation(phaseIdx)
+                       *(vars.internalEnergy(phaseIdx) - gravityPotential);
+        return storage;
     }
 
 };

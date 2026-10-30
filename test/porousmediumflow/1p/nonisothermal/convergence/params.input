@@ -1,0 +1,28 @@
+[Grid]
+UpperRight = 1 1
+Cells = 4 4
+Refinement = 0
+
+[Problem]
+Name = onepni_convergence
+EnableGravity = false
+PressureGradient = -1.0 -0.5
+ReferencePressure = 1e5
+ReferenceTemperature = 300
+TemperatureAmplitude = 10
+
+[SpatialParams]
+Permeability = 1.0
+ReferencePorosity = 0.3
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0
+LiquidHeatCapacity = 1.0
+LiquidThermalConductivity = 0.6
+SolidDensity = 2.0
+SolidHeatCapacity = 1.0
+SolidThermalConductivity = 2.0
+
+[Flux]
+UpwindWeight = 0.5
