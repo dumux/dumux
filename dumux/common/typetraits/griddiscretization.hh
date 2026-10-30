@@ -14,6 +14,8 @@
 
 #include <utility>
 
+#include <dune/common/std/type_traits.hh>
+
 #include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
@@ -40,6 +42,14 @@ template<class T>
 struct GridDiscretizationType<T>
 { using type = typename T::GridGeometry; };
 
+//! Placeholders for element discretizations that do not partition the element into
+//! sub-control volumes, such as the finite element schemes
+struct NoSubControlVolume {};
+struct NoSubControlVolumeFace {};
+
+template<class ED> using SpecifiedSubControlVolume = typename ED::SubControlVolume;
+template<class ED> using SpecifiedSubControlVolumeFace = typename ED::SubControlVolumeFace;
+
 } // end namespace Detail
 #endif // DOXYGEN
 
@@ -52,6 +62,29 @@ struct GridDiscretizationType<T>
  */
 template<class T>
 using GridDiscretization_t = typename Detail::GridDiscretizationType<T>::type;
+
+/*!
+ * \ingroup Typetraits
+ * \brief The sub-control volume type of an element discretization, or a placeholder
+ *        type for discretizations that do not define sub-control volumes
+ * \note This allows generic code to declare sub-control-volume based interfaces without
+ *       excluding finite element discretizations, for which those interfaces are unusable.
+ */
+template<class ElementDiscretization>
+using SubControlVolume_t = Dune::Std::detected_or_t<
+    Detail::NoSubControlVolume, Detail::SpecifiedSubControlVolume, ElementDiscretization
+>;
+
+/*!
+ * \ingroup Typetraits
+ * \brief The sub-control volume face type of an element discretization, or a placeholder
+ *        type for discretizations that do not define sub-control volume faces
+ * \copydetails SubControlVolume_t
+ */
+template<class ElementDiscretization>
+using SubControlVolumeFace_t = Dune::Std::detected_or_t<
+    Detail::NoSubControlVolumeFace, Detail::SpecifiedSubControlVolumeFace, ElementDiscretization
+>;
 
 /*!
  * \ingroup Typetraits
