@@ -38,8 +38,8 @@ public:
                const std::vector<int>& throatLabel,
                const int inletPoreLabel,
                const int outletPoreLabel,
-               const std::size_t numThroatsInvaded = 0.0,
-               const bool allowDraingeOfOutlet = false)
+               const bool allowDraingeOfOutlet = false,
+               const std::size_t numThroatsInvaded = 0)
     : gridView_(gridGeometry.gridView())
     , pcEntry_(pcEntry)
     , pcSnapOff_(pcSnapOff)
@@ -226,7 +226,7 @@ private:
     const std::vector<int>& throatLabel_;
     const int inletThroatLabel_;
     const int outletThroatLabel_;
-    const int allowDraingeOfOutlet_;
+    const bool allowDraingeOfOutlet_;
     std::size_t numThroatsInvaded_;
 };
 
