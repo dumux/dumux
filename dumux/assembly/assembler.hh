@@ -41,23 +41,61 @@
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
 
+#include <dumux/common/concepts/variables_.hh>
+
 #include "cvfelocalassembler_.hh"
+#include "cvfelocalassembler.hh"
+#include "cclocalassembler.hh"
+#include "fclocalassembler.hh"
 
 namespace Dumux::Experimental::Detail {
 
-template<class DiscretizationMethod>
-struct LocalAssemblerChooser;
+template<class DiscretizationMethod, bool usesVariables>
+struct LocalAssemblerChooser
+{
+    static_assert(Concept::AlwaysFalse<DiscretizationMethod>,
+                  "No local assembler for this combination of discretization method and grid variables");
+};
 
 template<class DM>
-struct LocalAssemblerChooser<DiscretizationMethods::CVFE<DM>>
+struct LocalAssemblerChooser<DiscretizationMethods::CVFE<DM>, true>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = Dumux::Experimental::CVFELocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
+template<class DM>
+struct LocalAssemblerChooser<DiscretizationMethods::CVFE<DM>, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = Dumux::CVFELocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethods::CCMpfa, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = Dumux::CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethods::CCTpfa, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = Dumux::CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethods::FCStaggered, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = Dumux::FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
 template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
 using LocalAssemblerChooser_t = typename LocalAssemblerChooser<
-    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    Concept::GridVariables<GetPropType<TypeTag, Properties::GridVariables>>
 >::template type<TypeTag, Impl, diffMethod, isImplicit>;
 
 //! helper struct detecting if problem has a constraints() function

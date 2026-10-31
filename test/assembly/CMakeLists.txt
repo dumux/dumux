@@ -3,3 +3,6 @@
 
 dumux_add_test(SOURCES test_partialreassembler.cc
                LABELS unit assembly)
+
+dumux_add_test(SOURCES test_localassemblerchooser.cc
+               LABELS unit assembly)
