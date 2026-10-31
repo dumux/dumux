@@ -22,6 +22,7 @@ workflow:
 
 # variables that should be overwritten by the trigger
 variables:
+  GIT_STRATEGY: clone
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
   CXX_MAX_STANDARD: "17"
