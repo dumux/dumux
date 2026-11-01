@@ -2656,7 +2656,7 @@
             "false"
         ],
         "explanation": [
-            "Whether to also log parameters that fall back to a default value given at the call site. The parameter report then lists them."
+            "Whether to also log parameters that fall back to a default value given at the call site. The parameter report then lists them and the parameters used with different default values."
         ],
         "mode": "manual",
         "type": [
