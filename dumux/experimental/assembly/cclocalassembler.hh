@@ -104,6 +104,30 @@ public:
             // assemble the coupling blocks for coupled models (does nothing if not coupled)
             maybeAssembleCouplingBlocks(res[globalI]);
         }
+
+        // the Jacobian rows of internally constrained equations are replaced in assembleJacobian,
+        // the residual rows follow after the undeflected residual is no longer needed
+        setInternalDirichletResidual_(this->asImp_().curSol(), res, constrainedDofs);
+    }
+
+    //! Internal Dirichlet constraints also replace the residual rows of residual-only assemblies
+    static constexpr bool enforcesElementConstraints = Problem::enableInternalDirichletConstraints();
+
+    /*!
+     * \brief Replace the equations with an internal Dirichlet constraint by the constraint x - g = 0
+     * \param curSol The current solution
+     * \param res The residual, in which the constraint rows are set
+     * \param constrainedDofs Marks the constrained equations
+     * \note The Jacobian rows are set during the assembly of the Jacobian.
+     */
+    template<class SolutionVector, class ResidualVector, class Jacobian>
+    void enforceElementConstraints(const SolutionVector& curSol,
+                                   ResidualVector& res,
+                                   Jacobian&&,
+                                   ResidualVector& constrainedDofs)
+    {
+        this->fvGeometry().bindElement(this->element());
+        setInternalDirichletResidual_(curSol, res, constrainedDofs);
     }
 
     /*!
@@ -150,8 +174,10 @@ public:
     template<class SubResidualVector>
     void assembleOperators(OperatorEvaluations<SubResidualVector> evaluations)
     {
+        // the implicit solves skip the contributions of known states in the constrained equations
         if constexpr (Problem::enableInternalDirichletConstraints())
-            DUNE_THROW(Dune::NotImplemented, "Operator evaluations with internal Dirichlet constraints");
+            if (!this->isImplicit())
+                DUNE_THROW(Dune::NotImplemented, "Explicit operator evaluations with internal Dirichlet constraints");
 
         this->localResidual().spatialWeight(1.0, !evaluations.spatial);
         this->asImp_().bindLocalViews();
@@ -177,6 +203,32 @@ public:
      */
     template<class... Args>
     void maybeEvalAdditionalDomainDerivatives(Args&&...) {}
+
+private:
+    template<class SolutionVector, class ResidualVector>
+    void setInternalDirichletResidual_(const SolutionVector& curSol,
+                                       ResidualVector& res,
+                                       ResidualVector& constrainedDofs) const
+    {
+        if constexpr (Problem::enableInternalDirichletConstraints())
+        {
+            const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
+            const auto& scv = this->fvGeometry().scv(globalI);
+            const auto constrained = this->asImp_().problem().hasInternalDirichletConstraint(this->element(), scv);
+            if (constrained.none())
+                return;
+
+            const auto dirichletValues = this->asImp_().problem().internalDirichlet(this->element(), scv);
+            for (int eqIdx = 0; eqIdx < constrained.size(); ++eqIdx)
+            {
+                if (constrained[eqIdx])
+                {
+                    res[globalI][eqIdx] = curSol[globalI][eqIdx] - dirichletValues[eqIdx];
+                    constrainedDofs[globalI][eqIdx] = 1.0;
+                }
+            }
+        }
+    }
 };
 
 /*!

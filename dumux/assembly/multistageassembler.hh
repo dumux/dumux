@@ -365,7 +365,7 @@ private:
     //! Let the local assemblers enforce the constraints belonging to the elements (e.g. Dirichlet boundary conditions)
     void enforceElementConstraints_(const SolutionVector& curSol, JacobianMatrix* jac)
     {
-        if constexpr (requires { LocalAssembler::enforcesElementConstraints; })
+        if constexpr (requires { requires LocalAssembler::enforcesElementConstraints; })
         {
             assemble_([&](const Element& element)
             {
