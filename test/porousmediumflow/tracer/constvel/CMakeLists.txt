@@ -15,6 +15,29 @@ dumux_add_test(NAME test_tracer_explicit_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa params.input -Problem.Name test_tracer_explicit_tpfa")
 
+# tpfa assembled with the assembler of the general interface, explicit and implicit
+dumux_add_test(NAME test_tracer_explicit_tpfa_assembler
+              LABELS porousmediumflow tracer
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false USEMOLES=false USE_EXPERIMENTAL_ASSEMBLER=1
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_explicit_tpfa-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa_assembler-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_explicit_tpfa_assembler params.input -Problem.Name test_tracer_explicit_tpfa_assembler")
+
+dumux_add_test(NAME test_tracer_implicit_tpfa_assembler
+              LABELS porousmediumflow tracer
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true USEMOLES=false USE_EXPERIMENTAL_ASSEMBLER=1
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_implicit_tpfa-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_tpfa_assembler-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_implicit_tpfa_assembler params.input -Problem.Name test_tracer_implicit_tpfa_assembler")
+
 dumux_add_test(NAME test_tracer_explicit_box
               LABELS porousmediumflow tracer
               SOURCES main.cc

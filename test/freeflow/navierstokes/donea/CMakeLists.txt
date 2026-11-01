@@ -28,6 +28,23 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_fcstaggered_1.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum -Problem.Name test_ff_stokes_donea_momentum")
 
+dumux_add_test(NAME test_ff_stokes_donea_momentum_assembler
+               LABELS freeflow navierstokes donea
+               SOURCES main_momentum.cc
+               CMAKE_GUARD HAVE_UMFPACK
+               COMPILE_DEFINITIONS USE_EXPERIMENTAL_ASSEMBLER=1
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_donea_momentum-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_assembler_fcstaggered_1.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_assembler -Problem.Name test_ff_stokes_donea_momentum_assembler")
+
+dumux_add_test(NAME test_ff_stokes_donea_momentum_weightedassembly
+               LABELS freeflow navierstokes donea
+               SOURCES test_weightedassembly.cc
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_weightedassembly
+               CMD_ARGS params_weightedassembly.input)
+
 dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea_momentum

@@ -317,7 +317,7 @@ int main(int argc, char** argv)
         faceVtk.write(baseName + "_face" + discSuffix + rankSuffix + "_0", Dune::VTK::ascii);
     }
 
-#if NEW_PROBLEM_INTERFACE
+#if NEW_PROBLEM_INTERFACE || USE_EXPERIMENTAL_ASSEMBLER
     using Assembler = Dumux::Experimental::Assembler<TypeTag, DiffMethod::numeric>;
 #else
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;

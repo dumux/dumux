@@ -66,6 +66,16 @@ dumux_add_test(NAME test_2p2c_injection_tpfa_caching
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa_caching-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa_caching params.input -Problem.Name test_2p2c_injection_tpfa_caching")
 
+dumux_add_test(NAME test_2p2c_injection_tpfa_multistageassembler
+              LABELS porousmediumflow 2p2c
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfa ENABLECACHING=1 USE_MULTISTAGE_ASSEMBLER=1
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa_multistageassembler-00008.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_tpfa_multistageassembler params.input -Problem.Name test_2p2c_injection_tpfa_multistageassembler")
+
 dumux_add_test(NAME test_2p2c_injection_mpfa_caching
               LABELS porousmediumflow 2p2c
               SOURCES main.cc

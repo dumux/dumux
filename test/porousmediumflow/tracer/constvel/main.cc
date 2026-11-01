@@ -29,6 +29,7 @@
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/linear/pdesolver.hh>
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/assembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
@@ -98,7 +99,11 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
+#ifdef USE_EXPERIMENTAL_ASSEMBLER
+    using Assembler = Experimental::Assembler<TypeTag, DiffMethod::analytic, IMPLICIT>;
+#else
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic, IMPLICIT>;
+#endif
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeLoop, xOld);
 
     //! the linear solver

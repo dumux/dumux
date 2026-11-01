@@ -28,7 +28,11 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
+#ifdef USE_MULTISTAGE_ASSEMBLER
+#include <dumux/assembly/multistageassembler.hh>
+#else
 #include <dumux/experimental/assembly/multistagefvassembler.hh>
+#endif
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
@@ -96,7 +100,11 @@ int main(int argc, char** argv)
     auto timeSteppingMethod = std::make_shared<Experimental::MultiStage::ExplicitEuler<Scalar>>();
 
     //! the assembler with time loop for instationary problem
+#ifdef USE_MULTISTAGE_ASSEMBLER
+    using Assembler = Experimental::MultiStageAssembler<TypeTag, DiffMethod::numeric>;
+#else
     using Assembler = Experimental::MultiStageFVAssembler<TypeTag, DiffMethod::numeric>;
+#endif
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables, timeSteppingMethod, xOld);
 
     //! the linear solver

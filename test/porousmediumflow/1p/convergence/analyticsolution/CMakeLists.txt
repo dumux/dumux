@@ -11,6 +11,8 @@ add_executable(test_1p_convergence_analytic_tpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_mpfa EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_box EXCLUDE_FROM_ALL main.cc)
 add_executable(test_1p_convergence_analytic_box_variables EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_tpfa_assembler EXCLUDE_FROM_ALL main.cc)
+add_executable(test_1p_convergence_analytic_mpfa_assembler EXCLUDE_FROM_ALL main.cc)
 
 if (dune-uggrid_FOUND)
     target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
@@ -24,6 +26,17 @@ else()
     target_compile_definitions(test_1p_convergence_analytic_box_variables PUBLIC "TYPETAG=OnePConvergenceBoxNewInterface" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
 endif()
 
+# the finite volume schemes assembled with the assembler of the general interface
+if (dune-uggrid_FOUND)
+    set(ASSEMBLER_TEST_GRIDTYPE "Dune::UGGrid<2>")
+else()
+    set(ASSEMBLER_TEST_GRIDTYPE "Dune::YaspGrid<2>")
+endif()
+target_compile_definitions(test_1p_convergence_analytic_tpfa_assembler PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "USE_EXPERIMENTAL_ASSEMBLER"
+                           PUBLIC "GRIDTYPE=${ASSEMBLER_TEST_GRIDTYPE}")
+target_compile_definitions(test_1p_convergence_analytic_mpfa_assembler PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "USE_EXPERIMENTAL_ASSEMBLER"
+                           PUBLIC "GRIDTYPE=${ASSEMBLER_TEST_GRIDTYPE}")
+
 # using tpfa and structured grid with zero off-diagonal permeability entries
 dumux_add_test(NAME test_1p_convergence_analytic_tpfa_structured
                TARGET test_1p_convergence_analytic_tpfa
@@ -31,6 +44,21 @@ dumux_add_test(NAME test_1p_convergence_analytic_tpfa_structured
                COMMAND ./convergencetest.py
                CMD_ARGS test_1p_convergence_analytic_tpfa
                         tpfa_structured params.input -Problem.C 0.0)
+
+# using tpfa and structured grid with the assembler of the general interface
+dumux_add_test(NAME test_1p_convergence_analytic_tpfa_assembler_structured
+               TARGET test_1p_convergence_analytic_tpfa_assembler
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_tpfa_assembler
+                        tpfa_assembler_structured params.input -Problem.C 0.0)
+
+# using mpfa and structured grid with the assembler of the general interface
+dumux_add_test(NAME test_1p_convergence_analytic_mpfa_assembler_structured
+               TARGET test_1p_convergence_analytic_mpfa_assembler
+               LABELS porousmediumflow 1p
+               COMMAND ./convergencetest.py
+               CMD_ARGS test_1p_convergence_analytic_mpfa_assembler mpfa_assembler_structured)
 
 # using mpfa and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_mpfa_structured

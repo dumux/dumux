@@ -14,6 +14,17 @@ dumux_add_test(NAME test_tracer_multiphase_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa params.input -Problem.Name test_tracer_multiphase_tpfa")
 
+dumux_add_test(NAME test_tracer_multiphase_tpfa_multistageassembler
+              LABELS porousmediumflow tracer
+              TIMEOUT 3600
+              SOURCES main.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa USE_MULTISTAGE_ASSEMBLER=1
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_tracer_multiphase_tpfa-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa_multistageassembler-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_multiphase_tpfa_multistageassembler params.input -Problem.Name test_tracer_multiphase_tpfa_multistageassembler")
+
 dumux_add_test(NAME test_tracer_multiphase_mpfa
               LABELS porousmediumflow tracer
               TIMEOUT 3600

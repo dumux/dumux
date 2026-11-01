@@ -177,9 +177,13 @@ int main(int argc, char** argv)
     gridVariables->init(x);
 
     // create assembler & linear solver
+#ifdef USE_EXPERIMENTAL_ASSEMBLER
+    using Assembler = Dumux::Experimental::Assembler<TypeTag, DiffMethod::numeric>;
+#else
     using Assembler = std::conditional_t<usesGeneralGridVariables<GridVariables>(),
                                          Dumux::Experimental::Assembler<TypeTag, DiffMethod::numeric>,
                                          FVAssembler<TypeTag, DiffMethod::numeric>>;
+#endif
     auto assembler = std::make_shared<Assembler>(problem, gridGeometry, gridVariables);
 
     using LinearSolver = ILUBiCGSTABIstlSolver<LinearSolverTraits<GridGeometry>, LinearAlgebraTraitsFromAssembler<Assembler>>;
