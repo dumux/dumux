@@ -12,7 +12,7 @@ WaveNumberSquared = 0.0 0.0
 OutputFileName = test_complex_facet_helmholtz.log
 
 [L2Error]
-QuadratureOrder = 1
+IntegrationOrder = 1
 
 [LinearSolver]
 Verbosity = 0

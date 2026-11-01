@@ -46,7 +46,7 @@ namespace Dumux {
 template<class GridView, class Problem, class SolutionVector>
 double relativeL2Error(const GridView& gridView, const Problem& problem, const SolutionVector& x)
 {
-    const auto order = getParam<int>("L2Error.QuadratureOrder");
+    const auto order = getParam<int>("L2Error.IntegrationOrder");
     double error = 0.0;
     double profileMin = std::numeric_limits<double>::max(), profileMax = std::numeric_limits<double>::lowest();
     for (const auto& element : elements(gridView))

@@ -26,7 +26,7 @@ ResidualReduction = 1e-20
 MaxIterations = 2000
 
 [L2Error]
-QuadratureOrder = 1
+IntegrationOrder = 1
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e10
