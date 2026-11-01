@@ -22,6 +22,7 @@ workflow:
 
 # variables that should be overwritten by the trigger
 variables:
+  GIT_STRATEGY: clone
   MR_TARGET_BRANCH_NAME: ""
   REFERENCE_SHA: ""
   CXX_MAX_STANDARD: "17"
@@ -126,7 +127,7 @@ linters:
 reuse:
   stage: linting
   image:
-    name: fsfe/reuse:latest
+    name: fsfe/reuse:6.2.0
     entrypoint: [""]
   script:
     - reuse lint
