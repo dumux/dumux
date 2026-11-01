@@ -136,7 +136,8 @@ e.g. `getParam<double>("Newton.MaxRelativeShift", 1e-8)`, are only logged if the
 ```sh
 ./executable params.input -Parameters.LogFallbackDefaults true
 ```
-The report then also lists these parameters with the value they fell back to.
+The report then also lists these parameters with the value they fell back to, and the parameters that
+were used with different default values, at different call sites or at a call site and in the global defaults.
 
 ## Parameter input file
 

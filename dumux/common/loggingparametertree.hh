@@ -12,16 +12,19 @@
 #ifndef DUMUX_LOGGING_PARAMETER_TREE_HH
 #define DUMUX_LOGGING_PARAMETER_TREE_HH
 
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <memory>
 #include <mutex>
 #include <type_traits>
+#include <vector>
 
 #include <dune/common/parametertree.hh>
 #include <dumux/common/exceptions.hh>
@@ -50,6 +53,7 @@ public:
     , usedRuntimeParams_(std::make_unique<Dune::ParameterTree>())
     , usedDefaultParams_(std::make_unique<Dune::ParameterTree>())
     , usedFallbackDefaultParams_(std::make_unique<Dune::ParameterTree>())
+    , distinctDefaultValues_(std::make_unique<std::map<std::string, std::vector<std::string>>>())
     {}
 
     /** \brief test for key
@@ -173,6 +177,22 @@ public:
         {
             stream << "\n# Fallback default parameters used (hardcoded at the call site in the source code):" << std::endl;
             usedFallbackDefaultParams_->report(stream);
+
+            const auto& distinctDefaultValues = *distinctDefaultValues_;
+            if (std::ranges::any_of(distinctDefaultValues, [](const auto& entry){ return entry.second.size() > 1; }))
+            {
+                stream << "\n# Parameters used with different default values (at call sites or as global default):" << std::endl;
+                for (const auto& [key, values] : distinctDefaultValues)
+                {
+                    if (values.size() > 1)
+                    {
+                        stream << key << " =";
+                        for (const auto& value : values)
+                            stream << " \"" << value << "\"";
+                        stream << std::endl;
+                    }
+                }
+            }
         }
 
         const auto unusedParams = getUnusedKeys();
@@ -527,11 +547,13 @@ public:
         *usedRuntimeParams_ = Dune::ParameterTree{};
         *usedDefaultParams_ = Dune::ParameterTree{};
         *usedFallbackDefaultParams_ = Dune::ParameterTree{};
+        distinctDefaultValues_->clear();
     }
 
     /** \brief Also log parameters that fall back to the default value given at the call site
      *
-     * The report then also lists these parameters.
+     * The report then also lists these parameters, and the parameters that were used with
+     * different default values (at different call sites, or at a call site and as global default).
      */
     void setLogFallbackDefaults(bool enable)
     { logFallbackDefaults_ = enable; }
@@ -577,6 +599,7 @@ private:
     }
 
     /** \brief Log the key value pair as used fallback default param
+     *         and record the distinct default values of the key
      */
     template<class T>
     void logUsedFallbackDefaultParam_(const std::string& key, const T& defaultValue) const
@@ -585,8 +608,25 @@ private:
         if (!value)
             return;
 
+        std::optional<std::string> globalDefault;
+        if (defaultParams_.hasKey(key))
+        {
+            // compare in the representation of the call-site default, e.g. "1e300" and 1e300 are the same value
+            try { globalDefault = toParameterString_(defaultParams_.template get<T>(key)); }
+            catch (const Dune::RangeError&) { globalDefault = defaultParams_[key]; }
+        }
+
         std::scoped_lock lock{ usedFallbackDefaultMutex_ };
         usedFallbackDefaultParams_->operator[](key) = *value;
+
+        auto& values = (*distinctDefaultValues_)[key];
+        const auto addIfNew = [&](const std::string& v){
+            if (std::ranges::find(values, v) == values.end())
+                values.push_back(v);
+        };
+        addIfNew(*value);
+        if (globalDefault)
+            addIfNew(*globalDefault);
     }
 
     /** \brief The value in the format of Dune::ParameterTree, or no value if the type cannot be written
@@ -637,6 +677,7 @@ private:
     std::unique_ptr<Dune::ParameterTree> usedRuntimeParams_;
     std::unique_ptr<Dune::ParameterTree> usedDefaultParams_;
     std::unique_ptr<Dune::ParameterTree> usedFallbackDefaultParams_;
+    std::unique_ptr<std::map<std::string, std::vector<std::string>>> distinctDefaultValues_;
 
     // access to the caches have to be protected for thread-safety
     mutable std::mutex usedRuntimeMutex_;

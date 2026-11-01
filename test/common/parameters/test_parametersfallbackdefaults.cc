@@ -26,6 +26,7 @@
 namespace {
 
 const std::string fallbackHeader = "# Fallback default parameters used";
+const std::string differingHeader = "# Parameters used with different default values";
 
 // the report section starting with the given header, empty if the report has no such section
 std::string reportSection(const std::string& header)
@@ -55,7 +56,7 @@ int main(int argc, char* argv[])
     // without Parameters.LogFallbackDefaults the fallback defaults are not logged
     Parameters::init([](Dune::ParameterTree&){});
     getParam<double>("Newton.MaxRelativeShift", 1e-8);
-    if (!reportSection(fallbackHeader).empty())
+    if (!reportSection(fallbackHeader).empty() || !reportSection(differingHeader).empty())
         DUNE_THROW(Dune::Exception, "Fallback defaults are reported although their log is disabled");
 
     // enable the log in the input file
@@ -104,6 +105,26 @@ int main(int argc, char* argv[])
         DUNE_THROW(Dune::Exception, "Runtime parameters are logged as fallback defaults:\n" << fallbackSection);
     checkContains(reportSection("# Runtime-specified parameters used"), "LogFallbackDefaults = \"true\"");
 
+    // different default values for the same key, at call sites or as global default
+    getParam<int>("Newton.MaxSteps", 18);
+    getParam<int>("Newton.MaxSteps", 20);
+    getParam<int>("Newton.MaxSteps", 18);
+    getParam<bool>("Problem.EnableGravity", false);
+    getParam<int>("Flux.UpwindWeight", 1);
+
+    // the same values in a different type or notation
+    getParam<double>("Same.Value", 1.0);
+    getParam<int>("Same.Value", 1);
+    getParam<double>("TimeLoop.MaxTimeStepSize", 1e300);
+    getParam<int>("TimeLoop.MaxTimeStepDivisions", 10);
+
+    const auto differingSection = reportSection(differingHeader);
+    checkContains(differingSection, "Newton.MaxSteps = \"18\" \"20\"\n");
+    checkContains(differingSection, "Problem.EnableGravity = \"false\" \"true\"\n");
+    checkContains(differingSection, "Flux.UpwindWeight = \"1\" \"1.0\"\n");
+    for (const auto& key : {"Same.Value", "TimeLoop.MaxTimeStepSize", "TimeLoop.MaxTimeStepDivisions", "Fallback.", "Newton.MaxRelativeShift"})
+        checkContains(differingSection, key, false);
+
     // a reset discards the log, another init can enable it again
     Parameters::reset();
     Parameters::init([](Dune::ParameterTree& params){
@@ -112,6 +133,8 @@ int main(int argc, char* argv[])
     getParam<int>("Newton.MaxSteps", 20);
     checkContains(reportSection(fallbackHeader), "MaxSteps = \"20\"");
     checkContains(reportSection(fallbackHeader), "[ Fallback ]", false);
+    if (!reportSection(differingHeader).empty())
+        DUNE_THROW(Dune::Exception, "Different default values survive the reset");
 
     // and disable it again
     Parameters::reset();
