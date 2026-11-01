@@ -84,7 +84,10 @@ public:
             for (const auto& group : linearSolverGroups)
             {
                 const auto fullDumuxKey = group + "." + dumuxKey;
-                const auto value = getParam<std::string>(fullDumuxKey, "");
+                if (!hasParam(fullDumuxKey))
+                    continue;
+
+                const auto value = getParam<std::string>(fullDumuxKey);
                 if (!value.empty())
                 {
                     params[istlKey] = value;
