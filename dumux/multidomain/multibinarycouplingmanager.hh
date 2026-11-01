@@ -366,6 +366,25 @@ public:
         });
     }
 
+    /*!
+     * \brief Update the variables of domain i that depend on the coupled domains
+     * \note Overload for variables that are not split into volume variables
+     *       and a flux variables cache (grid or element variables).
+     */
+    template<std::size_t i, class LocalAssemblerI, class UpdatableElementVars>
+    void updateCoupledVariables(Dune::index_constant<i> domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                UpdatableElementVars& elemVars)
+    {
+        // for the coupling blocks
+        using namespace Dune::Hybrid;
+        forEach(CouplingMap::coupledDomains(domainI), [&](const auto domainJ){
+            subApply(domainI, domainJ, [&](auto& cm, auto&& ii, auto&& jj){
+                cm.updateCoupledVariables(ii, localAssemblerI, elemVars);
+            });
+        });
+    }
+
 protected:
     SolutionVectors& curSol()
     { return solutionVectors_; }
