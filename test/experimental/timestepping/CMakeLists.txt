@@ -13,6 +13,14 @@ dune_symlink_to_source_files(FILES
 
 dumux_add_test(SOURCES test_newmarkbeta.cc LABELS unit timestepping experimental)
 
+dumux_add_test(SOURCES test_problemtime.cc LABELS unit timestepping experimental)
+
+dumux_add_test(NAME test_problemtime_rejects_time_setter
+               SOURCES test_problemtime.cc
+               LABELS unit timestepping experimental
+               COMPILE_DEFINITIONS CHECK_TIME_SETTER_REJECTION=1
+               EXPECT_COMPILE_FAIL)
+
 dumux_add_test(SOURCES test_timestepmethods.cc LABELS unit timestepping experimental)
 set_tests_properties(test_timestepmethods PROPERTIES
   FIXTURES_SETUP timestepmethods_convergence_data)

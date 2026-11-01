@@ -599,17 +599,7 @@ private:
     {
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
-        { setProblemTime_(*std::get<domainId>(problemTuple_), t); });
-    }
-
-    template<class P>
-    void setProblemTime_(const P& p, const Scalar t)
-    {
-        if constexpr (requires { p.setTime(t); })
-            p.setTime(t);
-        else
-            static_assert(!requires (P& q) { q.setTime(Scalar{}); },
-                "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
+        { Detail::TimeStepping::setProblemTime(*std::get<domainId>(problemTuple_), t); });
     }
 
     std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> timeSteppingMethod_;

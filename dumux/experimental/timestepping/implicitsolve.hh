@@ -30,12 +30,16 @@
  * It holds no time integration history: the stepper evaluates the
  * unweighted operators at the states it needs to remember and builds
  * \f$ c \f$ from them.
+ *
+ * Time-dependent problems receive the time at which the assembler evaluates
+ * the operators through `void setTime(Scalar t) const`.
  */
 #ifndef DUMUX_TIMESTEPPING_IMPLICIT_SOLVE_HH
 #define DUMUX_TIMESTEPPING_IMPLICIT_SOLVE_HH
 
 #include <memory>
 #include <concepts>
+#include <type_traits>
 
 #include <dumux/experimental/timestepping/timelevel.hh>
 
@@ -101,6 +105,50 @@ constexpr bool enablesInertia()
         return Problem::enableInertia();
     else
         return false;
+}
+
+struct TimeSetterNames
+{
+    void setTime();
+    void updateTime();
+    void setTimeLoop();
+};
+
+template<class Problem>
+struct ProblemWithTimeSetterNames : public Problem, public TimeSetterNames {};
+
+/*!
+ * \brief Whether the problem has a member named setTime, updateTime or setTimeLoop (with any signature)
+ * \note Such a member makes the name lookup in ProblemWithTimeSetterNames ambiguous.
+ *       Final classes cannot be derived from and are reported as having no such member.
+ */
+template<class Problem>
+constexpr bool hasTimeSetter()
+{
+    if constexpr (std::is_class_v<Problem> && !std::is_final_v<Problem>)
+    {
+        using P = ProblemWithTimeSetterNames<Problem>;
+        return !requires { &P::setTime; }
+            || !requires { &P::updateTime; }
+            || !requires { &P::setTimeLoop; };
+    }
+    else
+        return false;
+}
+
+/*!
+ * \brief Set the time at which the operators of the problem are evaluated
+ * \note Time-dependent problems receive the time through `void setTime(Scalar t) const`.
+ *       A problem without a member named setTime, updateTime or setTimeLoop is time-independent.
+ */
+template<class Problem, class Scalar>
+void setProblemTime(const Problem& problem, const Scalar t)
+{
+    if constexpr (requires { problem.setTime(t); })
+        problem.setTime(t);
+    else
+        static_assert(!hasTimeSetter<Problem>(),
+            "Time-dependent problems receive the time at which the operators are evaluated through void setTime(Scalar t) const");
 }
 
 //! y += a*x for scalars and (block) vectors

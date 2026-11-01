@@ -247,7 +247,7 @@ public:
      */
     void setImplicitSolve(const SolutionVector&, const SolveParams& params)
     {
-        setProblemTime_(*problem_, params.timeLevel.current());
+        Detail::TimeStepping::setProblemTime(*problem_, params.timeLevel.current());
         solveParams_ = params;
     }
 
@@ -259,7 +259,7 @@ public:
                            const Experimental::TimeLevel<Scalar>& timeLevel,
                            Experimental::OperatorEvaluations<ResidualType> evaluations)
     {
-        setProblemTime_(*problem_, timeLevel.current());
+        Detail::TimeStepping::setProblemTime(*problem_, timeLevel.current());
         assembleOperators_(sol, evaluations);
     }
 
@@ -472,16 +472,6 @@ private:
 
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
-    }
-
-    template<class P>
-    void setProblemTime_(const P& p, const Scalar t)
-    {
-        if constexpr (requires { p.setTime(t); })
-            p.setTime(t);
-        else
-            static_assert(!requires (P& q) { q.setTime(Scalar{}); },
-                "The multi-stage assembler sets the stage time through a const problem: setTime has to be const.");
     }
 
     std::shared_ptr<const Experimental::TimeIntegrationMethod<Scalar>> timeSteppingMethod_;
