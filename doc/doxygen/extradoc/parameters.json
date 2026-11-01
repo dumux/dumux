@@ -2651,6 +2651,18 @@
             "int"
         ]
     },
+    "Parameters.LogFallbackDefaults": {
+        "defaultValue": [
+            "false"
+        ],
+        "explanation": [
+            "Whether to also log parameters that fall back to a default value given at the call site. The parameter report then lists them."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
+        ]
+    },
     "PointSource.EnableBoxLumping": {
         "explanation": [
             "For a DOF-index to point source map distribute source using a check if point sources are inside a subcontrolvolume instead of using basis function weights."
