@@ -400,8 +400,8 @@ void intersectingEntities(const Geometry& geometry,
     // No leaf. Check both children nodes.
     else
     {
-        intersectingEntities(geometry, tree, bBox, bBoxNode.child0, intersections);
-        intersectingEntities(geometry, tree, bBox, bBoxNode.child1, intersections);
+        intersectingEntities(geometry, tree, bBox, bBoxNode.child0, intersections, intersectionPolicy);
+        intersectingEntities(geometry, tree, bBox, bBoxNode.child1, intersections, intersectionPolicy);
     }
 }
 
@@ -521,28 +521,28 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
     // if we reached the leaf in treeA, just continue in treeB
     else if (isLeafA)
     {
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections);
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections, intersectionPolicy);
     }
 
     // if we reached the leaf in treeB, just continue in treeA
     else if (isLeafB)
     {
-        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections);
-        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections);
+        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections, intersectionPolicy);
     }
 
     // we know now that both trees didn't reach the leaf yet so
     // we continue with the larger tree first (bigger node number)
     else if (nodeA > nodeB)
     {
-        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections);
-        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections);
+        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections, intersectionPolicy);
     }
     else
     {
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections);
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections, intersectionPolicy);
     }
 }
 
