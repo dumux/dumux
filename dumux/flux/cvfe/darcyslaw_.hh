@@ -12,15 +12,14 @@
 #ifndef DUMUX_FLUX_CVFE_DARCYS_LAW__HH
 #define DUMUX_FLUX_CVFE_DARCYS_LAW__HH
 
-#include <concepts>
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
+#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/concepts/ipdata_.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 #include <dumux/flux/gravitytermdensity.hh>
+#include <dumux/flux/cvfe/coefficients_.hh>
 
 namespace Dumux::Experimental {
 
@@ -47,7 +46,7 @@ public:
 
     /*!
      * \brief Returns the flux term of a fluid phase at an interpolation point
-     * \note Looks up the cache of the interpolation point, see the overloads below.
+     * \note Looks up the cache of the interpolation point, see the overload below.
      */
     template<class Problem, class ElementVariables, Concept::IpData IpData, class Tensor>
     static GlobalPosition fluxTerm(const Problem& problem,
@@ -61,12 +60,13 @@ public:
 
     /*!
      * \brief Returns the flux term of a fluid phase at an interpolation point
-     * \note This term is \f$-\mathbf{T} \left( \nabla p - \rho \mathbf{g} \right)\f$, where the
-     *       tensor \f$\mathbf{T}\f$ is given per local dof and interpolated alongside the potential
-     *       gradient. A scheme that upwinds the mobility passes the permeability only.
+     * \note This term is \f$-\mathbf{T} \left( \nabla p - \rho \mathbf{g} \right)\f$. The tensor
+     *       \f$\mathbf{T}\f$ is given per local dof, `tensor(vars)`, and then interpolated alongside the
+     *       potential gradient, or per interpolation point, `tensor(elemDisc, elemVars, ipData)`, for
+     *       instance an average over the face being integrated. A scheme that upwinds the mobility
+     *       passes the permeability only.
      */
     template<class Problem, class ElementVariables, Concept::IpData IpData, class IpCache, class Tensor>
-        requires std::invocable<Tensor, const typename ElementVariables::Variables&>
     static GlobalPosition fluxTerm(const Problem& problem,
                                    const Element& element,
                                    const ElementDiscretization& elemDisc,
@@ -78,89 +78,42 @@ public:
     {
         static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
+        constexpr bool tensorPerLocalDof = Dumux::Detail::CVFE::LocalDofCoefficient<Tensor, ElementVariables>;
+        using InterpolatedTensor = typename std::conditional_t<
+            tensorPerLocalDof,
+            Dumux::Detail::CVFE::LocalDofValue<Tensor, ElementVariables>,
+            std::type_identity<Scalar>
+        >::type;
+
         const auto& shapeValues = ipCache.shapeValues();
-
-        std::decay_t<decltype(tensor(elemVars[0]))> interpolatedTensor(0.0);
-        GlobalPosition gradP(0.0);
+        [[maybe_unused]] InterpolatedTensor interpolatedTensor(0.0);
+        GlobalPosition gradPotential(0.0);
         Scalar rho(0.0);
-
         for (const auto& localDof : localDofs(elemDisc))
         {
             const auto& vars = elemVars[localDof];
             const auto shapeValue = shapeValues[localDof.index()][0];
 
-            interpolatedTensor += shapeValue*tensor(vars);
+            if constexpr (tensorPerLocalDof)
+                interpolatedTensor += shapeValue*tensor(vars);
 
             if (enableGravity)
                 rho += GravityTermDensity::density(problem, vars, phaseIdx)*shapeValue;
 
-            // the global shape function gradient
-            gradP.axpy(vars.pressure(phaseIdx), ipCache.gradN(localDof.index()));
+            gradPotential.axpy(vars.pressure(phaseIdx), ipCache.gradN(localDof.index()));
         }
 
         if (enableGravity)
-            gradP.axpy(-rho, problem.spatialParams().gravity(ipData.global()));
+            gradPotential.axpy(-rho, problem.spatialParams().gravity(ipData.global()));
 
-        return fluxTerm_(interpolatedTensor, gradP);
-    }
-
-    /*!
-     * \brief Returns the flux term of a fluid phase at an interpolation point
-     * \note Overload for a tensor that is a property of the interpolation point rather than of
-     *       the local dofs, for instance an average over the face being integrated.
-     */
-    template<class Problem, class ElementVariables, Concept::IpData IpData, class IpCache, class Tensor>
-        requires std::invocable<Tensor, const ElementDiscretization&, const ElementVariables&, const IpData&>
-    static GlobalPosition fluxTerm(const Problem& problem,
-                                   const Element& element,
-                                   const ElementDiscretization& elemDisc,
-                                   const ElementVariables& elemVars,
-                                   const int phaseIdx,
-                                   const IpData& ipData,
-                                   const IpCache& ipCache,
-                                   const Tensor& tensor)
-    {
-        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-
-        const auto& shapeValues = ipCache.shapeValues();
-
-        GlobalPosition gradP(0.0);
-        Scalar rho(0.0);
-
-        for (const auto& localDof : localDofs(elemDisc))
+        auto fluxTerm = [&]
         {
-            const auto& vars = elemVars[localDof];
-
-            if (enableGravity)
-                rho += GravityTermDensity::density(problem, vars, phaseIdx)*shapeValues[localDof.index()][0];
-
-            // the global shape function gradient
-            gradP.axpy(vars.pressure(phaseIdx), ipCache.gradN(localDof.index()));
-        }
-
-        if (enableGravity)
-            gradP.axpy(-rho, problem.spatialParams().gravity(ipData.global()));
-
-        return fluxTerm_(tensor(elemDisc, elemVars, ipData), gradP);
-    }
-
-private:
-    /*!
-     * \brief Returns \f$-\mathbf{T} \nabla \Phi\f$ for the given potential gradient
-     * \note An isotropic medium is described by a scalar, which is a valid tensor here but
-     *       offers no matrix-vector product, so the two cases are formed differently.
-     */
-    template<class Tensor>
-    static GlobalPosition fluxTerm_(const Tensor& tensor, const GlobalPosition& gradP)
-    {
-        GlobalPosition fluxTerm(0.0);
-        if constexpr (Dune::IsNumber<Tensor>::value)
-            fluxTerm.axpy(-tensor, gradP);
-        else
-        {
-            tensor.mv(gradP, fluxTerm);
-            fluxTerm *= -1.0;
-        }
+            if constexpr (tensorPerLocalDof)
+                return mv(interpolatedTensor, gradPotential);
+            else
+                return mv(tensor(elemDisc, elemVars, ipData), gradPotential);
+        }();
+        fluxTerm *= -1.0;
         return fluxTerm;
     }
 };
