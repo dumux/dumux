@@ -22,6 +22,7 @@
 #include <dumux/discretization/extrusion.hh>
 
 #include <dumux/flux/maxwellstefandiffusioncoefficients.hh>
+#include <dumux/flux/maxwellstefanmatrix.hh>
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/facetensoraverage.hh>
@@ -147,63 +148,26 @@ private:
                                                  const ComponentFluxVector moleFrac,
                                                  const Scalar avgMolarMass)
     {
-        ReducedComponentMatrix reducedDiffusionMatrix(0.0);
-
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         //this is to not divide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(insideVolVars.saturation(phaseIdx), 0) || Dune::FloatCmp::eq<Scalar>(outsideVolVars.saturation(phaseIdx), 0))
-            return reducedDiffusionMatrix;
+            return ReducedComponentMatrix(0.0);
 
-        for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
+        return Detail::maxwellStefanMatrix<FluidSystem>(moleFrac, avgMolarMass, [&](int compIIdx, int compJIdx)
         {
-            //calculate diffusivity for i,numComponents
-            const auto xi = moleFrac[compIIdx];
-            const auto Mn = FluidSystem::molarMass(numComponents-1);
-
-            auto tinInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
-            auto tinOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
+            // effective diffusion tensors
+            auto tijInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
+            auto tijOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
 
             // scale by extrusion factor
-            tinInside *= insideVolVars.extrusionFactor();
-            tinOutside *= outsideVolVars.extrusionFactor();
+            tijInside *= insideVolVars.extrusionFactor();
+            tijOutside *= outsideVolVars.extrusionFactor();
 
             // the resulting averaged diffusion tensor
-            const auto tin = faceTensorAverage(tinInside, tinOutside, scvf.unitOuterNormal());
-
-            // begin with the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
-
-            // now set the rest of the entries (off-diagonal and additional entries for diagonal)
-            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
-            {
-                //we don't want to calculate e.g. water in water diffusion
-                if (compIIdx == compJIdx)
-                    continue;
-
-                //calculate diffusivity for compIIdx, compJIdx
-                const auto xj = moleFrac[compJIdx];
-                const auto Mi = FluidSystem::molarMass(compIIdx);
-                const auto Mj = FluidSystem::molarMass(compJIdx);
-
-                // effective diffusion tensors
-                auto tijInside = insideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-                auto tijOutside = outsideVolVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-
-                // scale by extrusion factor
-                tijInside *= insideVolVars.extrusionFactor();
-                tijOutside *= outsideVolVars.extrusionFactor();
-
-                // the resulting averaged diffusion tensor
-                const auto tij = faceTensorAverage(tijInside, tijOutside, scvf.unitOuterNormal());
-
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
-                if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
-            }
-        }
-        return reducedDiffusionMatrix;
+            return faceTensorAverage(tijInside, tijOutside, scvf.unitOuterNormal());
+        });
     }
 
 };

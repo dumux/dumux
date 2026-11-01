@@ -24,6 +24,7 @@
 #include <dumux/flux/fluxvariablescaching.hh>
 #include <dumux/flux/referencesystemformulation.hh>
 #include <dumux/flux/maxwellstefandiffusioncoefficients.hh>
+#include <dumux/flux/maxwellstefanmatrix.hh>
 
 namespace Dumux {
 
@@ -215,42 +216,16 @@ private:
                                                  const SubControlVolume& scv,
                                                  const int phaseIdx)
     {
-        ReducedComponentMatrix reducedDiffusionMatrix(0.0);
-
         //this is to not divide by 0 if the saturation in 0 and the effectiveDiffusionCoefficient becomes zero due to that
         if(Dune::FloatCmp::eq<Scalar>(volVars.saturation(phaseIdx), 0))
-            return reducedDiffusionMatrix;
+            return ReducedComponentMatrix(0.0);
 
-        const auto avgMolarMass = volVars.averageMolarMass(phaseIdx);
+        ComponentFluxVector moleFrac;
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+            moleFrac[compIdx] = volVars.moleFraction(phaseIdx, compIdx);
 
-        for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
-        {
-            const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
-
-            const auto Mn = FluidSystem::molarMass(numComponents-1);
-            Scalar tin = volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1);
-
-            // set the entries of the diffusion matrix of the diagonal
-            reducedDiffusionMatrix[compIIdx][compIIdx] += xi*avgMolarMass/(tin*Mn);
-
-            // now set the rest of the entries (off-diagonal and additional entries for diagonal)
-            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
-            {
-                // we don't want to calculate e.g. water in water diffusion
-                if (compJIdx == compIIdx)
-                    continue;
-
-                const auto xj = volVars.moleFraction(phaseIdx, compJIdx);
-                const auto Mi = FluidSystem::molarMass(compIIdx);
-                const auto Mj = FluidSystem::molarMass(compJIdx);
-                Scalar tij = volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xj*avgMolarMass/(tij*Mi);
-
-                if (compJIdx < numComponents-1)
-                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(avgMolarMass/(tin*Mn) - avgMolarMass/(tij*Mj));
-            }
-        }
-        return reducedDiffusionMatrix;
+        return Detail::maxwellStefanMatrix<FluidSystem>(moleFrac, volVars.averageMolarMass(phaseIdx), [&](int compIIdx, int compJIdx)
+        { return volVars.effectiveDiffusionCoefficient(phaseIdx, compIIdx, compJIdx); });
     }
 
 };
