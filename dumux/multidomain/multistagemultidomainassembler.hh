@@ -9,7 +9,8 @@
  * \ingroup MultiDomain
  * \ingroup Assembly
  * \brief A linear system assembler for the implicit solves of time integration methods
- *        for multiple domains discretized with the control-volume finite element interface.
+ *        for multiple domains discretized with control-volume finite element schemes (variables per local dof),
+ *        cell-centered finite volume schemes and face-centered staggered schemes.
  *
  * This is the multi-stage counterpart of Experimental::MultiDomainAssembler.
  * \code
@@ -37,6 +38,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/utility.hh>
 #include <dumux/common/gridcapabilities.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
@@ -47,16 +49,64 @@
 #include <dumux/multidomain/subdomaincvfelocalassembler_.hh>
 #include <dumux/multidomain/assemblytraits.hh>
 
+#include <dumux/experimental/assembly/subdomaincclocalassembler.hh>
+#include <dumux/experimental/assembly/subdomainfclocalassembler.hh>
+#include <dumux/experimental/assembly/multistagefvlocaloperator.hh>
 #include <dumux/experimental/timestepping/timelevel.hh>
 #include <dumux/experimental/timestepping/timeintegrationmethod.hh>
 #include <dumux/experimental/timestepping/implicitsolve.hh>
+
+namespace Dumux::Experimental::Detail {
+
+template<class DiscretizationMethod, bool usesVariables>
+struct MultiStageSubDomainLocalAssemblerChooser
+{
+    static_assert(Concept::AlwaysFalse<DiscretizationMethod>,
+                  "No multi-stage multi-domain local assembler for this combination of discretization method and grid variables");
+};
+
+template<class DM>
+struct MultiStageSubDomainLocalAssemblerChooser<DiscretizationMethods::CVFE<DM>, true>
+{
+    template<std::size_t id, class TypeTag, class Assembler, DiffMethod diffMethod>
+    using type = Dumux::Experimental::SubDomainCVFELocalAssembler<id, TypeTag, Assembler, diffMethod, /*isImplicit=*/true>;
+};
+
+template<>
+struct MultiStageSubDomainLocalAssemblerChooser<DiscretizationMethods::CCTpfa, false>
+{
+    template<std::size_t id, class TypeTag, class Assembler, DiffMethod diffMethod>
+    using type = Dumux::Experimental::SubDomainCCLocalAssembler<id, TypeTag, Assembler, diffMethod>;
+};
+
+template<>
+struct MultiStageSubDomainLocalAssemblerChooser<DiscretizationMethods::CCMpfa, false>
+{
+    template<std::size_t id, class TypeTag, class Assembler, DiffMethod diffMethod>
+    using type = Dumux::Experimental::SubDomainCCLocalAssembler<id, TypeTag, Assembler, diffMethod>;
+};
+
+template<>
+struct MultiStageSubDomainLocalAssemblerChooser<DiscretizationMethods::FCStaggered, false>
+{
+    template<std::size_t id, class TypeTag, class Assembler, DiffMethod diffMethod>
+    using type = Dumux::Experimental::SubDomainFaceCenteredLocalAssembler<id, TypeTag, Assembler, diffMethod>;
+};
+
+template<std::size_t id, class TypeTag, class Assembler, DiffMethod diffMethod>
+using MultiStageSubDomainLocalAssemblerChooser_t = typename MultiStageSubDomainLocalAssemblerChooser<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    Concept::GridVariables<GetPropType<TypeTag, Properties::GridVariables>>
+>::template type<id, TypeTag, Assembler, diffMethod>;
+
+} // end namespace Dumux::Experimental::Detail
 
 namespace Dumux::Experimental {
 
 /*!
  * \ingroup MultiDomain
  * \ingroup Assembly
- * \brief Multi-stage (Runge-Kutta) multi-domain assembler for the control-volume finite element interface
+ * \brief Multi-stage (Runge-Kutta) multi-domain assembler for general discretization schemes
  *
  * \tparam MDTraits MultiDomainTraits
  * \tparam CMType The coupling manager type
@@ -99,17 +149,11 @@ private:
     template<std::size_t id>
     using SubDomainAssemblerView = MultiDomainAssemblerSubDomainView<ThisType, id>;
 
-    template<class DiscretizationMethod, std::size_t id>
-    struct SubDomainAssemblerType;
-
-    template<std::size_t id, class DM>
-    struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
-    {
-        using type = Dumux::Experimental::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, true>;
-    };
+    template<std::size_t id>
+    using SubDomainAssembler = Detail::MultiStageSubDomainLocalAssemblerChooser_t<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod>;
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<typename GridDiscretization<id>::DiscretizationMethod, id>::type;
+    static constexpr bool usesVariables = Concept::GridVariables<GridVariables<id>>;
 
 public:
     /*!
@@ -171,6 +215,8 @@ public:
                     constrainedDofs_[domainId]
                 );
             });
+
+            enforceElementConstraints_(domainId, curSol);
 
             // the contribution of known states does not enter the constraint equations
             if (solveParams_->constant)
@@ -336,9 +382,16 @@ public:
         return solveParams_->weights;
     }
 
+    //! The local residual of domain i, for finite volume schemes wrapped to evaluate the weighted operators
     template<std::size_t i>
-    LocalResidual<i> localResidual(Dune::index_constant<i> domainId) const
-    { return LocalResidual<i>(std::get<domainId>(problemTuple_).get(), nullptr); }
+    auto localResidual(Dune::index_constant<i> domainId) const
+    {
+        LocalResidual<i> localResidual(std::get<domainId>(problemTuple_).get(), nullptr);
+        if constexpr (usesVariables<i>)
+            return localResidual;
+        else
+            return MultiStageFVLocalOperator<LocalResidual<i>>(localResidual);
+    }
 
     void computeColorsForAssembly()
     {
@@ -465,6 +518,23 @@ private:
 
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
+    }
+
+    //! Let the local assemblers enforce the constraints belonging to the elements of domain i (e.g. Dirichlet boundary conditions)
+    template<std::size_t i>
+    void enforceElementConstraints_(Dune::index_constant<i> domainId, const SolutionVector& curSol)
+    {
+        if constexpr (requires { requires SubDomainAssembler<i>::enforcesElementConstraints; })
+        {
+            assemble_(domainId, [&](const auto& element)
+            {
+                MultiDomainAssemblerSubDomainView view{*this, domainId};
+                SubDomainAssembler<i> subDomainAssembler(view, element, curSol, *couplingManager_);
+                subDomainAssembler.enforceElementConstraints(
+                    curSol[domainId], (*residual_)[domainId], (*jacobian_)[domainId], constrainedDofs_[domainId]
+                );
+            });
+        }
     }
 
     //! Enforce the Dirichlet constraints of problem.constraints() in the Jacobian row and residual of domain i

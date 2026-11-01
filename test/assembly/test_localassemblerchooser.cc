@@ -17,6 +17,7 @@
 #include <dumux/assembly/assembler.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/multistageassembler.hh>
+#include <dumux/multidomain/multistagemultidomainassembler.hh>
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/method.hh>
 
@@ -47,6 +48,10 @@ template<class DM, bool usesVariables>
 using ChosenMultiStage = typename Experimental::Detail::MultiStageLocalAssemblerChooser<DM, usesVariables>
     ::template type<void, void, DiffMethod::numeric>;
 
+template<class DM, bool usesVariables>
+using ChosenMultiStageSubDomain = typename Experimental::Detail::MultiStageSubDomainLocalAssemblerChooser<DM, usesVariables>
+    ::template type<1, void, void, DiffMethod::numeric>;
+
 } // end namespace Dumux
 
 int main()
@@ -67,6 +72,11 @@ int main()
     static_assert(std::is_same_v<ChosenMultiStage<DMs::CCMpfa, false>, Experimental::CCLocalAssembler<void, void, DiffMethod::numeric>>);
     static_assert(std::is_same_v<ChosenMultiStage<DMs::FCStaggered, false>, Experimental::FaceCenteredLocalAssembler<void, void, DiffMethod::numeric>>);
     static_assert(std::is_same_v<ChosenMultiStage<DMs::Box, true>, Experimental::CVFELocalAssembler<void, void, DiffMethod::numeric, true>>);
+
+    static_assert(std::is_same_v<ChosenMultiStageSubDomain<DMs::CCTpfa, false>, Experimental::SubDomainCCLocalAssembler<1, void, void, DiffMethod::numeric>>);
+    static_assert(std::is_same_v<ChosenMultiStageSubDomain<DMs::CCMpfa, false>, Experimental::SubDomainCCLocalAssembler<1, void, void, DiffMethod::numeric>>);
+    static_assert(std::is_same_v<ChosenMultiStageSubDomain<DMs::FCStaggered, false>, Experimental::SubDomainFaceCenteredLocalAssembler<1, void, void, DiffMethod::numeric>>);
+    static_assert(std::is_same_v<ChosenMultiStageSubDomain<DMs::Box, true>, Experimental::SubDomainCVFELocalAssembler<1, void, void, DiffMethod::numeric, true>>);
 
     std::cout << "All local assembler choices are as expected" << std::endl;
     return 0;
