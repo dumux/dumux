@@ -576,9 +576,6 @@ public:
                 if (intersectsPointGeometry(geo2.corner(i), geo1))
                     points.emplace_back(geo2.corner(i));
 
-            if (points.empty())
-                return false;
-
             if (points.size() - numPoints1 != geo2.corners())
             {
                 const auto refElement1 = referenceElement(geo1);

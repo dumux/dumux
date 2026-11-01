@@ -4,9 +4,11 @@
 //
 #include <config.h>
 
+#include <cmath>
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/float_cmp.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
@@ -70,6 +72,40 @@ bool testPolygonIntersection(const Polygon1& pol1,
     return (found == expectIntersection);
 }
 
+template<int dimworld, class Polygon1, class Polygon2>
+bool testPolygonIntersectionArea(const Polygon1& pol1,
+                                 const Polygon2& pol2,
+                                 double expectedArea)
+{
+    using Policy = Dumux::IntersectionPolicy::PolygonPolicy<double, dimworld>;
+    using Algorithm = Dumux::GeometryIntersection<Polygon1, Polygon2, Policy>;
+
+    typename Algorithm::Intersection intersection;
+    if (!Algorithm::intersection(pol1, pol2, intersection))
+    {
+        std::cout << "Could not find intersection!" << std::endl;
+        return false;
+    }
+
+    // the intersection is an ordered convex polygon
+    double area = 0.0;
+    for (std::size_t i = 1; i + 1 < intersection.size(); ++i)
+    {
+        const auto u = intersection[i] - intersection[0];
+        const auto v = intersection[i+1] - intersection[0];
+        area += 0.5*std::sqrt(u.two_norm2()*v.two_norm2() - (u*v)*(u*v));
+    }
+
+    if (Dune::FloatCmp::ne(area, expectedArea, 1e-10))
+    {
+        std::cout << "Wrong intersection area " << area << ", expected " << expectedArea << std::endl;
+        return false;
+    }
+
+    std::cout << "Found intersection with correct area" << std::endl;
+    return true;
+}
+
 template<int dimWorld>
 void testPolygonIntersections(std::vector<bool>& returns)
 {
@@ -127,6 +163,23 @@ void testPolygonIntersections(std::vector<bool>& returns)
         returns.push_back(testPolygonIntersection<dimWorld>(tria1, quad2, false)); // touches in point
         returns.push_back(testPolygonIntersection<dimWorld>(tria1, quad3, false)); // touches in edge
         returns.push_back(testPolygonIntersection<dimWorld>(tria1, quad4, true)); // small overlap region
+
+        // overlaps where no corner of either polygon lies inside the other
+        const auto tria8 = makeTriangle( makePosition<dimWorld>(2.0/3.0*scaling, 4.0/3.0*scaling),
+                                         makePosition<dimWorld>(2.0/3.0*scaling, 1.0/3.0*scaling),
+                                         makePosition<dimWorld>(-1.0/3.0*scaling, 1.0/3.0*scaling) );
+        const auto quad5 = makeQuadrilateral( makePosition<dimWorld>(-0.5*scaling, 0.4*scaling),
+                                              makePosition<dimWorld>(1.5*scaling, 0.4*scaling),
+                                              makePosition<dimWorld>(-0.5*scaling, 0.6*scaling),
+                                              makePosition<dimWorld>(1.5*scaling, 0.6*scaling) );
+        const auto quad6 = makeQuadrilateral( makePosition<dimWorld>(0.4*scaling, -0.5*scaling),
+                                              makePosition<dimWorld>(0.6*scaling, -0.5*scaling),
+                                              makePosition<dimWorld>(0.4*scaling, 1.5*scaling),
+                                              makePosition<dimWorld>(0.6*scaling, 1.5*scaling) );
+
+        // tria8 is tria1 reflected at its centroid, the overlap has 2/3 of the triangle area
+        returns.push_back(testPolygonIntersectionArea<dimWorld>(tria1, tria8, 1.0/3.0*scaling*scaling));
+        returns.push_back(testPolygonIntersectionArea<dimWorld>(quad5, quad6, 0.04*scaling*scaling));
 
         std::cout << std::endl;
     }
