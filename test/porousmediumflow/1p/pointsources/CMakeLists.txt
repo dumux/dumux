@@ -3,3 +3,4 @@
 
 add_subdirectory(timeindependent)
 add_subdirectory(timedependent)
+add_subdirectory(interface)
