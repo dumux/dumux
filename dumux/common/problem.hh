@@ -13,6 +13,7 @@
 #define DUMUX_COMMON_DEFAULT_PROBLEM_HH
 
 #include <memory>
+#include <vector>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -286,7 +287,12 @@ public:
      *   Evaluates the point source for the given context.
      */
     EmptyPointSources pointSources() const
-    { return {}; }
+    {
+        static_assert(!definesAddPointSources_(),
+                      "Problems derived from Experimental::Problem return their point sources from pointSources(), "
+                      "addPointSources is not called");
+        return {};
+    }
 
     //! The grid discretization
     [[deprecated("Use gridDiscretization() instead")]]
@@ -311,6 +317,17 @@ protected:
     { return *static_cast<const Implementation *>(this); }
 
 private:
+    //! Whether the implementation adds point sources through the interface of FVProblem
+    static constexpr bool definesAddPointSources_()
+    {
+        if constexpr (Properties::hasDefinedType<TypeTag, Properties::PointSource>())
+            return requires(Implementation& problem,
+                            std::vector<GetPropType<TypeTag, Properties::PointSource>>& pointSources)
+            { problem.addPointSources(pointSources); };
+        else
+            return false;
+    }
+
     //! The grid discretization
     std::shared_ptr<const GridDiscretization> gridDiscretization_;
 
