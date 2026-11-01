@@ -68,9 +68,9 @@ int main(int argc, char** argv)
 
     // get some time loop parameters
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    const auto tEnd = getParam<Scalar>("TimeManager.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeManager.MaxTimeStepSize");
-    const auto dt = getParam<Scalar>("TimeManager.DtInitial");
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    const auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // initialize the vtk output module
     using IOFields = GetPropType<TypeTag, Properties::IOFields>;
