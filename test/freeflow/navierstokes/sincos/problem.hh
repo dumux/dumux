@@ -290,11 +290,20 @@ public:
     }
 
     /*!
+     * \brief Set the time at which sources and boundary conditions are evaluated
+     * \note This is const because multi-stage assemblers set the stage time through a const problem.
+     */
+    void setTime(const Scalar time) const
+    {
+        time_ = time;
+    }
+
+    /*!
      * \brief Updates the time
      */
     void updateTime(const Scalar time)
     {
-        time_ = time;
+        setTime(time);
     }
 
 private:
@@ -399,7 +408,7 @@ private:
 
     Scalar rho_;
     Scalar mu_;
-    Scalar time_;
+    mutable Scalar time_;
 
     bool isStationary_;
     bool useNeumann_;

@@ -40,8 +40,16 @@
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvgridgeometry.hh>
-#include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
+
+#ifdef USE_MULTISTAGE_ASSEMBLER
+#include <dumux/multidomain/multistagemultidomainassembler.hh>
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
+#include <test/experimental/timestepping/implicitsolvecheck.hh>
+#else
+#include <dumux/multidomain/fvassembler.hh>
+#endif
 
 #include "properties.hh"
 
@@ -187,12 +195,21 @@ int main(int argc, char** argv)
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
+#ifdef USE_MULTISTAGE_ASSEMBLER
+    auto timeSteppingMethod = std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>();
+    using Assembler = Experimental::MultiStageMultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(problem0, problem1),
+                                                 std::make_tuple(fvGridGeometry0, fvGridGeometry1),
+                                                 std::make_tuple(gridVariables0, gridVariables1),
+                                                 couplingManager, timeSteppingMethod, oldSol);
+#else
     // the assembler with time loop for transient problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(problem0, problem1),
                                                  std::make_tuple(fvGridGeometry0, fvGridGeometry1),
                                                  std::make_tuple(gridVariables0, gridVariables1),
                                                  couplingManager, timeLoop, oldSol);
+#endif
 
     // the linear solver
     using LinearSolver = AMGBiCGSTABIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
@@ -200,14 +217,23 @@ int main(int argc, char** argv)
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    auto nonLinearSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
+
+#ifdef USE_MULTISTAGE_ASSEMBLER
+    Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, timeSteppingMethod);
+    Test::checkImplicitSolveContract(*assembler, sol, timeLoop->time(), 1.0/timeLoop->timeStepSize(), 1.0);
+#endif
 
     // time loop
     timeLoop->start();
     while (!timeLoop->finished())
     {
         // solve the non-linear system with time step control
-        nonLinearSolver.solve(sol, *timeLoop);
+#ifdef USE_MULTISTAGE_ASSEMBLER
+        timeStepper.step(sol, *timeLoop);
+#else
+        nonLinearSolver->solve(sol, *timeLoop);
+#endif
 
         // make the new solution the old solution
         oldSol = sol;
@@ -225,7 +251,7 @@ int main(int argc, char** argv)
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(nonLinearSolver->suggestTimeStepSize(timeLoop->timeStepSize()));
     }
 
     timeLoop->finalize(mpiHelper.getCommunication());

@@ -25,3 +25,14 @@ dumux_add_test(NAME test_md_boundary_darcy1p_darcy1p_lens
                                     -Vtk.OutputName test_md_boundary_darcy1p_darcy1p_lens")
 
 dune_symlink_to_source_files(FILES "params.input")
+
+dumux_add_test(NAME test_md_boundary_darcy1p_darcy1p_half_multistageassembler
+              LABELS multidomain multidomain_boundary darcydarcy 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS DOMAINSPLIT=0 USE_MULTISTAGE_ASSEMBLER=1
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_cc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_half_multistageassembler_combined.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_boundary_darcy1p_darcy1p_half_multistageassembler params.input \
+                                   -Vtk.OutputName test_md_boundary_darcy1p_darcy1p_half_multistageassembler")

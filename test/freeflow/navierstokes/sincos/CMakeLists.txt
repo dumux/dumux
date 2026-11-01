@@ -228,3 +228,46 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq2
                        -MultiStageTest.SingleSolveTolerance 1e-5
                        -LinearPDESolver.Verbosity 0
                        -MultiStageTest.RateTolerance 0.2)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_fcstaggered
+              SOURCES main_multistage.cc
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS TYPETAG_MOMENTUM=SincosTestMomentum
+              COMPILE_DEFINITIONS TYPETAG_MASS=SincosTestMass
+              COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=0
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_multistage_fcstaggered
+              CMD_ARGS params.input
+                       -Grid.UpperRight "1 1"
+                       -Grid.Cells "8 8"
+                       -Problem.Name test_ff_navierstokes_sincos_multistage_fcstaggered
+                       -Problem.IsStationary false
+                       -Problem.EnableInertiaTerms false
+                       -Component.LiquidKinematicViscosity 0.001
+                       -TimeLoop.TEnd 1.0
+                       -Newton.MaxRelativeShift 1e-12
+                       -Newton.EnableAbsoluteResidualCriterion false
+                       -Newton.SatisfyResidualAndShiftCriterion false
+                       -Newton.Verbosity 0
+                       -MultiStageTest.NumStepsCoarse 4
+                       -MultiStageTest.NumTimeStepRefinements 4
+                       -MultiStageTest.EquivalenceTolerance 1e-8
+                       -MultiStageTest.SingleSolveTolerance 1e-5
+                       -LinearPDESolver.Verbosity 0
+                       -MultiStageTest.RateTolerance 0.2)
+
+dumux_add_test(NAME test_ff_navierstokes_sincos_weightedassembly_fcstaggered
+              SOURCES test_weightedassembly_multidomain.cc
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS TYPETAG_MOMENTUM=SincosTestMomentum
+              COMPILE_DEFINITIONS TYPETAG_MASS=SincosTestMass
+              COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=0
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_weightedassembly_fcstaggered
+              CMD_ARGS params.input
+                       -Grid.UpperRight "1 1"
+                       -Grid.Cells "4 4"
+                       -Problem.Name test_ff_navierstokes_sincos_weightedassembly_fcstaggered
+                       -Problem.IsStationary false
+                       -Problem.EnableInertiaTerms false
+                       -Component.LiquidKinematicViscosity 0.001)

@@ -13,6 +13,13 @@ dumux_add_test(NAME test_1p_internaldirichlet_tpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/incompressible/params.input -Problem.Name test_1p_internaldirichlet_tpfa -Problem.EnableGravity false")
 
+dumux_add_test(NAME test_1p_internaldirichlet_tpfa_weightedassembly
+              SOURCES test_weightedassembly.cc
+              LABELS porousmediumflow 1p
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_1p_internaldirichlet_tpfa_weightedassembly
+              CMD_ARGS ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/incompressible/params.input
+                       -Grid.Cells "6 6" -Problem.EnableGravity false)
+
 dumux_add_test(NAME test_1p_internaldirichlet_box
               SOURCES ${CMAKE_SOURCE_DIR}/test/porousmediumflow/1p/incompressible/main.cc
               LABELS porousmediumflow 1p
