@@ -32,13 +32,62 @@
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/assembler.hh>
+#include <dumux/common/concepts/variables_.hh>
 
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
 
+#include <dumux/experimental/assembly/cclocalassembler.hh>
+#include <dumux/experimental/assembly/fclocalassembler.hh>
+#include <dumux/experimental/assembly/multistagefvlocaloperator.hh>
 #include <dumux/experimental/timestepping/timelevel.hh>
 #include <dumux/experimental/timestepping/timeintegrationmethod.hh>
 #include <dumux/experimental/timestepping/implicitsolve.hh>
+
+namespace Dumux::Experimental::Detail {
+
+template<class DiscretizationMethod, bool usesVariables>
+struct MultiStageLocalAssemblerChooser
+{
+    static_assert(Concept::AlwaysFalse<DiscretizationMethod>,
+                  "No multi-stage local assembler for this combination of discretization method and grid variables");
+};
+
+template<class DM>
+struct MultiStageLocalAssemblerChooser<DiscretizationMethods::CVFE<DM>, true>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod>
+    using type = Dumux::Experimental::CVFELocalAssembler<TypeTag, Impl, diffMethod, /*isImplicit=*/true>;
+};
+
+template<>
+struct MultiStageLocalAssemblerChooser<DiscretizationMethods::CCMpfa, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod>
+    using type = Dumux::Experimental::CCLocalAssembler<TypeTag, Impl, diffMethod>;
+};
+
+template<>
+struct MultiStageLocalAssemblerChooser<DiscretizationMethods::CCTpfa, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod>
+    using type = Dumux::Experimental::CCLocalAssembler<TypeTag, Impl, diffMethod>;
+};
+
+template<>
+struct MultiStageLocalAssemblerChooser<DiscretizationMethods::FCStaggered, false>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod>
+    using type = Dumux::Experimental::FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod>;
+};
+
+template<class TypeTag, class Impl, DiffMethod diffMethod>
+using MultiStageLocalAssemblerChooser_t = typename MultiStageLocalAssemblerChooser<
+    typename GetPropType<TypeTag, Properties::GridGeometry>::DiscretizationMethod,
+    Concept::GridVariables<GetPropType<TypeTag, Properties::GridVariables>>
+>::template type<TypeTag, Impl, diffMethod>;
+
+} // end namespace Dumux::Experimental::Detail
 
 namespace Dumux::Experimental {
 
@@ -49,20 +98,23 @@ namespace Dumux::Experimental {
  *        same localDof/grid-variables local assembler as the stationary Assembler.
  * \tparam TypeTag The TypeTag
  * \tparam diffMethod The differentiation method to residual compute derivatives
- * \note Only implicit (DIRK-type) time-stepping schemes are supported: the underlying
- *       CVFELocalAssembler only has an implicit specialization.
+ * \note With the variables per local dof, only implicit (DIRK-type) time-stepping schemes
+ *       are supported: the underlying CVFELocalAssembler only has an implicit specialization.
+ *       Cell-centered schemes also support explicit schemes.
  */
 template<class TypeTag, DiffMethod diffMethod>
 class MultiStageAssembler
 {
     using GridGeo = GetPropType<TypeTag, Properties::GridGeometry>;
     using GridView = typename GridGeo::GridView;
-    using LocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    using ModelLocalResidual = GetPropType<TypeTag, Properties::LocalResidual>;
+    static constexpr bool usesVariables = Concept::GridVariables<GetPropType<TypeTag, Properties::GridVariables>>;
+    using LocalResidual = std::conditional_t<usesVariables, ModelLocalResidual, MultiStageFVLocalOperator<ModelLocalResidual>>;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementSeed = typename GridView::Grid::template Codim<0>::EntitySeed;
 
     using ThisType = MultiStageAssembler<TypeTag, diffMethod>;
-    using LocalAssembler = typename Detail::LocalAssemblerChooser_t<TypeTag, ThisType, diffMethod, /*isImplicit=*/true>;
+    using LocalAssembler = typename Detail::MultiStageLocalAssemblerChooser_t<TypeTag, ThisType, diffMethod>;
 
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -94,10 +146,11 @@ public:
     , gridVariables_(gridVariables)
     , prevSol_(&prevSol)
     {
-        if (!timeSteppingMethod_->implicit())
-            DUNE_THROW(Dune::NotImplemented,
-                "MultiStageAssembler only supports implicit (DIRK-type) time-stepping schemes; "
-                "the underlying CVFELocalAssembler has no explicit-scheme specialization.");
+        if constexpr (usesVariables)
+            if (!timeSteppingMethod_->implicit())
+                DUNE_THROW(Dune::NotImplemented,
+                    "With the variables per local dof, the MultiStageAssembler only supports implicit (DIRK-type) "
+                    "time-stepping schemes; the underlying CVFELocalAssembler has no explicit-scheme specialization.");
 
         enableMultithreading_ = SupportsColoring<typename GridGeometry::DiscretizationMethod>::value
             && Grid::Capabilities::supportsMultithreading(gridGeometry_->gridView())
@@ -130,6 +183,7 @@ public:
             );
         });
 
+        enforceElementConstraints_(curSol, jacobian_.get());
         addConstant_();
         applyDirichletConstraints_(curSol);
     }
@@ -154,6 +208,7 @@ public:
         residual_->axpy(weights.storage, storage);
         residual_->axpy(weights.spatial, spatial);
 
+        enforceElementConstraints_(curSol, nullptr);
         addConstant_();
         applyDirichletResidual_(curSol);
     }
@@ -228,7 +283,12 @@ public:
      *       storage/flux terms and applies the operator weights of the implicit solve.
      */
     LocalResidual localResidual() const
-    { return LocalResidual(problem_.get(), nullptr); }
+    {
+        if constexpr (usesVariables)
+            return LocalResidual(problem_.get(), nullptr);
+        else
+            return LocalResidual(ModelLocalResidual(problem_.get(), nullptr));
+    }
 
     /*!
      * \brief Update the grid variables
@@ -302,6 +362,19 @@ private:
         });
     }
 
+    //! Let the local assemblers enforce the constraints belonging to the elements (e.g. Dirichlet boundary conditions)
+    void enforceElementConstraints_(const SolutionVector& curSol, JacobianMatrix* jac)
+    {
+        if constexpr (requires { LocalAssembler::enforcesElementConstraints; })
+        {
+            assemble_([&](const Element& element)
+            {
+                LocalAssembler localAssembler(*this, element, curSol);
+                localAssembler.enforceElementConstraints(curSol, *residual_, jac, constrainedDofs_);
+            });
+        }
+    }
+
     //! Add the contribution of known states to all equations except the constraint equations
     void addConstant_()
     {
@@ -321,7 +394,10 @@ private:
     {
         const auto numDofs = this->numDofs();
         jacobian_->setSize(numDofs, numDofs);
-        getJacobianPattern<true>(gridGeometry()).exportIdx(*jacobian_);
+        if (timeSteppingMethod_->implicit())
+            getJacobianPattern<true>(gridGeometry()).exportIdx(*jacobian_);
+        else
+            getJacobianPattern<false>(gridGeometry()).exportIdx(*jacobian_);
     }
 
     //! Resizes the residual

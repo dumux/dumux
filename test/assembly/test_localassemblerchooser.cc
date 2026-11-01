@@ -16,6 +16,7 @@
 
 #include <dumux/assembly/assembler.hh>
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/multistageassembler.hh>
 #include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/method.hh>
 
@@ -42,6 +43,10 @@ template<class DM, bool usesVariables>
 using Chosen = typename Experimental::Detail::LocalAssemblerChooser<DM, usesVariables>
     ::template type<void, void, DiffMethod::numeric, true>;
 
+template<class DM, bool usesVariables>
+using ChosenMultiStage = typename Experimental::Detail::MultiStageLocalAssemblerChooser<DM, usesVariables>
+    ::template type<void, void, DiffMethod::numeric>;
+
 } // end namespace Dumux
 
 int main()
@@ -57,6 +62,11 @@ int main()
     static_assert(std::is_same_v<Chosen<DMs::FCStaggered, false>, FaceCenteredLocalAssembler<void, void, DiffMethod::numeric, true>>);
     static_assert(std::is_same_v<Chosen<DMs::Box, false>, CVFELocalAssembler<void, void, DiffMethod::numeric, true>>);
     static_assert(std::is_same_v<Chosen<DMs::Box, true>, Experimental::CVFELocalAssembler<void, void, DiffMethod::numeric, true>>);
+
+    static_assert(std::is_same_v<ChosenMultiStage<DMs::CCTpfa, false>, Experimental::CCLocalAssembler<void, void, DiffMethod::numeric>>);
+    static_assert(std::is_same_v<ChosenMultiStage<DMs::CCMpfa, false>, Experimental::CCLocalAssembler<void, void, DiffMethod::numeric>>);
+    static_assert(std::is_same_v<ChosenMultiStage<DMs::FCStaggered, false>, Experimental::FaceCenteredLocalAssembler<void, void, DiffMethod::numeric>>);
+    static_assert(std::is_same_v<ChosenMultiStage<DMs::Box, true>, Experimental::CVFELocalAssembler<void, void, DiffMethod::numeric, true>>);
 
     std::cout << "All local assembler choices are as expected" << std::endl;
     return 0;

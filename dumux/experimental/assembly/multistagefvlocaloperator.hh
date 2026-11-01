@@ -109,6 +109,42 @@ public:
         return result;
     }
 
+    /*!
+     * \brief The weighted residual of the equation of the sub-control volume scv
+     * \note Requires that the fluxes over the faces of scv enter only the equation of scv
+     *       (face-centered staggered schemes). Only the entry of scv is nonzero, and it equals
+     *       the entry of scv in the sum of evalFluxAndSource and evalStorage.
+     */
+    template<class FVGeometry, class ElemVolVars, class ElemFluxVars, class ElemBCTypes>
+    ElementOperatorResultVector evalScvResidual(
+        const FVGeometry& fvGeometry,
+        const ElemVolVars& elemVolVars,
+        const ElemFluxVars& elemFluxVarsCache,
+        const ElemBCTypes& bcTypes,
+        const typename FVGeometry::SubControlVolume& scv
+    ) const {
+        ElementOperatorResultVector result(fvGeometry.numScv());
+        const auto localIdx = scv.localDofIndex();
+        if (!skipSpatial_)
+        {
+            const auto& element = fvGeometry.element();
+            op_.evalSource(result, op_.problem(), element, fvGeometry, elemVolVars, scv);
+            for (const auto& scvf : scvfs(fvGeometry, scv))
+                op_.evalFlux(result, op_.problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
+            result[localIdx] *= spatialWeight_;
+        }
+
+        std::decay_t<decltype(result[localIdx])> timeDerivatives(0.0);
+        if (!skipTemporal_)
+            timeDerivatives += storage_(fvGeometry, elemVolVars, scv, temporalWeight_);
+        if constexpr (enableInertia)
+            if (!skipInertia_)
+                timeDerivatives += inertia_(fvGeometry, elemVolVars, scv, inertiaWeight_);
+        result[localIdx] += timeDerivatives;
+
+        return result;
+    }
+
     // interface allowing for optimization when computing the cell-centered finite volume Jacobian
     template<class Problem, class FVGeometry, class ElemVolVars, class ElemFluxVars>
     auto evalFlux(
@@ -162,11 +198,19 @@ private:
                      const double weight) const
     {
         for (const auto& scv : scvs(fvGeometry))
-            result[scv.localDofIndex()] +=
-                op_.computeStorage(op_.problem(), scv, elemVolVars[scv])
-                * elemVolVars[scv].extrusionFactor()
-                * Extrusion_t<typename FVGeometry::GridGeometry>::volume(fvGeometry, scv)
-                * weight;
+            result[scv.localDofIndex()] += storage_(fvGeometry, elemVolVars, scv, weight);
+    }
+
+    template<class FVGeometry, class ElemVolVars>
+    auto storage_(const FVGeometry& fvGeometry,
+                  const ElemVolVars& elemVolVars,
+                  const typename FVGeometry::SubControlVolume& scv,
+                  const double weight) const
+    {
+        return op_.computeStorage(op_.problem(), scv, elemVolVars[scv])
+               * elemVolVars[scv].extrusionFactor()
+               * Extrusion_t<typename FVGeometry::GridGeometry>::volume(fvGeometry, scv)
+               * weight;
     }
 
     template<class FVGeometry, class ElemVolVars>
@@ -175,15 +219,23 @@ private:
                      const ElemVolVars& elemVolVars,
                      const double weight) const
     {
-        static_assert(requires { op_.computeInertia(op_.problem(), fvGeometry.element(), *scvs(fvGeometry).begin(), elemVolVars[*scvs(fvGeometry).begin()]); },
+        for (const auto& scv : scvs(fvGeometry))
+            result[scv.localDofIndex()] += inertia_(fvGeometry, elemVolVars, scv, weight);
+    }
+
+    template<class FVGeometry, class ElemVolVars>
+    auto inertia_(const FVGeometry& fvGeometry,
+                  const ElemVolVars& elemVolVars,
+                  const typename FVGeometry::SubControlVolume& scv,
+                  const double weight) const
+    {
+        static_assert(requires { op_.computeInertia(op_.problem(), fvGeometry.element(), scv, elemVolVars[scv]); },
             "The problem enables inertia, so the local residual has to implement computeInertia(problem, element, scv, volVars)");
 
-        for (const auto& scv : scvs(fvGeometry))
-            result[scv.localDofIndex()] +=
-                op_.computeInertia(op_.problem(), fvGeometry.element(), scv, elemVolVars[scv])
-                * elemVolVars[scv].extrusionFactor()
-                * Extrusion_t<typename FVGeometry::GridGeometry>::volume(fvGeometry, scv)
-                * weight;
+        return op_.computeInertia(op_.problem(), fvGeometry.element(), scv, elemVolVars[scv])
+               * elemVolVars[scv].extrusionFactor()
+               * Extrusion_t<typename FVGeometry::GridGeometry>::volume(fvGeometry, scv)
+               * weight;
     }
 
     LocalOperator op_;
