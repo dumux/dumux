@@ -21,7 +21,6 @@
 
 #include <dumux/multidomain/facet/box/properties.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
-#include <dumux/multidomain/facet/cellcentered/mpfa/properties.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/multidomain/traits.hh>
@@ -29,7 +28,6 @@
 
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
-#include <dumux/discretization/ccmpfa.hh>
 
 #include "spatialparams.hh"
 #include "problem_bulk.hh"
@@ -43,7 +41,6 @@ namespace Dumux::Properties {
 namespace TTag {
 struct OnePBulk { using InheritsFrom = std::tuple<OneP>; };
 struct OnePBulkTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePBulk>; };
-struct OnePBulkMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePBulk>; };
 struct OnePBulkBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePBulk>; };
 } // end namespace TTag
 
@@ -76,7 +73,6 @@ public:
 namespace TTag {
 struct OnePFacet { using InheritsFrom = std::tuple<OneP>; };
 struct OnePFacetTpfa { using InheritsFrom = std::tuple<CCTpfaFacetCouplingModel, OnePFacet>; };
-struct OnePFacetMpfa { using InheritsFrom = std::tuple<CCMpfaFacetCouplingModel, OnePFacet>; };
 struct OnePFacetBox { using InheritsFrom = std::tuple<BoxFacetCouplingModel, OnePFacet>; };
 } // end namespace TTag
 
@@ -109,7 +105,6 @@ public:
 namespace TTag {
 struct OnePEdge { using InheritsFrom = std::tuple<OneP>; };
 struct OnePEdgeTpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
-struct OnePEdgeMpfa { using InheritsFrom = std::tuple<OnePEdge, CCTpfaModel>; };
 struct OnePEdgeBox { using InheritsFrom = std::tuple<OnePEdge, BoxModel>; };
 } // end namespace TTag
 
@@ -151,7 +146,6 @@ public:
 };
 
 using TpfaTraits = TestTraits<TTag::OnePBulkTpfa, TTag::OnePFacetTpfa, TTag::OnePEdgeTpfa>;
-using MpfaTraits = TestTraits<TTag::OnePBulkMpfa, TTag::OnePFacetMpfa, TTag::OnePEdgeMpfa>;
 using BoxTraits = TestTraits<TTag::OnePBulkBox, TTag::OnePFacetBox, TTag::OnePEdgeBox>;
 
 template<class TypeTag>
@@ -160,13 +154,6 @@ template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePFacetTpfa> { using type = typename TpfaTraits::CouplingManager; };
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePEdgeTpfa> { using type = typename TpfaTraits::CouplingManager; };
-
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePBulkMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePFacetMpfa> { using type = typename MpfaTraits::CouplingManager; };
-template<class TypeTag>
-struct CouplingManager<TypeTag, TTag::OnePEdgeMpfa> { using type = typename MpfaTraits::CouplingManager; };
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::OnePBulkBox> { using type = typename BoxTraits::CouplingManager; };
