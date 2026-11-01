@@ -12,11 +12,16 @@
 #ifndef DUMUX_LOGGING_PARAMETER_TREE_HH
 #define DUMUX_LOGGING_PARAMETER_TREE_HH
 
+#include <array>
+#include <charconv>
 #include <iomanip>
 #include <iostream>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <memory>
 #include <mutex>
+#include <type_traits>
 
 #include <dune/common/parametertree.hh>
 #include <dumux/common/exceptions.hh>
@@ -44,6 +49,7 @@ public:
     , defaultParams_(defaultParams)
     , usedRuntimeParams_(std::make_unique<Dune::ParameterTree>())
     , usedDefaultParams_(std::make_unique<Dune::ParameterTree>())
+    , usedFallbackDefaultParams_(std::make_unique<Dune::ParameterTree>())
     {}
 
     /** \brief test for key
@@ -163,6 +169,12 @@ public:
         stream << "\n# Global default parameters used:" << std::endl;
         usedDefaultParams_->report(stream);
 
+        if (logFallbackDefaults_)
+        {
+            stream << "\n# Fallback default parameters used (hardcoded at the call site in the source code):" << std::endl;
+            usedFallbackDefaultParams_->report(stream);
+        }
+
         const auto unusedParams = getUnusedKeys();
         if (!unusedParams.empty())
         {
@@ -226,6 +238,9 @@ public:
             logUsedRuntimeParam_(key, returnValue);
             return returnValue;
         }
+
+        if (logFallbackDefaults_)
+            logUsedFallbackDefaultParam_(key, defaultValue);
 
         return defaultValue;
     }
@@ -334,6 +349,9 @@ public:
             logUsedRuntimeParam_(key, params_[key]);
             return params_.template get<T>(key);
         }
+
+        if (logFallbackDefaults_)
+            logUsedFallbackDefaultParam_(key, defaultValue);
 
         return defaultValue;
     }
@@ -505,10 +523,18 @@ public:
      */
     void clearUsageLog()
     {
-        std::scoped_lock lock{ usedRuntimeMutex_, usedDefaultMutex_ };
+        std::scoped_lock lock{ usedRuntimeMutex_, usedDefaultMutex_, usedFallbackDefaultMutex_ };
         *usedRuntimeParams_ = Dune::ParameterTree{};
         *usedDefaultParams_ = Dune::ParameterTree{};
+        *usedFallbackDefaultParams_ = Dune::ParameterTree{};
     }
+
+    /** \brief Also log parameters that fall back to the default value given at the call site
+     *
+     * The report then also lists these parameters.
+     */
+    void setLogFallbackDefaults(bool enable)
+    { logFallbackDefaults_ = enable; }
 
 private:
     /** \brief Find the keys that haven't been used yet recursively
@@ -550,16 +576,74 @@ private:
         usedDefaultParams_->operator[](key) = value;
     }
 
+    /** \brief Log the key value pair as used fallback default param
+     */
+    template<class T>
+    void logUsedFallbackDefaultParam_(const std::string& key, const T& defaultValue) const
+    {
+        const auto value = toParameterString_(defaultValue);
+        if (!value)
+            return;
+
+        std::scoped_lock lock{ usedFallbackDefaultMutex_ };
+        usedFallbackDefaultParams_->operator[](key) = *value;
+    }
+
+    /** \brief The value in the format of Dune::ParameterTree, or no value if the type cannot be written
+     */
+    template<class T>
+    static std::optional<std::string> toParameterString_(const T& value)
+    {
+        if constexpr (std::is_same_v<T, std::string>)
+            return value;
+        else if constexpr (std::is_same_v<T, bool>)
+            return value ? "true" : "false";
+        else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>)
+        {
+            // the shortest representation that is read back as the same value
+            std::array<char, 32> buffer;
+            const auto end = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value).ptr;
+            return std::string(buffer.data(), end);
+        }
+        // ranges, but not ranges of their own type such as std::filesystem::path
+        else if constexpr (requires { std::end(value); requires !std::is_same_v<std::decay_t<decltype(*std::begin(value))>, T>; })
+        {
+            std::string result;
+            for (bool first = true; const auto& entry : value)
+            {
+                const auto entryString = toParameterString_(entry);
+                if (!entryString)
+                    return std::nullopt;
+
+                result += (first ? "" : " ") + *entryString;
+                first = false;
+            }
+            return result;
+        }
+        else if constexpr (requires (std::ostream& stream) { stream << value; })
+        {
+            std::ostringstream stream;
+            stream << value;
+            return stream.str();
+        }
+        else
+            return std::nullopt;
+    }
+
     const Dune::ParameterTree& params_;
     const Dune::ParameterTree& defaultParams_;
 
     // logging caches (externally stored)
     std::unique_ptr<Dune::ParameterTree> usedRuntimeParams_;
     std::unique_ptr<Dune::ParameterTree> usedDefaultParams_;
+    std::unique_ptr<Dune::ParameterTree> usedFallbackDefaultParams_;
 
     // access to the caches have to be protected for thread-safety
     mutable std::mutex usedRuntimeMutex_;
     mutable std::mutex usedDefaultMutex_;
+    mutable std::mutex usedFallbackDefaultMutex_;
+
+    bool logFallbackDefaults_ = false;
 };
 
 } // end namespace Dumux

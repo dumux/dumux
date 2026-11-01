@@ -3,7 +3,10 @@
 
 dumux_add_test(SOURCES test_loggingparametertree.cc
               LABELS unit)
-dune_symlink_to_source_files(FILES "params.input")
+dune_symlink_to_source_files(FILES "params.input" "params_fallbackdefaults.input")
 
 dumux_add_test(SOURCES test_parametersreset.cc
+              LABELS unit)
+
+dumux_add_test(SOURCES test_parametersfallbackdefaults.cc
               LABELS unit)

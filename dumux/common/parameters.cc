@@ -107,6 +107,7 @@ void Parameters::init(int argc, char **argv,
                 std::cout << "Rank " << mpiHelper.rank() << ": ";
             std::cout << "No parameter file found. Continuing without parameter file.\n";
 
+            configureUsageLog_();
             return;
         }
         else
@@ -130,6 +131,8 @@ void Parameters::init(int argc, char **argv,
     Dune::ParameterTreeParser::readINITree(parameterFileName,
                                             paramTree_(),
                                             /*overwrite=*/false);
+
+    configureUsageLog_();
 }
 
 // Initialize the parameter tree
@@ -141,6 +144,8 @@ void Parameters::init(const DefaultParams& params,
     // apply the default parameters
     defaultParams(defaultParamTree_());
     applyGlobalDefaults_(defaultParamTree_());
+
+    configureUsageLog_();
 }
 
 // Initialize the parameter tree
@@ -158,6 +163,8 @@ void Parameters::init(const std::string& parameterFileName,
     // apply the default parameters
     defaultParams(defaultParamTree_());
     applyGlobalDefaults_(defaultParamTree_());
+
+    configureUsageLog_();
 }
 
 // discard all parameters and the record of their use
@@ -167,6 +174,7 @@ void Parameters::reset()
     paramTree_() = Dune::ParameterTree{};
     defaultParamTree_() = Dune::ParameterTree{};
     loggingTree_().clearUsageLog();
+    loggingTree_().setLogFallbackDefaults(false);
 }
 
 // prints all used and unused parameters
@@ -272,6 +280,12 @@ void Parameters::applyGlobalDefaults_(Dune::ParameterTree& params)
 
     // merge the global default tree but do not overwrite if the parameter already exists
     mergeTree_(params, defaultParams, false);
+}
+
+// enable the optional parts of the usage log requested by runtime parameters
+void Parameters::configureUsageLog_()
+{
+    loggingTree_().setLogFallbackDefaults(getParam<bool>("Parameters.LogFallbackDefaults", false));
 }
 
 // merge source into target tree
