@@ -75,3 +75,20 @@ dumux_add_test(NAME test_2p2c_injection_mpfa_caching
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2p2c_injection_cc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_mpfa_caching-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_injection_mpfa_caching params.input -Problem.Name test_2p2c_injection_mpfa_caching")
+
+# the primary variable switch is not implemented for the variables per local dof
+dumux_add_test(NAME test_2p2c_privarswitch_volumevariables
+              LABELS porousmediumflow 2p2c
+              SOURCES test_2p2c_privarswitch.cc
+              COMPILE_DEFINITIONS ENABLECACHING=0 USEVARIABLES=0 INSTANTIATE_ADAPTER=1)
+
+dumux_add_test(NAME test_2p2c_privarswitch_variables_detect
+              LABELS porousmediumflow 2p2c
+              SOURCES test_2p2c_privarswitch.cc
+              COMPILE_DEFINITIONS ENABLECACHING=0 USEVARIABLES=1 INSTANTIATE_ADAPTER=0)
+
+dumux_add_test(NAME test_2p2c_privarswitch_variables_adapter
+              LABELS porousmediumflow 2p2c
+              SOURCES test_2p2c_privarswitch.cc
+              COMPILE_DEFINITIONS ENABLECACHING=0 USEVARIABLES=1 INSTANTIATE_ADAPTER=1
+              EXPECT_COMPILE_FAIL)

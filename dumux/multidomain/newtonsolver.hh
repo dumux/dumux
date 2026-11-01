@@ -22,6 +22,9 @@ namespace Detail {
 template<class Assembler, class Index>
 using DetectPVSwitchMultiDomain = typename Assembler::template GridVariables<Index::value>::VolumeVariables::PrimaryVariableSwitch;
 
+template<class Assembler, class Index>
+using DetectLocalDofVariablesPVSwitchMultiDomain = typename Assembler::template GridVariables<Index::value>::Variables::PrimaryVariableSwitch;
+
 } // end namespace Detail
 
 /*!
@@ -69,6 +72,9 @@ public:
         using namespace Dune::Hybrid;
         forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
+            static_assert(!Dune::Std::is_detected_v<Detail::DetectLocalDofVariablesPVSwitchMultiDomain, Assembler, std::decay_t<decltype(id)>>,
+                          "The primary variable switch is not implemented for variables per local dof");
+
             const int priVarSwitchVerbosity = getParamFromGroup<int>(paramGroup, "PrimaryVariableSwitch.Verbosity", 1);
             using PVSwitch = PrimaryVariableSwitch<std::decay_t<decltype(id)>::value>;
             elementAt(priVarSwitches_, id) = std::make_unique<PVSwitch>(priVarSwitchVerbosity);
