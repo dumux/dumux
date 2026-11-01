@@ -48,6 +48,11 @@ auto faceTensorAverageAtScvf(Coefficient&& coefficient)
 
 namespace Dumux::Detail::CVFE {
 
+//! The type of the value of a quantity given per local dof, `quantity(vars)`
+template<class Quantity, class ElementVariables>
+struct LocalDofValue
+{ using type = std::decay_t<std::invoke_result_t<const Quantity&, const typename ElementVariables::Variables&>>; };
+
 //! The interpolated value at an interpolation point of a quantity given per local dof, `quantity(vars)`
 template<class ElementDiscretization, class ElementVariables, class IpCache, class Quantity>
 auto valueAtIp(const ElementDiscretization& elemDisc,
@@ -56,7 +61,7 @@ auto valueAtIp(const ElementDiscretization& elemDisc,
                const Quantity& quantity)
 {
     const auto& shapeValues = ipCache.shapeValues();
-    std::decay_t<std::invoke_result_t<const Quantity&, const typename ElementVariables::Variables&>> value(0.0);
+    typename LocalDofValue<Quantity, ElementVariables>::type value(0.0);
     for (const auto& localDof : localDofs(elemDisc))
         value += shapeValues[localDof.index()][0]*quantity(elemVars[localDof]);
     return value;
