@@ -25,7 +25,11 @@
 #include <dumux/linear/linearalgebratraits.hh>
 
 #include <dumux/multidomain/newtonsolver.hh>
+#ifdef USE_EXPERIMENTAL_MULTIDOMAIN_ASSEMBLER
+#include <dumux/multidomain/assembler.hh>
+#else
 #include <dumux/multidomain/fvassembler.hh>
+#endif
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -128,7 +132,11 @@ int main(int argc, char** argv)
     poroMechVtkWriter.write(0.0);
 
     // the assembler
+#ifdef USE_EXPERIMENTAL_MULTIDOMAIN_ASSEMBLER
+    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
+#else
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
+#endif
     auto assembler = std::make_shared<Assembler>( std::make_tuple(onePProblem, poroMechProblem),
                                                   std::make_tuple(onePFvGridGeometry, poroMechFvGridGeometry),
                                                   std::make_tuple(onePGridVariables, poroMechGridVariables),

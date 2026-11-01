@@ -30,6 +30,7 @@
 #include <dumux/common/typetraits/periodic.hh>
 #include <dumux/common/gridcapabilities.hh>
 #include <dumux/common/deprecated.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
@@ -38,6 +39,7 @@
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
+#include "subdomaincvfelocalassembler.hh"
 #include "subdomaincvfelocalassembler_.hh"
 #include "subdomainfclocalassembler.hh"
 #include "assemblerview.hh"
@@ -112,19 +114,23 @@ private:
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::CCTpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = Dumux::SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::CCMpfa, id>
     {
-        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = Dumux::SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id, class DM>
     struct SubDomainAssemblerType<DiscretizationMethods::CVFE<DM>, id>
     {
-        using type = Dumux::Experimental::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = std::conditional_t<
+            Concept::GridVariables<GridVariables<id>>,
+            Dumux::Experimental::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>,
+            Dumux::SubDomainCVFELocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>
+        >;
     };
 
 #if HAVE_DUMUX_OLD_STAGGERED
@@ -138,7 +144,7 @@ private:
     template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::FCStaggered, id>
     {
-        using type = SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
+        using type = Dumux::SubDomainFaceCenteredLocalAssembler<id, SubDomainTypeTag<id>, SubDomainAssemblerView<id>, diffMethod, isImplicit()>;
     };
 
     template<std::size_t id>

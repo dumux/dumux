@@ -15,3 +15,17 @@ dumux_add_test(NAME test_md_poromechanics_el1p
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p params.input
                                                               -Vtk.OutputName test_md_poromechanics_el1p"
                        --zeroThreshold {"u":1e-14})
+
+dumux_add_test(NAME test_md_poromechanics_el1p_experimentalassembler
+              LABELS multidomain poromechanics 1p poroelastic
+              SOURCES main.cc
+              COMPILE_DEFINITIONS USE_EXPERIMENTAL_MULTIDOMAIN_ASSEMBLER=1
+              COMMAND ${DUMUX_RUNTEST}
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el1p_1p-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p_experimentalassembler_onep-00001.vtu
+                                ${CMAKE_SOURCE_DIR}/test/references/test_md_poromechanics_el1p_poroelastic-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p_experimentalassembler_poroelastic-00001.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_poromechanics_el1p_experimentalassembler params.input
+                                                              -Vtk.OutputName test_md_poromechanics_el1p_experimentalassembler"
+                       --zeroThreshold {"u":1e-14})
