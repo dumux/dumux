@@ -26,14 +26,27 @@ using DetectPVSwitch = typename Variables::VolumeVariables::PrimaryVariableSwitc
 template<class Variables>
 using PrimaryVariableSwitch = Dune::Std::detected_or_t<int, DetectPVSwitch, Variables>;
 
+//! helper alias to extract a primary variable switch from the variables per local dof of grid variables
+template<class GridVariables>
+using DetectLocalDofVariablesPVSwitch = typename GridVariables::Variables::PrimaryVariableSwitch;
+
+template<class Variables>
+constexpr bool detectPriVarsSwitch()
+{
+    static_assert(!Dune::Std::is_detected_v<DetectLocalDofVariablesPVSwitch, Variables>,
+                  "The primary variable switch is not implemented for variables per local dof");
+    return Dune::Std::is_detected_v<DetectPVSwitch, Variables>;
+}
+
 } // end namespace Detail
 
 /*!
  * \ingroup Nonlinear
  * \brief Helper boolean to check if the given variables involve primary variable switching.
+ * \note Fails to compile for variables per local dof with a primary variable switch, which is not implemented.
  */
 template<class Variables>
-inline constexpr bool hasPriVarsSwitch = Dune::Std::is_detected<Detail::DetectPVSwitch, Variables>();
+inline constexpr bool hasPriVarsSwitch = Detail::detectPriVarsSwitch<Variables>();
 
 /*!
  * \ingroup Nonlinear
