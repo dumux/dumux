@@ -25,5 +25,5 @@ dumux_add_test(NAME test_rans_kepsilon_channelni
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_rans_kepsilon_channelni-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channelni-00329.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channelni-00295.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_rans_kepsilon_channelni params_ni.input")
