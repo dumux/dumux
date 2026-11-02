@@ -1,0 +1,39 @@
+[Grid]
+Length = 1.0
+Height = 0.1
+
+[TimeLoop]
+TEnd = 0.3
+
+[Problem]
+Velocity = 1.0
+InterfacePosition = 0.3
+InterfaceWidth = 0.05
+EnableGravity = false
+EnableInertiaTerms = true
+
+[Component]
+LiquidDensity = 1.0
+
+[Study]
+BaseCells = 20
+NumLevels = 3
+Cfl = 0.5
+DensityRatios = 1 10 1000
+
+[Flux]
+UpwindWeight = 1.0
+
+[Newton]
+MaxSteps = 20
+MaxRelativeShift = 1e-12
+EnableAbsoluteResidualCriterion = true
+MaxAbsoluteResidual = 1e-10
+SatisfyResidualAndShiftCriterion = false
+Verbosity = 0
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Vtk]
+AddProcessRank = false
