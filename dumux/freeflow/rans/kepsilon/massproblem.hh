@@ -141,11 +141,18 @@ public:
                                                       : yPlus(eIdx) < yPlusThreshold();
     }
 
+    //! \note Zero while the stored viscosity is not yet populated at the initial time, see RANSMomentumProblem
     Scalar yPlus(std::size_t eIdx) const
-    { return wallDistance(eIdx)*uStar(eIdx)/kinematicViscosity(eIdx); }
+    {
+        const auto nu = kinematicViscosity(eIdx);
+        return nu > 0.0 ? wallDistance(eIdx)*uStar(eIdx)/nu : 0.0;
+    }
 
     Scalar yPlusNominal(std::size_t eIdx) const
-    { return wallDistance(eIdx)*uStarNominal(eIdx)/kinematicViscosity(eIdx); }
+    {
+        const auto nu = kinematicViscosity(eIdx);
+        return nu > 0.0 ? wallDistance(eIdx)*uStarNominal(eIdx)/nu : 0.0;
+    }
 
     //! \brief The wall shear-stress velocity, from the actual velocity gradient at the wall.
     Scalar uStar(std::size_t eIdx) const
