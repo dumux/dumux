@@ -110,6 +110,10 @@ class NavierStokesMomentumFluxCVFE
 public:
     /*!
      * \brief Returns the advective momentum flux
+     *
+     * By default, the momentum density is upwinded, with the density at the dof of each side.
+     * With `Flux.UpwindMomentumDensity = false`, the density at the interpolation point multiplies
+     * the upwinded velocity instead.
      */
     template<class Context>
     NumEqVector advectiveMomentumFlux(const Context& context) const
@@ -128,16 +132,31 @@ public:
         for (const auto& localDof : localDofs(elemDisc))
             v.axpy(shapeValues[localDof.index()][0], elemVars[localDof.index()].velocity());
 
-        // get density from the problem
-        const Scalar density = context.problem().density(context.element(), context.elemDisc(), fluxVarCache.ipData());
-
         const auto vn = v*scvf.unitOuterNormal();
-        const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
-        const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
-        const auto upwindVelocity = vn > 0 ? insideVars.velocity() : outsideVars.velocity();
-        const auto downwindVelocity = vn > 0 ? outsideVars.velocity() : insideVars.velocity();
+        const auto& insideScv = elemDisc.scv(scvf.insideScvIdx());
+        const auto& outsideScv = elemDisc.scv(scvf.outsideScvIdx());
+        const auto& insideVars = elemVars[insideScv];
+        const auto& outsideVars = elemVars[outsideScv];
         static const auto upwindWeight = getParamFromGroup<Scalar>(context.problem().paramGroup(), "Flux.UpwindWeight");
-        const auto advectiveTermIntegrand = density*vn * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
+        static const bool upwindMomentumDensity
+            = getParamFromGroup<bool>(context.problem().paramGroup(), "Flux.UpwindMomentumDensity", true);
+
+        NumEqVector advectiveTermIntegrand;
+        if (upwindMomentumDensity)
+        {
+            const NumEqVector insideMomentum = context.problem().density(context.element(), elemDisc, ipData(elemDisc, insideScv))*insideVars.velocity();
+            const NumEqVector outsideMomentum = context.problem().density(context.element(), elemDisc, ipData(elemDisc, outsideScv))*outsideVars.velocity();
+            const auto& upwindMomentum = vn > 0 ? insideMomentum : outsideMomentum;
+            const auto& downwindMomentum = vn > 0 ? outsideMomentum : insideMomentum;
+            advectiveTermIntegrand = vn * (upwindWeight * upwindMomentum + (1.0-upwindWeight)*downwindMomentum);
+        }
+        else
+        {
+            const Scalar density = context.problem().density(context.element(), elemDisc, fluxVarCache.ipData());
+            const auto& upwindVelocity = vn > 0 ? insideVars.velocity() : outsideVars.velocity();
+            const auto& downwindVelocity = vn > 0 ? outsideVars.velocity() : insideVars.velocity();
+            advectiveTermIntegrand = density*vn * (upwindWeight * upwindVelocity + (1.0-upwindWeight)*downwindVelocity);
+        }
 
         return advectiveTermIntegrand * Extrusion::area(elemDisc, scvf) * insideVars.extrusionFactor();
     }

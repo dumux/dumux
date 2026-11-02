@@ -96,6 +96,10 @@ boundary face, another its values. A dof on several boundary faces gets a single
 on any of them.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
+- __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum
+density $\varrho \mathbf{v}$, each side with the density at its own degree of freedom, like a mass balance that upwinds the
+density. Before, the density at the interpolation point multiplied the upwinded velocity; `Flux.UpwindMomentumDensity = false`
+restores this form. For a constant density, the two forms differ by round-off.
 - __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
 specify more; a `DUMUX_NUM_THREADS` set when calling ctest no longer reaches them. The parallel tests of DuMux are named
 `<name>-mpi-<n>` for n processes, like all tests using `MPI_RANKS`.
