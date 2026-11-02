@@ -191,6 +191,25 @@ bool computeSegmentIntersection(const Geo1& geo1, const Geo2& geo2, ctype baseEp
 
 } // end namespace Detail
 
+namespace Detail {
+
+//! Segment geometries with corners stored in a std::array
+template<class ctype>
+struct SegmentGeometryTraits : public Dune::MultiLinearGeometryTraits<ctype>
+{
+    template<int mydim, int cdim>
+    struct CornerStorage { using Type = std::array<Dune::FieldVector<ctype, cdim>, 2>; };
+
+    template<int dim>
+    struct hasSingleGeometryType
+    {
+        static const bool v = true;
+        static const unsigned int topologyId = Dune::GeometryTypes::line.id();
+    };
+};
+
+} // end namespace Detail
+
 /*!
  * \ingroup Geometry
  * \brief A class for geometry collision detection and intersection calculation
@@ -582,21 +601,21 @@ public:
                 const auto refElement2 = referenceElement(geo2);
 
                 // add intersections of edges
-                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
                 using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
                 for (int i = 0; i < refElement1.size(dim1-1); ++i)
                 {
                     const auto localEdgeGeom1 = refElement1.template geometry<dim1-1>(i);
                     const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
-                                                    std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
-                                                                         geo1.global(localEdgeGeom1.corner(1))} ));
+                                                    std::array<Point, 2>{ {geo1.global(localEdgeGeom1.corner(0)),
+                                                                         geo1.global(localEdgeGeom1.corner(1))} });
 
                     for (int j = 0; j < refElement2.size(dim2-1); ++j)
                     {
                         const auto localEdgeGeom2 = refElement2.template geometry<dim2-1>(j);
                         const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
-                                                        std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
-                                                                             geo2.global(localEdgeGeom2.corner(1))} ));
+                                                        std::array<Point, 2>{ {geo2.global(localEdgeGeom2.corner(0)),
+                                                                             geo2.global(localEdgeGeom2.corner(1))} });
 
                         using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
                         typename EdgeTest::Intersection edgeIntersection;
