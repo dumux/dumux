@@ -3,7 +3,6 @@
 
 add_subdirectory(rasterimagereader)
 
-add_input_file_links()
 dune_symlink_to_source_files(FILES polyline.vtp)
 
 dumux_add_test(NAME test_vtkreader_3d

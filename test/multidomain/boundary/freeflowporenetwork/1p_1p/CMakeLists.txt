@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(nonisothermal)
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params.input" "params_single_throat.input")
 
 dumux_add_test(NAME test_md_boundary_ff1p_pnm1p
               LABELS multidomain multidomain_boundary freeflowpnm 1p navierstokes porenetwork

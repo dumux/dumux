@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params.input" "params_diffusion.input")
 
 add_executable(test_pnm_1p2c EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_pnm_1p2c PRIVATE ISOTHERMAL=1)

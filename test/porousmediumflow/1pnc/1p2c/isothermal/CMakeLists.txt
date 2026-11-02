@@ -5,7 +5,7 @@ add_subdirectory(saltwaterintrusion)
 add_subdirectory(hortonrogerslapwood)
 add_subdirectory(lockexchange)
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_1p2c_transport_box
               LABELS porousmediumflow 1p2c 1pnc
