@@ -46,9 +46,10 @@ namespace Dumux {
  * deliberately *not* routed through a CouplingManager: since these values are frozen for the
  * whole time step, there is nothing for Newton to differentiate against.
  *
- * The gradient ∇ν̃ is obtained via a standard Green-Gauss reconstruction over CCTpfa's own
- * face/neighbor connectivity - works on general grids, no flat-wall-bounded assumption needed
- * (see updateDynamicWallProperties() below).
+ * The gradient ∇ν̃ is reconstructed like releases/3.10 did: a central difference over the two
+ * neighboring elements along each axis (structured, axis-aligned meshes), and, at Dirichlet
+ * boundaries, a difference between the boundary value and the next interior element (see
+ * updateDynamicWallProperties() below).
  */
 template<class TypeTag, class MomentumProblem>
 class RANSMassOneEqProblem : public NavierStokesMassProblem<TypeTag>
@@ -104,38 +105,61 @@ public:
     void updateDynamicWallProperties(const SolutionVector& sol)
     {
         const auto& gridGeometry = this->gridGeometry();
-        viscosityTildeGradient_.assign(gridGeometry.elementMapper().size(), DimVector(0.0));
+        const auto numElements = gridGeometry.elementMapper().size();
+        viscosityTildeGradient_.assign(numElements, DimVector(0.0));
 
+        std::vector<Scalar> viscosityTilde(numElements);
         auto fvGeometry = localView(gridGeometry);
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             fvGeometry.bind(element);
             const auto& insideScv = *scvs(fvGeometry).begin();
-            const auto eIdx = insideScv.elementIndex();
-            const Scalar viscosityTildeInside = sol[insideScv.dofIndex()][Indices::viscosityTildeIdx];
+            viscosityTilde[insideScv.elementIndex()] = sol[insideScv.dofIndex()][Indices::viscosityTildeIdx];
+        }
 
-            DimVector gradient(0.0);
+        for (const auto& element : elements(gridGeometry.gridView()))
+        {
+            const auto eIdx = gridGeometry.elementMapper().index(element);
+            fvGeometry.bind(element);
+
+            // central difference over the two neighbors along each axis (a neighbor that does not
+            // exist is the element itself, which gives a one-sided difference at boundaries)
+            for (int axisIdx = 0; axisIdx < dim; ++axisIdx)
+            {
+                const auto neighborIdx0 = momentumProblem_->neighborIndex(eIdx, axisIdx, 0);
+                const auto neighborIdx1 = momentumProblem_->neighborIndex(eIdx, axisIdx, 1);
+                const auto distance = momentumProblem_->cellCenter(neighborIdx1)[axisIdx]
+                                     - momentumProblem_->cellCenter(neighborIdx0)[axisIdx];
+                if (std::abs(distance) < 1e-8)
+                    continue;
+
+                viscosityTildeGradient_[eIdx][axisIdx] = (viscosityTilde[neighborIdx1] - viscosityTilde[neighborIdx0])/distance;
+            }
+
+            // Dirichlet boundaries (inlet and, as a weak condition, the walls where nu-tilde is zero):
+            // difference the boundary value against the next interior element instead
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                Scalar viscosityTildeFace;
-                if (scvf.boundary())
-                {
-                    if (this->asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::viscosityTildeEqIdx))
-                        viscosityTildeFace = this->asImp_().dirichlet(element, scvf)[Indices::viscosityTildeIdx];
-                    else
-                        viscosityTildeFace = viscosityTildeInside; // zero-gradient extrapolation
-                }
-                else
-                {
-                    const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-                    const Scalar viscosityTildeOutside = sol[outsideScv.dofIndex()][Indices::viscosityTildeIdx];
-                    viscosityTildeFace = 0.5*(viscosityTildeInside + viscosityTildeOutside);
-                }
+                if (!scvf.boundary())
+                    continue;
 
-                gradient.axpy((viscosityTildeFace - viscosityTildeInside)*scvf.area(), scvf.unitOuterNormal());
+                Scalar boundaryValue;
+                if (this->asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::viscosityTildeEqIdx))
+                    boundaryValue = this->asImp_().dirichlet(element, scvf)[Indices::viscosityTildeIdx];
+                else if (this->asImp_().isOnWallAtPos(scvf.center()))
+                    boundaryValue = 0.0;
+                else
+                    continue;
+
+                const auto& normal = scvf.unitOuterNormal();
+                const int axisIdx = std::abs(normal[0]) > 0.5 ? 0 : 1;
+                auto neighborIdx = momentumProblem_->neighborIndex(eIdx, axisIdx, 0);
+                if (scvf.center()[axisIdx] < momentumProblem_->cellCenter(eIdx)[axisIdx])
+                    neighborIdx = momentumProblem_->neighborIndex(eIdx, axisIdx, 1);
+
+                viscosityTildeGradient_[eIdx][axisIdx] = (viscosityTilde[neighborIdx] - boundaryValue)
+                    /(momentumProblem_->cellCenter(neighborIdx)[axisIdx] - scvf.center()[axisIdx]);
             }
-            gradient /= insideScv.volume();
-            viscosityTildeGradient_[eIdx] = gradient;
         }
     }
 
