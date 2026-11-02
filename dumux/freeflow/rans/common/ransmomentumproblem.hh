@@ -286,8 +286,11 @@ public:
     Scalar stressTensorScalarProduct(std::size_t eIdx) const
     { return stressTensorScalarProduct_[eIdx]; }
 
+    //! \note Returns 0 while the stored density is still zero (set by updateStaticWallProperties()
+    //! and only filled by the first updateDynamicWallProperties()), to avoid a 0.0/0.0 NaN being
+    //! cached in the volume variables of the initial time.
     Scalar kinematicViscosity(std::size_t eIdx) const
-    { return storedViscosity_[eIdx]/storedDensity_[eIdx]; }
+    { return storedDensity_[eIdx] > 0.0 ? storedViscosity_[eIdx]/storedDensity_[eIdx] : 0.0; }
 
     Scalar storedDensity(std::size_t eIdx) const
     { return storedDensity_[eIdx]; }
