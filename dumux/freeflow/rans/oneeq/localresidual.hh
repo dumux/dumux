@@ -15,6 +15,7 @@
 #include <cmath>
 #include <iostream>
 
+#include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/localresidual.hh>
@@ -144,7 +145,18 @@ private:
             : (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - insideScv.dofPosition()).two_norm();
         const auto diffCoeffInside = (insideVars.viscosity() + insideVars.density()*insideVars.viscosityTilde())/insideVars.sigma();
         const auto diffCoeffOutside = (outsideVars.viscosity() + outsideVars.density()*outsideVars.viscosityTilde())/outsideVars.sigma();
-        const auto diffCoeff = scvf.boundary() ? diffCoeffInside : 0.5*(diffCoeffInside + diffCoeffOutside);
+        // distance-weighted (not plain) mean of the diffusion coefficient on interior faces, as in
+        // releases/3.10 (arithmeticMean() with the inside/outside distances to the face as weights)
+        const auto weightedMean = [&](const auto inside, const auto outside)
+        {
+            if (scvf.boundary())
+                return inside;
+            const auto distanceInside = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const auto distanceOutside = (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - scvf.ipGlobal()).two_norm();
+            return arithmeticMean(inside, outside, distanceOutside, distanceInside);
+        };
+
+        const auto diffCoeff = weightedMean(diffCoeffInside, diffCoeffOutside);
 
         flux -= diffCoeff*(outsideVars.viscosityTilde() - insideVars.viscosityTilde())/distance*area;
 
