@@ -108,6 +108,7 @@ identified degrees of freedom (`std::vector` for box, pq1bubble, pq2, pq3 and fi
 
 - __FreeFlow__: Headers in the `freeflow/navierstokes/momentum` that were only related to the `fcstaggered` discretization were moved into a new subdirectory `fcstaggered`. The old headers are deprecated and will be removed after `release/3.11`. Please also note that class names were partly adapted
 to the new subdirectory.
+- __CMake__: The macro `add_input_file_links` is deprecated and will be removed after release 3.11. It links all `*.input` files of the directory and ignores its arguments. Use `dune_symlink_to_source_files(FILES ...)` and list the input files.
 - __Periodic boundaries__: `periodicallyMappedDof(dofIdx)` of the grid geometries is deprecated. Use `periodicallyMappedDofs(dofIdx)`,
 which returns a range of all periodically identified degrees of freedom. Grid geometries providing only `periodicallyMappedDof`
 or a single-index `periodicDofMap()` still work with the assemblers and trigger a deprecation warning.

@@ -5,6 +5,8 @@
 include_guard(GLOBAL)
 
 macro(add_input_file_links)
+  message(DEPRECATION "add_input_file_links is deprecated and will be removed after release 3.11. "
+                      "Use dune_symlink_to_source_files(FILES ...) and list the input files.")
   FILE(GLOB input_files *.input)
   foreach(VAR ${input_files})
     get_filename_component(file_name ${VAR} NAME)
