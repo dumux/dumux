@@ -16,7 +16,8 @@ dumux_add_test(NAME test_ff_stokes_donea_taylorhood
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=true
                COMMAND ./convergencetest.py
-               CMD_ARGS test_ff_stokes_donea_taylorhood params_taylorhood.input)
+               CMD_ARGS test_ff_stokes_donea_taylorhood params_taylorhood.input
+                        -Rates "L2(v) 2.85 3.15" "H1(v) 1.85 2.15" "L2(p) 1.85 2.15" "H1(p) 0.85 1.15")
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                LABELS freeflow navierstokes donea

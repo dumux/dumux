@@ -14,14 +14,44 @@ if len(sys.argv) < 2:
 testname = str(sys.argv[1])
 testargs = [str(i) for i in sys.argv][2:]
 
+
+def parseRates(testargs):
+    """Remove the -Rates "ErrorType minRate maxRate" entries from the arguments and return them"""
+    if "-Rates" not in testargs:
+        sys.stderr.write("Please provide the expected rates with -Rates \"ErrorType minRate maxRate\" ...\n")
+        sys.exit(1)
+
+    idx = testargs.index("-Rates")
+    end = idx + 1
+    while end < len(testargs) and not testargs[end].startswith("-"):
+        end += 1
+
+    rates = {}
+    for spec in testargs[idx + 1:end]:
+        parts = spec.split()
+        if len(parts) != 3:
+            sys.stderr.write("Each -Rates entry must be 'ErrorType minRate maxRate', got: '{}'\n".format(spec))
+            sys.exit(1)
+        rates[parts[0]] = (float(parts[1]), float(parts[2]))
+    return rates, testargs[:idx] + testargs[end:]
+
+
+rateSpecs, testargs = parseRates(testargs)
+
 refinements = [0, 1, 2]
-rateTolerance = 0.15
-quantities = [
-    ("velocity L2", testname + "_errors_velocity.csv", 2, 3.0),
-    ("velocity H1", testname + "_errors_velocity.csv", 3, 2.0),
-    ("pressure L2", testname + "_errors_pressure.csv", 2, 2.0),
-    ("pressure H1", testname + "_errors_pressure.csv", 3, 1.0),
-]
+
+# the error types that can be checked: the csv file and the column of the error
+errorColumns = {
+    "L2(v)": (testname + "_errors_velocity.csv", 2),
+    "H1(v)": (testname + "_errors_velocity.csv", 3),
+    "L2(p)": (testname + "_errors_pressure.csv", 2),
+    "H1(p)": (testname + "_errors_pressure.csv", 3),
+}
+unknownRates = set(rateSpecs) - set(errorColumns)
+if unknownRates:
+    sys.stderr.write("Unknown error types in -Rates: {}\n".format(", ".join(sorted(unknownRates))))
+    sys.exit(1)
+quantities = [(label, *errorColumns[label], bounds) for label, bounds in rateSpecs.items()]
 
 for fileName in [testname + ".log", testname + "_errors_velocity.csv", testname + "_errors_pressure.csv"]:
     if os.path.exists(fileName):
@@ -68,11 +98,11 @@ failed = False
 with open(testname + ".log", "w") as logFile:
     logFile.write("quantity\trates\texpected\n")
     logFile.write("-" * 50 + "\n")
-    for label, fileName, errorColumn, expectedRate in quantities:
+    for label, fileName, errorColumn, (minRate, maxRate) in quantities:
         rates = convergenceRates(data[fileName], errorColumn)
         ratesString = ", ".join("{:.4e}".format(rate) for rate in rates)
-        logFile.write("{}\t{}\t{:.1f}\n".format(label, ratesString, expectedRate))
-        if len(rates) == 0 or abs(rates[-1] - expectedRate) > rateTolerance:
+        logFile.write("{}\t{}\t[{}, {}]\n".format(label, ratesString, minRate, maxRate))
+        if len(rates) == 0 or not minRate <= rates[-1] <= maxRate:
             failed = True
 
 print("\nComputed the following convergence rates for {}:\n".format(testname))
