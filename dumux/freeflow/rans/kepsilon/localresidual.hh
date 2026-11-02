@@ -12,6 +12,7 @@
 #ifndef DUMUX_RANS_KEPSILON_MASS_LOCAL_RESIDUAL_HH
 #define DUMUX_RANS_KEPSILON_MASS_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/localresidual.hh>
@@ -143,8 +144,19 @@ private:
         const auto diffCoeffEpsilonInside = insideVars.dynamicEddyViscosity()/insideVars.sigmaEpsilon() + insideVars.viscosity();
         const auto diffCoeffEpsilonOutside = outsideVars.dynamicEddyViscosity()/outsideVars.sigmaEpsilon() + outsideVars.viscosity();
 
-        const auto diffCoeffK = scvf.boundary() ? diffCoeffKInside : 0.5*(diffCoeffKInside + diffCoeffKOutside);
-        const auto diffCoeffEpsilon = scvf.boundary() ? diffCoeffEpsilonInside : 0.5*(diffCoeffEpsilonInside + diffCoeffEpsilonOutside);
+        // distance-weighted (not plain) mean of the diffusion coefficient on interior faces, as in
+        // releases/3.10 (arithmeticMean() with the inside/outside distances to the face as weights)
+        const auto weightedMean = [&](const auto inside, const auto outside)
+        {
+            if (scvf.boundary())
+                return inside;
+            const auto distanceInside = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const auto distanceOutside = (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - scvf.ipGlobal()).two_norm();
+            return arithmeticMean(inside, outside, distanceOutside, distanceInside);
+        };
+
+        const auto diffCoeffK = weightedMean(diffCoeffKInside, diffCoeffKOutside);
+        const auto diffCoeffEpsilon = weightedMean(diffCoeffEpsilonInside, diffCoeffEpsilonOutside);
 
         // Suppressed between matching-point/near-wall-region cells (avoids diffusively coupling
         // the algebraic wall-function region back into the resolved solution), and unconditionally
