@@ -28,6 +28,8 @@
 #include <dumux/assembly/multistageassembler.hh>
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 
+#include <test/assembly/constraintrows.hh>
+
 namespace Dumux::Test {
 
 struct WeightedAssemblyDifferences
@@ -38,6 +40,7 @@ struct WeightedAssemblyDifferences
     double constraint = 0.0; //!< largest difference in the constraint rows, which are not scaled by the time step size
     std::size_t numCompared = 0; //!< number of compared rows
     std::size_t numConstraintRows = 0; //!< number of compared constraint rows
+    std::size_t numPeriodicRows = 0; //!< number of compared constraint rows of periodic degrees of freedom
 };
 
 /*!
@@ -95,19 +98,8 @@ WeightedAssemblyDifferences compareWeightedAssembly(std::shared_ptr<Problem> pro
     // rows with a constraint are not scaled by the time step size
     const auto& jacOld = fvAssembler.jacobian();
     const auto& jacMs = msAssembler.jacobian();
-    const auto isConstraintRow = [&] (std::size_t i)
-    {
-        const auto& row = jacOld[i];
-        for (auto col = row.begin(); col != row.end(); ++col)
-            for (int r = 0; r < int(col->N()); ++r)
-                for (int c = 0; c < int(col->M()); ++c)
-                {
-                    const Scalar expected = (col.index() == i && r == c) ? 1.0 : 0.0;
-                    if (abs((*col)[r][c] - expected) > 0.0)
-                        return false;
-                }
-        return true;
-    };
+    const auto isConstraintRow = [&] (std::size_t i) { return Test::isConstraintRow(jacOld[i], i); };
+    const auto isPeriodicRow = [&] (std::size_t i) { return Test::isConstraintRow(jacOld[i], i, /*periodic=*/true); };
 
     double residualScale = 0.0, jacobianScale = 0.0;
     for (std::size_t i = 0; i < x.size(); ++i)
@@ -128,6 +120,8 @@ WeightedAssemblyDifferences compareWeightedAssembly(std::shared_ptr<Problem> pro
         if (isConstraintRow(i))
         {
             ++result.numConstraintRows;
+            if (isPeriodicRow(i))
+                ++result.numPeriodicRows;
             for (int r = 0; r < int(x[i].size()); ++r)
                 result.constraint = max(result.constraint, abs(msAssembler.residual()[i][r] - fvAssembler.residual()[i][r]));
             const auto& row = jacOld[i];

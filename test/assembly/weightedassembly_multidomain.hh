@@ -26,6 +26,8 @@
 
 #include <dumux/experimental/timestepping/timelevel.hh>
 
+#include <test/assembly/constraintrows.hh>
+
 namespace Dumux::Test {
 
 struct MultiDomainWeightedAssemblyDifferences
@@ -37,6 +39,7 @@ struct MultiDomainWeightedAssemblyDifferences
     std::size_t numCompared = 0; //!< number of compared rows
     std::size_t numCouplingEntries = 0; //!< number of compared nonzero entries of off-diagonal blocks
     std::size_t numConstraintRows = 0; //!< number of compared constraint rows
+    std::size_t numPeriodicRows = 0; //!< number of compared constraint rows of periodic degrees of freedom
 };
 
 /*!
@@ -80,21 +83,21 @@ MultiDomainWeightedAssemblyDifferences compareWeightedMultiDomainAssembly(OldAss
     const auto& resOld = oldAssembler.residual();
     const auto& resMs = msAssembler.residual();
 
-    // a constraint row is the identity in its diagonal block and zero in all other blocks
-    const auto isConstraintRow = [&] (auto domainI, std::size_t i)
+    // a constraint row is a constraint row of its diagonal block and zero in all other blocks
+    const auto isConstraintRow = [&] (auto domainI, std::size_t i, bool periodic = false)
     {
-        bool result = true;
+        bool result = Test::isConstraintRow(jacOld[domainI][domainI][i], i, periodic);
         Dune::Hybrid::forEach(std::make_index_sequence<std::decay_t<decltype(jacOld)>::N()>{}, [&](auto domainJ)
         {
-            const auto& row = jacOld[domainI][domainJ][i];
-            for (auto col = row.begin(); col != row.end(); ++col)
-                for (int r = 0; r < int(col->N()); ++r)
-                    for (int c = 0; c < int(col->M()); ++c)
-                    {
-                        const Scalar expected = (domainI == domainJ && col.index() == i && r == c) ? 1.0 : 0.0;
-                        if (abs((*col)[r][c] - expected) > 0.0)
-                            result = false;
-                    }
+            if constexpr (decltype(domainJ)::value != decltype(domainI)::value)
+            {
+                const auto& row = jacOld[domainI][domainJ][i];
+                for (auto col = row.begin(); col != row.end(); ++col)
+                    for (int r = 0; r < int(col->N()); ++r)
+                        for (int c = 0; c < int(col->M()); ++c)
+                            if ((*col)[r][c] != 0.0)
+                                result = false;
+            }
         });
         return result;
     };
@@ -128,7 +131,11 @@ MultiDomainWeightedAssemblyDifferences compareWeightedMultiDomainAssembly(OldAss
         {
             const bool constraint = isConstraintRow(domainI, i);
             if (constraint)
+            {
                 ++result.numConstraintRows;
+                if (isConstraintRow(domainI, i, /*periodic=*/true))
+                    ++result.numPeriodicRows;
+            }
             else
                 ++result.numCompared;
 

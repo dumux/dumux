@@ -25,6 +25,18 @@
 
 #include "properties_momentum.hh"
 
+#if PERIODIC_DOF_MAP
+#include <test/assembly/periodicdofmap.hh>
+
+namespace Dumux::Properties {
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::TYPETAG_MOMENTUM>
+{ using type = Dumux::Test::GridGeometryWithPeriodicDofMap<typename GridGeometry<TypeTag, TTag::DISCRETIZATION_MODEL>::type>; };
+
+} // end namespace Dumux::Properties
+#endif
+
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -39,6 +51,11 @@ int main(int argc, char** argv)
 
     using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
     auto gridGeometry = std::make_shared<GridGeometry>(gridManager.grid().leafGridView());
+#if PERIODIC_DOF_MAP
+    const std::size_t numPeriodicRows = Test::addInteriorPeriodicDofs(*gridGeometry);
+#else
+    const std::size_t numPeriodicRows = 0;
+#endif
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     auto problem = std::make_shared<Problem>(gridGeometry);
 
@@ -59,10 +76,10 @@ int main(int argc, char** argv)
     std::cout << "compared rows: " << result.numCompared << "\n"
               << "residual difference: " << result.residual << "\n"
               << "Jacobian difference: " << result.jacobian << "\n"
-              << "constraint rows: " << result.numConstraintRows << ", difference " << result.constraint << "\n"
+              << "constraint rows: " << result.numConstraintRows << " (periodic " << result.numPeriodicRows << "), difference " << result.constraint << "\n"
               << "residual without and with Jacobian: " << result.residualOnly << std::endl;
 
-    if (result.numCompared == 0 || result.numConstraintRows == 0 || result.constraint > 1e-12 || result.residual > 1e-10 || result.jacobian > 1e-5 || result.residualOnly > 1e-12)
+    if (result.numCompared == 0 || result.numConstraintRows == 0 || result.numPeriodicRows != numPeriodicRows || result.constraint > 1e-12 || result.residual > 1e-10 || result.jacobian > 1e-5 || result.residualOnly > 1e-12)
     {
         std::cerr << "The weighted assembly differs from the instationary assembly" << std::endl;
         return 1;

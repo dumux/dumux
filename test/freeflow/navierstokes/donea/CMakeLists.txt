@@ -45,6 +45,14 @@ dumux_add_test(NAME test_ff_stokes_donea_momentum_weightedassembly
                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_weightedassembly
                CMD_ARGS params_weightedassembly.input)
 
+# degrees of freedom identified as periodic in the assembled linear system only
+dumux_add_test(NAME test_ff_stokes_donea_momentum_weightedassembly_periodicdofmap
+               LABELS freeflow navierstokes donea
+               SOURCES test_weightedassembly.cc
+               COMPILE_DEFINITIONS PERIODIC_DOF_MAP=1
+               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_momentum_weightedassembly_periodicdofmap
+               CMD_ARGS params_weightedassembly.input)
+
 dumux_add_test(NAME test_ff_stokes_donea_momentum_parallel
                LABELS freeflow navierstokes donea
                TARGET test_ff_stokes_donea_momentum

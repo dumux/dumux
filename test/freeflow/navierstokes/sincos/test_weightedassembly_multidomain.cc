@@ -32,6 +32,24 @@
 
 #include <test/assembly/weightedassembly_multidomain.hh>
 
+#if PERIODIC_DOF_MAP
+#include <test/assembly/periodicdofmap.hh>
+
+// declared before the properties of the test, which use the grid geometry property
+namespace Dumux::Properties {
+
+namespace TTag {
+struct TYPETAG_MOMENTUM;
+struct FaceCenteredStaggeredModel;
+} // end namespace TTag
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::TYPETAG_MOMENTUM>
+{ using type = Dumux::Test::GridGeometryWithPeriodicDofMap<typename GridGeometry<TypeTag, TTag::FaceCenteredStaggeredModel>::type>; };
+
+} // end namespace Dumux::Properties
+#endif
+
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -55,6 +73,11 @@ int main(int argc, char** argv)
     const auto& leafGridView = gridManager.grid().leafGridView();
     auto momentumGridGeometry = std::make_shared<GetPropType<MomentumTypeTag, Properties::GridGeometry>>(leafGridView);
     auto massGridGeometry = std::make_shared<GetPropType<MassTypeTag, Properties::GridGeometry>>(leafGridView);
+#if PERIODIC_DOF_MAP
+    const std::size_t numPeriodicRows = Test::addInteriorPeriodicDofs(*momentumGridGeometry);
+#else
+    const std::size_t numPeriodicRows = 0;
+#endif
 
     auto couplingManager = std::make_shared<CouplingManager>();
     auto momentumProblem = std::make_shared<GetPropType<MomentumTypeTag, Properties::Problem>>(momentumGridGeometry, couplingManager);
@@ -110,9 +133,9 @@ int main(int argc, char** argv)
               << "residual difference: " << result.residual << "\n"
               << "Jacobian difference: " << result.jacobian << "\n"
               << "coupling block difference: " << result.coupling << " (" << result.numCouplingEntries << " nonzero entries)\n"
-              << "constraint rows: " << result.numConstraintRows << ", difference " << result.constraint << std::endl;
+              << "constraint rows: " << result.numConstraintRows << " (periodic " << result.numPeriodicRows << "), difference " << result.constraint << std::endl;
 
-    if (result.numCompared == 0 || result.numConstraintRows == 0 || result.numCouplingEntries == 0
+    if (result.numCompared == 0 || result.numConstraintRows == 0 || result.numCouplingEntries == 0 || result.numPeriodicRows != numPeriodicRows
         || result.constraint > 1e-12 || result.residual > 1e-10 || result.jacobian > 1e-6)
     {
         std::cerr << "The weighted assembly differs from the instationary assembly" << std::endl;

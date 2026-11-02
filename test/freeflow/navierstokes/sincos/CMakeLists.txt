@@ -271,3 +271,21 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_weightedassembly_fcstaggered
                        -Problem.IsStationary false
                        -Problem.EnableInertiaTerms false
                        -Component.LiquidKinematicViscosity 0.001)
+
+# degrees of freedom identified as periodic in the assembled linear system only
+dumux_add_test(NAME test_ff_navierstokes_sincos_weightedassembly_fcstaggered_periodicdofmap
+              SOURCES test_weightedassembly_multidomain.cc
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS TYPETAG_MOMENTUM=SincosTestMomentum
+              COMPILE_DEFINITIONS TYPETAG_MASS=SincosTestMass
+              COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=0
+              COMPILE_DEFINITIONS PERIODIC_DOF_MAP=1
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_weightedassembly_fcstaggered_periodicdofmap
+              CMD_ARGS params.input
+                       -Grid.UpperRight "1 1"
+                       -Grid.Cells "4 4"
+                       -Problem.Name test_ff_navierstokes_sincos_weightedassembly_fcstaggered_periodicdofmap
+                       -Problem.IsStationary false
+                       -Problem.EnableInertiaTerms false
+                       -Component.LiquidKinematicViscosity 0.001)
