@@ -13,6 +13,7 @@
 #define DUMUX_RANS_ZEROEQ_PROBLEM_HH
 
 #include <cmath>
+#include <limits>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -33,7 +34,8 @@ namespace Dumux {
  * velocity component and the distance to the nearest wall, following Prandtl's
  * mixing-length hypothesis with an optional Van Driest near-wall damping correction
  * - matching the exact formula used by releases/3.10:dumux/freeflow/rans/zeroeq/volumevariables.hh
- * (velGrad = |velocityGradients()[flowDirectionAxis][wallNormalAxis]|).
+ * (velGrad = |velocityGradients()[flowDirectionAxis][wallNormalAxis]|). The Baldwin-Lomax
+ * two-layer model of releases/3.10 is available as RANS.EddyViscosityModel = baldwinLomax.
  *
  * Wall distance and the velocity gradients are taken from Dumux::RANSMomentumProblem, i.e.
  * with the same (releases/3.10) reconstruction as every other RANS closure. The axes are fixed,
@@ -98,6 +100,14 @@ public:
         const std::string eddyViscosityModel = getParamFromGroup<std::string>(this->paramGroup(), "RANS.EddyViscosityModel", "vanDriest");
         const auto flowAxis = this->flowDirectionAxis();
         const auto wallAxis = this->wallNormalAxis();
+
+        if (eddyViscosityModel == "baldwinLomax")
+        {
+            const auto kinematicEddyViscosity = baldwinLomaxKinematicEddyViscosity_();
+            for (std::size_t eIdx = 0; eIdx < eddyViscosity_.size(); ++eIdx)
+                eddyViscosity_[eIdx] = this->storedDensity(eIdx)*kinematicEddyViscosity[eIdx];
+            return;
+        }
 
         for (std::size_t eIdx = 0; eIdx < eddyViscosity_.size(); ++eIdx)
         {
@@ -170,9 +180,95 @@ private:
         else if (model == "vanDriest")
             mixingLength *= (1.0 - exp(-yPlus/26.0)) / sqrt(1.0 - exp(-0.26*yPlus));
         else
-            DUNE_THROW(Dune::NotImplemented, "RANS.EddyViscosityModel " << model << " (use \"none\", \"prandtl\" or \"vanDriest\")");
+            DUNE_THROW(Dune::NotImplemented, "RANS.EddyViscosityModel " << model << " (use \"none\", \"prandtl\", \"vanDriest\" or \"baldwinLomax\")");
 
         return mixingLength*mixingLength*velocityGradient;
+    }
+
+    //! The Baldwin-Lomax two-layer closure, per wall-normal column, ported from
+    //! releases/3.10:dumux/freeflow/rans/zeroeq/problem.hh (updateBaldwinLomaxProperties()).
+    //! An inner (Van Driest-damped mixing length times vorticity) and an outer (wake/Klebanoff)
+    //! kinematic eddy viscosity are evaluated; the inner one is used up to the first wall distance
+    //! at which the two cross, the outer one beyond. Without roughness (not supported here).
+    std::vector<Scalar> baldwinLomaxKinematicEddyViscosity_() const
+    {
+        using std::abs;
+        using std::exp;
+        using std::min;
+        using std::pow;
+        using std::sqrt;
+
+        const Scalar aPlus = 26.0;
+        const Scalar k = 0.0168;
+        const Scalar cCP = 1.6;
+        const Scalar cWake = 0.25;
+        const Scalar cKleb = 0.3;
+
+        const auto numElements = eddyViscosity_.size();
+        const auto flowAxis = this->flowDirectionAxis();
+        const auto wallAxis = this->wallNormalAxis();
+
+        std::vector<Scalar> inner(numElements, 0.0);
+        std::vector<Scalar> outer(numElements, 0.0);
+        std::vector<Scalar> difference(numElements, 0.0);
+        std::vector<Scalar> switchingPosition(numElements, std::numeric_limits<Scalar>::max());
+        std::vector<Scalar> storedFMax(numElements, 0.0);
+        std::vector<Scalar> storedYFMax(numElements, 0.0);
+
+        // (1) inner viscosity and the Klebanoff function maximum per column
+        for (std::size_t eIdx = 0; eIdx < numElements; ++eIdx)
+        {
+            const auto wallEIdx = this->wallElementIndex(eIdx);
+            const Scalar y = this->wallDistance(eIdx);
+            const Scalar omegaAbs = abs(this->velocityGradient(eIdx, flowAxis, wallAxis)
+                                        - this->velocityGradient(eIdx, wallAxis, flowAxis));
+            const Scalar uStar = sqrt(this->kinematicViscosity(wallEIdx)
+                                      * abs(this->velocityGradient(wallEIdx, flowAxis, wallAxis)));
+            const Scalar yPlus = y*uStar/this->kinematicViscosity(eIdx);
+            const Scalar mixingLength = this->karmanConstant()*y*(1.0 - exp(-yPlus/aPlus));
+            inner[eIdx] = mixingLength*mixingLength*omegaAbs;
+
+            const Scalar f = y*omegaAbs*(1.0 - exp(-yPlus/aPlus));
+            if (f > storedFMax[wallEIdx])
+            {
+                storedFMax[wallEIdx] = f;
+                storedYFMax[wallEIdx] = y;
+            }
+        }
+
+        // (2) outer viscosity
+        for (std::size_t eIdx = 0; eIdx < numElements; ++eIdx)
+        {
+            const auto wallEIdx = this->wallElementIndex(eIdx);
+            const Scalar y = this->wallDistance(eIdx);
+
+            const auto velocityMaximum = this->velocityMaximum(eIdx);
+            const auto velocityMinimum = this->velocityMinimum(eIdx);
+            const Scalar deltaU = sqrt(velocityMaximum.two_norm2()) - sqrt(velocityMinimum.two_norm2());
+            const Scalar yFMax = storedYFMax[wallEIdx];
+            const Scalar fMax = storedFMax[wallEIdx];
+            const Scalar fWake = min(yFMax*fMax, cWake*yFMax*deltaU*deltaU/fMax);
+            const Scalar fKleb = 1.0/(1.0 + 5.5*pow(cKleb*y/yFMax, 6));
+            outer[eIdx] = k*cCP*fWake*fKleb;
+            difference[eIdx] = inner[eIdx] - outer[eIdx];
+        }
+
+        // (3) switching position: closest wall distance at which the sign of the difference
+        //     differs from the one of the wall-adjacent element
+        for (std::size_t eIdx = 0; eIdx < numElements; ++eIdx)
+        {
+            const auto wallEIdx = this->wallElementIndex(eIdx);
+            const Scalar y = this->wallDistance(eIdx);
+            if (difference[wallEIdx]*difference[eIdx] < 0.0 && switchingPosition[wallEIdx] > y)
+                switchingPosition[wallEIdx] = y;
+        }
+
+        // (4) inner viscosity up to the switching position, outer one beyond
+        std::vector<Scalar> kinematicEddyViscosity(numElements);
+        for (std::size_t eIdx = 0; eIdx < numElements; ++eIdx)
+            kinematicEddyViscosity[eIdx] = this->wallDistance(eIdx) >= switchingPosition[this->wallElementIndex(eIdx)]
+                                           ? outer[eIdx] : inner[eIdx];
+        return kinematicEddyViscosity;
     }
 
     std::vector<Scalar> eddyViscosity_;
