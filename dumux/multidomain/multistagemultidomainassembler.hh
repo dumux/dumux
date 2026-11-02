@@ -42,6 +42,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/assembly/periodicconstraints.hh>
 #include <dumux/parallel/multithreading.hh>
 
 #include <dumux/multidomain/couplingjacobianpattern.hh>
@@ -227,6 +228,7 @@ public:
                         (*residual_)[domainId][i][ii] += constrainedDofs_[domainId][i][ii] > 0.5 ? 0.0 : constant[i][ii];
             }
 
+            enforcePeriodicConstraints_(domainId, jacRow, (*residual_)[domainId], curSol[domainId]);
             enforceProblemConstraints_(domainId, (*jacobian_)[domainId], (*residual_)[domainId], curSol[domainId]);
         });
     }
@@ -518,6 +520,19 @@ private:
 
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
+    }
+
+    //! Merge the equations of the periodic degrees of freedom of domain i (also in the coupling blocks)
+    template<std::size_t i, class JacRow, class Res, class Sol>
+    void enforcePeriodicConstraints_(Dune::index_constant<i> domainI, JacRow& jacRow, Res& res, const Sol& curSol) const
+    {
+        const auto& gridGeometry = gridDiscretization(domainI);
+        Dumux::Detail::PeriodicConstraints::enforceInResidual(gridGeometry, res, curSol);
+        Dumux::Detail::PeriodicConstraints::enforceInJacobian(gridGeometry, jacRow[domainI]);
+
+        using namespace Dune::Hybrid;
+        forEach(makeIncompleteIntegerSequence<JacobianMatrix::N(), domainI>(), [&](const auto domainJ)
+        { Dumux::Detail::PeriodicConstraints::enforceInCouplingJacobian(gridGeometry, jacRow[domainJ]); });
     }
 
     //! Let the local assemblers enforce the constraints belonging to the elements of domain i (e.g. Dirichlet boundary conditions)

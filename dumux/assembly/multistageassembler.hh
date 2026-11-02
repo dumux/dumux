@@ -31,6 +31,7 @@
 #include <dumux/assembly/coloring.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/periodicconstraints.hh>
 #include <dumux/assembly/assembler.hh>
 #include <dumux/common/concepts/variables_.hh>
 
@@ -185,6 +186,8 @@ public:
 
         enforceElementConstraints_(curSol, jacobian_.get());
         addConstant_();
+        Dumux::Detail::PeriodicConstraints::enforceInResidual(gridGeometry(), *residual_, curSol);
+        Dumux::Detail::PeriodicConstraints::enforceInJacobian(gridGeometry(), *jacobian_);
         applyDirichletConstraints_(curSol);
     }
 
@@ -210,6 +213,7 @@ public:
 
         enforceElementConstraints_(curSol, nullptr);
         addConstant_();
+        Dumux::Detail::PeriodicConstraints::enforceInResidual(gridGeometry(), *residual_, curSol);
         applyDirichletResidual_(curSol);
     }
 

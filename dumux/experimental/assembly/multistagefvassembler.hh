@@ -32,6 +32,7 @@
 #include <dumux/assembly/coloring.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/periodicconstraints.hh>
 
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
@@ -171,6 +172,9 @@ public:
                 for (std::size_t ii = 0; ii < constant[i].size(); ++ii)
                     (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constant[i][ii];
         }
+
+        Dumux::Detail::PeriodicConstraints::enforceInResidual(gridGeometry(), *residual_, curSol);
+        Dumux::Detail::PeriodicConstraints::enforceInJacobian(gridGeometry(), *jacobian_);
     }
 
     //! compute the residuals using the internal residual

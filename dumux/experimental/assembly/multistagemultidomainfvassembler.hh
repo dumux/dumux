@@ -32,6 +32,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/jacobianpattern.hh>
+#include <dumux/assembly/periodicconstraints.hh>
 #include <dumux/linear/parallelhelpers.hh>
 #include <dumux/parallel/multithreading.hh>
 
@@ -191,6 +192,12 @@ public:
                     for (std::size_t ii = 0; ii < constant[i].size(); ++ii)
                         (*residual_)[domainId][i][ii] += constrainedDofs_[domainId][i][ii] > 0.5 ? 0.0 : constant[i][ii];
             }
+
+            const auto& gridGeometry = this->gridGeometry(domainId);
+            Dumux::Detail::PeriodicConstraints::enforceInResidual(gridGeometry, (*residual_)[domainId], curSol[domainId]);
+            Dumux::Detail::PeriodicConstraints::enforceInJacobian(gridGeometry, jacRow[domainId]);
+            forEach(makeIncompleteIntegerSequence<JacobianMatrix::N(), domainId>(), [&](const auto domainJ)
+            { Dumux::Detail::PeriodicConstraints::enforceInCouplingJacobian(gridGeometry, jacRow[domainJ]); });
         });
     }
 
@@ -257,6 +264,8 @@ public:
                         });
                 });
             }
+
+            Dumux::Detail::PeriodicConstraints::enforceInResidual(this->gridGeometry(domainId), residual, curSol[domainId]);
         });
     }
 
