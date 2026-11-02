@@ -12,6 +12,7 @@
 #ifndef DUMUX_RANS_COMMON_MOMENTUM_PROBLEM_HH
 #define DUMUX_RANS_COMMON_MOMENTUM_PROBLEM_HH
 
+#include <limits>
 #include <vector>
 #include <array>
 #include <cmath>
@@ -159,6 +160,23 @@ public:
             }
         }
 
+        // Per wall-normal column: the cell-center velocity with the largest and smallest magnitude
+        // per axis, as in releases/3.10's calculateMaxMinVelocities_() for flat-wall-bounded
+        // channels (profile perpendicular to the wall), keyed by the wall-adjacent element.
+        velocityMaximum_.assign(numElements, DimVector(1e-16));
+        velocityMinimum_.assign(numElements, DimVector(std::numeric_limits<Scalar>::max()));
+        for (std::size_t eIdx = 0; eIdx < numElements; ++eIdx)
+        {
+            const auto wallEIdx = wallElementIdx_[eIdx];
+            for (int axisIdx = 0; axisIdx < dim; ++axisIdx)
+            {
+                if (std::abs(ccVelocity[eIdx][axisIdx]) > std::abs(velocityMaximum_[wallEIdx][axisIdx]))
+                    velocityMaximum_[wallEIdx][axisIdx] = ccVelocity[eIdx][axisIdx];
+                if (std::abs(ccVelocity[eIdx][axisIdx]) < std::abs(velocityMinimum_[wallEIdx][axisIdx]))
+                    velocityMinimum_[wallEIdx][axisIdx] = ccVelocity[eIdx][axisIdx];
+            }
+        }
+
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             const auto eIdx = gridGeometry.elementMapper().index(element);
@@ -286,6 +304,15 @@ public:
     Scalar stressTensorScalarProduct(std::size_t eIdx) const
     { return stressTensorScalarProduct_[eIdx]; }
 
+    //! The cell-center velocity of largest magnitude in the wall-normal column of the element
+    //! (per axis, signed) - used by the Baldwin-Lomax model for the velocity difference across the column.
+    DimVector velocityMaximum(std::size_t eIdx) const
+    { return velocityMaximum_[wallElementIdx_[eIdx]]; }
+
+    //! The cell-center velocity of smallest magnitude in the wall-normal column of the element.
+    DimVector velocityMinimum(std::size_t eIdx) const
+    { return velocityMinimum_[wallElementIdx_[eIdx]]; }
+
     //! \note Returns 0 while the stored density is still zero (set by updateStaticWallProperties()
     //! and only filled by the first updateDynamicWallProperties()), to avoid a 0.0/0.0 NaN being
     //! cached in the volume variables of the initial time.
@@ -361,6 +388,8 @@ private:
     std::vector<DimMatrix> velocityGradientTensor_;
     std::vector<Scalar> vorticityTensorScalarProduct_;
     std::vector<Scalar> stressTensorScalarProduct_;
+    std::vector<DimVector> velocityMaximum_;
+    std::vector<DimVector> velocityMinimum_;
     std::vector<Scalar> storedDensity_;
     std::vector<Scalar> storedViscosity_;
 };
