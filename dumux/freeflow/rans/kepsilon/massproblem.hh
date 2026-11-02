@@ -176,6 +176,34 @@ public:
         return pow(cMu(), 0.25)*sqrt(storedTurbulentKineticEnergy(matchingPointIndex));
     }
 
+    //! \brief The energy wall-function flux (outward positive) at the wall face of a matching-point
+    //!        cell, ported from releases/3.10's wallFunctionEnergy(): a log-law temperature profile
+    //!        with the Jayatilleke P-function, replacing the usual conductive wall flux there.
+    template<class VolumeVariables>
+    Scalar wallFunctionEnergyFlux(std::size_t eIdx, const VolumeVariables& volVars, Scalar wallTemperature) const
+    {
+        using std::log;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        static const Scalar turbulentPrandtlNumber = getParamFromGroup<Scalar>(this->paramGroup(), "RANS.TurbulentPrandtlNumber", 1.0);
+
+        const Scalar heatCapacity = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        const Scalar prandtlNumber = volVars.viscosity()*heatCapacity/volVars.fluidThermalConductivity();
+
+        return -1.0*(wallTemperature - volVars.temperature())
+               * volVars.density()*heatCapacity*uStarNominal(eIdx)/turbulentPrandtlNumber
+               / (1.0/karmanConstant()*log(yPlusNominal(eIdx)*9.793) + pFunction(prandtlNumber, turbulentPrandtlNumber));
+    }
+
+    //! \brief The P-function after Jayatilleke (Versteeg2009a), correcting the log law for a molecular
+    //!        Prandtl number different from the turbulent one.
+    Scalar pFunction(Scalar molecularNumber, Scalar turbulentNumber) const
+    {
+        using std::pow;
+        using std::exp;
+        return 9.24*(pow(molecularNumber/turbulentNumber, 0.75) - 1.0)
+                   *(1.0 + 0.28*exp(-0.007*molecularNumber/turbulentNumber));
+    }
+
     //! \brief The dissipation wall-function value (log-law).
     Scalar dissipationWallFunction(std::size_t eIdx) const
     {
