@@ -17,7 +17,7 @@ EnableInertiaTerms = true
 EnableGravity = false
 
 [RANS]
-EddyViscosityModel = vanDriest
+EddyViscosityModel = baldwinLomax
 WallNormalAxis = 1
 
 [Newton]
