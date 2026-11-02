@@ -178,11 +178,20 @@ public:
         }
     }
 
-    //! Adds the (spatially constant per element, precomputed) eddy viscosity to the molecular one.
+    //! Adds the (constant per element, precomputed) eddy viscosity to the molecular one.
+    //! On interior faces the inside and outside values are averaged, exactly like the molecular
+    //! viscosity is in the coupling manager: otherwise the two staggered half-cells sharing a
+    //! lateral face would see different viscosities, so the shear flux leaving one would not
+    //! equal the one entering the other (a spurious body force where the eddy viscosity varies).
     Scalar effectiveViscosity(const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf) const
-    { return ParentType::effectiveViscosity(element, fvGeometry, scvf) + dynamicEddyViscosity_(fvGeometry.elementIndex()); }
+    {
+        Scalar eddyViscosity = dynamicEddyViscosity_(fvGeometry.scv(scvf.insideScvIdx()).elementIndex());
+        if (!scvf.boundary())
+            eddyViscosity = 0.5*(eddyViscosity + dynamicEddyViscosity_(fvGeometry.scv(scvf.outsideScvIdx()).elementIndex()));
+        return ParentType::effectiveViscosity(element, fvGeometry, scvf) + eddyViscosity;
+    }
 
     //! \copydoc effectiveViscosity(const Element&,const FVElementGeometry&,const SubControlVolumeFace&) const
     Scalar effectiveViscosity(const Element& element,
