@@ -204,8 +204,7 @@ private:
         storage_.resize(numStages);
         spatial_.resize(numStages);
 
-        assembler.assembleOperators(vars, TimeLevel<Scalar>{t, t, msMethod_->timeStepWeight(0)},
-                                    {.storage = &storage_[0], .spatial = &spatial_[0]});
+        assembleOperatorsOfLaterStages_(vars, 0, TimeLevel<Scalar>{t, t, msMethod_->timeStepWeight(0)});
 
         for (std::size_t stageIdx = 1; stageIdx <= numStages; ++stageIdx)
         {
@@ -234,11 +233,28 @@ private:
                 return false;
 
             if (stageIdx < numStages)
-                assembler.assembleOperators(vars, timeLevel,
-                                            {.storage = &storage_[stageIdx], .spatial = &spatial_[stageIdx]});
+                assembleOperatorsOfLaterStages_(vars, stageIdx, timeLevel);
         }
 
         return true;
+    }
+
+    //! Evaluate the operators at the solution of stage k that enter the residuals of the later stages
+    void assembleOperatorsOfLaterStages_(Variables& vars, const std::size_t k, const TimeLevel<Scalar>& timeLevel)
+    {
+        bool storage = false, spatial = false;
+        for (std::size_t i = k + 1; i <= msMethod_->numStages(); ++i)
+        {
+            const StageParams params(*msMethod_, i, timeLevel.previous(), 1.0);
+            storage = storage || !params.skipTemporal(k);
+            spatial = spatial || !params.skipSpatial(k);
+        }
+
+        if (storage || spatial)
+            pdeSolver_->assembler().assembleOperators(vars, timeLevel, {
+                .storage = storage ? &storage_[k] : nullptr,
+                .spatial = spatial ? &spatial_[k] : nullptr
+            });
     }
 
     static constexpr bool assemblerHasInertia_()

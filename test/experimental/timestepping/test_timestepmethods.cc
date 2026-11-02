@@ -249,6 +249,27 @@ int main(int argc, char* argv[])
     testObservedOrder(dirk4, 4);
     testObservedOrder(qinZhang, 2);
 
+    // the stepper evaluates the operators of a stage only if they enter the residual of a later stage
+    const auto testOperatorEvaluations = [&] (const auto& method, std::size_t numStorage, std::size_t numSpatial)
+    {
+        auto countingAssembler = std::make_shared<Assembler>();
+        auto countingNewtonSolver = std::make_shared<NewtonSolver>(countingAssembler, linearSolver);
+        Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(countingNewtonSolver, method);
+        SolutionVector x = 0.0;
+        Variables vars(x);
+        timeStepper.step(vars, 0.0, 0.01);
+        std::cout << method->name() << ": " << countingAssembler->numStorageEvaluations() << " storage and "
+                  << countingAssembler->numSpatialEvaluations() << " spatial operator evaluations per step" << std::endl;
+        if (countingAssembler->numStorageEvaluations() != numStorage || countingAssembler->numSpatialEvaluations() != numSpatial)
+            DUNE_THROW(Dune::InvalidStateException, "Unexpected operator evaluations for " + method->name());
+    };
+
+    testOperatorEvaluations(implicitEuler, 1, 0);
+    testOperatorEvaluations(explicitEuler, 1, 1);
+    testOperatorEvaluations(crankNicolson, 1, 1);
+    testOperatorEvaluations(rk4, 1, 4);
+    testOperatorEvaluations(dirk2, 1, 1);
+
     // --- convergence sweep: error vs. step size for all methods, written to JSON for plotting ---
     // Use a second test equation, du/dt = -u + exp(t), u(0) = 0, with exact solution u(t) = sinh(t).
     // Unlike du/dt = exp(t) above, this right-hand side depends on u, so the methods no longer

@@ -14,6 +14,7 @@
 #define DUMUX_TEST_TIMESTEPPING_SCALAR_ASSEMBLER_HH
 
 #include <cmath>
+#include <cstddef>
 #include <optional>
 
 #include <dune/common/exceptions.hh>
@@ -71,10 +72,24 @@ public:
     {
         vars.updateTime(timeLevel);
         if (evaluations.storage)
+        {
             *evaluations.storage = storage_(vars);
+            ++numStorageEvaluations_;
+        }
         if (evaluations.spatial)
+        {
             *evaluations.spatial = spatial_(vars);
+            ++numSpatialEvaluations_;
+        }
     }
+
+    //! The number of evaluations of the storage operator by assembleOperators
+    std::size_t numStorageEvaluations() const
+    { return numStorageEvaluations_; }
+
+    //! The number of evaluations of the spatial operator by assembleOperators
+    std::size_t numSpatialEvaluations() const
+    { return numSpatialEvaluations_; }
 
 private:
     Scalar storage_(const Variables& vars) const
@@ -87,6 +102,8 @@ private:
     }
 
     Scalar lambda_;
+    std::size_t numStorageEvaluations_ = 0;
+    std::size_t numSpatialEvaluations_ = 0;
     ResidualType res_;
     JacobianMatrix jac_;
     std::optional<SolveParams> params_;
