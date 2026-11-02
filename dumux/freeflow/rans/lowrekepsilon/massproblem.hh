@@ -28,26 +28,16 @@ namespace Dumux {
  *        wallDistance()/stressTensorScalarProduct()/kinematicViscosity()/yPlus() forwarding
  *        used by Dumux::LowReKEpsilonMassVolumeVariables.
  *
- * Unlike the wall-function k-epsilon model (dumux/freeflow/rans/kepsilon/massproblem.hh), this
- * model needs no near-wall-region/matching-point bookkeeping, no internal Dirichlet constraints,
- * and no per-time-step mass-side update at all: k and epsilon-tilde are solved by their ordinary
- * transport PDE all the way to the wall, with a plain (boundary-face) Dirichlet condition k=0,
- * epsilon-tilde=0 there (see the test problem), and the eddy viscosity is always evaluated live
- * from the current Newton iterate (releases/3.10's optional RANS.UseStoredEddyViscosity lagging
- * opt-out is not ported, the same simplification already made for the one-equation and k-omega
- * models). \c yPlus(eIdx) is computed the same way k-epsilon's *local* (non-matching-point) y+
- * already is - from the wall-adjacent element's velocity gradient, via
- * Dumux::RANSMomentumProblem's existing wallElementIndex()/velocityGradient()/
- * wallNormalAxis()/flowDirectionAxis() accessors - no new momentum-side bookkeeping is needed.
+ * k and epsilon-tilde are solved by their transport equations all the way to the wall, with
+ * Dirichlet conditions k=0, epsilon-tilde=0 on the wall faces, so no near-wall-region or
+ * matching-point bookkeeping and no internal Dirichlet constraints are needed (in contrast to
+ * the wall-function model in dumux/freeflow/rans/kepsilon/massproblem.hh). The eddy viscosity is
+ * evaluated from the current Newton iterate. \c yPlus(eIdx) is computed from the velocity
+ * gradient of the wall-adjacent element, using the wallElementIndex()/velocityGradient()/
+ * wallNormalAxis()/flowDirectionAxis() accessors of Dumux::RANSMomentumProblem.
  *
  * \tparam TypeTag The mass sub-model's TypeTag.
- * \tparam MomentumProblem The concrete momentum problem type (a Dumux::LowReKEpsilonMomentumProblem),
- *         explicit template parameter, exactly as for Dumux::KOmegaMassProblem.
- *
- * Ported from the deleted releases/3.10:dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh
- * (RANSProblemImpl<TypeTag, TurbulenceModel::lowrekepsilon>) and, for the wall condition,
- * releases/3.10:test/freeflow/rans/problem.hh (which has no lowrekepsilon-specific branch at
- * all - plain face Dirichlet BCs are used, confirmed this session).
+ * \tparam MomentumProblem The concrete momentum problem type (a Dumux::LowReKEpsilonMomentumProblem).
  */
 template<class TypeTag, class MomentumProblem>
 class LowReKEpsilonMassProblem : public NavierStokesMassProblem<TypeTag>
@@ -78,24 +68,17 @@ public:
     Scalar stressTensorScalarProduct(std::size_t eIdx) const
     { return momentumProblem_->stressTensorScalarProduct(eIdx); }
 
-    //! \note Guarded against the transient 0.0/0.0 that RANSMomentumProblem's stored molecular
-    //! density/viscosity briefly evaluate to between updateStaticWallProperties() (which only
-    //! zero-initializes them) and the first call to updateDynamicWallProperties() (which
-    //! populates them from a real solution) - this window is exercised once, when
-    //! GridVariables::init() eagerly caches the t=0 volume variables in main.cc, before the
-    //! time loop's first updateDynamicWallProperties() call. Returning 0.0 there (rather than
-    //! NaN) keeps that transient state numerically harmless; it is never read by any solved
-    //! time step.
+    //! \note Returns 0.0 as long as the stored density of RANSMomentumProblem is zero, i.e. before
+    //! the first call to updateDynamicWallProperties(), to avoid a division by zero (NaN) when
+    //! the volume variables are first cached.
     Scalar kinematicViscosity(std::size_t eIdx) const
     {
         const auto density = momentumProblem_->storedDensity(eIdx);
         return density > 0.0 ? momentumProblem_->kinematicViscosity(eIdx) : 0.0;
     }
 
-    //! The wall unit y+ = y*uStar/nu, with uStar computed from the wall-adjacent element's
-    //! velocity gradient - the same local (not matching-point-based) formula used by the
-    //! wall-function k-epsilon model's yPlus(), reusing the momentum problem's already-existing
-    //! flat-wall-bounded bookkeeping.
+    //! The wall unit y+ = y*uStar/nu, with uStar computed from the velocity gradient of the
+    //! wall-adjacent element.
     Scalar yPlus(std::size_t eIdx) const
     {
         using std::abs;
@@ -113,10 +96,7 @@ public:
     }
 
     /*!
-     * \brief The low-Reynolds k-epsilon production/destruction/damping-function source term,
-     *        ported from releases/3.10:dumux/freeflow/rans/twoeq/lowrekepsilon/staggered/
-     *        localresidual.hh's computeSourceForCellCenter(). Added through the standard
-     *        problem.source(...) extension point.
+     * \brief The low-Reynolds k-epsilon production/destruction/damping-function source term.
      */
     template<class ElementVolumeVariables>
     NumEqVector source(const Element& element,

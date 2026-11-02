@@ -36,13 +36,11 @@ namespace Dumux {
  *        problem.hasInternalDirichletConstraint()/internalDirichlet() extension point.
  *
  * \tparam TypeTag The mass sub-model's TypeTag.
- * \tparam MomentumProblem The concrete momentum problem type (a Dumux::KOmegaMomentumProblem),
- *         explicit template parameter, exactly as for Dumux::RANSMassOneEqProblem.
+ * \tparam MomentumProblem The concrete momentum problem type (a Dumux::KOmegaMomentumProblem)
  *
- * stressTensorScalarProduct() is *not* recomputed here - it is a frozen (lagged) value
- * computed once per time step by the momentum domain's Dumux::RANSMomentumProblem and
- * forwarded, read-only, through the stored momentum-problem pointer - the same lagging
- * strategy Dumux::RANSMassOneEqProblem already established.
+ * The stressTensorScalarProduct() is a lagged value, computed once per time step by the
+ * momentum domain's Dumux::RANSMomentumProblem and forwarded read-only through the stored
+ * momentum problem pointer.
  */
 template<class TypeTag, class MomentumProblem>
 class KOmegaMassProblem : public NavierStokesMassProblem<TypeTag>
@@ -69,10 +67,9 @@ public:
     template<class... Args>
     KOmegaMassProblem(Args&&... args)
     : ParentType(std::forward<Args>(args)...)
-    // k/omega gradients are read (KOmegaMassVolumeVariables::update()) as soon as the grid
-    // variables are first initialized in main.cc, before updateDynamicWallProperties() is ever
-    // called (once per time step, inside the time loop) - so this must be pre-sized here, to
-    // zero, exactly as for Dumux::RANSMassOneEqProblem's viscosityTildeGradient_.
+    // The gradient product is read by KOmegaMassVolumeVariables::update() when the grid
+    // variables are initialized, i.e. before updateDynamicWallProperties() is first called,
+    // so it is sized and zero-initialized here.
     , crossDiffusionGradientProduct_(this->gridGeometry().elementMapper().size(), 0.0)
     {}
 
@@ -89,21 +86,17 @@ public:
     Scalar storedCrossDiffusionGradientProduct(std::size_t eIdx) const
     { return crossDiffusionGradientProduct_[eIdx]; }
 
-    //! The von Karman constant and the beta_omega closure constant, needed for the wall
-    //! omega value below (kept here, not just in volumevariables.hh, since this method needs
-    //! it without a volVars object at hand).
+    //! The beta_omega closure constant, needed for the wall value of omega
+    //! where no volume variables are available.
     Scalar betaOmega() const
     { return 0.0708; }
 
     /*!
-     * \brief Updates the (lagged) k/omega gradients used by the cross-diffusion source term, via
-     *        a central difference over each element's two neighbors along every axis - reusing
-     *        the momentum domain's neighborIndex()/cellCenter() bookkeeping - reproducing
-     *        releases/3.10:dumux/freeflow/rans/twoeq/komega/problem.hh's own gradient
-     *        computation verbatim (a Green-Gauss reconstruction over CCTpfa's face/neighbor
-     *        connectivity was used here previously; it gives a shorter effective distance at
-     *        boundary-adjacent cells, see Dumux::SSTMassProblem for where that was found to
-     *        matter). Called once per time step from main.cc, before the next assembly.
+     * \brief Updates the (lagged) product of the k and omega gradients used by the
+     *        cross-diffusion source term. The gradients are computed by central differences
+     *        over the two neighboring cells along each axis, using the neighborIndex() and
+     *        cellCenter() of the momentum problem. To be called once per time step before the
+     *        next assembly.
      */
     template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& sol)
@@ -148,10 +141,7 @@ public:
     }
 
     /*!
-     * \brief The k-omega production/destruction/cross-diffusion source term, ported from
-     *        releases/3.10:dumux/freeflow/rans/twoeq/komega/staggered/localresidual.hh's
-     *        computeSourceForCellCenter(). Added through the standard problem.source(...)
-     *        extension point.
+     * \brief The k-omega production/destruction/cross-diffusion source term.
      */
     template<class ElementVolumeVariables>
     NumEqVector source(const Element& element,
@@ -178,9 +168,8 @@ public:
         return source;
     }
 
-    //! \name Wall-adjacent-cell analytical omega Dirichlet condition (an internal, not
-    //! boundary-face, constraint - see releases/3.10's isDirichletCell_/
-    //! dirichletTurbulentTwoEq_ komega branches).
+    //! \name Analytical omega Dirichlet condition in the wall-adjacent cells (an internal
+    //! constraint on the cell, not a boundary face condition).
     // \{
 
     static constexpr bool enableInternalDirichletConstraints()

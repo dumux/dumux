@@ -21,21 +21,18 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Mixin that adds the momentum-domain side of the one-equation (Spalart-Allmaras)
  *        RANS turbulence closure to a face-centered-staggered Navier-Stokes momentum
- *        problem: the wall-distance/velocity-gradient/vorticity bookkeeping inherited from
- *        Dumux::RANSMomentumProblem, plus forwarding the turbulent (eddy) viscosity - which
- *        is computed from the working viscosity ν̃ solved as an extra transport equation on
- *        the *mass* sub-model, see dumux/freeflow/rans/oneeq/volumevariables.hh - into
- *        effectiveViscosity(), analogous to how Dumux::ZeroEqProblem adds its own (purely
- *        algebraic, not transport-equation-based) eddy viscosity.
+ *        problem: the wall-distance, velocity-gradient and vorticity data inherited from
+ *        Dumux::RANSMomentumProblem, plus the turbulent (eddy) viscosity in
+ *        effectiveViscosity(). The eddy viscosity is computed from the working viscosity ν̃,
+ *        which is solved as an extra transport equation on the mass sub-model, see
+ *        dumux/freeflow/rans/oneeq/volumevariables.hh.
  *
- * Unlike the zero-equation model, the eddy viscosity here is read live (i.e. from the
- * *current* Newton iterate, not lagged) through the coupling manager's turbulentViscosity().
- * Only the production-term inputs (velocity gradients/vorticity, handled by the
- * RANSMomentumProblem base) are lagged; this feedback link is not.
+ * The eddy viscosity is read from the current Newton iterate through the coupling manager's
+ * turbulentViscosity(). Only the production-term inputs (velocity gradients and vorticity,
+ * provided by RANSMomentumProblem) are lagged.
  *
- * Usage: derive your test problem from this class instead of directly from
- * Dumux::NavierStokesMomentumProblem<TypeTag>/Dumux::RANSMomentumProblem<TypeTag>, exactly
- * like Dumux::ZeroEqProblem.
+ * Usage: derive the problem from this class instead of directly from
+ * Dumux::NavierStokesMomentumProblem<TypeTag> or Dumux::RANSMomentumProblem<TypeTag>.
  */
 template<class TypeTag>
 class OneEqMomentumProblem : public RANSMomentumProblem<TypeTag>
@@ -53,8 +50,8 @@ class OneEqMomentumProblem : public RANSMomentumProblem<TypeTag>
 public:
     using ParentType::ParentType;
 
-    //! Adds the (current-iterate) turbulent viscosity, read from the mass domain's ν̃-derived
-    //! eddy viscosity through the coupling manager, to the molecular one.
+    //! Adds the turbulent viscosity (derived from ν̃ on the mass domain and obtained
+    //! through the coupling manager) to the molecular one.
     Scalar effectiveViscosity(const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf) const

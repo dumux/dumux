@@ -18,10 +18,10 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief The indices for the one-equation (Spalart-Allmaras) turbulence closure, fused as a
- *        second transported equation onto the single-phase Navier-Stokes mass balance
- *        (pressure remains equation/index 0, exactly as in NavierStokesMassOnePIndices;
- *        the working viscosity ν̃ is equation/index 1).
+ * \brief The indices for the one-equation (Spalart-Allmaras) turbulence closure, which adds
+ *        a second transported equation to the single-phase Navier-Stokes mass balance.
+ *        The pressure keeps equation/index 0 as in NavierStokesMassOnePIndices, the
+ *        working viscosity ν̃ is equation/index 1.
  */
 struct OneEqMassIndices : public NavierStokesMassOnePIndices
 {

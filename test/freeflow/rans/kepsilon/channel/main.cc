@@ -80,22 +80,21 @@ int main(int argc, char** argv)
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
-    // wire the mass problem's turbulence closure to the momentum problem, so it can read the
-    // (lagged) wall-distance/stress-tensor/column bookkeeping computed there, see
-    // dumux/freeflow/rans/kepsilon/massproblem.hh
+    // the mass problem reads the wall distance, the stress tensor and the wall-normal column data from the momentum problem
+    // (see dumux/freeflow/rans/kepsilon/massproblem.hh)
     massProblem->setMomentumProblem(momentumProblem);
 
-    // wire the momentum problem's wall function to the mass problem's (lagged) matching-point
-    // classification/uStarNominal/yPlusNominal - plain type-erased callbacks, not routed through
-    // the coupling manager, see dumux/freeflow/rans/kepsilon/momentumproblem.hh for why.
+    // the wall function of the momentum problem queries the matching-point classification and the
+    // nominal friction velocity and y+ from the mass problem through callbacks
+    // (see dumux/freeflow/rans/kepsilon/momentumproblem.hh)
     momentumProblem->setWallFunctionQueries(
         [massProblem](std::size_t eIdx){ return massProblem->isMatchingPoint(eIdx); },
         [massProblem](std::size_t eIdx){ return massProblem->uStarNominal(eIdx); },
         [massProblem](std::size_t eIdx){ return massProblem->yPlusNominal(eIdx); }
     );
 
-    // get the time loop parameters: this test reaches a steady turbulent state via
-    // pseudo-transient continuation, exactly as the other RANS tests do.
+    // get the time loop parameters: the steady turbulent state is reached by
+    // pseudo-transient continuation (marching in time with growing time steps)
     using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -127,11 +126,9 @@ int main(int argc, char** argv)
     // initialize the coupling stencils
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
 
-    // Compute the (solution-independent) wall distances/column bookkeeping once, now that the
-    // problem is fully constructed - and crucially *before* massGridVariables->init() below,
-    // since that immediately triggers KEpsilonMassVolumeVariables::update() for every element,
-    // which reads momentum-domain data forwarded through the still-empty bookkeeping vectors if
-    // this were called after (see the one-equation test's main.cc for the same ordering bug/fix).
+    // The wall distances and the wall-normal column data do not depend on the solution and are
+    // computed once. This must happen before the grid variables are initialized, because
+    // KEpsilonMassVolumeVariables::update() reads them during initialization.
     momentumProblem->updateStaticWallProperties();
 
     // initializing the gridvariables requires the coupling manager to be set up
@@ -145,7 +142,7 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the instationary assembler (a TimeLoop and xOld are passed, unlike a stationary problem)
+    // the instationary assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(
         std::make_tuple(momentumProblem, massProblem),
@@ -165,13 +162,11 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // Update the momentum-side wall-distance/velocity-gradient/stress-tensor bookkeeping
-        // and the mass-side (lagged) matching-point/near-wall-region classification and blended
-        // eddy viscosity, once per time step, from the previous (converged) solution - the same
-        // Picard-in-time treatment already used for the one-equation and k-omega models. k and
-        // epsilon themselves remain fully implicit primary variables of the mass sub-model
-        // (except where the internal Dirichlet constraints pin them), solved by Newton like
-        // every other equation.
+        // The velocity gradient, the stress tensor, the matching-point and near-wall-region
+        // classification and the blended eddy viscosity are evaluated once per time step from
+        // the solution of the previous time step and kept fixed during the Newton solve.
+        // k and epsilon are primary variables and are solved for implicitly (except where
+        // internal Dirichlet constraints fix them).
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
         massProblem->updateDynamicWallProperties(x[massIdx]);
 

@@ -22,11 +22,8 @@ namespace Dumux {
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation, high-Reynolds-number wall-function k-epsilon turbulence closure for the
  *        turbulent kinetic energy k and the dissipation rate epsilon, fused as two extra
- *        equations on the mass sub-model rather than on a separate coupled sub-domain,
- *        following the same strategy already used for the one-equation and k-omega models.
+ *        equations on the mass sub-model.
  *
- * Closure constants/functions ported near-verbatim from the deleted
- * releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/volumevariables.hh.
  * stressTensorScalarProduct() is read from the problem (forwarded from the momentum domain's
  * Dumux::RANSMomentumProblem); inNearWallRegion()/isMatchingPoint()/yPlusNominal()/
  * uStarNominal() are read from the mass problem's own (lagged) per-time-step wall-function
@@ -63,8 +60,8 @@ public:
         else
             dynamicEddyViscosity_ = cMu()*turbulentKineticEnergy()*turbulentKineticEnergy()/dissipation()*this->density();
 
-        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs for why this must be done explicitly here rather than automatically.
+        // Nonisothermal only: the effective thermal conductivity includes the turbulent
+        // contribution, see dumux/freeflow/rans/common/thermalconductivitymodel.hh.
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
             this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }

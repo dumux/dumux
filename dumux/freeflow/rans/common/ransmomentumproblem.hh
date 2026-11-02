@@ -29,29 +29,20 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Mixin providing the momentum-side wall-distance/velocity-gradient/vorticity
- *        bookkeeping shared by transport-equation-based RANS turbulence closures
- *        (one-equation Spalart-Allmaras, and, in the future, two-equation models).
+ * \brief Mixin providing the momentum-side wall-distance, velocity-gradient and vorticity
+ *        data needed by the RANS turbulence closures.
  *
- * This provides the subset of wall-distance/near-wall bookkeeping the one- and two-equation
- * models actually need (no flat-wall-bounded y+/u+ bookkeeping). All quantities here are
- * computed explicitly from main.cc, once per time step (updateDynamicWallProperties), from
- * the *previous* converged solution - a deliberate, lagged/Picard-in-time treatment rather
- * than differentiating these terms through Newton.
+ * All quantities are computed explicitly from main.cc, once per time step
+ * (updateDynamicWallProperties), from the last converged solution. They are thus lagged in time
+ * and not differentiated within the Newton iteration.
  *
- * Velocity gradients are reconstructed by a cell-center-averaged central difference over each
- * element's two neighbors along the differentiated axis (releases/3.10's own
- * calculateCCVelocities_()/calculateCCVelocityGradients_() convention, reproduced verbatim -
- * including its Dirichlet-velocity-boundary handling, which differences the boundary value
- * against the next interior element rather than the boundary-adjacent element's own value),
- * rather than the generic FCStaggeredVelocityGradients helper: the latter's shorter effective
- * distance at boundary-adjacent cells was found to bias every model's near-wall turbulence
- * level, and for the low-Re k-epsilon closure to destabilize the wall-adjacent cell outright.
+ * Velocity gradients are reconstructed from cell-center-averaged velocities by a central
+ * difference over each element's two neighbors along the differentiated axis. At Dirichlet
+ * velocity boundaries the boundary value is differenced against the next interior element.
  *
- * Usage: derive your test problem from this class (or, more commonly, from a further mixin
- * like Dumux::OneEqMomentumProblem that itself extends this one), analogous to
- * Dumux::ZeroEqProblem. Two extension points must be implemented by the most derived problem
- * class: `isOnWall(scvf)`/`isOnWallAtPos(globalPos)`, exactly as for Dumux::ZeroEqProblem.
+ * Usage: derive the problem from this class (or from a further mixin like
+ * Dumux::OneEqMomentumProblem that itself extends this one). The most derived problem class
+ * must implement `isOnWall(scvf)` or `isOnWallAtPos(globalPos)`.
  */
 template<class TypeTag>
 class RANSMomentumProblem : public NavierStokesMomentumProblem<TypeTag>
@@ -113,10 +104,10 @@ public:
     }
 
     /*!
-     * \brief Updates the velocity gradient tensor, the vorticity tensor scalar product, and
-     *        the stored (molecular) density/viscosity at every element, from the given
-     *        (typically: the last converged) momentum solution. Called once per time step
-     *        from main.cc, before the next assembly - not re-evaluated within Newton.
+     * \brief Updates the velocity gradient tensor, the stress and vorticity tensor scalar
+     *        products, and the stored (molecular) density/viscosity at every element from the
+     *        given (typically the last converged) momentum solution. Called once per time step
+     *        before the next assembly, not within the Newton iteration.
      */
     template<class SolutionVector, class GridVariables>
     void updateDynamicWallProperties(const SolutionVector& sol, const GridVariables& gridVariables)
@@ -126,10 +117,8 @@ public:
         auto elemVolVars = localView(gridVariables.curGridVolVars());
         const auto numElements = gridGeometry.elementMapper().size();
 
-        // First pass: each element's own per-axis dof value and dof position - the latter only
-        // to determine, below, which side of the cell that dof sits on (needed to pair it with
-        // the correct neighbor when averaging). Everything here is read from the currently-bound
-        // element alone, no neighbor access required yet.
+        // First pass: each element's own per-axis dof value and dof position. The position
+        // determines on which side of the cell the dof sits, see the second pass.
         std::vector<DimVector> ownVelocity(numElements);
         std::vector<DimVector> ownDofPosition(numElements);
         for (const auto& element : elements(gridGeometry.gridView()))
@@ -144,10 +133,10 @@ public:
             }
         }
 
-        // Second pass: the cell-center-averaged velocity at every element, reproducing
-        // releases/3.10:dumux/freeflow/rans/problem.hh's calculateCCVelocities_() ("faces are
-        // equidistant to cell center"). This element's own dof sits on one side of the cell; the
-        // dof on the other side is the same-axis dof of the neighboring element on that side.
+        // Second pass: the cell-center velocity at every element as the average of the two
+        // face dofs of each axis (the faces are equidistant to the cell center). This element's
+        // own dof sits on one side of the cell; the dof on the other side is the same-axis dof
+        // of the neighboring element on that side.
         std::vector<DimVector> ccVelocity(numElements, DimVector(0.0));
         for (const auto& element : elements(gridGeometry.gridView()))
         {
@@ -161,8 +150,7 @@ public:
         }
 
         // Per wall-normal column: the cell-center velocity with the largest and smallest magnitude
-        // per axis, as in releases/3.10's calculateMaxMinVelocities_() for flat-wall-bounded
-        // channels (profile perpendicular to the wall), keyed by the wall-adjacent element.
+        // per axis, keyed by the wall-adjacent element.
         velocityMaximum_.assign(numElements, DimVector(1e-16));
         velocityMinimum_.assign(numElements, DimVector(std::numeric_limits<Scalar>::max()));
         for (std::size_t eIdx = 0; eIdx < numElements; ++eIdx)
@@ -183,9 +171,8 @@ public:
             fvGeometry.bind(element);
             elemVolVars.bind(element, fvGeometry, sol);
 
-            // Central-difference gradient over the *two* neighboring elements' cell-center
-            // velocities (skipping this element's own value entirely), reproducing
-            // releases/3.10:dumux/freeflow/rans/problem.hh's calculateCCVelocityGradients_().
+            // Central-difference gradient over the two neighboring elements' cell-center
+            // velocities (this element's own value is not used)
             DimMatrix gradV(0.0);
             for (int j = 0; j < dim; ++j)
             {
@@ -200,10 +187,8 @@ public:
                     gradV[i][j] = (ccVelocity[neighborIdx1][i] - ccVelocity[neighborIdx0][i])/distance;
             }
 
-            // At every Dirichlet-velocity boundary face (walls, and - on these axis-aligned
-            // channel meshes - the inlet too), releases/3.10 instead differenced the boundary
-            // value directly against the *next* interior element - one element further away
-            // than the central-difference stencil above would otherwise reach.
+            // At every Dirichlet-velocity boundary face the gradient is instead the difference
+            // between the next interior cell-center velocity and the boundary value
             for (const auto& scv : scvs(fvGeometry))
             {
                 for (const auto& scvf : scvfs(fvGeometry, scv))
@@ -250,8 +235,7 @@ public:
             const auto& scv = *scvs(fvGeometry).begin();
             storedDensity_[eIdx] = this->density(element, scv);
             // ParentType::effectiveViscosity() forwards to the coupling manager and returns
-            // the molecular (mass-domain) viscosity only - exactly the same trick
-            // Dumux::ZeroEqProblem already uses to obtain it without duplicating the lookup.
+            // the molecular (mass-domain) viscosity only
             storedViscosity_[eIdx] = ParentType::effectiveViscosity(element, fvGeometry, scv);
         }
     }
@@ -259,30 +243,25 @@ public:
     Scalar wallDistance(std::size_t eIdx) const
     { return wallDistance_[eIdx]; }
 
-    //! The element index of the wall-adjacent cell in eIdx's wall-normal column - needed by
-    //! two-equation wall-function models (k-epsilon); unused by zero-/one-equation/k-omega.
+    //! The element index of the wall-adjacent cell in the wall-normal column of element eIdx
     std::size_t wallElementIndex(std::size_t eIdx) const
     { return wallElementIdx_[eIdx]; }
 
-    //! The neighboring element index along the given axis/side (0 = "lower", 1 = "upper"),
-    //! ported from releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase - needed for
-    //! k-epsilon's per-column near-wall-region/matching-point search on structured,
-    //! axis-aligned (flat-wall-bounded) meshes.
+    //! The neighboring element index along the given axis/side (0 = "lower", 1 = "upper").
+    //! Only meaningful for structured, axis-aligned meshes.
     std::size_t neighborIndex(std::size_t eIdx, int axisIdx, int sideIdx) const
     { return neighborIdx_[eIdx][axisIdx][sideIdx]; }
 
     GlobalPosition cellCenter(std::size_t eIdx) const
     { return this->gridGeometry().element(eIdx).geometry().center(); }
 
-    //! One component of the full local velocity gradient tensor already reconstructed in
-    //! updateDynamicWallProperties() - needed by k-epsilon's zero-equation (Van Driest)
-    //! blended eddy viscosity, mirroring ZeroEqProblem's own gradient usage.
+    //! One component dv_i/dx_j of the velocity gradient tensor reconstructed in
+    //! updateDynamicWallProperties()
     Scalar velocityGradient(std::size_t eIdx, int i, int j) const
     { return velocityGradientTensor_[eIdx][i][j]; }
 
     //! The wall-normal axis used by wall-function/mixing-length formulas (RANS.WallNormalAxis,
-    //! defaulting to the last coordinate direction) - same fixed-axis convention already
-    //! established by Dumux::ZeroEqProblem for straight, axis-aligned channels.
+    //! defaulting to the last coordinate direction), assuming straight, axis-aligned channels.
     int wallNormalAxis() const
     {
         static const int axis = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", GridView::dimension - 1);
@@ -299,8 +278,8 @@ public:
     Scalar vorticityTensorScalarProduct(std::size_t eIdx) const
     { return vorticityTensorScalarProduct_[eIdx]; }
 
-    //! S_ij*S_ij with S_ij = 1/2*(dv_i/dx_j + dv_j/dx_i), needed by two-equation models'
-    //! production term (P = 2*mu_t*S:S) - not used by the one-equation model.
+    //! S_ij*S_ij with S_ij = 1/2*(dv_i/dx_j + dv_j/dx_i), used for the production term
+    //! (P = 2*mu_t*S:S) of the two-equation models
     Scalar stressTensorScalarProduct(std::size_t eIdx) const
     { return stressTensorScalarProduct_[eIdx]; }
 
@@ -313,9 +292,8 @@ public:
     DimVector velocityMinimum(std::size_t eIdx) const
     { return velocityMinimum_[wallElementIdx_[eIdx]]; }
 
-    //! \note Returns 0 while the stored density is still zero (set by updateStaticWallProperties()
-    //! and only filled by the first updateDynamicWallProperties()), to avoid a 0.0/0.0 NaN being
-    //! cached in the volume variables of the initial time.
+    //! \note Returns 0 as long as the stored density is zero (i.e. before the first call of
+    //! updateDynamicWallProperties()), to avoid a 0.0/0.0 NaN.
     Scalar kinematicViscosity(std::size_t eIdx) const
     { return storedDensity_[eIdx] > 0.0 ? storedViscosity_[eIdx]/storedDensity_[eIdx] : 0.0; }
 
@@ -337,10 +315,8 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "isOnWallAtPos or isOnWall not implemented for this problem."); }
 
 private:
-    //! Axis-aligned nearest-neighbor search via cell-center comparison, ported from
-    //! releases/3.10:dumux/freeflow/rans/problem.hh's RANSProblemBase::findNeighborIndices_() -
-    //! only meaningful/used for structured, axis-aligned (flat-wall-bounded) meshes, exactly as
-    //! in the old code.
+    //! Axis-aligned nearest-neighbor search via cell-center comparison,
+    //! only meaningful for structured, axis-aligned meshes.
     void findNeighborIndices_()
     {
         using std::abs;

@@ -25,20 +25,15 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation SST (Menter 1994) turbulence closure for the turbulent kinetic energy k
- *        and the specific dissipation rate omega, fused as two extra equations on the mass
- *        sub-model rather than on a separate coupled sub-domain, following the same strategy
- *        already used for k-omega.
+ *        and the specific dissipation rate omega, solved as two extra equations on the mass
+ *        sub-model.
  *
- * Closure constants/functions ported near-verbatim from the deleted
- * releases/3.10:dumux/freeflow/rans/twoeq/sst/volumevariables.hh, with
- * stressTensorScalarProduct()/vorticityTensorScalarProduct()/wallDistance()/kinematicViscosity()
- * read from the problem (which forwards them to the momentum domain's
- * Dumux::RANSMomentumProblem), and the (lagged, see massproblem.hh) storedTurbulentKineticEnergy()/
- * storedDissipation()/storedCrossDiffusionGradientProduct() read from the mass problem's own
- * bookkeeping - the same pattern Dumux::KOmegaMassVolumeVariables already established. Unlike the
- * old code (which stored the two gradient vectors ∇k/∇ω separately), only their dot product is
- * stored, since that is the only quantity F1() and the cross-diffusion source term ever need -
- * the same simplification already made for k-omega's own cross-diffusion term.
+ * The stressTensorScalarProduct(), vorticityTensorScalarProduct(), wallDistance() and
+ * kinematicViscosity() are read from the problem (which forwards them from the momentum
+ * domain's Dumux::RANSMomentumProblem). The lagged storedTurbulentKineticEnergy(),
+ * storedDissipation() and storedCrossDiffusionGradientProduct() are read from the mass
+ * problem (see massproblem.hh). Only the product of the k and omega gradients is stored,
+ * since it is the only gradient quantity needed by F1() and the cross-diffusion source term.
  */
 template<class Traits>
 class SSTMassVolumeVariables
@@ -67,24 +62,14 @@ public:
         storedDissipation_ = problem.storedDissipation(eIdx);
         crossDiffusionGradientProduct_ = problem.storedCrossDiffusionGradientProduct(eIdx);
 
-        // Cached here (rather than computed on demand from a Problem argument, the way
-        // calculateEddyViscosity() itself needs one to branch on sstModelVersion()) so that a
-        // plain no-argument dynamicEddyViscosity() getter can be exposed below - matching the
-        // signature every other RANS model's own dynamicEddyViscosity() already has. This
-        // matters beyond mere convention: dumux/multidomain/freeflow/couplingmanager_staggered.hh's
-        // turbulentViscosity() (the sole path through which the momentum domain ever receives a
-        // turbulent viscosity contribution) duck-types this exact zero-argument signature via
-        // Dune::Std::is_detected; a Problem-argument-only overload is invisible to it and it
-        // silently falls back to returning 0.0 - i.e. the momentum equation would run with
-        // molecular viscosity only, no turbulence contribution at all. Recomputed here on every
-        // update() call (i.e. every Newton iteration), so this is exactly as "live" as calling
-        // calculateEddyViscosity(problem) directly would be - releases/3.10's optional
-        // RANS.UseStoredEddyViscosity lagging opt-out is (deliberately) not ported, the same
-        // simplification already made for the one-equation and k-omega models.
+        // The eddy viscosity is cached so that it can be accessed through the argument-free
+        // dynamicEddyViscosity(), which is the signature the coupling manager looks for when
+        // providing the turbulent viscosity to the momentum domain. It is updated with every
+        // update() call.
         dynamicEddyViscosity_ = calculateEddyViscosity(problem);
 
-        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs for why this must be done explicitly here rather than automatically.
+        // Nonisothermal only: the effective thermal conductivity including the eddy
+        // contribution (see dumux/freeflow/rans/common/thermalconductivitymodel.hh)
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
         {
             using FluidSystem = typename Traits::FluidSystem;
@@ -132,16 +117,12 @@ public:
         return sqrt(2.0*vorticityTensorScalarProduct());
     }
 
-    //! The (live, current-Newton-iterate) dynamic eddy viscosity, cached in update() - see its
-    //! comment for why this needs to be a stored member with a no-argument getter rather than
-    //! computed on demand from calculateEddyViscosity(problem) at every call site.
+    //! The dynamic eddy viscosity of the current solution, cached in update().
     Scalar dynamicEddyViscosity() const
     { return dynamicEddyViscosity_; }
 
-    //! \brief Computes the dynamic eddy viscosity for the SST model, branching on the
-    //!        (runtime-selected) SST model version. Only called from update() (see
-    //!        dynamicEddyViscosity() above for the cached, no-argument accessor everything
-    //!        else should use).
+    //! \brief Computes the dynamic eddy viscosity for the selected SST model version.
+    //!        Called from update(), use dynamicEddyViscosity() to access the cached value.
     template<class Problem>
     Scalar calculateEddyViscosity(const Problem& problem) const
     {
@@ -159,13 +140,8 @@ public:
 
     //! \brief Returns the transformation function F1 blending the near-wall (k-omega) and
     //!        far-field (transformed k-epsilon) closure-constant sets.
-    //! \note Guarded against the transient storedDissipation()==0.0 that exists briefly between
-    //! updateStaticWallProperties() (which only zero-initializes the lagged storage) and the
-    //! first call to updateDynamicWallProperties() (which populates it from the real initial
-    //! solution) - exercised once, when GridVariables::init() eagerly caches the t=0 volume
-    //! variables in main.cc. Returning 0.0 there (a value F1 legitimately takes far from the
-    //! wall) avoids a 0.0/0.0 NaN that would otherwise poison that cached state; it is never
-    //! read by any solved time step (see the analogous guard for LowReKEpsilonMassProblem::yPlus()).
+    //! \note Returns zero as long as the stored dissipation is zero (i.e. before the first
+    //! updateDynamicWallProperties() call) to avoid a division by zero.
     Scalar F1() const
     {
         using std::max;

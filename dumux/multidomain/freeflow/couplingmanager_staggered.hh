@@ -92,14 +92,13 @@ private:
     using VelocityVector = typename SubControlVolumeFace<freeFlowMassIndex>::GlobalPosition;
     static_assert(std::is_same_v<VelocityVector, typename SubControlVolumeFace<freeFlowMomentumIndex>::GlobalPosition>);
 
-    //! Detects whether a mass-domain VolumeVariables type exposes dynamicEddyViscosity()
-    //! (used by turbulentViscosity() below, duck-typed so this is a no-op for non-RANS models).
+    //! Detects whether a mass-domain VolumeVariables type provides dynamicEddyViscosity(),
+    //! used by turbulentViscosity() below.
     template<class VolVars>
     using DynamicEddyViscosityDetector = decltype(std::declval<VolVars>().dynamicEddyViscosity());
 
-    //! Detects whether a mass-domain VolumeVariables type exposes turbulentKineticEnergy()
-    //! (used by turbulentKineticEnergy() below, for two-equation RANS models that solve k as a
-    //! transported variable on the mass domain - a no-op/zero for every other model).
+    //! Detects whether a mass-domain VolumeVariables type provides turbulentKineticEnergy(),
+    //! used by turbulentKineticEnergy() below.
     template<class VolVars>
     using TurbulentKineticEnergyDetector = decltype(std::declval<VolVars>().turbulentKineticEnergy());
 
@@ -376,17 +375,10 @@ public:
     }
 
     /*!
-     * \brief Returns the turbulent (eddy) viscosity at a given sub control volume face,
-     *        read from the mass domain's volume variables if (and only if) they expose a
-     *        dynamicEddyViscosity() method - duck-typed, since only RANS turbulence
-     *        sub-models that fuse an extra transport equation into the mass balance
-     *        (e.g. the one-equation Spalart-Allmaras model, see
-     *        dumux/freeflow/rans/oneeq/volumevariables.hh) define one; every other
-     *        (non-RANS) mass model is unaffected and this returns 0 for it. Averaged the
-     *        same way as effectiveViscosity() above. This additive hook lets RANS models
-     *        that fuse their turbulence transport equations into the mass balance forward
-     *        the eddy viscosity to the momentum domain without needing a dedicated
-     *        turbulence coupling manager.
+     * \brief Returns the turbulent (eddy) viscosity at a given sub control volume face.
+     *        It is read from the mass domain's volume variables if they provide a
+     *        dynamicEddyViscosity() method, and is zero otherwise. Averaged the same way
+     *        as effectiveViscosity() above.
      */
     Scalar turbulentViscosity(const Element<freeFlowMomentumIndex>& element,
                               const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,
@@ -429,14 +421,10 @@ public:
 
     /*!
      * \brief Returns the turbulent kinetic energy k at a given (frontal, interior) sub control
-     *        volume face, read from the mass domain's volume variables if (and only if) they
-     *        expose a turbulentKineticEnergy() method - duck-typed, analogous to
-     *        turbulentViscosity() above, for two-equation RANS models (k-omega, k-epsilon, ...)
-     *        that solve k as a transported variable fused onto the mass balance. Used by
-     *        NavierStokesMomentumFCStaggeredFluxVariables::turbulentKineticEnergyContribution()
-     *        for the isotropic 2/dim*rho*k normal-stress correction. Only ever queried at
-     *        frontal, non-boundary scvfs (see that method), so - unlike turbulentViscosity() -
-     *        no boundary/scv overload is needed here.
+     *        volume face. It is read from the mass domain's volume variables if they provide a
+     *        turbulentKineticEnergy() method, and is zero otherwise. Used for the isotropic
+     *        normal-stress contribution in
+     *        NavierStokesMomentumFCStaggeredFluxVariables::turbulentKineticEnergyContribution().
      */
     Scalar turbulentKineticEnergy(const Element<freeFlowMomentumIndex>& element,
                                   const FVElementGeometry<freeFlowMomentumIndex>& fvGeometry,

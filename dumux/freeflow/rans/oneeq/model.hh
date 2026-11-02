@@ -7,12 +7,12 @@
 /*!
  * \file
  * \ingroup FreeflowModels
- * \brief The one-equation (Spalart-Allmaras) RANS turbulence closure, fused as a second
- *        transported equation (the working viscosity ν̃) onto the single-phase Navier-Stokes
+ * \brief The one-equation (Spalart-Allmaras) RANS turbulence closure, added as a second
+ *        transported equation (for the working viscosity ν̃) to the single-phase Navier-Stokes
  *        mass balance.
  *
- * The transport equation is fused onto the *mass* sub-model rather than living on a
- * dedicated third coupled sub-domain.
+ * The transport equation is part of the mass sub-model, i.e. it is solved on the
+ * cell-centered dofs together with the pressure.
  */
 #ifndef DUMUX_RANS_ONEEQ_MASS_MODEL_HH
 #define DUMUX_RANS_ONEEQ_MASS_MODEL_HH
@@ -32,7 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Traits for the one-equation (Spalart-Allmaras) turbulence closure fused onto the
+ * \brief Traits for the one-equation (Spalart-Allmaras) turbulence closure on top of the
  *        single-phase Navier-Stokes mass model.
  */
 struct OneEqMassModelTraits : public NavierStokesMassOnePModelTraits
@@ -46,7 +46,7 @@ struct OneEqMassModelTraits : public NavierStokesMassOnePModelTraits
 namespace Properties {
 
 namespace TTag {
-//! The type tag for the single-phase Navier-Stokes mass model fused with the one-equation
+//! The type tag for the single-phase Navier-Stokes mass model with the one-equation
 //! (Spalart-Allmaras) turbulence closure.
 struct NavierStokesMassOnePOneEq { using InheritsFrom = std::tuple<NavierStokesMassOneP>; };
 } // end namespace TTag

@@ -20,7 +20,7 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief The indices for the two-equation k-omega turbulence closure, fused as two additional
  *        transported equations onto the single-phase Navier-Stokes mass balance (pressure
- *        remains equation/index 0, as in NavierStokesMassOnePIndices; k is index 1, omega is
+ *        is equation/index 0 as in NavierStokesMassOnePIndices, k is index 1, omega is
  *        index 2).
  */
 struct KOmegaMassIndices : public NavierStokesMassOnePIndices

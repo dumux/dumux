@@ -18,8 +18,8 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Adds I/O fields for the one-equation (Spalart-Allmaras) turbulence closure fused
- *        onto the single-phase Navier-Stokes mass model.
+ * \brief Adds I/O fields for the one-equation (Spalart-Allmaras) turbulence closure
+ *        on top of the single-phase Navier-Stokes mass model.
  */
 class OneEqMassIOFields
 {

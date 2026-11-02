@@ -29,21 +29,20 @@ namespace Dumux {
 
 /*!
  * \ingroup NavierStokesTests
- * \brief Test problem for turbulent channel flow using the two-equation k-omega RANS model,
- *        mirroring test/freeflow/rans/oneeq/channel's geometry/BCs/fluid, with additional
- *        boundary/initial conditions for k and omega - matching
- *        releases/3.10:test/freeflow/rans/problem.hh's PipeLauferProblem (komega branch).
+ * \brief Test problem for turbulent channel flow using the two-equation k-omega RANS model.
  *
- * \note Walls are kept Neumann (not Dirichlet) for both pressure *and* k, exactly as ν̃ is
- *       treated in the one-equation test: dumux/assembly/cclocalassembler.hh rejects mixed
- *       Dirichlet/Neumann boundary conditions across equations at the same CCTpfa face, so
- *       k=0 at walls is enforced weakly (a one-sided diffusive/Robin-style flux) instead - see
- *       neumann() below. Omega's wall value is *not* a boundary condition at all: it uses the
- *       analytical 6ν/(β_ω·y²) formula enforced as an internal (whole-cell) Dirichlet
- *       constraint on the wall-*adjacent* cell (Dumux::KOmegaMassProblem::internalDirichlet()),
- *       exactly as releases/3.10 did via isDirichletCell_/dirichletTurbulentTwoEq_ - so omega's
- *       face BC at walls is Neumann too (its value there is irrelevant, the whole equation row
- *       for that cell gets overwritten regardless).
+ * Flow from left to right in a two-dimensional channel, with a uniform (top-hat) inflow
+ * velocity profile at the inlet (left), a fixed pressure at the outlet (right), and no-slip
+ * walls at the top and bottom. The turbulent kinetic energy k and the specific dissipation
+ * rate omega are fixed at the inlet and leave the domain at the outlet.
+ *
+ * \note At the walls the pressure is Neumann, and the cell-centered scheme does not allow
+ *       different boundary condition types for different equations on the same face.
+ *       Therefore k = 0 at the walls is imposed weakly through the diffusive flux in neumann().
+ *       The wall value of omega is not a boundary condition: the analytical wall value
+ *       6ν/(β_ω·y²) is imposed as an internal Dirichlet constraint on the wall-adjacent cells
+ *       (Dumux::KOmegaMassProblem::internalDirichlet()), which replaces the whole equation of
+ *       those cells.
  */
 template<class TypeTag, class BaseProblem>
 class RANSKOmegaChannelTestProblem : public BaseProblem
@@ -80,8 +79,9 @@ public:
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 303.15);
 #endif
 
-        // k/omega inflow estimates are only meaningful (and only compile: FluidState is only
-        // defined) on the mass domain, exactly as for the one-equation test's viscosityTilde_.
+        // The inflow values of k and omega are only needed by the mass problem (the momentum
+        // problem has no fluid state). They are empirical estimates from the inlet velocity,
+        // the channel height and the kinematic viscosity of the fluid at a reference state.
         if constexpr (!ParentType::isMomentumProblem())
         {
             using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -152,7 +152,7 @@ public:
         else
         {
             values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
-            // Only ever queried at the inlet - see boundaryTypesAtPos() (walls are Neumann).
+            // only queried at the inlet, k is imposed weakly at the walls (see neumann())
             values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
 #if NONISOTHERMAL
@@ -188,11 +188,9 @@ public:
             }
             else if (isOnWallAtPos(globalPos))
             {
-                // Weak (Robin-form) equivalent of a true Dirichlet k=0 wall condition, exactly
-                // as ν̃ is treated in the one-equation test - see that file's neumann() for the
-                // full rationale. Omega's actual wall row is overridden separately via
-                // KOmegaMassProblem::internalDirichlet(), so no equivalent term is needed here
-                // for omega.
+                // Weak imposition of k = 0 at the wall (see the class documentation): the
+                // two-point diffusive flux towards the wall value, directed out of the cell.
+                // No flux is needed for omega, which is constrained by internalDirichlet().
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVars = elemVolVars[insideScv];
                 const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
@@ -200,10 +198,8 @@ public:
                     + insideVars.sigmaK()*insideVars.density()*insideVars.turbulentKineticEnergy()/insideVars.dissipation();
                 values[Indices::turbulentKineticEnergyEqIdx] = diffCoeff*insideVars.turbulentKineticEnergy()/distance;
 #if NONISOTHERMAL
-                // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition,
-                // exactly as k is treated above - the CCTpfa mixed-boundary-condition restriction
-                // (pressure/k are already Neumann at the wall) rules out an actual Dirichlet face
-                // BC here.
+                // The wall temperature is imposed weakly through a conductive heat flux
+                // towards the prescribed wall temperature
                 values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
                     *(insideVars.temperature() - wallTemperature_)/distance;
 #endif
@@ -246,7 +242,7 @@ public:
 
     /*!
      * \brief Returns whether the given position lies on a solid (no-slip) wall of the channel.
-     * \note Required by Dumux::RANSMomentumProblem for the wall-distance computation, and by
+     * \note Required by Dumux::RANSMomentumProblem for the wall distance computation, and by
      *       Dumux::KOmegaMassProblem for the wall-adjacent omega internal constraint.
      */
     bool isOnWallAtPos(const GlobalPosition& globalPos) const
@@ -264,8 +260,7 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
-    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    //! Uniform (top-hat) inflow profile: zero at the walls, the inlet velocity elsewhere
     Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];

@@ -22,17 +22,13 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
+ * \brief Volume variables for the single-phase Navier-Stokes mass balance together with the
  *        one-equation (Spalart-Allmaras) turbulence transport equation for the working
- *        viscosity ν̃, fused as a second equation on the mass sub-model rather than on a
- *        separate coupled sub-domain.
+ *        viscosity ν̃.
  *
- * The Spalart-Allmaras closure functions here are ported near-verbatim from the deleted
- * releases/3.10:dumux/freeflow/rans/oneeq/volumevariables.hh, with wallDistance()/
- * vorticityTensorScalarProduct() and the (lagged, see problem.hh) storedViscosityTildeGradient()
- * read from the problem (which forwards the former two to the momentum domain's
- * Dumux::RANSMomentumProblem, and computes the latter itself, see
- * dumux/freeflow/rans/oneeq/massproblem.hh).
+ * The Spalart-Allmaras closure functions are evaluated here. wallDistance(),
+ * vorticityTensorScalarProduct() and the lagged ν̃ gradient are read from the problem, see
+ * dumux/freeflow/rans/oneeq/massproblem.hh.
  */
 template<class Traits>
 class OneEqMassVolumeVariables
@@ -56,8 +52,7 @@ public:
         vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct(scv.elementIndex());
         viscosityTildeGradientSquared_ = problem.storedViscosityTildeGradient(scv.elementIndex()).two_norm2();
 
-        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs for why this must be done explicitly here rather than automatically.
+        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
             this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
@@ -75,8 +70,8 @@ public:
     Scalar karmanConstant() const
     { return 0.41; }
 
-    //! The dynamic eddy viscosity mu_t = rho * nu~ * fv1 - the quantity the momentum domain
-    //! reads through the coupling manager's turbulentViscosity()/effectiveViscosity().
+    //! The dynamic eddy viscosity mu_t = rho * nu~ * fv1, which is added to the molecular
+    //! viscosity in the momentum balance.
     Scalar dynamicEddyViscosity() const
     { return viscosityTilde()*fv1()*this->density(); }
 
@@ -112,10 +107,9 @@ public:
     {
         using std::min;
         using std::max;
-        // Guard against stressTensorScalarProductTilde() == 0 exactly (e.g. at a channel
-        // centerline, where the mean velocity profile's symmetry makes the vorticity - and
-        // hence, in the sBar<-c2*omega branch, the whole modified strain rate - exactly zero):
-        // without this floor, r() -> infinity, cascading through g()/fw() into an Inf*0 = NaN.
+        // Floor the modified strain rate to avoid a division by zero (e.g. at a channel
+        // centerline where the vorticity vanishes), which would result in r() -> infinity
+        // and NaN in g() and fw().
         const Scalar sTilde = max(stressTensorScalarProductTilde(), 1e-10);
         return min(10.0, viscosityTilde()/(sTilde*karmanConstant()*karmanConstant()*wallDistance()*wallDistance()));
     }
@@ -138,7 +132,7 @@ public:
         return sqrt(2.0*vorticityTensorScalarProduct_);
     }
 
-    //! |grad(nu~)|^2 at this element, from the problem's stored (lagged) gradient, needed for
+    //! |grad(nu~)|^2 at this element, from the problem's stored (lagged) gradient, used in
     //! the cross-diffusion source term (cb2/sigma)*rho*|grad(nu~)|^2.
     Scalar viscosityTildeGradientSquared() const
     { return viscosityTildeGradientSquared_; }

@@ -32,12 +32,10 @@ namespace Dumux {
  *
  * Flow from left to right in a two-dimensional channel, with a uniform (top-hat) inflow
  * velocity profile at the inlet (left), a fixed pressure at the outlet (right), and no-slip
- * walls at the top and bottom - matching releases/3.10:test/freeflow/rans/problem.hh's
- * PipeLauferProblem inflow exactly, so that Problem.InletVelocity means the same thing (the
- * bulk/mean inflow velocity) here as it did there. The Reynolds number is chosen high enough
- * for the flow to be turbulent (see params.input), so that the zero-equation eddy-viscosity
- * closure implemented in Dumux::ZeroEqProblem (dumux/freeflow/rans/zeroeq/problem.hh) is
- * exercised.
+ * walls at the top and bottom. Problem.InletVelocity is the bulk inflow velocity.
+ * The Reynolds number is high enough for the flow to be turbulent, so that the
+ * zero-equation eddy viscosity closure of Dumux::ZeroEqProblem
+ * (dumux/freeflow/rans/zeroeq/problem.hh) is exercised.
  */
 template<class TypeTag, class BaseProblem>
 class RANSZeroEqChannelTestProblem : public BaseProblem
@@ -113,9 +111,8 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // The uniform inflow profile is used for every velocity-Dirichlet boundary (inlet
-            // and walls): it is zero at y=yMin/yMax (walls) and inletVelocity_ everywhere else
-            // (inlet), matching releases/3.10's PipeLauferProblem.
+            // The inflow profile is used for every velocity Dirichlet boundary (inlet and walls):
+            // it is zero at the walls and equal to the inlet velocity elsewhere
             values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
@@ -154,8 +151,8 @@ public:
 #if NONISOTHERMAL
             else if (isOnWallAtPos(globalPos))
             {
-                // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition -
-                // same trick as the other RANS-NI tests use.
+                // The wall temperature is imposed weakly through a conductive heat flux
+                // towards the prescribed wall temperature
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVars = elemVolVars[insideScv];
                 const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
@@ -200,7 +197,7 @@ public:
     /*!
      * \brief Returns whether the given position lies on a solid (no-slip) wall of the channel,
      *        i.e. the top or bottom boundary but not the inlet/outlet.
-     * \note Required by Dumux::ZeroEqProblem for the wall-distance computation.
+     * \note Required by Dumux::ZeroEqProblem for the wall distance computation.
      */
     bool isOnWallAtPos(const GlobalPosition& globalPos) const
     { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_ || globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
@@ -217,10 +214,7 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    //! Uniform (top-hat) inflow profile: zero at the walls (y=yMin/yMax), inletVelocity_
-    //! everywhere else, matching releases/3.10:test/freeflow/rans/problem.hh's
-    //! PipeLauferProblem::initialAtPos() exactly, so that Problem.InletVelocity is the bulk
-    //! (flux-averaged) inflow velocity, not a centerline/peak value.
+    //! Uniform (top-hat) inflow profile: zero at the walls, the inlet velocity elsewhere
     Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];

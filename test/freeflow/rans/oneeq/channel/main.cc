@@ -80,15 +80,12 @@ int main(int argc, char** argv)
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
-    // wire the mass problem's turbulence closure to the momentum problem, so it can read the
-    // (lagged) wall-distance/vorticity bookkeeping computed there, see
-    // dumux/freeflow/rans/oneeq/massproblem.hh
+    // the mass problem reads the wall distance and the vorticity from the momentum problem
+    // (see dumux/freeflow/rans/oneeq/massproblem.hh)
     massProblem->setMomentumProblem(momentumProblem);
 
-    // get the time loop parameters: this test reaches a steady turbulent state via
-    // pseudo-transient continuation, exactly as test/freeflow/rans/zeroeq/channel and, before
-    // it, releases/3.10:test/freeflow/rans/ did, rather than a single cold-started stationary
-    // Newton solve.
+    // get the time loop parameters: the steady turbulent state is reached by
+    // pseudo-transient continuation (marching in time with growing time steps)
     using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -120,11 +117,9 @@ int main(int argc, char** argv)
     // initialize the coupling stencils
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
 
-    // Compute the (solution-independent) wall distances once, now that the problem is fully
-    // constructed - and crucially *before* massGridVariables->init() below, since that
-    // immediately triggers OneEqMassVolumeVariables::update() for every element, which reads
-    // momentumProblem->wallDistance(eIdx)/vorticityTensorScalarProduct(eIdx): an out-of-bounds
-    // read on the still-empty momentum-side bookkeeping vectors if this were called after.
+    // The wall distances do not depend on the solution and are computed once. This must happen
+    // before the grid variables are initialized, because OneEqMassVolumeVariables::update()
+    // reads the wall distance and the vorticity of the momentum problem during initialization.
     momentumProblem->updateStaticWallProperties();
 
     // initializing the gridvariables requires the coupling manager to be set up
@@ -138,7 +133,7 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the instationary assembler (a TimeLoop and xOld are passed, unlike a stationary problem)
+    // the instationary assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(
         std::make_tuple(momentumProblem, massProblem),
@@ -158,11 +153,10 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // Update the momentum-side wall-distance/velocity-gradient/vorticity bookkeeping and
-        // the mass-side (lagged) ν̃ gradient, once per time step, from the previous (converged)
-        // solution - a deliberate Picard-in-time treatment rather than differentiating these
-        // terms through Newton. ν̃ itself remains a fully implicit primary variable of the mass
-        // sub-model, solved by Newton like every other equation.
+        // The velocity gradient, the vorticity and the gradient of the turbulent viscosity variable
+        // are evaluated once per time step from the solution of the previous time step and kept
+        // fixed during the Newton solve. The turbulent viscosity variable itself is a primary
+        // variable and is solved for implicitly.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
         massProblem->updateDynamicWallProperties(x[massIdx]);
 

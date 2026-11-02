@@ -44,10 +44,9 @@ struct RANSOneEqChannelTestMass { using InheritsFrom = std::tuple<RANSOneEqChann
 #endif
 } // end namespace TTag
 
-// Set the problem property: the momentum problem is layered on top of Dumux::OneEqMomentumProblem
-// (the one-equation RANS closure mixin), the mass problem on top of Dumux::RANSMassOneEqProblem
-// (which needs the momentum problem's concrete type as an explicit second template parameter,
-// see dumux/freeflow/rans/oneeq/massproblem.hh).
+// Set the problem property: the momentum problem is based on Dumux::OneEqMomentumProblem and the
+// mass problem on Dumux::RANSMassOneEqProblem, which takes the type of the momentum problem as
+// second template parameter (see dumux/freeflow/rans/oneeq/massproblem.hh)
 template<class TypeTag>
 struct Problem<TypeTag, TTag::RANSOneEqChannelTestMomentum>
 { using type = RANSOneEqChannelTestProblem<TypeTag, Dumux::OneEqMomentumProblem<TypeTag>>; };
@@ -61,8 +60,7 @@ public:
     using type = RANSOneEqChannelTestProblem<TypeTag, Dumux::RANSMassOneEqProblem<TypeTag, MomentumProblem>>;
 };
 
-// the fluid system: air, matching test/freeflow/rans/zeroeq/channel and (before it)
-// releases/3.10:test/freeflow/rans/ (PipeLauferProblem)
+// the fluid system: air
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::RANSOneEqChannelTest>
 {
@@ -70,8 +68,8 @@ struct FluidSystem<TypeTag, TTag::RANSOneEqChannelTest>
     using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
 };
 
-// Set the grid type: a graded (wall-refined) tensor-product-coordinate YaspGrid, matching
-// test/freeflow/rans/zeroeq/channel (see params.input: Positions0/1, Cells0/1, Grading1).
+// Set the grid type: a YaspGrid with tensor-product coordinates, which allows grading
+// the mesh towards the walls (see params.input: Positions, Cells, Grading)
 template<class TypeTag>
 struct Grid<TypeTag, TTag::RANSOneEqChannelTest>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2>>; };
@@ -88,10 +86,8 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::RANSOneEqChannelTest>
 { static constexpr bool value = true; };
 
-// Set the coupling manager property: the existing, unmodified momentum<->mass coupling
-// manager - no dedicated turbulence coupling manager is needed, since the working
-// viscosity ν̃ is solved as an extra equation on the mass sub-model rather than on a
-// separate sub-domain.
+// Set the coupling manager property: the working viscosity is solved as additional equations of the
+// mass sub-model, so the standard momentum-mass coupling manager is sufficient
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::RANSOneEqChannelTest>
 {

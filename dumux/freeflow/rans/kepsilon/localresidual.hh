@@ -25,16 +25,14 @@ namespace Dumux {
  *        the two-equation, wall-function k-epsilon turbulence transport equations (k, epsilon).
  *
  * Extends Dumux::NavierStokesMassOnePLocalResidual's storage/flux with the k/epsilon transport
- * terms, ported from the deleted releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/staggered/
- * fluxvariables.hh's computeMassFlux() (advective + diffusive terms, plus the k-diffusive-flux
- * suppression between matching-point/near-wall-region cells - "don't let the algebraic
- * wall-function region diffusively couple back into the resolved region"). See
- * dumux/freeflow/rans/oneeq/localresidual.hh for why boundary "outside"/ghost volVars must be
- * fetched via elemVars[scvf.outsideScvIdx()] directly rather than fvGeometry.scv(...).
+ * terms (advective and diffusive fluxes, with the k-diffusive flux suppressed between
+ * matching-point/near-wall-region cells so that the algebraic wall-function region does not
+ * diffusively couple into the resolved region). The volume variables on the outside of a
+ * boundary face are fetched via elemVars[scvf.outsideScvIdx()] directly.
  *
  * Production/destruction source terms (including the matching-point production/destruction
- * skip for k) are *not* added here: they go through the standard problem.source(...) extension
- * point instead (Dumux::KEpsilonMassProblem).
+ * skip for k) are not added here: they are provided by problem.source(...)
+ * (Dumux::KEpsilonMassProblem).
  */
 template<class TypeTag>
 class KEpsilonMassLocalResidual
@@ -109,19 +107,15 @@ public:
     }
 
 private:
-    //! Two-point-TPFA diffusive ((mu_t/sigma_k+mu), (mu_t/sigma_epsilon+mu)) terms - ported from
-    //! releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/staggered/fluxvariables.hh::computeMassFlux().
-    //! The k-diffusive term is additionally suppressed across a face where both sides, or one
-    //! side, are matching-point cells adjacent to a near-wall-region cell, exactly as old code
-    //! did - preventing the algebraic wall-function region from diffusively coupling back into
-    //! the resolved log-layer solution.
+    //! Adds the two-point diffusive terms with the diffusion coefficients (mu_t/sigma_k + mu) and
+    //! (mu_t/sigma_epsilon + mu). The k-diffusive term is suppressed across faces between
+    //! matching-point cells and between a matching-point cell and a near-wall-region cell, which
+    //! keeps the algebraic wall-function region from diffusively coupling into the resolved
+    //! log-layer solution.
     //!
-    //! \note The advective (upwind) part of the k/epsilon flux is *not* added here - it is
-    //! already included in ParentType::computeFlux()'s result via the KEpsilonMassModelTraits-
-    //! specific Dumux::AdvectiveFlux specialization, which NavierStokesMassOnePFluxVariables::
-    //! advectiveFlux() dispatches to automatically for every equation index, not just
-    //! conti0EqIdx. Adding it again here would double-count k/epsilon advection (a bug found and
-    //! fixed while implementing Phases 6/7, see komega/localresidual.hh for the same note).
+    //! \note The advective (upwind) part of the k/epsilon flux is not added here: it is already
+    //! contained in the result of ParentType::computeFlux() through the Dumux::AdvectiveFlux
+    //! specialization for KEpsilonMassModelTraits, which is applied to every equation index.
     void addTurbulenceFlux_(NumEqVector& flux,
                             const Problem& problem,
                             const Element& element,
@@ -144,8 +138,8 @@ private:
         const auto diffCoeffEpsilonInside = insideVars.dynamicEddyViscosity()/insideVars.sigmaEpsilon() + insideVars.viscosity();
         const auto diffCoeffEpsilonOutside = outsideVars.dynamicEddyViscosity()/outsideVars.sigmaEpsilon() + outsideVars.viscosity();
 
-        // distance-weighted (not plain) mean of the diffusion coefficient on interior faces, as in
-        // releases/3.10 (arithmeticMean() with the inside/outside distances to the face as weights)
+        // mean of the diffusion coefficient on interior faces, weighted by the distances of the
+        // two cell centers to the face
         const auto weightedMean = [&](const auto inside, const auto outside)
         {
             if (scvf.boundary())
@@ -158,10 +152,8 @@ private:
         const auto diffCoeffK = weightedMean(diffCoeffKInside, diffCoeffKOutside);
         const auto diffCoeffEpsilon = weightedMean(diffCoeffEpsilonInside, diffCoeffEpsilonOutside);
 
-        // Suppressed between matching-point/near-wall-region cells (avoids diffusively coupling
-        // the algebraic wall-function region back into the resolved solution), and unconditionally
-        // at a wall boundary face itself (k has no natural diffusive flux to add there - its value
-        // is set entirely by the internal Dirichlet constraint instead, see massproblem.hh).
+        // Suppressed between matching-point/near-wall-region cells, and at a wall boundary face
+        // itself, where k is set by the internal Dirichlet constraint (see massproblem.hh).
         const bool suppressKDiffusion = (insideVars.isMatchingPoint() && outsideVars.isMatchingPoint())
             || (insideVars.isMatchingPoint() && outsideVars.inNearWallRegion())
             || (insideVars.inNearWallRegion() && outsideVars.isMatchingPoint())

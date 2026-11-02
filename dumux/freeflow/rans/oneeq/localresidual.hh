@@ -24,19 +24,16 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Element-wise storage/flux for the single-phase Navier-Stokes mass balance fused
- *        with the one-equation (Spalart-Allmaras) turbulence transport equation for ν̃.
+ * \brief Element-wise storage/flux for the single-phase Navier-Stokes mass balance
+ *        together with the one-equation (Spalart-Allmaras) turbulence transport equation for ν̃.
  *
  * Extends Dumux::NavierStokesMassOnePLocalResidual's storage/flux with the ν̃ transport
- * terms (advective + diffusive), reusing this mass model's own, already-correct, always-live
- * velocity lookup (problem.velocity(...)), the same one the pressure equation's own advective
- * flux already uses.
+ * terms (advective + diffusive), using the same face velocity as the advective flux of the
+ * pressure equation.
  *
- * Production/destruction/cross-diffusion source terms are *not* added here: they go through
- * the standard DuMux problem.source(...) extension point instead (implemented in
- * Dumux::RANSMassOneEqProblem, dumux/freeflow/rans/oneeq/massproblem.hh), since
- * Dumux::DiscretizationDefaultLocalOperator's computeSource() already forwards there
- * generically - no need to override source handling here.
+ * The production/destruction/cross-diffusion source terms are provided by
+ * problem.source(...), see Dumux::RANSMassOneEqProblem in
+ * dumux/freeflow/rans/oneeq/massproblem.hh.
  */
 template<class TypeTag>
 class OneEqMassLocalResidual
@@ -109,18 +106,15 @@ public:
     }
 
 private:
-    //! Upwinded advective ρν̃(v·n) plus a two-point-TPFA diffusive ((μ+ρν̃)/σ) term, reusing
-    //! problem.faceVelocity(element,fvGeometry,scvf) - the exact same, always-live velocity
-    //! lookup dumux/freeflow/navierstokes/scalarfluxvariables.hh's getAdvectiveFlux() already
-    //! uses for the pressure equation's own advective flux.
+    //! Upwinded advective ρν̃(v·n) plus a two-point-TPFA diffusive ((μ+ρν̃)/σ) term. The face
+    //! velocity is obtained from problem.faceVelocity(element,fvGeometry,scvf), as for the
+    //! advective flux of the pressure equation.
     //!
-    //! \note Called for interior faces *and* for boundary faces with a pure-Dirichlet BC (the
-    //!       inlet here, see CCLocalResidual::evalFlux) - Neumann boundaries (walls/outlet) go
-    //!       through Problem::neumann() instead. For a boundary face, scvf.outsideScvIdx() does
-    //!       not index a real scv in fvGeometry (CCTpfa has no "ghost" scv objects) - the
-    //!       corresponding volVars (populated from problem.dirichlet(...) by the framework) must
-    //!       be looked up directly from elemVars by that raw index instead, and the "outside"
-    //!       position is the face itself (one-sided distance), not a dofPosition().
+    //! \note Called for interior faces and for boundary faces with a pure-Dirichlet BC.
+    //!       Neumann boundaries go through Problem::neumann() instead. For a boundary face,
+    //!       scvf.outsideScvIdx() does not index a scv in fvGeometry (CCTpfa has no ghost
+    //!       scvs), so the corresponding volVars (set from problem.dirichlet(...)) are looked up
+    //!       directly from elemVars by that index, and the one-sided distance to the face is used.
     Scalar viscosityTildeFlux_(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
@@ -145,8 +139,8 @@ private:
             : (fvGeometry.scv(scvf.outsideScvIdx()).dofPosition() - insideScv.dofPosition()).two_norm();
         const auto diffCoeffInside = (insideVars.viscosity() + insideVars.density()*insideVars.viscosityTilde())/insideVars.sigma();
         const auto diffCoeffOutside = (outsideVars.viscosity() + outsideVars.density()*outsideVars.viscosityTilde())/outsideVars.sigma();
-        // distance-weighted (not plain) mean of the diffusion coefficient on interior faces, as in
-        // releases/3.10 (arithmeticMean() with the inside/outside distances to the face as weights)
+        // distance-weighted mean of the diffusion coefficient on interior faces
+        // (the inside/outside distances to the face are the weights)
         const auto weightedMean = [&](const auto inside, const auto outside)
         {
             if (scvf.boundary())

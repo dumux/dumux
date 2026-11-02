@@ -30,18 +30,20 @@ namespace Dumux {
 /*!
  * \ingroup NavierStokesTests
  * \brief Test problem for turbulent channel flow using the two-equation, wall-function k-epsilon
- *        RANS model, mirroring test/freeflow/rans/komega/channel's geometry/BCs/fluid, with
- *        additional boundary/initial conditions for k and epsilon, and a wall-function-aware
- *        momentum boundary treatment - matching
- *        releases/3.10:test/freeflow/rans/problem.hh's PipeLauferProblem (kepsilon branch).
+ *        RANS model.
  *
- * \note Walls are Neumann (not Dirichlet) for pressure, k, *and* epsilon: the actual near-wall
- *       values are enforced entirely through Dumux::KEpsilonMassProblem's internal (whole-cell)
- *       Dirichlet constraints, not through boundary conditions - see that class for the
- *       near-wall-region/matching-point mechanism. Momentum is Dirichlet no-slip everywhere
- *       except the outlet *and* the matching-point cell's own wall face, where
- *       Dumux::KEpsilonMomentumProblem::boundaryTypes() switches to Neumann so the log-law
- *       wall-shear flux can be applied instead (see neumann() below).
+ * Flow from left to right in a two-dimensional channel, with a uniform (top-hat) inflow
+ * velocity profile at the inlet (left), a fixed pressure at the outlet (right), and walls
+ * at the top and bottom. The turbulent kinetic energy k and the dissipation rate epsilon
+ * are fixed at the inlet and leave the domain at the outlet.
+ *
+ * \note At the walls the pressure, k and epsilon are Neumann. The near-wall values of k and
+ *       epsilon are imposed through the internal Dirichlet constraints of
+ *       Dumux::KEpsilonMassProblem, see that class for the near-wall region and matching-point
+ *       treatment. The momentum is no-slip Dirichlet everywhere except at the outlet and at
+ *       the wall face of the matching-point cells, where
+ *       Dumux::KEpsilonMomentumProblem::boundaryTypes() switches to Neumann so that the
+ *       log-law wall shear flux can be applied (see neumann()).
  */
 template<class TypeTag, class BaseProblem>
 class RANSKEpsilonChannelTestProblem : public BaseProblem
@@ -94,8 +96,8 @@ public:
 
             const Scalar halfHeight = 0.5*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]);
 
-            // Note: plain dissipation(), not dissipationRate() - that estimator is
-            // komega/SST-specific (confirmed from the old test problem's own branching).
+            // empirical estimates of the inflow values from the inlet velocity, the channel
+            // height and the kinematic viscosity
             Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
             turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, 2.0*halfHeight, kinematicViscosity);
             dissipation_ = turbulenceProperties.dissipation(inletVelocity_, 2.0*halfHeight, kinematicViscosity);
@@ -150,7 +152,7 @@ public:
         else
         {
             values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
-            // Only ever queried at the inlet - see boundaryTypesAtPos() (walls are Neumann).
+            // only queried at the inlet, the walls are Neumann
             values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
             values[Indices::dissipationIdx] = dissipation_;
 #if NONISOTHERMAL
@@ -174,9 +176,8 @@ public:
         {
             if (isOnWallAtPos(scvf.ipGlobal()))
             {
-                // Only reached at the matching-point cell's own wall face - see
-                // KEpsilonMomentumProblem::boundaryTypes(), which is the only place this
-                // becomes a Neumann condition in the first place.
+                // Only reached at the wall face of the matching-point cells, where
+                // KEpsilonMomentumProblem::boundaryTypes() sets a Neumann condition
                 values = BoundaryFluxes(this->wallFunctionMomentumFlux(element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf));
             }
             else
@@ -194,9 +195,8 @@ public:
                 using FluxHelper = NavierStokesScalarBoundaryFluxHelper<AdvectiveFlux<ModelTraits>>;
                 values = FluxHelper::scalarOutflowFlux(*this, element, fvGeometry, scvf, elemVolVars);
             }
-            // At walls, both k and epsilon are Neumann with zero flux here - their actual
-            // near-wall values are enforced entirely via the internal Dirichlet constraints in
-            // Dumux::KEpsilonMassProblem, not through this boundary treatment.
+            // At the walls, k and epsilon have zero flux. Their near-wall values are
+            // imposed by the internal Dirichlet constraints of Dumux::KEpsilonMassProblem.
 #if NONISOTHERMAL
             else if (isOnWallAtPos(globalPos))
             {
@@ -204,13 +204,13 @@ public:
                 const auto& insideVars = elemVolVars[insideScv];
                 if (this->isMatchingPoint(insideScv.elementIndex()))
                 {
-                    // Jayatilleke log-law energy wall function at the matching point, as in
-                    // releases/3.10 (it replaces the conductive wall flux there)
+                    // Jayatilleke log-law energy wall function at the matching point,
+                    // which replaces the conductive wall flux
                     values[Indices::energyEqIdx] = this->wallFunctionEnergyFlux(insideScv.elementIndex(), insideVars, wallTemperature_);
                 }
                 else
                 {
-                    // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition
+                    // The wall temperature is imposed weakly through a conductive heat flux
                     const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
                     values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
                         *(insideVars.temperature() - wallTemperature_)/distance;
@@ -255,9 +255,9 @@ public:
 
     /*!
      * \brief Returns whether the given position lies on a solid (no-slip) wall of the channel.
-     * \note Required by Dumux::RANSMomentumProblem for the wall-distance computation, by
-     *       Dumux::KEpsilonMassProblem for the near-wall-region/matching-point classification,
-     *       and directly here (both problem instances) to dispatch boundary treatment.
+     * \note Required by Dumux::RANSMomentumProblem for the wall distance computation, by
+     *       Dumux::KEpsilonMassProblem for the near-wall region and matching-point
+     *       classification, and by the boundary treatment of this problem.
      */
     bool isOnWallAtPos(const GlobalPosition& globalPos) const
     { return globalPos[1] < this->gridGeometry().bBoxMin()[1] + eps_ || globalPos[1] > this->gridGeometry().bBoxMax()[1] - eps_; }
@@ -274,8 +274,7 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
-    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    //! Uniform (top-hat) inflow profile: zero at the walls, the inlet velocity elsewhere
     Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];

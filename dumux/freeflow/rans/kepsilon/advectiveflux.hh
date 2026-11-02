@@ -8,15 +8,12 @@
  * \file
  * \ingroup FreeflowModels
  * \brief Helper struct defining the advective fluxes of the two-equation k-epsilon turbulence
- *        closure fused onto the single-phase Navier-Stokes mass model, for use with
- *        dumux/freeflow/navierstokes/scalarfluxhelper.hh's boundary flux helpers (the outflow
- *        treatment at the test's outlet, see test/freeflow/rans/kepsilon/channel).
+ *        closure fused onto the single-phase Navier-Stokes mass model.
  */
 #ifndef DUMUX_RANS_KEPSILON_MASS_ADVECTIVE_FLUX_HH
 #define DUMUX_RANS_KEPSILON_MASS_ADVECTIVE_FLUX_HH
 
-// Pulls in the primary template (with its default second argument) exactly once - see
-// dumux/freeflow/rans/oneeq/advectiveflux.hh for why this must not be redeclared here.
+// Provides the primary template (with its default second argument), which must not be redeclared.
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 
@@ -30,7 +27,7 @@ struct KEpsilonMassModelTraits;
  * \ingroup FreeflowModels
  * \brief Helper struct defining the advective fluxes of the k-epsilon turbulence closure fused
  *        onto the single-phase Navier-Stokes mass model: the pressure equation's mass flux
- *        (density upwind, as in the plain 1p model) plus k's and epsilon's advective fluxes
+ *        (density upwind) plus k's and epsilon's advective fluxes
  *        (rho*k, rho*epsilon upwind).
  */
 template<class T>

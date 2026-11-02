@@ -35,9 +35,7 @@ namespace Dumux {
  *        Dirichlet constraints for k and epsilon.
  *
  * \tparam TypeTag The mass sub-model's TypeTag.
- * \tparam MomentumProblem The concrete momentum problem type (a Dumux::KEpsilonMomentumProblem),
- *         explicit template parameter, exactly as for Dumux::RANSMassOneEqProblem/
- *         Dumux::KOmegaMassProblem.
+ * \tparam MomentumProblem The concrete momentum problem type (a Dumux::KEpsilonMomentumProblem).
  *
  * The "matching point" is the cell whose wall distance is closest to the target y+ at which
  * the log-law and viscous sublayer profiles are matched; the "near-wall region" comprises the
@@ -45,11 +43,10 @@ namespace Dumux {
  * instead fixed via internal Dirichlet constraints from the blended two-layer closure.
  *
  * wallDistance()/stressTensorScalarProduct()/wallElementIndex()/neighborIndex()/
- * velocityGradient()/kinematicViscosity()/karmanConstant() are *not* recomputed here - they are
- * frozen (lagged) values computed once per time step by the momentum domain's
+ * velocityGradient()/kinematicViscosity()/karmanConstant() are not recomputed here: they are
+ * lagged values computed once per time step by the momentum domain's
  * Dumux::RANSMomentumProblem and forwarded, read-only, through the stored momentum-problem
- * pointer - the same lagging strategy already established for the one-equation and k-omega
- * models.
+ * pointer.
  */
 template<class TypeTag, class MomentumProblem>
 class KEpsilonMassProblem : public NavierStokesMassProblem<TypeTag>
@@ -75,12 +72,8 @@ public:
     template<class... Args>
     KEpsilonMassProblem(Args&&... args)
     : ParentType(std::forward<Args>(args)...)
-    // Sized here (to zero/false), not lazily inside updateDynamicWallProperties(), since
-    // KEpsilonMassVolumeVariables::update() is read as soon as the grid variables are first
-    // initialized in main.cc - before updateDynamicWallProperties() is ever called (only
-    // happens once per time step, inside the time loop). Same reasoning as
-    // Dumux::RANSMassOneEqProblem's viscosityTildeGradient_/Dumux::KOmegaMassProblem's
-    // crossDiffusionGradientProduct_.
+    // The storage is sized here because KEpsilonMassVolumeVariables::update() reads it when the
+    // grid variables are initialized, before updateDynamicWallProperties() is first called.
     , matchingPointIdx_(this->gridGeometry().elementMapper().size(), 0)
     , storedTurbulentKineticEnergy_(this->gridGeometry().elementMapper().size(), 0.0)
     , storedDissipation_(this->gridGeometry().elementMapper().size(), 0.0)
@@ -141,7 +134,7 @@ public:
                                                       : yPlus(eIdx) < yPlusThreshold();
     }
 
-    //! \note Zero while the stored viscosity is not yet populated at the initial time, see RANSMomentumProblem
+    //! \note Zero while the stored viscosity is not yet populated at the initial time, see RANSMomentumProblem.
     Scalar yPlus(std::size_t eIdx) const
     {
         const auto nu = kinematicViscosity(eIdx);
@@ -177,8 +170,8 @@ public:
     }
 
     //! \brief The energy wall-function flux (outward positive) at the wall face of a matching-point
-    //!        cell, ported from releases/3.10's wallFunctionEnergy(): a log-law temperature profile
-    //!        with the Jayatilleke P-function, replacing the usual conductive wall flux there.
+    //!        cell: a log-law temperature profile with the Jayatilleke P-function, replacing the
+    //!        conductive wall flux there.
     template<class VolumeVariables>
     Scalar wallFunctionEnergyFlux(std::size_t eIdx, const VolumeVariables& volVars, Scalar wallTemperature) const
     {
@@ -242,9 +235,8 @@ public:
     /*!
      * \brief Updates the (lagged) matching-point/near-wall-region classification and the
      *        blended two-layer eddy viscosity, from the given (typically: the last converged)
-     *        mass solution. Called once per time step from main.cc, before the next assembly -
-     *        not re-evaluated within Newton, matching how releases/3.10 treated all of this
-     *        (see class documentation above).
+     *        mass solution. Called once per time step before the next assembly; the values are
+     *        not re-evaluated within the Newton iterations.
      */
     template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& sol)
@@ -264,8 +256,7 @@ public:
                                                 / storedDissipation_[eIdx]*momentumProblem_->storedDensity(eIdx);
         }
 
-        // find the matching point for each wall-normal column - ported verbatim from
-        // releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/problem.hh::updateDynamicWallProperties()
+        // find the matching point for each wall-normal column
         for (const auto& element : elements(gridGeometry.gridView()))
         {
             const auto eIdx = gridGeometry.elementMapper().index(element);
@@ -308,10 +299,9 @@ public:
     }
 
     /*!
-     * \brief The k-epsilon production/destruction source term, ported from
-     *        releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/staggered/localresidual.hh's
-     *        computeSourceForCellCenter(). k's production/destruction are skipped exactly at
-     *        the matching point (local equilibrium hypothesis: production = dissipation there).
+     * \brief The k-epsilon production/destruction source term. k's production/destruction are
+     *        skipped at the matching point (local equilibrium hypothesis: production equals
+     *        dissipation there).
      */
     template<class ElementVolumeVariables>
     NumEqVector source(const Element& element,
@@ -336,8 +326,7 @@ public:
     }
 
     //! \name Near-wall-region/matching-point internal (whole-cell) Dirichlet constraints for
-    //! k and epsilon - see releases/3.10's isDirichletCell_/dirichletTurbulentTwoEq_ kepsilon
-    //! branches.
+    //! k and epsilon.
     // \{
 
     static constexpr bool enableInternalDirichletConstraints()

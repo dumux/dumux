@@ -44,10 +44,9 @@ struct RANSLowReKEpsilonChannelTestMass { using InheritsFrom = std::tuple<RANSLo
 #endif
 } // end namespace TTag
 
-// Set the problem property: the momentum problem is layered on top of
-// Dumux::LowReKEpsilonMomentumProblem (the RANS closure mixin), the mass problem on top of
-// Dumux::LowReKEpsilonMassProblem (which needs the momentum problem's concrete type as an
-// explicit second template parameter, see dumux/freeflow/rans/lowrekepsilon/massproblem.hh).
+// Set the problem property: the momentum problem is based on Dumux::LowReKEpsilonMomentumProblem and the
+// mass problem on Dumux::LowReKEpsilonMassProblem, which takes the type of the momentum problem as
+// second template parameter (see dumux/freeflow/rans/lowrekepsilon/massproblem.hh)
 template<class TypeTag>
 struct Problem<TypeTag, TTag::RANSLowReKEpsilonChannelTestMomentum>
 { using type = RANSLowReKEpsilonChannelTestProblem<TypeTag, Dumux::LowReKEpsilonMomentumProblem<TypeTag>>; };
@@ -61,7 +60,7 @@ public:
     using type = RANSLowReKEpsilonChannelTestProblem<TypeTag, Dumux::LowReKEpsilonMassProblem<TypeTag, MomentumProblem>>;
 };
 
-// the fluid system: air, matching the k-omega/one-equation tests
+// the fluid system: air
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::RANSLowReKEpsilonChannelTest>
 {
@@ -69,8 +68,8 @@ struct FluidSystem<TypeTag, TTag::RANSLowReKEpsilonChannelTest>
     using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
 };
 
-// Set the grid type: a graded (wall-refined) tensor-product-coordinate YaspGrid, matching the
-// other RANS tests (see params.input: Positions0/1, Cells0/1, Grading1).
+// Set the grid type: a YaspGrid with tensor-product coordinates, which allows grading
+// the mesh towards the walls (see params.input: Positions, Cells, Grading)
 template<class TypeTag>
 struct Grid<TypeTag, TTag::RANSLowReKEpsilonChannelTest>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2>>; };
@@ -87,10 +86,8 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::RANSLowReKEpsilonChannelTest>
 { static constexpr bool value = true; };
 
-// Set the coupling manager property: the existing, unmodified momentum<->mass coupling
-// manager - no dedicated turbulence coupling manager is needed, since k and
-// epsilon-tilde are solved as extra equations on the mass sub-model rather than on a
-// separate sub-domain.
+// Set the coupling manager property: k and epsilon-tilde are solved as additional equations of the
+// mass sub-model, so the standard momentum-mass coupling manager is sufficient
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::RANSLowReKEpsilonChannelTest>
 {

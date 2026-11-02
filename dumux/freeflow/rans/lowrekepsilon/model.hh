@@ -11,8 +11,7 @@
  *        fused as two extra transported equations (turbulent kinetic energy k, transported
  *        dissipation epsilon-tilde) onto the single-phase Navier-Stokes mass balance.
  *
- * The two transport equations are fused onto the *mass* sub-model, following the same
- * strategy already used for the one-equation and k-omega models.
+ * The two transport equations are fused onto the mass sub-model.
  */
 #ifndef DUMUX_RANS_LOWREKEPSILON_MASS_MODEL_HH
 #define DUMUX_RANS_LOWREKEPSILON_MASS_MODEL_HH

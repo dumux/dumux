@@ -32,17 +32,14 @@ namespace Dumux {
  * separate coupled turbulence sub-model. The eddy viscosity at a given element is
  * computed algebraically from the wall-normal derivative of the flow-direction
  * velocity component and the distance to the nearest wall, following Prandtl's
- * mixing-length hypothesis with an optional Van Driest near-wall damping correction
- * - matching the exact formula used by releases/3.10:dumux/freeflow/rans/zeroeq/volumevariables.hh
- * (velGrad = |velocityGradients()[flowDirectionAxis][wallNormalAxis]|). The Baldwin-Lomax
- * two-layer model of releases/3.10 is available as RANS.EddyViscosityModel = baldwinLomax.
+ * mixing-length hypothesis with an optional Van Driest near-wall damping correction. The
+ * velocity gradient used is |dv_flow/dx_wallNormal|. The Baldwin-Lomax two-layer model is
+ * available as RANS.EddyViscosityModel = baldwinLomax.
  *
- * Wall distance and the velocity gradients are taken from Dumux::RANSMomentumProblem, i.e.
- * with the same (releases/3.10) reconstruction as every other RANS closure. The axes are fixed,
- * runtime-configurable constants (RANS.WallNormalAxis, defaulting to the last coordinate
- * direction, with the flow direction assumed to be the complementary axis in 2D) rather than
- * the old code's per-element dynamic axis detection - a deliberate simplification for
- * straight-channel-type test geometries.
+ * Wall distance and the velocity gradients are taken from Dumux::RANSMomentumProblem. The wall
+ * normal axis is a runtime parameter (RANS.WallNormalAxis, defaulting to the last coordinate
+ * direction) and the flow direction is the complementary axis in 2D, i.e. this model is
+ * intended for straight channel-type geometries.
  *
  * Usage: derive your test problem from this class instead of directly from
  * Dumux::NavierStokesMomentumProblem<TypeTag>, e.g.
@@ -130,10 +127,10 @@ public:
     }
 
     //! Adds the (constant per element, precomputed) eddy viscosity to the molecular one.
-    //! On interior faces the inside and outside values are averaged, exactly like the molecular
-    //! viscosity is in the coupling manager: otherwise the two staggered half-cells sharing a
+    //! On interior faces the inside and outside values are averaged like the molecular
+    //! viscosity in the coupling manager. Otherwise, the two staggered half-cells sharing a
     //! lateral face would see different viscosities, so the shear flux leaving one would not
-    //! equal the one entering the other (a spurious body force where the eddy viscosity varies).
+    //! equal the one entering the other.
     Scalar effectiveViscosity(const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf) const
@@ -150,11 +147,9 @@ public:
                               const SubControlVolume& scv) const
     { return ParentType::effectiveViscosity(element, fvGeometry, scv) + dynamicEddyViscosity_(scv.elementIndex()); }
 
-    //! The (spatially constant per element, precomputed) eddy viscosity - public so a
-    //! nonisothermal mass-side problem (Dumux::ZeroEqMassProblem) can forward it into the
-    //! energy equation's eddy thermal conductivity; zero-eq is the only RANS model with no
-    //! mass-domain representation of its own, since its eddy viscosity is computed and added
-    //! purely on the momentum side (see effectiveViscosity() above).
+    //! The (constant per element, precomputed) dynamic eddy viscosity. It is public such that
+    //! the nonisothermal mass problem (Dumux::ZeroEqMassProblem) can use it for the eddy
+    //! thermal conductivity.
     Scalar dynamicEddyViscosity(std::size_t eIdx) const
     { return eddyViscosity_[eIdx]; }
 
@@ -185,11 +180,10 @@ private:
         return mixingLength*mixingLength*velocityGradient;
     }
 
-    //! The Baldwin-Lomax two-layer closure, per wall-normal column, ported from
-    //! releases/3.10:dumux/freeflow/rans/zeroeq/problem.hh (updateBaldwinLomaxProperties()).
+    //! The Baldwin-Lomax two-layer closure, per wall-normal column.
     //! An inner (Van Driest-damped mixing length times vorticity) and an outer (wake/Klebanoff)
     //! kinematic eddy viscosity are evaluated; the inner one is used up to the first wall distance
-    //! at which the two cross, the outer one beyond. Without roughness (not supported here).
+    //! at which the two cross, the outer one beyond. Wall roughness is not considered.
     std::vector<Scalar> baldwinLomaxKinematicEddyViscosity_() const
     {
         using std::abs;

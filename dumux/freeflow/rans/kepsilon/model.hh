@@ -11,8 +11,7 @@
  *        closure, fused as two extra transported equations (turbulent kinetic energy k,
  *        dissipation rate epsilon) onto the single-phase Navier-Stokes mass balance.
  *
- * The two transport equations are fused onto the *mass* sub-model, following the same
- * strategy already used for the one-equation and k-omega models.
+ * The two transport equations are fused onto the mass sub-model.
  */
 #ifndef DUMUX_RANS_KEPSILON_MASS_MODEL_HH
 #define DUMUX_RANS_KEPSILON_MASS_MODEL_HH
@@ -81,9 +80,7 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneKEpsilon> { using type = KEpsilonMassIOFields; };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Nonisothermal variant. As with every other RANS model, the wall temperature is enforced
-// via the same simple weak-Neumann treatment already used for k (not a Jayatilleke
-// wall-function energy flux) - a deliberate simplification, not an oversight.
+// Nonisothermal variant.
 //////////////////////////////////////////////////////////////////////////////////////
 
 namespace TTag {

@@ -8,15 +8,12 @@
  * \file
  * \ingroup FreeflowModels
  * \brief Helper struct defining the advective fluxes of the two-equation k-omega turbulence
- *        closure fused onto the single-phase Navier-Stokes mass model, for use with
- *        dumux/freeflow/navierstokes/scalarfluxhelper.hh's boundary flux helpers (the outflow
- *        treatment at the test's outlet, see test/freeflow/rans/komega/channel).
+ *        closure fused onto the single-phase Navier-Stokes mass model.
  */
 #ifndef DUMUX_RANS_KOMEGA_MASS_ADVECTIVE_FLUX_HH
 #define DUMUX_RANS_KOMEGA_MASS_ADVECTIVE_FLUX_HH
 
-// Pulls in the primary template (with its default second argument) exactly once - see
-// dumux/freeflow/rans/oneeq/advectiveflux.hh for why this must not be redeclared here.
+// Provides the primary AdvectiveFlux template, which is specialized below
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 
@@ -29,9 +26,9 @@ struct KOmegaMassModelTraits;
 /*!
  * \ingroup FreeflowModels
  * \brief Helper struct defining the advective fluxes of the k-omega turbulence closure fused
- *        onto the single-phase Navier-Stokes mass model: the pressure equation's mass flux
- *        (density upwind, as in the plain 1p model) plus k's and omega's advective fluxes
- *        (rho*k, rho*omega upwind).
+ *        onto the single-phase Navier-Stokes mass model: the mass flux of the pressure
+ *        equation (density upwind) plus the advective fluxes of k and omega (rho*k and
+ *        rho*omega upwind).
  */
 template<class T>
 struct AdvectiveFlux<KOmegaMassModelTraits, T>
@@ -50,9 +47,8 @@ struct AdvectiveFlux<KOmegaMassModelTraits, T>
     }
 };
 
-//! Use the same advective flux for the non-isothermal model (heat fluxes are added separately
-//! by NavierStokesMassOnePFluxVariables::flux(), see dumux/freeflow/rans/komega/model.hh's NI
-//! TypeTag) - mirrors dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh's own NI passthrough.
+//! The non-isothermal model uses the same advective flux (the heat fluxes are added
+//! separately by NavierStokesMassOnePFluxVariables::flux()).
 template<>
 struct AdvectiveFlux<NavierStokesEnergyModelTraits<KOmegaMassModelTraits>>
 : public AdvectiveFlux<KOmegaMassModelTraits>

@@ -303,10 +303,8 @@ public:
     }
 
 private:
-    //! Detects whether a problem exposes turbulentKineticEnergy(element, fvGeometry, scvf) -
-    //! used by turbulentKineticEnergyContribution() below (duck-typed: a no-op unless a
-    //! two-equation RANS turbulence closure problem mixin provides this method, see
-    //! dumux/freeflow/rans/komega/momentumproblem.hh and whatisimplemented.md).
+    //! Detects whether a problem provides turbulentKineticEnergy(element, fvGeometry, scvf),
+    //! used by turbulentKineticEnergyContribution() below.
     template<class P>
     using TurbulentKineticEnergyDetector = decltype(
         std::declval<P>().turbulentKineticEnergy(std::declval<const Element&>(),
@@ -316,14 +314,11 @@ private:
 
 public:
     /*!
-     * \brief Returns the isotropic turbulent normal-stress correction (2/dim*rho*k), added to
-     *        the frontal momentum flux by two-equation RANS turbulence models (k-omega,
-     *        k-epsilon, ...) that solve the turbulent kinetic energy k as a transported
-     *        variable - ported from the deleted
-     *        releases/3.10:dumux/freeflow/rans/twoeq/komega/staggered/fluxvariables.hh's
-     *        computeMomentumFlux(). Zero (a no-op) for any problem that does not expose a
-     *        turbulentKineticEnergy(element, fvGeometry, scvf) method - i.e. every existing
-     *        (non-two-equation-RANS) momentum problem, see whatisimplemented.md.
+     * \brief Returns the isotropic turbulent normal-stress contribution (2/dim*rho*k) to
+     *        the frontal momentum flux, for turbulence models that solve the turbulent
+     *        kinetic energy k as a transported variable (k-omega, k-epsilon, ...).
+     *        Zero for problems that do not provide a
+     *        turbulentKineticEnergy(element, fvGeometry, scvf) method.
      */
     NumEqVector turbulentKineticEnergyContribution() const
     {

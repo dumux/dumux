@@ -23,10 +23,9 @@ namespace Dumux {
  *        closure to a face-centered-staggered Navier-Stokes momentum problem: the
  *        wall-distance/velocity-gradient/vorticity/stress-tensor bookkeeping inherited from
  *        Dumux::RANSMomentumProblem, plus forwarding the turbulent (eddy) viscosity and the
- *        turbulent kinetic energy k - both computed on the *mass* sub-model, see
+ *        turbulent kinetic energy k - both computed on the mass sub-model, see
  *        dumux/freeflow/rans/komega/volumevariables.hh - into effectiveViscosity() and the
- *        normal-stress correction respectively. Analogous to Dumux::OneEqMomentumProblem/
- *        Dumux::ZeroEqProblem.
+ *        normal-stress correction respectively.
  */
 template<class TypeTag>
 class KOmegaMomentumProblem : public RANSMomentumProblem<TypeTag>

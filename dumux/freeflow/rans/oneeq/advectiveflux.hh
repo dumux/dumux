@@ -8,16 +8,14 @@
  * \file
  * \ingroup FreeflowModels
  * \brief Helper struct defining the advective fluxes of the one-equation (Spalart-Allmaras)
- *        turbulence closure fused onto the single-phase Navier-Stokes mass model, for use
- *        with dumux/freeflow/navierstokes/scalarfluxhelper.hh's boundary flux helpers
- *        (e.g. the outflow treatment at the test's outlet, see test/freeflow/rans/oneeq/channel).
+ *        turbulence closure on top of the single-phase Navier-Stokes mass model, for use
+ *        with the boundary flux helpers in dumux/freeflow/navierstokes/scalarfluxhelper.hh.
  */
 #ifndef DUMUX_RANS_ONEEQ_MASS_ADVECTIVE_FLUX_HH
 #define DUMUX_RANS_ONEEQ_MASS_ADVECTIVE_FLUX_HH
 
-// Pulls in the primary template (with its default second argument) exactly once, so this
-// header does not need to (and must not, see below) redeclare it itself: repeating a default
-// template argument for an already-visible declaration is a hard error in C++.
+// This include provides the primary template (including its default template argument), which
+// must not be redeclared here since default template arguments cannot be repeated.
 #include <dumux/freeflow/navierstokes/mass/1p/advectiveflux.hh>
 #include <dumux/freeflow/navierstokes/energy/model.hh>
 
@@ -30,9 +28,9 @@ struct OneEqMassModelTraits;
 /*!
  * \ingroup FreeflowModels
  * \brief Helper struct defining the advective fluxes of the one-equation turbulence closure
- *        fused onto the single-phase Navier-Stokes mass model: the pressure equation's mass
- *        flux (density upwind, as in the plain 1p model) plus the ν̃ transport equation's
- *        advective flux (ρν̃ upwind).
+ *        on top of the single-phase Navier-Stokes mass model: the mass flux of the
+ *        pressure equation (density upwind) plus the advective flux of the ν̃ transport
+ *        equation (ρν̃ upwind).
  */
 template<class T>
 struct AdvectiveFlux<OneEqMassModelTraits, T>
@@ -50,9 +48,8 @@ struct AdvectiveFlux<OneEqMassModelTraits, T>
 };
 
 //! Use the same advective flux for the non-isothermal model (heat fluxes are added separately).
-//! Note: OneEqMassLocalResidual overwrites (not adds to) the viscosityTildeEqIdx entry itself
-//! (see that file), so this specialization only needs to exist for the code to compile - it is
-//! conti0EqIdx (unmodified downstream) that actually matters here.
+//! Note: OneEqMassLocalResidual overwrites the viscosityTildeEqIdx entry of the flux, so only
+//! the conti0EqIdx entry is relevant here.
 template<>
 struct AdvectiveFlux<NavierStokesEnergyModelTraits<OneEqMassModelTraits>>
 : public AdvectiveFlux<OneEqMassModelTraits>

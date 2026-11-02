@@ -23,12 +23,10 @@ namespace Dumux {
  *        closure to a face-centered-staggered Navier-Stokes momentum problem: the
  *        wall-distance/velocity-gradient/vorticity/stress-tensor bookkeeping inherited from
  *        Dumux::RANSMomentumProblem, plus forwarding the turbulent (eddy) viscosity and the
- *        turbulent kinetic energy k - both computed on the *mass* sub-model, see
+ *        turbulent kinetic energy k - both computed on the mass sub-model, see
  *        dumux/freeflow/rans/sst/volumevariables.hh - into effectiveViscosity() and the
- *        normal-stress correction respectively. Identical in structure to
- *        Dumux::KOmegaMomentumProblem - no boundary-type/Neumann override is needed here (SST,
- *        like k-omega, solves omega all the way to the wall via an internal Dirichlet
- *        constraint, not a momentum wall function).
+ *        normal-stress correction respectively. No wall function is applied to the momentum
+ *        balance since omega is solved up to the wall using an internal Dirichlet constraint.
  */
 template<class TypeTag>
 class SSTMomentumProblem : public RANSMomentumProblem<TypeTag>

@@ -20,9 +20,8 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief The indices for the two-equation low-Reynolds-number k-epsilon (Chien 1982) turbulence
  *        closure, fused as two additional transported equations onto the single-phase
- *        Navier-Stokes mass balance (pressure remains equation/index 0, as in
- *        NavierStokesMassOnePIndices; k is index 1, the transported dissipation epsilon-tilde
- *        is index 2).
+ *        Navier-Stokes mass balance (pressure is equation/index 0, k is index 1,
+ *        the transported dissipation epsilon-tilde is index 2).
  */
 struct LowReKEpsilonMassIndices : public NavierStokesMassOnePIndices
 {

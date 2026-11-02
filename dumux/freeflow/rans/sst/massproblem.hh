@@ -35,19 +35,10 @@ namespace Dumux {
  *        once-per-time-step (lagged) update of the k/omega cross-diffusion gradient product
  *        needed by F1() and the cross-diffusion source term, and the wall-adjacent analytical
  *        omega Dirichlet condition omega_wall = 6*nu/(beta_omega*y^2), enforced as an internal
- *        (cell, not boundary-face) Dirichlet constraint - identical in every respect to
- *        Dumux::KOmegaMassProblem's own wall condition (SST does not override betaOmega(); the
- *        resulting 0.0708-vs-0.075 discrepancy is a deliberately preserved quirk of the ported
- *        formula, not a bug).
+ *        (cell, not boundary-face) Dirichlet constraint.
  *
  * \tparam TypeTag The mass sub-model's TypeTag.
- * \tparam MomentumProblem The concrete momentum problem type (a Dumux::SSTMomentumProblem),
- *         explicit template parameter, exactly as for Dumux::KOmegaMassProblem.
- *
- * Ported from the deleted releases/3.10:dumux/freeflow/rans/twoeq/sst/problem.hh
- * (RANSProblemImpl<TypeTag, TurbulenceModel::sst>) and
- * releases/3.10:test/freeflow/rans/problem.hh's isDirichletCell_/dirichletTurbulentTwoEq_
- * komega/sst-shared branches.
+ * \tparam MomentumProblem The concrete momentum problem type (a Dumux::SSTMomentumProblem)
  */
 template<class TypeTag, class MomentumProblem>
 class SSTMassProblem : public NavierStokesMassProblem<TypeTag>
@@ -74,11 +65,9 @@ public:
     template<class... Args>
     SSTMassProblem(Args&&... args)
     : ParentType(std::forward<Args>(args)...)
-    // The k/omega cross-diffusion gradient product is read (SSTMassVolumeVariables::update())
-    // as soon as the grid variables are first initialized in main.cc, before
-    // updateDynamicWallProperties() is ever called (once per time step, inside the time loop) -
-    // so this must be pre-sized here, to zero, exactly as for Dumux::KOmegaMassProblem's
-    // crossDiffusionGradientProduct_.
+    // The stored fields are read by SSTMassVolumeVariables::update() when the grid
+    // variables are initialized, i.e. before updateDynamicWallProperties() is first called,
+    // so they are sized and zero-initialized here.
     , crossDiffusionGradientProduct_(this->gridGeometry().elementMapper().size(), 0.0)
     , storedTurbulentKineticEnergy_(this->gridGeometry().elementMapper().size(), 0.0)
     , storedDissipation_(this->gridGeometry().elementMapper().size(), 0.0)
@@ -92,10 +81,8 @@ public:
     Scalar wallDistance(std::size_t eIdx) const
     { return momentumProblem_->wallDistance(eIdx); }
 
-    //! \note Guarded the same way as Dumux::LowReKEpsilonMassProblem::kinematicViscosity() (see
-    //! its comment): RANSMomentumProblem's stored molecular density/viscosity are only
-    //! zero-*initialized* by updateStaticWallProperties(), so this quotient would otherwise
-    //! evaluate to NaN in the narrow window before the first updateDynamicWallProperties() call.
+    //! \note Returns zero as long as the stored density of the momentum problem is zero (i.e.
+    //! before the first updateDynamicWallProperties() call), to avoid a division by zero.
     Scalar kinematicViscosity(std::size_t eIdx) const
     {
         const auto density = momentumProblem_->storedDensity(eIdx);
@@ -121,22 +108,16 @@ public:
     SSTModel sstModelVersion() const
     { return sstModelVersion_; }
 
-    //! The von Karman constant and the beta_omega closure constant, needed for the wall omega
-    //! value below (kept here, not just in volumevariables.hh, since this method needs it
-    //! without a volVars object at hand) - identical, unblended constant to Dumux::KOmegaMassProblem's.
+    //! The (unblended) beta_omega closure constant, needed for the wall value of omega
+    //! where no volume variables are available.
     Scalar betaOmega() const
     { return 0.0708; }
 
     /*!
-     * \brief Updates the (lagged) stored k/omega and their cross-diffusion gradient product, via
-     *        a central difference over each element's two neighbors along every axis - reusing
-     *        the momentum domain's neighborIndex()/cellCenter() bookkeeping - reproducing
-     *        releases/3.10:dumux/freeflow/rans/twoeq/sst/problem.hh's own gradient computation
-     *        verbatim (a Green-Gauss reconstruction over CCTpfa's face/neighbor connectivity was
-     *        used here previously; it gives a shorter effective distance at boundary-adjacent
-     *        cells that was found to needlessly amplify SST's already gradient-sensitive
-     *        near-wall blending). Called once per time step from main.cc, before the next
-     *        assembly.
+     * \brief Updates the (lagged) stored k and omega and the product of their gradients.
+     *        The gradients are computed by central differences over the two neighboring cells
+     *        along each axis, using the neighborIndex() and cellCenter() of the momentum
+     *        problem. To be called once per time step before the next assembly.
      */
     template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& sol)
@@ -177,10 +158,8 @@ public:
     }
 
     /*!
-     * \brief The SST production/destruction/cross-diffusion source term, ported from
-     *        releases/3.10:dumux/freeflow/rans/twoeq/sst/staggered/localresidual.hh's
-     *        computeSourceForCellCenter(), branching on the runtime SST model version. Added
-     *        through the standard problem.source(...) extension point.
+     * \brief The SST production/destruction/cross-diffusion source term, using the
+     *        coefficients of the selected SST model version.
      */
     template<class ElementVolumeVariables>
     NumEqVector source(const Element& element,
@@ -211,15 +190,15 @@ public:
             source[Indices::dissipationEqIdx] -= volVars.betaSST()*volVars.density()*volVars.dissipation()*volVars.dissipation();
         }
 
-        // cross-diffusion term - identical in both branches, always weighted by (1-F1)
+        // cross-diffusion term, the same for both model versions, weighted by (1-F1)
         const Scalar gradientProduct = volVars.storedCrossDiffusionGradientProduct();
         source[Indices::dissipationEqIdx] += 2.0*volVars.density()*(1.0 - volVars.F1())*volVars.sigmaOmega2()/volVars.dissipation()*gradientProduct;
 
         return source;
     }
 
-    //! \name Wall-adjacent-cell analytical omega Dirichlet condition - identical mechanism and
-    //! formula to Dumux::KOmegaMassProblem's (see class docs above for why SST reuses it as-is).
+    //! \name Analytical omega Dirichlet condition in the wall-adjacent cells (an internal
+    //! constraint on the cell, not a boundary face condition).
     // \{
 
     static constexpr bool enableInternalDirichletConstraints()

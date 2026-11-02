@@ -21,18 +21,15 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Mixin that adds the mass-domain side of the zero-equation RANS turbulence closure -
- *        used only by the nonisothermal ("...NI") TypeTag (Dumux::NavierStokesMassOneZeroEqNI),
- *        since the isothermal zero-equation test needs no mass-side wiring at all (it uses the
- *        plain Dumux::NavierStokesMassProblem directly, see test/freeflow/rans/zeroeq/channel).
+ * \brief Mixin that adds the mass-domain side of the zero-equation RANS turbulence closure.
+ *        It is only used by the nonisothermal ("...NI") TypeTag
+ *        (Dumux::NavierStokesMassOneZeroEqNI); the isothermal model uses
+ *        Dumux::NavierStokesMassProblem directly.
  *
- * Unlike every other RANS model, zero-eq computes and adds its eddy viscosity entirely on the
- * *momentum* side (Dumux::ZeroEqProblem::effectiveViscosity()), with no mass-domain
- * representation and no coupling-manager `turbulentViscosity()` involvement. For the
- * nonisothermal energy equation to pick up an eddy thermal conductivity, the mass domain needs
- * read-only access to that momentum-side eddy viscosity - forwarded here the same way every
- * other RANS model's mass problem forwards *momentum*-owned data (wallDistance,
- * stressTensorScalarProduct, ...), just for a different quantity.
+ * The zero-equation model computes the eddy viscosity on the momentum side
+ * (Dumux::ZeroEqProblem::effectiveViscosity()). For the energy equation to account for an eddy
+ * thermal conductivity, the mass domain needs read-only access to it, which is provided by
+ * this class.
  */
 template<class TypeTag, class MomentumProblem>
 class ZeroEqMassProblem : public NavierStokesMassProblem<TypeTag>
@@ -43,7 +40,7 @@ class ZeroEqMassProblem : public NavierStokesMassProblem<TypeTag>
 public:
     using ParentType::ParentType;
 
-    //! Must be called once, after both sub-problems have been constructed.
+    //! Sets the momentum problem. Must be called once, after both sub-problems have been constructed.
     void setMomentumProblem(std::shared_ptr<const MomentumProblem> momentumProblem)
     { momentumProblem_ = momentumProblem; }
 

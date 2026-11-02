@@ -20,8 +20,7 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief The indices for the two-equation k-epsilon turbulence closure, fused as two additional
  *        transported equations onto the single-phase Navier-Stokes mass balance (pressure
- *        remains equation/index 0, as in NavierStokesMassOnePIndices; k is index 1, epsilon is
- *        index 2).
+ *        is equation/index 0, k is index 1, epsilon is index 2).
  */
 struct KEpsilonMassIndices : public NavierStokesMassOnePIndices
 {

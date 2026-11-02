@@ -48,8 +48,8 @@ struct RANSZeroEqChannelTestMass { using InheritsFrom = std::tuple<RANSZeroEqCha
 #endif
 } // end namespace TTag
 
-// Set the problem property: the momentum problem is layered on top of Dumux::ZeroEqProblem
-// (the zero-equation RANS closure mixin) instead of directly on Dumux::NavierStokesMomentumProblem
+// Set the problem property: the momentum problem is based on Dumux::ZeroEqProblem,
+// which provides the zero-equation eddy viscosity closure
 template<class TypeTag>
 struct Problem<TypeTag, TTag::RANSZeroEqChannelTestMomentum>
 { using type = RANSZeroEqChannelTestProblem<TypeTag, Dumux::ZeroEqProblem<TypeTag>>; };
@@ -67,7 +67,7 @@ public:
 #endif
 };
 
-// the fluid system: air, matching releases/3.10:test/freeflow/rans/ (PipeLauferProblem)
+// the fluid system: air
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::RANSZeroEqChannelTest>
 {
@@ -75,10 +75,9 @@ struct FluidSystem<TypeTag, TTag::RANSZeroEqChannelTest>
     using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
 };
 
-// Set the grid type: a graded (wall-refined) tensor-product-coordinate YaspGrid, matching
-// the mesh grading approach used by releases/3.10:test/freeflow/rans/ (see params.input:
-// Positions0/1, Cells0/1, Grading1) - a plain equidistant grid does not resolve the near-wall
-// region finely enough for a physically meaningful turbulent boundary layer.
+// Set the grid type: a YaspGrid with tensor-product coordinates, which allows grading
+// the mesh towards the walls (see params.input: Positions, Cells, Grading) to resolve
+// the near-wall region
 template<class TypeTag>
 struct Grid<TypeTag, TTag::RANSZeroEqChannelTest>
 { using type = Dune::YaspGrid<2, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 2>>; };

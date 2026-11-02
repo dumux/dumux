@@ -24,16 +24,12 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation k-omega (Wilcox 2008) turbulence closure for the turbulent kinetic
- *        energy k and the specific dissipation rate omega, fused as two extra equations on
- *        the mass sub-model rather than on a separate coupled sub-domain, following the same
- *        strategy already used for the one-equation model.
+ *        energy k and the specific dissipation rate omega, solved as two extra equations on
+ *        the mass sub-model.
  *
- * Closure constants/functions ported near-verbatim from the deleted
- * releases/3.10:dumux/freeflow/rans/twoeq/komega/volumevariables.hh, with
- * stressTensorScalarProduct() read from the problem (which forwards it to the momentum
- * domain's Dumux::RANSMomentumProblem), and the (lagged, see massproblem.hh)
- * storedTurbulentKineticEnergyGradient()/storedDissipationGradient() read from the mass
- * problem's own bookkeeping.
+ * The stressTensorScalarProduct() is read from the problem (which forwards it from the
+ * momentum domain's Dumux::RANSMomentumProblem) and the lagged product of the k and omega
+ * gradients is read from the mass problem (see massproblem.hh).
  */
 template<class Traits>
 class KOmegaMassVolumeVariables
@@ -56,12 +52,10 @@ public:
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct(scv.elementIndex());
         crossDiffusionGradientProduct_ = problem.storedCrossDiffusionGradientProduct(scv.elementIndex());
 
-        // Nonisothermal only: overwrite the molecular-only lambdaEff_ that
-        // ParentType::update() already set (via a call site that cannot see
-        // dynamicEddyViscosity(), see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs) with the correct eddy-augmented value, now that dynamicEddyViscosity() -
-        // a pure function of the primary variables ParentType::update() just set up - is
-        // reachable through *this.
+        // Nonisothermal only: ParentType::update() sets the effective thermal conductivity
+        // without the eddy contribution, because dynamicEddyViscosity() is not available
+        // there (see dumux/freeflow/rans/common/thermalconductivitymodel.hh). It is
+        // overwritten here with the value including the eddy contribution.
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
             this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
@@ -84,8 +78,7 @@ public:
 
     //! The dynamic eddy viscosity mu_t = rho*k/max(omega, limiter) - the quantity the momentum
     //! domain reads through the coupling manager's turbulentViscosity()/effectiveViscosity().
-    //! The Wilcox2008 dissipation limiter is always enabled (no runtime opt-out, matching
-    //! the simplification already made for the one-equation model).
+    //! The Wilcox (2008) dissipation limiter is always applied.
     Scalar dynamicEddyViscosity() const
     {
         using std::sqrt;

@@ -26,20 +26,16 @@ namespace Dumux {
  *        (k, epsilon-tilde).
  *
  * Extends Dumux::NavierStokesMassOnePLocalResidual's storage/flux with the k/epsilon-tilde
- * diffusive transport terms, ported from the deleted releases/3.10:dumux/freeflow/rans/
- * twoeq/lowrekepsilon/staggered/fluxvariables.hh's computeMassFlux(). See
- * dumux/freeflow/rans/oneeq/localresidual.hh for why boundary "outside"/ghost volVars must be
- * fetched via elemVars[scvf.outsideScvIdx()] directly rather than fvGeometry.scv(...).
+ * diffusive transport terms. The volume variables on the outside of a boundary face are
+ * fetched via elemVars[scvf.outsideScvIdx()] directly.
  *
- * \note The advective part of the k/epsilon-tilde flux is *not* added here - it is already
- * included in ParentType::computeFlux()'s result via the LowReKEpsilonMassModelTraits-specific
- * Dumux::AdvectiveFlux specialization (dumux/freeflow/rans/lowrekepsilon/advectiveflux.hh),
- * which NavierStokesMassOnePFluxVariables::advectiveFlux() dispatches to automatically for
- * every equation index, not just conti0EqIdx - see komega/localresidual.hh's note for the
- * double-counting bug this avoids.
+ * \note The advective part of the k/epsilon-tilde flux is not added here: it is already
+ * contained in the result of ParentType::computeFlux() through the Dumux::AdvectiveFlux
+ * specialization for LowReKEpsilonMassModelTraits
+ * (dumux/freeflow/rans/lowrekepsilon/advectiveflux.hh), which is applied to every equation index.
  *
- * Production/destruction/damping-function source terms are *not* added here: they go through
- * the standard problem.source(...) extension point instead (Dumux::LowReKEpsilonMassProblem).
+ * Production/destruction/damping-function source terms are not added here: they are provided
+ * by problem.source(...) (Dumux::LowReKEpsilonMassProblem).
  */
 template<class TypeTag>
 class LowReKEpsilonMassLocalResidual
@@ -114,10 +110,9 @@ public:
     }
 
 private:
-    //! Two-point-TPFA diffusive ((mu+sigma_k*mu_t), (mu+sigma_epsilon*mu_t)) terms - ported from
-    //! releases/3.10:dumux/freeflow/rans/twoeq/lowrekepsilon/staggered/fluxvariables.hh::
-    //! computeMassFlux(). See class docs above re: boundary ghost-volVars handling and why the
-    //! advective part is not (re-)added here.
+    //! Adds the two-point diffusive terms with the diffusion coefficients (mu_t/sigma_k + mu) and
+    //! (mu_t/sigma_epsilon + mu). The advective part is not added here, see the class
+    //! documentation.
     void addTurbulenceFlux_(NumEqVector& flux,
                             const FVElementGeometry& fvGeometry,
                             const ElementVariables& elemVars,
@@ -138,8 +133,8 @@ private:
         const auto diffCoeffEpsilonInside = insideVars.dynamicEddyViscosity()/insideVars.sigmaEpsilon() + insideVars.viscosity();
         const auto diffCoeffEpsilonOutside = outsideVars.dynamicEddyViscosity()/outsideVars.sigmaEpsilon() + outsideVars.viscosity();
 
-        // distance-weighted (not plain) mean of the diffusion coefficient on interior faces, as in
-        // releases/3.10 (arithmeticMean() with the inside/outside distances to the face as weights)
+        // mean of the diffusion coefficient on interior faces, weighted by the distances of the
+        // two cell centers to the face
         const auto weightedMean = [&](const auto inside, const auto outside)
         {
             if (scvf.boundary())

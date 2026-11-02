@@ -27,29 +27,23 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief Mixin that adds the mass-domain side of the one-equation (Spalart-Allmaras)
  *        RANS turbulence closure: the Spalart-Allmaras production/destruction/
- *        cross-diffusion source term (through the standard problem.source() extension
- *        point), and the once-per-time-step (lagged, see below) update of the ν̃ gradient
- *        needed for the cross-diffusion term.
+ *        cross-diffusion source term (through problem.source()), and the once-per-time-step
+ *        (lagged) update of the ν̃ gradient needed for the cross-diffusion term.
  *
  * \tparam TypeTag The mass sub-model's TypeTag.
  * \tparam MomentumProblem The concrete momentum problem type (a Dumux::RANSMomentumProblem
- *         or, in practice, Dumux::OneEqMomentumProblem, subclass) - explicit template
- *         parameter rather than property-system plumbing, since the mass sub-model has no
- *         other way to learn its momentum sibling's type. Set post-construction via
- *         setMomentumProblem(), mirroring how e.g. Problem::setTimeLoop() is wired in
- *         main.cc elsewhere in this codebase.
+ *         or Dumux::OneEqMomentumProblem). It is set after construction via
+ *         setMomentumProblem().
  *
- * wallDistance()/vorticityTensorScalarProduct() are *not* recomputed here - they are frozen
- * (lagged) values computed once per time step by the momentum domain's
- * Dumux::RANSMomentumProblem and simply forwarded, read-only, through the stored
- * momentum-problem pointer (both grids share the same underlying element indexing). This is
- * deliberately *not* routed through a CouplingManager: since these values are frozen for the
- * whole time step, there is nothing for Newton to differentiate against.
+ * wallDistance() and vorticityTensorScalarProduct() are computed once per time step by the
+ * momentum domain's Dumux::RANSMomentumProblem and forwarded read-only through the stored
+ * momentum problem pointer (both grids share the same element indexing). Since these values
+ * are constant during a time step, they do not need to be passed through the coupling manager.
  *
- * The gradient ∇ν̃ is reconstructed like releases/3.10 did: a central difference over the two
- * neighboring elements along each axis (structured, axis-aligned meshes), and, at Dirichlet
- * boundaries, a difference between the boundary value and the next interior element (see
- * updateDynamicWallProperties() below).
+ * The gradient ∇ν̃ is reconstructed by a central difference over the two neighboring elements
+ * along each axis (structured, axis-aligned meshes), and, at Dirichlet boundaries, by a
+ * difference between the boundary value and the next interior element (see
+ * updateDynamicWallProperties()).
  */
 template<class TypeTag, class MomentumProblem>
 class RANSMassOneEqProblem : public NavierStokesMassProblem<TypeTag>
@@ -75,14 +69,13 @@ public:
     template<class... Args>
     RANSMassOneEqProblem(Args&&... args)
     : ParentType(std::forward<Args>(args)...)
-    // ν̃'s gradient is read (OneEqMassVolumeVariables::update()) as soon as the grid variables
-    // are first initialized in main.cc, i.e. before updateDynamicWallProperties() is ever
-    // called (that only happens once per time step, inside the time loop) - so this must be
-    // pre-sized here, to zero, rather than left empty until the first update.
+    // The ν̃ gradient is read in OneEqMassVolumeVariables::update() when the grid variables
+    // are initialized, i.e. before updateDynamicWallProperties() is first called,
+    // so it is initialized to zero here.
     , viscosityTildeGradient_(this->gridGeometry().elementMapper().size(), DimVector(0.0))
     {}
 
-    //! Must be called once, after both sub-problems have been constructed.
+    //! Sets the momentum problem. Must be called once, after both sub-problems have been constructed.
     void setMomentumProblem(std::shared_ptr<const MomentumProblem> momentumProblem)
     { momentumProblem_ = momentumProblem; }
 
@@ -96,10 +89,9 @@ public:
     { return viscosityTildeGradient_[eIdx]; }
 
     /*!
-     * \brief Updates the (lagged) ν̃ gradient used by the cross-diffusion source term, from
-     *        the given (typically: the last converged) mass solution. Called once per time
-     *        step from main.cc, before the next assembly - not re-evaluated within Newton,
-     *        matching how releases/3.10 treated this term (see class documentation above).
+     * \brief Updates the (lagged) ν̃ gradient used by the cross-diffusion source term from
+     *        the given (typically the last converged) mass solution. Called once per time
+     *        step from main.cc before the next assembly, not within the Newton iteration.
      */
     template<class SolutionVector>
     void updateDynamicWallProperties(const SolutionVector& sol)
@@ -164,12 +156,7 @@ public:
     }
 
     /*!
-     * \brief The Spalart-Allmaras production/destruction/cross-diffusion source term,
-     *        ported from releases/3.10:dumux/freeflow/rans/oneeq/staggered/localresidual.hh's
-     *        computeSourceForCellCenter(). Added through the standard problem.source(...)
-     *        extension point (Dumux::DiscretizationDefaultLocalOperator's default
-     *        computeSource() already forwards here generically, so no localResidual
-     *        override is needed for this term, see localresidual.hh).
+     * \brief The Spalart-Allmaras production/destruction/cross-diffusion source term.
      */
     template<class ElementVolumeVariables>
     NumEqVector source(const Element& element,

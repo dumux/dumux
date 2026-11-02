@@ -23,11 +23,10 @@ namespace Dumux {
  *        k-epsilon RANS turbulence closure to a face-centered-staggered Navier-Stokes momentum
  *        problem: the wall-distance/velocity-gradient/stress-tensor bookkeeping inherited from
  *        Dumux::RANSMomentumProblem, plus forwarding the turbulent (eddy) viscosity and the
- *        turbulent kinetic energy k - both computed on the *mass* sub-model, see
+ *        turbulent kinetic energy k - both computed on the mass sub-model, see
  *        dumux/freeflow/rans/lowrekepsilon/volumevariables.hh - into effectiveViscosity() and
- *        the normal-stress correction respectively. Identical in structure to
- *        Dumux::KOmegaMomentumProblem - unlike the wall-function k-epsilon model, no
- *        boundary-type/Neumann wall-function override is needed here.
+ *        the normal-stress correction respectively. No wall-function boundary treatment is
+ *        needed since the wall is resolved.
  */
 template<class TypeTag>
 class LowReKEpsilonMomentumProblem : public RANSMomentumProblem<TypeTag>

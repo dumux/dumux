@@ -30,11 +30,12 @@ namespace Dumux {
 /*!
  * \ingroup NavierStokesTests
  * \brief Test problem for turbulent channel flow using the one-equation (Spalart-Allmaras)
- *        RANS model, mirroring test/freeflow/rans/zeroeq/channel's geometry/BCs/fluid, with
- *        the same uniform inflow profile and the same graded, wall-refined mesh, but
- *        also setting boundary/initial conditions for the working viscosity ν̃ (Dirichlet at
- *        walls/inlet, outflow at the outlet) - matching
- *        releases/3.10:test/freeflow/rans/problem.hh's PipeLauferProblem (one-eq branch).
+ *        RANS model.
+ *
+ * Flow from left to right in a two-dimensional channel, with a uniform (top-hat) inflow
+ * velocity profile at the inlet (left), a fixed pressure at the outlet (right), and no-slip
+ * walls at the top and bottom. The working viscosity ν̃ is fixed at the inlet, vanishes
+ * at the walls, and leaves the domain at the outlet.
  */
 template<class TypeTag, class BaseProblem>
 class RANSOneEqChannelTestProblem : public BaseProblem
@@ -71,11 +72,10 @@ public:
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 303.15);
 #endif
 
-        // The inflow viscosityTilde_ value is only used on the mass domain (which owns the ν̃
-        // primary variable) - the momentum domain has no FluidState property, so this is
-        // skipped there. Computed the same way releases/3.10:test/freeflow/rans/problem.hh did:
-        // an empirical estimate (Dumux::TurbulenceProperties) from the inlet velocity, a
-        // reference length, and the fluid's kinematic viscosity at a reference state.
+        // The inflow value of ν̃ is only needed by the mass problem, which owns the ν̃
+        // primary variable (the momentum problem has no fluid state). It is an empirical
+        // estimate (Dumux::TurbulenceProperties) from the inlet velocity, the channel height
+        // and the kinematic viscosity of the fluid at a reference state.
         if constexpr (!ParentType::isMomentumProblem())
         {
             using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -92,8 +92,8 @@ public:
 
             const Scalar halfHeight = 0.5*(this->gridGeometry().bBoxMax()[1] - this->gridGeometry().bBoxMin()[1]);
 
-            // ideally the viscosityTilde parameter as inflow for the Spalart-Allmaras model
-            // should be zero - matching releases/3.10:test/freeflow/rans/problem.hh exactly.
+            // ideally ν̃ at the inlet of the Spalart-Allmaras model would be zero, so a small
+            // fraction of the empirical estimate is used
             Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
             viscosityTilde_ = 1e-3*turbulenceProperties.viscosityTilde(inletVelocity_, 2.0*halfHeight, kinematicViscosity);
         }
@@ -120,15 +120,10 @@ public:
         {
             values.setAllNeumann();
 
-            // Only the inlet gets a true (per-equation-consistent) Dirichlet condition, since
-            // there both pressure *and* ν̃ are Dirichlet - no mixing. At walls, pressure must
-            // stay Neumann (as everywhere outside the inlet), so ν̃ is *also* kept Neumann there
-            // instead of Dirichlet: dumux/assembly/cclocalresidual.hh's evalFlux() rejects a
-            // boundary scvf with different BC types across equations ("mixed boundary
-            // conditions ... convert Dirichlet BCs to Robin BCs"). The wall condition ν̃=0 is
-            // therefore enforced weakly, as a manually-computed Dirichlet-equivalent diffusive
-            // flux inside neumann() below - numerically identical to a true Dirichlet BC, just
-            // expressed through the Neumann flux interface CCTpfa requires here.
+            // Pressure and ν̃ are Dirichlet at the inlet. At the walls the pressure is
+            // Neumann, and the cell-centered scheme does not allow different boundary
+            // condition types for different equations on the same face. Therefore ν̃ = 0 at
+            // the walls is imposed weakly through the diffusive flux in neumann().
             if (isInlet_(globalPos))
             {
                 values.setDirichlet(Indices::pressureIdx);
@@ -149,16 +144,14 @@ public:
 
         if constexpr (ParentType::isMomentumProblem())
         {
-            // Uniform inflow profile, see test/freeflow/rans/zeroeq/channel/problem.hh for the
-            // rationale.
+            // The inflow profile is used for every velocity Dirichlet boundary (inlet and walls)
             values[Indices::velocityXIdx] = inletVelocityProfile_(globalPos[1]);
             values[Indices::velocityYIdx] = 0.0;
         }
         else
         {
             values[Indices::pressureIdx] = this->couplingManager().cellPressure(element, scvf);
-            // Only ever queried at the inlet - see boundaryTypesAtPos() (walls are Neumann,
-            // enforced weakly instead, see neumann()).
+            // only queried at the inlet, ν̃ is imposed weakly at the walls (see neumann())
             values[Indices::viscosityTildeIdx] = viscosityTilde_;
 #if NONISOTHERMAL
             values[Indices::temperatureIdx] = inletTemperature_;
@@ -193,11 +186,8 @@ public:
             }
             else if (isOnWallAtPos(globalPos))
             {
-                // Weak (Robin-form) equivalent of a true Dirichlet ν̃=0 wall condition - see
-                // boundaryTypesAtPos() above for why this can't be a real per-equation
-                // Dirichlet BC here. Numerically the same two-point diffusive flux CCTpfa's
-                // own Dirichlet-boundary assembly would produce for this equation, computed
-                // manually: coeff*(insideValue - 0)/distance*area, directed out of the cell.
+                // Weak imposition of ν̃ = 0 at the wall (see boundaryTypesAtPos()): the
+                // two-point diffusive flux towards the wall value, directed out of the cell
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVars = elemVolVars[insideScv];
                 const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
@@ -262,8 +252,7 @@ private:
     bool isOutlet_(const GlobalPosition& globalPos) const
     { return globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_; }
 
-    //! Uniform (top-hat) inflow profile: zero at the walls, inletVelocity_ everywhere else -
-    //! see test/freeflow/rans/zeroeq/channel/problem.hh for the rationale.
+    //! Uniform (top-hat) inflow profile: zero at the walls, the inlet velocity elsewhere
     Scalar inletVelocityProfile_(const Scalar y) const
     {
         const Scalar yMin = this->gridGeometry().bBoxMin()[1];

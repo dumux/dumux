@@ -81,13 +81,12 @@ int main(int argc, char** argv)
     using MassProblem = GetPropType<MassTypeTag, Properties::Problem>;
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
-    // wire the mass problem's turbulence closure to the momentum problem, so it can read the
-    // (lagged) wall-distance/stress-tensor bookkeeping computed there, see
-    // dumux/freeflow/rans/lowrekepsilon/massproblem.hh
+    // the mass problem reads the wall distance and the stress tensor from the momentum problem
+    // (see dumux/freeflow/rans/lowrekepsilon/massproblem.hh)
     massProblem->setMomentumProblem(momentumProblem);
 
-    // get the time loop parameters: this test reaches a steady turbulent state via
-    // pseudo-transient continuation, exactly as the other RANS tests do.
+    // get the time loop parameters: the steady turbulent state is reached by
+    // pseudo-transient continuation (marching in time with growing time steps)
     using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -119,12 +118,9 @@ int main(int argc, char** argv)
     // initialize the coupling stencils
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
 
-    // Compute the (solution-independent) wall distances once, now that the problem is fully
-    // constructed - and crucially *before* massGridVariables->init() below, since that
-    // immediately triggers LowReKEpsilonMassVolumeVariables::update() for every element, which
-    // reads momentumProblem->wallDistance(eIdx)/stressTensorScalarProduct(eIdx)/yPlus(eIdx): an
-    // out-of-bounds read on the still-empty momentum-side bookkeeping vectors if this were
-    // called after (see the one-equation test's main.cc for the same ordering bug/fix).
+    // The wall distances do not depend on the solution and are computed once. This must happen
+    // before the grid variables are initialized, because LowReKEpsilonMassVolumeVariables::update()
+    // reads the wall distance, the stress tensor and y+ of the momentum problem during initialization.
     momentumProblem->updateStaticWallProperties();
 
     // initializing the gridvariables requires the coupling manager to be set up
@@ -138,7 +134,7 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the instationary assembler (a TimeLoop and xOld are passed, unlike a stationary problem)
+    // the instationary assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(
         std::make_tuple(momentumProblem, massProblem),
@@ -158,13 +154,9 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // Update the momentum-side wall-distance/velocity-gradient/stress-tensor bookkeeping
-        // once per time step, from the previous (converged) solution - the same Picard-in-time
-        // treatment already used for the other RANS models. Unlike k-omega/k-epsilon, the mass
-        // side needs no per-step update at all here (see
-        // dumux/freeflow/rans/lowrekepsilon/massproblem.hh). k and epsilon-tilde themselves
-        // remain fully implicit primary variables of the mass sub-model, solved by Newton
-        // like every other equation.
+        // The velocity gradient and the stress tensor are evaluated once per time step from the
+        // solution of the previous time step and kept fixed during the Newton solve.
+        // k and epsilon-tilde are primary variables and are solved for implicitly.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
 
         // solve the non-linear system with time step control

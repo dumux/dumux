@@ -28,32 +28,20 @@ namespace Dumux {
  *        bookkeeping inherited from Dumux::RANSMomentumProblem, forwarding the turbulent
  *        viscosity and turbulent kinetic energy (both computed on the *mass* sub-model, see
  *        dumux/freeflow/rans/kepsilon/volumevariables.hh) into effectiveViscosity() and the
- *        normal-stress correction respectively (unchanged from Dumux::KOmegaMomentumProblem),
- *        plus the log-law momentum wall function applied *only* at the matching-point cell of
- *        each wall-normal column (see dumux/freeflow/rans/kepsilon/massproblem.hh for what
+ *        normal-stress correction respectively, plus the log-law momentum wall function applied
+ *        only at the matching-point cell of each wall-normal column (see dumux/freeflow/rans/kepsilon/massproblem.hh for what
  *        "matching point" means).
  *
- * The wall function is implemented as a plain Neumann momentum flux at the matching-point wall
- * face (the same mechanism already used for the outlet's fixedPressureMomentumFlux, just gated
- * to matching-point cells instead) rather than a dumux/freeflow/navierstokes/momentum/
- * slipcondition.hh SlipConditions policy: the slip-velocity mechanism there solves for an
- * *equivalent slip velocity* that reproduces a desired flux through the standard
- * finite-difference viscous-flux formula, whereas the wall function directly returns the
- * shear-stress flux.
+ * The wall function is applied as a Neumann momentum flux at the wall face of the matching-point
+ * cell, directly returning the wall shear stress.
  *
  * The matching-point classification and uStarNominal/yPlusNominal values are lagged (computed
- * once per time step on the mass domain, see Dumux::KEpsilonMassProblem) - reading them via the
- * coupling manager (as effectiveViscosity()/turbulentKineticEnergy() above legitimately do,
- * since those are meant to be live/differentiated) triggered a segfault here: boundaryTypes()
- * is evaluated very early, as part of building the momentum grid's own flux-variables cache,
- * from a multithreaded pass that isn't compatible with the coupling manager's single-context
- * binding cache. Since this data is lagged anyway (no Newton differentiation needed - the same
- * reasoning already used for wallDistance()/stressTensorScalarProduct() etc.), it is instead
- * forwarded directly via plain, type-erased callbacks (setWallFunctionQueries(), wired once in
- * main.cc after both sub-problems exist) - this also sidesteps what would otherwise be a
- * circular template dependency (a concrete Dumux::KEpsilonMassProblem<TypeTag, MomentumProblem>
- * template parameter here would need MomentumProblem's own concrete type, which in turn would
- * need the mass problem's type, and so on).
+ * once per time step on the mass domain, see Dumux::KEpsilonMassProblem). They are forwarded
+ * through type-erased callbacks (setWallFunctionQueries()) instead of the coupling manager,
+ * because boundaryTypes() is evaluated while the momentum flux-variables cache is built, in a
+ * multithreaded pass that is not compatible with the coupling manager's single-context binding
+ * cache. The callbacks also avoid a circular template dependency between the momentum and
+ * mass problem types.
  */
 template<class TypeTag>
 class KEpsilonMomentumProblem : public RANSMomentumProblem<TypeTag>
@@ -74,8 +62,7 @@ public:
     using ParentType::ParentType;
 
     //! Type-erased read-only queries into the mass domain's (lagged) k-epsilon wall-function
-    //! bookkeeping - see class documentation above for why this isn't routed through the
-    //! coupling manager. Must be called once, after both sub-problems have been constructed.
+    //! bookkeeping. Must be called once, after both sub-problems have been constructed.
     void setWallFunctionQueries(std::function<bool(std::size_t)> isMatchingPoint,
                                std::function<Scalar(std::size_t)> uStarNominal,
                                std::function<Scalar(std::size_t)> yPlusNominal)
@@ -109,8 +96,7 @@ public:
      * \brief At the matching-point cell's own wall (lateral, boundary) face, switch the
      *        velocity boundary condition from the usual Dirichlet no-slip to Neumann, so the
      *        log-law wall-shear-stress flux (wallFunctionMomentumFlux() below) can be applied
-     *        there instead - exactly mirroring how releases/3.10's useWallFunction() gated its
-     *        own wallFunction() hook.
+     *        there instead.
      */
     BoundaryTypes boundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
@@ -129,12 +115,9 @@ public:
     }
 
     /*!
-     * \brief The log-law wall-shear-stress momentum flux, ported from the deleted
-     *        releases/3.10:dumux/freeflow/rans/twoeq/kepsilon/problem.hh's
-     *        tangentialMomentumWallFunction()/wallFunction(). Only ever called at the
-     *        matching-point cell's own wall face (see boundaryTypes() above) - the most derived
-     *        test problem's neumann() must dispatch here for wall faces, falling back to its
-     *        own (e.g. outlet) Neumann treatment elsewhere.
+     * \brief The log-law wall-shear-stress momentum flux. Only called at the matching-point
+     *        cell's own wall face (see boundaryTypes() above); the neumann() of the derived
+     *        problem must dispatch here for wall faces.
      */
     template<class ElementVolumeVariables, class ElementFluxVariablesCache>
     Scalar wallFunctionMomentumFlux(const Element& element,

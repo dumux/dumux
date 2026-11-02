@@ -81,17 +81,13 @@ int main(int argc, char** argv)
     auto massProblem = std::make_shared<MassProblem>(massGridGeometry, couplingManager);
 
 #if NONISOTHERMAL
-    // wire the mass problem's energy equation to the momentum problem, so it can read the
-    // (lagged) eddy viscosity computed there, see dumux/freeflow/rans/zeroeq/massproblem.hh -
-    // zero-eq is the only RANS model with no mass-domain turbulence representation of its own.
+    // the energy equation of the mass problem needs the eddy viscosity, which is computed
+    // by the momentum problem (see dumux/freeflow/rans/zeroeq/massproblem.hh)
     massProblem->setMomentumProblem(momentumProblem);
 #endif
 
-    // get the time loop parameters: this test reaches a steady turbulent state via
-    // pseudo-transient continuation (marching forward in time with growing time steps,
-    // relying on the time-derivative term to regularize the high-Reynolds-number nonlinear
-    // solve), exactly as releases/3.10:test/freeflow/rans/ did, rather than a single
-    // cold-started stationary Newton solve.
+    // get the time loop parameters: the steady turbulent state is reached by
+    // pseudo-transient continuation (marching in time with growing time steps)
     using Scalar = GetPropType<MassTypeTag, Properties::Scalar>;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
@@ -123,13 +119,9 @@ int main(int argc, char** argv)
     // initialize the coupling stencils
     couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
 
-    // Compute the (solution-independent) wall distances once, now that the problem is fully
-    // constructed - and, in the nonisothermal case, crucially *before* massGridVariables->init()
-    // below, since that immediately triggers ZeroEqMassVolumeVariables::update() for every
-    // element, which reads momentumProblem->dynamicEddyViscosity(eIdx): an out-of-bounds read on
-    // the still-empty (not yet sized) momentum-side eddyViscosity_ vector if this were called
-    // after (see the other RANS tests' main.cc for the same ordering bug/fix - harmless for the
-    // isothermal case, which never reads momentum-side data from the mass side at all).
+    // The wall distances do not depend on the solution and are computed once. This must happen
+    // before the grid variables are initialized, because the mass volume variables read the
+    // eddy viscosity of the momentum problem during initialization.
     momentumProblem->updateStaticWallProperties();
 
     // initializing the gridvariables requires the coupling manager to be set up
@@ -143,7 +135,7 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the instationary assembler (a TimeLoop and xOld are passed, unlike a stationary problem)
+    // the instationary assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(
         std::make_tuple(momentumProblem, massProblem),
@@ -163,10 +155,8 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
-        // Update the eddy viscosity once per time step, from the previous (converged) time
-        // step's velocity field, before assembling/solving the next step. The zero-equation
-        // eddy viscosity is not itself a solved unknown, so it is lagged by one time step
-        // rather than re-linearized within Newton - a standard semi-implicit treatment.
+        // The eddy viscosity is not a primary variable. It is evaluated once per time step
+        // from the velocity field of the previous time step and kept fixed during the Newton solve.
         momentumProblem->updateDynamicWallProperties(x[momentumIdx], *momentumGridVariables);
 
         // solve the non-linear system with time step control

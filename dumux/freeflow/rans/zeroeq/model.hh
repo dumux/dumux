@@ -7,19 +7,15 @@
 /*!
  * \file
  * \ingroup FreeflowModels
- * \brief Nonisothermal mass-domain wiring for the zero-equation RANS turbulence closure.
+ * \brief Nonisothermal mass-domain model for the zero-equation RANS turbulence closure.
  *
- * Unlike every other RANS model, the isothermal zero-equation closure
- * (dumux/freeflow/rans/zeroeq/problem.hh) needs no dedicated mass-domain TypeTag at all: it adds
- * its eddy viscosity purely on the momentum side, and the isothermal test simply uses the plain
- * `NavierStokesMassOneP`/`Dumux::NavierStokesMassProblem<TypeTag>` directly (see
- * test/freeflow/rans/zeroeq/channel/properties.hh). The nonisothermal variant, however, needs
- * the mass domain to know the momentum-side eddy viscosity (to compute an eddy thermal
- * conductivity), so this file adds *only* a nonisothermal TypeTag
- * (`NavierStokesMassOneZeroEqNI`), inheriting directly from the already-existing
- * `NavierStokesMassOnePNI` and re-specializing just `VolumeVariables`/`ThermalConductivityModel`
- * - `ModelTraits`/`IOFields`/`HeatConductionType`/`FluxVariables`/... are all reused unchanged,
- * since zero-eq adds no extra transported equations (numEq stays dim+1+1, exactly as plain NI).
+ * The isothermal zero-equation closure (dumux/freeflow/rans/zeroeq/problem.hh) adds its eddy
+ * viscosity purely on the momentum side and needs no dedicated mass-domain TypeTag. The
+ * nonisothermal variant needs the mass domain to know the momentum-side eddy viscosity in order
+ * to compute an eddy thermal conductivity. The TypeTag `NavierStokesMassOneZeroEqNI` therefore
+ * inherits from `NavierStokesMassOnePNI` and only specializes `VolumeVariables` and
+ * `ThermalConductivityModel`. As no additional transport equations are solved, everything else
+ * is inherited unchanged.
  */
 #ifndef DUMUX_RANS_ZEROEQ_MASS_MODEL_HH
 #define DUMUX_RANS_ZEROEQ_MASS_MODEL_HH
@@ -34,8 +30,8 @@ namespace Dumux {
 namespace Properties {
 
 namespace TTag {
-//! The type tag for the single-phase, non-isothermal Navier-Stokes mass model fused with the
-//! zero-equation turbulence closure's (momentum-side) eddy viscosity.
+//! The type tag for the single-phase, non-isothermal Navier-Stokes mass model with the
+//! eddy viscosity of the zero-equation turbulence closure.
 struct NavierStokesMassOneZeroEqNI { using InheritsFrom = std::tuple<NavierStokesMassOnePNI>; };
 } // end namespace TTag
 

@@ -20,9 +20,8 @@ namespace Dumux {
  * \ingroup FreeflowModels
  * \brief The indices for the two-equation SST (Menter 1994) turbulence closure, fused as two
  *        additional transported equations onto the single-phase Navier-Stokes mass balance
- *        (pressure remains equation/index 0, as in NavierStokesMassOnePIndices; k is index 1,
- *        the specific dissipation rate omega is index 2) - identical numbering to
- *        Dumux::KOmegaMassIndices.
+ *        (pressure is equation/index 0 as in NavierStokesMassOnePIndices, k is index 1,
+ *        the specific dissipation rate omega is index 2).
  */
 struct SSTMassIndices : public NavierStokesMassOnePIndices
 {

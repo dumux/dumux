@@ -11,8 +11,7 @@
  *        transported equations (turbulent kinetic energy k, specific dissipation rate omega)
  *        onto the single-phase Navier-Stokes mass balance.
  *
- * The two transport equations are fused onto the *mass* sub-model, following the same
- * strategy already used for the one-equation Spalart-Allmaras model.
+ * The two transport equations are solved as additional equations of the mass sub-model.
  */
 #ifndef DUMUX_RANS_KOMEGA_MASS_MODEL_HH
 #define DUMUX_RANS_KOMEGA_MASS_MODEL_HH
@@ -81,9 +80,9 @@ template<class TypeTag>
 struct IOFields<TypeTag, TTag::NavierStokesMassOneKOmega> { using type = KOmegaMassIOFields; };
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Nonisothermal variant. The injection point is Properties::ThermalConductivityModel;
-// every class here (KOmegaMassVolumeVariables, KOmegaMassLocalResidual) is reused
-// unmodified, only instantiated with nonisothermal-flavored ModelTraits/Traits.
+// Nonisothermal variant. The eddy contribution to the thermal conductivity is selected
+// through Properties::ThermalConductivityModel; the volume variables and local residual
+// are the same as in the isothermal case, instantiated with nonisothermal traits.
 //////////////////////////////////////////////////////////////////////////////////////
 
 namespace TTag {
@@ -128,8 +127,7 @@ template<class TypeTag>
 struct HeatConductionType<TypeTag, TTag::NavierStokesMassOneKOmegaNI>
 { using type = FouriersLaw<TypeTag>; };
 
-//! The flux variables - see dumux/freeflow/navierstokes/mass/1p/model.hh's own NI
-//! specialization (this is a verbatim copy, generic over ModelTraits/Problem/HeatConductionType).
+//! The flux variables including the heat conduction flux.
 template<class TypeTag>
 struct FluxVariables<TypeTag, TTag::NavierStokesMassOneKOmegaNI>
 {

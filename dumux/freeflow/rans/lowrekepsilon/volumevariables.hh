@@ -24,18 +24,13 @@ namespace Dumux {
  * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
  *        two-equation, low-Reynolds-number k-epsilon (Chien 1982) turbulence closure for the
  *        turbulent kinetic energy k and the transported dissipation epsilon-tilde, fused as
- *        two extra equations on the mass sub-model rather than on a separate coupled
- *        sub-domain, following the same strategy already used for the one-equation and
- *        k-omega models.
+ *        two extra equations on the mass sub-model.
  *
- * Unlike the wall-function k-epsilon model (dumux/freeflow/rans/kepsilon/), this model damps the
- * eddy viscosity and the epsilon-tilde production/destruction terms analytically as functions of
- * y+ and the turbulent Reynolds number Re_t, so that k=0, epsilon-tilde=0 ordinary Dirichlet
- * conditions at the wall are enough - no near-wall-region/matching-point bookkeeping is needed at
- * all. Closure constants/functions ported near-verbatim from the deleted
- * releases/3.10:dumux/freeflow/rans/twoeq/lowrekepsilon/volumevariables.hh, with
- * stressTensorScalarProduct()/yPlus() read from the problem (which forwards them to the momentum
- * domain's Dumux::RANSMomentumProblem).
+ * The eddy viscosity and the epsilon-tilde production/destruction terms are damped analytically
+ * as functions of y+ and the turbulent Reynolds number Re_t, so that Dirichlet conditions
+ * k=0, epsilon-tilde=0 at the wall are sufficient and no near-wall-region/matching-point
+ * bookkeeping is needed. stressTensorScalarProduct()/yPlus() are read from the problem, which
+ * forwards them from the momentum domain's Dumux::RANSMomentumProblem.
  */
 template<class Traits>
 class LowReKEpsilonMassVolumeVariables
@@ -59,8 +54,8 @@ public:
         yPlus_ = problem.yPlus(scv.elementIndex());
         wallDistance_ = problem.wallDistance(scv.elementIndex());
 
-        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs for why this must be done explicitly here rather than automatically.
+        // Nonisothermal only: the effective thermal conductivity includes the turbulent
+        // contribution, see dumux/freeflow/rans/common/thermalconductivitymodel.hh.
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
             this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
@@ -76,7 +71,7 @@ public:
     Scalar stressTensorScalarProduct() const
     { return stressTensorScalarProduct_; }
 
-    //! The wall unit y+, from the problem's (lagged) local wall-shear-velocity bookkeeping.
+    //! The wall unit y+, from the problem's local wall shear velocity.
     Scalar yPlus() const
     { return yPlus_; }
 

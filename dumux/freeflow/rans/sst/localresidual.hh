@@ -24,21 +24,17 @@ namespace Dumux {
  * \brief Element-wise storage/flux for the single-phase Navier-Stokes mass balance fused with
  *        the two-equation SST turbulence transport equations (k, omega).
  *
- * Extends Dumux::NavierStokesMassOnePLocalResidual's storage/flux with the k/omega diffusive
- * transport terms, ported from the deleted releases/3.10:dumux/freeflow/rans/twoeq/sst/
- * staggered/fluxvariables.hh's computeMassFlux(). See dumux/freeflow/rans/oneeq/localresidual.hh
- * for why boundary "outside"/ghost volVars must be fetched via elemVars[scvf.outsideScvIdx()]
- * directly rather than fvGeometry.scv(...).
+ * Extends Dumux::NavierStokesMassOnePLocalResidual's storage/flux with the k/omega storage
+ * and diffusive flux terms. At boundary faces the "outside" (ghost) volume variables are
+ * accessed via elemVars[scvf.outsideScvIdx()], because there is no sub control volume
+ * in fvGeometry for them.
  *
- * \note The advective part of the k/omega flux is *not* added here - it is already included in
- * ParentType::computeFlux()'s result via the SSTMassModelTraits-specific Dumux::AdvectiveFlux
- * specialization (dumux/freeflow/rans/sst/advectiveflux.hh), which
- * NavierStokesMassOnePFluxVariables::advectiveFlux() dispatches to automatically for every
- * equation index, not just conti0EqIdx - see komega/localresidual.hh's note for the
- * double-counting bug this avoids (found and fixed while implementing Phase 6).
+ * \note The advective part of the k/omega flux is not added here, it is already contained in
+ * the result of ParentType::computeFlux() through the Dumux::AdvectiveFlux specialization in
+ * dumux/freeflow/rans/sst/advectiveflux.hh.
  *
- * Production/destruction/cross-diffusion source terms are *not* added here: they go through the
- * standard problem.source(...) extension point instead (Dumux::SSTMassProblem).
+ * The production/destruction/cross-diffusion source terms are provided by
+ * Dumux::SSTMassProblem through problem.source(...).
  */
 template<class TypeTag>
 class SSTMassLocalResidual
@@ -113,11 +109,9 @@ public:
     }
 
 private:
-    //! Two-point-TPFA diffusive ((mu+sigma_k(problem)*mu_t), (mu+sigma_omega(problem)*mu_t))
-    //! terms - ported from releases/3.10:dumux/freeflow/rans/twoeq/sst/staggered/
-    //! fluxvariables.hh::computeMassFlux(). The diffusion coefficients use the
-    //! model-version-blended sigmaK()/sigmaOmega() (see volumevariables.hh), unlike k-omega's
-    //! fixed constants.
+    //! Adds the two-point diffusive fluxes of k and omega with the diffusion coefficients
+    //! (mu + sigma_k*mu_t) and (mu + sigma_omega*mu_t), where sigma_k and sigma_omega are the
+    //! blended coefficients of the selected model version (see volumevariables.hh).
     void addTurbulenceFlux_(NumEqVector& flux,
                             const Problem& problem,
                             const FVElementGeometry& fvGeometry,
@@ -135,14 +129,9 @@ private:
         const auto diffCoeffOmegaInside = insideVars.viscosity() + insideVars.sigmaOmega(problem)*insideVars.dynamicEddyViscosity();
         const auto diffCoeffOmegaOutside = outsideVars.viscosity() + outsideVars.sigmaOmega(problem)*outsideVars.dynamicEddyViscosity();
 
-        // Distance-weighted (not plain-averaged) interpolation of the diffusion coefficient to
-        // the face, and the corresponding cell-to-cell distance - reproducing
-        // releases/3.10:dumux/freeflow/rans/twoeq/sst/staggered/fluxvariables.hh's
-        // arithmeticMean()-based interior-face treatment verbatim. On a graded mesh, a plain
-        // 0.5*(inside+outside) average (used here previously) deviates most exactly where the
-        // diffusion coefficient itself jumps most sharply between neighboring cells - found to
-        // matter right at the wall-adjacent cell, where the analytically-pinned omega there
-        // implies a much larger eddy viscosity than its neighbor.
+        // The diffusion coefficient is interpolated to the face with distance-based weights,
+        // which is more accurate than a plain average on graded meshes, in particular next to
+        // the wall where the eddy viscosity varies strongly between neighboring cells.
         Scalar distance, diffCoeffK, diffCoeffOmega;
         if (scvf.boundary())
         {

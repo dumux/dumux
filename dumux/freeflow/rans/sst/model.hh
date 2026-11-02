@@ -15,7 +15,7 @@
  * free stream) via the F1 blending function, and optionally limits the eddy viscosity using
  * Bradshaw's assumption (the runtime-selectable RANS.SSTModelVersion = "SST" vs. "BSL" variant,
  * see Dumux::SSTModel in dumux/freeflow/turbulencemodel.hh). The two transport equations are
- * fused onto the *mass* sub-model, following the same strategy already used for k-omega.
+ * solved as additional equations of the mass sub-model.
  */
 #ifndef DUMUX_RANS_SST_MASS_MODEL_HH
 #define DUMUX_RANS_SST_MASS_MODEL_HH

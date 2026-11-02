@@ -19,12 +19,11 @@ namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
- * \brief Volume variables for the single-phase, nonisothermal Navier-Stokes mass balance, with
- *        a `dynamicEddyViscosity()` forwarded (read-only) from the zero-equation model's
- *        momentum-side eddy viscosity (Dumux::ZeroEqProblem), so the energy equation's eddy
- *        thermal conductivity can be computed - see dumux/freeflow/rans/zeroeq/massproblem.hh.
- *        Used only by the nonisothermal TypeTag (Dumux::NavierStokesMassOneZeroEqNI); the
- *        isothermal zero-equation test needs no mass-side turbulence data at all.
+ * \brief Volume variables for the single-phase, nonisothermal Navier-Stokes mass balance with
+ *        the eddy viscosity of the zero-equation model (Dumux::ZeroEqProblem), which is needed
+ *        for the eddy thermal conductivity in the energy equation, see
+ *        dumux/freeflow/rans/zeroeq/massproblem.hh. Only used by the nonisothermal TypeTag
+ *        (Dumux::NavierStokesMassOneZeroEqNI).
  */
 template<class Traits>
 class ZeroEqMassVolumeVariables
@@ -44,8 +43,7 @@ public:
 
         dynamicEddyViscosity_ = problem.dynamicEddyViscosity(scv.elementIndex());
 
-        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh's
-        // class docs for why this must be done explicitly here rather than automatically.
+        // Nonisothermal only: see dumux/freeflow/rans/common/thermalconductivitymodel.hh
         if constexpr (Traits::ModelTraits::enableEnergyBalance())
             this->lambdaEff_ = RANSThermalConductivityModel::turbulentEffectiveThermalConductivity(*this);
     }
