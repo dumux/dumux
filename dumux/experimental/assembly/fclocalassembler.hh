@@ -112,7 +112,10 @@ public:
         checkSupported_();
 
         this->localResidual().spatialWeight(1.0, !evaluations.spatial);
-        this->asImp_().bindLocalViews();
+        if (evaluations.spatial)
+            this->asImp_().bindLocalViews();
+        else
+            this->asImp_().bindElementLocalViews();
 
         if (evaluations.spatial)
             addToGlobal_(*evaluations.spatial, this->evalLocalFluxAndSourceResidual(this->curElemVolVars()));

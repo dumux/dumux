@@ -219,8 +219,10 @@ public:
         if constexpr (implicit)
         {
             curElemVars.bind(element, elemDisc, curSol);
-            if (!this->assembler().isStationaryProblem())
-                this->prevElemVars().bindElement(element, elemDisc, this->assembler().prevSol()[domainId]);
+            // assemblers of the implicit solves of time integration methods receive the previous time levels as a constant
+            if constexpr (!requires (const Assembler& a) { a.currentOperatorWeights(); })
+                if (!this->assembler().isStationaryProblem())
+                    this->prevElemVars().bindElement(element, elemDisc, this->assembler().prevSol()[domainId]);
         }
         else
         {

@@ -180,7 +180,10 @@ public:
                 DUNE_THROW(Dune::NotImplemented, "Explicit operator evaluations with internal Dirichlet constraints");
 
         this->localResidual().spatialWeight(1.0, !evaluations.spatial);
-        this->asImp_().bindLocalViews();
+        if (evaluations.spatial)
+            this->asImp_().bindLocalViews();
+        else
+            this->asImp_().bindElementLocalViews();
         const auto globalI = this->fvGeometry().gridGeometry().elementMapper().index(this->element());
         if (evaluations.spatial)
             (*evaluations.spatial)[globalI] = this->evalLocalFluxAndSourceResidual(this->curElemVolVars())[0];

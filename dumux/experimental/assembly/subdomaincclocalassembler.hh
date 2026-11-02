@@ -162,6 +162,17 @@ public:
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
     }
 
+    /*!
+     * \brief Prepares the element-local views, which suffice for the operators without fluxes
+     */
+    void bindElementLocalViews()
+    {
+        const auto& element = this->element();
+        couplingManager_.bindCouplingContext(domainId, element, this->assembler());
+        this->fvGeometry().bindElement(element);
+        this->curElemVolVars().bindElement(element, this->fvGeometry(), this->curSol(domainId));
+    }
+
     //! return reference to the subdomain problem
     template<std::size_t i = domainId>
     const Problem& problem(Dune::index_constant<i> dId = domainId) const

@@ -42,6 +42,10 @@ class LocalAssemblerBase
     using ElementVariables = typename GridVariablesCache::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    // assemblers of the implicit solves of time integration methods weight the operators
+    // and receive the contributions of previous time levels as a constant
+    static constexpr bool assemblerWeightsOperators = requires (const Assembler& a) { a.currentOperatorWeights(); };
+
 public:
     using LocalResidual = std::decay_t<decltype(std::declval<Assembler>().localResidual())>;
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
@@ -114,7 +118,7 @@ public:
      */
     ElementResidualVector evalLocalResidual(const ElementVariables& elemVars) const
     {
-        if constexpr (requires (const Assembler& a) { a.currentOperatorWeights(); })
+        if constexpr (assemblerWeightsOperators)
             return evalLocalResidualForStage(elemVars, assembler().currentOperatorWeights());
         else if (!assembler().isStationaryProblem())
         {
@@ -207,8 +211,9 @@ public:
         if (isImplicit())
         {
             curElemVars.bind(element, elemDisc, curSol);
-            if (!this->assembler().isStationaryProblem())
-                prevElemVars.bindElement(element, elemDisc, this->assembler().prevSol());
+            if constexpr (!assemblerWeightsOperators)
+                if (!this->assembler().isStationaryProblem())
+                    prevElemVars.bindElement(element, elemDisc, this->assembler().prevSol());
         }
         else
         {

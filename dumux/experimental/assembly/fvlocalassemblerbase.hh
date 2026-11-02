@@ -181,6 +181,15 @@ public:
     }
 
     /*!
+     * \brief Bind the element-local views, which suffice for the operators without fluxes
+     */
+    void bindElementLocalViews()
+    {
+        this->fvGeometry().bindElement(this->element());
+        this->curElemVolVars().bindElement(this->element(), this->fvGeometry(), this->curSol());
+    }
+
+    /*!
      * \brief Enforces Dirichlet constraints if enabled in the problem
      */
     template<typename ApplyFunction, class P = Problem, typename std::enable_if_t<P::enableInternalDirichletConstraints(), int> = 0>
