@@ -200,14 +200,21 @@ public:
 #if NONISOTHERMAL
             else if (isOnWallAtPos(globalPos))
             {
-                // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition -
-                // same trick as the other RANS-NI tests use, not a Jayatilleke wall-function
-                // energy flux (a deliberate simplification).
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVars = elemVolVars[insideScv];
-                const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-                values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
-                    *(insideVars.temperature() - wallTemperature_)/distance;
+                if (this->isMatchingPoint(insideScv.elementIndex()))
+                {
+                    // Jayatilleke log-law energy wall function at the matching point, as in
+                    // releases/3.10 (it replaces the conductive wall flux there)
+                    values[Indices::energyEqIdx] = this->wallFunctionEnergyFlux(insideScv.elementIndex(), insideVars, wallTemperature_);
+                }
+                else
+                {
+                    // Weak (Robin-form) equivalent of a true Dirichlet wall-temperature condition
+                    const auto distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+                    values[Indices::energyEqIdx] = insideVars.effectiveThermalConductivity()
+                        *(insideVars.temperature() - wallTemperature_)/distance;
+                }
             }
 #endif
         }
