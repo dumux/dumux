@@ -488,7 +488,7 @@ private:
          // lambda to obtain the facet corners on geo1
          auto getFacetCorners = [] (const Geometry1& geo1)
          {
-             std::vector< std::array<int, 2> > facetCorners;
+             Dune::ReservedVector<std::array<int, 2>, 4> facetCorners;
              switch (geo1.corners())
              {
                  case 4: // quadrilateral
@@ -782,7 +782,7 @@ private:
          // lambda to obtain facet corners on geo1
          auto getFacetCorners = [] (const Geometry1& geo1)
          {
-             std::vector< std::vector<int> > facetCorners;
+             Dune::ReservedVector<Dune::ReservedVector<int, 4>, 6> facetCorners;
              // sort facet corner so that normal n = (p1-p0)x(p2-p0) always points outwards
              switch (geo1.corners())
              {
@@ -809,7 +809,7 @@ private:
          };
 
          // lambda to obtain the normal on a facet
-         auto computeNormal = [&geo1] (const std::vector<int>& facetCorners)
+         auto computeNormal = [&geo1] (const Dune::ReservedVector<int, 4>& facetCorners)
          {
              const auto v0 = geo1.corner(facetCorners[1]) - geo1.corner(facetCorners[0]);
              const auto v1 = geo1.corner(facetCorners[2]) - geo1.corner(facetCorners[0]);
@@ -1511,7 +1511,7 @@ private:
         // lambda to obtain the facet corners on geo1
         auto getFacetCorners = [] (const Geometry1& geo1)
         {
-            std::vector< std::array<int, 2> > facetCorners;
+            Dune::ReservedVector<std::array<int, 2>, 4> facetCorners;
             switch (geo1.corners())
             {
                 case 4: // quadrilateral
