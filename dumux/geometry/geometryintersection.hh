@@ -13,10 +13,13 @@
 #ifndef DUMUX_GEOMETRY_INTERSECTION_HH
 #define DUMUX_GEOMETRY_INTERSECTION_HH
 
+#include <array>
 #include <tuple>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -206,6 +209,14 @@ struct SegmentGeometryTraits : public Dune::MultiLinearGeometryTraits<ctype>
         static const bool v = true;
         static const unsigned int topologyId = Dune::GeometryTypes::line.id();
     };
+};
+
+//! Triangle or quadrilateral geometries with corners stored in a Dune::ReservedVector
+template<class ctype>
+struct PolygonGeometryTraits : public Dune::MultiLinearGeometryTraits<ctype>
+{
+    template<int mydim, int cdim>
+    struct CornerStorage { using Type = Dune::ReservedVector<Dune::FieldVector<ctype, cdim>, 4>; };
 };
 
 } // end namespace Detail
@@ -931,17 +942,17 @@ public:
                 const auto referenceElement2 = referenceElement(geo2);
 
                 // add intersections of edges
-                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
                 using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
                 for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
                 {
                     const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
                     const auto edge1 = SegGeometry(
                         Dune::GeometryTypes::line,
-                        std::vector<Point>({
+                        std::array<Point, 2>{
                             geo1.global(localEdgeGeom1.corner(0)),
                             geo1.global(localEdgeGeom1.corner(1))
-                        })
+                        }
                     );
 
                     for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
@@ -949,10 +960,10 @@ public:
                         const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
                         const auto edge2 = SegGeometry(
                             Dune::GeometryTypes::line,
-                            std::vector<Point>({
+                            std::array<Point, 2>{
                                 geo2.global(localEdgeGeom2.corner(0)),
                                 geo2.global(localEdgeGeom2.corner(1))
-                            })
+                            }
                         );
 
                         using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
@@ -1076,8 +1087,8 @@ public:
                 points.emplace_back(geo2.corner(i));
 
         // get some geometry types
-        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
-        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld, Detail::PolygonGeometryTraits<ctype>>;
+        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
 
         const auto refElement1 = referenceElement(geo1);
         const auto refElement2 = referenceElement(geo2);
@@ -1091,7 +1102,7 @@ public:
             const auto localEdgeGeom = refElement1.template geometry<dim1-1>(i);
             const auto p = geo1.global(localEdgeGeom.corner(0));
             const auto q = geo1.global(localEdgeGeom.corner(1));
-            const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+            const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::array<Point, 2>{p, q});
 
             using PolySegTest = GeometryIntersection<Geometry2, SegGeometry, PointPolicy>;
             typename PolySegTest::Intersection polySegIntersection;
@@ -1112,7 +1123,7 @@ public:
                     const auto c = geo1.global(localFaceGeo.corner(2));
                     const auto d = geo1.global(localFaceGeo.corner(3));
 
-                    return PolyhedronFaceGeometry(Dune::GeometryTypes::cube(2), std::vector<Point>{a, b, c, d});
+                    return PolyhedronFaceGeometry(Dune::GeometryTypes::cube(2), Dune::ReservedVector<Point, 4>{a, b, c, d});
                 }
                 else
                 {
@@ -1120,7 +1131,7 @@ public:
                     const auto b = geo1.global(localFaceGeo.corner(1));
                     const auto c = geo1.global(localFaceGeo.corner(2));
 
-                    return PolyhedronFaceGeometry(Dune::GeometryTypes::simplex(2), std::vector<Point>{a, b, c});
+                    return PolyhedronFaceGeometry(Dune::GeometryTypes::simplex(2), Dune::ReservedVector<Point, 4>{a, b, c});
                 }
             }();
 
@@ -1130,7 +1141,7 @@ public:
                 const auto p = geo2.global(localEdgeGeom.corner(0));
                 const auto q = geo2.global(localEdgeGeom.corner(1));
 
-                const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+                const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::array<Point, 2>{p, q});
 
                 using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
                 typename PolySegTest::Intersection polySegIntersection;
@@ -1273,8 +1284,8 @@ public:
         addPointIntersections(geo2, geo1);
 
         // get geometry types for the facets
-        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
-        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld, Detail::PolygonGeometryTraits<ctype>>;
+        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
 
         // intersection policy for point-like intersections (used later)
         using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
@@ -1295,7 +1306,7 @@ public:
                         const auto d = g1.global(localFaceGeo.corner(3));
 
                         return PolyhedronFaceGeometry(
-                            Dune::GeometryTypes::cube(2), std::vector<Point>{a, b, c, d}
+                            Dune::GeometryTypes::cube(2), Dune::ReservedVector<Point, 4>{a, b, c, d}
                         );
                     }
                     else
@@ -1305,7 +1316,7 @@ public:
                         const auto c = g1.global(localFaceGeo.corner(2));
 
                         return PolyhedronFaceGeometry(
-                            Dune::GeometryTypes::simplex(2), std::vector<Point>{a, b, c}
+                            Dune::GeometryTypes::simplex(2), Dune::ReservedVector<Point, 4>{a, b, c}
                         );
                     }
                 }();
@@ -1316,7 +1327,7 @@ public:
                     const auto p = g2.global(localEdgeGeom.corner(0));
                     const auto q = g2.global(localEdgeGeom.corner(1));
 
-                    const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+                    const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::array<Point, 2>{p, q});
 
                     using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
                     typename PolySegTest::Intersection polySegIntersection;
