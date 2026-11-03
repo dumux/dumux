@@ -124,11 +124,11 @@ public:
     //! Default Constructor
     BoundingBoxTree() = default;
 
-    //! Constructor with gridView
+    //! Constructor building the tree for the entities of the given set
     explicit BoundingBoxTree(std::shared_ptr<const GeometricEntitySet> set)
     { build(set); }
 
-    //! Build up bounding box tree for a grid with leafGridView
+    //! Build the bounding box tree for the entities of the given set
     void build(std::shared_ptr<const GeometricEntitySet> set)
     {
         // set the pointer to the entity set
@@ -172,7 +172,7 @@ public:
     const BoundingBoxNode& getBoundingBoxNode(std::size_t nodeIdx) const
     { return boundingBoxNodes_[nodeIdx]; }
 
-    //! Get an existing bounding box for a given node
+    //! Get the coordinates of the bounding box of a given node (minimum then maximum coordinates)
     const ctype* getBoundingBoxCoordinates(std::size_t nodeIdx) const
     { return boundingBoxCoordinates_.data() + 2*dimworld*nodeIdx; }
 
@@ -297,7 +297,7 @@ private:
 };
 
 /*!
- * \brief Check whether a point is intersectin a bounding box (dimworld == 3)
+ * \brief Check whether a point is intersecting a bounding box (dimworld == 3)
  * \param point The point
  * \param b Pointer to bounding box coordinates
  */
@@ -317,7 +317,7 @@ inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>&
 }
 
 /*!
- * \brief Check whether a point is intersectin a bounding box  (dimworld == 2)
+ * \brief Check whether a point is intersecting a bounding box  (dimworld == 2)
  * \param point The point
  * \param b Pointer to bounding box coordinates
  */
@@ -335,7 +335,7 @@ inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>&
 }
 
 /*!
- * \brief Check whether a point is intersectin a bounding box  (dimworld == 1)
+ * \brief Check whether a point is intersecting a bounding box  (dimworld == 1)
  * \param point The point
  * \param b Pointer to bounding box coordinates
  */

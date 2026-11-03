@@ -224,8 +224,11 @@ struct PolygonGeometryTraits : public Dune::MultiLinearGeometryTraits<ctype>
 /*!
  * \ingroup Geometry
  * \brief A class for geometry collision detection and intersection calculation
+ *
  * The class can be specialized for combinations of dimworld, dim1, dim2, where
  * dimworld is the world dimension embedding a grid of dim1 and a grid of dim2.
+ * \tparam Policy The dimension and the type of the sought intersection, see IntersectionPolicy.
+ *         Defaults to an intersection of the lower dimension of the two geometries.
  */
 template
 <class Geometry1, class Geometry2,
@@ -582,7 +585,6 @@ public:
      *       Add intersections of polygon edges
      *       Remove duplicate points from the list
      *       Compute the convex hull polygon
-     *       Return a triangulation of that polygon as intersection
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the corner points of the polygon (as convex hull)
      * \note This overload is used when polygon like intersections are seeked
@@ -1060,14 +1062,6 @@ private:
 public:
     /*!
      * \brief Colliding polygon and convex polyhedron
-     * \note First we find the vertex candidates for the intersection region as follows:
-     *       Add triangle vertices that are inside the tetrahedron
-     *       Add tetrahedron vertices that are inside the triangle
-     *       Add all intersection points of tetrahedron edges (codim 2) with the triangle (codim 0) (6*1 tests)
-     *       Add all intersection points of triangle edges (codim 1) with tetrahedron faces (codim 1) (3*4 tests)
-     *       Remove duplicate points from the list
-     *       Compute the convex hull polygon
-     *       Return a triangulation of that polygon as intersection
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the corner points of the polygon (as convex hull)
      * \note This overload is used when polygon like intersections are seeked
@@ -1185,15 +1179,7 @@ public:
     }
 
     /*!
-     * \brief Colliding segment and convex polyhedron
-     * \note First we find the vertex candidates for the intersection region as follows:
-     *       Add triangle vertices that are inside the tetrahedron
-     *       Add tetrahedron vertices that are inside the triangle
-     *       Add all intersection points of tetrahedron edges (codim 2) with the triangle (codim 0) (6*1 tests)
-     *       Add all intersection points of triangle edges (codim 1) with tetrahedron faces (codim 1) (3*4 tests)
-     *       Remove duplicate points from the list
-     *       Compute the convex hull polygon
-     *       Return a triangulation of that polygon as intersection
+     * \brief Colliding polygon and convex polyhedron
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the intersection result
      * \todo implement overloads for segment or point-like intersections
@@ -1252,13 +1238,9 @@ private:
 public:
     /*!
      * \brief Colliding two convex polyhedra
-     * \note First we find the vertex candidates for the intersection region as follows:
-     *       Add vertices that are inside the other geometry for both geometries
-     *       Add all intersection points of edges (codim 2) with the other tetrahedron's faces triangle
-     *       Remove duplicate points from the list
-     *       Return a triangulation of the polyhedron formed by the convex hull of the point cloud
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection Container to store the corner points of the polygon (as convex hull)
+     * \param intersection Container to store the corner points of the intersection polyhedron
+     *        as an unordered point cloud (the intersection is the convex hull of these points)
      * \note This overload is used when polyhedron-like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 3, int> = 0>
@@ -1399,7 +1381,7 @@ public:
     }
 
     /*!
-     * \brief Colliding segment and convex polyhedron
+     * \brief Colliding two convex polyhedra
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the intersection result
      * \todo implement overloads for polygon-, segment- or point-like intersections
@@ -1408,7 +1390,7 @@ public:
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
-        DUNE_THROW(Dune::NotImplemented, "Polyhedron-polygon intersection detection only implemented for polygon-like intersections");
+        DUNE_THROW(Dune::NotImplemented, "Polyhedron-polyhedron intersection detection only implemented for polyhedron-like intersections");
     }
 };
 
@@ -1433,13 +1415,13 @@ private:
 
 public:
     /*!
-     *  \brief Colliding segment and convex polyhedron
+     *  \brief Colliding segment and convex polygon
      *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
      *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection If the geometries collide, is holds the corner points of
+     * \param intersection If the geometries collide, intersection holds the corner points of
      *        the intersection object in global coordinates.
-     * \note This overload is used when point-like intersections are seeked
+     * \note This overload is used when segment-like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
@@ -1459,7 +1441,7 @@ public:
     }
 
     /*!
-     *  \brief Colliding segment and convex polyhedron
+     *  \brief Colliding segment and convex polygon
      *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
      *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
      * \param geo1/geo2 The geometries to intersect
@@ -1776,7 +1758,7 @@ public:
     /*!
      *  \brief Colliding two segments in 3D
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection If the geometries collide, is holds the corner points of
+     * \param intersection If the geometries collide, intersection holds the corner points of
      *        the intersection object in global coordinates.
      * \note This overload is used when segment-like intersections are seeked
      */
