@@ -21,6 +21,7 @@
 #include <dumux/discretization/defaultlocaloperator.hh>
 #include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/felocalresidual.hh>
 
 namespace Dumux {
 
@@ -56,15 +57,42 @@ class NavierStokesMassOnePLocalResidual
     using SubControlVolumeFace = typename ElementDiscretization::SubControlVolumeFace;
     using GridView = typename GridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
     using NumEqVector = Dumux::NumEqVector<GetPropType<TypeTag, Properties::PrimaryVariables>>;
     using ModelTraits = GetPropType<TypeTag, Properties::ModelTraits>;
 
     using Extrusion = Extrusion_t<GridGeometry>;
+    using FeResidual = NavierStokesMassOnePFELocalResidualTerms<Scalar, typename ModelTraits::Indices>;
 
 public:
     //! Use the parent type's constructor
     using ParentType::ParentType;
+
+    /*!
+     * \brief Add the storage of non-CV local dofs at one time level
+     */
+    template<class ElementResidualVector>
+    void addToElementStorage(ElementResidualVector& storage,
+                             const Problem& problem,
+                             const Element& element,
+                             const ElementDiscretization& elemDisc,
+                             const ElementVariables& elemVars,
+                             bool isPreviousTimeLevel) const
+    {
+        FeResidual::addStorageTerms(storage, problem, elemDisc, elemVars, isPreviousTimeLevel);
+    }
+
+    /*!
+     * \brief Add flux and source residual contribution for non-CV local dofs
+     */
+    template<class ElementResidualVector>
+    void addToElementFluxAndSourceResidual(ElementResidualVector& residual,
+                                           const Problem& problem,
+                                           const Element& element,
+                                           const ElementDiscretization& elemDisc,
+                                           const ElementVariables& elemVars) const
+    {
+        FeResidual::addFluxAndSourceTerms(residual, problem, elemDisc, elemVars);
+    }
 
     /*!
      * \brief Calculate the storage term of the equation
@@ -129,6 +157,7 @@ public:
                             const SubControlVolumeFace& scvf,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
+        using FluxVariables = GetPropType<TypeTag, Properties::FluxVariables>;
         FluxVariables fluxVars;
         fluxVars.init(problem, element, elemDisc, elemVars, scvf, elemFluxVarsCache);
         auto flux = fluxVars.flux(0);

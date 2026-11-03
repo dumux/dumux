@@ -62,6 +62,7 @@
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/pq3.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/fcstaggered/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
