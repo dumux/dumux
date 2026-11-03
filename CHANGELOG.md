@@ -100,9 +100,11 @@ of one polygon is inside the other (e.g. two rectangles forming a cross), which 
 trees, `IntersectionEntitySet` and `makeGlue` for two-dimensional grids. The triangulation of a convex hull in 3D
 (`triangulate<3, 3>`) added faces twice, so intersection volumes in 3D were too large, in particular far from the origin.
 An intersection policy passed to `intersectingEntities` was not used below the root node of the tree, and intersections
-with the point policy had one wrong corner per coordinate instead of the intersection point. The 2D polygon intersection
-no longer allocates heap memory for the edges of the polygons, and `intersectingEntities` no longer copies the geometries
-of entity sets that store them (e.g. `GeometriesEntitySet`).
+with the point policy had one wrong corner per coordinate instead of the intersection point. With the point policy, a
+segment could intersect a convex polygon in 2D that it misses, and a segment never intersected a convex polyhedron in
+3D. The intersections of polygons and polyhedra no longer allocate heap memory for the edges and faces of the
+geometries, the intersections of a segment with a polygon or a polyhedron no longer allocate heap memory at all, and
+`intersectingEntities` no longer copies the geometries of entity sets that store them (e.g. `GeometriesEntitySet`).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum
