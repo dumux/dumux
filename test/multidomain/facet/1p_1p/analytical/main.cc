@@ -65,7 +65,7 @@ computeL2Norm(const GridView& gridView,
     // some necessary parameters
     const auto a = Dumux::getParam<Scalar>("LowDim.SpatialParams.Aperture");
     const auto numE = Dumux::getParam<int>("Grid.NumElemsPerSide");
-    const auto order = Dumux::getParam<int>("L2Error.QuadratureOrder");
+    const auto order = Dumux::getParam<int>("L2Error.IntegrationOrder");
 
     // Compute epsilon (a/dx = a/(1/numE) = a*numE)
     l2Data.epsilon = a*numE;

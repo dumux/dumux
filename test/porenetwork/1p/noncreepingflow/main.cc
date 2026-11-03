@@ -117,8 +117,8 @@ int main(int argc, char** argv)
     {
         std::cout << "cumulative outflux is: "
                   << boundaryFlux.getFlux("max", 0, true) << std::endl;
-        DumuxMessage::print();
         Parameters::print();
+        DumuxMessage::print(/*firstCall=*/false);
     }
 
     return 0;

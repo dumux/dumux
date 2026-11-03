@@ -3,8 +3,8 @@ Differences Between DuMu<sup>x</sup> 3.11 and DuMu<sup>x</sup> 3.10
 
 ### General changes / structure
 
-- __Requirements__: Testing DuMu<sup>x</sup> (specifically using the script `dumux_run_test.py`)
-  now requires the Python library `fieldcompare` (>= 0.4.0) because any fallack implementation have been removed.
+- __Requirements__: Testing DuMu<sup>x</sup> (specifically using the script `dumux_runtest.py`)
+  now requires the Python library `fieldcompare` (>= 0.4.0) because the fallback implementation has been removed.
 
 ### Improvements and Enhancements
 
@@ -22,7 +22,7 @@ times whenever multiple scvs were associated with the same localDof.
 - __Stokes solver__: `StokesSolver` now also runs in parallel (MPI), on non-overlapping and on overlapping decompositions. The velocity AMG and the Jacobi iteration of the pressure block communicate across processes; tested with the donea problem on 2 and 4 processes for PQ1Bubble and Taylor-Hood (P2/P1) on simplices and for hybrid PQ1Bubble on a YaspGrid with overlap.
 - __Free flow__: The coupled face-centered staggered Navier-Stokes system runs in parallel (MPI) with the `StokesSolver`. On a distributed grid the staggered coupling manager matches the faces of the mass balance with the momentum degrees of freedom by their orientation, and `LinearSolverTraits` for cctpfa provide the `dofMapper`.
 - __Stokes solver__: For transient problems the `StokesSolver` accepts a user pressure operator in place of the pressure mass matrix (`setPressureMatrix`), for example a Poisson operator scaled by the time step size, and a diagonal added to its inverse (`setPressureDiagonal`, Cahouet & Chabard). New options: `LinearSolver.Preconditioner.AMGForPressure` and `LinearSolver.Preconditioner.SSORForVelocity`. `setMatrix` and `solve(x, b)` keep the matrix and the preconditioner for several solves, also with symmetrized Dirichlet constraints, which makes the solver usable with `LinearPDESolver::reuseMatrix`.
-- __Testing__: `dumux_run_test.py` is now installed as a script when installing DuMux (with `make install`).
+- __Testing__: `dumux_runtest.py` is now installed as a script when installing DuMux (with `make install`).
 - __Face-centered staggered__: Fixed the axisymmetric source terms of the momentum balance: the viscous hoop stress had the wrong sign, and both source terms took the distance to the domain boundary as the radius instead of the distance to the rotation axis.
 - __Extended Richards__: The equilibrium vapor pressure is the fluid system's fluid-state dependent vapor pressure if the fluid system provides one, e.g. Kelvin's equation with `FluidSystems::H2OAir<..., useKelvinVaporPressure = true>`.
 - __Multidomain FF-PNM__: The grid manager for the free-flow domain has been improved to allow for up- and downstream grading, even if no additional up- or downstream positions are specified in the input file.
@@ -108,12 +108,14 @@ identified degrees of freedom (`std::vector` for box, pq1bubble, pq2, pq3 and fi
 
 - __FreeFlow__: Headers in the `freeflow/navierstokes/momentum` that were only related to the `fcstaggered` discretization were moved into a new subdirectory `fcstaggered`. The old headers are deprecated and will be removed after `release/3.11`. Please also note that class names were partly adapted
 to the new subdirectory.
+- __CMake__: The macro `add_input_file_links` is deprecated and will be removed after release 3.11. It links all `*.input` files of the directory and ignores its arguments. Use `dune_symlink_to_source_files(FILES ...)` and list the input files.
 - __Periodic boundaries__: `periodicallyMappedDof(dofIdx)` of the grid geometries is deprecated. Use `periodicallyMappedDofs(dofIdx)`,
 which returns a range of all periodically identified degrees of freedom. Grid geometries providing only `periodicallyMappedDof`
 or a single-index `periodicDofMap()` still work with the assemblers and trigger a deprecation warning.
 
 ### Removed
 - __FreeFlow__: The previous implementation of the staggered grid is moved to the new dumux-repository [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered). A newer implementation (introduced in DuMu<sup>x</sup> 3.5) of the staggered grid using the coupling manager is still available on [dumux](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux). While the newer implementation covers most of the models that were previously implemented for the old-staggered, turbulence models and higher order schemes are currently only available on [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered).
+- __Testing__: The script `bin/testing/runtest.py` has been removed. Use `bin/testing/dumux_runtest.py` (`${DUMUX_RUNTEST}` in CMake) instead.
 
 
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9

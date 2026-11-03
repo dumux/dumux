@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 TEnd = 86400 # [s]
 DtInitial = 60 # [s]
 MaxTimeStepSize = 60 # [s]

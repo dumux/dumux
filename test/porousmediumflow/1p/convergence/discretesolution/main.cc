@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     std::vector<Scalar> analyticErrors; analyticErrors.reserve(cellsVector.size());
 
     cellsVector.pop_back();
-    const auto intOrder = getParam<int>("L2Norm.IntegrationOrder");
+    const auto intOrder = getParam<int>("L2Error.IntegrationOrder");
     for (auto dx : cellsVector)
     {
         std::cout << "\n --- Solving with dx = " << dx << " --- \n\n";
@@ -157,10 +157,10 @@ int main(int argc, char** argv)
     }
 
     // maybe write the errors to disk
-    if (getParam<bool>("L2Norm.WriteLogFiles", false))
+    if (getParam<bool>("L2Error.WriteLogFiles", false))
     {
-        std::ofstream analyticFile(getParam<std::string>("L2Norm.AnalyticErrorsFile"));
-        std::ofstream discreteFile(getParam<std::string>("L2Norm.DiscreteErrorsFile"));
+        std::ofstream analyticFile(getParam<std::string>("L2Error.AnalyticErrorsFile"));
+        std::ofstream discreteFile(getParam<std::string>("L2Error.DiscreteErrorsFile"));
 
         for (unsigned int i = 0; i < analyticErrors.size(); ++i)
             analyticFile << dxVector[i] << "," << analyticErrors[i] << "\n";

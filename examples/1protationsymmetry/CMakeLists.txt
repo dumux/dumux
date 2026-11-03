@@ -6,7 +6,7 @@ dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME example_1p_rotationsymmetry
               LABELS porousmediumflow 1p example
               SOURCES main.cc
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/example_rotationsymmetry-reference.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/example_rotationsymmetry-00000.vtp

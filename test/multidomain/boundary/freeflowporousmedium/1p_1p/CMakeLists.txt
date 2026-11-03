@@ -4,7 +4,7 @@
 add_subdirectory(convergence)
 add_subdirectory(transient)
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params_horizontalflow.input" "params_verticalflow.input")
 
 add_executable(test_md_boundary_ff1p_pm1p EXCLUDE_FROM_ALL main.cc)
 

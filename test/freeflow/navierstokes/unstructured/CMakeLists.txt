@@ -12,7 +12,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_diamond.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa -Problem.EnableInertiaTerms true")
@@ -25,7 +25,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa
                TIMEOUT 600
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa -Problem.EnableInertiaTerms false
@@ -40,7 +40,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params.input
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box -Problem.EnableInertiaTerms true")
@@ -53,7 +53,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box
                TIMEOUT 600
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box -Problem.EnableInertiaTerms false
@@ -68,7 +68,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diam
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params.input
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms true
@@ -81,7 +81,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS      --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond.vtu
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms false

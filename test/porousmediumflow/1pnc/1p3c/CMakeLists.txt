@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params.input")
 
 # 1pnc tests
 dumux_add_test(NAME test_1pnc_maxwellstefan_tpfa

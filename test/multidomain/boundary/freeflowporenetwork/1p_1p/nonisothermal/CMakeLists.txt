@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightInfo: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "paramsni.input")
 
 dumux_add_test(NAME test_md_boundary_ff1pni_pnm1pni
                SOURCES main.cc

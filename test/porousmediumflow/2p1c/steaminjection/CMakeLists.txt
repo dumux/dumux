@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 #add links to input files
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params_box.input" "params_tpfa.input")
 
 add_executable(test_2p1cni_steaminjection_tpfa EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_2p1cni_steaminjection_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfa")

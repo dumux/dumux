@@ -246,7 +246,7 @@ int main(int argc, char** argv)
     }
 
     // write the L2-norm to file
-    static const int order = getParam<int>("Problem.NormIntegrationOrder");
+    static const int order = getParam<int>("L2Error.IntegrationOrder");
     auto norm1D = L2Norm<double>::computeErrorNorm(*lowDimProblem, sol[lowDimIdx], order);
     norm1D /= L2Norm<double>::computeNormalization(*lowDimProblem, order);
     auto norm3D = L2Norm<double>::computeErrorNorm(*bulkProblem, sol[bulkIdx], order);

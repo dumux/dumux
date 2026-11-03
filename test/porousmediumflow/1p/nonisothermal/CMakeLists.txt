@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(simple)
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params_conduction.input" "params_convection.input")
 
 # non-isothermal tests
 dumux_add_test(NAME test_1pni_conduction_box

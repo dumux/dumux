@@ -12,7 +12,7 @@ CellsSequence = 10 20 40 80
 [IO]
 WriteVTK = true
 
-[L2Norm]
+[L2Error]
 IntegrationOrder = 3
 WriteLogFiles = false
 AnalyticErrorsFile = conforming_analytic.log

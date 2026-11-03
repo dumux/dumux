@@ -3,7 +3,7 @@
 
 add_subdirectory(nonisothermal)
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_pnm_1p_noncreeping_flow
               SOURCES main.cc

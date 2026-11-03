@@ -1,7 +1,14 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES "test_gmshboundaryflag.input"
+                                   "test_gridmanager_cake.input"
+                                   "test_gridmanager_subgrid.input"
+                                   "test_gridmanager_vtk.input"
+                                   "test_pnm_gridmanager-constant-params.input"
+                                   "test_pnm_gridmanager-random-params.input"
+                                   "test_pnm_subgriddata.input"
+                                   "test_remove-troats-on-boundary.input")
 dune_symlink_to_source_files(FILES grids periodic.dgf)
 
 add_executable(test_gridmanager_cake_ug EXCLUDE_FROM_ALL test_gridmanager_cake.cc)

@@ -9,9 +9,9 @@ dumux_add_test(NAME example_pnm1p_upscaling
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-foamgrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}
                CMD_ARGS       --script fuzzyData --delimiter " "
-                              --files ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_X-dir_PermeabilityratioVsForchheimerNumber.dat
+                              --files ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_X-dir_PermeabilityratioVsForchheimerNumber-reference.dat
                                       ${CMAKE_CURRENT_BINARY_DIR}/X-dir-PermeabilityratioVsForchheimerNumber.dat
-                                      ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_X-dir_InversePrmeabilityVsInertiaToViscousRatio.dat
+                                      ${CMAKE_SOURCE_DIR}/test/references/example_porenetwork_upscaling_noncreeping_flow_X-dir_InversePrmeabilityVsInertiaToViscousRatio-reference.dat
                                       ${CMAKE_CURRENT_BINARY_DIR}/X-dir-InversePrmeabilityVsInertiaToViscousRatio.dat
                               --command "${CMAKE_CURRENT_BINARY_DIR}/example_pnm1p_upscaling params.input -Problem.AssumeCreepingFlow false -Problem.Directions 0 -Output.PlotConductivity false")
 

@@ -22,9 +22,11 @@ Name = 1d
 Name = 3d
 
 [Problem]
-NormIntegrationOrder = 1
 EnableGravity = false
 OutputFilename = log.txt
+
+[L2Error]
+IntegrationOrder = 1
 
 [Vtk]
 OutputName = test_md_embedded1d3d_1p1p

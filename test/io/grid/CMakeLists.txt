@@ -3,7 +3,6 @@
 
 add_subdirectory(rasterimagereader)
 
-add_input_file_links()
 dune_symlink_to_source_files(FILES polyline.vtp)
 
 dumux_add_test(NAME test_vtkreader_3d
@@ -17,19 +16,6 @@ dumux_add_test(NAME test_vtkreader_3d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p2c_richards2c_3d-reference.vtu test-3d"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_md_embedded_1d3d_1p2c_richards2c_3d-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vtu)
-
-# structured grid reader is not yet fully implemented
-# dumux_add_test(NAME test_vtkreader_3d_structured
-#               SOURCES test_vtkreader.cc
-#               LABELS unit io
-#               CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
-#               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<3,Dune::EquidistantOffsetCoordinates<double,3>>
-#               COMMAND ${DUMUX_RUNTEST}
-#               CMD_ARGS --script fuzzy
-#                        --backend fieldcompare
-#                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_3d_structured ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vti test-3d"
-#                        --files ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vti
-#                                ${CMAKE_CURRENT_BINARY_DIR}/test-3d.vtu)
 
 dumux_add_test(NAME test_vtkreader_2d
               SOURCES test_vtkreader.cc
