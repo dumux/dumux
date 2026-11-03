@@ -12,6 +12,7 @@
 #ifndef DUMUX_GEOMETRY_INTERSECTING_ENTITIES_HH
 #define DUMUX_GEOMETRY_INTERSECTING_ENTITIES_HH
 
+#include <array>
 #include <cmath>
 #include <type_traits>
 #include <vector>
@@ -392,6 +393,8 @@ void intersectingEntities(const Geometry& geometry,
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
                     intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
             }
+            else if constexpr (dimIntersection == 0)
+                intersections.emplace_back(eIdxA, eIdxB, std::array{intersection});
             else
                 intersections.emplace_back(eIdxA, eIdxB, intersection);
         }
@@ -513,6 +516,8 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
                     intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
             }
+            else if constexpr (dimIntersection == 0)
+                intersections.emplace_back(eIdxA, eIdxB, std::array{intersection});
             else
                 intersections.emplace_back(eIdxA, eIdxB, intersection);
         }
