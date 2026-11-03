@@ -143,6 +143,12 @@ void performTests(std::vector<bool>& returns, const Quadrilateral& quad, const T
 
     returns.push_back(testIntersection<dimworld, SegmentPolicy>(triangle, makeLine({ {1.0, 0.0}, {1.0, 1.0} }, dm), false));
     returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {1.0, 0.0}, {1.0, 1.0} }, dm)));
+
+    // segments that miss the polygon
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {2.0, 2.0}, {3.0, 2.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(quad, makeLine({ {1.5, -1.0}, {1.5, 2.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {2.0, 2.0}, {3.0, 2.0} }, dm), false));
+    returns.push_back(testIntersection<dimworld, PointPolicy>(triangle, makeLine({ {0.6, 0.6}, {1.0, 1.0} }, dm), false));
 }
 
 #endif

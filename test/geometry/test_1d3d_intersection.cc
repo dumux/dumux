@@ -49,6 +49,36 @@ bool testIntersection(const Dune::MultiLinearGeometry<double, 3, 3>& polyhedron,
     }
     return (found == foundExpected);
 }
+
+bool testPointIntersection(const Dune::MultiLinearGeometry<double, 3, 3>& polyhedron,
+                           const Dune::MultiLinearGeometry<double, 1, 3>& line,
+                           bool foundExpected, const Dune::FieldVector<double, 3>& expectedPoint,
+                           bool verbose)
+{
+    using Test = Dumux::GeometryIntersection<Dune::MultiLinearGeometry<double, 3, 3>,
+                                             Dune::MultiLinearGeometry<double, 1, 3>,
+                                             Dumux::IntersectionPolicy::PointPolicy<double, 3>>;
+    typename Test::Intersection intersection;
+    const bool found = Test::intersection(polyhedron, line, intersection);
+    if (found != foundExpected)
+    {
+        std::cerr << "  " << (found ? "Found false positive: point" : "Failed detecting point")
+                  << " intersection with " << line.corner(0) << " " << line.corner(1) << std::endl;
+        return false;
+    }
+
+    if (found && (intersection - expectedPoint).two_norm() > 1e-7*(line.corner(1) - line.corner(0)).two_norm())
+    {
+        std::cerr << "  Wrong point intersection " << intersection << " with " << line.corner(0) << " "
+                  << line.corner(1) << ", expected " << expectedPoint << std::endl;
+        return false;
+    }
+
+    if (verbose)
+        std::cout << "  " << (found ? "Found" : "No") << " point intersection with "
+                  << line.corner(0) << " " << line.corner(1) << std::endl;
+    return true;
+}
 #endif
 
 namespace Dumux {
@@ -102,6 +132,13 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(tetrahedron, makeLine({{transform({0.0, -1e-5, 0.0})}, {transform({1.0, -1e-5, 0.0})}}), false, verbose));
     returns.push_back(testIntersection(tetrahedron, makeLine({{transform({0.0, 0.0, 0.0})}, {transform({1.0, -1e-5, 0.0})}}), false, verbose));
 
+    // point-like intersections: a segment ending on a face, a segment touching a corner only,
+    // a segment crossing the tetrahedron and a segment missing it
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({0.25, 0.25, -1.0})}, {transform({0.25, 0.25, 0.0})}}), true, transform({0.25, 0.25, 0.0}), verbose));
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({0.0, -1.0, -1.0})}, {transform({2.0, 1.0, 1.0})}}), true, transform({1.0, 0.0, 0.0}), verbose));
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({0.25, 0.25, -1.0})}, {transform({0.25, 0.25, 1.0})}}), false, {}, verbose));
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({1.5, 0.0, 0.5})}, {transform({0.0, 1.5, 0.5})}}), false, {}, verbose));
+
     // test hexahedron-line intersections
     if (verbose) std::cout << "\n  -- Test hexahedron-line intersections" << std::endl;
 
@@ -119,6 +156,13 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(hexahedron, makeLine({{transform({1.1, 1.1, 0.0})}, {transform({1.1, 1.1, 1.0})}}), false, verbose));
     returns.push_back(testIntersection(hexahedron, makeLine({{transform({1.1, 0.0, 0.0})}, {transform({1.1, 1.0, 1.0})}}), false, verbose));
     returns.push_back(testIntersection(hexahedron, makeLine({{transform({0.0, -0.1, 0.0})}, {transform({1.0, -0.1, 0.0})}}), false, verbose));
+
+    // point-like intersections: a segment ending on a face, a segment touching a corner only,
+    // a segment crossing the hexahedron and a segment missing it
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.5, 0.5, -1.0})}, {transform({0.5, 0.5, 0.0})}}), true, transform({0.5, 0.5, 0.0}), verbose));
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.0, 2.0, 0.0})}, {transform({2.0, 0.0, 2.0})}}), true, transform({1.0, 1.0, 1.0}), verbose));
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.5, 0.5, -1.0})}, {transform({0.5, 0.5, 2.0})}}), false, {}, verbose));
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.0, 0.0, 2.0})}, {transform({1.0, 1.0, 2.0})}}), false, {}, verbose));
 
     // test pyramid-line intersections
     if (verbose) std::cout << "\n  -- Test pyramid-line intersections" << std::endl;

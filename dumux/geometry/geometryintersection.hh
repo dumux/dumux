@@ -464,14 +464,16 @@ public:
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
 
+        // intersect_ stops as soon as the interval [tfirst, tlast] is empty or a single point,
+        // and a single point is an intersection only if it lies in the polygon
         ctype tfirst, tlast;
-        if (!intersect_(geo1, geo2, tfirst, tlast))
+        using std::abs;
+        if (!intersect_(geo1, geo2, tfirst, tlast) && abs(tfirst - tlast) < eps_)
         {
-            // if start & end point are same, the intersection is a point
-            using std::abs;
-            if ( tfirst > tlast - eps_ )
+            const auto point = geo2.global(tfirst);
+            if (intersectsPointGeometry(point, geo1))
             {
-                intersection = Intersection(geo2.global(tfirst));
+                intersection = Intersection(point);
                 return true;
             }
         }
@@ -758,14 +760,16 @@ public:
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
 
+        // intersect_ stops as soon as the interval [tfirst, tlast] is empty or a single point,
+        // and a single point is an intersection only if it lies in the polyhedron
         ctype tfirst, tlast;
-        if (intersect_(geo1, geo2, tfirst, tlast))
+        using std::abs;
+        if (!intersect_(geo1, geo2, tfirst, tlast) && abs(tfirst - tlast) < eps_)
         {
-            // if start & end point are same, the intersection is a point
-            using std::abs;
-            if ( abs(tfirst - tlast) < eps_ )
+            const auto point = geo2.global(tfirst);
+            if (intersectsPointGeometry(point, geo1))
             {
-                intersection = Intersection(geo2.global(tfirst));
+                intersection = Intersection(point);
                 return true;
             }
         }
