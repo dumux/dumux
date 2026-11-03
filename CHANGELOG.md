@@ -95,6 +95,14 @@ problems that return their constraints from `constraints()`. One callable return
 boundary face, another its values. A dof on several boundary faces gets a single constraint of all equations constrained
 on any of them.
 - __Navier-Stokes__: Fixed the upwinding of the density in the single-phase mass balance assembled with the variables per local dof (`Transition::UseVariables`, hybrid schemes). The density was taken from the inside degree of freedom of a face (with `Flux.UpwindWeight = 1`) whatever the flow direction, i.e. from the downstream one when the flow enters it, which makes a transported density step unstable. The flux of this assembly contains no energy balance, so the non-isothermal model no longer compiles with it instead of adding the mass flux to the energy balance.
+- __Geometry__: Fixed the intersection of geometries. The intersection of two convex polygons in 2D was empty if no corner
+of one polygon is inside the other (e.g. two rectangles forming a cross), which affected `intersectingEntities` for two
+trees, `IntersectionEntitySet` and `makeGlue` for two-dimensional grids. The triangulation of a convex hull in 3D
+(`triangulate<3, 3>`) added faces twice, so intersection volumes in 3D were too large, in particular far from the origin.
+An intersection policy passed to `intersectingEntities` was not used below the root node of the tree, and intersections
+with the point policy had one wrong corner per coordinate instead of the intersection point. The 2D polygon intersection
+no longer allocates heap memory for the edges of the polygons, and `intersectingEntities` no longer copies the geometries
+of entity sets that store them (e.g. `GeometriesEntitySet`).
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum
