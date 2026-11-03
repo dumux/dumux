@@ -33,6 +33,10 @@ dumux_add_test(NAME test_elementvariables_ipdatacache
                LABELS unit discretization
                SOURCES test_elementvariables_ipdatacache.cc)
 
+dumux_add_test(NAME test_dirichletconstraints
+               LABELS unit discretization
+               SOURCES test_dirichletconstraints.cc)
+
 dumux_add_test(NAME test_periodicdofmap
                LABELS unit discretization
                SOURCES test_periodicdofmap.cc

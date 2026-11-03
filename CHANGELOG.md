@@ -89,6 +89,11 @@ evaluated at the position of the interpolation point (`ipData.global()`), as `ev
 volume variables, and a parameter constant per element is determined by the element (`elemDisc.element()`), which is what the
 volume variables assume by default (see `test/porousmediumflow/1p/layered`).
 - __Free flow-porous medium coupling__: `FreeFlowPorousMediumCouplingManager` supports control-volume finite element schemes on grids that match at the interface: PQ1Bubble or PQ2 (also hybrid) for the free-flow momentum balance, box for the free-flow mass balance and box for the porous medium (`FreeFlowPorousMediumCouplingManagerCvfe`, `FFPMCouplingConditionsCvfe`). The porous-medium pressure and density at the interface are interpolated with the shape functions of the coupled element. The generic `CouplingManagerBinaryCvfe` and `MapperCoupledMatchingBoundaryFaces` (`dumux/multidomain/boundary`) couple two CVFE subdomains over matching boundary faces. `Experimental::MultiDomainAssembler` assembles CVFE subdomains that use the grid variables of the finite-volume interface with `SubDomainCVFELocalAssembler`. `FreeFlowPorousMediumCouplingManagerCvfe::darcyVelocity` returns the Darcy velocity at the interface computed with the pressure gradient in the coupled porous-medium element, for the Beavers-Joseph condition with the porous-medium velocity. The convergence test `test/multidomain/boundary/freeflowporousmedium/1p_1p/convergence` covers the new pairs.
+- __Dirichlet constraints__: `appendBoundaryDirichletConstraints` (`dumux/discretization/dirichletconstraints.hh`) appends
+the Dirichlet constraints of the local dofs on the boundary faces of a grid discretization to a vector of constraints, for
+problems that return their constraints from `constraints()`. One callable returns the constraint info of a local dof on a
+boundary face, another its values. A dof on several boundary faces gets a single constraint of all equations constrained
+on any of them.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
