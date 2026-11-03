@@ -140,7 +140,8 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
             entities.push_back(entityIdx);
         else
         {
-            const auto geometry = tree.entitySet().entity(entityIdx).geometry();
+            const auto& entity = tree.entitySet().entity(entityIdx);
+            const auto& geometry = entity.geometry();
             // if the primitive is positive it intersects the actual geometry, add the entity to the list
             if (intersectsPointGeometry(point, geometry))
                 entities.push_back(entityIdx);
@@ -378,7 +379,8 @@ void intersectingEntities(const Geometry& geometry,
         const auto eIdxA = 0;
         const auto eIdxB = bBoxNode.child1;
 
-        const auto geometryTree = tree.entitySet().entity(eIdxB).geometry();
+        const auto& entityTree = tree.entitySet().entity(eIdxB);
+        const auto& geometryTree = entityTree.geometry();
         using GeometryTree = std::decay_t<decltype(geometryTree)>;
         using IntersectionAlgorithm = GeometryIntersection<Geometry, GeometryTree, IntersectionPolicy>;
         using Intersection = typename IntersectionAlgorithm::Intersection;
@@ -496,8 +498,10 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
         const auto eIdxA = bBoxA.child1;
         const auto eIdxB = bBoxB.child1;
 
-        const auto geometryA = treeA.entitySet().entity(eIdxA).geometry();
-        const auto geometryB = treeB.entitySet().entity(eIdxB).geometry();
+        const auto& entityA = treeA.entitySet().entity(eIdxA);
+        const auto& entityB = treeB.entitySet().entity(eIdxB);
+        const auto& geometryA = entityA.geometry();
+        const auto& geometryB = entityB.geometry();
 
         using GeometryA = std::decay_t<decltype(geometryA)>;
         using GeometryB = std::decay_t<decltype(geometryB)>;
