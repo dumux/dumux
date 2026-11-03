@@ -89,6 +89,26 @@ evaluated at the position of the interpolation point (`ipData.global()`), as `ev
 volume variables, and a parameter constant per element is determined by the element (`elemDisc.element()`), which is what the
 volume variables assume by default (see `test/porousmediumflow/1p/layered`).
 - __Free flow-porous medium coupling__: `FreeFlowPorousMediumCouplingManager` supports control-volume finite element schemes on grids that match at the interface: PQ1Bubble or PQ2 (also hybrid) for the free-flow momentum balance, box for the free-flow mass balance and box for the porous medium (`FreeFlowPorousMediumCouplingManagerCvfe`, `FFPMCouplingConditionsCvfe`). The porous-medium pressure and density at the interface are interpolated with the shape functions of the coupled element. The generic `CouplingManagerBinaryCvfe` and `MapperCoupledMatchingBoundaryFaces` (`dumux/multidomain/boundary`) couple two CVFE subdomains over matching boundary faces. `Experimental::MultiDomainAssembler` assembles CVFE subdomains that use the grid variables of the finite-volume interface with `SubDomainCVFELocalAssembler`. `FreeFlowPorousMediumCouplingManagerCvfe::darcyVelocity` returns the Darcy velocity at the interface computed with the pressure gradient in the coupled porous-medium element, for the Beavers-Joseph condition with the porous-medium velocity. The convergence test `test/multidomain/boundary/freeflowporousmedium/1p_1p/convergence` covers the new pairs.
+- __Flux laws at interpolation points__: `Experimental::CVFEFouriersLawAtIp`, `Experimental::CVFEFicksLawAtIp`,
+`Experimental::CVFEMaxwellStefansLawAtIp` and `Experimental::CVFEHookesLawAtIp` (`dumux/flux/cvfe/*_.hh`) evaluate the flux
+terms at an interpolation point of any control-volume finite element scheme, on sub-control volume faces and at the
+element and boundary points of hybrid and finite element schemes. Like `Experimental::CVFEDarcysLawAtIp`, they take the
+coefficient per local dof (interpolated) or per interpolation point; `Experimental::CVFE::faceTensorAverageAtScvf`
+averages a coefficient over the two sub-control volumes sharing a face. The elastic model uses `CVFEHookesLawAtIp` as
+stress type with variables per local dof.
+- __Non-isothermal single-phase flow with variables per local dof__: `Experimental::OnePVariables` and
+`Experimental::ImmiscibleLocalResidual` solve the energy balance in local thermal equilibrium (type tag `OnePNI`):
+storage of fluid and solid, advective heat flux with the upwind direction of the mass flux, and conduction with
+`Experimental::CVFEFouriersLawAtIp`; degrees of freedom without control volume get the corresponding Galerkin terms.
+`Experimental::EnergyVariables` (`dumux/porousmediumflow/nonisothermal/variables.hh`) provides the temperature, the solid
+energy parameters and the effective thermal conductivity per local dof. The convergence test
+`test/porousmediumflow/1p/nonisothermal/convergence` checks the rates for box, PQ1Bubble, PQ2 and PQ3 (hybrid), for conduction
+and with convection.
+- __PQ3__: Fixed the L2 projection (`CVFE::interpolate` with `InterpolationPolicy::L2Projection`) on grids where
+neighboring elements see an edge with opposite orientation, e.g. unstructured simplex grids. It took the index of a degree
+of freedom on an edge as the first index of the edge plus its local index, ignoring the orientation of the edge, so the
+L2 projection of a function in the discrete space was not the function. It now uses the orientation-aware `dofIndex` of the
+grid discretization if there is one.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Testing__: Tests added with `dumux_add_test` run with one thread per process unless `THREADS` or `DUMUX_TEST_NUM_THREADS`
