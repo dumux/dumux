@@ -4,7 +4,7 @@
 dune_symlink_to_source_files(FILES params.input solid.msh run_benchmarks.py)
 dumux_add_test(
     NAME test_saint_venant_kirchhoff_dynamic
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main.cc
     CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
     COMMAND ${DUMUX_RUNTEST}

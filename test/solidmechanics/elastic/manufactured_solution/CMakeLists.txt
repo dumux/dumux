@@ -4,7 +4,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_elastic_manufactured_solution_box
-              LABELS geomechanics elastic
+              LABELS solidmechanics elastic
               SOURCES main.cc
               CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
               COMMAND ${DUMUX_RUNTEST}

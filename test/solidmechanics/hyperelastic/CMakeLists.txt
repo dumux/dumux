@@ -4,7 +4,7 @@
 dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(
     NAME test_hyperelastic_box
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main.cc
     COMMAND ${DUMUX_RUNTEST}
     CMD_ARGS  --script fuzzy
@@ -14,7 +14,7 @@ dumux_add_test(
 )
 dumux_add_test(
     NAME test_hyperelastic_box_gridformat_io
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
     COMPILE_DEFINITIONS USE_GRIDFORMAT=1
     SOURCES main.cc

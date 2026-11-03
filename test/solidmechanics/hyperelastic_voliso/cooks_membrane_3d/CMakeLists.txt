@@ -5,7 +5,7 @@ dune_symlink_to_source_files(FILES params_mixed3d.input cooksmembrane3d.msh)
 
 dumux_add_test(
     NAME test_hyperelastic_cooks_membrane_mini_3d
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main_mixed3d.cc
     CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
     COMMAND ${DUMUX_RUNTEST}
@@ -16,7 +16,7 @@ dumux_add_test(
 )
 dumux_add_test(
     NAME test_hyperelastic_cooks_membrane_taylorhood_3d
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main_taylorhood3d.cc
     CMAKE_GUARD "( HAVE_UMFPACK AND dune-alugrid_FOUND )"
     COMMAND ${DUMUX_RUNTEST}
