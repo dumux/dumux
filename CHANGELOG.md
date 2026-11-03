@@ -56,7 +56,7 @@ pressure problem the volumetric pressure (`volumetricPressure(J)`), and the mode
 Tests: Cook's membrane (SPP 1748, 2D and 3D, MINI and Taylor-Hood elements) and the incompressible block (SPP 1748; MINI, P2-P1, P2-P1
 finite elements, Q2-Q1), each with a benchmark page.
 - __Hyperelastic model__: The hyperelastic model (`solidmechanics/hyperelastic`) is implemented on the new CVFE and finite element interface (`HyperelasticLocalResidual`, `HyperelasticVariables`) and works with the box, PQ2 hybrid and PQ2 finite element discretizations. Problems may provide an acceleration (inertia with lumped mass for control-volume dofs and consistent mass for the other dofs) and a velocity (rate-dependent stress laws). A dynamic manufactured-solution test checks the convergence rates.
-- __Grid variables for local degrees of freedom__: The new property `Variables` sets the variables per local degree of freedom of a model. `Experimental::DefaultGridVariables<TypeTag>` (`dumux/discretization/defaultgridvariables.hh`) are the grid variables for them, or for the volume variables of models that do not set `Variables`. The variables cache is selected depending on the element discretization: the control-volume cache if every local degree of freedom has a sub-control volume, the hybrid cache if only some have one, and the finite element cache if none has one. The hybrid and finite element type tags of the PQ1, PQ1-bubble, PQ1-nonconforming, PQ2 and PQ3 schemes always use them. The box, PQ1-bubble and face-centered diamond type tags use them if the type tag sets `Properties::Transition::UseVariables` and keep `FVGridVariables` otherwise, unless the model sets the grid variables itself, as the hyperelastic, hyperelastic volumetric-isochoric and large-deformation poroelastic models do. `Variables` are set by the linear elastic, hyperelastic, hyperelastic volumetric-isochoric and large-deformation poroelastic models, the control-volume finite element Navier-Stokes momentum model, the single-phase Navier-Stokes mass model and the single-phase porous-medium model; for the latter the local residual and Darcy's law follow the choice of variables. Models with an energy balance do not support variables per local degree of freedom; their variables check this at compile time.
+- __Grid variables for local degrees of freedom__: The new property `Variables` sets the variables per local degree of freedom of a model. `Experimental::DefaultGridVariables<TypeTag>` (`dumux/discretization/defaultgridvariables.hh`) are the grid variables for them, or for the volume variables of models that do not set `Variables`. The variables cache is selected depending on the element discretization: the control-volume cache if every local degree of freedom has a sub-control volume, the hybrid cache if only some have one, and the finite element cache if none has one. The hybrid and finite element type tags of the PQ1, PQ1-bubble, PQ1-nonconforming, PQ2 and PQ3 schemes always use them. The box, PQ1-bubble and face-centered diamond type tags use them if the type tag sets `Properties::Transition::UseVariables` and keep `FVGridVariables` otherwise, unless the model sets the grid variables itself, as the hyperelastic, hyperelastic volumetric-isochoric and large-deformation poroelastic models do. `Variables` are set by the linear elastic, hyperelastic, hyperelastic volumetric-isochoric and large-deformation poroelastic models, the control-volume finite element Navier-Stokes momentum model, the single-phase Navier-Stokes mass model and the single-phase porous-medium model; for the latter the local residual and Darcy's law follow the choice of variables. The single-phase Navier-Stokes mass model does not support an energy balance with variables per local degree of freedom; its variables check this at compile time.
 - __Newton__: `NewtonSolverLinesearchCubicbacktracking` (`dumux/nonlinear/newtonsolver_linesearch_cubicbacktracking.hh`) is a Newton solver with a backtracking line search based on the sufficient decrease (Armijo) condition. A rejected step size is replaced by the minimizer of a quadratic or cubic interpolation of the squared residual norm. The Armijo constant is set by the new parameter `Newton.LineSearchArmijoC1`.
 - __Periodic boundaries__: Degrees of freedom on edges and corners of domains that are periodic in several directions are now
 identified with all their periodic images, and all assemblers enforce the periodic constraints for each of them. The periodic
@@ -110,6 +110,29 @@ segment could intersect a convex polygon in 2D that it misses, and a segment nev
 elements). The intersections of polygons and polyhedra no longer allocate heap memory for the edges and faces of the
 geometries, the intersections of a segment with a polygon or a polyhedron no longer allocate heap memory at all, and
 `intersectingEntities` no longer copies the geometries of entity sets that store them (e.g. `GeometriesEntitySet`).
+- __Flux laws at interpolation points__: `Experimental::CVFEFouriersLawAtIp`, `Experimental::CVFEFicksLawAtIp`,
+`Experimental::CVFEMaxwellStefansLawAtIp` and `Experimental::CVFEHookesLawAtIp` (`dumux/flux/cvfe/*_.hh`) evaluate the flux
+terms at an interpolation point of any control-volume finite element scheme, on sub-control volume faces and at the
+element and boundary points of hybrid and finite element schemes. Like `Experimental::CVFEDarcysLawAtIp`, they take the
+coefficient per local dof (interpolated) or per interpolation point; `Experimental::CVFE::faceTensorAverageAtScvf`
+averages a coefficient over the two sub-control volumes sharing a face. `CVFEFicksLawAtIp` closes the flux of the main
+component of a phase with the negative sum of the other component fluxes, as the Maxwell-Stefan laws do, independently of
+`BalanceEqOpts`. The elastic model uses `CVFEHookesLawAtIp` as stress type with variables per local dof.
+- __Non-isothermal single-phase flow with variables per local dof__: `Experimental::OnePVariables` and
+`Experimental::ImmiscibleLocalResidual` solve the energy balance in local thermal equilibrium (type tag `OnePNI`):
+storage of fluid and solid, advective heat flux with the upwind direction of the mass flux, and conduction with
+`Experimental::CVFEFouriersLawAtIp`; degrees of freedom without control volume get the corresponding Galerkin terms.
+`Experimental::EnergyVariables` (`dumux/porousmediumflow/nonisothermal/variables.hh`) provides the temperature, the solid
+energy parameters and the effective thermal conductivity per local dof. `Flux.ScvfThermalConductivity = FaceTensorAverage`
+averages the effective thermal conductivity over the two sub-control volumes sharing a face, as `Flux.ScvfPermeability` does
+for the permeability. The convergence test `test/porousmediumflow/1p/nonisothermal/convergence` checks the rates for box,
+PQ1Bubble, PQ2 and PQ3 (hybrid), for conduction and with convection, and `test/porousmediumflow/1p/nonisothermal/layered`
+checks that the box scheme with the face average is exact for conduction through two layers.
+- __PQ3__: Fixed the L2 projection (`CVFE::interpolate` with `InterpolationPolicy::L2Projection`) on grids where
+neighboring elements see an edge with opposite orientation, e.g. unstructured simplex grids. It took the index of a degree
+of freedom on an edge as the first index of the edge plus its local index, ignoring the orientation of the edge, so the
+L2 projection of a function in the discrete space was not the function. It now uses the orientation-aware `dofIndex` of the
+grid discretization if there is one.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum
