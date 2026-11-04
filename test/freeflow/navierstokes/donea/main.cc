@@ -50,7 +50,6 @@
 #include <dumux/common/typetraits/griddiscretization.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
-#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "properties.hh"
 
@@ -161,8 +160,8 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
           && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>;
     if constexpr (quadratureErrors)
     {
-        const auto velocityErrors = std::get<1>(calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]));
-        const auto pressureErrors = std::get<1>(calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]));
+        const auto velocityErrors = std::get<1>(NavierStokesTest::calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]));
+        const auto pressureErrors = std::get<1>(NavierStokesTest::calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]));
 
         if (printErrors)
             std::cout << "[Errors] velocity L2 = " << velocityErrors[0] << " H1 = " << velocityErrors[1] << std::endl

@@ -45,7 +45,6 @@
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
-#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "testcase.hh"
 #include "properties.hh"
@@ -216,8 +215,8 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
     {
         if constexpr (hasMomentumGradAnalyticalSolution && hasMassGradAnalyticalSolution)
         {
-            const auto [totalVolumeMomentum, momentumErrors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
-            const auto [totalVolumeMass, massErrors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
+            const auto [totalVolumeMomentum, momentumErrors] = Dumux::NavierStokesTest::calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massErrors] = Dumux::NavierStokesTest::calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
 
             const double massL2DofError = computeL2Error(
                 massGridDiscretization, x[massIdx],
@@ -243,8 +242,8 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         }
         else
         {
-            const auto [totalVolumeMomentum, momentumL2Error] = calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
-            const auto [totalVolumeMass, massL2Error] = calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
+            const auto [totalVolumeMomentum, momentumL2Error] = Dumux::NavierStokesTest::calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massL2Error] = Dumux::NavierStokesTest::calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
 
             const double massL2DofError = computeL2Error(
                 massGridDiscretization, x[massIdx],
@@ -294,7 +293,7 @@ void printDarcyL2Error(std::shared_ptr<Problem> problem,
 
     if constexpr (Dumux::DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>)
     {
-        const auto [totalVolume, cvfeL2Error] = calculateL2Error(*problem, gridVariables, x);
+        const auto [totalVolume, cvfeL2Error] = NavierStokesTest::calculateL2Error(*problem, gridVariables, x);
         const double l2dofError = computeL2Error(
             Dumux::gridDiscretization(*problem), x,
             [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }

@@ -48,7 +48,7 @@
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
-#include <test/freeflow/navierstokes/errors_cvfe.hh>
+#include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
 
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
             const Scalar dt = tEnd/(numStepsCoarse*(1 << refIdx));
             results.push_back(solveWithMultiStageAssembler(gridGeometry, method, dt, tEnd));
 
-            const auto [volume, errors] = calculateL2AndH1Errors(*results.back().problem, *results.back().gridVariables, results.back().x);
+            const auto [volume, errors] = NavierStokesTest::calculateL2AndH1Errors(*results.back().problem, *results.back().gridVariables, results.back().x);
             std::cout << "[Convergence] " << method->name() << ": dt = " << dt
                       << " velocity L2 error to the analytical solution = " << errors[0] << std::endl;
         }

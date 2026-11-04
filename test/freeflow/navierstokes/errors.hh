@@ -15,12 +15,16 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <tuple>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/indices.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
 #include <dumux/io/format.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/common/typetraits/problem.hh>
@@ -661,6 +665,120 @@ ErrorCSVWriter(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>)
 template<class MomentumProblem, class MassProblem>
 ErrorCSVWriter(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>, const std::string&)
 -> ErrorCSVWriter<MomentumProblem, MassProblem>;
+
+/*!
+ * \brief The L2 norm and the H1 norm of the error of a solution field, integrated with a quadrature rule of the given order
+ * \return The integrated volume and the two norms
+ */
+template<class Problem, class GridVariables, class SolutionVector>
+std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Problem& problem,
+                                                                        const GridVariables& gridVariables,
+                                                                        const SolutionVector& x,
+                                                                        int order = 5)
+{
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    double totalVolume = 0.0;
+    Dune::FieldVector<double, 2> errors(0.0);
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    auto fvGeometry = localView(gridDiscretization);
+
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        fvGeometry.bind(element);
+        const auto geometry = fvGeometry.elementGeometry();
+
+        elemVolVars.bind(element, fvGeometry, x);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& quad = Dune::QuadratureRules<double, GridGeometry::GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& localPos = qp.position();
+            const auto& qpVolumeWeight = qp.weight() * Extrusion::integrationElement(geometry, localPos);
+            totalVolume += qpVolumeWeight;
+
+            const auto& globalPos = geometry.global(localPos);
+            const auto analyticalSolution = problem.analyticalSolution(globalPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto solDiff = numericalSolution - analyticalSolution;
+            errors[0] += (solDiff * solDiff) * qpVolumeWeight;
+
+            const auto gradAnalyticalSolution = problem.gradAnalyticalSolution(globalPos);
+            const auto gradNumericalSolution = evalGradientsAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto gradDiff = gradNumericalSolution - gradAnalyticalSolution;
+            double gradDiffNorm = 0.0;
+            for (int i = 0; i < gradDiff.size(); ++i)
+                gradDiffNorm += gradDiff[i] * gradDiff[i];
+
+            errors[1] += (solDiff * solDiff + gradDiffNorm) * qpVolumeWeight;
+        }
+    }
+    errors[0] = std::sqrt(errors[0]);
+    errors[1] = std::sqrt(errors[1]);
+
+    return {totalVolume, errors};
+}
+
+/*!
+ * \brief The L2 norm of the error of a solution field, integrated with a quadrature rule of the given order
+ * \return The integrated volume and the norm
+ */
+template<class Problem, class GridVariables, class SolutionVector>
+std::tuple<double, double> calculateL2Error(const Problem& problem,
+                                            const GridVariables& gridVariables,
+                                            const SolutionVector& x,
+                                            int order = 5)
+{
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    double totalVolume = 0.0;
+    double error = 0.0;
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    auto fvGeometry = localView(gridDiscretization);
+
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        fvGeometry.bind(element);
+        const auto geometry = fvGeometry.elementGeometry();
+
+        elemVolVars.bind(element, fvGeometry, x);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& quad = Dune::QuadratureRules<double, GridGeometry::GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& localPos = qp.position();
+            const auto& qpVolumeWeight = qp.weight() * Extrusion::integrationElement(geometry, localPos);
+            totalVolume += qpVolumeWeight;
+
+            const auto& globalPos = geometry.global(localPos);
+            const auto analyticalSolution = problem.analyticalSolution(globalPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto solDiff = numericalSolution - analyticalSolution;
+            error += (solDiff * solDiff) * qpVolumeWeight;
+        }
+    }
+    error = std::sqrt(error);
+
+    return {totalVolume, error};
+}
 
 
 /*!
