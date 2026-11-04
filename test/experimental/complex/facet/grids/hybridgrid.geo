@@ -1,4 +1,4 @@
-numElemsPerSide = 25;
+DefineConstant[ numElemsPerSide = 25 ];
 dx = 1/numElemsPerSide;
 
 Point(1) = {0.5, -0.5, 0, dx};
