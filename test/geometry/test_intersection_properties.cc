@@ -7,12 +7,13 @@
  * \ingroup Geometry
  * \brief Properties of the geometry intersections for random convex geometries
  *
- * Random convex geometries of all supported element types are intersected with the cells of
- * structured grids, with each other and with segments, under several rotations, scalings and
- * translations. Checked are: the measures of the intersections with all cells of a grid add up to
- * the measure of the geometry, both argument orders give the same intersection, point-like
- * intersections agree with an independent computation, tree queries agree with testing all pairs,
- * and cells of a conforming grid only intersect if they are moved into each other.
+ * Random convex geometries of all supported element types, with corners numbered in either
+ * orientation, are intersected with the cells of structured grids, with each other and with
+ * segments, under several rotations, reflections, scalings and translations. Checked are: the
+ * measures of the intersections with all cells of a grid add up to the measure of the geometry,
+ * both argument orders give the same intersection, point-like intersections agree with an
+ * independent computation, tree queries agree with testing all pairs, and cells of a conforming
+ * grid only intersect if they are moved into each other.
  */
 #include <config.h>
 
@@ -272,7 +273,8 @@ std::vector<Point<2>> ellipsePoints(int n)
     return p;
 }
 
-//! corners in Dune order of a random convex polygon (triangle or quadrilateral) of size r around c
+//! corners in Dune order of a random convex polygon (triangle or quadrilateral) of size r around c,
+//! numbered in either orientation
 template<int dim>
 std::vector<Point<dim>> randomPolygon(Dune::GeometryType type, const Point<dim>& c, double r,
                                       const std::array<Point<dim>, dim>& R)
@@ -280,21 +282,24 @@ std::vector<Point<dim>> randomPolygon(Dune::GeometryType type, const Point<dim>&
     auto p = ellipsePoints(type.isTriangle() ? 3 : 4);
     if (type.isQuadrilateral())
         std::swap(p[2], p[3]);
+    const double mirror = uniform(0.0, 1.0) < 0.5 ? -1.0 : 1.0;
     std::vector<Point<dim>> corners;
     for (const auto& q : p)
     {
         Point<dim> x(0.0);
-        x[0] = r*q[0]; x[1] = r*q[1];
+        x[0] = mirror*r*q[0]; x[1] = r*q[1];
         corners.push_back(c + rotate(R, x));
     }
     return corners;
 }
 
-//! corners in Dune order of a random convex polyhedron with planar faces of size r around c
+//! corners in Dune order of a random convex polyhedron with planar faces of size r around c,
+//! numbered in either orientation
 std::vector<Point<3>> randomPolyhedron(Dune::GeometryType type, const Point<3>& c, double r)
 {
     const auto R = randomRotation<3>();
-    const auto place = [&](const Point<3>& x){ return c + rotate(R, r*x); };
+    const double mirror = uniform(0.0, 1.0) < 0.5 ? -1.0 : 1.0;
+    const auto place = [&](Point<3> x){ x[0] *= mirror; return c + rotate(R, r*x); };
     std::vector<Point<3>> corners;
     if (type.isTetrahedron())
     {
