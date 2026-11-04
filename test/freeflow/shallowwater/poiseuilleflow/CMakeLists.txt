@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(vertical)
-dune_symlink_to_source_files(FILES params.input convergencetest.py plot_results.py)
+dune_symlink_to_source_files(FILES params.input plot_results.py)
 
 dumux_add_test(NAME test_shallowwater_poiseuilleflow
                SOURCES main.cc
@@ -55,10 +55,26 @@ dumux_add_test(NAME test_shallowwater_poiseuilleflow_unstructured_parallel
 
 dune_symlink_to_source_files(FILES "grids")
 
-# convergence towards the parabolic velocity profile of the steady flow
-dumux_add_test(NAME test_shallowwater_poiseuilleflow_convergence
+# convergence towards the parabolic velocity profile of the steady flow, refined along the channel
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_convergence_x
                TARGET test_shallowwater_poiseuilleflow
                LABELS shallowwater
                TIMEOUT 1200
-               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
-               CMD_ARGS test_shallowwater_poiseuilleflow)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_poiseuilleflow params.input -TimeLoop.TEnd 1e6 -TimeLoop.MaxTimeStepSize 1e5 -TimeLoop.PrintoutTimes 1e6 -Problem.Name test_shallowwater_poiseuilleflow_convergence_x -Problem.MeshSizeDirection 0"
+                        --levels 10 20 40
+                        --level-args "-Grid.Cells '{} 160'"
+                        --errors test_shallowwater_poiseuilleflow_convergence_x-errors.csv
+                        --check "L2Rel(u) mean 0.85")
+
+# convergence towards the parabolic velocity profile of the steady flow, refined across the channel
+dumux_add_test(NAME test_shallowwater_poiseuilleflow_convergence_y
+               TARGET test_shallowwater_poiseuilleflow
+               LABELS shallowwater
+               TIMEOUT 1200
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_poiseuilleflow params.input -TimeLoop.TEnd 1e6 -TimeLoop.MaxTimeStepSize 1e5 -TimeLoop.PrintoutTimes 1e6 -Problem.Name test_shallowwater_poiseuilleflow_convergence_y -Problem.MeshSizeDirection 1"
+                        --levels 20 40 80
+                        --level-args "-Grid.Cells '160 {}'"
+                        --errors test_shallowwater_poiseuilleflow_convergence_y-errors.csv
+                        --check "L2Rel(u) mean 1.6")

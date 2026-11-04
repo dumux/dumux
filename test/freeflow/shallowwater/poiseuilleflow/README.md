@@ -141,8 +141,9 @@ $S \Delta x / (2 h_0) = 1.25 \cdot 10^{-4}$, the step of the bed at a face relat
 The script repeats the 20-cell run with the slope $10 S$ and with the depth $2 h_0$; the relative errors are
 $1.19 \cdot 10^{-3}$ and $6.04 \cdot 10^{-5}$, again 0.95 to 0.97 times $S \Delta x / (2 h_0)$.
 
-The test `test_shallowwater_poiseuilleflow_convergence` refines the grid along the channel
-($10, 20, 40$ cells, 160 cells across) and across the channel ($20, 40, 80$ cells, 160 cells along) and
-checks that the mean convergence rates of the relative $L^2$ error are at least 0.85 and 1.6. The test
+The tests `test_shallowwater_poiseuilleflow_convergence_x` and `test_shallowwater_poiseuilleflow_convergence_y`
+refine the grid along the channel ($10, 20, 40$ cells, 160 cells across) and across the channel ($20, 40, 80$
+cells, 160 cells along) and check that the mean convergence rates of the relative $L^2$ error are at least
+0.85 and 1.6. The test
 `test_shallowwater_poiseuilleflow_vertical_convergence` runs the film flow on $20, 40, 80$ cells and checks
 that the mean rate is at least 0.9.

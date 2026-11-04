@@ -10,6 +10,7 @@ Usage:
 import math
 import os
 import re
+import shlex
 import sys
 import xml.etree.ElementTree as ET
 
@@ -17,7 +18,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from plotstyle import cell_ticks, plt, series, slope_triangle
-from convergencetest import rates, run
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, runLevels
 
 CELLS = [250, 500, 1000, 2000]
 
@@ -49,8 +51,11 @@ def main():
     celerity = math.sqrt(g*normalDepth)
     print(f"Normal flow: h = {normalDepth:.6f} m, u = {normalVelocity:.6f} m/s\n")
 
-    results = [run(executable, cells, ["-Vtk.Precision", "Float64"]) for cells in CELLS]
-    rh, ru = rates([r["h"] for r in results]), rates([r["u"] for r in results])
+    rows = runLevels(f"{shlex.quote(executable)} params.input -Vtk.Precision Float64", [str(cells) for cells in CELLS],
+                     "-Problem.Name roughchannel_{0} -Grid.Cells0 {0}", "roughchannel_{0}-errors.csv")
+    meshSizes = [r["h"] for r in rows]
+    results = [{"h": r["L2Rel(depth)"], "u": r["L2Rel(u)"]} for r in rows]
+    rh, ru = convergenceRates(meshSizes, [r["h"] for r in results]), convergenceRates(meshSizes, [r["u"] for r in results])
     print("| cells | rel. L2 error h | rate | rel. L2 error u | rate |")
     print("|--:|--:|--:|--:|--:|")
     for i, (cells, r) in enumerate(zip(CELLS, results)):

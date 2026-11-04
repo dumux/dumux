@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input convergencetest.py plot_results.py)
+dune_symlink_to_source_files(FILES params.input plot_results.py)
 
 add_executable(test_shallowwater_dambreak EXCLUDE_FROM_ALL main.cc)
 
@@ -32,9 +32,14 @@ dumux_add_test(NAME test_shallowwater_dambreak_parallel
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_dambreak params.input
                            -Problem.Name dambreak_parallel")
 
-# convergence towards the exact solution of the Riemann problem
+# convergence towards the exact solution of the Riemann problem, with the time step size proportional to the cell size
 dumux_add_test(NAME test_shallowwater_dambreak_convergence
                TARGET test_shallowwater_dambreak
                LABELS shallowwater
-               COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
-               CMD_ARGS test_shallowwater_dambreak)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_shallowwater_dambreak params.input -Problem.Name test_shallowwater_dambreak_convergence -Grid.Cells1 1"
+                        --levels "100 0.005" "200 0.0025" "400 0.00125"
+                        --level-args "-Grid.Cells0 {0} -TimeLoop.MaxTimeStepSize {1} -TimeLoop.DtInitial {1}"
+                        --errors test_shallowwater_dambreak_convergence-errors.csv
+                        --check "L1Rel(depth) mean 0.7"
+                        --check "L1Rel(u) mean 0.7")

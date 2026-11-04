@@ -36,6 +36,7 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <test/freeflow/shallowwater/errors.hh>
+#include <test/testing/convergencetest.hh>
 
 #include "properties.hh"
 
@@ -164,8 +165,12 @@ int main(int argc, char** argv)
         const auto eIdx = gridGeometry->elementMapper().index(element);
         return std::array<Scalar, 3>{{ exactWaterDepth[eIdx], exactVelocityX[eIdx], 0.0 }};
     });
+    const auto h = Test::maxElementExtent(leafGridView, 0);
     if (mpiHelper.rank() == 0)
+    {
         ShallowWaterTest::printErrors(errors, timeLoop->time());
+        ShallowWaterTest::writeConvergenceTestErrors(problem->name(), h, errors);
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

@@ -1,5 +1,6 @@
 [Problem]
 Name = poiseuilleflow
+MeshSizeDirection = 0 # coordinate direction of the cell size written as mesh size of a convergence test
 BedSlope = 0.00005 # [-] slope of the bed in m/m (positive downwards)
 Gravity = 9.81 # [m/s^2] gravitational acceleration
 Discharge = -4.0875 # [m^2/s] discharge per meter at the inflow boundary
