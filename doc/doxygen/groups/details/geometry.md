@@ -107,6 +107,7 @@ of their length have no point-like intersection with it.
 
 The algorithms assume convex geometries with straight edges and planar faces:
 segments, triangles and quadrilaterals, tetrahedra, pyramids, prisms and hexahedra.
+Their corners may be numbered in either orientation (e.g. mirrored elements).
 Two neighboring elements that only share a face have no polygon- or polyhedron-like intersection.
 
 Without a tree, `intersectsPointGeometry` (`dumux/geometry/intersectspointgeometry.hh`)
