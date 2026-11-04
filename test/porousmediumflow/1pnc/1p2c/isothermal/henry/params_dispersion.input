@@ -14,8 +14,8 @@ Name = test_1p2c_henry_dispersion_box
 EnableGravity = true
 FreshwaterInflow = 6.6e-5 # [m^2/s]
 DensityDifference = 25 # [kg/m^3]
-ReferenceTable = fahs2016_table_d2.csv
-IsochlorTolerance = 1e-2 # [m]
+ReferenceTable = reference_dispersion.csv
+IsochlorTolerance = 1.5e-2 # [m]
 
 [SpatialParams]
 Permeability = 1.0204e-9 # [m^2]

@@ -14,7 +14,7 @@ Name = test_1p2c_henry_diffusion_box
 EnableGravity = true
 FreshwaterInflow = 6.6e-5 # [m^2/s]
 DensityDifference = 25 # [kg/m^3]
-ReferenceTable = fahs2016_table_d1.csv
+ReferenceTable = reference_diffusion.csv
 IsochlorTolerance = 1e-2 # [m]
 
 [SpatialParams]

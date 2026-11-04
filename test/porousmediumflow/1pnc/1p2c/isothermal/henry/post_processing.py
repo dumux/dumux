@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
 Animation of the Henry problem: concentration and 10/50/90 % isochlors of test case 1 (top) and 2 (bottom)
-compared with the tables of Fahs et al. (2016).
+compared with the reference tables computed with henry_legendre.py.
 
 Run in the build directory after running both tests:  python3 post_processing.py
 Reads test_1p2c_henry_diffusion_box.pvd and test_1p2c_henry_dispersion_box.pvd and writes henry_combined.gif.
@@ -23,8 +23,9 @@ from PIL import Image
 
 # (title, output of the test, reference table)
 TEST_CASES = [
-    ("Test Case 1 (purely diffusive)", "test_1p2c_henry_diffusion_box.pvd", "fahs2016_table_d1.csv"),
-    (r"Test Case 2 ($\alpha_L=0.1$ m, $\alpha_T=0.01$ m)", "test_1p2c_henry_dispersion_box.pvd", "fahs2016_table_d2.csv"),
+    ("Test Case 1 (purely diffusive)", "test_1p2c_henry_diffusion_box.pvd", "reference_diffusion.csv"),
+    (r"Test Case 2 ($\alpha_L=0.1$ m, $\alpha_T=0.01$ m)", "test_1p2c_henry_dispersion_box.pvd",
+     "reference_dispersion.csv"),
 ]
 ISOCHLORS = {0.1: (":", "o"), 0.5: ("--", "s"), 0.9: ("-", "^")}  # c: (line style, marker)
 
@@ -35,7 +36,7 @@ FRAME_DURATION = 120  # [ms]
 
 
 def readReferenceTable(fileName):
-    """Fahs et al. (2016) isochlor positions: {c: (x values, z values)}"""
+    """Reference isochlor positions: {c: (x values, z values)}"""
     with open(fileName, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(line for line in f if not line.startswith("#")))
     z = [float(row["Z"]) for row in rows]
@@ -69,7 +70,7 @@ def plotTimeStep(ax, title, time, mesh, reference):
         ax.tricontour(triangles, c, levels=[level], colors=LINE_COLOR, linewidths=1.5, linestyles=lineStyle)
         x, z = reference[level]
         ax.plot(x, z, linestyle="none", marker=marker, markersize=4, markerfacecolor="none",
-                markeredgecolor=LINE_COLOR, label=rf"Fahs et al. (2016), $c={level}$")
+                markeredgecolor=LINE_COLOR, label=rf"reference, $c={level}$")
 
     ax.set_xlim(mesh.bounds[0], mesh.bounds[1])
     ax.set_ylim(mesh.bounds[2], mesh.bounds[3])

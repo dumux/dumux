@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """
 Convergence of the Henry problem: RMSE of the horizontal offset x_computed(z) - x_table(z) of the 10, 50 and 90 %
-isochlors to the tables of Fahs et al. (2016), for grids with 9x3 to 240x80 cells.
+isochlors to the reference tables computed with henry_legendre.py, for grids with 9x3 to 240x80 cells.
 
 Run in the build directory:  python3 convergence.py
 Runs test_1p2c_henry_diffusion_box with both input files on each grid (output in henry_convergence_runs) and
@@ -29,9 +29,10 @@ WORK_DIR = "henry_convergence_runs"
 GRIDS = [(9, 3), (15, 5), (30, 10), (60, 20), (120, 40), (240, 80)]  # cells in x and z, h = 3 m / cells in x
 # (name, title, input file, reference table, color, marker)
 TEST_CASES = [
-    ("diffusion", "Test Case 1 (purely diffusive)", "params_diffusion.input", "fahs2016_table_d1.csv", "#4C72B0", "o"),
-    ("dispersion", r"Test Case 2 ($\alpha_L=0.1$ m, $\alpha_T=0.01$ m)", "params_dispersion.input", "fahs2016_table_d2.csv",
-     "#9E3D22", "s"),
+    ("diffusion", "Test Case 1 (purely diffusive)", "params_diffusion.input", "reference_diffusion.csv",
+     "#4C72B0", "o"),
+    ("dispersion", r"Test Case 2 ($\alpha_L=0.1$ m, $\alpha_T=0.01$ m)", "params_dispersion.input",
+     "reference_dispersion.csv", "#9E3D22", "s"),
 ]
 LEVELS = [0.1, 0.5, 0.9]
 
