@@ -212,7 +212,10 @@ public:
         return this->asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
 
-    //! \copydoc inertVolumeFraction
+    /*!
+     * \brief Function for defining the solid volume fraction at an interpolation point.
+     * \note There is no default, for the same reason as for the porosity at an interpolation point.
+     */
     template<class SolidSystem, class IpData, class ElementSolution>
         requires ((SolidSystem::numInertComponents > 1)
                   || ((SolidSystem::numInertComponents > 0)
@@ -223,7 +226,19 @@ public:
                                const IpData& ipData,
                                const ElementSolution& elemSol,
                                int compIdx) const
-    { return this->asImp_().template inertVolumeFractionAtPos<SolidSystem>(ipData.global(), compIdx); }
+    {
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class SolidSystem, class IpData, class ElementSolution>\n"
+        "         Scalar inertVolumeFraction(const FVElementGeometry& fvGeometry,\n"
+        "                                    const IpData& ipData,\n"
+        "                                    const ElementSolution& elemSol,\n"
+        "                                    int compIdx) const\n\n"
+        "   returning e.g. inertVolumeFractionAtPos<SolidSystem>(ipData.global(), compIdx) for a smooth\n"
+        "   volume fraction or a value determined by fvGeometry.element() for a volume fraction that is\n"
+        "   constant per element.\n\n");
+        return 0.0;
+    }
 };
 
 } // namespace Dumux

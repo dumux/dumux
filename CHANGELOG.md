@@ -88,6 +88,11 @@ both sides, so a function of the position (`permeabilityAtPos`) is ambiguous whe
 evaluated at the position of the interpolation point (`ipData.global()`), as `evaluatePermeabilityAtScvfIP()` does for the
 volume variables, and a parameter constant per element is determined by the element (`elemDisc.element()`), which is what the
 volume variables assume by default (see `test/porousmediumflow/1p/layered`).
+- __Spatial parameters__: Like `permeability` and `porosity`, the functions `fluidMatrixInteraction`, `wettingPhase`,
+`inertVolumeFraction` and the parameters of the nonequilibrium models (`characteristicLength`, `factorEnergyTransfer`,
+`factorMassTransfer`) taking interpolation point data have no default, and `inertVolumeFraction` no longer evaluates
+`inertVolumeFractionAtPos` at the position of the interpolation point. `FVPorousMediumFlowSpatialParamsOnePConstant`
+defines its permeability and porosity at interpolation points.
 - __Free flow-porous medium coupling__: `FreeFlowPorousMediumCouplingManager` supports control-volume finite element schemes on grids that match at the interface: PQ1Bubble or PQ2 (also hybrid) for the free-flow momentum balance, box for the free-flow mass balance and box for the porous medium (`FreeFlowPorousMediumCouplingManagerCvfe`, `FFPMCouplingConditionsCvfe`). The porous-medium pressure and density at the interface are interpolated with the shape functions of the coupled element. The generic `CouplingManagerBinaryCvfe` and `MapperCoupledMatchingBoundaryFaces` (`dumux/multidomain/boundary`) couple two CVFE subdomains over matching boundary faces. `Experimental::MultiDomainAssembler` assembles CVFE subdomains that use the grid variables of the finite-volume interface with `SubDomainCVFELocalAssembler`. `FreeFlowPorousMediumCouplingManagerCvfe::darcyVelocity` returns the Darcy velocity at the interface computed with the pressure gradient in the coupled porous-medium element, for the Beavers-Joseph condition with the porous-medium velocity. The convergence test `test/multidomain/boundary/freeflowporousmedium/1p_1p/convergence` covers the new pairs.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
