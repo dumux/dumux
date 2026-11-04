@@ -47,7 +47,7 @@
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cvfe/interpolationpointdata.hh>
 
-#include <test/poromechanics/cryer_analytical.hh>
+#include <test/poromechanics/cryeranalyticalsolution.hh>
 
 #include "properties.hh"
 

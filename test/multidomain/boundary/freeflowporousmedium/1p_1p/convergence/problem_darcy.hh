@@ -21,7 +21,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "testcase.hh"
-#include "analyticalsolutions.hh"
+#include "analyticalsolution.hh"
 
 namespace Dumux {
 

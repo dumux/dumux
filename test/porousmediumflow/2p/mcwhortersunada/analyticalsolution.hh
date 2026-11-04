@@ -5,8 +5,8 @@
  * \ingroup TwoPTests
  * \brief Fučík's semi-analytical McWhorter-Sunada solution for counter-current imbibition.
  */
-#ifndef DUMUX_TEST_TWOP_MCWHORTERSUNADA_ANALYTICSOLUTION_HH
-#define DUMUX_TEST_TWOP_MCWHORTERSUNADA_ANALYTICSOLUTION_HH
+#ifndef DUMUX_TEST_TWOP_MCWHORTERSUNADA_ANALYTICAL_SOLUTION_HH
+#define DUMUX_TEST_TWOP_MCWHORTERSUNADA_ANALYTICAL_SOLUTION_HH
 
 #include <algorithm>
 #include <array>

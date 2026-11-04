@@ -10,8 +10,8 @@
  * \brief Helper functions for analytical solutions
  */
 
-#ifndef DUMUX_RICHARDS_BENCHMARKS_ANALYTICAL_HH
-#define DUMUX_RICHARDS_BENCHMARKS_ANALYTICAL_HH
+#ifndef DUMUX_RICHARDS_BENCHMARKS_ANALYTICAL_SOLUTION_HH
+#define DUMUX_RICHARDS_BENCHMARKS_ANALYTICAL_SOLUTION_HH
 
 #include <cmath>
 #include <algorithm>

@@ -10,8 +10,8 @@
  * \brief Similarity solution for the injection of a less dense and less viscous fluid into a confined aquifer.
  */
 
-#ifndef DUMUX_TEST_TWOPVE_RADIAL_INJECTION_ANALYTIC_SOLUTION_HH
-#define DUMUX_TEST_TWOPVE_RADIAL_INJECTION_ANALYTIC_SOLUTION_HH
+#ifndef DUMUX_TEST_TWOPVE_RADIAL_INJECTION_ANALYTICAL_SOLUTION_HH
+#define DUMUX_TEST_TWOPVE_RADIAL_INJECTION_ANALYTICAL_SOLUTION_HH
 
 #include <cmath>
 

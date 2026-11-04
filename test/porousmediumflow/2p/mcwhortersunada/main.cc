@@ -31,7 +31,7 @@
 #include <dumux/nonlinear/newtonsolver.hh>
 
 #include "properties.hh"
-#include "analyticsolution.hh"
+#include "analyticalsolution.hh"
 
 int main(int argc, char** argv)
 {

@@ -35,7 +35,7 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-#include "analyticsolution.hh"
+#include "analyticalsolution.hh"
 #include "properties.hh"
 
 namespace Dumux {

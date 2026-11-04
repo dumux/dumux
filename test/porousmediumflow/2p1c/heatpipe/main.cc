@@ -34,7 +34,7 @@
 #include <test/testing/convergencetest.hh>
 
 #include "properties.hh"
-#include "heatpipesolution.hh"
+#include "analyticalsolution.hh"
 
 int main(int argc, char** argv)
 {

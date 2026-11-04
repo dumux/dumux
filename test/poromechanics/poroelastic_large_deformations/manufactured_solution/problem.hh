@@ -12,7 +12,7 @@
  *
  * Displacement and fluid pressure are prescribed on the whole boundary of the unit square,
  * where both vanish. The body force and the fluid source are those of the exact solution
- * in solution.hh.
+ * in analyticalsolution.hh.
  */
 #ifndef DUMUX_TEST_POROELASTIC_LARGE_DEF_MMS_PROBLEM_HH
 #define DUMUX_TEST_POROELASTIC_LARGE_DEF_MMS_PROBLEM_HH
@@ -32,7 +32,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/dirichletconstraints.hh>
 
-#include "solution.hh"
+#include "analyticalsolution.hh"
 
 namespace Dumux {
 

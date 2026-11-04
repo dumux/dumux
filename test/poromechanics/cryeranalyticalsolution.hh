@@ -39,8 +39,8 @@
  * Reference: Cryer, C.W. (1963) A comparison of the three-dimensional consolidation
  * theories of Biot and Terzaghi. *Q. J. Mech. Appl. Math.* 16(4):401–412.
  */
-#ifndef DUMUX_CRYER_ANALYTICAL_HH
-#define DUMUX_CRYER_ANALYTICAL_HH
+#ifndef DUMUX_CRYER_ANALYTICAL_SOLUTION_HH
+#define DUMUX_CRYER_ANALYTICAL_SOLUTION_HH
 
 #include <cmath>
 #include <cstddef>

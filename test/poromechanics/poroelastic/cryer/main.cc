@@ -47,7 +47,7 @@
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/geometry/intersectingentities.hh>
 
-#include <test/poromechanics/cryer_analytical.hh>
+#include <test/poromechanics/cryeranalyticalsolution.hh>
 
 #include "properties.hh"
 #include "volumetricstrain.hh"

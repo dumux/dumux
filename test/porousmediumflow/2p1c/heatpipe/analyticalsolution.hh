@@ -9,8 +9,8 @@
  * \ingroup TwoPOneCTests
  * \brief Steady solution of the horizontal heat pipe of Udell (1985) inside the two-phase zone.
  */
-#ifndef DUMUX_TEST_2P1C_HEATPIPE_SOLUTION_HH
-#define DUMUX_TEST_2P1C_HEATPIPE_SOLUTION_HH
+#ifndef DUMUX_TEST_2P1C_HEATPIPE_ANALYTICAL_SOLUTION_HH
+#define DUMUX_TEST_2P1C_HEATPIPE_ANALYTICAL_SOLUTION_HH
 
 #include <cmath>
 
