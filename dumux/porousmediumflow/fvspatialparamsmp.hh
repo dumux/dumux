@@ -19,6 +19,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/fvspatialparams.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 #include "fvspatialparams.hh"
 
@@ -85,6 +86,33 @@ public:
     }
 
     /*!
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.)
+     *        at an interpolation point.
+     * \note There is no default. A local dof on an element face belongs to the elements on both sides,
+     *       so parameters given as a function of the position are ambiguous where they jump.
+     *       Overload this function using the position of the interpolation point for smooth
+     *       parameters and the element of the element discretization for parameters that are
+     *       constant per element.
+     * \param elemDisc The element discretization
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    void fluidMatrixInteraction(const ElementDiscretization& elemDisc,
+                                const IpData& ipData,
+                                const ElementSolution& elemSol) const
+    {
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         auto fluidMatrixInteraction(const ElementDiscretization& elemDisc,\n"
+        "                                     const IpData& ipData,\n"
+        "                                     const ElementSolution& elemSol) const\n\n"
+        "   returning e.g. fluidMatrixInteractionAtPos(ipData.global()) for smooth parameters\n"
+        "   or a value determined by elemDisc.element() for parameters that are constant per element.\n\n");
+    }
+
+    /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
      * \param element The current element
@@ -98,6 +126,31 @@ public:
                      const ElementSolution& elemSol) const
     {
         return this->asImp_().template wettingPhaseAtPos<FluidSystem>(scv.center());
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase
+     *        at an interpolation point.
+     * \note There is no default, for the same reason as for the parameters of the constitutive relationships
+     *       at an interpolation point.
+     * \param elemDisc The element discretization
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    template<class FluidSystem, class ElementDiscretization, class IpData, class ElementSolution>
+    int wettingPhase(const ElementDiscretization& elemDisc,
+                     const IpData& ipData,
+                     const ElementSolution& elemSol) const
+    {
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class FluidSystem, class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         int wettingPhase(const ElementDiscretization& elemDisc,\n"
+        "                          const IpData& ipData,\n"
+        "                          const ElementSolution& elemSol) const\n\n"
+        "   returning e.g. wettingPhaseAtPos<FluidSystem>(ipData.global()) if the wetting phase is the same\n"
+        "   everywhere or a value determined by elemDisc.element() if it is constant per element.\n\n");
+        return 0;
     }
 
     /*!

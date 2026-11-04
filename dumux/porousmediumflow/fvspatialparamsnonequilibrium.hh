@@ -13,6 +13,8 @@
 #ifndef DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_NONEQUILIBRIUM_HH
 #define DUMUX_POROUS_MEDIUM_FLOW_FV_SPATIAL_PARAMS_NONEQUILIBRIUM_HH
 
+#include <dumux/common/typetraits/typetraits.hh>
+
 #include "fvspatialparamsmp.hh"
 
 namespace Dumux {
@@ -56,6 +58,25 @@ public:
     { return this->asImp_().characteristicLengthAtPos(scv.dofPosition()); }
 
     /*!
+     * \brief Return the characteristic length for the mass transfer at an interpolation point.
+     * \note There is no default. A local dof on an element face belongs to the elements on both sides,
+     *       so a value given as a function of the position is ambiguous where it jumps.
+     */
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar characteristicLength(const ElementDiscretization& elemDisc,
+                                const IpData& ipData,
+                                const ElementSolution& elemSol) const
+    {
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         Scalar characteristicLength(const ElementDiscretization& elemDisc,\n"
+        "                                     const IpData& ipData,\n"
+        "                                     const ElementSolution& elemSol) const\n\n");
+        return 0.0;
+    }
+
+    /*!
      * \brief Return the characteristic length for the mass transfer.
      *
      * \param globalPos The position in global coordinates.
@@ -80,6 +101,24 @@ public:
     { return this->asImp_().factorEnergyTransferAtPos(scv.dofPosition()); }
 
     /*!
+     * \brief Return the pre-factor of the energy transfer at an interpolation point.
+     * \note There is no default, as for the characteristic length at an interpolation point.
+     */
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar factorEnergyTransfer(const ElementDiscretization& elemDisc,
+                                const IpData& ipData,
+                                const ElementSolution& elemSol) const
+    {
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         Scalar factorEnergyTransfer(const ElementDiscretization& elemDisc,\n"
+        "                                     const IpData& ipData,\n"
+        "                                     const ElementSolution& elemSol) const\n\n");
+        return 0.0;
+    }
+
+    /*!
      * \brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.
      */
@@ -101,6 +140,24 @@ public:
                                     const SubControlVolume& scv,
                                     const ElementSolution& elemSol) const
     { return this->asImp_().factorMassTransferAtPos(scv.dofPosition()); }
+
+    /*!
+     * \brief Return the pre-factor of the mass transfer at an interpolation point.
+     * \note There is no default, as for the characteristic length at an interpolation point.
+     */
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar factorMassTransfer(const ElementDiscretization& elemDisc,
+                              const IpData& ipData,
+                              const ElementSolution& elemSol) const
+    {
+        static_assert(AlwaysFalse<IpData>::value, " \n\n"
+        "   Your spatial params class has to overload\n\n"
+        "         template<class ElementDiscretization, class IpData, class ElementSolution>\n"
+        "         Scalar factorMassTransfer(const ElementDiscretization& elemDisc,\n"
+        "                                   const IpData& ipData,\n"
+        "                                   const ElementSolution& elemSol) const\n\n");
+        return 0.0;
+    }
 
 
     /*!
