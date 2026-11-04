@@ -102,7 +102,8 @@ trees, `IntersectionEntitySet` and `makeGlue` for two-dimensional grids. The tri
 An intersection policy passed to `intersectingEntities` was not used below the root node of the tree, and intersections
 with the point policy had one wrong corner per coordinate instead of the intersection point. With the point policy, a
 segment could intersect a convex polygon in 2D that it misses, and a segment never intersected a convex polyhedron in
-3D. The intersections of polygons and polyhedra no longer allocate heap memory for the edges and faces of the
+3D. Segments did not intersect convex polyhedra whose corners are given in the order of opposite orientation (mirrored
+elements). The intersections of polygons and polyhedra no longer allocate heap memory for the edges and faces of the
 geometries, the intersections of a segment with a polygon or a polyhedron no longer allocate heap memory at all, and
 `intersectingEntities` no longer copies the geometries of entity sets that store them (e.g. `GeometriesEntitySet`).
 
