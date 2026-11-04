@@ -11,9 +11,11 @@
  *
  * With `USEVARIABLES`, the box scheme assembles with the variables per local dof, for which the
  * primary variable switch is not implemented. Instantiating the switch adapter of the Newton
- * solver (`INSTANTIATE_ADAPTER`) then fails to compile.
+ * solver (`INSTANTIATE_ADAPTER`), which evaluates `hasPriVarsSwitch`, then fails to compile.
  */
 #include <config.h>
+
+#include <dune/common/std/type_traits.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/primaryvariableswitchadapter.hh>
@@ -32,8 +34,12 @@ int main()
     using namespace Dumux;
     using GridVariables = GetPropType<Properties::TTag::InjectionBox, Properties::GridVariables>;
 
-    static_assert(hasPriVarsSwitch<GridVariables> == !USEVARIABLES);
-    static_assert(Detail::hasLocalDofVariablesPriVarsSwitch<GridVariables> == USEVARIABLES);
+#if USEVARIABLES
+    static_assert(Dune::Std::is_detected_v<Detail::DetectLocalDofVariablesPVSwitch, GridVariables>);
+#else
+    static_assert(hasPriVarsSwitch<GridVariables>);
+    static_assert(!Dune::Std::is_detected_v<Detail::DetectLocalDofVariablesPVSwitch, GridVariables>);
+#endif
 
 #if INSTANTIATE_ADAPTER
     [[maybe_unused]] constexpr auto adapterSize = sizeof(PrimaryVariableSwitchAdapter<GridVariables>);
