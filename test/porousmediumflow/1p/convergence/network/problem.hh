@@ -164,24 +164,18 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    const auto globalPos = ipData(elemDisc, localDof).global();
-                    if (isFluxEnd_(globalPos))
-                        continue;
-                    ConstraintInfo info;
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
+            {
+                ConstraintInfo info;
+                if (!isFluxEnd_(ipData(elemDisc, localDof).global()))
                     info.setAll();
-                    ConstraintValues values(analyticalPressure(globalPos));
-                    constraints_.push_back(
-                        DirichletConstraintData{std::move(info), std::move(values), localDof.dofIndex()}
-                    );
-                }
-        }
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return ConstraintValues(analyticalPressure(ipData(elemDisc, localDof).global())); }
+        );
     }
 
     bool quartic_;

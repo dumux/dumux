@@ -15,7 +15,6 @@
 #include <cmath>
 #include <vector>
 #include <memory>
-#include <utility>
 
 #include <dune/common/fvector.hh>
 
@@ -155,25 +154,17 @@ private:
     //! Every local dof on the boundary carries the analytical pressure
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    const auto globalPos = ipData(elemDisc, localDof).global();
-
-                    ConstraintInfo info;
-                    info.setAll();
-
-                    ConstraintValues values(dirichletAtPos(globalPos));
-                    constraints_.push_back(
-                        DirichletConstraintData{std::move(info), std::move(values), localDof.dofIndex()}
-                    );
-                }
-        }
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
+            {
+                ConstraintInfo info;
+                info.setAll();
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return dirichletAtPos(ipData(elemDisc, localDof).global()); }
+        );
     }
 
     static constexpr Scalar omega_ = M_PI;
