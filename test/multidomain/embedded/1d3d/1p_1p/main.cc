@@ -34,6 +34,8 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 #include "l2norm.hh"
 
@@ -259,11 +261,9 @@ int main(int argc, char** argv)
               << " L2_q  : " << sourceNorm << " hmax_3d: " << hMaxBulk << '\n';
     std::cout << "-----------------------------------------------------" << std::endl;
 
-    // ... and file.
-    {
-        std::ofstream outFile(getParam<std::string>("Problem.OutputFilename"));
-        outFile << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << " " << sourceNorm << '\n';
-    }
+    Test::writeConvergenceTestErrors(getParam<std::string>("Problem.Name"), hMaxBulk, {
+        {"L2Rel(p_3d)", norm3D}, {"L2Rel(p_1d)", norm1D}, {"L2Rel(q)", sourceNorm}
+    });
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

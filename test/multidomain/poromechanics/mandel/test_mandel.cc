@@ -37,6 +37,8 @@
 #include <dumux/experimental/timestepping/multistagemethods.hh>
 #include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 #include "volumetricstrain.hh"
 
@@ -221,12 +223,16 @@ int main(int argc, char** argv)
         errorUx = sqrt(errorUx);
         errorUy = sqrt(errorUy);
 
+        const auto h = Test::maxElementDiameter(leafGridView);
         if (leafGridView.comm().rank() == 0)
         {
             std::cout << "** L2 errors at t = " << t
                       << ": L2(p) = " << errorP
                       << ", L2(ux) = " << errorUx
                       << ", L2(uy) = " << errorUy << std::endl;
+            Test::writeConvergenceTestErrors(getParam<std::string>("Vtk.OutputName"), h, {
+                {"L2(p)", errorP}, {"L2(ux)", errorUx}, {"L2(uy)", errorUy}
+            });
         }
     }
 

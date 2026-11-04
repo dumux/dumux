@@ -1,4 +1,5 @@
 [Problem]
+Name = test_md_facet_1p1p
 UseInteriorDirichletBCs = false
 EnableGravity = false
 

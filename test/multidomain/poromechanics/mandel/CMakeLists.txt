@@ -3,7 +3,7 @@
 
 add_subdirectory(analyticalsolution)
 
-dune_symlink_to_source_files(FILES params.input plot_results.py convergencetest.py)
+dune_symlink_to_source_files(FILES params.input plot_results.py)
 
 dumux_add_test(NAME test_md_mandel
               LABELS multidomain poromechanics 1p poroelastic
@@ -36,6 +36,10 @@ dumux_add_test(NAME test_md_mandel_convergence
               LABELS multidomain poromechanics 1p poroelastic
               TARGET test_md_mandel
               CMAKE_GUARD HAVE_UMFPACK
-              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
-              CMD_ARGS test_md_mandel -Grid.Cells "20 2" -TimeLoop.Scheme DIRK3
-                       -TimeLoop.TEnd 1000 -TimeLoop.CheckPoints 1000 -Vtk.OutputName test_md_mandel_convergence)
+              COMMAND ${DUMUX_CONVERGENCETEST}
+              CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_md_mandel params.input -Grid.Cells '20 2' -TimeLoop.Scheme DIRK3 -TimeLoop.TEnd 1000 -TimeLoop.CheckPoints 1000 -Vtk.OutputName test_md_mandel_convergence"
+                       --levels 0 1 2
+                       --level-args "-Grid.Refinement {}"
+                       --errors test_md_mandel_convergence-errors.csv
+                       --check "L2(p) mean 1.9"
+                       --check "L2(ux) mean 1.9")

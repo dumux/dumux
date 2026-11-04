@@ -22,8 +22,8 @@ Name = 1d
 Name = 3d
 
 [Problem]
+Name = test_md_embedded_1d3d_1p1p
 EnableGravity = false
-OutputFilename = log.txt
 
 [L2Error]
 IntegrationOrder = 1

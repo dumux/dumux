@@ -35,6 +35,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 
 namespace Dumux {
@@ -310,11 +312,9 @@ int main(int argc, char** argv)
     std::cout << "Matrix - epsilon/error: " << m.epsilon << ", " << m.norm << std::endl;
     std::cout << "Fracture - epsilon/error: " << f.epsilon << ", " << f.norm << std::endl;
 
-    const auto outputFileName = getParam<std::string>("Problem.OutputFileName");
-    std::ofstream file;
-    file.open(outputFileName, std::ios::app);
-    file << m.epsilon << "," << m.norm << "," << f.epsilon << "," << f.norm << "\n";
-    file.close();
+    Test::writeConvergenceTestErrors(getParam<std::string>("Problem.Name"), 1.0/getParam<int>("Grid.NumElemsPerSide"), {
+        {"L2Rel(p_m)", m.norm}, {"L2Rel(p_f)", f.norm}
+    });
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
