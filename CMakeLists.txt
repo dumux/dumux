@@ -172,6 +172,7 @@ if(PROJECT_NAME STREQUAL CMAKE_PROJECT_NAME)
 endif()
 
 set(DUMUX_RUNTEST ${CMAKE_SOURCE_DIR}/bin/testing/dumux_runtest.py)
+set(DUMUX_CONVERGENCETEST ${CMAKE_SOURCE_DIR}/bin/testing/dumux_convergencetest.py)
 
 add_subdirectory(bin)
 add_subdirectory(cmake/modules)

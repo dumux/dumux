@@ -5,6 +5,7 @@
 build-*
 Testing
 !bin/testing
+!test/testing
 
 # auto-saved files
 *~
