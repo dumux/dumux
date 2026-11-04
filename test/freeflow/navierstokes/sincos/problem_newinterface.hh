@@ -347,24 +347,18 @@ private:
 
     void appendDirichletConstraints_() const
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
-                if (isMomentumFluxBoundary_(boundaryFace.center()))
-                    continue;
-
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    ConstraintInfo info;
+                ConstraintInfo info;
+                if (!isMomentumFluxBoundary_(boundaryFace.center()))
                     info.setAll();
-                    ConstraintValues values(dirichletAtPos(ipData(elemDisc, localDof).global()));
-                    constraints_.push_back(DirichletConstraintData{std::move(info), std::move(values), localDof.dofIndex()});
-                }
-            }
-        }
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return dirichletAtPos(ipData(elemDisc, localDof).global()); }
+        );
     }
 
     void appendPressureConstraint_() const
