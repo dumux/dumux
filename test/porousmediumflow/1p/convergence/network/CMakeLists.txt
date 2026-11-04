@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dune_symlink_to_source_files(FILES "params_junction.input" "params_line.input")
-dune_symlink_to_source_files(FILES "convergencetest.py" "junction.dgf")
+dune_symlink_to_source_files(FILES "junction.dgf")
 
 # with vertex control volumes on the median dual, the hybrid schemes of even order
 # converge one order below the optimal rate in L2
@@ -12,9 +12,13 @@ dumux_add_test(NAME test_1p_convergence_line_pq2
                COMPILE_DEFINITIONS TYPETAG=OnePNetworkConvergencePQ2
                COMPILE_DEFINITIONS GRIDTYPE=Dune::OneDGrid
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_line_pq2 line_pq2
-                        --l2-rate 2 --h1-rate 2 params_line.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_line_pq2 params_line.input -Problem.Name test_1p_convergence_line_pq2"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_line_pq2-errors.csv
+                        --check "L2(p) finest 1.9 2.1"
+                        --check "H1(p) finest 1.9 2.1")
 
 dumux_add_test(NAME test_1p_convergence_line_pq3
                SOURCES main.cc
@@ -22,9 +26,13 @@ dumux_add_test(NAME test_1p_convergence_line_pq3
                COMPILE_DEFINITIONS TYPETAG=OnePNetworkConvergencePQ3
                COMPILE_DEFINITIONS GRIDTYPE=Dune::OneDGrid
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_line_pq3 line_pq3
-                        --l2-rate 4 --h1-rate 3 params_line.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_line_pq3 params_line.input -Problem.Name test_1p_convergence_line_pq3"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_line_pq3-errors.csv
+                        --check "L2(p) finest 3.9 4.1"
+                        --check "H1(p) finest 2.9 3.1")
 
 dumux_add_test(NAME test_1p_convergence_junction_pq2
                SOURCES main.cc
@@ -32,9 +40,13 @@ dumux_add_test(NAME test_1p_convergence_junction_pq2
                COMPILE_DEFINITIONS TYPETAG=OnePNetworkConvergencePQ2
                COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<1,3>
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_junction_pq2 junction_pq2
-                        --l2-rate 2 --h1-rate 2 params_junction.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_junction_pq2 params_junction.input -Problem.Name test_1p_convergence_junction_pq2"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_junction_pq2-errors.csv
+                        --check "L2(p) finest 1.9 2.1"
+                        --check "H1(p) finest 1.9 2.1")
 
 dumux_add_test(NAME test_1p_convergence_junction_pq3
                SOURCES main.cc
@@ -42,6 +54,10 @@ dumux_add_test(NAME test_1p_convergence_junction_pq3
                COMPILE_DEFINITIONS TYPETAG=OnePNetworkConvergencePQ3
                COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<1,3>
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_junction_pq3 junction_pq3
-                        --l2-rate 4 --h1-rate 3 params_junction.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_junction_pq3 params_junction.input -Problem.Name test_1p_convergence_junction_pq3"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_junction_pq3-errors.csv
+                        --check "L2(p) finest 3.9 4.1"
+                        --check "H1(p) finest 2.9 3.1")

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dune_symlink_to_source_files(FILES "params.input")
-dune_symlink_to_source_files(FILES "convergencetest.py")
 
 # if UG is found, we use UG for all tests. Otherwise, we use
 # YaspGrid for the tests on unstructured grids and enforce
@@ -28,30 +27,45 @@ endif()
 dumux_add_test(NAME test_1p_convergence_analytic_tpfa_structured
                TARGET test_1p_convergence_analytic_tpfa
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_tpfa
-                        tpfa_structured params.input -Problem.C 0.0)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_tpfa params.input -Problem.C 0.0 -Problem.Name test_1p_convergence_analytic_tpfa_structured"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_tpfa_structured-errors.csv
+                        --check "L2(p) mean 1.8")
 
 # using mpfa and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_mpfa_structured
                TARGET test_1p_convergence_analytic_mpfa
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_mpfa mpfa_structured)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_mpfa params.input -Problem.Name test_1p_convergence_analytic_mpfa_structured"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_mpfa_structured-errors.csv
+                        --check "L2(p) mean 1.8")
 
 # using box and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_box_structured
                TARGET test_1p_convergence_analytic_box
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_box box_structured)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_box params.input -Problem.Name test_1p_convergence_analytic_box_structured"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_box_structured-errors.csv
+                        --check "L2(p) mean 1.8")
 
 # using box assembled with the variables per local dof and structured grid
 dumux_add_test(NAME test_1p_convergence_analytic_box_variables_structured
                TARGET test_1p_convergence_analytic_box_variables
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_box_variables box_variables_structured)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_box_variables params.input -Problem.Name test_1p_convergence_analytic_box_variables_structured"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_box_variables_structured-errors.csv
+                        --check "L2(p) mean 1.8")
 
 # tests on ustructured grids in case UG is found
 if (dune-uggrid_FOUND)
@@ -59,17 +73,23 @@ if (dune-uggrid_FOUND)
     dumux_add_test(NAME test_1p_convergence_analytic_mpfa_unstructured
                    TARGET test_1p_convergence_analytic_mpfa
                    LABELS porousmediumflow 1p
-                   COMMAND ./convergencetest.py
-                   CMD_ARGS test_1p_convergence_analytic_mpfa mpfa_unstructured
-                            params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+                   COMMAND ${DUMUX_CONVERGENCETEST}
+                   CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_mpfa params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf -Problem.Name test_1p_convergence_analytic_mpfa_unstructured"
+                            --levels 0 1 2 3
+                            --level-args "-Grid.Refinement {}"
+                            --errors test_1p_convergence_analytic_mpfa_unstructured-errors.csv
+                            --check "L2(p) mean 1.8")
 
     # using box and unstructured grid
     dumux_add_test(NAME test_1p_convergence_analytic_box_unstructured
                    TARGET test_1p_convergence_analytic_box
                    LABELS porousmediumflow 1p
-                   COMMAND ./convergencetest.py
-                   CMD_ARGS test_1p_convergence_analytic_box box_unstructured
-                            params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf)
+                   COMMAND ${DUMUX_CONVERGENCETEST}
+                   CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_box params.input -Grid.File ../../incompressible/grids/randomlydistorted.dgf -Problem.Name test_1p_convergence_analytic_box_unstructured"
+                            --levels 0 1 2 3
+                            --level-args "-Grid.Refinement {}"
+                            --errors test_1p_convergence_analytic_box_unstructured-errors.csv
+                            --check "L2(p) mean 1.8")
 
 # otherwise define test with the same name but enforce skip
 else()
@@ -90,10 +110,12 @@ dumux_add_test(NAME test_1p_convergence_analytic_pq3
                COMPILE_DEFINITIONS TYPETAG=OnePConvergencePQ3
                COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_pq3 pq3_structured
-                        --expected-rate 4
-                        params.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_pq3 params.input -Problem.Name test_1p_convergence_analytic_pq3"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_pq3-errors.csv
+                        --check "L2(p) mean 3.6")
 
 # PQ1Bubble is defined on simplices, so it needs a simplex grid
 dumux_add_test(NAME test_1p_convergence_analytic_pq1bubble
@@ -102,17 +124,21 @@ dumux_add_test(NAME test_1p_convergence_analytic_pq1bubble
                COMPILE_DEFINITIONS TYPETAG=OnePConvergencePQ1Bubble
                COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_pq1bubble pq1bubble_structured
-                        --expected-rate 2
-                        params.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_pq1bubble params.input -Problem.Name test_1p_convergence_analytic_pq1bubble"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_pq1bubble-errors.csv
+                        --check "L2(p) mean 1.8")
 
 # the permeability on the faces between control volumes averaged instead of interpolated
 dumux_add_test(NAME test_1p_convergence_analytic_pq1bubble_facetensoraverage
                TARGET test_1p_convergence_analytic_pq1bubble
                CMAKE_GUARD dune-alugrid_FOUND
                LABELS porousmediumflow 1p
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_1p_convergence_analytic_pq1bubble pq1bubble_facetensoraverage_structured
-                        --expected-rate 2
-                        params.input -Flux.ScvfPermeability FaceTensorAverage)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_convergence_analytic_pq1bubble params.input -Flux.ScvfPermeability FaceTensorAverage -Problem.Name test_1p_convergence_analytic_pq1bubble_facetensoraverage"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_1p_convergence_analytic_pq1bubble_facetensoraverage-errors.csv
+                        --check "L2(p) mean 1.8")

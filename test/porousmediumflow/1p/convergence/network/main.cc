@@ -24,7 +24,6 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/metadata.hh>
 
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -36,6 +35,8 @@
 #if HAVE_DUNE_FOAMGRID
 #include <dumux/io/grid/gridmanager_foam.hh>
 #endif
+
+#include <test/testing/convergencetest.hh>
 
 #include "properties.hh"
 
@@ -95,14 +96,7 @@ void writeErrors(const Problem& problem, const SolutionVector& x)
               << "** errors for " << gridGeometry.numDofs() << " dofs, h = " << hMax
               << ": L2 = " << l2 << ", H1 = " << h1 << std::endl;
 
-    MetaData::Collector collector;
-    if (MetaData::jsonFileExists(problem.name()))
-        MetaData::readJsonFile(collector, problem.name());
-    collector["numDofs"].push_back(gridGeometry.numDofs());
-    collector["h"].push_back(hMax);
-    collector["L2errors"].push_back(l2);
-    collector["H1errors"].push_back(h1);
-    MetaData::writeJsonFile(collector, problem.name());
+    Test::writeConvergenceTestErrors(problem.name(), hMax, {{"L2(p)", l2}, {"H1(p)", h1}});
 }
 
 int main(int argc, char** argv)

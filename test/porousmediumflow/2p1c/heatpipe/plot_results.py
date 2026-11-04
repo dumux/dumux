@@ -9,6 +9,7 @@ Usage (run from the test directory in the build tree):
 """
 
 import os
+import shlex
 import sys
 import subprocess
 import numpy as np
@@ -17,8 +18,30 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({"font.size": 13, "axes.labelsize": 14, "xtick.labelsize": 12,
                      "ytick.labelsize": 12, "legend.fontsize": 12})
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from convergencetest import FIELDS, collect_data, compute_rates, print_table
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, runLevels
+
+# the error of each field in the error file of the executable
+FIELDS = {"saturation": "L2(S)", "gas pressure": "L2(p_g)", "liquid pressure": "L2(p_l)", "temperature": "L2(T)"}
+
+
+def collect_data(executable, refinements, name, extra_args):
+    """Run the test for each grid refinement and return the mesh sizes and the errors per field."""
+    exe = executable if os.path.isabs(executable) else "./" + executable
+    rows = runLevels(f"{shlex.quote(exe)} params.input -Problem.Name {name} {shlex.join(extra_args)}",
+                     [str(r) for r in refinements], "-Grid.Refinement {}", f"{name}-errors.csv")
+    return [r["h"] for r in rows], {field: [r[column] for r in rows] for field, column in FIELDS.items()}
+
+
+def print_table(hs, errors, rates):
+    """Print a convergence table with one error and rate column per field."""
+    print(f"  {'h':>10}" + "".join(f"  {field:>16}  {'rate':>6}" for field in FIELDS))
+    for i, h in enumerate(hs):
+        line = f"  {h:>10.5f}"
+        for field in FIELDS:
+            rate = f"{rates[field][i - 1]:.2f}" if i > 0 else "-"
+            line += f"  {errors[field][i]:>16.4e}  {rate:>6}"
+        print(line)
 
 if len(sys.argv) < 2:
     sys.stderr.write(__doc__)
@@ -70,7 +93,7 @@ for k, executable, weighting, upwindWeight, color, marker in configurations:
     name = f"{os.path.basename(executable)}-{weighting}"
     hs, errors = collect_data(executable, refinements=range(7), name=name,
                               extra_args=["-Flux.UpwindWeight", upwindWeight])
-    rates = {field: compute_rates(hs, errors[field]) for field in FIELDS}
+    rates = {field: convergenceRates(hs, errors[field]) for field in FIELDS}
     print(f"\nConvergence rates for {executable}, {weighting} mobility weighting:")
     print_table(hs, errors, rates)
     results.append((hs, errors))
