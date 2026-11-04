@@ -54,24 +54,18 @@ public:
     , name_(getParam<std::string>("Problem.Name"))
     , gravity_(getParam<Scalar>("Problem.Gravity"))
     {
-        auto elemDisc = localView(*gridGeometry);
-        std::vector<bool> isConstrained(gridGeometry->numDofs(), false);
-        for (const auto& element : elements(gridGeometry->gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    const auto globalPos = ipData(elemDisc, localDof).global();
-                    if (isClamped_(globalPos) && !isConstrained[localDof.dofIndex()])
-                    {
-                        isConstrained[localDof.dofIndex()] = true;
-                        typename DirichletConstraintData::ConstraintInfo info;
-                        info.setAll();
-                        constraints_.push_back(DirichletConstraintData{std::move(info), dirichletAtPos(globalPos), localDof.dofIndex()});
-                    }
-                }
-        }
+        appendBoundaryDirichletConstraints(
+            constraints_, *gridGeometry,
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
+            {
+                typename DirichletConstraintData::ConstraintInfo info;
+                if (isClamped_(ipData(elemDisc, localDof).global()))
+                    info.setAll();
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return dirichletAtPos(ipData(elemDisc, localDof).global()); }
+        );
     }
 
     const std::string& name() const

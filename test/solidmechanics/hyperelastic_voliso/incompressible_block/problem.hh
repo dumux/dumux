@@ -151,30 +151,20 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
                 const auto& bcTypes = this->boundaryTypesAtPos_(boundaryFace.center());
-                if (bcTypes.hasDirichlet())
-                {
-                    for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                    {
-                        ConstraintInfo info;
-                        // set the Dirichlet constraints
-                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                            if (bcTypes.isDirichlet(eqIdx))
-                                info.set(bcTypes.eqToDirichletIndex(eqIdx), eqIdx);
-
-                        auto dirichletValues = PrimaryVariables(0.0);
-                        constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
-                    }
-                }
-            }
-        }
-
+                ConstraintInfo info;
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    if (bcTypes.isDirichlet(eqIdx))
+                        info.set(bcTypes.eqToDirichletIndex(eqIdx), eqIdx);
+                return info;
+            },
+            [] (const auto& elemDisc, const auto& localDof)
+            { return PrimaryVariables(0.0); }
+        );
     }
 
     static constexpr Scalar eps_ = 1e-6;
