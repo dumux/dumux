@@ -419,27 +419,18 @@ private:
 
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-
-            for(const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
-                if(!isMomentumFluxBoundary_(boundaryFace.center()))
-                {
-                    for(const auto& localDof : localDofs(elemDisc, boundaryFace))
-                    {
-                        const auto globalPos = ipData(elemDisc, localDof).global();
-                        ConstraintInfo info;
-                        info.setAll();
-
-                        DirichletValues dirichletValues(this->dirichletAtPos(globalPos));
-                        constraints_.push_back(DirichletConstraintData{std::move(info), std::move(dirichletValues), localDof.dofIndex()});
-                    }
-                }
-            }
-        }
+                ConstraintInfo info;
+                if (!isMomentumFluxBoundary_(boundaryFace.center()))
+                    info.setAll();
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return this->dirichletAtPos(ipData(elemDisc, localDof).global()); }
+        );
     }
 
     // Pin the pressure nullspace by fixing the local dof at the lower-left domain corner to the

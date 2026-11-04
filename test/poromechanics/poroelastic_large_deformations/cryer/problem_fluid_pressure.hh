@@ -18,7 +18,6 @@
 
 #include <cmath>
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include <dumux/common/boundarytypes_.hh>
@@ -82,23 +81,18 @@ private:
     //! The fluid pressure is zero on the drained sphere surface
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
-                if (this->boundaryTypes(elemDisc, boundaryFace).hasOnlyFluxBoundary())
-                    continue;
-
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    ConstraintInfo info;
+                ConstraintInfo info;
+                if (!this->boundaryTypes(elemDisc, boundaryFace).hasOnlyFluxBoundary())
                     info.setAll();
-                    constraints_.push_back(DirichletConstraintData{std::move(info), ConstraintValues(0.0), localDof.dofIndex()});
-                }
-            }
-        }
+                return info;
+            },
+            [] (const auto& elemDisc, const auto& localDof)
+            { return ConstraintValues(0.0); }
+        );
     }
 
     bool isOnSymmetryPlane_(const GlobalPosition& pos) const

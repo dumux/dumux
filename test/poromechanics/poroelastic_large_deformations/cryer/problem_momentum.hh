@@ -127,25 +127,20 @@ private:
     //! The displacement components without traction condition are zero
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
                 const auto bcTypes = this->boundaryTypes(elemDisc, boundaryFace);
-                if (bcTypes.hasOnlyFluxBoundary())
-                    continue;
-
                 ConstraintInfo info;
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                     if (!bcTypes.isFluxBoundary(eqIdx))
                         info.set(eqIdx);
-
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                    constraints_.push_back(DirichletConstraintData{info, ConstraintValues(0.0), localDof.dofIndex()});
-            }
-        }
+                return info;
+            },
+            [] (const auto& elemDisc, const auto& localDof)
+            { return ConstraintValues(0.0); }
+        );
     }
 
     bool isOnSymmetryPlane_(const GlobalPosition& pos) const

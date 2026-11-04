@@ -16,7 +16,6 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
@@ -276,30 +275,18 @@ private:
     //! Every local dof on a boundary face carrying no flux condition is constrained to the analytical pressure
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
-                if (isFluxBoundary_(elemDisc, boundaryFace))
-                    continue;
-
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    const auto globalPos = ipData(elemDisc, localDof).global();
-
-                    ConstraintInfo info;
+                ConstraintInfo info;
+                if (!isFluxBoundary_(elemDisc, boundaryFace))
                     info.setAll();
-
-                    ConstraintValues values(analyticalSolution(globalPos));
-                    constraints_.push_back(
-                        DirichletConstraintData{std::move(info), std::move(values), localDof.dofIndex()}
-                    );
-                }
-            }
-        }
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return analyticalSolution(ipData(elemDisc, localDof).global()); }
+        );
     }
 
     bool onLeftBoundary_(const GlobalPosition& globalPos) const

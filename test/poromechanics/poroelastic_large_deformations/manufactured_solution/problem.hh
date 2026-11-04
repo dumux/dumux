@@ -19,7 +19,6 @@
 
 #include <cmath>
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include <dune/common/fmatrix.hh>
@@ -149,20 +148,17 @@ private:
     //! The exact solution vanishes on the boundary
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    typename ConstraintData::ConstraintInfo info;
-                    info.setAll();
-                    constraints_.push_back(ConstraintData{std::move(info), typename ConstraintData::ConstraintValues(0.0), localDof.dofIndex()});
-                }
-            }
-        }
+                typename ConstraintData::ConstraintInfo info;
+                info.setAll();
+                return info;
+            },
+            [] (const auto& elemDisc, const auto& localDof)
+            { return typename ConstraintData::ConstraintValues(0.0); }
+        );
     }
 
     std::shared_ptr<CouplingManager> couplingManager_;
@@ -246,20 +242,17 @@ private:
     //! The exact solution vanishes on the boundary
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    typename ConstraintData::ConstraintInfo info;
-                    info.setAll();
-                    constraints_.push_back(ConstraintData{std::move(info), typename ConstraintData::ConstraintValues(0.0), localDof.dofIndex()});
-                }
-            }
-        }
+                typename ConstraintData::ConstraintInfo info;
+                info.setAll();
+                return info;
+            },
+            [] (const auto& elemDisc, const auto& localDof)
+            { return typename ConstraintData::ConstraintValues(0.0); }
+        );
     }
 
     std::shared_ptr<CouplingManager> couplingManager_;

@@ -13,7 +13,6 @@
 #define DUMUX_ONEP_LAYERED_TEST_PROBLEM_HH
 
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include <dune/common/fvector.hh>
@@ -56,7 +55,19 @@ class OnePLayeredProblem : public Experimental::ProblemWithSpatialParams<TypeTag
 public:
     OnePLayeredProblem(std::shared_ptr<const GridDiscretization> gridDiscretization)
     : ParentType(gridDiscretization)
-    { appendDirichletConstraints_(); }
+    {
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
+            {
+                ConstraintInfo info;
+                info.setAll();
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return ConstraintValues(exactPressure(ipData(elemDisc, localDof).global())); }
+        );
+    }
 
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     { return BoundaryTypes{}; }
@@ -77,25 +88,6 @@ public:
     { return constraints_; }
 
 private:
-    void appendDirichletConstraints_()
-    {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    ConstraintInfo info;
-                    info.setAll();
-                    ConstraintValues values(exactPressure(ipData(elemDisc, localDof).global()));
-                    constraints_.push_back(
-                        DirichletConstraintData{std::move(info), std::move(values), localDof.dofIndex()}
-                    );
-                }
-        }
-    }
-
     std::vector<DirichletConstraintData> constraints_;
 };
 

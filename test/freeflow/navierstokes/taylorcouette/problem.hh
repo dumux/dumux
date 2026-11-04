@@ -127,22 +127,17 @@ public:
 private:
     void setVelocityOnCylinders_(const GridGeometry& gridGeometry)
     {
-        auto fvGeometry = localView(gridGeometry);
-        for (const auto& element : elements(gridGeometry.gridView()))
-        {
-            fvGeometry.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(fvGeometry))
+        appendBoundaryDirichletConstraints(
+            constraints_, gridGeometry,
+            [] (const auto& fvGeometry, const auto& boundaryFace, const auto& localDof)
             {
-                for (const auto& localDof : localDofs(fvGeometry, boundaryFace))
-                {
-                    ConstraintInfo info;
-                    info.setAll();
-                    constraints_.push_back(Constraint{std::move(info),
-                                                      analyticalSolution(ipData(fvGeometry, localDof).global()),
-                                                      localDof.dofIndex()});
-                }
-            }
-        }
+                ConstraintInfo info;
+                info.setAll();
+                return info;
+            },
+            [&] (const auto& fvGeometry, const auto& localDof)
+            { return analyticalSolution(ipData(fvGeometry, localDof).global()); }
+        );
     }
 
     // the pressure is only defined up to a constant

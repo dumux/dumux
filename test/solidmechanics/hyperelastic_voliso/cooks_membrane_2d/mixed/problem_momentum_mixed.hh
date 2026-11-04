@@ -107,11 +107,9 @@ public:
 private:
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
                 const auto& center = boundaryFace.center();
                 ConstraintInfo info;
@@ -119,13 +117,11 @@ private:
                     info.setAll();
                 else if (dim == 3 && center[dim-1] < eps_)
                     info.set(dim-1, dim-1);
-                else
-                    continue;
-
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                    constraints_.push_back(DirichletConstraintData{info, ConstraintValues(0.0), localDof.dofIndex()});
-            }
-        }
+                return info;
+            },
+            [] (const auto& elemDisc, const auto& localDof)
+            { return ConstraintValues(0.0); }
+        );
     }
 
     static constexpr Scalar eps_ = 1e-6;

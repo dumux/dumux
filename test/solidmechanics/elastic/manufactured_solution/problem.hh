@@ -157,31 +157,20 @@ private:
     //! The displacement components without prescribed traction are constrained to the exact solution
     void appendDirichletConstraints_()
     {
-        auto elemDisc = localView(this->gridDiscretization());
-        for (const auto& element : elements(this->gridDiscretization().gridView()))
-        {
-            elemDisc.bind(element);
-
-            for (const auto& boundaryFace : boundaryFaces(elemDisc))
+        appendBoundaryDirichletConstraints(
+            constraints_, this->gridDiscretization(),
+            [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
                 const auto bcTypes = this->boundaryTypes(elemDisc, boundaryFace);
-                if (bcTypes.hasOnlyFluxBoundary())
-                    continue;
-
                 ConstraintInfo info;
                 for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                     if (!bcTypes.isFluxBoundary(eqIdx))
                         info.set(eqIdx);
-
-                for (const auto& localDof : localDofs(elemDisc, boundaryFace))
-                {
-                    const auto globalPos = ipData(elemDisc, localDof).global();
-                    constraints_.push_back(
-                        DirichletConstraintData{info, exactSolution(globalPos), localDof.dofIndex()}
-                    );
-                }
-            }
-        }
+                return info;
+            },
+            [&] (const auto& elemDisc, const auto& localDof)
+            { return exactSolution(ipData(elemDisc, localDof).global()); }
+        );
     }
 
     //! The divergence of the stress of the exact solution
