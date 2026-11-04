@@ -240,7 +240,7 @@ int main(int argc, char** argv)
                 ).printErrors(errors);
 
                 if (printConvergenceTestFile)
-                    NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+                    NavierStokesTest::writeConvergenceTestErrors(momentumProblem, massProblem, errors);
             }
 
         }

@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     vtkWriter.write(1.0);
 
     NavierStokesTest::ErrorsSubProblem<Problem> errors(problem, x);
-    convergenceTestAppendErrorsMomentum(problem, errors);
+    NavierStokesTest::writeConvergenceTestErrorsMomentum(problem, errors);
 
     if (mpiHelper.rank() == 0)
         Parameters::print();

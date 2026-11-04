@@ -26,6 +26,8 @@
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
 
+#include <test/testing/convergencetest.hh>
+
 namespace Dumux {
 
 /*!
@@ -258,57 +260,6 @@ template<class Problem>
 NavierStokesErrorCSVWriter(std::shared_ptr<Problem>, const std::string&)
 -> NavierStokesErrorCSVWriter<Problem>;
 
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class Problem>
-void convergenceTestAppendErrors(std::ofstream& logFile,
-                                 std::shared_ptr<Problem> problem,
-                                 const NavierStokesErrors<Problem>& errors)
-{
-    static constexpr int dim
-        = ProblemTraits<Problem>::GridGeometry::GridView::dimension;
-
-    const auto velLabels = velocityLabels();
-
-    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
-
-    const auto numCCDofs = gridGeometry.numCellCenterDofs();
-    const auto numFaceDofs = gridGeometry.numFaceDofs();
-
-    logFile << Fmt::format(
-        "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
-        numCCDofs, numFaceDofs
-    );
-
-    const auto print = [&](const auto& e, const std::string& name){
-        using Indices = typename Problem::Indices;
-        logFile << Fmt::format(" {} = {}", name + "(p)", e[Indices::pressureIdx]);
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[Indices::velocity(dirIdx)]);
-        }
-    };
-
-    print(errors.l2Absolute(), "L2Abs");
-    print(errors.l2Relative(), "L2Rel");
-    print(errors.lInfAbsolute(), "LinfAbs");
-    print(errors.lInfRelative(), "LinfRel");
-
-    logFile << "\n";
-}
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class Problem>
-void convergenceTestAppendErrors(std::shared_ptr<Problem> problem,
-                                 const NavierStokesErrors<Problem>& errors)
-{
-    const auto logFileName = problem->name() + ".log";
-    std::ofstream logFile(logFileName, std::ios::app);
-    convergenceTestAppendErrors(logFile, problem, errors);
-}
 
 namespace NavierStokesTest {
 
@@ -713,110 +664,65 @@ ErrorCSVWriter(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>, c
 
 
 /*!
- * \brief Append errors to the log file during a convergence test
+ * \brief Write the mesh size and the discrete l2 and l-infinity errors for the convergence test driver
+ * \note L2Abs(v) is the l2 error of the velocity vector
  */
-template<class MomentumProblem, class MassProblem>
-void convergenceTestAppendErrors(std::ofstream& logFile,
-                                 std::shared_ptr<MomentumProblem> momentumProblem,
-                                 std::shared_ptr<MassProblem> massProblem,
-                                 const Errors<MomentumProblem, MassProblem>& errors)
+template<class MomentumProblem, class MassProblem, class Scalar>
+void writeConvergenceTestErrors(std::shared_ptr<MomentumProblem> momentumProblem,
+                                std::shared_ptr<MassProblem> massProblem,
+                                const Errors<MomentumProblem, MassProblem, Scalar>& errors)
 {
     static constexpr int dim
         = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
+    using MassIndices = typename MassProblem::Indices;
+    using MomIndices = typename MomentumProblem::Indices;
 
     const auto velLabels = velocityLabels();
-
-    const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
-
-    const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
-
-    const auto numCCDofs = massGridGeometry.numDofs();
-    const auto numFaceDofs = momentumGridGeometry.numDofs();
-
-    logFile << Fmt::format(
-        "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
-        numCCDofs, numFaceDofs
-    );
-
-    const auto print = [&](const auto& e, const std::string& name){
-        using MassIndices = typename MassProblem::Indices;
-        using MomIndices = typename MomentumProblem::Indices;
-        logFile << Fmt::format(" {} = {}", name + "(p)", e[MassIndices::pressureIdx]);
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
-        }
+    std::vector<std::pair<std::string, Scalar>> values;
+    const auto add = [&](const auto& e, const std::string& name){
+        values.emplace_back(name + "(p)", e[MassIndices::pressureIdx]);
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            values.emplace_back(name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
     };
 
-    print(errors.l2Absolute(), "L2Abs");
-    print(errors.l2Relative(), "L2Rel");
-    print(errors.lInfAbsolute(), "LinfAbs");
-    print(errors.lInfRelative(), "LinfRel");
+    add(errors.l2Absolute(), "L2Abs");
+    add(errors.l2Relative(), "L2Rel");
+    add(errors.lInfAbsolute(), "LinfAbs");
+    add(errors.lInfRelative(), "LinfRel");
 
-    logFile << "\n";
-}
+    using std::sqrt;
+    Scalar velocityError = 0.0;
+    for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+        velocityError += errors.l2Absolute()[MomIndices::velocity(dirIdx)+1]*errors.l2Absolute()[MomIndices::velocity(dirIdx)+1];
+    values.emplace_back("L2Abs(v)", sqrt(velocityError));
 
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class MomentumProblem, class MassProblem>
-void convergenceTestAppendErrors(std::shared_ptr<MomentumProblem> momentumProblem,
-                                 std::shared_ptr<MassProblem> massProblem,
-                                 const Errors<MomentumProblem, MassProblem>& errors)
-{
-    const auto logFileName = massProblem->name() + ".log";
-    std::ofstream logFile(logFileName, std::ios::app);
-    convergenceTestAppendErrors(logFile, momentumProblem, massProblem, errors);
+    Test::writeConvergenceTestErrors(massProblem->name(), errors.hMax()[0], values);
 }
 
 /*!
- * \brief Append errors to the log file during a convergence test
+ * \brief Write the mesh size and the discrete l2 and l-infinity errors of the velocity for the convergence test driver
  */
-template<class MomentumProblem>
-void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
-                                         std::shared_ptr<MomentumProblem> problem,
-                                         const ErrorsSubProblem<MomentumProblem>& errors)
+template<class MomentumProblem, class Scalar>
+void writeConvergenceTestErrorsMomentum(std::shared_ptr<MomentumProblem> problem,
+                                        const ErrorsSubProblem<MomentumProblem, Scalar>& errors)
 {
     static constexpr int dim
         = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
+    using MomIndices = typename MomentumProblem::Indices;
 
     const auto velLabels = velocityLabels();
-
-    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
-
-    const auto numFaceDofs = gridGeometry.numDofs();
-
-    logFile << Fmt::format(
-        "[ConvergenceTest] numFaceDofs = {}",
-        numFaceDofs
-    );
-
-    const auto print = [&](const auto& e, const std::string& name){
-        using MomIndices = typename MomentumProblem::Indices;
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)]);
-        }
+    std::vector<std::pair<std::string, Scalar>> values;
+    const auto add = [&](const auto& e, const std::string& name){
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            values.emplace_back(name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)]);
     };
 
-    print(errors.l2Absolute(), "L2Abs");
-    print(errors.l2Relative(), "L2Rel");
-    print(errors.lInfAbsolute(), "LinfAbs");
-    print(errors.lInfRelative(), "LinfRel");
+    add(errors.l2Absolute(), "L2Abs");
+    add(errors.l2Relative(), "L2Rel");
+    add(errors.lInfAbsolute(), "LinfAbs");
+    add(errors.lInfRelative(), "LinfRel");
 
-    logFile << "\n";
-}
-
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class MomentumProblem>
-void convergenceTestAppendErrorsMomentum(std::shared_ptr<MomentumProblem> problem,
-                                         const ErrorsSubProblem<MomentumProblem>& errors)
-{
-    const auto logFileName = problem->name() + ".log";
-    std::ofstream logFile(logFileName, std::ios::app);
-    convergenceTestAppendErrorsMomentum(logFile, problem, errors);
+    Test::writeConvergenceTestErrors(problem->name(), errors.hMax(), values);
 }
 
 } // end namespace NavierStokesTest

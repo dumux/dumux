@@ -114,13 +114,6 @@ std::size_t numNonFiniteEntries(const Matrix& matrix)
 
 namespace Dumux {
 
-template<class Error>
-void writeError_(std::ofstream& logFile, const Error& error)
-{
-    for (const auto& e : error)
-        logFile << ", " << e;
-}
-
 template<class MomentumGridGeometry, class MassGridGeometry,
          class SolutionVector, class MomentumIdx, class MassIdx>
 void writeHigherOrderVTK(const MomentumGridGeometry& momentumGridGeometry,
@@ -154,10 +147,6 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
 {
     using MomentumGridGeometry = typename ProblemTraits<MomentumProblem>::GridGeometry;
     using MassGridGeometry = typename ProblemTraits<MassProblem>::GridGeometry;
-    static constexpr int dim = MomentumGridGeometry::GridView::dimension;
-
-    const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
-
     const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
 
     // print discrete L2 and Linfity errors
@@ -172,41 +161,18 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
           && DiscretizationMethods::isCVFE<typename MassGridGeometry::DiscretizationMethod>;
     if constexpr (quadratureErrors)
     {
-        // first print momentum
-        {
-        const auto [totalVolume, errors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+        const auto velocityErrors = std::get<1>(calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]));
+        const auto pressureErrors = std::get<1>(calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]));
 
         if (printErrors)
-            std::cout << "[Errors] velocity L2 = " << errors[0] << " H1 = " << errors[1] << std::endl;
+            std::cout << "[Errors] velocity L2 = " << velocityErrors[0] << " H1 = " << velocityErrors[1] << std::endl
+                      << "[Errors] pressure L2 = " << pressureErrors[0] << " H1 = " << pressureErrors[1] << std::endl;
 
         if (printConvergenceTestFile)
-        {
-            std::ofstream logFile(momentumProblem->name() + "_errors_velocity.csv", std::ios::app);
-            auto numDofs = momentumGridGeometry.numDofs();
-            logFile << numDofs << ", ";
-            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
-            writeError_(logFile, errors);
-            logFile << "\n";
-        }
-        }
-
-        // now print mass
-        {
-        const auto [totalVolume, errors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
-
-        if (printErrors)
-            std::cout << "[Errors] pressure L2 = " << errors[0] << " H1 = " << errors[1] << std::endl;
-
-        if (printConvergenceTestFile)
-        {
-            std::ofstream logFile(massProblem->name() + "_errors_pressure.csv", std::ios::app);
-            auto numDofs = massGridGeometry.numDofs();
-            logFile << numDofs << ", ";
-            logFile << std::pow(totalVolume / numDofs, 1.0/dim);
-            writeError_(logFile, errors);
-            logFile << "\n";
-        }
-        }
+            Test::writeConvergenceTestErrors(massProblem->name(), Test::maxElementDiameter(massGridGeometry.gridView()), {
+                {"L2(v)", velocityErrors[0]}, {"H1(v)", velocityErrors[1]},
+                {"L2(p)", pressureErrors[0]}, {"H1(p)", pressureErrors[1]}
+            });
     }
     else
     {
@@ -216,7 +182,7 @@ void printErrors(std::shared_ptr<MomentumProblem> momentumProblem,
         ).printErrors(errors);
 
         if (printConvergenceTestFile)
-            NavierStokesTest::convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+            NavierStokesTest::writeConvergenceTestErrors(momentumProblem, massProblem, errors);
     }
 }
 

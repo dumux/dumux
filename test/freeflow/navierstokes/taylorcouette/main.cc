@@ -124,6 +124,7 @@ int main(int argc, char** argv)
 
     NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
     NavierStokesTest::ErrorCSVWriter(momentumProblem, massProblem).printErrors(errors);
+    NavierStokesTest::writeConvergenceTestErrors(momentumProblem, massProblem, errors);
 
     if (mpiHelper.rank() == 0)
         Parameters::print();

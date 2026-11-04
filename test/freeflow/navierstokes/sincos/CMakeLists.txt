@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES "convergencetest.py")
 dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_ff_navierstokes_sincos
@@ -11,14 +10,14 @@ dumux_add_test(NAME test_ff_navierstokes_sincos
               TIMEOUT 3600
               CMAKE_GUARD HAVE_UMFPACK
               COMPILE_DEFINITIONS LINEARSOLVER=UMFPackIstlSolver<SeqLinearSolverTraits,LinearAlgebraTraitsFromAssembler<Assembler>>
-              COMMAND ./convergencetest.py
-              CMD_ARGS test_ff_navierstokes_sincos params.input
-              -Grid.UpperRight "6.28 6.28"
-              -Grid.Cells "150 150"
-              -Problem.Name test_ff_navierstokes_sincos_stationary_convergence
-              -Problem.PrintConvergenceTestFile true
-              -Problem.IsStationary true
-              -Component.LiquidKinematicViscosity 0.001)
+              COMMAND ${DUMUX_CONVERGENCETEST}
+              CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos params.input -Grid.UpperRight '6.28 6.28' -Grid.Cells '150 150' -Problem.Name test_ff_navierstokes_sincos_stationary_convergence -Problem.PrintConvergenceTestFile true -Problem.IsStationary true -Component.LiquidKinematicViscosity 0.001"
+                       --levels 0 1
+                       --level-args "-Grid.Refinement {}"
+                       --errors test_ff_navierstokes_sincos_stationary_convergence-errors.csv
+                       --check "L2Abs(p) mean 1.95"
+                       --check "L2Abs(vx) mean 1.95"
+                       --check "L2Abs(vy) mean 1.95")
 
 dumux_add_test(NAME test_ff_navierstokes_sincos_instationary
               TARGET test_ff_navierstokes_sincos

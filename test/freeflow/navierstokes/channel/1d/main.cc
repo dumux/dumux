@@ -146,7 +146,7 @@ int main(int argc, char** argv)
         errorCSVWriter.printErrors(errors);
 
         if (printConvergenceTestFile)
-            convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+            NavierStokesTest::writeConvergenceTestErrors(momentumProblem, massProblem, errors);
     }
 
     // write vtk output

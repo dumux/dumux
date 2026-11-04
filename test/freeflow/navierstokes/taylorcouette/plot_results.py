@@ -12,10 +12,13 @@ taylorcouette_comparison.png (tangential velocity and pressure over the radius a
 the output directory (default: current directory). Requires numpy, matplotlib and pyvista.
 """
 
+import os
+import shlex
 import sys
 from pathlib import Path
 
-from convergencetest import run, rates
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, runLevels
 
 LEVELS = [0, 1, 2, 3]
 
@@ -57,13 +60,15 @@ def main():
     executable = str(Path(sys.argv[1]).resolve())
     outdir = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else Path.cwd()
 
-    results = [run(executable, level) for level in LEVELS]
-    profiles = [radialProfile(f"{name}-00000.vtu") for name, _, _ in results]
+    rows = runLevels(f"{shlex.quote(executable)} params.input", [str(level) for level in LEVELS],
+                     "-Problem.Name taylorcouette_level{0} -Grid.Refinement {0}", "taylorcouette_level{0}-errors.csv")
+    profiles = [radialProfile(f"taylorcouette_level{level}-00000.vtu") for level in LEVELS]
 
-    pErrors = [r[1] for r in results]
-    uErrors = [r[2] for r in results]
-    pRates = ["-"] + [f"{rate:.2f}" for rate in rates(pErrors)]
-    uRates = ["-"] + [f"{rate:.2f}" for rate in rates(uErrors)]
+    meshSizes = [r["h"] for r in rows]
+    pErrors = [r["L2Abs(p)"] for r in rows]
+    uErrors = [r["L2Abs(v)"] for r in rows]
+    pRates = ["-"] + [f"{rate:.2f}" for rate in convergenceRates(meshSizes, pErrors)]
+    uRates = ["-"] + [f"{rate:.2f}" for rate in convergenceRates(meshSizes, uErrors)]
     print("| Grid (radial × angular cells) | L2 error pressure (Pa) | rate | L2 error velocity (m/s) | rate |")
     print("|:--|--:|--:|--:|--:|")
     for profile, ep, rp, eu, ru in zip(profiles, pErrors, pRates, uErrors, uRates):
