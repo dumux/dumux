@@ -815,13 +815,19 @@ private:
          };
 
          // lambda to obtain the normal on a facet
-         auto computeNormal = [&geo1] (const Dune::ReservedVector<int, 4>& facetCorners)
+         const auto center1 = geo1.center();
+         auto computeNormal = [&geo1, &center1] (const Dune::ReservedVector<int, 4>& facetCorners)
          {
-             const auto v0 = geo1.corner(facetCorners[1]) - geo1.corner(facetCorners[0]);
-             const auto v1 = geo1.corner(facetCorners[2]) - geo1.corner(facetCorners[0]);
+             const auto c0 = geo1.corner(facetCorners[0]);
+             const auto v0 = geo1.corner(facetCorners[1]) - c0;
+             const auto v1 = geo1.corner(facetCorners[2]) - c0;
 
              auto n = crossProduct(v0, v1);
              n /= n.two_norm();
+
+             // the facet corners give outward normals for one orientation of the element only
+             if (n*(center1 - c0) > 0.0)
+                 n *= -1.0;
 
              return n;
          };
