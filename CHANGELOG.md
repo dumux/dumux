@@ -94,6 +94,7 @@ the Dirichlet constraints of the local dofs on the boundary faces of a grid disc
 problems that return their constraints from `constraints()`. One callable returns the constraint info of a local dof on a
 boundary face, another its values. A dof on several boundary faces gets a single constraint of all equations constrained
 on any of them.
+- __Navier-Stokes__: Fixed the upwinding of the density in the single-phase mass balance assembled with the variables per local dof (`Transition::UseVariables`, hybrid schemes). The density was taken from the inside degree of freedom of a face (with `Flux.UpwindWeight = 1`) whatever the flow direction, i.e. from the downstream one when the flow enters it, which makes a transported density step unstable. The flux of this assembly contains no energy balance, so the non-isothermal model no longer compiles with it instead of adding the mass flux to the energy balance.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum
