@@ -7,5 +7,13 @@ dumux_add_test(NAME test_membrane_plate
               LABELS solidmechanics plate
               SOURCES main.cc
               CMAKE_GUARD "( dune-foamgrid_FOUND AND Gmsh_FOUND )"
-              COMMAND ../convergencetest.py
-              CMD_ARGS test_membrane_plate)
+              COMMAND ${DUMUX_CONVERGENCETEST}
+              CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_membrane_plate params.input"
+                       --levels 0.25 0.125 0.0625
+                       --level-args "-Grid.File ../disk_{}.msh"
+                       --errors test_membrane_plate-errors.csv
+                       --check "L2Rel(w) mean 1.8 2.2")
+
+if(Gmsh_FOUND)
+  add_dependencies(test_membrane_plate test_plate_disk_meshes)
+endif()

@@ -9,12 +9,16 @@ Usage (run from the test subdirectory, e.g. kirchhoff_love/):
 
 import glob
 import os
+import shlex
+import subprocess
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from convergencetest import collect_data, compute_rates, print_table
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, runLevels
+
+MESH_SIZES = [0.25, 0.125, 0.0625, 0.03125]
 
 if len(sys.argv) < 2:
     sys.stderr.write("Usage: python3 plot_convergence.py <executable>\n")
@@ -27,9 +31,23 @@ exe_basename = os.path.basename(testname)
 title_words = exe_basename.removeprefix("test_").replace("_", " ").title()
 title = f"{title_words}: convergence of vertical deformation"
 
-hs, errors = collect_data(testname, [0.25, 0.125, 0.0625, 0.03125])
-rates = compute_rates(hs, errors)
-print_table(hs, errors, rates)
+geo = os.path.join(os.path.dirname(os.path.realpath(__file__)), "disk.geo")
+for clmax in MESH_SIZES:
+    subprocess.run(["gmsh", "-2", "-format", "msh2", "-clmax", str(clmax), geo, "-o", f"disk_{clmax}.msh"],
+                   check=True, stdout=subprocess.DEVNULL)
+executable = testname if os.path.isabs(testname) else "./" + testname
+rows = runLevels(f"{shlex.quote(executable)} params.input", [str(clmax) for clmax in MESH_SIZES],
+                 "-Grid.File disk_{}.msh", f"{exe_basename}-errors.csv")
+for clmax in MESH_SIZES:
+    os.remove(f"disk_{clmax}.msh")
+
+hs = [r["h"] for r in rows]
+errors = [r["L2Rel(w)"] for r in rows]
+rates = convergenceRates(hs, errors)
+print(f"  {'h':>10}  {'L2-error':>12}  {'rate':>6}")
+for i, (h, e) in enumerate(zip(hs, errors)):
+    rate = f"{rates[i - 1]:.2f}" if i > 0 else "   -"
+    print(f"  {h:>10.4f}  {e:>12.4e}  {rate:>6}")
 
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.loglog(hs, errors, "o-", label="L² error")

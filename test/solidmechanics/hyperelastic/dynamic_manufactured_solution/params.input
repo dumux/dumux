@@ -9,6 +9,7 @@ TEnd = 1.0
 DtInitial = 0.25
 
 [Problem]
+Name = hyperelastic_dynamic_manufactured_solution
 ShearModulus = 1.0
 LameLambda = 4.0
 Viscosity = 0.1

@@ -43,6 +43,8 @@
 #include <dumux/discretization/evalsolution.hh>
 #include <dumux/discretization/elementsolution.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 
 namespace Dumux {
@@ -160,16 +162,14 @@ int main(int argc, char** argv)
         return std::array<Scalar, 1>{PoroElasticLargeDefMMS::fluidPressure(pos[0], pos[1], t)};
     });
 
-    Scalar hMax = 0.0;
-    for (const auto& element : elements(leafGridView))
-        for (int i = 0; i < element.geometry().corners(); ++i)
-            for (int j = i+1; j < element.geometry().corners(); ++j)
-                hMax = std::max(hMax, (element.geometry().corner(i) - element.geometry().corner(j)).two_norm());
-
+    const auto hMax = Test::maxElementDiameter(leafGridView);
     std::cout << "Max element diameter: " << hMax << "\n"
               << "L2 error displacement: " << displacementError << "\n"
               << "L2 error solid pressure: " << solidPressureError << "\n"
               << "L2 error fluid pressure: " << fluidPressureError << std::endl;
+    Test::writeConvergenceTestErrors(getParam<std::string>("Problem.Name"), hMax, {
+        {"L2(u)", displacementError}, {"L2(p_s)", solidPressureError}, {"L2(p_f)", fluidPressureError}
+    });
 
     return 0;
 }

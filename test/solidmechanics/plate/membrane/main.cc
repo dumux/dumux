@@ -26,6 +26,8 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -95,7 +97,9 @@ int main(int argc, char** argv)
     }
 
     std::cout << "Max element diameter: " << hMax << std::endl;
-    std::cout << "Relative L2-error deformation w: " << std::sqrt(l2norm2/l2norm2Ref) << std::endl;
+    const auto relL2Error = std::sqrt(l2norm2/l2norm2Ref);
+    std::cout << "Relative L2-error deformation w: " << relL2Error << std::endl;
+    Dumux::Test::writeConvergenceTestErrors(problem->name(), hMax, {{"L2Rel(w)", relL2Error}});
 
     return 0;
 }
