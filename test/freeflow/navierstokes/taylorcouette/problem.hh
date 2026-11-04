@@ -91,13 +91,11 @@ public:
                            const ElementVolumeVariables& elemVolVars,
                            const ElementFluxVariablesCache& elemFluxVarsCache,
                            const SubControlVolumeFace& scvf) const
+    requires (!ParentType::isMomentumProblem())
     {
         BoundaryFluxes values(0.0);
-
-        if constexpr (!ParentType::isMomentumProblem())
-            values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf)
-                                           *density_*scvf.unitOuterNormal();
-
+        values[Indices::conti0EqIdx] = this->faceVelocity(element, fvGeometry, scvf)
+                                       *density_*scvf.unitOuterNormal();
         return values;
     }
 

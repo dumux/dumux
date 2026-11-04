@@ -199,6 +199,10 @@ public:
      */
     NumEqVector boundaryFluxAtPos(const GlobalPosition& globalPos) const
     {
+        static_assert(!definesNeumann_(),
+                      "Problems derived from Experimental::Problem define their boundary fluxes with boundaryFlux "
+                      "or boundaryFluxAtPos, neumann and neumannAtPos are not called");
+
         //! As a default, i.e. if the user's problem does not overload any boundary flux method
         //! return no-flux boundary conditions at all boundaries
         return NumEqVector(0.0);
@@ -326,6 +330,22 @@ private:
             { problem.addPointSources(pointSources); };
         else
             return false;
+    }
+
+    //! Converts to any argument type, so that a call is valid for any parameter types of the function
+    struct AnyArgument_
+    {
+        template<class T>
+        operator T&() const;
+    };
+
+    //! Whether the implementation defines a boundary flux through the interface of FVProblem
+    static constexpr bool definesNeumann_()
+    {
+        return requires(const Implementation& problem, const GlobalPosition& globalPos)
+               { problem.neumannAtPos(globalPos); }
+            || requires(const Implementation& problem, const AnyArgument_& any)
+               { problem.neumann(any, any, any, any, any); };
     }
 
     //! The grid discretization
