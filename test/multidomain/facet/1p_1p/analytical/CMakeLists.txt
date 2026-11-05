@@ -24,7 +24,8 @@ dumux_add_test(NAME test_md_facet_1p1p_tpfa_convergence
                        --levels 10 20 30 40 50 60 70 80 90 100
                        --level-args "-Grid.File hybridgrid_{0}.msh -Grid.NumElemsPerSide {0}"
                        --errors test_md_facet_1p1p_tpfa_convergence-errors.csv
-                       --check "L2Rel(p_m) finest 1.9")
+                       --check "L2Rel(p_m) finest 1.9"
+                       --check "L2Rel(p_f) finest 1.9")
 
 if(Gmsh_FOUND)
   add_dependencies(test_md_facet_1p1p_tpfa_convergence test_md_facet_1p1p_analytical_meshes)
@@ -40,7 +41,8 @@ dumux_add_test(NAME test_md_facet_1p1p_box_convergence
                        --levels 10 20 30 40 50 60 70 80 90 100
                        --level-args "-Grid.File hybridgrid_{0}.msh -Grid.NumElemsPerSide {0}"
                        --errors test_md_facet_1p1p_box_convergence-errors.csv
-                       --check "L2Rel(p_m) finest 1.9")
+                       --check "L2Rel(p_m) finest 1.9"
+                       --check "L2Rel(p_f) finest 1.9")
 
 if(Gmsh_FOUND)
   add_dependencies(test_md_facet_1p1p_box_convergence test_md_facet_1p1p_analytical_meshes)
