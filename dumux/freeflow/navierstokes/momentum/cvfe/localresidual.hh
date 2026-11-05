@@ -299,19 +299,37 @@ public:
         {
             static const auto upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Flux.UpwindWeight");
 
-            const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
-            const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
-            const bool insideIsUpwind = velocityIntegral*scvf.unitOuterNormal() > 0;
-            const auto& upwindVelocity = insideIsUpwind ? insideVars.velocity() : outsideVars.velocity();
-            const auto& downwindVelocity = insideIsUpwind ? outsideVars.velocity() : insideVars.velocity();
+            static const bool upwindMomentumDensity = getParamFromGroup<bool>(problem.paramGroup(), "Flux.UpwindMomentumDensity", true);
 
-            // both are face quantities here, the density is evaluated at the face center
+            const auto& insideScv = elemDisc.scv(scvf.insideScvIdx());
+            const auto& outsideScv = elemDisc.scv(scvf.outsideScvIdx());
+            const auto& insideVars = elemVars[insideScv];
+            const auto& outsideVars = elemVars[outsideScv];
+            const bool insideIsUpwind = velocityIntegral*scvf.unitOuterNormal() > 0;
             const auto faceIpData = ipData(elemDisc, scvf);
-            const Scalar density = problem.density(element, elemDisc, faceIpData);
-            const auto momentum = [&](const auto&, const auto&, const auto&)
-            { return density*(upwindWeight*upwindVelocity + (1.0 - upwindWeight)*downwindVelocity); };
+
+            GlobalPosition momentum(0.0);
+            if (upwindMomentumDensity)
+            {
+                // momentum densities at the dofs of both sides, each with the density at its own dof
+                const GlobalPosition insideMomentum = problem.density(element, elemDisc, ipData(elemDisc, insideScv))*insideVars.velocity();
+                const GlobalPosition outsideMomentum = problem.density(element, elemDisc, ipData(elemDisc, outsideScv))*outsideVars.velocity();
+                const auto& upwindMomentum = insideIsUpwind ? insideMomentum : outsideMomentum;
+                const auto& downwindMomentum = insideIsUpwind ? outsideMomentum : insideMomentum;
+                momentum = upwindWeight*upwindMomentum + (1.0 - upwindWeight)*downwindMomentum;
+            }
+            else
+            {
+                const auto& upwindVelocity = insideIsUpwind ? insideVars.velocity() : outsideVars.velocity();
+                const auto& downwindVelocity = insideIsUpwind ? outsideVars.velocity() : insideVars.velocity();
+                // both are face quantities here, the density is evaluated at the face center
+                const Scalar density = problem.density(element, elemDisc, faceIpData);
+                momentum = density*(upwindWeight*upwindVelocity + (1.0 - upwindWeight)*downwindVelocity);
+            }
+
+            const auto momentumAtIp = [&](const auto&, const auto&, const auto&) { return momentum; };
             const auto transportingVelocity = [&](const auto&, const auto&, const auto&) { return velocityIntegral; };
-            FluxTerms::advectiveFluxTerm(elemDisc, elemVars, faceIpData, momentum, transportingVelocity)
+            FluxTerms::advectiveFluxTerm(elemDisc, elemVars, faceIpData, momentumAtIp, transportingVelocity)
                 .umv(scvf.unitOuterNormal(), flux);
         }
 

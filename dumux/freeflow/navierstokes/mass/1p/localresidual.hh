@@ -182,12 +182,15 @@ public:
                              const ElementVariables& elemVars,
                              const SubControlVolumeFace& scvf) const
     {
+        static_assert(!ModelTraits::enableEnergyBalance(),
+                      "The flux integral does not include the energy balance");
+
         const auto& problem = this->asImp().problem();
-        NumEqVector flux(0.0);
+        Scalar volumeFlux = 0.0;
         for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf))
         {
             const auto& faceIpData = qpData.ipData();
-            flux += qpData.weight() * (problem.velocity(elemDisc, faceIpData) * faceIpData.unitOuterNormal());
+            volumeFlux += qpData.weight() * (problem.velocity(elemDisc, faceIpData) * faceIpData.unitOuterNormal());
         }
 
         static const auto upwindWeight
@@ -195,8 +198,13 @@ public:
 
         const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
         const auto& outsideVars = elemVars[elemDisc.scv(scvf.outsideScvIdx())];
+        const bool insideIsUpwind = volumeFlux > 0.0;
+        const auto& upwindVars = insideIsUpwind ? insideVars : outsideVars;
+        const auto& downwindVars = insideIsUpwind ? outsideVars : insideVars;
 
-        flux *= (upwindWeight * insideVars.density() + (1.0 - upwindWeight) * outsideVars.density());
+        NumEqVector flux(0.0);
+        flux[ModelTraits::Indices::conti0EqIdx]
+            = volumeFlux * (upwindWeight * upwindVars.density() + (1.0 - upwindWeight) * downwindVars.density());
 
         // the auxiliary flux is enabled if the trait is specialized for the problem
         // this can be used, for example, to implement flux stabilization terms

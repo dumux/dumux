@@ -795,6 +795,11 @@
             "If you use a staggered grid with a TVD approach: For a uniform grid \"Uniform\" is fine. For a nonuniform grid decide between \"Li\" and \"Hou\" (two literature-based methods)."
         ]
     },
+    "Flux.UpwindMomentumDensity": {
+        "explanation": [
+            "Advective momentum flux of the control-volume finite element momentum balance: upwind the momentum density with the density at the dof of each side (true), or multiply the upwinded velocity by the density at the interpolation point (false)."
+        ]
+    },
     "Flux.UpwindWeight": {
         "explanation": [
             "Upwind weight in staggered upwind method"

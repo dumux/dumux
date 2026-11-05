@@ -3,6 +3,7 @@
 
 add_subdirectory(angeli)
 add_subdirectory(channel)
+add_subdirectory(densityadvection)
 add_subdirectory(donea)
 add_subdirectory(mass)
 add_subdirectory(periodic)
