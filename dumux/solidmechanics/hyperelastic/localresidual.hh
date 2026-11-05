@@ -110,6 +110,12 @@ public:
             source.axpy(qpData.weight(), value);
         }
         source *= elemVars[scv].extrusionFactor();
+
+        const auto& pointSources = problem.pointSources();
+        if (!pointSources.empty())
+            for (const auto& context : pointSources.contexts(elemDisc, scv))
+                source += pointSources.eval(elemDisc, elemVars, context);
+
         return source;
     }
 
