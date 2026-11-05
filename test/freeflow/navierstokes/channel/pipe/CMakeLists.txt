@@ -7,7 +7,6 @@ dune_symlink_to_source_files(FILES params.input)
 dumux_add_test(NAME test_ff_stokes_channel_pipe
                LABELS freeflow navierstokes
                SOURCES main.cc
-               LABELS freeflow
                CMAKE_GUARD HAVE_UMFPACK
                COMMAND ${DUMUX_CONVERGENCETEST}
                CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_channel_pipe params.input -Problem.Name test_ff_stokes_channel_pipe -Problem.PrintConvergenceTestFile true"
