@@ -194,7 +194,7 @@ public:
         // forward to the local residual specialized for the discretization methods
         for (const auto& scv : scvs(this->elemDisc()))
         {
-            residual[scv.localDofIndex()] = this->localResidual().sourceIntegral(this->elemDisc(), elemVars, scv);
+            residual[scv.localDofIndex()] = -this->localResidual().sourceIntegral(this->elemDisc(), elemVars, scv);
         }
 
         return residual;
