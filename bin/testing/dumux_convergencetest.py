@@ -7,7 +7,9 @@ Run an executable on a sequence of refinement levels and check the convergence r
 
 After each run, the executable has to write a CSV file with a header row and one data row.
 The first column is the mesh size h, the other columns are named errors. The rate of an
-error e between two levels is log(e_i/e_{i+1})/log(h_i/h_{i+1}).
+error e between two levels is log(e_i/e_{i+1})/log(h_i/h_{i+1}). A check passes without a
+rate if its error is below the round-off value on all levels, for a solution that the
+discretization represents exactly.
 
 Example:
   dumux_convergencetest.py --command "./test_name params.input"
@@ -92,6 +94,16 @@ def readCmdParameters():
             " finest levels, or every rate of the error has to lie in [min, max]"
         ),
     )
+    parser.add_argument(
+        "-r",
+        "--round-off",
+        type=float,
+        default=0.0,
+        help=(
+            "A check passes without a rate if its error is below this value on all levels"
+            " (default: 0)"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -153,7 +165,7 @@ def printTable(levels, h, errors, rates):
     print()
 
 
-def checkRates(checks, rates):
+def checkRates(checks, errors, rates, roundOff):
     """Apply each check to the rates, print the outcome and return whether all passed"""
     passed = True
     for check in checks:
@@ -161,6 +173,9 @@ def checkRates(checks, rates):
         if name not in rates:
             sys.stderr.write(f"Error '{name}' is not in the error file ({', '.join(rates)})\n")
             passed = False
+            continue
+        if all(e < roundOff for e in errors[name]):
+            print(f"{name}: below the round-off value {roundOff} on all levels")
             continue
         if statistic == "mean":
             values = [sum(rates[name]) / len(rates[name])]
@@ -198,7 +213,7 @@ def runConvergenceTest():
     rates = {name: convergenceRates(h, values) for name, values in errors.items()}
 
     printTable(args.levels, h, errors, rates)
-    if not checkRates(args.check, rates):
+    if not checkRates(args.check, errors, rates, args.round_off):
         sys.stderr.write("At least one convergence rate is out of its bounds\n")
         sys.exit(1)
     sys.exit(0)

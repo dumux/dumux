@@ -18,11 +18,11 @@ DRIVER, EXECUTABLE = sys.argv[1], sys.argv[2]
 FAILURES = []
 
 
-def runDriver(name, levels, levelArgs, checks):
+def runDriver(name, levels, levelArgs, checks, options=()):
     """Run the driver on the quadrature executable"""
     name = f"test_convergencetest_{name}"
     call = [DRIVER, "--command", f"{EXECUTABLE} {name}", "--errors", f"{name}-errors.csv"]
-    call += ["--levels", *levels, "--level-args", levelArgs]
+    call += ["--levels", *levels, "--level-args", levelArgs, *options]
     for check in checks:
         call += ["--check", check]
     return subprocess.run(call, capture_output=True, text=True, check=False)
@@ -83,6 +83,20 @@ expect("non-finite checked error fails", result.returncode != 0 and "Non-finite 
 
 result = runDriver("nanunchecked", ["4", "8"], "{} nan", ["leftsum mean 0.9"])
 expect("non-finite unchecked error is allowed", result.returncode == 0, result)
+
+result = runDriver("exact", ["4", "8", "16"], "{}", ["linear all 1.9 2.1"])
+expect("rates of an exactly integrated error fail without round-off value", result.returncode == 1 and "NOT in" in result.stdout, result)
+
+result = runDriver("roundoff", ["4", "8", "16"], "{}", ["linear all 1.9 2.1", "midpoint all 1.95 2.05"], ["--round-off", "1e-12"])
+expect("exactly integrated error passes below the round-off value",
+       result.returncode == 0 and "linear: below the round-off value" in result.stdout and "midpoint: all rate" in result.stdout, result)
+
+result = runDriver("roundoffrates", ["4", "8", "16"], "{}", ["midpoint mean 2.5"], ["--round-off", "1e-12"])
+expect("error above the round-off value is still checked", result.returncode == 1 and "NOT in" in result.stdout, result)
+
+result = runDriver("roundoffpartial", ["4", "8", "16"], "{}", ["midpoint all 1.95 2.05"], ["--round-off", "2e-3"])
+expect("error below the round-off value on some levels only is still checked",
+       result.returncode == 0 and "midpoint: all rate" in result.stdout, result)
 
 result = runDriver("crash", ["4", "0"], "{}", ["leftsum mean 0.9"])
 expect("exit code of a failing run is passed on", result.returncode == 2, result)
