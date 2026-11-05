@@ -131,7 +131,13 @@ public:
                 );
 
                 // update the global stiffness matrix with the current partial derivatives
-                for (const auto& scvJ : scvs(localAssemblerI.fvGeometry()))
+                const auto& elemDiscI = [&]() -> decltype(auto) {
+                    if constexpr (requires { localAssemblerI.elemDisc(); })
+                        return localAssemblerI.elemDisc();
+                    else
+                        return localAssemblerI.fvGeometry();
+                }();
+                for (const auto& scvJ : scvs(elemDiscI))
                 {
                     for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                     {
