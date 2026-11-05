@@ -35,6 +35,8 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "analyticalsolution.hh"
 #include "properties.hh"
 
@@ -212,6 +214,8 @@ int main(int argc, char** argv)
 
     nonLinearSolver.report();
     timeLoop->finalize(gridGeometryCoarse->gridView().comm());
+
+    Test::writeConvergenceTestErrors(problem->name(), Test::maxElementDiameter(gridGeometryCoarse->gridView()), {{"L1Rel(zp_eff)", error}});
 
     const Scalar maxError = getParam<Scalar>("Benchmark.MaxRelativeGasPlumeDistanceError");
     if (error > maxError)

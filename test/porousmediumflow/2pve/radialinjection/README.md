@@ -118,6 +118,9 @@ The test suite runs two cases and compares the relative gas plume distance error
 - `test_2pve_radialinjection_smallgravity_tpfa`: the same injected volume at a hundred times the
   injection rate, $\Gamma = 0.0014$, tolerance $e \leq 0.005$.
 
+`test_2pve_radialinjection_convergence` runs the two coarsest grids of the grid study shown below
+and checks that the observed convergence rate of $e$ lies between 0.8 and 1.2.
+
 **Results**
 
 To run the simulations and produce the figures, run in the build directory of the test:
