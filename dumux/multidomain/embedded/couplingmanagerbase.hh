@@ -197,21 +197,26 @@ public:
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        typename LocalAssemblerI::LocalResidual::ElementResidualVector residual;
-
-        const auto& element = localAssemblerI.element();
-        const auto& fvGeometry = localAssemblerI.fvGeometry();
-        const auto& curElemVolVars = localAssemblerI.curElemVolVars();
-
-        residual.resize(fvGeometry.numScv());
-        for (const auto& scv : scvs(fvGeometry))
+        if constexpr (requires { localAssemblerI.curElemVars(); })
+            return localAssemblerI.evalLocalSourceResidual(localAssemblerI.element(), localAssemblerI.curElemVars());
+        else
         {
-            auto couplingSource = this->problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
-            couplingSource += this->problem(domainI).source(element, fvGeometry, curElemVolVars, scv);
-            couplingSource *= -GridGeometry<i>::Extrusion::volume(fvGeometry, scv)*curElemVolVars[scv].extrusionFactor();
-            residual[scv.indexInElement()] = couplingSource;
+            typename LocalAssemblerI::LocalResidual::ElementResidualVector residual;
+
+            const auto& element = localAssemblerI.element();
+            const auto& fvGeometry = localAssemblerI.fvGeometry();
+            const auto& curElemVolVars = localAssemblerI.curElemVolVars();
+
+            residual.resize(fvGeometry.numScv());
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                auto couplingSource = this->problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
+                couplingSource += this->problem(domainI).source(element, fvGeometry, curElemVolVars, scv);
+                couplingSource *= -GridGeometry<i>::Extrusion::volume(fvGeometry, scv)*curElemVolVars[scv].extrusionFactor();
+                residual[scv.indexInElement()] = couplingSource;
+            }
+            return residual;
         }
-        return residual;
     }
 
     // \}
