@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dune_symlink_to_source_files(FILES "params.input")
-dune_symlink_to_source_files(FILES "convergencetest.py" "plot_results.py")
+dune_symlink_to_source_files(FILES "plot_results.py")
 
 add_executable(test_2p1cni_heatpipe_box EXCLUDE_FROM_ALL main.cc)
 target_compile_definitions(test_2p1cni_heatpipe_box PUBLIC "TYPETAG=TwoPOneCHeatPipeBox")
@@ -13,28 +13,52 @@ target_compile_definitions(test_2p1cni_heatpipe_tpfa PUBLIC "TYPETAG=TwoPOneCHea
 dumux_add_test(NAME test_2p1cni_heatpipe_box
                TARGET test_2p1cni_heatpipe_box
                LABELS porousmediumflow 2p1c 2p1cni
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_2p1cni_heatpipe_box params.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_heatpipe_box params.input -Problem.Name test_2p1cni_heatpipe_box"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_2p1cni_heatpipe_box-errors.csv
+                        --check "L2(S) mean 0.8 1.2"
+                        --check "L2(p_g) mean 0.8 1.2"
+                        --check "L2(p_l) mean 0.8 1.2"
+                        --check "L2(T) mean 0.8 1.2")
 
 dumux_add_test(NAME test_2p1cni_heatpipe_tpfa
                TARGET test_2p1cni_heatpipe_tpfa
                LABELS porousmediumflow 2p1c 2p1cni
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_2p1cni_heatpipe_tpfa params.input)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_heatpipe_tpfa params.input -Problem.Name test_2p1cni_heatpipe_tpfa"
+                        --levels 0 1 2 3
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_2p1cni_heatpipe_tpfa-errors.csv
+                        --check "L2(S) mean 0.8 1.2"
+                        --check "L2(p_g) mean 0.8 1.2"
+                        --check "L2(p_l) mean 0.8 1.2"
+                        --check "L2(T) mean 0.8 1.2")
 
 # central weighting of the mobilities makes both schemes second order
 dumux_add_test(NAME test_2p1cni_heatpipe_box_central
                TARGET test_2p1cni_heatpipe_box
                LABELS porousmediumflow 2p1c 2p1cni
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_2p1cni_heatpipe_box params.input
-                        --expected-rate 2 --refinements 6 --name test_2p1cni_heatpipe_box_central
-                        -Flux.UpwindWeight 0.5)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_heatpipe_box params.input -Problem.Name test_2p1cni_heatpipe_box_central -Flux.UpwindWeight 0.5"
+                        --levels 0 1 2 3 4 5
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_2p1cni_heatpipe_box_central-errors.csv
+                        --check "L2(S) mean 1.8 2.2"
+                        --check "L2(p_g) mean 1.8 2.2"
+                        --check "L2(p_l) mean 1.8 2.2"
+                        --check "L2(T) mean 1.8 2.2")
 
 dumux_add_test(NAME test_2p1cni_heatpipe_tpfa_central
                TARGET test_2p1cni_heatpipe_tpfa
                LABELS porousmediumflow 2p1c 2p1cni
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_2p1cni_heatpipe_tpfa params.input
-                        --expected-rate 2 --refinements 6 --name test_2p1cni_heatpipe_tpfa_central
-                        -Flux.UpwindWeight 0.5)
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_heatpipe_tpfa params.input -Problem.Name test_2p1cni_heatpipe_tpfa_central -Flux.UpwindWeight 0.5"
+                        --levels 0 1 2 3 4 5
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_2p1cni_heatpipe_tpfa_central-errors.csv
+                        --check "L2(S) mean 1.8 2.2"
+                        --check "L2(p_g) mean 1.8 2.2"
+                        --check "L2(p_l) mean 1.8 2.2"
+                        --check "L2(T) mean 1.8 2.2")

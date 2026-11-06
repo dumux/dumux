@@ -3,7 +3,7 @@
 
 dumux_add_test(
   SOURCES test_particles_rotating_disc.cc
-  LABELS particle
+  LABELS particles
   CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_particles_rotating_disc
 )
@@ -13,7 +13,7 @@ add_executable(test_particles_fokker_planck EXCLUDE_FROM_ALL test_particles_fokk
 foreach(_dim 1 2)
   dumux_add_test(NAME test_particles_fokker_planck_${_dim}d
     TARGET test_particles_fokker_planck
-    LABELS particle
+    LABELS particles
     CMAKE_GUARD DUMUX_HAVE_GRIDFORMAT
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_particles_fokker_planck
     CMD_ARGS -Grid.Dimension ${_dim}

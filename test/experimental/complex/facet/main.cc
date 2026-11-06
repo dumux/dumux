@@ -38,6 +38,8 @@
 #include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 
 namespace Dumux {
@@ -141,7 +143,8 @@ int main(int argc, char** argv)
     std::cout << "Matrix - epsilon/error: " << epsilon << ", " << bulkError << std::endl;
     std::cout << "Fracture - epsilon/error: " << epsilon << ", " << lowDimError << std::endl;
 
-    std::ofstream file(getParam<std::string>("Problem.OutputFileName"), std::ios::app);
-    file << epsilon << "," << bulkError << "," << epsilon << "," << lowDimError << "\n";
+    Test::writeConvergenceTestErrors(getParam<std::string>("Problem.Name"), 1.0/getParam<int>("Grid.NumElemsPerSide"), {
+        {"L2Rel(p_m)", bulkError}, {"L2Rel(p_f)", lowDimError}
+    });
     return 0;
 }

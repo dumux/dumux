@@ -31,8 +31,10 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
-#include "heatpipesolution.hh"
+#include "analyticalsolution.hh"
 
 int main(int argc, char** argv)
 {
@@ -139,9 +141,9 @@ int main(int argc, char** argv)
               << ", gas pressure " << sqrt(errorPg) << " Pa, liquid pressure " << sqrt(errorPl)
               << " Pa, temperature " << sqrt(errorT) << " K" << std::endl;
 
-    std::ofstream errors(problem->name() + "-errors.csv", std::ios::app);
-    errors << std::setprecision(15) << meshSize << ","
-           << sqrt(errorS) << "," << sqrt(errorPg) << "," << sqrt(errorPl) << "," << sqrt(errorT) << "\n";
+    Test::writeConvergenceTestErrors(problem->name(), meshSize, {
+        {"L2(S)", sqrt(errorS)}, {"L2(p_g)", sqrt(errorPg)}, {"L2(p_l)", sqrt(errorPl)}, {"L2(T)", sqrt(errorT)}
+    });
 
     return 0;
 }

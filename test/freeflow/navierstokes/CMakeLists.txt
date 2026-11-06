@@ -11,5 +11,3 @@ add_subdirectory(permeabilityupscaling)
 add_subdirectory(sincos)
 add_subdirectory(taylorcouette)
 add_subdirectory(unstructured)
-
-dune_symlink_to_source_files(FILES convergence.sh)

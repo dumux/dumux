@@ -19,6 +19,7 @@ import configparser
 import glob
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -27,9 +28,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import NullFormatter
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from convergencetest import (BASE_END_TIME, BASE_INITIAL_TIME_STEP, BASE_MAX_TIME_STEP, BASE_RATE,
-                             compute_rates, grid_study, print_table, remove_outputs)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, printTable, runLevels
+
+# the paper case of params.input: 120 m^3/day for 10000 days
+BASE_RATE = 1.388888889e-3
+BASE_END_TIME = 8.64e8
+BASE_MAX_TIME_STEP = 8.64e5
+BASE_INITIAL_TIME_STEP = 1e3
+
+# a negligible gravity number (1.4e-4) and capillary fringe (entry pressure 1 Pa), for which the deviation from
+# the similarity solution is dominated by the discretization
+GRID_STUDY_RATE_FACTOR = 1000
+GRID_STUDY_ENTRY_PRESSURE = 1.0
+GRID_STUDY_CELLS = [400, 800, 1600, 3200]
+VERTICAL_CELLS = 30
 
 
 def read_parameters(file_name):
@@ -59,6 +72,12 @@ def read_pvd(file_name):
     """Return the times and file names of a PVD collection."""
     datasets = ET.parse(file_name).getroot().findall(".//DataSet")
     return [(float(d.get("timestep")), d.get("file")) for d in datasets]
+
+
+def remove_outputs(name):
+    for pattern in (f"{name}-*.vtu", f"{name}-*.vtp", f"{name}.pvd", f"fine_{name}-*.vtu", f"fine_{name}.pvd"):
+        for f in glob.glob(pattern):
+            os.remove(f)
 
 
 def similarityGasPlumeDistance(chi, mobility_ratio):
@@ -153,8 +172,21 @@ for f in glob.glob(name + "*.vtu") + glob.glob(name + "*.vtp") + glob.glob("fine
         os.remove(f)
 
 # gas plume distance error for decreasing radial cell size and time step size at a negligible gravity number and capillary fringe
-cell_sizes, errors = grid_study(testname)
-print_table("dr [m]", cell_sizes, errors, compute_rates(cell_sizes, errors))
+study_name = name + "_gridstudy"
+command = shlex.join([exe, "params.input",
+                      "-Problem.Name", study_name,
+                      "-Problem.InjectionRate", str(BASE_RATE*GRID_STUDY_RATE_FACTOR),
+                      "-TimeLoop.TEnd", str(BASE_END_TIME/GRID_STUDY_RATE_FACTOR),
+                      "-TimeLoop.DtInitial", "0.01",
+                      "-SpatialParams.BrooksCoreyPcEntry", str(GRID_STUDY_ENTRY_PRESSURE),
+                      "-Benchmark.MaxRelativeGasPlumeDistanceError", "1"])
+levels = [f"{cells} {BASE_MAX_TIME_STEP/GRID_STUDY_RATE_FACTOR*GRID_STUDY_CELLS[0]/cells}" for cells in GRID_STUDY_CELLS]
+rows = runLevels(command, levels, f"-Grid.Cells '{{0}} {VERTICAL_CELLS}' -TimeLoop.MaxTimeStepSize {{1}}",
+                 study_name + "-errors.csv")
+remove_outputs(study_name)
+cell_sizes = [row["h"] for row in rows]
+errors = [row["L1Rel(zp_eff)"] for row in rows]
+printTable(levels, cell_sizes, {"L1Rel(zp_eff)": errors}, {"L1Rel(zp_eff)": convergenceRates(cell_sizes, errors)})
 
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.loglog(cell_sizes, errors, "o-", color="#2a78d6", lw=1.5, label="VE model")

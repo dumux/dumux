@@ -9,8 +9,8 @@
  * \ingroup TwoPTests
  * \brief Analytical saturation profile for the Buckley-Leverett test.
  */
-#ifndef DUMUX_TEST_TWOP_BUCKLEYLEVERETT_ANALYTICSOLUTION_HH
-#define DUMUX_TEST_TWOP_BUCKLEYLEVERETT_ANALYTICSOLUTION_HH
+#ifndef DUMUX_TEST_TWOP_BUCKLEYLEVERETT_ANALYTICAL_SOLUTION_HH
+#define DUMUX_TEST_TWOP_BUCKLEYLEVERETT_ANALYTICAL_SOLUTION_HH
 
 #include <cmath>
 #include <functional>

@@ -31,7 +31,7 @@
 #include <dumux/discretization/dirichletconstraints.hh>
 
 #include "testcase.hh"
-#include "analyticalsolutions.hh"
+#include "analyticalsolution.hh"
 
 namespace Dumux {
 

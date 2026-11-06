@@ -6,6 +6,9 @@ Cells = 8 8
 TEnd = 1.0
 Dt = 0.25
 
+[Problem]
+Name = poroelastic_large_def_manufactured_solution
+
 [SpatialParams]
 ShearModulus = 1.0
 BulkModulus = 2.0

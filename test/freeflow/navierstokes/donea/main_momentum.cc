@@ -53,7 +53,6 @@
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
 
-#include <test/freeflow/navierstokes/errors_cvfe.hh>
 #include "properties_momentum.hh"
 
 #if DUMUX_HAVE_GRIDFORMAT
@@ -87,7 +86,7 @@ void printErrors(std::shared_ptr<Problem> problem,
         // For CVFE schemes we can directly calculate the L2 and H1 errors by using quadrature rules
         if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
         {
-            const auto [totalVolume, errors] = calculateL2AndH1Errors(*problem, gridVariables, x);
+            const auto [totalVolume, errors] = NavierStokesTest::calculateL2AndH1Errors(*problem, gridVariables, x);
 
             std::ofstream logFile(problem->name() + ".csv", std::ios::app);
             auto numDofs = gridGeometry.numDofs();

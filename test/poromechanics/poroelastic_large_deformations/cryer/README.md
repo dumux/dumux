@@ -63,7 +63,7 @@ B = \frac{\alpha_B}{\alpha_B^2 + K S_p}.$$
 
 $B$ is Skempton's coefficient, the uniform pore pressure $B p_0$ right after loading. With the
 parameters above, $m = 0.5$, $c_v = 3 \times 10^{-3}$ m²/s, $\beta = 1$, $B = 1$, and the centre
-pressure has its maximum 1.575 $p_0$ at $t c_v/R_0^2 = 0.0625$. `test/poromechanics/cryer_analytical.hh` implements the series.
+pressure has its maximum 1.575 $p_0$ at $t c_v/R_0^2 = 0.0625$. `test/poromechanics/cryeranalyticalsolution.hh` implements the series.
 
 ## Discretization
 

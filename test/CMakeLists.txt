@@ -20,6 +20,7 @@ add_subdirectory(porenetwork)
 add_subdirectory(poromechanics)
 add_subdirectory(porousmediumflow)
 add_subdirectory(solidmechanics)
+add_subdirectory(testing)
 
 # if Python bindings are enabled, include Python binding tests
 if(DUMUX_ENABLE_PYTHONBINDINGS)

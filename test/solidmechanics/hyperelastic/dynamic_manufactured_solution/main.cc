@@ -29,6 +29,8 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 
 int main(int argc, char** argv)
@@ -97,15 +99,12 @@ int main(int argc, char** argv)
     }
 
     // errors of the displacement at the final time
-    Scalar l2Error = 0.0, h1Error = 0.0, hMax = 0.0;
+    Scalar l2Error = 0.0, h1Error = 0.0;
     auto elemDisc = localView(*gridGeometry);
     for (const auto& element : elements(leafGridView))
     {
         elemDisc.bind(element);
         const auto& geometry = element.geometry();
-        for (int i = 0; i < geometry.corners(); ++i)
-            for (int j = i + 1; j < geometry.corners(); ++j)
-                hMax = std::max(hMax, (geometry.corner(i) - geometry.corner(j)).two_norm());
 
         const auto& localBasis = elemDisc.feLocalBasis();
         using ShapeData = FEInterpolationPointData<typename Grid::template Codim<0>::Geometry::GlobalCoordinate,
@@ -131,9 +130,13 @@ int main(int argc, char** argv)
         }
     }
 
+    const auto hMax = Test::maxElementDiameter(leafGridView);
     std::cout << "Max element diameter: " << hMax << "\n"
               << "L2 error displacement: " << std::sqrt(l2Error) << "\n"
               << "H1 error displacement: " << std::sqrt(h1Error) << "\n";
+    Test::writeConvergenceTestErrors(getParam<std::string>("Problem.Name"), hMax, {
+        {"L2(u)", std::sqrt(l2Error)}, {"H1(u)", std::sqrt(h1Error)}
+    });
 
     return 0;
 }

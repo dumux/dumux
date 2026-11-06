@@ -24,7 +24,6 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/metadata.hh>
 
 #include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/istlsolvers.hh>
@@ -37,6 +36,8 @@
 #include <dumux/io/grid/gridmanager_foam.hh>
 #endif
 
+#include <test/testing/convergencetest.hh>
+
 #include "properties.hh"
 
 /*!
@@ -47,16 +48,16 @@ template<class Problem, class SolutionVector>
 void writeErrors(const Problem& problem, const SolutionVector& x)
 {
     using namespace Dumux;
-    const auto& gridGeometry = problem.gridGeometry();
-    using GridView = std::decay_t<decltype(gridGeometry.gridView())>;
+    const auto& gridDiscretization = problem.gridDiscretization();
+    using GridView = std::decay_t<decltype(gridDiscretization.gridView())>;
     using GlobalPosition = typename GridView::template Codim<0>::Geometry::GlobalCoordinate;
     static constexpr int dim = GridView::dimension;
 
     double l2 = 0.0, h1 = 0.0, hMax = 0.0;
     std::vector<Dune::FieldVector<double, 1>> values;
     std::vector<Dune::FieldMatrix<double, 1, dim>> jacobians;
-    auto fvGeometry = localView(gridGeometry);
-    for (const auto& element : elements(gridGeometry.gridView()))
+    auto fvGeometry = localView(gridDiscretization);
+    for (const auto& element : elements(gridDiscretization.gridView()))
     {
         fvGeometry.bind(element);
         const auto geometry = element.geometry();
@@ -92,17 +93,10 @@ void writeErrors(const Problem& problem, const SolutionVector& x)
     l2 = std::sqrt(l2);
     h1 = std::sqrt(h1);
     std::cout << std::setprecision(10) << std::scientific
-              << "** errors for " << gridGeometry.numDofs() << " dofs, h = " << hMax
+              << "** errors for " << gridDiscretization.numDofs() << " dofs, h = " << hMax
               << ": L2 = " << l2 << ", H1 = " << h1 << std::endl;
 
-    MetaData::Collector collector;
-    if (MetaData::jsonFileExists(problem.name()))
-        MetaData::readJsonFile(collector, problem.name());
-    collector["numDofs"].push_back(gridGeometry.numDofs());
-    collector["h"].push_back(hMax);
-    collector["L2errors"].push_back(l2);
-    collector["H1errors"].push_back(h1);
-    MetaData::writeJsonFile(collector, problem.name());
+    Test::writeConvergenceTestErrors(problem.name(), hMax, {{"L2(p)", l2}, {"H1(p)", h1}});
 }
 
 int main(int argc, char** argv)

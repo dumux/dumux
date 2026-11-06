@@ -44,7 +44,6 @@
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
-#include <test/freeflow/navierstokes/errors_cvfe.hh>
 
 #include "properties.hh"
 
@@ -59,8 +58,8 @@ void printCVFEErrors(const MomentumProblem& momentumProblem,
                      const MassSolution& xMass,
                      double time)
 {
-    const auto [volume, velocityErrors] = Dumux::calculateL2AndH1Errors(momentumProblem, momentumGridVariables, xMomentum);
-    const auto [massVolume, pressureErrors] = Dumux::calculateL2AndH1Errors(massProblem, massGridVariables, xMass);
+    const auto [volume, velocityErrors] = Dumux::NavierStokesTest::calculateL2AndH1Errors(momentumProblem, momentumGridVariables, xMomentum);
+    const auto [massVolume, pressureErrors] = Dumux::NavierStokesTest::calculateL2AndH1Errors(massProblem, massGridVariables, xMass);
     std::cout << "[Errors] t = " << time
               << " numDofsVelocity = " << Dumux::gridDiscretization(momentumProblem).numDofs()
               << " numDofsPressure = " << Dumux::gridDiscretization(massProblem).numDofs()
@@ -242,7 +241,7 @@ int main(int argc, char** argv)
             errorCSVWriter.printErrors(errors);
 
             if (printConvergenceTestFile)
-                convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+                NavierStokesTest::writeConvergenceTestErrors(momentumProblem, massProblem, errors);
         }
 #endif
 

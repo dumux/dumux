@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-
 """
 # Script to reproduce Figure 5 of
 # Koch et al (2020) JCP
@@ -12,24 +11,13 @@
 # convergence rates
 """
 
-import numpy as np
-import subprocess
-import sys
 import os
+import sys
 
-def make_program_call(executable, args):
-    call = ['./' + executable]
-    for k, v in args.items():
-        call += ['-' + k, v]
-    return call
+import numpy as np
 
-# remove the old log file and run
-def run_simulation(params, filter=[]):
-    print("Running ", params["exec"], params["Vessel.Grid.Cells"], "...")
-    if params["exec"] not in filter:
-        with open(os.devnull, 'w') as devnull:
-            subprocess.run(['rm', '-f', params["Problem.OutputFilename"]], stdout=devnull)
-            subprocess.run(make_program_call(params["exec"], params))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, runLevels
 
 executables = ["test_md_embedded_1d3d_1p1p_tpfatpfa_average", "test_md_embedded_1d3d_1p1p_tpfatpfa_surface", "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel"]
 method = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":1, "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":3, "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":5}
@@ -38,23 +26,17 @@ marker = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":"o", "test_md_embedded_1
 cells = [10, 20, 40, 80]
 radius = 0.1
 
-runs = []
-res = {}
-for e in executables:
-    for c in cells:
-        runs.append({"Vessel.Grid.Cells":str(c//2),
-                     "Tissue.Grid.Cells":str(c)+" "+str(c)+" "+str(c//2),
-                     "SpatialParams.Radius":str(radius),
-                     "Problem.OutputFilename":e+str(c)+".log",
-                     "Vtk.EnableVtkOutput":"false",
-                     "exec":e})
-        res[e] = {}
+# length of the vessel elements, the vessel has unit length and half as many cells as the tissue per direction
+h = [1.0/(c//2) for c in cells]
 
-for run in runs:
-    run_simulation(run)
-    name, numcells, result = (run["exec"], run["Vessel.Grid.Cells"], np.genfromtxt(run["Problem.OutputFilename"]))
-    print("Read file: ", run["Problem.OutputFilename"])
-    res[name][int(numcells)] = result
+def get_errors(executable):
+    name = executable + "_figure"
+    rows = runLevels(f"./{executable} params.input -SpatialParams.Radius {radius} -Vtk.EnableVtkOutput false -Problem.Name {name}",
+                     [f"{c//2} {c}" for c in cells], "-Vessel.Grid.Cells {0} -Tissue.Grid.Cells '{1} {1} {0}'",
+                     f"{name}-errors.csv")
+    return ([r["L2Rel(p_3d)"] for r in rows], [r["L2Rel(p_1d)"] for r in rows], [r["L2Rel(q)"] for r in rows])
+
+res = {e: get_errors(e) for e in executables}
 
 # produce output suitable for latex table
 # Table 1
@@ -62,21 +44,10 @@ table1 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 table2 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 table3 = [["", "", "", "", "", "", ""] for i in range(len(cells)+1)]
 
-def get_errors(result):
-    p3d, p1d, q, h = [], [], [], []
-    for cells, norms in sorted(result.items()):
-        h.append(norms[1])
-        p3d.append(norms[2])
-        p1d.append(norms[3])
-        q.append(norms[4])
-    return (p3d, p1d, q, h)
-
-for exec, result in res.items():
-    p3d, p1d, q, h = get_errors(result=result)
-
-    rates3d = [(np.log10(p3d[i+1])-np.log10(p3d[i]))/(np.log10(h[i+1])-np.log10(h[i])) for i in range(len(p3d)-1)]
-    rates1d = [(np.log10(p1d[i+1])-np.log10(p1d[i]))/(np.log10(h[i+1])-np.log10(h[i])) for i in range(len(p1d)-1)]
-    ratesq = [(np.log10(q[i+1])-np.log10(q[i]))/(np.log10(h[i+1])-np.log10(h[i])) for i in range(len(q)-1)]
+for exec, (p3d, p1d, q) in res.items():
+    rates3d = convergenceRates(h, p3d)
+    rates1d = convergenceRates(h, p1d)
+    ratesq = convergenceRates(h, q)
 
     ofs = method[exec]
     for i in range(len(h)):
@@ -109,26 +80,6 @@ print("q")
 print_table(table3)
 
 #############################################
-# verify mean rates against reference
-#############################################
-# the reference rates from the paper
-reference = {"test_md_embedded_1d3d_1p1p_tpfatpfa_average":[1.3483, 1.3545, 1.8449],
-             "test_md_embedded_1d3d_1p1p_tpfatpfa_surface":[1.4693, 1.7800, 2.2715],
-             "test_md_embedded_1d3d_1p1p_tpfatpfa_kernel":[2.0583, 2.0927, 2.5822]}
-
-for exec, result in res.items():
-    samples = len(result)
-    ofs = method[exec]
-    rate3d = float(table1[len(h)][ofs+1])
-    rate1d = float(table2[len(h)][ofs+1])
-    rateq = float(table3[len(h)][ofs+1])
-    error_to_reference = np.linalg.norm(np.array(reference[exec])-np.array([rate3d, rate1d, rateq]), ord=2)
-    if error_to_reference > 0.1:
-        print("\nWrong convergence rates for case {}".format(exec))
-        print("Expected {}, obtained {}".format(reference[exec], [rate3d, rate1d, rateq]))
-        sys.exit(1)
-
-#############################################
 # create plot from paper (Figure 5)
 #############################################
 try:
@@ -142,8 +93,7 @@ try:
     dpi = 300.0
     fig, axes = plt.subplots(1, 3, dpi=dpi, figsize=(8, 4))
 
-    for exec, result in res.items():
-        p3d, p1d, q, h = get_errors(result=result)
+    for exec, (p3d, p1d, q) in res.items():
         hR = np.array(h)/radius
         axes[0].plot(hR, p3d, "--" + marker[exec], label=label[exec])
         axes[0].set_title(r"$|| p^\mathbb{M}_{t,e} -p^\mathbb{M}_t ||_2$")

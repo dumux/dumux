@@ -58,7 +58,7 @@ dumux_add_test(NAME test_facetcouplingmapper_mpfa_ug
               CMD_ARGS test_gridmanager.input)
 
 dumux_add_test(NAME test_facetcouplingmapper_box_alu
-              LABELS multidomain facet
+              LABELS multidomain multidomain_facet
               CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
               COMPILE_DEFINITIONS USEBOXINBULK=true

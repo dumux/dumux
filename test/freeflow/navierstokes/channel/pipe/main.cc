@@ -138,7 +138,7 @@ int main(int argc, char** argv)
         errorCSVWriter.printErrors(errors);
 
         if (printConvergenceTestFile)
-            convergenceTestAppendErrors(momentumProblem, massProblem, errors);
+            NavierStokesTest::writeConvergenceTestErrors(momentumProblem, massProblem, errors);
     }
 
     // Use FluxOverAxisAlignedSurface class to calculate fluxes entering and leaving the domain.

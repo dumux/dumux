@@ -39,7 +39,7 @@
 #include <dumux/porousmediumflow/richards/newtonsolver.hh>
 #include <dumux/assembly/fvassembler.hh>
 
-#include <test/porousmediumflow/richards/benchmarks/analytical.hh>
+#include <test/porousmediumflow/richards/benchmarks/analyticalsolution.hh>
 #include <test/porousmediumflow/richards/benchmarks/properties.hh>
 
 int main(int argc, char** argv)

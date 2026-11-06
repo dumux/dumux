@@ -9,7 +9,7 @@ Permeability = 1e-4
 [Problem]
 Amplitude = 1.0 0.0
 WaveNumberSquared = 0.0 0.0
-OutputFileName = test_complex_facet_helmholtz.log
+Name = test_complex_facet_helmholtz
 
 [L2Error]
 IntegrationOrder = 1

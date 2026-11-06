@@ -15,16 +15,22 @@
 #include <vector>
 #include <cmath>
 #include <fstream>
+#include <tuple>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/indices.hh>
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/extrusion.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/evalgradients.hh>
 #include <dumux/io/format.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/common/typetraits/problem.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
+
+#include <test/testing/convergencetest.hh>
 
 namespace Dumux {
 
@@ -33,282 +39,6 @@ namespace Dumux {
  */
 std::vector<std::string> velocityLabels()
 { return {"(vx)", "(vy)", "(vz)"}; }
-
-/*!
- * \brief Compute errors between an analytical solution and the numerical approximation
- */
-template<class Problem, class Scalar = double>
-class NavierStokesErrors
-{
-    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
-    using SubControlVolume = typename GridGeometry::SubControlVolume;
-    using Extrusion = Extrusion_t<GridGeometry>;
-    using Indices = typename Problem::Indices;
-    using Element = typename GridGeometry::LocalView::Element;
-    using PrimaryVariables = std::decay_t<decltype(
-        std::declval<Problem>().dirichlet(std::declval<Element>(), std::declval<SubControlVolume>())
-    )>;
-
-    static constexpr int dim = GridGeometry::GridView::dimension;
-
-public:
-    template<class SolutionVector>
-    NavierStokesErrors(std::shared_ptr<const Problem> problem,
-                       const SolutionVector& curSol,
-                       Scalar time = 0.0)
-    : problem_(problem)
-    { calculateErrors_(curSol, time); }
-
-    /*!
-     * \brief Computes errors between an analytical solution and the numerical approximation
-     *
-     * \param curSol The current solution vector
-     * \param time The current time
-     */
-    template<class SolutionVector>
-    void update(const SolutionVector& curSol, Scalar time = 0.0)
-    { calculateErrors_(curSol, time); }
-
-    //! The (absolute) discrete l2 error
-    const PrimaryVariables& l2Absolute() const { return l2Absolute_; }
-    //! The relative discrete l2 error (relative to the discrete l2 norm of the reference solution)
-    const PrimaryVariables& l2Relative() const { return l2Relative_; }
-    //! The (absolute) discrete l-infinity error
-    const PrimaryVariables& lInfAbsolute() const { return lInfAbsolute_; }
-    //! The relative discrete l-infinity error (relative to the discrete loo norm of the reference solution)
-    const PrimaryVariables& lInfRelative() const { return lInfRelative_; }
-
-    //! Time corresponding to the error (returns 0 per default)
-    Scalar time() const { return time_; }
-
-private:
-    template<class SolutionVector>
-    void calculateErrors_(const SolutionVector& curSol, Scalar time)
-    {
-        // store time information
-        time_ = time;
-
-        // calculate helping variables
-        Scalar totalVolume = 0.0;
-
-        PrimaryVariables sumReference(0.0);
-        PrimaryVariables sumError(0.0);
-        PrimaryVariables maxReference(0.0);
-        PrimaryVariables maxError(0.0);
-
-        const auto& gridGeometry = Dumux::gridDiscretization(*problem_);
-
-        auto fvGeometry = localView(gridGeometry);
-        for (const auto& element : elements(gridGeometry.gridView()))
-        {
-            fvGeometry.bindElement(element);
-
-            for (const auto& scv : scvs(fvGeometry))
-            {
-                totalVolume += Extrusion::volume(fvGeometry, scv);
-
-                // compute the pressure errors
-                const auto analyticalSolutionCellCenter
-                    = problem_->analyticalSolution(scv.dofPosition(), time)[Indices::pressureIdx];
-                const auto numericalSolutionCellCenter
-                    = curSol[GridGeometry::cellCenterIdx()][scv.dofIndex()][Indices::pressureIdx - dim];
-
-                const Scalar pError = absDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter);
-                const Scalar pReference = absDiff_(analyticalSolutionCellCenter, 0.0);
-
-                maxError[Indices::pressureIdx] = std::max(maxError[Indices::pressureIdx], pError);
-                maxReference[Indices::pressureIdx] = std::max(maxReference[Indices::pressureIdx], pReference);
-                sumError[Indices::pressureIdx] += pError * pError * Extrusion::volume(fvGeometry, scv);
-                sumReference[Indices::pressureIdx] += pReference * pReference * Extrusion::volume(fvGeometry, scv);
-
-                for (const auto& scvf : scvfs(fvGeometry))
-                {
-                    // compute the velocity errors
-                    const auto velocityIndex = Indices::velocity(scvf.directionIndex());
-
-                    const Scalar staggeredHalfVolume = Extrusion::volume(fvGeometry,
-                        typename GridGeometry::Traits::FaceSubControlVolume(
-                            0.5*(scv.center() + scvf.center()), 0.5*Extrusion::volume(fvGeometry, scv)
-                        )
-                    );
-
-                    const auto analyticalSolutionFace = problem_->analyticalSolution(scvf.center(), time)[velocityIndex];
-                    const auto numericalSolutionFace = curSol[GridGeometry::faceIdx()][scvf.dofIndex()][0];
-
-                    const Scalar velError = absDiff_(analyticalSolutionFace, numericalSolutionFace);
-                    const Scalar velReference = absDiff_(analyticalSolutionFace, 0.0);
-
-                    maxError[velocityIndex] = std::max(maxError[velocityIndex], velError);
-                    maxReference[velocityIndex] = std::max(maxReference[velocityIndex], velReference);
-                    sumError[velocityIndex] += velError * velError * staggeredHalfVolume;
-                    sumReference[velocityIndex] += velReference * velReference * staggeredHalfVolume;
-                }
-            }
-        }
-
-        // calculate errors
-        for (int i = 0; i < PrimaryVariables::size(); ++i)
-        {
-            l2Absolute_[i] = std::sqrt(sumError[i] / totalVolume);
-            l2Relative_[i] = std::sqrt(sumError[i] / sumReference[i]);
-            lInfAbsolute_[i] = maxError[i];
-            lInfRelative_[i] = maxError[i] / maxReference[i];
-        }
-    }
-
-    template<class T>
-    T absDiff_(const T& a, const T& b) const
-    { using std::abs; return abs(a-b); }
-
-    std::shared_ptr<const Problem> problem_;
-
-    PrimaryVariables l2Absolute_;
-    PrimaryVariables l2Relative_;
-    PrimaryVariables lInfAbsolute_;
-    PrimaryVariables lInfRelative_;
-    Scalar time_;
-};
-
-template<class Problem, class SolutionVector>
-NavierStokesErrors(std::shared_ptr<Problem>, SolutionVector&&)
--> NavierStokesErrors<Problem>;
-
-template<class Problem, class SolutionVector, class Scalar>
-NavierStokesErrors(std::shared_ptr<Problem>, SolutionVector&&, Scalar)
--> NavierStokesErrors<Problem, Scalar>;
-
-
-/*!
- * \brief An error CSV file writer
- */
-template<class Problem, class Scalar = double>
-class NavierStokesErrorCSVWriter
-{
-    using GridGeometry = typename ProblemTraits<Problem>::GridGeometry;
-    using Indices = typename Problem::Indices;
-
-    static constexpr int dim = GridGeometry::GridView::dimension;
-
-public:
-    NavierStokesErrorCSVWriter(std::shared_ptr<const Problem> problem, const std::string& suffix = "")
-    : name_(problem->name() + (suffix.empty() ? "_error" : "_error_" + suffix))
-    {
-        const auto& gridGeometry = Dumux::gridDiscretization(*problem);
-
-        const int numCCDofs = gridGeometry.numCellCenterDofs();
-        const int numFaceDofs = gridGeometry.numFaceDofs();
-
-        // print auxiliary file with the number of dofs
-        std::ofstream logFileDofs(name_ + "_dofs.csv", std::ios::trunc);
-        logFileDofs << "cc dofs, face dofs, all dofs\n"
-                    << numCCDofs << ", " << numFaceDofs << ", " << numCCDofs + numFaceDofs << "\n";
-
-        // clear error file
-        std::ofstream logFile(name_ + ".csv", std::ios::trunc);
-
-        // write header
-        logFile << "time";
-        for (const std::string e : { "L2Abs", "L2Rel", "LinfAbs", "LinfRel" })
-            printError_(logFile, errorNames_(e), "{:s}");
-        logFile << "\n";
-    }
-
-    void printErrors(const NavierStokesErrors<Problem>& errors) const
-    {
-        // append to error file
-        std::ofstream logFile(name_ + ".csv", std::ios::app);
-
-        logFile << Fmt::format("{:.5e}", errors.time());
-        printError_(logFile, errors.l2Absolute());
-        printError_(logFile, errors.l2Relative());
-        printError_(logFile, errors.lInfAbsolute());
-        printError_(logFile, errors.lInfRelative());
-
-        logFile << "\n";
-    }
-
-private:
-    template<class Error>
-    void printError_(std::ofstream& logFile, const Error& error, const std::string& format = "{:.5e}") const
-    {
-        logFile << Fmt::vformat(", " + format, Fmt::make_format_args(error[Indices::pressureIdx]));
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-            logFile << Fmt::vformat(", " + format, Fmt::make_format_args(error[Indices::velocity(dirIdx)]));
-    }
-
-    std::vector<std::string> errorNames_(const std::string& e) const
-    {
-        const auto velLabels = velocityLabels();
-        if constexpr (dim == 1)
-            return { e + velLabels[0], e + "(p)" };
-        else if constexpr (dim == 2)
-            return { e + velLabels[0], e + velLabels[1], e + "(p)" };
-        else
-            return { e + velLabels[0], e + velLabels[1], e + velLabels[2], e + "(p)" };
-    }
-
-    std::string name_;
-};
-
-template<class Problem>
-NavierStokesErrorCSVWriter(std::shared_ptr<Problem>)
--> NavierStokesErrorCSVWriter<Problem>;
-
-template<class Problem>
-NavierStokesErrorCSVWriter(std::shared_ptr<Problem>, const std::string&)
--> NavierStokesErrorCSVWriter<Problem>;
-
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class Problem>
-void convergenceTestAppendErrors(std::ofstream& logFile,
-                                 std::shared_ptr<Problem> problem,
-                                 const NavierStokesErrors<Problem>& errors)
-{
-    static constexpr int dim
-        = ProblemTraits<Problem>::GridGeometry::GridView::dimension;
-
-    const auto velLabels = velocityLabels();
-
-    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
-
-    const auto numCCDofs = gridGeometry.numCellCenterDofs();
-    const auto numFaceDofs = gridGeometry.numFaceDofs();
-
-    logFile << Fmt::format(
-        "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
-        numCCDofs, numFaceDofs
-    );
-
-    const auto print = [&](const auto& e, const std::string& name){
-        using Indices = typename Problem::Indices;
-        logFile << Fmt::format(" {} = {}", name + "(p)", e[Indices::pressureIdx]);
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[Indices::velocity(dirIdx)]);
-        }
-    };
-
-    print(errors.l2Absolute(), "L2Abs");
-    print(errors.l2Relative(), "L2Rel");
-    print(errors.lInfAbsolute(), "LinfAbs");
-    print(errors.lInfRelative(), "LinfRel");
-
-    logFile << "\n";
-}
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class Problem>
-void convergenceTestAppendErrors(std::shared_ptr<Problem> problem,
-                                 const NavierStokesErrors<Problem>& errors)
-{
-    const auto logFileName = problem->name() + ".log";
-    std::ofstream logFile(logFileName, std::ios::app);
-    convergenceTestAppendErrors(logFile, problem, errors);
-}
 
 namespace NavierStokesTest {
 
@@ -711,112 +441,181 @@ template<class MomentumProblem, class MassProblem>
 ErrorCSVWriter(std::shared_ptr<MomentumProblem>, std::shared_ptr<MassProblem>, const std::string&)
 -> ErrorCSVWriter<MomentumProblem, MassProblem>;
 
+/*!
+ * \brief The L2 norm and the H1 norm of the error of a solution field, integrated with a quadrature rule of the given order
+ * \return The integrated volume and the two norms
+ */
+template<class Problem, class GridVariables, class SolutionVector>
+std::tuple<double, Dune::FieldVector<double, 2>> calculateL2AndH1Errors(const Problem& problem,
+                                                                        const GridVariables& gridVariables,
+                                                                        const SolutionVector& x,
+                                                                        int order = 5)
+{
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    double totalVolume = 0.0;
+    Dune::FieldVector<double, 2> errors(0.0);
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    auto fvGeometry = localView(gridDiscretization);
+
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        fvGeometry.bind(element);
+        const auto geometry = fvGeometry.elementGeometry();
+
+        elemVolVars.bind(element, fvGeometry, x);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& quad = Dune::QuadratureRules<double, GridGeometry::GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& localPos = qp.position();
+            const auto& qpVolumeWeight = qp.weight() * Extrusion::integrationElement(geometry, localPos);
+            totalVolume += qpVolumeWeight;
+
+            const auto& globalPos = geometry.global(localPos);
+            const auto analyticalSolution = problem.analyticalSolution(globalPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto solDiff = numericalSolution - analyticalSolution;
+            errors[0] += (solDiff * solDiff) * qpVolumeWeight;
+
+            const auto gradAnalyticalSolution = problem.gradAnalyticalSolution(globalPos);
+            const auto gradNumericalSolution = evalGradientsAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto gradDiff = gradNumericalSolution - gradAnalyticalSolution;
+            double gradDiffNorm = 0.0;
+            for (int i = 0; i < gradDiff.size(); ++i)
+                gradDiffNorm += gradDiff[i] * gradDiff[i];
+
+            errors[1] += (solDiff * solDiff + gradDiffNorm) * qpVolumeWeight;
+        }
+    }
+    errors[0] = std::sqrt(errors[0]);
+    errors[1] = std::sqrt(errors[1]);
+
+    return {totalVolume, errors};
+}
 
 /*!
- * \brief Append errors to the log file during a convergence test
+ * \brief The L2 norm of the error of a solution field, integrated with a quadrature rule of the given order
+ * \return The integrated volume and the norm
  */
-template<class MomentumProblem, class MassProblem>
-void convergenceTestAppendErrors(std::ofstream& logFile,
-                                 std::shared_ptr<MomentumProblem> momentumProblem,
-                                 std::shared_ptr<MassProblem> massProblem,
-                                 const Errors<MomentumProblem, MassProblem>& errors)
+template<class Problem, class GridVariables, class SolutionVector>
+std::tuple<double, double> calculateL2Error(const Problem& problem,
+                                            const GridVariables& gridVariables,
+                                            const SolutionVector& x,
+                                            int order = 5)
+{
+    using GridGeometry = Dumux::GridDiscretization_t<GridVariables>;
+    using Extrusion = Extrusion_t<GridGeometry>;
+    double totalVolume = 0.0;
+    double error = 0.0;
+    const auto& gridDiscretization = Dumux::gridDiscretization(problem);
+    auto fvGeometry = localView(gridDiscretization);
+
+    auto curGridVars = [&]() -> decltype(auto)
+    {
+        if constexpr (requires { gridVariables.curGridVolVars(); })
+            return gridVariables.curGridVolVars();
+        else
+            return gridVariables.curGridVars();
+    };
+
+    auto elemVolVars = localView(curGridVars());
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        fvGeometry.bind(element);
+        const auto geometry = fvGeometry.elementGeometry();
+
+        elemVolVars.bind(element, fvGeometry, x);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
+        const auto& quad = Dune::QuadratureRules<double, GridGeometry::GridView::dimension>::rule(geometry.type(), order);
+        for (auto&& qp : quad)
+        {
+            const auto& localPos = qp.position();
+            const auto& qpVolumeWeight = qp.weight() * Extrusion::integrationElement(geometry, localPos);
+            totalVolume += qpVolumeWeight;
+
+            const auto& globalPos = geometry.global(localPos);
+            const auto analyticalSolution = problem.analyticalSolution(globalPos);
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto solDiff = numericalSolution - analyticalSolution;
+            error += (solDiff * solDiff) * qpVolumeWeight;
+        }
+    }
+    error = std::sqrt(error);
+
+    return {totalVolume, error};
+}
+
+
+/*!
+ * \brief Write the mesh size and the discrete l2 and l-infinity errors for the convergence test driver
+ * \note L2Abs(v) is the l2 error of the velocity vector
+ */
+template<class MomentumProblem, class MassProblem, class Scalar>
+void writeConvergenceTestErrors(std::shared_ptr<MomentumProblem> momentumProblem,
+                                std::shared_ptr<MassProblem> massProblem,
+                                const Errors<MomentumProblem, MassProblem, Scalar>& errors)
 {
     static constexpr int dim
         = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
+    using MassIndices = typename MassProblem::Indices;
+    using MomIndices = typename MomentumProblem::Indices;
 
     const auto velLabels = velocityLabels();
-
-    const auto& massGridGeometry = Dumux::gridDiscretization(*massProblem);
-
-    const auto& momentumGridGeometry = Dumux::gridDiscretization(*momentumProblem);
-
-    const auto numCCDofs = massGridGeometry.numDofs();
-    const auto numFaceDofs = momentumGridGeometry.numDofs();
-
-    logFile << Fmt::format(
-        "[ConvergenceTest] numCCDofs = {} numFaceDofs = {}",
-        numCCDofs, numFaceDofs
-    );
-
-    const auto print = [&](const auto& e, const std::string& name){
-        using MassIndices = typename MassProblem::Indices;
-        using MomIndices = typename MomentumProblem::Indices;
-        logFile << Fmt::format(" {} = {}", name + "(p)", e[MassIndices::pressureIdx]);
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
-        }
+    std::vector<std::pair<std::string, Scalar>> values;
+    const auto add = [&](const auto& e, const std::string& name){
+        values.emplace_back(name + "(p)", e[MassIndices::pressureIdx]);
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            values.emplace_back(name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)+1]);
     };
 
-    print(errors.l2Absolute(), "L2Abs");
-    print(errors.l2Relative(), "L2Rel");
-    print(errors.lInfAbsolute(), "LinfAbs");
-    print(errors.lInfRelative(), "LinfRel");
+    add(errors.l2Absolute(), "L2Abs");
+    add(errors.l2Relative(), "L2Rel");
+    add(errors.lInfAbsolute(), "LinfAbs");
+    add(errors.lInfRelative(), "LinfRel");
 
-    logFile << "\n";
-}
+    using std::sqrt;
+    Scalar velocityError = 0.0;
+    for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+        velocityError += errors.l2Absolute()[MomIndices::velocity(dirIdx)+1]*errors.l2Absolute()[MomIndices::velocity(dirIdx)+1];
+    values.emplace_back("L2Abs(v)", sqrt(velocityError));
 
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class MomentumProblem, class MassProblem>
-void convergenceTestAppendErrors(std::shared_ptr<MomentumProblem> momentumProblem,
-                                 std::shared_ptr<MassProblem> massProblem,
-                                 const Errors<MomentumProblem, MassProblem>& errors)
-{
-    const auto logFileName = massProblem->name() + ".log";
-    std::ofstream logFile(logFileName, std::ios::app);
-    convergenceTestAppendErrors(logFile, momentumProblem, massProblem, errors);
+    Test::writeConvergenceTestErrors(massProblem->name(), errors.hMax()[0], values);
 }
 
 /*!
- * \brief Append errors to the log file during a convergence test
+ * \brief Write the mesh size and the discrete l2 and l-infinity errors of the velocity for the convergence test driver
  */
-template<class MomentumProblem>
-void convergenceTestAppendErrorsMomentum(std::ofstream& logFile,
-                                         std::shared_ptr<MomentumProblem> problem,
-                                         const ErrorsSubProblem<MomentumProblem>& errors)
+template<class MomentumProblem, class Scalar>
+void writeConvergenceTestErrorsMomentum(std::shared_ptr<MomentumProblem> problem,
+                                        const ErrorsSubProblem<MomentumProblem, Scalar>& errors)
 {
     static constexpr int dim
         = ProblemTraits<MomentumProblem>::GridGeometry::GridView::dimension;
+    using MomIndices = typename MomentumProblem::Indices;
 
     const auto velLabels = velocityLabels();
-
-    const auto& gridGeometry = Dumux::gridDiscretization(*problem);
-
-    const auto numFaceDofs = gridGeometry.numDofs();
-
-    logFile << Fmt::format(
-        "[ConvergenceTest] numFaceDofs = {}",
-        numFaceDofs
-    );
-
-    const auto print = [&](const auto& e, const std::string& name){
-        using MomIndices = typename MomentumProblem::Indices;
-        for (int dirIdx = 0; dirIdx < dim; ++dirIdx){
-            logFile << Fmt::format(" {} = {}", name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)]);
-        }
+    std::vector<std::pair<std::string, Scalar>> values;
+    const auto add = [&](const auto& e, const std::string& name){
+        for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
+            values.emplace_back(name + velLabels[dirIdx], e[MomIndices::velocity(dirIdx)]);
     };
 
-    print(errors.l2Absolute(), "L2Abs");
-    print(errors.l2Relative(), "L2Rel");
-    print(errors.lInfAbsolute(), "LinfAbs");
-    print(errors.lInfRelative(), "LinfRel");
+    add(errors.l2Absolute(), "L2Abs");
+    add(errors.l2Relative(), "L2Rel");
+    add(errors.lInfAbsolute(), "LinfAbs");
+    add(errors.lInfRelative(), "LinfRel");
 
-    logFile << "\n";
-}
-
-
-/*!
- * \brief Append errors to the log file during a convergence test
- */
-template<class MomentumProblem>
-void convergenceTestAppendErrorsMomentum(std::shared_ptr<MomentumProblem> problem,
-                                         const ErrorsSubProblem<MomentumProblem>& errors)
-{
-    const auto logFileName = problem->name() + ".log";
-    std::ofstream logFile(logFileName, std::ios::app);
-    convergenceTestAppendErrorsMomentum(logFile, problem, errors);
+    Test::writeConvergenceTestErrors(problem->name(), errors.hMax(), values);
 }
 
 } // end namespace NavierStokesTest

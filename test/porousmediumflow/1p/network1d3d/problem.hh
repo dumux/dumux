@@ -25,6 +25,8 @@
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <test/testing/convergencetest.hh>
+
 namespace Dumux {
 
 /*!
@@ -217,11 +219,7 @@ public:
         }
         lTwoNorm = std::sqrt(lTwoNorm);
 
-        // write the norm into a log file
-        std::ofstream logFile;
-        logFile.open(this->name() + ".log", std::ios::app);
-        logFile << "[ConvergenceTest] L2-norm(pressure) = " << lTwoNorm  << " hMax = " << hMax_ << std::endl;
-        logFile.close();
+        Test::writeConvergenceTestErrors(this->name(), hMax_, {{"L2(p)", lTwoNorm}});
     }
 
 private:

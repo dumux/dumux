@@ -3,7 +3,6 @@
 
 dune_symlink_to_source_files(FILES "params.input" "params_taylorhood.input")
 dune_symlink_to_source_files(FILES grids)
-dune_symlink_to_source_files(FILES convergencetest.py)
 
 dumux_add_test(NAME test_ff_stokes_donea_taylorhood
                LABELS freeflow navierstokes donea
@@ -15,9 +14,15 @@ dumux_add_test(NAME test_ff_stokes_donea_taylorhood
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ1FEModel
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=true
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_ff_stokes_donea_taylorhood params_taylorhood.input
-                        -Rates "L2(v) 2.85 3.15" "H1(v) 1.85 2.15" "L2(p) 1.85 2.15" "H1(p) 0.85 1.15")
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_taylorhood params_taylorhood.input -Problem.Name test_ff_stokes_donea_taylorhood -Problem.PrintErrors false -Problem.PrintConvergenceTestFile true"
+                        --levels 0 1 2
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_ff_stokes_donea_taylorhood-errors.csv
+                        --check "L2(v) finest 2.85 3.15"
+                        --check "H1(v) finest 1.85 2.15"
+                        --check "L2(p) finest 1.85 2.15"
+                        --check "H1(p) finest 0.85 1.15")
 
 # PQ3 hybrid momentum / PQ2 hybrid mass tests
 # The PQ2 pressure space contains the exact (quadratic) pressure, so the pressure errors
@@ -32,9 +37,15 @@ dumux_add_test(NAME test_ff_stokes_donea_pq3_pq2_hybrid
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ2HybridModel
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=true
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_ff_stokes_donea_pq3_pq2_hybrid params_taylorhood.input
-                        -Rates "L2(v) 3.85 4.15" "H1(v) 2.85 3.6" "L2(p) 2.85 3.6" "H1(p) 1.85 2.6")
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq3_pq2_hybrid params_taylorhood.input -Problem.Name test_ff_stokes_donea_pq3_pq2_hybrid -Problem.PrintErrors false -Problem.PrintConvergenceTestFile true"
+                        --levels 0 1 2
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_ff_stokes_donea_pq3_pq2_hybrid-errors.csv
+                        --check "L2(v) finest 3.85 4.15"
+                        --check "H1(v) finest 2.85 3.6"
+                        --check "L2(p) finest 2.85 3.6"
+                        --check "H1(p) finest 1.85 2.6")
 
 # PQ3 fe momentum / PQ2 fe mass tests
 # The PQ2 pressure space contains the exact (quadratic) pressure, so the pressure errors
@@ -50,9 +61,15 @@ dumux_add_test(NAME test_ff_stokes_donea_pq3_pq2_fe
                COMPILE_DEFINITIONS MASS_DISCRETIZATION_MODEL=PQ2FEModel
                COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                COMPILE_DEFINITIONS ENABLECACHING=true
-               COMMAND ./convergencetest.py
-               CMD_ARGS test_ff_stokes_donea_pq3_pq2_fe params_taylorhood.input
-                        -Rates "L2(v) 3.85 4.15" "H1(v) 2.85 3.15" "L2(p) 2.85 3.6" "H1(p) 1.85 2.6")
+               COMMAND ${DUMUX_CONVERGENCETEST}
+               CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_donea_pq3_pq2_fe params_taylorhood.input -Problem.Name test_ff_stokes_donea_pq3_pq2_fe -Problem.PrintErrors false -Problem.PrintConvergenceTestFile true"
+                        --levels 0 1 2
+                        --level-args "-Grid.Refinement {}"
+                        --errors test_ff_stokes_donea_pq3_pq2_fe-errors.csv
+                        --check "L2(v) finest 3.85 4.15"
+                        --check "H1(v) finest 2.85 3.15"
+                        --check "L2(p) finest 2.85 3.6"
+                        --check "H1(p) finest 1.85 2.6")
 
 dumux_add_test(NAME test_ff_stokes_donea_momentum
                LABELS freeflow navierstokes donea

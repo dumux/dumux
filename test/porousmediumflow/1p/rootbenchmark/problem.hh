@@ -27,6 +27,8 @@
 
 #include <dumux/material/components/constant.hh>
 
+#include <test/testing/convergencetest.hh>
+
 namespace Dumux {
 
 /*!
@@ -176,9 +178,7 @@ public:
 
         l2Norm = std::sqrt(l2Norm/l2NormNormalization);
 
-        // write the norm into a log file
-        std::ofstream logFile(this->name() + ".log", std::ios::app);
-        logFile << "[ConvergenceTest] L2-norm(pressure) = " << l2Norm  << " hMax = " << hMax << std::endl;
+        Test::writeConvergenceTestErrors(this->name(), hMax, {{"L2Rel(p)", l2Norm}});
     }
 
     Scalar analyticalSolution(const GlobalPosition& globalPos) const

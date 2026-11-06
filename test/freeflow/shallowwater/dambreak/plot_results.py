@@ -13,6 +13,7 @@ Usage:
 
 import math
 import os
+import shlex
 import sys
 import xml.etree.ElementTree as ET
 
@@ -21,9 +22,12 @@ from scipy.optimize import brentq
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from plotstyle import EXACT, cell_ticks, plt, series, slope_triangle
-from convergencetest import TIME_STEP_SIZE_100, rates, run
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../../bin/testing"))
+from dumux_convergencetest import convergenceRates, runLevels
 
 CELLS = [100, 200, 400, 800, 1600]
+# time step size on the coarsest grid of params.input (100 cells)
+TIME_STEP_SIZE_100 = 0.005
 PROFILE_CELLS = [100, 400, 1600]
 DEPTH_LEFT, DEPTH_RIGHT, GATE, LENGTH, GRAVITY, TIME = 4.0, 1.0, 10.0, 20.0, 9.81, 1.0
 
@@ -102,7 +106,12 @@ def main():
     executable = sys.argv[1] if "/" in sys.argv[1] else "./" + sys.argv[1]
     imageDir = sys.argv[2] if len(sys.argv) > 2 else "."
 
-    results = [run(executable, cells, ["-Vtk.Precision", "Float64"]) for cells in CELLS]
+    rows = runLevels(f"{shlex.quote(executable)} params.input -Vtk.Precision Float64 -Grid.Cells1 1",
+                     [f"{cells} {TIME_STEP_SIZE_100*100/cells}" for cells in CELLS],
+                     "-Problem.Name dambreak_{0} -Grid.Cells0 {0} -TimeLoop.MaxTimeStepSize {1} -TimeLoop.DtInitial {1}",
+                     "dambreak_{0}-errors.csv")
+    meshSizes = [r["h"] for r in rows]
+    results = [{"h": r["L1Rel(depth)"], "u": r["L1Rel(u)"]} for r in rows]
     _, _, hm, um, shockSpeed = stoker(0.0, TIME)
     print(f"Stoker: h_m = {hm:.6f} m, u_m = {um:.6f} m/s, shock speed {shockSpeed:.6f} m/s\n")
 
@@ -112,7 +121,7 @@ def main():
         hExact, *_ = stoker(x, TIME)
         reference.append(np.abs(h - hExact).sum()/np.abs(hExact).sum())
 
-    rh, ru, rg = rates([r["h"] for r in results]), rates([r["u"] for r in results]), rates(reference)
+    rh, ru, rg = (convergenceRates(meshSizes, e) for e in ([r["h"] for r in results], [r["u"] for r in results], reference))
     print("| cells | time step size (s) | rel. L1 error h | rate | rel. L1 error u | rate "
           "| rel. L1 error h, explicit Godunov | rate |")
     print("|--:|--:|--:|--:|--:|--:|--:|--:|")

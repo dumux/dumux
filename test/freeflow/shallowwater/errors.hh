@@ -16,11 +16,14 @@
 #include <cmath>
 #include <cstddef>
 #include <iostream>
+#include <string>
 #include <type_traits>
 
 #include <dune/grid/common/partitionset.hh>
 
 #include <dumux/io/format.hh>
+
+#include <test/testing/convergencetest.hh>
 
 namespace Dumux::ShallowWaterTest {
 
@@ -120,6 +123,21 @@ void printErrors(const Errors<Scalar>& errors, Scalar time)
 {
     std::cout << Fmt::format("At t = {:.6g} s:\n", time);
     printErrors(errors);
+}
+
+/*!
+ * \ingroup ShallowWaterTests
+ * \brief Write the relative errors of water depth and velocity for the convergence test driver
+ */
+template<class Scalar>
+void writeConvergenceTestErrors(const std::string& name, Scalar h, const Errors<Scalar>& errors)
+{
+    Test::writeConvergenceTestErrors(name, h, {
+        {"L1Rel(depth)", errors.l1[0]/errors.exactL1[0]},
+        {"L1Rel(u)", errors.l1[1]/errors.exactL1[1]},
+        {"L2Rel(depth)", errors.l2[0]/errors.exactL2[0]},
+        {"L2Rel(u)", errors.l2[1]/errors.exactL2[1]}
+    });
 }
 
 } // end namespace Dumux::ShallowWaterTest

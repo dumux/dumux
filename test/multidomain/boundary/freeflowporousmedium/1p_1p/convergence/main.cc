@@ -13,6 +13,9 @@
 #include <config.h>
 
 #include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/quadraturerules.hh>
@@ -45,7 +48,7 @@
 
 #include <test/freeflow/navierstokes/analyticalsolutionvectors.hh>
 #include <test/freeflow/navierstokes/errors.hh>
-#include <test/freeflow/navierstokes/errors_cvfe.hh>
+#include <test/testing/convergencetest.hh>
 
 #include "testcase.hh"
 #include "properties.hh"
@@ -154,10 +157,12 @@ bool hasVertexOrElementDofs(const GridDiscretization& gridDiscretization)
     return numDofs == gridView.size(GridDiscretization::GridView::dimension) || numDofs == gridView.size(0);
 }
 
+using ConvergenceTestErrors = std::vector<std::pair<std::string, double>>;
+
 template<class MassP, class MomP, class SolutionVector>
-void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
-                          std::shared_ptr<MassP> massProblem,
-                          const SolutionVector& sol)
+ConvergenceTestErrors printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
+                                           std::shared_ptr<MassP> massProblem,
+                                           const SolutionVector& sol)
 {
     using namespace Dumux;
 
@@ -174,23 +179,19 @@ void printFreeFlowL2Error(std::shared_ptr<MomP> momentumProblem,
               << Fmt::format(", L2dof(vy) = {:.8e} / {:.8e}", absL2[2], relL2[2])
               << std::endl;
 
-    // write the norm into a log file
-    std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
-    logFile << "[ConvergenceTest] L2dof(p) = " << absL2[0]
-            << " L2dof(v) = " << std::sqrt(absL2[1]*absL2[1] + absL2[2]*absL2[2])
-            << std::endl;
+    return {{"L2dof(p_ff)", absL2[0]}, {"L2dof(v)", std::sqrt(absL2[1]*absL2[1] + absL2[2]*absL2[2])}};
 }
 
 template<class MomentumProblem, class MassProblem,
          class MomentumGridVariables, class MassGridVariables,
          class SolutionVector, class MomentumIdx, class MassIdx>
-void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
-                         std::shared_ptr<MassProblem> massProblem,
-                         const MomentumGridVariables& momentumGridVariables,
-                         const MassGridVariables& massGridVariables,
-                         const SolutionVector& x,
-                         const MomentumIdx momentumIdx,
-                         const MassIdx massIdx)
+ConvergenceTestErrors printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
+                                          std::shared_ptr<MassProblem> massProblem,
+                                          const MomentumGridVariables& momentumGridVariables,
+                                          const MassGridVariables& massGridVariables,
+                                          const SolutionVector& x,
+                                          const MomentumIdx momentumIdx,
+                                          const MassIdx massIdx)
 {
     using MomentumGridGeometry = typename Dumux::ProblemTraits<MomentumProblem>::GridGeometry;
     using MassGridGeometry = typename Dumux::ProblemTraits<MassProblem>::GridGeometry;
@@ -216,8 +217,8 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
     {
         if constexpr (hasMomentumGradAnalyticalSolution && hasMassGradAnalyticalSolution)
         {
-            const auto [totalVolumeMomentum, momentumErrors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
-            const auto [totalVolumeMass, massErrors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
+            const auto [totalVolumeMomentum, momentumErrors] = Dumux::NavierStokesTest::calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massErrors] = Dumux::NavierStokesTest::calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
 
             const double massL2DofError = computeL2Error(
                 massGridDiscretization, x[massIdx],
@@ -233,18 +234,13 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
                                             massL2DofError, momentumL2DofError)
                       << std::endl;
 
-            std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
-            logFile << "[ConvergenceTest] L2(p) = " << massErrors[0]
-                    << " L2(v) = " << momentumErrors[0]
-                    << " H1(v) = " << momentumErrors[1]
-                    << " L2dof(p) = " << massL2DofError
-                    << " L2dof(v) = " << momentumL2DofError
-                    << std::endl;
+            return {{"L2(p_ff)", massErrors[0]}, {"L2(v)", momentumErrors[0]}, {"H1(v)", momentumErrors[1]},
+                    {"L2dof(p_ff)", massL2DofError}, {"L2dof(v)", momentumL2DofError}};
         }
         else
         {
-            const auto [totalVolumeMomentum, momentumL2Error] = calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
-            const auto [totalVolumeMass, massL2Error] = calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
+            const auto [totalVolumeMomentum, momentumL2Error] = Dumux::NavierStokesTest::calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
+            const auto [totalVolumeMass, massL2Error] = Dumux::NavierStokesTest::calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
 
             const double massL2DofError = computeL2Error(
                 massGridDiscretization, x[massIdx],
@@ -259,16 +255,12 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
                                             massL2Error, momentumL2Error, massL2DofError, momentumL2DofError)
                       << std::endl;
 
-            std::ofstream logFile(massProblem->name() + ".log", std::ios::app);
-            logFile << "[ConvergenceTest] L2(p) = " << massL2Error
-                    << " L2(v) = " << momentumL2Error
-                    << " L2dof(p) = " << massL2DofError
-                    << " L2dof(v) = " << momentumL2DofError
-                    << std::endl;
+            return {{"L2(p_ff)", massL2Error}, {"L2(v)", momentumL2Error},
+                    {"L2dof(p_ff)", massL2DofError}, {"L2dof(v)", momentumL2DofError}};
         }
     }
     else
-        printFreeFlowL2Error(momentumProblem, massProblem, Dumux::partial(x, momentumIdx, massIdx));
+        return printFreeFlowL2Error(momentumProblem, massProblem, Dumux::partial(x, momentumIdx, massIdx));
 }
 
 /*!
@@ -285,16 +277,16 @@ void addDarcyVelocityOutput(VtkWriter& vtkWriter, GridVariables& gridVariables)
 }
 
 template<class Problem, class GridVariables, class SolutionVector>
-void printDarcyL2Error(std::shared_ptr<Problem> problem,
-                       const GridVariables& gridVariables,
-                       const SolutionVector& x)
+ConvergenceTestErrors printDarcyL2Error(std::shared_ptr<Problem> problem,
+                                        const GridVariables& gridVariables,
+                                        const SolutionVector& x)
 {
     using namespace Dumux;
     using GridDiscretization = Dumux::GridDiscretization_t<GridVariables>;
 
     if constexpr (Dumux::DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>)
     {
-        const auto [totalVolume, cvfeL2Error] = calculateL2Error(*problem, gridVariables, x);
+        const auto [totalVolume, cvfeL2Error] = NavierStokesTest::calculateL2Error(*problem, gridVariables, x);
         const double l2dofError = computeL2Error(
             Dumux::gridDiscretization(*problem), x,
             [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }
@@ -306,10 +298,7 @@ void printDarcyL2Error(std::shared_ptr<Problem> problem,
                     << Fmt::format(", L2dof error = {:.8e}", l2dofError)
                     << std::endl;
 
-        // write the norm into a log file
-        std::ofstream logFile(problem->name() + ".log", std::ios::app);
-        logFile << "[ConvergenceTest] L2(p) = " << cvfeL2Error
-                << " L2dof(p) = " << l2dofError << std::endl;
+        return {{"L2(p_pm)", cvfeL2Error}, {"L2dof(p_pm)", l2dofError}};
     }
     else
     {
@@ -323,9 +312,7 @@ void printDarcyL2Error(std::shared_ptr<Problem> problem,
                     << Fmt::format("L2dof error = {:.8e}", l2error)
                     << std::endl;
 
-        // write the norm into a log file
-        std::ofstream logFile(problem->name() + ".log", std::ios::app);
-        logFile << "[ConvergenceTest] L2dof(p) = " << l2error << std::endl;
+        return {{"L2dof(p_pm)", l2error}};
     }
 }
 
@@ -500,14 +487,16 @@ int main(int argc, char** argv)
         darcyVtkWriter.write(1.0);
 
     // print L2 errors
-    printFreeFlowErrors(freeFlowMomentumProblem,
-                        freeFlowMassProblem,
-                        *freeFlowMomentumGridVariables,
-                        *freeFlowMassGridVariables,
-                        sol,
-                        freeFlowMomentumIndex,
-                        freeFlowMassIndex);
-    printDarcyL2Error(darcyProblem, *darcyGridVariables, sol[porousMediumIndex]);
+    auto errors = printFreeFlowErrors(freeFlowMomentumProblem,
+                                      freeFlowMassProblem,
+                                      *freeFlowMomentumGridVariables,
+                                      *freeFlowMassGridVariables,
+                                      sol,
+                                      freeFlowMomentumIndex,
+                                      freeFlowMassIndex);
+    const auto darcyErrors = printDarcyL2Error(darcyProblem, *darcyGridVariables, sol[porousMediumIndex]);
+    errors.insert(errors.end(), darcyErrors.begin(), darcyErrors.end());
+    Test::writeConvergenceTestErrors(getParam<std::string>("Problem.Name"), Test::maxElementDiameter(freeFlowGridView), errors);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

@@ -145,7 +145,7 @@ With the parameters above (implicit Euler, time step size growing from 0.1 s to 
 relative discrete $L^2$ error of the pressure at $t = 5000$ s is $3.5 \times 10^{-4}$ for $\alpha = 1$ and
 $4.1 \times 10^{-4}$ for $\alpha = 0.7$.
 
-The test `test_md_mandel_convergence` (script `convergencetest.py`) refines the grid twice and checks that the
+The test `test_md_mandel_convergence` refines the grid twice and checks that the
 discrete $L^2$ errors of $p$ and $u_x$ at $t = 1000$ s decrease with a rate of at least 1.9.
 It uses the third-order DIRK scheme so that the time discretization error is smaller than the spatial error.
 On the grids $40 \times 4$ to $320 \times 32$, the errors are

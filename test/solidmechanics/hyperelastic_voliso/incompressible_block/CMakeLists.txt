@@ -5,7 +5,7 @@ dune_symlink_to_source_files(FILES params.input block_delaunay.geo block_delauna
 
 dumux_add_test(
     NAME test_hyperelastic_incompressible_block_p1b_p1
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main.cc
     COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION=IncompressibleBlockMomentumP1B
     COMPILE_DEFINITIONS PRESSURE_DISCRETIZATION=IncompressibleBlockPressure
@@ -21,7 +21,7 @@ dumux_add_test(
 
 dumux_add_test(
     NAME test_hyperelastic_incompressible_block_p2_p1
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main.cc
     COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION=IncompressibleBlockMomentumPQ2
     COMPILE_DEFINITIONS PRESSURE_DISCRETIZATION=IncompressibleBlockPressure
@@ -37,7 +37,7 @@ dumux_add_test(
 
 dumux_add_test(
     NAME test_hyperelastic_incompressible_block_q2_q1
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main.cc
     COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION=IncompressibleBlockMomentumPQ2
     COMPILE_DEFINITIONS PRESSURE_DISCRETIZATION=IncompressibleBlockPressure
@@ -52,7 +52,7 @@ dumux_add_test(
 
 dumux_add_test(
     NAME test_hyperelastic_incompressible_block_p2fe_p1fe
-    LABELS geomechanics elastic
+    LABELS solidmechanics elastic
     SOURCES main.cc
     COMPILE_DEFINITIONS MOMENTUM_DISCRETIZATION=IncompressibleBlockMomentumPQ2Fe
     COMPILE_DEFINITIONS PRESSURE_DISCRETIZATION=IncompressibleBlockPressureFe

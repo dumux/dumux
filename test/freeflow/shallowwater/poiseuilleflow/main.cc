@@ -28,6 +28,7 @@
 #include <dumux/io/grid/gridmanager_ug.hh>
 
 #include <test/freeflow/shallowwater/errors.hh>
+#include <test/testing/convergencetest.hh>
 
 #include "properties.hh"
 
@@ -141,8 +142,12 @@ int main(int argc, char** argv)
             problem->getExactWaterDepth()[eIdx], problem->getExactVelocityX()[eIdx], problem->getExactVelocityY()[eIdx]
         }};
     });
+    const auto h = Test::maxElementExtent(leafGridView, getParam<int>("Problem.MeshSizeDirection"));
     if (mpiHelper.rank() == 0)
+    {
         ShallowWaterTest::printErrors(errors, timeLoop->time());
+        ShallowWaterTest::writeConvergenceTestErrors(problem->name(), h, errors);
+    }
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
