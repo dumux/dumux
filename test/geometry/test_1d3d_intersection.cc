@@ -49,9 +49,52 @@ bool testIntersection(const Dune::MultiLinearGeometry<double, 3, 3>& polyhedron,
     }
     return (found == foundExpected);
 }
+
+bool testPointIntersection(const Dune::MultiLinearGeometry<double, 3, 3>& polyhedron,
+                           const Dune::MultiLinearGeometry<double, 1, 3>& line,
+                           bool foundExpected, const Dune::FieldVector<double, 3>& expectedPoint,
+                           bool verbose)
+{
+    using Test = Dumux::GeometryIntersection<Dune::MultiLinearGeometry<double, 3, 3>,
+                                             Dune::MultiLinearGeometry<double, 1, 3>,
+                                             Dumux::IntersectionPolicy::PointPolicy<double, 3>>;
+    typename Test::Intersection intersection;
+    const bool found = Test::intersection(polyhedron, line, intersection);
+    if (found != foundExpected)
+    {
+        std::cerr << "  " << (found ? "Found false positive: point" : "Failed detecting point")
+                  << " intersection with " << line.corner(0) << " " << line.corner(1) << std::endl;
+        return false;
+    }
+
+    if (found && (intersection - expectedPoint).two_norm() > 1e-7*(line.corner(1) - line.corner(0)).two_norm())
+    {
+        std::cerr << "  Wrong point intersection " << intersection << " with " << line.corner(0) << " "
+                  << line.corner(1) << ", expected " << expectedPoint << std::endl;
+        return false;
+    }
+
+    if (verbose)
+        std::cout << "  " << (found ? "Found" : "No") << " point intersection with "
+                  << line.corner(0) << " " << line.corner(1) << std::endl;
+    return true;
+}
 #endif
 
 namespace Dumux {
+
+//! the corners in the given order, which describes the same element with opposite orientation
+std::vector<Dune::FieldVector<double, 3>> reorder(const std::vector<Dune::FieldVector<double, 3>>& corners,
+                                                  const std::vector<int>& oppositeOrder, bool reverseOrientation)
+{
+    if (!reverseOrientation)
+        return corners;
+
+    std::vector<Dune::FieldVector<double, 3>> reordered;
+    for (const int i : oppositeOrder)
+        reordered.push_back(corners[i]);
+    return reordered;
+}
 
 void testEdgesAndDiagonals(std::vector<bool>& returns,
                            const Dune::MultiLinearGeometry<double, 3, 3>& polyhedron,
@@ -71,7 +114,7 @@ void testEdgesAndDiagonals(std::vector<bool>& returns,
 }
 
 template<class Transformation>
-void runIntersectionTest(std::vector<bool>& returns, const Transformation& transform, bool verbose)
+void runIntersectionTest(std::vector<bool>& returns, const Transformation& transform, bool reverseOrientation, bool verbose)
 {
     using Points = std::vector<Dune::FieldVector<double, 3>>;
     using Geo = Dune::MultiLinearGeometry<double, 3, 3>;
@@ -82,7 +125,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     auto cornersTetrahedron = Points({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}});
     std::transform(cornersTetrahedron.begin(), cornersTetrahedron.end(), cornersTetrahedron.begin(),
                    [&](const auto& p) { return transform(p); });
-    const auto tetrahedron = Geo(Dune::GeometryTypes::tetrahedron, cornersTetrahedron);
+    const auto tetrahedron = Geo(Dune::GeometryTypes::tetrahedron, reorder(cornersTetrahedron, {0, 2, 1, 3}, reverseOrientation));
 
     // test all edges and diagonals in both orientations
     testEdgesAndDiagonals(returns, tetrahedron, verbose);
@@ -102,6 +145,13 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(tetrahedron, makeLine({{transform({0.0, -1e-5, 0.0})}, {transform({1.0, -1e-5, 0.0})}}), false, verbose));
     returns.push_back(testIntersection(tetrahedron, makeLine({{transform({0.0, 0.0, 0.0})}, {transform({1.0, -1e-5, 0.0})}}), false, verbose));
 
+    // point-like intersections: a segment ending on a face, a segment touching a corner only,
+    // a segment crossing the tetrahedron and a segment missing it
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({0.25, 0.25, -1.0})}, {transform({0.25, 0.25, 0.0})}}), true, transform({0.25, 0.25, 0.0}), verbose));
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({0.0, -1.0, -1.0})}, {transform({2.0, 1.0, 1.0})}}), true, transform({1.0, 0.0, 0.0}), verbose));
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({0.25, 0.25, -1.0})}, {transform({0.25, 0.25, 1.0})}}), false, {}, verbose));
+    returns.push_back(testPointIntersection(tetrahedron, makeLine({{transform({1.5, 0.0, 0.5})}, {transform({0.0, 1.5, 0.5})}}), false, {}, verbose));
+
     // test hexahedron-line intersections
     if (verbose) std::cout << "\n  -- Test hexahedron-line intersections" << std::endl;
 
@@ -109,7 +159,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
                                      {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}, {1.0, 1.0, 1.0}});
     std::transform(cornersHexahedron.begin(), cornersHexahedron.end(), cornersHexahedron.begin(),
                    [&](const auto& p) { return transform(p); });
-    auto hexahedron = Geo(Dune::GeometryTypes::hexahedron, cornersHexahedron);
+    auto hexahedron = Geo(Dune::GeometryTypes::hexahedron, reorder(cornersHexahedron, {1, 0, 3, 2, 5, 4, 7, 6}, reverseOrientation));
 
     // test all edges and diagonals in both orientations
     testEdgesAndDiagonals(returns, hexahedron, verbose);
@@ -120,13 +170,20 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
     returns.push_back(testIntersection(hexahedron, makeLine({{transform({1.1, 0.0, 0.0})}, {transform({1.1, 1.0, 1.0})}}), false, verbose));
     returns.push_back(testIntersection(hexahedron, makeLine({{transform({0.0, -0.1, 0.0})}, {transform({1.0, -0.1, 0.0})}}), false, verbose));
 
+    // point-like intersections: a segment ending on a face, a segment touching a corner only,
+    // a segment crossing the hexahedron and a segment missing it
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.5, 0.5, -1.0})}, {transform({0.5, 0.5, 0.0})}}), true, transform({0.5, 0.5, 0.0}), verbose));
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.0, 2.0, 0.0})}, {transform({2.0, 0.0, 2.0})}}), true, transform({1.0, 1.0, 1.0}), verbose));
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.5, 0.5, -1.0})}, {transform({0.5, 0.5, 2.0})}}), false, {}, verbose));
+    returns.push_back(testPointIntersection(hexahedron, makeLine({{transform({0.0, 0.0, 2.0})}, {transform({1.0, 1.0, 2.0})}}), false, {}, verbose));
+
     // test pyramid-line intersections
     if (verbose) std::cout << "\n  -- Test pyramid-line intersections" << std::endl;
 
     auto cornersPyramid = Points({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0}, {0.5, 0.5, 1.0}});
     std::transform(cornersPyramid.begin(), cornersPyramid.end(), cornersPyramid.begin(),
                    [&](const auto& p) { return transform(p); });
-    auto pyramid = Geo(Dune::GeometryTypes::pyramid, cornersPyramid);
+    auto pyramid = Geo(Dune::GeometryTypes::pyramid, reorder(cornersPyramid, {0, 2, 1, 3, 4}, reverseOrientation));
 
     // test all edges and diagonals in both orientations
     testEdgesAndDiagonals(returns, pyramid, verbose);
@@ -144,7 +201,7 @@ void runIntersectionTest(std::vector<bool>& returns, const Transformation& trans
                                 {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}});
     std::transform(cornersPrism.begin(), cornersPrism.end(), cornersPrism.begin(),
                    [&](const auto& p) { return transform(p); });
-    auto prism = Geo(Dune::GeometryTypes::prism, cornersPrism);
+    auto prism = Geo(Dune::GeometryTypes::prism, reorder(cornersPrism, {0, 2, 1, 3, 5, 4}, reverseOrientation));
 
     // test all edges and diagonals in both orientations
     testEdgesAndDiagonals(returns, prism, verbose);
@@ -171,7 +228,9 @@ int main (int argc, char *argv[])
         for (const double translation : {0.0, 1.0})
             for (const double angle : {0.0, 0.2*M_PI, 0.5*M_PI, 0.567576567*M_PI, M_PI})
                 for (const auto& rotAxis : {Vec(std::sqrt(3.0)/3.0), Vec({std::sqrt(2.0)/2.0, std::sqrt(2.0)/2.0, 0.0})})
-                    runIntersectionTest(returns, make3DTransformation<double>(scaling, Vec(translation), rotAxis, angle, true), verbose);
+                    for (const bool reverseOrientation : {false, true})
+                        runIntersectionTest(returns, make3DTransformation<double>(scaling, Vec(translation), rotAxis, angle, true),
+                                            reverseOrientation, verbose);
 
     // determine the exit code
     if (std::any_of(returns.begin(), returns.end(), std::logical_not<bool>{}))

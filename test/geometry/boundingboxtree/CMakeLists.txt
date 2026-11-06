@@ -17,6 +17,14 @@ dumux_add_test(NAME test_bboxtree_dim3
               COMPILE_DEFINITIONS WORLD_DIMENSION=3
               LABELS unit)
 
+dumux_add_test(NAME test_bboxtree_intersectionpolicy
+              SOURCES test_bboxtree_intersectionpolicy.cc
+              LABELS unit)
+
+dumux_add_test(NAME test_intersectingentities
+              SOURCES test_intersectingentities.cc
+              LABELS unit)
+
 dumux_add_test(NAME test_geometry_fracture
               SOURCES test_geometry_fracture.cc
               CMAKE_GUARD dune-foamgrid_FOUND

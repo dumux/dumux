@@ -60,6 +60,7 @@ EXCLUDE               += @top_srcdir@/dumux/io/format/fmt \
 
 EXAMPLE_PATH          += @srcdir@/extradoc \
                          @top_srcdir@/test/python \
+                         @top_srcdir@/test/geometry/boundingboxtree \
                          @srcdir@/groups/details
 
 IMAGE_PATH             = @srcdir@/images

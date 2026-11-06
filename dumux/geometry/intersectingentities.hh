@@ -7,11 +7,12 @@
 /*!
  * \file
  * \ingroup Geometry
- * \brief Algorithms that finds which geometric entities intersect
+ * \brief Algorithms that find which geometric entities intersect
  */
 #ifndef DUMUX_GEOMETRY_INTERSECTING_ENTITIES_HH
 #define DUMUX_GEOMETRY_INTERSECTING_ENTITIES_HH
 
+#include <array>
 #include <cmath>
 #include <type_traits>
 #include <vector>
@@ -139,7 +140,8 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
             entities.push_back(entityIdx);
         else
         {
-            const auto geometry = tree.entitySet().entity(entityIdx).geometry();
+            const auto& entity = tree.entitySet().entity(entityIdx);
+            const auto& geometry = entity.geometry();
             // if the primitive is positive it intersects the actual geometry, add the entity to the list
             if (intersectsPointGeometry(point, geometry))
                 entities.push_back(entityIdx);
@@ -159,6 +161,8 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
  * \brief Compute all entities whose bounding box overlaps the given box
  * \param box pointer to the query box coordinates (min then max, length 2*dimworld)
  * \param tree the bounding box tree
+ * \param node the index of the tree node to start the search from
+ * \param entities the indices of the found entities are appended to this vector
  * \note This is a pure bounding-box overlap query without a primitive geometry test.
  *       For entity sets whose geometries are axis-aligned (GeometryTraits::axisAligned)
  *       the result is exact, otherwise it returns the bounding-box candidates.
@@ -273,6 +277,8 @@ intersectingBoxes(const BoundingBoxTree<EntitySet0>& treeA, const BoundingBoxTre
 /*!
  * \ingroup Geometry
  * \brief Compute all intersections between a geometry and a bounding box tree
+ * \note Uses the default intersection policy, i.e. intersections of the lower dimension
+ *       of the geometry and the entities in the tree (see IntersectionPolicy::DefaultPolicy)
  */
 template<class Geometry, class EntitySet>
 inline std::vector<IntersectionInfo<Geometry::coorddimension, typename Geometry::ctype, typename EntitySet::ctype>>
@@ -286,6 +292,9 @@ intersectingEntities(const Geometry& geometry,
 /*!
  * \ingroup Geometry
  * \brief Compute all intersections between a geometry and a bounding box tree
+ * \note The intersection policy determines the dimension of the sought intersections.
+ *       Polygon- and polyhedron-like intersections are triangulated and every triangle or tetrahedron
+ *       is returned as one intersection, so the same pair of entities can occur several times.
  */
 template<class Geometry, class EntitySet, class IntersectionPolicy>
 inline std::vector<IntersectionInfo<Geometry::coorddimension, typename Geometry::ctype, typename EntitySet::ctype>>
@@ -334,7 +343,7 @@ intersectingEntities(const Geometry& geometry,
 
 /*!
  * \ingroup Geometry
- * \brief Compute intersections with point for all nodes of the bounding box tree recursively
+ * \brief Compute intersections with a geometry for all nodes of the bounding box tree recursively
  */
 template<class Geometry, class EntitySet>
 void intersectingEntities(const Geometry& geometry,
@@ -350,7 +359,7 @@ void intersectingEntities(const Geometry& geometry,
 }
 /*!
  * \ingroup Geometry
- * \brief Compute intersections with point for all nodes of the bounding box tree recursively
+ * \brief Compute intersections with a geometry for all nodes of the bounding box tree recursively
  */
 template<class Geometry, class EntitySet, class IntersectionPolicy>
 void intersectingEntities(const Geometry& geometry,
@@ -377,7 +386,8 @@ void intersectingEntities(const Geometry& geometry,
         const auto eIdxA = 0;
         const auto eIdxB = bBoxNode.child1;
 
-        const auto geometryTree = tree.entitySet().entity(eIdxB).geometry();
+        const auto& entityTree = tree.entitySet().entity(eIdxB);
+        const auto& geometryTree = entityTree.geometry();
         using GeometryTree = std::decay_t<decltype(geometryTree)>;
         using IntersectionAlgorithm = GeometryIntersection<Geometry, GeometryTree, IntersectionPolicy>;
         using Intersection = typename IntersectionAlgorithm::Intersection;
@@ -392,6 +402,8 @@ void intersectingEntities(const Geometry& geometry,
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
                     intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
             }
+            else if constexpr (dimIntersection == 0)
+                intersections.emplace_back(eIdxA, eIdxB, std::array{intersection});
             else
                 intersections.emplace_back(eIdxA, eIdxB, intersection);
         }
@@ -400,14 +412,16 @@ void intersectingEntities(const Geometry& geometry,
     // No leaf. Check both children nodes.
     else
     {
-        intersectingEntities(geometry, tree, bBox, bBoxNode.child0, intersections);
-        intersectingEntities(geometry, tree, bBox, bBoxNode.child1, intersections);
+        intersectingEntities(geometry, tree, bBox, bBoxNode.child0, intersections, intersectionPolicy);
+        intersectingEntities(geometry, tree, bBox, bBoxNode.child1, intersections, intersectionPolicy);
     }
 }
 
 /*!
  * \ingroup Geometry
  * \brief Compute all intersections between two bounding box trees
+ * \note Uses the default intersection policy, i.e. intersections of the lower dimension
+ *       of the entities in the two trees (see IntersectionPolicy::DefaultPolicy)
  */
 template<class EntitySet0, class EntitySet1>
 inline std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntitySet0::ctype, typename EntitySet1::ctype>>
@@ -421,6 +435,9 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
 /*!
  * \ingroup Geometry
  * \brief Compute all intersections between two bounding box trees
+ * \note The intersection policy determines the dimension of the sought intersections.
+ *       Polygon- and polyhedron-like intersections are triangulated and every triangle or tetrahedron
+ *       is returned as one intersection, so the same pair of entities can occur several times.
  */
 template<class EntitySet0, class EntitySet1, class IntersectionPolicy>
 inline std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntitySet0::ctype, typename EntitySet1::ctype>>
@@ -446,7 +463,7 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
 
 /*!
  * \ingroup Geometry
- * \brief Compute all intersections between two all bounding box tree nodes recursively
+ * \brief Compute all intersections between the nodes of two bounding box trees recursively
  */
 template<class EntitySet0, class EntitySet1>
 void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
@@ -462,7 +479,7 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
 
 /*!
  * \ingroup Geometry
- * \brief Compute all intersections between two all bounding box tree nodes recursively
+ * \brief Compute all intersections between the nodes of two bounding box trees recursively
  */
 template<class EntitySet0, class EntitySet1, class IntersectionPolicy>
 void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
@@ -493,8 +510,10 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
         const auto eIdxA = bBoxA.child1;
         const auto eIdxB = bBoxB.child1;
 
-        const auto geometryA = treeA.entitySet().entity(eIdxA).geometry();
-        const auto geometryB = treeB.entitySet().entity(eIdxB).geometry();
+        const auto& entityA = treeA.entitySet().entity(eIdxA);
+        const auto& entityB = treeB.entitySet().entity(eIdxB);
+        const auto& geometryA = entityA.geometry();
+        const auto& geometryB = entityB.geometry();
 
         using GeometryA = std::decay_t<decltype(geometryA)>;
         using GeometryB = std::decay_t<decltype(geometryB)>;
@@ -513,6 +532,8 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                 for (unsigned int i = 0; i < triangulation.size(); ++i)
                     intersections.emplace_back(eIdxA, eIdxB, std::move(triangulation[i]));
             }
+            else if constexpr (dimIntersection == 0)
+                intersections.emplace_back(eIdxA, eIdxB, std::array{intersection});
             else
                 intersections.emplace_back(eIdxA, eIdxB, intersection);
         }
@@ -521,28 +542,28 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
     // if we reached the leaf in treeA, just continue in treeB
     else if (isLeafA)
     {
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections);
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections, intersectionPolicy);
     }
 
     // if we reached the leaf in treeB, just continue in treeA
     else if (isLeafB)
     {
-        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections);
-        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections);
+        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections, intersectionPolicy);
     }
 
     // we know now that both trees didn't reach the leaf yet so
     // we continue with the larger tree first (bigger node number)
     else if (nodeA > nodeB)
     {
-        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections);
-        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections);
+        intersectingEntities(treeA, treeB, bBoxA.child0, nodeB, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, bBoxA.child1, nodeB, intersections, intersectionPolicy);
     }
     else
     {
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections);
-        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child0, intersections, intersectionPolicy);
+        intersectingEntities(treeA, treeB, nodeA, bBoxB.child1, intersections, intersectionPolicy);
     }
 }
 

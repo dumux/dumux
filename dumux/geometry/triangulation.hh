@@ -17,6 +17,7 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <iterator>
 #include <type_traits>
 #include <tuple>
 
@@ -221,19 +222,44 @@ triangulate(const RandomAccessContainer& points)
     const auto eps2 = eps*eps;
     const auto epsDist = 1e-8*magnitude;
 
-    // reserve memory conservatively to avoid reallocation
-    std::vector<Tetrahedron> triangulation;
-    triangulation.reserve(numPoints);
+    // faces of the convex hull given by the sorted indices of their (coplanar) points
+    std::vector<std::vector<int>> faces;
+    faces.reserve(2*numPoints);
+    std::vector<int> face;
+    face.reserve(numPoints);
 
-    // make a buffer for storing coplanar points and indices
-    std::vector<Point> coplanarPointBuffer;
-    coplanarPointBuffer.reserve(std::min<std::size_t>(12, numPoints-1));
+    const auto isOnFace = [&](int i, int j, int k)
+    {
+        return std::any_of(faces.begin(), faces.end(), [&](const auto& f)
+        {
+            return std::binary_search(f.begin(), f.end(), i)
+                && std::binary_search(f.begin(), f.end(), j)
+                && std::binary_search(f.begin(), f.end(), k);
+        });
+    };
 
-    // remember coplanar cluster planes
-    // coplanar clusters are uniquely identified by their plane (outward unit normal and offset)
-    // we only want to add each cluster once (when handling the first triangle in the cluster)
-    std::vector<std::pair<Point, ctype>> coplanarClusters;
-    coplanarClusters.reserve(numPoints/3);
+    // Two faces of a convex polytope share at most an edge, so two faces sharing
+    // three points that are not on a line are the same face, found from triangles
+    // that classified coplanar points differently. Points on a common edge deviate
+    // from it by about the coplanarity tolerance epsDist, far below the threshold used here.
+    const auto isSameFace = [&](const auto& f, const auto& g)
+    {
+        std::vector<int> shared;
+        std::set_intersection(f.begin(), f.end(), g.begin(), g.end(), std::back_inserter(shared));
+        if (shared.size() < 3)
+            return false;
+
+        std::size_t a = 0, b = 1;
+        for (std::size_t m = 0; m < shared.size(); ++m)
+            for (std::size_t n = m+1; n < shared.size(); ++n)
+                if ((points[shared[n]] - points[shared[m]]).two_norm2() > (points[shared[b]] - points[shared[a]]).two_norm2())
+                { a = m; b = n; }
+
+        const auto line = points[shared[b]] - points[shared[a]];
+        const auto lineLength = line.two_norm();
+        return std::any_of(shared.begin(), shared.end(), [&](int c)
+        { return crossProduct(line, points[c] - points[shared[a]]).two_norm() > 1e-6*magnitude*lineLength; });
+    };
 
     // brute force algorithm: Try all possible triangles and check
     // if they are triangles of the convex hull. This is achieved by checking if all
@@ -245,23 +271,26 @@ triangulate(const RandomAccessContainer& points)
         {
             for (int k = j+1; k < numPoints; ++k)
             {
+                // this triangle lies on a face that has already been found
+                if (isOnFace(i, j, k))
+                    continue;
+
                 const auto pointI = points[i];
                 const auto ab = points[j] - pointI;
                 const auto ac = points[k] - pointI;
                 const auto normal = crossProduct(ab, ac);
 
-                // clear list of coplanar points w.r.t to triangle ijk
-                coplanarPointBuffer.clear();
+                // check if points are colinear and we can't form a triangle
+                // if so, skip this triangle
+                if (normal.two_norm2() < eps2*eps2)
+                    continue;
 
                 // check if this triangle ijk is admissible which means
                 // it is on the convex hull (all other points in the cloud are in the same half-space/side)
+                // and collect the points that are coplanar with it
+                face.assign({ i, j, k });
                 const bool isAdmissible = [&]()
                 {
-                    // check if points are colinear and we can't form a triangle
-                    // if so, skip this triangle
-                    if (normal.two_norm2() < eps2*eps2)
-                        return false;
-
                     int marker = 0; // 0 means undecided side (or coplanar)
                     for (int m = 0; m < numPoints; ++m)
                     {
@@ -287,35 +316,9 @@ triangulate(const RandomAccessContainer& points)
                             if (newMarker != 0 && marker != newMarker)
                                 return false;
 
-                            // handle possible coplanar points
                             if (coplanar)
-                                coplanarPointBuffer.push_back(points[m]);
+                                face.push_back(m);
                         }
-                    }
-
-                    // if there are coplanar points complete the cluster with i, j, and k
-                    // and store the cluster information for future lookup
-                    if (!coplanarPointBuffer.empty())
-                    {
-                        auto unitNormal = normal;
-                        unitNormal /= unitNormal.two_norm();
-                        if (unitNormal*(pointI - midPoint) < 0.0)
-                            unitNormal *= -1.0;
-                        const auto offset = unitNormal*pointI;
-
-                        using std::abs;
-                        if (std::find_if(
-                                coplanarClusters.begin(), coplanarClusters.end(),
-                                [&](const auto& c){ return unitNormal*c.first > 1.0 - 1e-6 && abs(offset - c.second) < epsDist; }
-                            ) != coplanarClusters.end())
-                        {
-                            // this cluster has already been handled
-                            coplanarPointBuffer.clear();
-                            return false;
-                        }
-
-                        coplanarPointBuffer.insert(coplanarPointBuffer.end(), { points[i], points[j], points[k] });
-                        coplanarClusters.emplace_back(std::make_pair(unitNormal, offset));
                     }
 
                     // we require that not all points are coplanar, so
@@ -327,47 +330,62 @@ triangulate(const RandomAccessContainer& points)
 
                 if (isAdmissible)
                 {
-                    // check if we have a cluster of coplanar points forming on of the
-                    // faces of the convex hull, if yes, compute (2d) convex hull first and triangulate
-                    if (!coplanarPointBuffer.empty())
-                    {
-                        const auto triangles = triangulate<2, 3, TriangulationPolicy::ConvexHullPolicy>(coplanarPointBuffer);
-                        for (const auto& triangle : triangles)
-                        {
-                            const auto ab = triangle[1] - triangle[0];
-                            const auto ac = triangle[2] - triangle[0];
-                            const auto normal = crossProduct(ab, ac);
-                            const auto am = midPoint - triangle[0];
-                            const auto sp = normal*am;
-                            using std::signbit;
-                            const bool isBelow = signbit(sp);
-                            if (isBelow)
-                                triangulation.emplace_back(Tetrahedron{
-                                    triangle[0], triangle[2], triangle[1], midPoint
-                                });
-                            else
-                                triangulation.emplace_back(Tetrahedron{
-                                    triangle[0], triangle[1], triangle[2], midPoint
-                                });
-                        }
-                    }
-                    else
-                    {
-                        const auto am = midPoint - pointI;
-                        const auto sp = normal*am;
-                        using std::signbit;
-                        const bool isBelow = signbit(sp);
-                        if (isBelow)
-                            triangulation.emplace_back(Tetrahedron{
-                                pointI, points[k], points[j], midPoint
-                            });
-                        else
-                            triangulation.emplace_back(Tetrahedron{
-                                pointI, points[j], points[k], midPoint
-                            });
-                    }
+                    std::sort(face.begin(), face.end());
+                    faces.push_back(face);
                 }
             }
+        }
+    }
+
+    for (bool merged = true; merged; )
+    {
+        merged = false;
+        for (std::size_t f = 0; f < faces.size() && !merged; ++f)
+        {
+            for (std::size_t g = f+1; g < faces.size() && !merged; ++g)
+            {
+                if (isSameFace(faces[f], faces[g]))
+                {
+                    std::vector<int> united;
+                    std::set_union(faces[f].begin(), faces[f].end(), faces[g].begin(), faces[g].end(), std::back_inserter(united));
+                    faces[f] = std::move(united);
+                    faces.erase(faces.begin() + g);
+                    merged = true;
+                }
+            }
+        }
+    }
+
+    // reserve memory conservatively to avoid reallocation
+    std::vector<Tetrahedron> triangulation;
+    triangulation.reserve(numPoints);
+
+    // connect the triangles of each face to the mid point
+    const auto addTetrahedron = [&](const Point& a, const Point& b, const Point& c)
+    {
+        const auto normal = crossProduct(b - a, c - a);
+        using std::signbit;
+        if (signbit(normal*(midPoint - a)))
+            triangulation.emplace_back(Tetrahedron{ a, c, b, midPoint });
+        else
+            triangulation.emplace_back(Tetrahedron{ a, b, c, midPoint });
+    };
+
+    std::vector<Point> facePoints;
+    for (const auto& f : faces)
+    {
+        if (f.size() == 3)
+            addTetrahedron(points[f[0]], points[f[1]], points[f[2]]);
+
+        // a cluster of coplanar points forms one of the faces of the convex hull:
+        // compute its (2d) convex hull first and triangulate
+        else
+        {
+            facePoints.clear();
+            for (int idx : f)
+                facePoints.push_back(points[idx]);
+            for (const auto& triangle : triangulate<2, 3, TriangulationPolicy::ConvexHullPolicy>(facePoints))
+                addTetrahedron(triangle[0], triangle[1], triangle[2]);
         }
     }
 

@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Geometry
- * \copydoc Dumux::DistanceField
+ * \brief Class to calculate the closest distance from a point to a given set of geometries
  */
 #ifndef DUMUX_GEOMETRY_DISTANCE_FIELD_HH
 #define DUMUX_GEOMETRY_DISTANCE_FIELD_HH

@@ -13,10 +13,13 @@
 #ifndef DUMUX_GEOMETRY_INTERSECTION_HH
 #define DUMUX_GEOMETRY_INTERSECTION_HH
 
+#include <array>
 #include <tuple>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -191,11 +194,41 @@ bool computeSegmentIntersection(const Geo1& geo1, const Geo2& geo2, ctype baseEp
 
 } // end namespace Detail
 
+namespace Detail {
+
+//! Segment geometries with corners stored in a std::array
+template<class ctype>
+struct SegmentGeometryTraits : public Dune::MultiLinearGeometryTraits<ctype>
+{
+    template<int mydim, int cdim>
+    struct CornerStorage { using Type = std::array<Dune::FieldVector<ctype, cdim>, 2>; };
+
+    template<int dim>
+    struct hasSingleGeometryType
+    {
+        static const bool v = true;
+        static const unsigned int topologyId = Dune::GeometryTypes::line.id();
+    };
+};
+
+//! Triangle or quadrilateral geometries with corners stored in a Dune::ReservedVector
+template<class ctype>
+struct PolygonGeometryTraits : public Dune::MultiLinearGeometryTraits<ctype>
+{
+    template<int mydim, int cdim>
+    struct CornerStorage { using Type = Dune::ReservedVector<Dune::FieldVector<ctype, cdim>, 4>; };
+};
+
+} // end namespace Detail
+
 /*!
  * \ingroup Geometry
  * \brief A class for geometry collision detection and intersection calculation
+ *
  * The class can be specialized for combinations of dimworld, dim1, dim2, where
  * dimworld is the world dimension embedding a grid of dim1 and a grid of dim2.
+ * \tparam Policy The dimension and the type of the sought intersection, see IntersectionPolicy.
+ *         Defaults to an intersection of the lower dimension of the two geometries.
  */
 template
 <class Geometry1, class Geometry2,
@@ -434,14 +467,16 @@ public:
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
 
+        // intersect_ stops as soon as the interval [tfirst, tlast] is empty or a single point,
+        // and a single point is an intersection only if it lies in the polygon
         ctype tfirst, tlast;
-        if (!intersect_(geo1, geo2, tfirst, tlast))
+        using std::abs;
+        if (!intersect_(geo1, geo2, tfirst, tlast) && abs(tfirst - tlast) < eps_)
         {
-            // if start & end point are same, the intersection is a point
-            using std::abs;
-            if ( tfirst > tlast - eps_ )
+            const auto point = geo2.global(tfirst);
+            if (intersectsPointGeometry(point, geo1))
             {
-                intersection = Intersection(geo2.global(tfirst));
+                intersection = Intersection(point);
                 return true;
             }
         }
@@ -458,7 +493,7 @@ private:
          // lambda to obtain the facet corners on geo1
          auto getFacetCorners = [] (const Geometry1& geo1)
          {
-             std::vector< std::array<int, 2> > facetCorners;
+             Dune::ReservedVector<std::array<int, 2>, 4> facetCorners;
              switch (geo1.corners())
              {
                  case 4: // quadrilateral
@@ -550,7 +585,6 @@ public:
      *       Add intersections of polygon edges
      *       Remove duplicate points from the list
      *       Compute the convex hull polygon
-     *       Return a triangulation of that polygon as intersection
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the corner points of the polygon (as convex hull)
      * \note This overload is used when polygon like intersections are seeked
@@ -576,30 +610,27 @@ public:
                 if (intersectsPointGeometry(geo2.corner(i), geo1))
                     points.emplace_back(geo2.corner(i));
 
-            if (points.empty())
-                return false;
-
             if (points.size() - numPoints1 != geo2.corners())
             {
                 const auto refElement1 = referenceElement(geo1);
                 const auto refElement2 = referenceElement(geo2);
 
                 // add intersections of edges
-                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
                 using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
                 for (int i = 0; i < refElement1.size(dim1-1); ++i)
                 {
                     const auto localEdgeGeom1 = refElement1.template geometry<dim1-1>(i);
                     const auto edge1 = SegGeometry( Dune::GeometryTypes::line,
-                                                    std::vector<Point>( {geo1.global(localEdgeGeom1.corner(0)),
-                                                                         geo1.global(localEdgeGeom1.corner(1))} ));
+                                                    std::array<Point, 2>{ {geo1.global(localEdgeGeom1.corner(0)),
+                                                                         geo1.global(localEdgeGeom1.corner(1))} });
 
                     for (int j = 0; j < refElement2.size(dim2-1); ++j)
                     {
                         const auto localEdgeGeom2 = refElement2.template geometry<dim2-1>(j);
                         const auto edge2 = SegGeometry( Dune::GeometryTypes::line,
-                                                        std::vector<Point>( {geo2.global(localEdgeGeom2.corner(0)),
-                                                                             geo2.global(localEdgeGeom2.corner(1))} ));
+                                                        std::array<Point, 2>{ {geo2.global(localEdgeGeom2.corner(0)),
+                                                                             geo2.global(localEdgeGeom2.corner(1))} });
 
                         using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
                         typename EdgeTest::Intersection edgeIntersection;
@@ -731,14 +762,16 @@ public:
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
 
+        // intersect_ stops as soon as the interval [tfirst, tlast] is empty or a single point,
+        // and a single point is an intersection only if it lies in the polyhedron
         ctype tfirst, tlast;
-        if (intersect_(geo1, geo2, tfirst, tlast))
+        using std::abs;
+        if (!intersect_(geo1, geo2, tfirst, tlast) && abs(tfirst - tlast) < eps_)
         {
-            // if start & end point are same, the intersection is a point
-            using std::abs;
-            if ( abs(tfirst - tlast) < eps_ )
+            const auto point = geo2.global(tfirst);
+            if (intersectsPointGeometry(point, geo1))
             {
-                intersection = Intersection(geo2.global(tfirst));
+                intersection = Intersection(point);
                 return true;
             }
         }
@@ -755,7 +788,7 @@ private:
          // lambda to obtain facet corners on geo1
          auto getFacetCorners = [] (const Geometry1& geo1)
          {
-             std::vector< std::vector<int> > facetCorners;
+             Dune::ReservedVector<Dune::ReservedVector<int, 4>, 6> facetCorners;
              // sort facet corner so that normal n = (p1-p0)x(p2-p0) always points outwards
              switch (geo1.corners())
              {
@@ -782,13 +815,19 @@ private:
          };
 
          // lambda to obtain the normal on a facet
-         auto computeNormal = [&geo1] (const std::vector<int>& facetCorners)
+         const auto center1 = geo1.center();
+         auto computeNormal = [&geo1, &center1] (const Dune::ReservedVector<int, 4>& facetCorners)
          {
-             const auto v0 = geo1.corner(facetCorners[1]) - geo1.corner(facetCorners[0]);
-             const auto v1 = geo1.corner(facetCorners[2]) - geo1.corner(facetCorners[0]);
+             const auto c0 = geo1.corner(facetCorners[0]);
+             const auto v0 = geo1.corner(facetCorners[1]) - c0;
+             const auto v1 = geo1.corner(facetCorners[2]) - c0;
 
              auto n = crossProduct(v0, v1);
              n /= n.two_norm();
+
+             // the facet corners give outward normals for one orientation of the element only
+             if (n*(center1 - c0) > 0.0)
+                 n *= -1.0;
 
              return n;
          };
@@ -915,17 +954,17 @@ public:
                 const auto referenceElement2 = referenceElement(geo2);
 
                 // add intersections of edges
-                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+                using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
                 using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
                 for (int i = 0; i < referenceElement1.size(dim1-1); ++i)
                 {
                     const auto localEdgeGeom1 = referenceElement1.template geometry<dim1-1>(i);
                     const auto edge1 = SegGeometry(
                         Dune::GeometryTypes::line,
-                        std::vector<Point>({
+                        std::array<Point, 2>{
                             geo1.global(localEdgeGeom1.corner(0)),
                             geo1.global(localEdgeGeom1.corner(1))
-                        })
+                        }
                     );
 
                     for (int j = 0; j < referenceElement2.size(dim2-1); ++j)
@@ -933,10 +972,10 @@ public:
                         const auto localEdgeGeom2 = referenceElement2.template geometry<dim2-1>(j);
                         const auto edge2 = SegGeometry(
                             Dune::GeometryTypes::line,
-                            std::vector<Point>({
+                            std::array<Point, 2>{
                                 geo2.global(localEdgeGeom2.corner(0)),
                                 geo2.global(localEdgeGeom2.corner(1))
-                            })
+                            }
                         );
 
                         using EdgeTest = GeometryIntersection<SegGeometry, SegGeometry, PointPolicy>;
@@ -1029,14 +1068,6 @@ private:
 public:
     /*!
      * \brief Colliding polygon and convex polyhedron
-     * \note First we find the vertex candidates for the intersection region as follows:
-     *       Add triangle vertices that are inside the tetrahedron
-     *       Add tetrahedron vertices that are inside the triangle
-     *       Add all intersection points of tetrahedron edges (codim 2) with the triangle (codim 0) (6*1 tests)
-     *       Add all intersection points of triangle edges (codim 1) with tetrahedron faces (codim 1) (3*4 tests)
-     *       Remove duplicate points from the list
-     *       Compute the convex hull polygon
-     *       Return a triangulation of that polygon as intersection
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the corner points of the polygon (as convex hull)
      * \note This overload is used when polygon like intersections are seeked
@@ -1060,8 +1091,8 @@ public:
                 points.emplace_back(geo2.corner(i));
 
         // get some geometry types
-        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
-        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld, Detail::PolygonGeometryTraits<ctype>>;
+        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
 
         const auto refElement1 = referenceElement(geo1);
         const auto refElement2 = referenceElement(geo2);
@@ -1075,7 +1106,7 @@ public:
             const auto localEdgeGeom = refElement1.template geometry<dim1-1>(i);
             const auto p = geo1.global(localEdgeGeom.corner(0));
             const auto q = geo1.global(localEdgeGeom.corner(1));
-            const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+            const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::array<Point, 2>{p, q});
 
             using PolySegTest = GeometryIntersection<Geometry2, SegGeometry, PointPolicy>;
             typename PolySegTest::Intersection polySegIntersection;
@@ -1096,7 +1127,7 @@ public:
                     const auto c = geo1.global(localFaceGeo.corner(2));
                     const auto d = geo1.global(localFaceGeo.corner(3));
 
-                    return PolyhedronFaceGeometry(Dune::GeometryTypes::cube(2), std::vector<Point>{a, b, c, d});
+                    return PolyhedronFaceGeometry(Dune::GeometryTypes::cube(2), Dune::ReservedVector<Point, 4>{a, b, c, d});
                 }
                 else
                 {
@@ -1104,7 +1135,7 @@ public:
                     const auto b = geo1.global(localFaceGeo.corner(1));
                     const auto c = geo1.global(localFaceGeo.corner(2));
 
-                    return PolyhedronFaceGeometry(Dune::GeometryTypes::simplex(2), std::vector<Point>{a, b, c});
+                    return PolyhedronFaceGeometry(Dune::GeometryTypes::simplex(2), Dune::ReservedVector<Point, 4>{a, b, c});
                 }
             }();
 
@@ -1114,7 +1145,7 @@ public:
                 const auto p = geo2.global(localEdgeGeom.corner(0));
                 const auto q = geo2.global(localEdgeGeom.corner(1));
 
-                const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+                const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::array<Point, 2>{p, q});
 
                 using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
                 typename PolySegTest::Intersection polySegIntersection;
@@ -1154,15 +1185,7 @@ public:
     }
 
     /*!
-     * \brief Colliding segment and convex polyhedron
-     * \note First we find the vertex candidates for the intersection region as follows:
-     *       Add triangle vertices that are inside the tetrahedron
-     *       Add tetrahedron vertices that are inside the triangle
-     *       Add all intersection points of tetrahedron edges (codim 2) with the triangle (codim 0) (6*1 tests)
-     *       Add all intersection points of triangle edges (codim 1) with tetrahedron faces (codim 1) (3*4 tests)
-     *       Remove duplicate points from the list
-     *       Compute the convex hull polygon
-     *       Return a triangulation of that polygon as intersection
+     * \brief Colliding polygon and convex polyhedron
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the intersection result
      * \todo implement overloads for segment or point-like intersections
@@ -1221,13 +1244,9 @@ private:
 public:
     /*!
      * \brief Colliding two convex polyhedra
-     * \note First we find the vertex candidates for the intersection region as follows:
-     *       Add vertices that are inside the other geometry for both geometries
-     *       Add all intersection points of edges (codim 2) with the other tetrahedron's faces triangle
-     *       Remove duplicate points from the list
-     *       Return a triangulation of the polyhedron formed by the convex hull of the point cloud
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection Container to store the corner points of the polygon (as convex hull)
+     * \param intersection Container to store the corner points of the intersection polyhedron
+     *        as an unordered point cloud (the intersection is the convex hull of these points)
      * \note This overload is used when polyhedron-like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 3, int> = 0>
@@ -1257,8 +1276,8 @@ public:
         addPointIntersections(geo2, geo1);
 
         // get geometry types for the facets
-        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld>;
-        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld>;
+        using PolyhedronFaceGeometry = Dune::MultiLinearGeometry<ctype, 2, dimworld, Detail::PolygonGeometryTraits<ctype>>;
+        using SegGeometry = Dune::MultiLinearGeometry<ctype, 1, dimworld, Detail::SegmentGeometryTraits<ctype>>;
 
         // intersection policy for point-like intersections (used later)
         using PointPolicy = IntersectionPolicy::PointPolicy<ctype, dimworld>;
@@ -1279,7 +1298,7 @@ public:
                         const auto d = g1.global(localFaceGeo.corner(3));
 
                         return PolyhedronFaceGeometry(
-                            Dune::GeometryTypes::cube(2), std::vector<Point>{a, b, c, d}
+                            Dune::GeometryTypes::cube(2), Dune::ReservedVector<Point, 4>{a, b, c, d}
                         );
                     }
                     else
@@ -1289,7 +1308,7 @@ public:
                         const auto c = g1.global(localFaceGeo.corner(2));
 
                         return PolyhedronFaceGeometry(
-                            Dune::GeometryTypes::simplex(2), std::vector<Point>{a, b, c}
+                            Dune::GeometryTypes::simplex(2), Dune::ReservedVector<Point, 4>{a, b, c}
                         );
                     }
                 }();
@@ -1300,7 +1319,7 @@ public:
                     const auto p = g2.global(localEdgeGeom.corner(0));
                     const auto q = g2.global(localEdgeGeom.corner(1));
 
-                    const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+                    const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::array<Point, 2>{p, q});
 
                     using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry, PointPolicy>;
                     typename PolySegTest::Intersection polySegIntersection;
@@ -1368,7 +1387,7 @@ public:
     }
 
     /*!
-     * \brief Colliding segment and convex polyhedron
+     * \brief Colliding two convex polyhedra
      * \param geo1/geo2 The geometries to intersect
      * \param intersection Container to store the intersection result
      * \todo implement overloads for polygon-, segment- or point-like intersections
@@ -1377,7 +1396,7 @@ public:
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
     {
         static_assert(int(dimworld) == int(Geometry2::coorddimension), "Can only collide geometries of same coordinate dimension");
-        DUNE_THROW(Dune::NotImplemented, "Polyhedron-polygon intersection detection only implemented for polygon-like intersections");
+        DUNE_THROW(Dune::NotImplemented, "Polyhedron-polyhedron intersection detection only implemented for polyhedron-like intersections");
     }
 };
 
@@ -1402,13 +1421,13 @@ private:
 
 public:
     /*!
-     *  \brief Colliding segment and convex polyhedron
+     *  \brief Colliding segment and convex polygon
      *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
      *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection If the geometries collide, is holds the corner points of
+     * \param intersection If the geometries collide, intersection holds the corner points of
      *        the intersection object in global coordinates.
-     * \note This overload is used when point-like intersections are seeked
+     * \note This overload is used when segment-like intersections are seeked
      */
     template<class P = Policy, std::enable_if_t<P::dimIntersection == 1, int> = 0>
     static bool intersection(const Geometry1& geo1, const Geometry2& geo2, Intersection& intersection)
@@ -1428,7 +1447,7 @@ public:
     }
 
     /*!
-     *  \brief Colliding segment and convex polyhedron
+     *  \brief Colliding segment and convex polygon
      *  \note Algorithm based on the one from "Real-Time Collision Detection" by Christer Ericson,
      *        published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.3.6)
      * \param geo1/geo2 The geometries to intersect
@@ -1484,7 +1503,7 @@ private:
         // lambda to obtain the facet corners on geo1
         auto getFacetCorners = [] (const Geometry1& geo1)
         {
-            std::vector< std::array<int, 2> > facetCorners;
+            Dune::ReservedVector<std::array<int, 2>, 4> facetCorners;
             switch (geo1.corners())
             {
                 case 4: // quadrilateral
@@ -1745,7 +1764,7 @@ public:
     /*!
      *  \brief Colliding two segments in 3D
      * \param geo1/geo2 The geometries to intersect
-     * \param intersection If the geometries collide, is holds the corner points of
+     * \param intersection If the geometries collide, intersection holds the corner points of
      *        the intersection object in global coordinates.
      * \note This overload is used when segment-like intersections are seeked
      */

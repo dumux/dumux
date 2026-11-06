@@ -7,7 +7,7 @@
 /*!
  * \file
  * \ingroup Geometry
- * \brief A function to compute bounding spheres of points clouds or convex polytopes
+ * \brief A simple sphere type
  */
 #ifndef DUMUX_GEOMETRY_SPHERE_HH
 #define DUMUX_GEOMETRY_SPHERE_HH
