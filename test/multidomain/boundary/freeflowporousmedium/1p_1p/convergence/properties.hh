@@ -42,7 +42,9 @@
 #include <dumux/discretization/fcstaggered.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/pq1.hh>
 #include <dumux/discretization/pq2.hh>
+#include <dumux/discretization/pq3.hh>
 #include <dumux/discretization/cvfe/quadraturerules.hh>
 
 #include <dumux/multidomain/boundary/freeflowporousmedium/couplingmanager.hh>
@@ -63,6 +65,10 @@ struct DarcyOneP { using InheritsFrom = std::tuple<DarcyOnePCommon, CCTpfaModel>
 
 //! The porous medium domain assembled with the new interfaces
 struct DarcyOnePBoxNewInterface { using InheritsFrom = std::tuple<DarcyOnePCommon, BoxModel>; };
+struct DarcyOnePPQ2Hybrid { using InheritsFrom = std::tuple<DarcyOnePCommon, PQ2HybridModel>; };
+struct DarcyOnePPQ3Hybrid { using InheritsFrom = std::tuple<DarcyOnePCommon, PQ3HybridModel>; };
+struct DarcyOnePPQ1FE { using InheritsFrom = std::tuple<DarcyOnePCommon, PQ1FEModel>; };
+struct DarcyOnePPQ3FE { using InheritsFrom = std::tuple<DarcyOnePCommon, PQ3FEModel>; };
 } // end namespace TTag
 
 // Set the problem property
@@ -102,6 +108,27 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::DarcyOnePBoxNewInterface>
 { using type = DarcySubProblemNewInterface<TypeTag>; };
 
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOnePPQ2Hybrid>
+{ using type = DarcySubProblemNewInterface<TypeTag>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOnePPQ3Hybrid>
+{ using type = DarcySubProblemNewInterface<TypeTag>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOnePPQ1FE>
+{ using type = DarcySubProblemNewInterface<TypeTag>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::DarcyOnePPQ3FE>
+{ using type = DarcySubProblemNewInterface<TypeTag>; };
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::DarcyOnePPQ1FE> { static constexpr bool value = true; };
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::DarcyOnePPQ3FE> { static constexpr bool value = true; };
+
 //! Assemble with the variables per local dof
 template<class TypeTag>
 struct Transition::UseVariables<TypeTag, TTag::DarcyOnePBoxNewInterface> { static constexpr bool value = true; };
@@ -116,6 +143,14 @@ struct FreeFlowOnePMomentumCVFE { using InheritsFrom = std::tuple<FreeFlowOneP>;
 struct FreeFlowOnePMomentumPQ1Bubble { using InheritsFrom = std::tuple<FreeFlowOnePMomentumCVFE, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
 struct FreeFlowOnePMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<FreeFlowOnePMomentumCVFE, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct FreeFlowOnePMomentumPQ2Hybrid { using InheritsFrom = std::tuple<FreeFlowOnePMomentumCVFE, NavierStokesMomentumCVFE, PQ2HybridModel>; };
+struct FreeFlowOnePMomentumPQ3Hybrid { using InheritsFrom = std::tuple<FreeFlowOnePMomentumCVFE, NavierStokesMomentumCVFE, PQ3HybridModel>; };
+struct FreeFlowOnePMassPQ2Hybrid { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOneP, PQ2HybridModel>; };
+
+//! The pure finite element pairs: P2/P1 (Taylor-Hood) and P3/P2
+struct FreeFlowOnePMomentumPQ2FE { using InheritsFrom = std::tuple<FreeFlowOnePMomentumCVFE, NavierStokesMomentumFE, PQ2FEModel>; };
+struct FreeFlowOnePMomentumPQ3FE { using InheritsFrom = std::tuple<FreeFlowOnePMomentumCVFE, NavierStokesMomentumFE, PQ3FEModel>; };
+struct FreeFlowOnePMassPQ1FE { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOnePFE, PQ1FEModel>; };
+struct FreeFlowOnePMassPQ2FE { using InheritsFrom = std::tuple<FreeFlowOneP, NavierStokesMassOnePFE, PQ2FEModel>; };
 } // end namespace TTag
 
 // the fluid system
@@ -163,6 +198,30 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::FreeFlowOnePMassBox>
 { using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>; };
 
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentumPQ3Hybrid>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentumPQ2FE>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMomentumPQ3FE>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMassPQ2Hybrid>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMassPQ1FE>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>; };
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::FreeFlowOnePMassPQ2FE>
+{ using type = FreeFlowSubProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>; };
+
 //! Assemble with the variables per local dof
 template<class TypeTag>
 struct Transition::UseVariables<TypeTag, TTag::FreeFlowOnePMomentumPQ1Bubble> { static constexpr bool value = true; };
@@ -193,6 +252,52 @@ public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, DefaultMapperTraits<GridView>, QuadTraits>>;
 };
 #endif
+
+/*!
+ * \brief Quadrature rules of sufficient order for the PQ3 velocity and the PQ2 pressure spaces
+ * \note The PQ2 free-flow mass domain integrates the fluxes of a PQ3 velocity.
+ */
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::FreeFlowOnePMomentumPQ3Hybrid>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Rule = Dumux::QuadratureRules::DuneQuadrature<8>;
+    using QuadTraits = PQ3QuadratureTraits<GridView, Rule, Rule, Rule, Rule, Rule>;
+public:
+    using type = PQ3FVGridGeometry<Scalar, GridView, enableCache,
+                                   PQ3DefaultGridGeometryTraits<GridView, PQ3MapperTraits<GridView>, QuadTraits>>;
+};
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::FreeFlowOnePMassPQ2Hybrid>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Rule = Dumux::QuadratureRules::DuneQuadrature<6>;
+    using QuadTraits = PQ2QuadratureTraits<GridView, Rule, Rule, Rule, Rule, Rule>;
+public:
+    using type = PQ2FVGridGeometry<Scalar, GridView, enableCache,
+                                   PQ2DefaultGridGeometryTraits<GridView, PQ2MapperTraits<GridView>, QuadTraits>>;
+};
+
+template<class TypeTag>
+struct GridGeometry<TypeTag, TTag::DarcyOnePPQ2Hybrid>
+{
+private:
+    static constexpr bool enableCache = getPropValue<TypeTag, Properties::EnableGridGeometryCache>();
+    using GridView = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Rule = Dumux::QuadratureRules::DuneQuadrature<6>;
+    using QuadTraits = PQ2QuadratureTraits<GridView, Rule, Rule, Rule, Rule, Rule>;
+public:
+    using type = PQ2FVGridGeometry<Scalar, GridView, enableCache,
+                                   PQ2DefaultGridGeometryTraits<GridView, PQ2MapperTraits<GridView>, QuadTraits>>;
+};
 
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::DarcyOnePCommon>

@@ -39,11 +39,32 @@
 
 namespace Dumux {
 
+#ifndef DOXYGEN
+namespace Detail {
+
+//! The quadrature rule for integrating the free-flow velocity over a face of the coupling interface:
+//! InterfaceVelocityQuadratureRule of the multidomain traits if given, otherwise a rule of the order
+//! of the velocity space on the given element
+template<class MDTraits, class MomentumGridDiscretization, class Element>
+auto interfaceVelocityQuadratureRule(const MomentumGridDiscretization& momentumGridDiscretization,
+                                     const Element& element)
+{
+    if constexpr (requires { typename MDTraits::InterfaceVelocityQuadratureRule; })
+        return typename MDTraits::InterfaceVelocityQuadratureRule{};
+    else
+    {
+        const auto order = momentumGridDiscretization.feCache().get(element.type()).localBasis().order();
+        return QuadratureRules::DuneQuadratureOfOrder(order);
+    }
+}
+
+} // end namespace Detail
+#endif
 
 /*!
  * \ingroup FreeFlowPorousMediumCoupling
  * \brief Coupling manager for coupling free flow and porous medium flow models,
- *        all discretized with control-volume finite element schemes on matching grids
+ *        all discretized with control-volume finite element or finite element schemes on matching grids
  */
 template<class MDTraits>
 class FreeFlowPorousMediumCouplingManagerCvfe
@@ -60,8 +81,8 @@ class FreeFlowPorousMediumCouplingManagerCvfe
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using GridDiscretization = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using ElementDiscretization = typename GridDiscretization<id>::LocalView;
-    template<std::size_t id> using SubControlVolumeFace = typename ElementDiscretization<id>::SubControlVolumeFace;
-    template<std::size_t id> using SubControlVolume = typename ElementDiscretization<id>::SubControlVolume;
+    template<std::size_t id> using SubControlVolumeFace = SubControlVolumeFace_t<ElementDiscretization<id>>;
+    template<std::size_t id> using SubControlVolume = SubControlVolume_t<ElementDiscretization<id>>;
     template<std::size_t id> using GridVariables =  GetPropType<SubDomainTypeTag<id>, Properties::GridVariables>;
     template<std::size_t id> using GridVariablesCache = Concept::GridVariablesCache_t<GridVariables<id>>;
     template<std::size_t id> using ElementVariables = typename GridVariablesCache<id>::LocalView;
@@ -80,6 +101,9 @@ public:
 
     /*!
      * \brief Returns the mass flux across the coupling boundary.
+     * \note The velocity is integrated over the sub-control volume face with the same quadrature rule
+     *       on both sides of the interface, InterfaceVelocityQuadratureRule of the multidomain traits
+     *       if given and a rule of the order of the velocity space otherwise.
      */
     template<std::size_t i, std::size_t j>
     auto massCouplingCondition(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ,
@@ -104,7 +128,10 @@ public:
         using VelocityVector = typename GridDiscretization<freeFlowMomentumIndex>::GlobalCoordinate;
         VelocityVector intVelocity(0.0);
         // We apply the velocity-related quadrature rule
-        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf, typename GridDiscretization<freeFlowMomentumIndex>::ScvfQuadratureRule{}))
+        const auto velocityQuadratureRule = Detail::interfaceVelocityQuadratureRule<MDTraits>(
+            Dumux::gridDiscretization(this->problem(freeFlowMomentumIndex)), ffMassElemDisc.element()
+        );
+        for (const auto& qpData : CVFE::quadratureRule(elemDisc, scvf, velocityQuadratureRule))
         {
             const auto& faceIpData = qpData.ipData();
             const auto ffMassFaceIpData = ipData(ffMassElemDisc, faceIpData.global());
@@ -121,6 +148,40 @@ public:
         const auto normalIntVelocity = intVelocity * scvf.unitOuterNormal();
         const bool insideIsUpstream = normalIntVelocity > 0.0;
         return CouplingConditions::advectiveFlux(insideDensity, outsideDensity, normalIntVelocity, insideIsUpstream);
+    }
+
+    /*!
+     * \brief Returns the mass flux across the coupling boundary at an interpolation point.
+     * \note The density is evaluated at the interpolation point.
+     */
+    template<std::size_t i, std::size_t j, class FaceIpData>
+        requires requires (const FaceIpData& ipData) { ipData.global(); ipData.unitOuterNormal(); }
+    auto massCouplingCondition(Dune::index_constant<i> domainI, Dune::index_constant<j> domainJ,
+                               const ElementDiscretization<i>& elemDisc,
+                               const FaceIpData& faceIpData,
+                               const ElementVariables<i>& elemVars) const
+    {
+        static_assert(domainI != freeFlowMomentumIndex && domainJ != freeFlowMomentumIndex);
+
+        const auto& couplingContext = this->subApply(domainI, domainJ, [&](const auto& cm, auto&& ii, auto&& jj) {
+            return cm.couplingContext(ii, elemDisc, faceIpData);
+        });
+
+        const auto& outsideElemDisc = couplingContext.elemDisc;
+        const auto& ffMassElemDisc = [&]() -> const auto& {
+            if constexpr (i == porousMediumIndex)
+                return outsideElemDisc;
+            else
+                return elemDisc;
+        }();
+
+        const auto ffMassFaceIpData = ipData(ffMassElemDisc, faceIpData.global());
+        const auto velocity = this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).velocity(
+            ffMassElemDisc, ffMassFaceIpData
+        );
+
+        const Scalar density = CouplingConditions::density(elemDisc, elemVars, faceIpData);
+        return density * (velocity * faceIpData.unitOuterNormal());
     }
 
     //////////////////////// Conditions for FreeFlowMomentum - PorousMedium coupling //////////
@@ -273,6 +334,19 @@ public:
     {
         return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).effectiveViscosity(
             element, elemDisc, ipData, considerPreviousTimeStep
+        );
+    }
+
+    /*!
+     * \brief Returns the divergence of the velocity at a given interpolation point
+     */
+    template<class IpData>
+    Scalar velocityDivergence(const ElementDiscretization<freeFlowMassIndex>& elemDisc,
+                              const IpData& ipData,
+                              const bool considerPreviousTimeStep = false) const
+    {
+        return this->subCouplingManager(freeFlowMomentumIndex, freeFlowMassIndex).velocityDivergence(
+            elemDisc, ipData, considerPreviousTimeStep
         );
     }
 

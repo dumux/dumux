@@ -68,6 +68,17 @@ struct DuneQuadrature : public Utility::Tag<DuneQuadrature<order>>
     static constexpr int quadratureOrder = order;
 };
 
+/*!
+ * \ingroup Discretization
+ * \brief Dune-based quadrature rule with an order given at runtime
+ */
+struct DuneQuadratureOfOrder : public Utility::Tag<DuneQuadratureOfOrder>
+{
+    explicit DuneQuadratureOfOrder(int order) : order(order) {}
+
+    int order;
+};
+
 } // end namespace QuadratureRules
 
 namespace CVFE {
@@ -225,12 +236,13 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
     return result;
 }
 
-//! Dune quadrature for scvf
-template<int order, class FVElementGeometry>
+//! Dune quadrature for scvf with an order given at runtime
+template<class FVElementGeometry>
 auto quadratureRule(const FVElementGeometry& fvGeometry,
                     const typename FVElementGeometry::SubControlVolumeFace& scvf,
-                    QuadratureRules::DuneQuadrature<order>)
+                    QuadratureRules::DuneQuadratureOfOrder rule)
 {
+    const int order = rule.order;
     using GridGeometry = GridDiscretization_t<FVElementGeometry>;
     using GridView = typename GridGeometry::GridView;
     using FaceIpData = FaceInterpolationPointData<Detail::BaseIpData<GridView>, typename IndexTraits<GridView>::LocalIndex>;
@@ -255,6 +267,13 @@ auto quadratureRule(const FVElementGeometry& fvGeometry,
             };
         });
 }
+
+//! Dune quadrature for scvf
+template<int order, class FVElementGeometry>
+auto quadratureRule(const FVElementGeometry& fvGeometry,
+                    const typename FVElementGeometry::SubControlVolumeFace& scvf,
+                    QuadratureRules::DuneQuadrature<order>)
+{ return quadratureRule(fvGeometry, scvf, QuadratureRules::DuneQuadratureOfOrder(order)); }
 
 //! Midpoint quadrature for element
 template<class FVElementGeometry>

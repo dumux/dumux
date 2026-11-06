@@ -234,18 +234,23 @@ public:
         // mass boundary conditions
         else
         {
-            const auto& scvf = elemDisc.scvf(faceIpData.scvfIndex());
-            if (isCoupled_(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, elemDisc, faceIpData))
+            // the finite element continuity equation is not integrated by parts, so it has no
+            // boundary flux and the coupling enters through the velocity
+            if constexpr (requires { elemDisc.scvf(faceIpData.scvfIndex()); })
             {
-                values = 1.0/scvf.area() * couplingManager().massCouplingCondition(
-                    CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex,
-                    elemDisc, scvf, elemVars
-                );
-            }
-            else
-            {
-                values =  this->velocity(elemDisc, faceIpData)
-                    * elemVars[scvf.insideScvIdx()].density() * faceIpData.unitOuterNormal();
+                const auto& scvf = elemDisc.scvf(faceIpData.scvfIndex());
+                if (isCoupled_(CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex, elemDisc, faceIpData))
+                {
+                    values = 1.0/scvf.area() * couplingManager().massCouplingCondition(
+                        CouplingManager::freeFlowMassIndex, CouplingManager::porousMediumIndex,
+                        elemDisc, scvf, elemVars
+                    );
+                }
+                else
+                {
+                    values =  this->velocity(elemDisc, faceIpData)
+                        * elemVars[scvf.insideScvIdx()].density() * faceIpData.unitOuterNormal();
+                }
             }
         }
 

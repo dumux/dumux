@@ -13,10 +13,26 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
+#include <type_traits>
+
 #include <dumux/porousmediumflow/fvspatialparams1p.hh>
+#include <dumux/porousmediumflow/spatialparams.hh>
 #include "testcase.hh"
 
 namespace Dumux {
+
+template<class GridGeometry, class Scalar>
+class ConvergenceTestSpatialParams;
+
+namespace Detail {
+//! The finite volume base class for schemes with sub-control volumes, the general one otherwise
+template<class GridGeometry, class Scalar>
+using ConvergenceTestSpatialParamsBase = std::conditional_t<
+    requires { typename GridGeometry::SubControlVolume; },
+    FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar, ConvergenceTestSpatialParams<GridGeometry, Scalar>>,
+    Experimental::PorousMediumFlowSpatialParams<GridGeometry, Scalar, ConvergenceTestSpatialParams<GridGeometry, Scalar>>
+>;
+} // end namespace Detail
 
 /*!
  * \ingroup BoundaryTests
@@ -25,13 +41,10 @@ namespace Dumux {
  */
 template<class GridGeometry, class Scalar>
 class ConvergenceTestSpatialParams
-: public FVPorousMediumFlowSpatialParamsOneP<GridGeometry, Scalar,
-                                         ConvergenceTestSpatialParams<GridGeometry, Scalar>>
+: public Detail::ConvergenceTestSpatialParamsBase<GridGeometry, Scalar>
 {
     using GridView = typename GridGeometry::GridView;
-    using ParentType = FVPorousMediumFlowSpatialParamsOneP<
-        GridGeometry, Scalar, ConvergenceTestSpatialParams<GridGeometry, Scalar>
-    >;
+    using ParentType = Detail::ConvergenceTestSpatialParamsBase<GridGeometry, Scalar>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

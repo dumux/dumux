@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/geometry/quadraturerules.hh>
 #include <dune/common/timer.hh>
 
 #include <dumux/common/initialize.hh>
@@ -26,6 +27,9 @@
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/evalsolution.hh>
+#include <dumux/discretization/extrusion.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/io/format.hh>
 #include <dumux/io/vtkoutputmodule.hh>
@@ -72,15 +76,15 @@ auto createDarcyAnalyticalSolution(const Problem& problem)
     {
         auto fvGeometry = localView(gridDiscretization);
         fvGeometry.bindElement(element);
-        for (auto&& scv : scvs(fvGeometry))
+        for (const auto& localDof : localDofs(fvGeometry))
         {
-            const auto ccDofIdx = scv.dofIndex();
-            const auto ccDofPosition = scv.dofPosition();
-            const auto analyticalSolutionAtCc = problem.fullAnalyticalSolution(ccDofPosition);
-            analyticalPressure[ccDofIdx] = analyticalSolutionAtCc[dim];
+            const auto dofIdx = localDof.dofIndex();
+            const auto dofPosition = ipData(fvGeometry, localDof).global();
+            const auto analyticalSolutionAtDof = problem.fullAnalyticalSolution(dofPosition);
+            analyticalPressure[dofIdx] = analyticalSolutionAtDof[dim];
 
             for (int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                analyticalVelocity[ccDofIdx][dirIdx] = analyticalSolutionAtCc[dirIdx];
+                analyticalVelocity[dofIdx][dirIdx] = analyticalSolutionAtDof[dirIdx];
         }
     }
 
@@ -112,6 +116,42 @@ double computeL2DofError(const GridDiscretization& gridDiscretization, const Sol
     }
     using std::sqrt;
     return sqrt(l2error);
+}
+
+/*!
+ * \brief Calculation of the L2 error
+ */
+template<class GridDiscretization, class SolutionVector, class ExactSolution>
+double computeL2Error(const GridDiscretization& gridDiscretization, const SolutionVector& x, ExactSolution&& exactSolution, int order = 5)
+{
+    using namespace Dumux;
+    using Extrusion = Extrusion_t<GridDiscretization>;
+
+    double l2error = 0.0;
+    for (const auto& element : elements(gridDiscretization.gridView()))
+    {
+        const auto geometry = element.geometry();
+        const auto elemSol = elementSolution(element, x, gridDiscretization);
+        for (const auto& qp : Dune::QuadratureRules<double, GridDiscretization::GridView::dimension>::rule(geometry.type(), order))
+        {
+            const auto& localPos = qp.position();
+            const auto numericalSolution = evalSolutionAtLocalPos(element, geometry, gridDiscretization, elemSol, localPos);
+            const auto delta = numericalSolution - exactSolution(geometry.global(localPos));
+            l2error += (delta*delta) * qp.weight() * Extrusion::integrationElement(geometry, localPos);
+        }
+    }
+
+    using std::sqrt;
+    return sqrt(l2error);
+}
+
+//! The vtk writer takes a field per vertex or per element, so it cannot write the dofs of other schemes
+template<class GridDiscretization>
+bool hasVertexOrElementDofs(const GridDiscretization& gridDiscretization)
+{
+    const auto& gridView = gridDiscretization.gridView();
+    const auto numDofs = gridDiscretization.numDofs();
+    return numDofs == gridView.size(GridDiscretization::GridView::dimension) || numDofs == gridView.size(0);
 }
 
 template<class MassP, class MomP, class SolutionVector>
@@ -179,11 +219,11 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
             const auto [totalVolumeMomentum, momentumErrors] = calculateL2AndH1Errors(*momentumProblem, momentumGridVariables, x[momentumIdx]);
             const auto [totalVolumeMass, massErrors] = calculateL2AndH1Errors(*massProblem, massGridVariables, x[massIdx]);
 
-            const double massL2DofError = computeL2DofError(
+            const double massL2DofError = computeL2Error(
                 massGridDiscretization, x[massIdx],
                 [&](const auto& pos) { return massProblem->analyticalSolution(pos); }
             );
-            const double momentumL2DofError = computeL2DofError(
+            const double momentumL2DofError = computeL2Error(
                 momentumGridDiscretization, x[momentumIdx],
                 [&](const auto& pos) { return momentumProblem->analyticalSolution(pos); }
             );
@@ -206,11 +246,11 @@ void printFreeFlowErrors(std::shared_ptr<MomentumProblem> momentumProblem,
             const auto [totalVolumeMomentum, momentumL2Error] = calculateL2Error(*momentumProblem, momentumGridVariables, x[momentumIdx]);
             const auto [totalVolumeMass, massL2Error] = calculateL2Error(*massProblem, massGridVariables, x[massIdx]);
 
-            const double massL2DofError = computeL2DofError(
+            const double massL2DofError = computeL2Error(
                 massGridDiscretization, x[massIdx],
                 [&](const auto& pos) { return massProblem->analyticalSolution(pos); }
             );
-            const double momentumL2DofError = computeL2DofError(
+            const double momentumL2DofError = computeL2Error(
                 momentumGridDiscretization, x[momentumIdx],
                 [&](const auto& pos) { return momentumProblem->analyticalSolution(pos); }
             );
@@ -255,7 +295,7 @@ void printDarcyL2Error(std::shared_ptr<Problem> problem,
     if constexpr (Dumux::DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>)
     {
         const auto [totalVolume, cvfeL2Error] = calculateL2Error(*problem, gridVariables, x);
-        const double l2dofError = computeL2DofError(
+        const double l2dofError = computeL2Error(
             Dumux::gridDiscretization(*problem), x,
             [&](const auto& pos) { return problem->fullAnalyticalSolution(pos)[2/*pressureIdx*/]; }
         );
@@ -395,17 +435,24 @@ int main(int argc, char** argv)
     GetPropType<FreeFlowMassTypeTag, Properties::IOFields>::initOutputModule(freeflowVtkWriter); // Add model specific output fields
     freeflowVtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<FreeFlowMassGridVariables>>());
     NavierStokesTest::AnalyticalSolutionVectors freeFlowAnalyticSol(freeFlowMomentumProblem, freeFlowMassProblem);
-    freeflowVtkWriter.addField(freeFlowAnalyticSol.analyticalPressureSolution(), "pressureExact");
+    if (hasVertexOrElementDofs(*freeFlowMassGridGeometry))
+        freeflowVtkWriter.addField(freeFlowAnalyticSol.analyticalPressureSolution(), "pressureExact");
     freeflowVtkWriter.addField(freeFlowAnalyticSol.analyticalVelocitySolution(), "velocityExact");
     freeflowVtkWriter.write(0.0);
 
+    const bool writeDarcyVtk = hasVertexOrElementDofs(*darcyGridGeometry);
+
     VtkOutputModule darcyVtkWriter(*darcyGridVariables, sol[porousMediumIndex],  darcyProblem->name());
-    GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
+    if (writeDarcyVtk)
+        GetPropType<DarcyTypeTag, Properties::IOFields>::initOutputModule(darcyVtkWriter);
     addDarcyVelocityOutput<DarcyTypeTag>(darcyVtkWriter, *darcyGridVariables);
     const auto darcyAnalyticalSolution = createDarcyAnalyticalSolution<double>(*darcyProblem);
-    darcyVtkWriter.addField(std::get<0>(darcyAnalyticalSolution), "pressureExact");
-    darcyVtkWriter.addField(std::get<1>(darcyAnalyticalSolution), "velocityExact");
-    darcyVtkWriter.write(0.0);
+    if (writeDarcyVtk)
+    {
+        darcyVtkWriter.addField(std::get<0>(darcyAnalyticalSolution), "pressureExact");
+        darcyVtkWriter.addField(std::get<1>(darcyAnalyticalSolution), "velocityExact");
+        darcyVtkWriter.write(0.0);
+    }
 
     // the assembler for a stationary problem
     using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
@@ -449,7 +496,8 @@ int main(int argc, char** argv)
 
     // write vtk output
     freeflowVtkWriter.write(1.0);
-    darcyVtkWriter.write(1.0);
+    if (writeDarcyVtk)
+        darcyVtkWriter.write(1.0);
 
     // print L2 errors
     printFreeFlowErrors(freeFlowMomentumProblem,

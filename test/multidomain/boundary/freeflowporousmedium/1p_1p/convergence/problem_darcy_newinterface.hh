@@ -152,20 +152,29 @@ public:
     {
         BoundaryFluxes values(0.0);
 
-        const auto& scvf = elemDisc.scvf(faceIpData.scvfIndex());
-        if (couplingManager().isCoupled(CouplingManager::porousMediumIndex,
-                                        CouplingManager::freeFlowMassIndex,
-                                        elemDisc, elemDisc.intersectionIndex(scvf)))
-            values[Indices::conti0EqIdx] = 1.0/scvf.area() * couplingManager().massCouplingCondition(
-                CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
-                elemDisc, scvf, elemVars
-            );
+        // Darcy's law is integrated by parts, so the boundary term is needed for every scheme.
+        if constexpr (requires { elemDisc.scvf(faceIpData.scvfIndex()); })
+        {
+            const auto& scvf = elemDisc.scvf(faceIpData.scvfIndex());
+            if (isCoupled_(elemDisc, faceIpData))
+                values[Indices::conti0EqIdx] = 1.0/scvf.area() * couplingManager().massCouplingCondition(
+                    CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                    elemDisc, scvf, elemVars
+                );
+            else
+                values[Indices::conti0EqIdx] = analyticalNormalVelocity_(faceIpData);
+        }
         else
         {
-            const auto sol = fullAnalyticalSolution(faceIpData.global());
-            const auto n = faceIpData.unitOuterNormal();
-            auto v = n; v[0] = sol[0]; v[1] = sol[1];
-            values[Indices::conti0EqIdx] = v*n;
+            // no sub-control volume faces: the assembler forms the boundary integral, so the
+            // flux per unit area is evaluated at the interpolation point
+            if (isCoupled_(elemDisc, faceIpData))
+                values[Indices::conti0EqIdx] = couplingManager().massCouplingCondition(
+                    CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                    elemDisc, faceIpData, elemVars
+                );
+            else
+                values[Indices::conti0EqIdx] = analyticalNormalVelocity_(faceIpData);
         }
 
         return values;
@@ -255,6 +264,27 @@ public:
     { return *couplingManager_; }
 
 private:
+    //! The normal velocity of the analytical solution at an interpolation point
+    template<class FaceIpData>
+    Scalar analyticalNormalVelocity_(const FaceIpData& faceIpData) const
+    {
+        const auto sol = fullAnalyticalSolution(faceIpData.global());
+        const auto n = faceIpData.unitOuterNormal();
+        auto v = n; v[0] = sol[0]; v[1] = sol[1];
+        return v*n;
+    }
+
+    template<class FaceIpData>
+    bool isCoupled_(const ElementDiscretization& elemDisc, const FaceIpData& faceIpData) const
+    {
+        if constexpr (requires { faceIpData.scvfIndex(); })
+            return couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                                               elemDisc, elemDisc.intersectionIndex(elemDisc.scvf(faceIpData.scvfIndex())));
+        else
+            return couplingManager().isCoupled(CouplingManager::porousMediumIndex, CouplingManager::freeFlowMassIndex,
+                                               elemDisc, elemDisc.boundaryFace(faceIpData.boundaryFaceIndex()).intersectionIndex());
+    }
+
     template<class BoundaryFace>
     bool isFluxBoundary_(const ElementDiscretization& elemDisc,
                          const BoundaryFace& boundaryFace) const

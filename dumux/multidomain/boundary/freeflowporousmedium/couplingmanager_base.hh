@@ -18,6 +18,7 @@
 
 #include <dune/common/indices.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/ffmasspm/couplingmanager.hh>
 #include <dumux/multidomain/boundary/freeflowporousmedium/ffmomentumpm/couplingmanager.hh>
 #include <dumux/multidomain/freeflow/couplingmanager.hh>
@@ -161,8 +162,8 @@ class FreeFlowPorousMediumCouplingManagerBase
     template<std::size_t id> using Problem = GetPropType<SubDomainTypeTag<id>, Properties::Problem>;
     template<std::size_t id> using GridGeometry = GetPropType<SubDomainTypeTag<id>, Properties::GridGeometry>;
     template<std::size_t id> using FVElementGeometry = typename GridGeometry<id>::LocalView;
-    template<std::size_t id> using SubControlVolumeFace = typename FVElementGeometry<id>::SubControlVolumeFace;
-    template<std::size_t id> using SubControlVolume = typename FVElementGeometry<id>::SubControlVolume;
+    template<std::size_t id> using SubControlVolumeFace = SubControlVolumeFace_t<FVElementGeometry<id>>;
+    template<std::size_t id> using SubControlVolume = SubControlVolume_t<FVElementGeometry<id>>;
     template<std::size_t id> using ElementVolumeVariables = typename GetPropType<SubDomainTypeTag<id>, Properties::GridVolumeVariables>::LocalView;
     template<std::size_t id> using NumEqVector = typename Problem<id>::Traits::NumEqVector;
 
