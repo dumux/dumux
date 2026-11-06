@@ -6,9 +6,8 @@ dune_symlink_to_source_files(FILES "params.input")
 # non-isothermal tests
 # conduction
 dumux_add_test(NAME test_1p2c_nonequilibrium_box
-              LABELS porousmediumflow 1p2c
+              LABELS porousmediumflow 1p2c 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumBox
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
@@ -18,9 +17,8 @@ dumux_add_test(NAME test_1p2c_nonequilibrium_box
                         --zeroThreshold {"velocity_liq \(m/s\)_1":1e-15})
 
 dumux_add_test(NAME test_1p2c_nonequilibrium_tpfa
-              LABELS porousmediumflow 1p2c
+              LABELS porousmediumflow 1p2c 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCThermalNonequilibriumCCTpfa
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy

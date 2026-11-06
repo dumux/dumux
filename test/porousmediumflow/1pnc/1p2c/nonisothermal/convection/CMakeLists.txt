@@ -6,9 +6,8 @@ dune_symlink_to_source_files(FILES "params.input")
 # non-isothermal tests
 # convection
 dumux_add_test(NAME test_1p2cni_convection_box
-              LABELS porousmediumflow 1p2c  1p2cni
+              LABELS porousmediumflow 1p2c 1p2cni 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBox
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
@@ -18,9 +17,8 @@ dumux_add_test(NAME test_1p2cni_convection_box
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-9})
 
 dumux_add_test(NAME test_1p2cni_convection_tpfa
-              LABELS porousmediumflow 1p2c  1p2cni
+              LABELS porousmediumflow 1p2c 1p2cni 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfa
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
@@ -30,9 +28,8 @@ dumux_add_test(NAME test_1p2cni_convection_tpfa
                         --zeroThreshold {"velocity_liq \(m/s\)":1e-9})
 
 dumux_add_test(NAME test_1p2cni_convection_mpfa
-              LABELS porousmediumflow 1p2c  1p2cni
+              LABELS porousmediumflow 1p2c 1p2cni 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfa
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy

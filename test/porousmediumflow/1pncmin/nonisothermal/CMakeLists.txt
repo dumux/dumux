@@ -4,9 +4,8 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 dumux_add_test(NAME test_1pncminni_box
-              LABELS porousmediumflow 1pncmin  1pncminni
+              LABELS porousmediumflow 1pncmin 1pncminni 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=ThermoChemBox
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy

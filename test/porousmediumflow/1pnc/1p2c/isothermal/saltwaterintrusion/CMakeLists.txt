@@ -5,9 +5,8 @@ dune_symlink_to_source_files(FILES params.input test_1p2c_saltwaterintrusion_box
 
 # salt-water intrusion test using the box model
 dumux_add_test(NAME test_1p2c_saltwaterintrusion_box
-              LABELS porousmediumflow 1p2c
+              LABELS porousmediumflow 1p2c 1pnc
               SOURCES main.cc
-              LABELS 1pnc
               COMPILE_DEFINITIONS TYPETAG=SaltWaterIntrusionTest
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
