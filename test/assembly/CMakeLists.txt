@@ -3,3 +3,5 @@
 
 dumux_add_test(SOURCES test_partialreassembler.cc
                LABELS unit assembly)
+
+add_subdirectory(multistage_periodic)
