@@ -114,6 +114,8 @@ segment could intersect a convex polygon in 2D that it misses, and a segment nev
 elements). The intersections of polygons and polyhedra no longer allocate heap memory for the edges and faces of the
 geometries, the intersections of a segment with a polygon or a polyhedron no longer allocate heap memory at all, and
 `intersectingEntities` no longer copies the geometries of entity sets that store them (e.g. `GeometriesEntitySet`).
+- __L2 projection__: `L2Projection::project` accepts a function of the global position also without dune-functions, besides
+local functions (`bind(element)` and evaluation at local coordinates) and grid functions providing `localFunction(f)`.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum

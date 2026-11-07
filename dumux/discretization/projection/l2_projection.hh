@@ -15,6 +15,7 @@
 #include <array>
 #include <optional>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <dune/common/fvector.hh>
@@ -24,9 +25,6 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
-#ifdef HAVE_DUNE_FUNCTIONS
-#include <dune/functions/gridfunctions/gridviewfunction.hh>
-#endif
 #include <dumux/io/format.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/linearalgebratraits.hh>
@@ -39,13 +37,39 @@ namespace Dumux {
 namespace Detail {
 
 /*!
+ * \brief A function of the global position seen as a local function on the bound element
+ */
+template<class Function, class Element>
+class GlobalFunctionAsLocalFunction
+{
+public:
+    explicit GlobalFunctionAsLocalFunction(Function f)
+    : function_(std::move(f))
+    {}
+
+    void bind(const Element& element)
+    { geometry_.emplace(element.geometry()); }
+
+    auto operator()(const typename Element::Geometry::LocalCoordinate& local) const
+    { return function_(geometry_->global(local)); }
+
+private:
+    Function function_;
+    std::optional<typename Element::Geometry> geometry_;
+};
+
+/*!
  * \brief Create a local function from a given function.
+ *
+ * The function either has the local-function interface (bind(element) and operator()(localCoord)),
+ * is a grid function providing localFunction(f), or is callable with a global position.
  */
 template<class Function, class GridView>
 auto makeLocalFunction(Function&& f, const GridView& gridView)
 {
     using Element = typename GridView::template Codim<0>::Entity;
     using LocalCoord = typename Element::Geometry::LocalCoordinate;
+    using GlobalCoord = typename Element::Geometry::GlobalCoordinate;
     constexpr bool hasLocalInterface =
         requires(std::decay_t<Function>& lf, const Element& e, const LocalCoord& x)
         {
@@ -53,18 +77,19 @@ auto makeLocalFunction(Function&& f, const GridView& gridView)
             lf(x);
         };
 
-    // If f already provides the local-function interface, use it directly.
-    // This must be checked first to avoid incorrectly re-wrapping it via dune-functions.
+    // a local function is used directly and a grid function through its local function,
+    // which has to be checked first as grid functions may also be callable with a global position
     if constexpr (hasLocalInterface)
         return std::forward<Function>(f);
-#ifdef HAVE_DUNE_FUNCTIONS
+    else if constexpr (requires { localFunction(f); })
+        return localFunction(f);
     else
-        return localFunction(Dune::Functions::makeGridViewFunction(std::forward<Function>(f), gridView));
-#else
-    else
-        DUNE_THROW(Dune::InvalidStateException, "Function must provide bind(element) and operator()(localCoord), "
-                                                "or dune-functions must be available to wrap a global f(globalPos) callable.");
-#endif
+    {
+        static_assert(std::is_invocable_v<const std::decay_t<Function>&, const GlobalCoord&>,
+                      "The function must provide bind(element) and operator()(localCoord), "
+                      "provide localFunction(f), or be callable with a global position");
+        return GlobalFunctionAsLocalFunction<std::decay_t<Function>, Element>(std::forward<Function>(f));
+    }
 }
 
 } // end namespace Detail
@@ -166,7 +191,7 @@ public:
     {
         auto localFunc = Detail::makeLocalFunction(std::forward<Function>(function), feBasis_.gridView());
         using LocalPosition = typename FEBasis::GridView::template Codim<0>::Entity::Geometry::LocalCoordinate;
-        using ReturnType = std::invoke_result_t<Function, LocalPosition>;
+        using ReturnType = std::decay_t<std::invoke_result_t<decltype(localFunc)&, const LocalPosition&>>;
         constexpr int numEq = []() {
             if constexpr (Dune::IsNumber<ReturnType>::value) return 1;
             else return ReturnType::dimension;
