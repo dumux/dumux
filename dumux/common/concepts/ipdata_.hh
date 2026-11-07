@@ -81,6 +81,10 @@ concept BoundaryFaceIpData = IpData<T> && Detail::BoundaryFaceIndexProvider<T>;
 template<class T>
 concept BoundaryFaceQpIpData = BoundaryFaceIpData<T> && Detail::QpIndexProvider<T>;
 
+template<class T>
+concept ElementQpIpData = QIpData<T> && !LocalDofIpData<T> && !ScvfIpData<T>
+                          && !IntersectionIpData<T> && !BoundaryFaceIpData<T>;
+
 } // end namespace Dumux::Concept
 
 #endif
