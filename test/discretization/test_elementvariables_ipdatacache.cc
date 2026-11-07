@@ -118,6 +118,30 @@ void forEachCachedInterpolationPoint(const ElementDiscretization& elemDisc, F&& 
     }
 }
 
+//! Whether element variables provide interpolation point data at points of the given type
+template<class ElementVariables, class IpData>
+concept ProvidesData = requires(const ElementVariables& elemVars, const IpData& ipData) { cache(elemVars, ipData); };
+
+//! Quadrature points of sub-control volumes and intersections have no data, as their index is not one of the element rule
+template<class ElementVariables, class ElementDiscretization>
+void checkUncachedInterpolationPoints(const ElementDiscretization& elemDisc)
+{
+    const auto checkType = [](const auto& ipData)
+    {
+        static_assert(!ProvidesData<ElementVariables, std::decay_t<decltype(ipData)>>,
+                      "Element variables provide data at a point that is not cached");
+    };
+
+    if constexpr (requires { scvs(elemDisc); })
+        for (const auto& scv : scvs(elemDisc))
+            for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv))
+                checkType(qpData.ipData());
+
+    for (const auto& intersection : intersections(elemDisc.gridDiscretization().gridView(), elemDisc.element()))
+        for (const auto& qpData : CVFE::quadratureRule(elemDisc, intersection))
+            checkType(qpData.ipData());
+}
+
 template<class Data, class ReferenceData>
 void checkIdentical(const Data& data, const ReferenceData& reference, std::size_t numLocalDofs)
 {
@@ -199,6 +223,8 @@ void checkInterpolationPointDataCache(const GridDiscretization& gridDiscretizati
         elemVars.bind(element, elemDisc, sol);
         if (IpData::numUpdates != 0)
             DUNE_THROW(Dune::Exception, name << ": binding computed interpolation point data");
+
+        checkUncachedInterpolationPoints<decltype(elemVars)>(elemDisc);
 
         const auto numLocalDofs = Detail::LocalDofs::numLocalDofs(elemDisc);
         std::size_t numPoints = 0;

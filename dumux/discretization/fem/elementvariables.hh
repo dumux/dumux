@@ -128,7 +128,7 @@ public:
                                                const IpData& ipData)
     { return elemVars.ipDataCache().boundaryFaceCache(ipData.boundaryFaceIndex(), ipData.qpIndex()); }
 
-    template<Concept::QIpData IpData>
+    template<Concept::ElementQpIpData IpData>
     friend const InterpolationPointData& cache(const FEElementVariables& elemVars,
                                                const IpData& ipData)
     { return elemVars.ipDataCache().elementCache(ipData.qpIndex()); }
@@ -375,7 +375,7 @@ public:
                                                const IpData& ipData)
     { return elemVars.ipDataCache().boundaryFaceCache(ipData.boundaryFaceIndex(), ipData.qpIndex()); }
 
-    template<Concept::QIpData IpData>
+    template<Concept::ElementQpIpData IpData>
     friend const InterpolationPointData& cache(const FEElementVariables& elemVars,
                                                const IpData& ipData)
     { return elemVars.ipDataCache().elementCache(ipData.qpIndex()); }

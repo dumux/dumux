@@ -81,6 +81,11 @@ concept BoundaryFaceIpData = IpData<T> && Detail::BoundaryFaceIndexProvider<T>;
 template<class T>
 concept BoundaryFaceQpIpData = BoundaryFaceIpData<T> && Detail::QpIndexProvider<T>;
 
+//! An element quadrature point: indexed, but not a point of a local dof, a face, an intersection or a boundary face
+template<class T>
+concept ElementQpIpData = QIpData<T> && !LocalDofIpData<T> && !ScvfIpData<T>
+                          && !IntersectionIpData<T> && !BoundaryFaceIpData<T>;
+
 } // end namespace Dumux::Concept
 
 #endif
