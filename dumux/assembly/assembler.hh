@@ -28,8 +28,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/gridcapabilities.hh>
-#include <dumux/common/deprecated.hh>
-#include <dumux/common/typetraits/periodic.hh>
 
 #include <dumux/discretization/method.hh>
 #include <dumux/linear/dunevectors.hh>
@@ -37,6 +35,7 @@
 #include <dumux/assembly/coloring.hh>
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/periodicconstraints.hh>
 
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
@@ -170,7 +169,7 @@ public:
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, *residual_, curSol, *gridDiscretization_);
+        Dumux::Detail::enforcePeriodicConstraints(*jacobian_, *residual_, curSol, *gridDiscretization_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -202,7 +201,7 @@ public:
             localAssembler.assembleJacobian(*jacobian_, *gridVariables_);
         });
 
-        enforcePeriodicConstraints_(*jacobian_, curSol, *gridDiscretization_);
+        Dumux::Detail::enforcePeriodicConstraints(*jacobian_, *gridDiscretization_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -236,7 +235,7 @@ public:
             localAssembler.assembleResidual(r);
         });
 
-        enforcePeriodicConstraints_(r, curSol, *gridDiscretization_);
+        Dumux::Detail::enforcePeriodicConstraints(r, curSol, *gridDiscretization_);
 
         auto applyDirichletConstraint = [&] (const auto& dofIdx,
                                              const auto& values,
@@ -493,119 +492,6 @@ private:
         // if not succeeded rethrow the error on all processes
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
-    }
-
-    template<class GG>
-    void enforcePeriodicConstraints_(JacobianMatrix& jac, ResidualType& res, const SolutionVector& curSol, const GG& gridDiscretization) const
-    {
-        if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
-        {
-            for (const auto& m : gridDiscretization.periodicDofMap())
-            {
-                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
-                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
-                {
-                    for (const auto& second : periodicallyMappedDofs)
-                    {
-                        // add the second row to the first
-                        res[m.first] += res[second];
-                        const auto end = jac[second].end();
-                        for (auto it = jac[second].begin(); it != end; ++it)
-                            jac[m.first][it.index()] += (*it);
-
-                        // enforce constraint in second row
-                        res[second] = curSol[second] - curSol[m.first];
-
-                        // set derivatives accordingly in jacobian, i.e. id for second and -id for m.first
-                        auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
-                        {
-                            for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
-                                matrixBlock[eIdx][eIdx] = diagValue;
-                        };
-
-                        for (auto it = jac[second].begin(); it != end; ++it)
-                        {
-                            auto& matrixBlock = *it;
-                            matrixBlock = 0.0;
-
-                            assert(matrixBlock.N() == matrixBlock.M());
-                            if(it.index() == second)
-                                setMatrixBlock(matrixBlock, 1.0);
-
-                            if(it.index() == m.first)
-                                setMatrixBlock(matrixBlock, -1.0);
-
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    template<class GG>
-    void enforcePeriodicConstraints_(JacobianMatrix& jac, const SolutionVector&, const GG& gridDiscretization) const
-    {
-        if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
-        {
-            for (const auto& m : gridDiscretization.periodicDofMap())
-            {
-                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
-                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
-                {
-                    for (const auto& second : periodicallyMappedDofs)
-                    {
-                        // add the second row to the first
-                        const auto end = jac[second].end();
-                        for (auto it = jac[second].begin(); it != end; ++it)
-                            jac[m.first][it.index()] += (*it);
-
-                        // set derivatives accordingly in jacobian, i.e. id for second and -id for m.first
-                        auto setMatrixBlock = [] (auto& matrixBlock, double diagValue)
-                        {
-                            for (int eIdx = 0; eIdx < matrixBlock.N(); ++eIdx)
-                                matrixBlock[eIdx][eIdx] = diagValue;
-                        };
-
-                        for (auto it = jac[second].begin(); it != end; ++it)
-                        {
-                            auto& matrixBlock = *it;
-                            matrixBlock = 0.0;
-
-                            assert(matrixBlock.N() == matrixBlock.M());
-                            if(it.index() == second)
-                                setMatrixBlock(matrixBlock, 1.0);
-
-                            if(it.index() == m.first)
-                                setMatrixBlock(matrixBlock, -1.0);
-
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    template<class GG>
-    void enforcePeriodicConstraints_(ResidualType& res, const SolutionVector& curSol, const GG& gridDiscretization) const
-    {
-        if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
-        {
-            for (const auto& m : gridDiscretization.periodicDofMap())
-            {
-                const auto& periodicallyMappedDofs = Dumux::Deprecated::ensureRangeOfPeriodicDofs(m.second);
-                if (std::ranges::all_of(periodicallyMappedDofs, [&](auto second){ return m.first < second; }))
-                {
-                    for (const auto& second : periodicallyMappedDofs)
-                    {
-                        // add the second row to the first
-                        res[m.first] += res[second];
-
-                        // enforce constraint in second row
-                        res[second] = curSol[second] - curSol[m.first];
-                    }
-                }
-            }
-        }
     }
 
     template<class Problem, class GG, typename ApplyFunction>
