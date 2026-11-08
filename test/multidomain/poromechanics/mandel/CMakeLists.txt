@@ -7,7 +7,7 @@ dune_symlink_to_source_files(FILES params.input plot_results.py)
 
 dumux_add_test(NAME test_md_mandel
               LABELS multidomain poromechanics 1p poroelastic
-              SOURCES test_mandel.cc
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
