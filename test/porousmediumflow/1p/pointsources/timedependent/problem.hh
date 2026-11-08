@@ -14,7 +14,7 @@
 #ifndef DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 
-#include "../timeindependent/problem.hh"
+#include <test/porousmediumflow/1p/pointsources/timeindependent/problem.hh>
 
 namespace Dumux {
 /*!

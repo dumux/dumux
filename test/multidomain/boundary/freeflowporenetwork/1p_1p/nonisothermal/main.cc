@@ -34,7 +34,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
-#include "../properties.hh"
+#include <test/multidomain/boundary/freeflowporenetwork/1p_1p/properties.hh>
 
 template<class GridGeometry, class GridVariables, class SolutionVector>
 void updateVelocities(

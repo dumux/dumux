@@ -28,8 +28,9 @@
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
+#include <test/porousmediumflow/1pnc/1p2c/spatialparams.hh>
+
 #include "problem.hh"
-#include "../1p2c/spatialparams.hh"
 
 
 #include <dumux/flux/maxwellstefanslaw.hh>

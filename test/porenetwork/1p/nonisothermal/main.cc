@@ -31,8 +31,9 @@
 #include <dumux/porenetwork/common/pnmvtkoutputmodule.hh>
 #include <dumux/porenetwork/common/boundaryflux.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
-#include "../problem.hh"
-#include "../properties.hh"
+
+#include <test/porenetwork/1p/problem.hh>
+#include <test/porenetwork/1p/properties.hh>
 
 int main(int argc, char** argv)
 {

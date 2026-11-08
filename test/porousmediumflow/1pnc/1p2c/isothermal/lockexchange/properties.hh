@@ -20,8 +20,9 @@
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 #include <dumux/porousmediumflow/1pnc/model.hh>
 
+#include <test/porousmediumflow/1pnc/1p2c/spatialparams.hh>
+
 #include "problem.hh"
-#include "../../spatialparams.hh"
 
 namespace Dumux::Properties {
 

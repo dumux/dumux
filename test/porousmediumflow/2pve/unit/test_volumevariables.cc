@@ -23,7 +23,7 @@
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
-#include "../cartesianinjection/properties.hh"
+#include <test/porousmediumflow/2pve/cartesianinjection/properties.hh>
 
 namespace {
 

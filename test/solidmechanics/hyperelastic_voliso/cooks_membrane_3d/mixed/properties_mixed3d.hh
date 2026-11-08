@@ -16,9 +16,10 @@
 
 #include <dumux/solidmechanics/hyperelastic_voliso/model.hh>
 #include <dumux/solidmechanics/hyperelastic_voliso/couplingmanager.hh>
-#include "../../cooks_membrane_2d/spatialparams.hh"
-#include "../../cooks_membrane_2d/mixed/problem_momentum_mixed.hh"
-#include "../../cooks_membrane_2d/mixed/problem_pressure_mixed.hh"
+
+#include <test/solidmechanics/hyperelastic_voliso/cooks_membrane_2d/spatialparams.hh>
+#include <test/solidmechanics/hyperelastic_voliso/cooks_membrane_2d/mixed/problem_momentum_mixed.hh>
+#include <test/solidmechanics/hyperelastic_voliso/cooks_membrane_2d/mixed/problem_pressure_mixed.hh>
 
 namespace Dumux::Properties {
 

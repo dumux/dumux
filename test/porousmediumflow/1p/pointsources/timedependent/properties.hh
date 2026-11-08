@@ -14,7 +14,8 @@
 #ifndef DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_PROPERTIES_HH
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_PROPERTIES_HH
 
-#include "../timeindependent/properties.hh"
+#include <test/porousmediumflow/1p/pointsources/timeindependent/properties.hh>
+
 #include "problem.hh"
 
 namespace Dumux::Properties {

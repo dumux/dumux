@@ -23,7 +23,8 @@
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
 
-#include "../conduction/spatialparams.hh"  // reuse the conduction spatialParams
+#include <test/porousmediumflow/3p/conduction/spatialparams.hh>  // reuse the conduction spatialParams
+
 #include "problem.hh"
 
 namespace Dumux::Properties {

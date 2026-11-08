@@ -35,7 +35,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
-#include "../properties.hh"
+#include <test/multidomain/boundary/freeflowporousmedium/1p_1p/properties.hh>
 
 int main(int argc, char** argv)
 {

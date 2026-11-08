@@ -22,8 +22,9 @@
 
 #include <dumux/material/fluidsystems/brine.hh>
 
+#include <test/porousmediumflow/1pnc/1p2c/spatialparams.hh>
+
 #include "problem.hh"
-#include "../../spatialparams.hh"
 
 namespace Dumux::Properties {
 // Create new type tags

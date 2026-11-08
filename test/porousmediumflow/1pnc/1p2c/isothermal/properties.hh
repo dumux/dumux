@@ -32,8 +32,9 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/1padapter.hh>
 
+#include <test/porousmediumflow/1pnc/1p2c/spatialparams.hh>
+
 #include "problem.hh"
-#include "../spatialparams.hh"
 
 namespace Dumux::Properties {
 

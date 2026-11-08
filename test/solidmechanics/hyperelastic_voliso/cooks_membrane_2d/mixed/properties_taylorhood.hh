@@ -15,7 +15,9 @@
 
 #include <dumux/solidmechanics/hyperelastic_voliso/model.hh>
 #include <dumux/solidmechanics/hyperelastic_voliso/couplingmanager.hh>
-#include "../spatialparams.hh"
+
+#include <test/solidmechanics/hyperelastic_voliso/cooks_membrane_2d/spatialparams.hh>
+
 #include "problem_momentum_mixed.hh"
 #include "problem_pressure_mixed.hh"
 

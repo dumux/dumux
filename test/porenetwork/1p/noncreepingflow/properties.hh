@@ -21,8 +21,9 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
+#include <test/porenetwork/1p/properties.hh>
+
 #include "spatialparams.hh"
-#include "../properties.hh"
 
 //////////
 // Specify the properties

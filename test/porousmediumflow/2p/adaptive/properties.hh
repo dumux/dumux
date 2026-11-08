@@ -21,7 +21,8 @@
 #include <dune/alugrid/grid.hh>
 #endif
 #include <test/porousmediumflow/2p/incompressible/problem.hh>
-#include "../incompressible/properties.hh"
+#include <test/porousmediumflow/2p/incompressible/properties.hh>
+
 #include "problem.hh"
 #include "pointsourceproblem.hh"
 

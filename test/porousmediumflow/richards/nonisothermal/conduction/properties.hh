@@ -21,7 +21,8 @@
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-#include "../spatialparams.hh"
+#include <test/porousmediumflow/richards/nonisothermal/spatialparams.hh>
+
 #include "problem.hh"
 
 namespace Dumux::Properties {
