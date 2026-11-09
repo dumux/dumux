@@ -13,8 +13,10 @@
 #define DUMUX_PORE_NETWORK_DGF_WRITER_HH
 
 #include <string>
+#include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <limits>
 
 namespace Dumux::PoreNetwork {
 
@@ -31,6 +33,7 @@ void writeDgf(const std::string& fileName, const GridView& gridView, const GridD
     const auto numElementParams = gridData.parameters(someElement).size();
 
     std::ofstream dgfFile(fileName);
+    dgfFile << std::setprecision(std::numeric_limits<double>::max_digits10);
     dgfFile << "DGF\nVertex % Coordinates, volumes and boundary flags of the pore bodies\nparameters " << numVertexParams << "\n";
     dgfFile << "% Vertex parameters: ";
     for (const auto& p : gridData.vertexParameterNames())
