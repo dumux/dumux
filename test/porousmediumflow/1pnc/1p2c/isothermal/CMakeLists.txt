@@ -4,6 +4,7 @@
 add_subdirectory(henry)
 add_subdirectory(saltwaterintrusion)
 add_subdirectory(hortonrogerslapwood)
+add_subdirectory(onesidedconvection)
 add_subdirectory(lockexchange)
 
 dune_symlink_to_source_files(FILES "params.input")
