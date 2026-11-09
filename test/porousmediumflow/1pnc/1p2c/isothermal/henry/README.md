@@ -1,0 +1,232 @@
+# Benchmark: Henry Saltwater Intrusion Problem {#benchmark-henry}
+
+## Problem description {#henry-problem-description}
+
+The Henry problem (Henry 1964 @cite Henry1964) is a classic benchmark for
+density-driven groundwater flow and solute transport, describing seawater intrusion
+into a confined, homogeneous coastal aquifer. Freshwater is injected at a fixed rate
+along the left (inland) boundary; the right (seaward) boundary is in hydrostatic
+contact with seawater at fixed salinity. The resulting steady state is a saltwater
+wedge intruding along the bottom of the aquifer beneath an outflowing freshwater lens.
+
+We consider the benchmark of Fahs et al. (2016) @cite Fahs2016, a re-derivation of
+Henry (1964) @cite Henry1964 with higher accuracy and an extension to
+velocity-dependent dispersion. They tabulate the positions of the 10, 50 and 90 %
+isochlors of the steady state (their Tables D1 and D2). The tests compare with the same
+positions computed from a converged solution of their equations, see @ref henry-reference.
+
+Fahs et al. (2016) use the Boussinesq approximation: the density $\varrho$ is dropped from
+both balances and kept only in the buoyancy term of the Darcy velocity. With the
+Darcy velocity $\mathbf{v}$ and the dimensionless concentration $c\in[0,1]$
+($c=0$ freshwater, $c=1$ seawater), the problem reads (eqs. 1-5 of Fahs et al. (2016) @cite Fahs2016)
+
+$$\nabla\cdot\mathbf{v}=0, \qquad
+\mathbf{v}=-\frac{\mathbf{K}}{\mu}\left(\nabla p - (\varrho_0+\Delta\varrho\,c)\,\mathbf{g}\right),$$
+
+$$\phi\,\frac{\partial c}{\partial t}+\mathbf{v}\cdot\nabla c-\nabla\cdot\left[(\phi D_m\mathbf{I}+\mathbf{D})\nabla c\right]=0,
+\qquad
+\mathbf{D}=(\alpha_L-\alpha_T)\,\frac{\mathbf{v}\,\mathbf{v}^T}{|\mathbf{v}|}+\alpha_T\,|\mathbf{v}|\,\mathbf{I},$$
+
+where
+
+- $\phi$ is the porosity,
+- $\varrho_0$ is the freshwater density and $\Delta\varrho$ the density difference between
+  seawater and freshwater,
+- $\mathbf{K}=k\mathbf{I}$ is the permeability tensor,
+- $\mu$ is the dynamic viscosity,
+- $D_m$ is the molecular diffusion coefficient,
+- $\mathbf{D}$ is Scheidegger's velocity-dependent dispersion tensor with the
+  longitudinal/transverse dispersivities $\alpha_L$, $\alpha_T$.
+
+## Model assumptions {#henry-model-assumptions}
+
+- **Boussinesq approximation**: the fluid density is constant, only the buoyancy
+  term depends on the concentration.
+- **Constant, salinity-independent viscosity**: $\mu=10^{-3}\,\mathrm{Pa\,s}$
+- **Homogeneous, isotropic aquifer**: $\mathbf{K}=k\mathbf{I}$ and $\phi$ are uniform
+  scalars, not tensors or spatially varying fields.
+
+## Boundary and initial conditions {#henry-boundary-and-initial-conditions}
+
+- **Right** (sea): Dirichlet, $c=1$ and hydrostatic seawater pressure
+  $p=p_0+(\varrho_0+\Delta\varrho)\,g\,(d-z)$.
+- **Left** (inland): uniform freshwater inflow $q_d/d$ (Neumann), with zero total solute flux. The solute
+  concentration is not prescribed: in the steady state the saltwater wedge is far from the left boundary, and
+  $c$ is below $10^{-9}$ there in the simulations.
+- **Top/bottom**: impermeable, no-flow.
+- **Initial**: domain filled with seawater at rest.
+
+## Test cases {#henry-test-cases}
+
+Fahs et al. (2016) define three test cases, differing only in the diffusion and dispersion
+coefficients (their Table 1); all other physical parameters (their Table 2) are identical:
+
+| Parameter | Symbol | Value | Unit |
+|-----------|--------|-------|------|
+| Domain length / depth | $\ell$ / $d$ | 3 / 1 | m |
+| Freshwater recharge | $q_d$ | $6.6\times10^{-5}$ | m$^2$ s$^{-1}$ |
+| Permeability | $k$ | $1.0204\times10^{-9}$ | m$^2$ |
+| Porosity | $\phi$ | 0.35 | - |
+| Freshwater density | $\varrho_0$ | 1000 | kg m$^{-3}$ |
+| Density difference | $\Delta\varrho$ | 25 | kg m$^{-3}$ |
+| Viscosity | $\mu$ | $10^{-3}$ | Pa s |
+
+| Test case | Status | Input file | $D_m$<br>[m$^2$ s$^{-1}$] | $\alpha_L$<br>[m] | $\alpha_T$<br>[m] |
+|-----------|--------|------------|------------------------|----------------|----------------|
+| 1 (classic, purely diffusive) | implemented | `params_diffusion.input` | $18.86\times10^{-6}$ | 0 | 0 |
+| 2 (velocity-dependent dispersion) | implemented | `params_dispersion.input` | $9.43\times10^{-8}$ | 0.1 | 0.01 |
+| 3 (velocity-dependent dispersion, narrow mixing zone) | not implemented | - | $9.43\times10^{-8}$ | 0.001 | 0.0001 |
+
+Test case 3 needs cells smaller than about $2\,\mathrm{mm}$ for a cell Péclet number below 2
+and is not part of the tests.
+
+## Model and discretization {#henry-model}
+
+The tests use the @ref OnePNCModel with mass fractions, where the solute mass fraction is $c$.
+Two components with equal molar masses give a constant fluid density $\varrho_0$. The Darcy flux
+`CVFEBoussinesqDarcysLaw` adds the buoyancy $\Delta\varrho\,c$ in the gravity term, through the
+problem function `buoyantDensity`. With a constant density, the mass balances of the two
+components reduce to the equations above.
+
+### Diffusion and dispersion {#henry-dispersion}
+
+The solute is transported by diffusion and dispersion with the gradient $\nabla c$ and the tensor
+$D_\text{eff}\,\mathbf{I}+\mathbf{D}$, where $D_\text{eff}$ is the effective diffusion coefficient. To match eq. 3 of
+Fahs et al. (2016), it must be
+
+$$D_\text{eff}=\phi\,D_m.$$
+
+We use the model `DiffusivityConstantTortuosity`, which computes $D_\text{eff}=\phi\,S\,\tau\,D_m$. With the saturation
+$S=1$ and the tortuosity $\tau=1$ (`SpatialParams.Tortuosity = 1`), this is $D_\text{eff}=\phi D_m$, the same as in
+the paper. The model is set in `properties.hh`:
+
+```cpp
+template<class TypeTag>
+struct EffectiveDiffusivityModel<TypeTag, TTag::HenryFahs>
+{ using type = DiffusivityConstantTortuosity<GetPropType<TypeTag, Properties::Scalar>>; };
+```
+
+The dispersion tensor $\mathbf{D}$ is Scheidegger's tensor of the Darcy velocity $\mathbf{v}$ (`ScheideggersDispersionTensor`,
+the default dispersion model),
+$$\mathbf{D}=(\alpha_L-\alpha_T)\,\frac{\mathbf{v}\,\mathbf{v}^T}{|\mathbf{v}|}+\alpha_T\,|\mathbf{v}|\,\mathbf{I}.$$
+It is switched on by the property `EnableCompositionalDispersion`, and the dispersivities are read from
+`SpatialParams.LongitudinalDispersivity` and `SpatialParams.TransverseDispersivity` (both 0 in `params_diffusion.input`).
+
+The domain is discretized with a structured @ref Dune::YaspGrid, $120\times40$ cells, and the
+@ref BoxDiscretization. The advective fluxes use central differences, i.e. the arithmetic
+mean of the upstream and downstream values (`Flux.UpwindWeight = 0.5`). The cell Péclet number
+$h|\mathbf{v}|/(\phi D_m+\alpha_L|\mathbf{v}|)$ is at most 2.0 with molecular diffusion only (at the
+outflow) and 0.25 with dispersion. The implicit Euler method runs with time steps of at most one
+hour, for one simulated day. Test case 1 is steady by then, and the isochlors of test case 2 move by less than
+$0.4\,\mathrm{mm}$ afterwards. The linear systems are solved with UMFPack.
+
+## Reference solution {#henry-reference}
+
+Fahs et al. (2016) solve for the steady state in a stream function formulation (their eqs. 10-13) with a Galerkin
+method, expanding the stream function and the concentration in Fourier series (their eqs. 14 and 15). These series
+converge slowly: a sine series of a function that vanishes on the boundary converges fast only if the second
+derivative of the function vanishes there as well, which holds neither for the stream function nor for the
+concentration. The script `henry_legendre.py` solves the same equations, also with a Galerkin method, but expands both
+functions in Legendre polynomials that satisfy the same boundary conditions. For test case 2, a smooth mapping of the
+coordinates refines the resolution at the toe of the saltwater wedge. The truncation orders are raised in steps; in the
+last step, the isochlor positions change by at most ${5.5\times10^{-8}\,d}$ (test case 1) and ${8.5\times10^{-5}\,d}$
+(test case 2). The positions, to six decimals, are listed in `reference_diffusion.csv` and
+`reference_dispersion.csv`. With the Python packages `numpy` and `scipy`, they are generated by
+
+```bash
+python3 henry_legendre.py 1 reference_diffusion.csv
+python3 henry_legendre.py 2 reference_dispersion.csv
+```
+
+Tables D1 and D2 of Fahs et al. (2016) give the positions to three decimals, so that rounding accounts for at most
+$0.5\,\mathrm{mm}$. They differ from the converged positions by up to $6.9\,\mathrm{mm}$ (test case 1, 10 % isochlor at
+${z=0.95\,\mathrm{m}}$) and $6.5\,\mathrm{mm}$ (test case 2, 50 % isochlor at ${z=0.05\,\mathrm{m}}$), with root mean
+squares of $1.2\,\mathrm{mm}$ and $1.7\,\mathrm{mm}$.
+
+## Validation {#henry-validation}
+
+At the end of the simulation, `main.cc` determines the $x$-positions of the 10/50/90 % isochlors
+($c=0.1,0.5,0.9$) at each height $z$ of the reference tables by linear interpolation
+along the grid line, and prints their difference to the table. The error is thus the horizontal offset
+$x_\mathrm{computed}(z)-x_\mathrm{table}(z)$ in metres at a given height $z$, not a concentration difference or the
+distance to the nearest table point. The test fails if its maximum absolute value
+exceeds `Problem.IsochlorTolerance`, here $1\,\mathrm{cm}$ for test case 1 and $1.5\,\mathrm{cm}$ for test case 2.
+
+Maximum horizontal offset between the computed isochlors and the reference positions
+(19 heights, 3 isochlors each, $120\times40$ cells, central differences):
+
+| Test case | Maximum horizontal isochlor offset |
+|-----------|------------------------|
+| 1, molecular diffusion | 5.0 mm |
+| 2, velocity-dependent dispersion | 11.1 mm |
+
+The cell size of the CI grid is $h=25\,\mathrm{mm}$, so both maxima are a fraction of one cell. The largest offset of
+test case 2 lies on the 50 % isochlor at ${z=0.05\,\mathrm{m}}$, near the toe of the saltwater wedge.
+
+## Convergence {#henry-convergence}
+
+The root mean square error (RMSE) of the horizontal isochlor offsets to the reference positions (same 57 values per
+test case) is computed on a sequence of grids. All other settings are unchanged, except that test case 2 is simulated
+for two days, after which its isochlors are steady. The offset at heights between grid lines is computed from the
+concentration interpolated linearly in $z$.
+
+| Grid | $h$ [m] | Test case 1: RMSE (max) | Order | Test case 2: RMSE (max) | Order |
+|------|---------|-------------------------|-------|-------------------------|-------|
+| ${60\times20}$ | 0.05 | 2.2 mm (8.8 mm) | | 8.9 mm (32 mm) | |
+| ${120\times40}$ | 0.025 | 0.88 mm (5.0 mm) | 1.33 | 3.1 mm (10.9 mm) | 1.51 |
+| ${240\times80}$ | 0.0125 | 0.21 mm (1.0 mm) | 2.04 | 0.99 mm (3.5 mm) | 1.65 |
+| ${360\times120}$ | 0.0083 | | | 0.48 mm (1.7 mm) | 1.81 |
+| ${480\times160}$ | 0.00625 | 0.062 mm (0.28 mm) | 1.78 | | |
+
+The study is not part of the tests. After building the test executable (`make test_1p2c_henry_diffusion_box`), run
+`python3 convergence.py` in the build directory of this test. The script only runs the executable on the grids
+and writes `henry_convergence.png`. It needs the Python packages of the animation below and `numpy`.
+
+![Convergence of the isochlor positions towards the reference solution](henry_convergence.png)
+
+Test case 1 converges at approximately second order. In test case 2, the order is lower and increases under
+refinement, and the largest offsets lie in the rows near the bottom. There, at the toe of the saltwater wedge, the
+flow along the bottom has a stagnation point, where the velocity, and with it the dispersion, vanishes. Only the
+molecular diffusion remains, ${\phi D_m=3.3\times10^{-8}\,\mathrm{m^2\,s^{-1}}}$ against
+${\alpha_L|\mathbf{v}|=6.6\times10^{-6}\,\mathrm{m^2\,s^{-1}}}$ at the inflow velocity ${|\mathbf{v}|=q_d/d}$.
+With a 16 times larger $D_m$, test case 2 converges at approximately second order on the grids from ${60\times20}$
+to ${240\times80}$ cells. The grids above thus do not yet resolve the variation of the concentration around the
+stagnation point.
+
+## Running the benchmark {#henry-results}
+
+The two tests are run by
+
+```bash
+cd <build-dir>/test/porousmediumflow/1pnc/1p2c/isothermal/henry
+make test_1p2c_henry_diffusion_box
+ctest -R test_1p2c_henry_
+```
+
+They use the same executable with different input files. The output files
+`test_1p2c_henry_diffusion_box.pvd` and `test_1p2c_henry_dispersion_box.pvd` are used
+for the animation below. Calling `./test_1p2c_henry_diffusion_box params_dispersion.input` directly
+also prints the table of the errors per height.
+
+@note The animation needs the Python packages `pyvista`, `matplotlib` and `pillow`.
+The easiest way is a Python virtual environment, set up once in the `dumux` source
+directory and activated before running the script:
+
+```bash
+python -m venv dumux_venv
+source dumux_venv/bin/activate
+pip install pyvista matplotlib pillow
+```
+
+`post_processing.py` plots the output of both tests as an animation of the transient approach to the steady state,
+sampled at equal times over $t\in[0,1]$ d. Test case 1 (top, molecular diffusion only) and test case 2 (bottom,
+with dispersion) are stacked. Each panel shows the concentration, the simulated 10/50/90 % isochlors as lines,
+and the reference positions as markers. In the build directory, after running both tests:
+
+```bash
+python3 post_processing.py
+```
+
+It reads `test_1p2c_henry_diffusion_box.pvd` and `test_1p2c_henry_dispersion_box.pvd` and writes `henry_combined.gif`.
+
+![Henry problem, test cases 1 and 2, transient approach to the steady state at 1 d, compared with the reference isochlor positions](henry_combined.gif)

@@ -1,0 +1,43 @@
+[TimeLoop]
+DtInitial = 432 # [s]
+MaxTimeStepSize = 3600 # [s]
+OutputInterval = 3600 # [s]
+TEnd = 86400 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 3 1
+Cells = 120 40
+
+[Problem]
+Name = test_1p2c_henry_dispersion_box
+EnableGravity = true
+FreshwaterInflow = 6.6e-5 # [m^2/s]
+DensityDifference = 25 # [kg/m^3]
+ReferenceTable = reference_dispersion.csv
+IsochlorTolerance = 1.5e-2 # [m]
+
+[SpatialParams]
+Permeability = 1.0204e-9 # [m^2]
+Porosity = 0.35
+Tortuosity = 1.0
+Temperature = 293.15 # [K]
+LongitudinalDispersivity = 0.1 # [m]
+TransverseDispersivity = 0.01 # [m]
+
+[1.Component]
+Name = Water
+MolarMass = 18e-3 # [kg/mol]
+LiquidDensity = 1000 # [kg/m^3]
+LiquidDynamicViscosity = 1e-3 # [Pa s]
+
+[2.Component]
+Name = Salt
+MolarMass = 18e-3 # [kg/mol]
+LiquidDiffusionCoefficient = 9.43e-8 # [m^2/s]
+
+[Flux]
+UpwindWeight = 0.5
+
+[Vtk]
+AddVelocity = true
