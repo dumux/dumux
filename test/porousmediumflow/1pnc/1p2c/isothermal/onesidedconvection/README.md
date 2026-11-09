@@ -111,6 +111,9 @@ The time step is refined with the square of the cell size, so that the first-ord
 second-order error in space. The error of $\ln A$ at $t = 2$ is $-0.0846$, $-0.0213$ and $-0.0053$ on the grids
 $8 \times 40$, $16 \times 80$ and $32 \times 160$ with $\Delta t = 4 \times 10^{-3}$, $10^{-3}$ and
 $2.5 \times 10^{-4}$, which is a convergence rate of 2.0.
+Figure 3 shows the same behaviour at $t = 0.5$, 1 and 2.
+
+![Figure 3: convergence of the amplification for k = 8π towards the linearized problem under refinement in space and time](onesidedconvection_convergence.png)
 
 **Test**
 

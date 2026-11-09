@@ -23,6 +23,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import numpy as np
 
 from linear_stability import LinearizedProblem, dominant_mode
@@ -145,6 +146,32 @@ def plot_growth_rates(results, filename):
     fig.savefig(filename, dpi=120, facecolor=SURFACE)
 
 
+def plot_convergence(errors, filename):
+    """Absolute error of ln A against the number of cells: errors[t] holds one value per grid of GRIDS"""
+    fig, ax = new_axes(4.2)
+    ax.grid(False)
+    cells = list(GRIDS)
+    styles = {2: ("#4c72b0", "o", "-"), 1: ("#9e3a1f", "s", "--"), 0.5: ("#4d4d4d", "^", ":")}
+    for t, (color, marker, line) in styles.items():
+        ax.loglog(cells, errors[t], color=color, marker=marker, markersize=7, linestyle=line, lw=2.0, label=f"$t = {t:g}$")
+
+    # triangle with the slope of second-order convergence
+    n0, n1, y0 = 20.0, 27.0, 0.9*errors[0.5][-1]
+    y1 = y0*(n1/n0)**2
+    ax.plot([n0, n1, n0, n0], [y0, y0, y1, y0], color="#4d4d4d", lw=1.0)
+    ax.text(n0/1.03, np.sqrt(y0*y1), "2", ha="right", va="center")
+
+    ax.set_xlabel(r"number of cells in $x$ direction $N$ ($N \times 5N$ cells, $\Delta t = 4\times10^{-3}\,(8/N)^2$)")
+    ax.set_ylabel(r"error of $\ln \left(A(t)/A(t_0)\right)$")
+    ax.set_xticks(cells)
+    ax.set_xticklabels([str(n) for n in cells])
+    ax.minorticks_off()
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
+    ax.legend(frameon=False, loc="upper right")
+    fig.tight_layout()
+    fig.savefig(filename, dpi=120, facecolor=SURFACE)
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -185,6 +212,8 @@ def main():
         previous = current
         print(f"| ${n} \\times {5 * n}$ | {4e-3*(min(GRIDS)/n)**2:g} | " + " | ".join(f"{error(f'grid {n}', t):.4f}" for t in (0.5, 1, 2)) + f" | {rate} |")
     print(f"Error at the setting of the test (16 x 80, time step 2e-3): {error('t 2', 2):.4f}")
+    plot_convergence({t: [abs(error(f"grid {n}", t)) for n in GRIDS] for t in (0.5, 1, 2)},
+                     f"{image_dir}/onesidedconvection_convergence.png")
 
     # the linearized perturbation at the times of the figure, for the same initial perturbation (amplitude 1)
     all_times = np.array([INITIAL_TIME] + PROFILE_TIMES)
