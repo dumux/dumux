@@ -18,7 +18,7 @@
 #include <dumux/poromechanics/poroelastic/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositylinearporoelasticity.hh>
 
-#include "analyticalsolution/analyticalsolution.hh"
+#include "analyticalsolution.hh"
 #include "volumetricstrain.hh"
 
 namespace Dumux {

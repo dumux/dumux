@@ -34,7 +34,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
 
-#include "mixed/properties_mixed.hh"
+#include "properties_mixed.hh"
 
 int main(int argc, char** argv)
 {
