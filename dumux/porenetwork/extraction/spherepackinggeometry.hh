@@ -18,6 +18,7 @@
 #ifndef DUMUX_PNM_EXTRACTION_SPHERE_PACKING_GEOMETRY_HH
 #define DUMUX_PNM_EXTRACTION_SPHERE_PACKING_GEOMETRY_HH
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <utility>
@@ -272,6 +273,103 @@ Scalar facetFluidArea(const std::array<Point<Scalar>, 3>& x, const std::array<Sc
             return abs(area + segment);
 
     return abs(area);
+}
+
+namespace Detail {
+
+//! Angle opposite to the side a of a triangle with sides a, b, c
+template<class Scalar>
+Scalar triangleAngle(Scalar a, Scalar b, Scalar c)
+{
+    using std::acos; using std::clamp;
+    return acos(clamp((b*b + c*c - a*a)/(2.0*b*c), Scalar(-1.0), Scalar(1.0)));
+}
+
+/*!
+ * \brief Force balance of the Mayer-Stowe-Princen method on a drainage meniscus of radius rc in the
+ *        throat between three spheres, per unit surface tension and length: perimeter of the
+ *        non-wetting region minus its area over rc
+ *
+ * In the plane of the sphere centres, the meniscus between spheres i and j is an arc of radius rc
+ * around the point at distances r_i + rc and r_j + rc from their centres. The non-wetting region is
+ * the void of the triangle without the three wetting corners behind these arcs.
+ */
+template<class Scalar>
+Scalar mspForceBalance(const std::array<Point<Scalar>, 3>& x, const std::array<Scalar, 3>& r, Scalar rc)
+{
+    using std::sin;
+    std::array<Scalar, 3> edge, vertexAngle, arcAngle;
+    for (int k = 0; k < 3; ++k)
+        edge[k] = (x[(k+1)%3] - x[(k+2)%3]).two_norm();
+    for (int i = 0; i < 3; ++i)
+        vertexAngle[i] = planeAngle(x[i], x[(i+1)%3], x[(i+2)%3]);
+
+    // cornerAngle[k][i]: angle at sphere i of the triangle of spheres i, j and the arc centre opposite to k
+    std::array<std::array<Scalar, 3>, 3> cornerAngle{};
+    Scalar wettedCorners = 0.0;
+    for (int k = 0; k < 3; ++k)
+    {
+        const int i = (k+1)%3, j = (k+2)%3;
+        const Scalar ri = r[i] + rc, rj = r[j] + rc;
+        arcAngle[k] = triangleAngle(edge[k], ri, rj);
+        cornerAngle[k][i] = triangleAngle(rj, edge[k], ri);
+        cornerAngle[k][j] = triangleAngle(ri, rj, edge[k]);
+        wettedCorners += 0.5*ri*rj*sin(arcAngle[k]) - 0.5*arcAngle[k]*rc*rc
+                         - 0.5*cornerAngle[k][i]*r[i]*r[i] - 0.5*cornerAngle[k][j]*r[j]*r[j];
+    }
+
+    Scalar perimeter = 0.0, voidArea = triangleArea(x[0], x[1], x[2]);
+    for (int i = 0; i < 3; ++i)
+    {
+        perimeter += arcAngle[i]*rc;
+        perimeter += (vertexAngle[i] - cornerAngle[(i+1)%3][i] - cornerAngle[(i+2)%3][i])*r[i];
+        voidArea -= 0.5*vertexAngle[i]*r[i]*r[i];
+    }
+    return perimeter - (voidArea - wettedCorners)/rc;
+}
+
+} // end namespace Detail
+
+/*!
+ * \brief Radius rc of the drainage entry meniscus of the throat between three spheres
+ *        (Mayer-Stowe-Princen method, contact angle zero); the entry capillary pressure is
+ *        surfaceTension/rc
+ *
+ * The root of the force balance between the largest half gap between the spheres and the radius of
+ * the inscribed circle, with the case distinctions of YADE's TwoPhaseFlowEngine
+ * (Yuan and Chareyre, 2017, https://doi.org/10.1016/j.advwatres.2017.08.020). Zero if the spheres
+ * close the throat.
+ */
+template<class Scalar>
+Scalar mspThroatRadius(const std::array<Point<Scalar>, 3>& x, const std::array<Scalar, 3>& r)
+{
+    using std::max;
+    const Scalar rMax = inscribedCircle(x, r).radius;
+    if (rMax <= 0.0)
+        return 0.0;
+
+    Scalar halfGap = 0.0;
+    for (int k = 0; k < 3; ++k)
+        halfGap = max(halfGap, 0.5*((x[(k+1)%3] - x[(k+2)%3]).two_norm() - r[(k+1)%3] - r[(k+2)%3]));
+    const Scalar rMin = halfGap > 0.0 ? halfGap : 1e-9*rMax;
+
+    Scalar lo = rMin, hi = rMax;
+    const Scalar balanceLo = Detail::mspForceBalance(x, r, lo);
+    const Scalar balanceHi = Detail::mspForceBalance(x, r, hi);
+    if (balanceLo > balanceHi || balanceHi < 0.0)
+        return rMax;
+    if (balanceLo > 0.0)
+        return rMin;
+
+    for (int it = 0; it < 200 && hi - lo > 1e-14*rMax; ++it)
+    {
+        const Scalar mid = 0.5*(lo + hi);
+        if (Detail::mspForceBalance(x, r, mid) < 0.0)
+            lo = mid;
+        else
+            hi = mid;
+    }
+    return 0.5*(lo + hi);
 }
 
 //! Volume, void volume and wetted solid surface of the region of a throat

@@ -19,6 +19,7 @@
 #include <map>
 #include <numeric>
 #include <numbers>
+#include <queue>
 #include <random>
 #include <string>
 #include <vector>
@@ -29,6 +30,8 @@
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
+#include <dumux/porenetwork/extraction/spherepackingcells.hh>
+#include <dumux/porenetwork/extraction/spherepackingdrainage.hh>
 #include <dumux/porenetwork/extraction/spherepackingtriangulation.hh>
 
 namespace {
@@ -396,6 +399,147 @@ void testWalls()
     }
 }
 
+void testCells()
+{
+    const double a = 2.0;
+    const double s = a/std::sqrt(8.0);
+    const P p0{s, s, s}, p1{s, -s, -s}, p2{-s, s, -s}, p3{-s, -s, s};
+    check(dihedralAngle(p0, p1, p2, p3), std::acos(1.0/3.0), 1e-14, "dihedral angle of the regular tetrahedron");
+
+    const auto packing = randomPacking(1000, 0.4, 11);
+    Walls<double> walls;
+    walls.lower = packing.lower;
+    walls.upper = packing.upper;
+    walls.numSpheres = packing.centers.size();
+    const auto t = regularTriangulation(packing.centers, packing.radii, walls);
+    const auto positions = vertexPositions(packing.centers, walls);
+    const int numSpheres = packing.centers.size();
+
+    const auto edges = sphereEdges(t, positions, numSpheres);
+    std::size_t numEntries = 0;
+    for (const auto& edge : edges)
+    {
+        checkTrue(edge.spheres[0] < edge.spheres[1] && edge.cells.size() == edge.dihedralAngles.size(), "sphere edge layout");
+        check(std::accumulate(edge.dihedralAngles.begin(), edge.dihedralAngles.end(), 0.0), 2.0*pi, 1e-12,
+              "dihedral angles around an edge between spheres add up to 2 pi");
+        numEntries += edge.cells.size();
+    }
+    std::size_t numSphereEdgesInCells = 0;
+    for (const auto& cell : t.cells)
+        for (int i = 0; i < 4; ++i)
+            for (int j = i + 1; j < 4; ++j)
+                numSphereEdgesInCells += cell[i] < numSpheres && cell[j] < numSpheres;
+    checkTrue(numEntries == numSphereEdgesInCells, "every sphere edge of every tetrahedron listed once");
+    std::cout << "cells: " << edges.size() << " edges between spheres in " << t.cells.size() << " tetrahedra\n";
+
+    const auto angles = cellSolidAngles(t, positions);
+    std::vector<double> surface(numSpheres, 0.0);
+    for (std::size_t c = 0; c < t.cells.size(); ++c)
+        for (int i = 0; i < 4; ++i)
+            if (const int v = t.cells[c][i]; v < numSpheres)
+                surface[v] += angles[c][i]*packing.radii[v]*packing.radii[v];
+    for (int v = 0; v < numSpheres; ++v)
+        check(surface[v], 4.0*pi*packing.radii[v]*packing.radii[v], 1e-12, "sphere surface split over its tetrahedra");
+
+    const auto network = extractNetwork(t, packing.centers, packing.radii, walls);
+    double solid = 0.0, sectors = 0.0;
+    for (const auto& pore : network.pores)
+        solid += pore.bulkVolume - pore.volume;
+    for (std::size_t c = 0; c < t.cells.size(); ++c)
+        if (network.cellPores[c] >= 0)
+            for (int i = 0; i < 4; ++i)
+                if (const int v = t.cells[c][i]; v < numSpheres)
+                    sectors += angles[c][i]*std::pow(packing.radii[v], 3)/3.0;
+    check(sectors, solid, 1e-12, "solid angles consistent with the solid volume of the pores");
+}
+
+// pores reachable from the inlet pores through throats with entry pressure up to pc, outlet pores excluded
+std::vector<bool> drainedByBreadthFirstSearch(const Network<double>& network, const std::vector<double>& entry,
+                                              const std::vector<bool>& inlet, const std::vector<bool>& outlet, double pc)
+{
+    std::vector<std::vector<std::pair<std::size_t, std::size_t>>> adjacent(network.pores.size());
+    for (std::size_t t = 0; t < network.throats.size(); ++t)
+    {
+        const auto [a, b] = network.throats[t].pores;
+        adjacent[a].push_back({b, t});
+        adjacent[b].push_back({a, t});
+    }
+    std::vector<bool> drained = inlet;
+    std::queue<std::size_t> front;
+    for (std::size_t p = 0; p < inlet.size(); ++p)
+        if (inlet[p])
+            front.push(p);
+    while (!front.empty())
+    {
+        const auto p = front.front();
+        front.pop();
+        for (const auto& [q, t] : adjacent[p])
+            if (!drained[q] && !outlet[q] && entry[t] <= pc)
+            {
+                drained[q] = true;
+                front.push(q);
+            }
+    }
+    return drained;
+}
+
+void testDrainage()
+{
+    const auto packing = randomPacking(1000, 0.4, 12);
+    Walls<double> walls;
+    walls.lower = packing.lower;
+    walls.upper = packing.upper;
+    walls.numSpheres = packing.centers.size();
+    const auto t = regularTriangulation(packing.centers, packing.radii, walls);
+    const auto network = extractNetwork(t, packing.centers, packing.radii, walls);
+
+    const auto entryRadii = throatEntryRadii(network, packing.centers, packing.radii, walls);
+    for (std::size_t i = 0; i < network.throats.size(); ++i)
+        checkTrue(entryRadii[i] > 0.0 && entryRadii[i] <= network.throats[i].inscribedRadius*(1.0 + 1e-12),
+                  "entry radius positive and not above the inscribed radius");
+
+    const double surfaceTension = 0.0728;
+    std::vector<double> entry(entryRadii.size());
+    for (std::size_t i = 0; i < entry.size(); ++i)
+        entry[i] = surfaceTension/entryRadii[i];
+
+    // air from the upper y wall (3), water reservoir at the lower y wall (2)
+    std::vector<bool> inlet(network.pores.size()), outlet(network.pores.size());
+    for (std::size_t p = 0; p < network.pores.size(); ++p)
+    {
+        const int label = network.pores[p].label;
+        inlet[p] = label > 0 && (label & (1 << 3));
+        outlet[p] = label > 0 && (label & (1 << 2)) && !inlet[p];
+    }
+    const NetworkDrainage<double> drainage(network, entry, inlet, outlet);
+
+    const auto [minEntry, maxEntry] = std::minmax_element(entry.begin(), entry.end());
+    std::vector<bool> previous(network.pores.size(), false);
+    double previousVolume = 0.0;
+    int mismatches = 0;
+    for (int step = 0; step <= 40; ++step)
+    {
+        const double pc = *minEntry*std::pow(1.2*(*maxEntry)/(*minEntry), step/40.0);
+        const auto drained = drainage.drainedPores(pc);
+        mismatches += drained != drainedByBreadthFirstSearch(network, entry, inlet, outlet, pc);
+        double volume = 0.0;
+        for (std::size_t p = 0; p < drained.size(); ++p)
+        {
+            checkTrue(!previous[p] || drained[p], "drained pores stay drained at a larger capillary pressure");
+            volume += drained[p] ? network.pores[p].volume : 0.0;
+        }
+        checkTrue(volume >= previousVolume, "drained volume grows with the capillary pressure");
+        previous = drained;
+        previousVolume = volume;
+    }
+    checkTrue(mismatches == 0, "drained pores equal a breadth-first search from the inlet");
+    for (std::size_t p = 0; p < previous.size(); ++p)
+        checkTrue(previous[p] == !outlet[p], "all pores but the outlet drained above the largest entry pressure");
+    std::cout << "drainage: entry pressure " << *minEntry << " to " << *maxEntry << " Pa, "
+              << std::count(inlet.begin(), inlet.end(), true) << " inlet and "
+              << std::count(outlet.begin(), outlet.end(), true) << " outlet pores\n";
+}
+
 } // end anonymous namespace
 
 int main(int argc, char** argv)
@@ -406,6 +550,8 @@ int main(int argc, char** argv)
     testCubicLattice();
     testRegionAndDgf();
     testWalls();
+    testCells();
+    testDrainage();
 
     if (numFailures > 0)
         DUNE_THROW(Dune::Exception, numFailures << " checks failed");

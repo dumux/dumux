@@ -11,6 +11,7 @@
  */
 #include <config.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -47,6 +48,15 @@ constexpr double numStandardErrors = 4.0;
 double relativeStandardError(int hits, int samples)
 {
     return std::sqrt((1.0 - double(hits)/samples)/hits);
+}
+
+void checkTrue(bool condition, const std::string& name)
+{
+    if (!condition)
+    {
+        std::cout << "FAILED " << name << "\n";
+        ++numFailures;
+    }
 }
 
 std::array<P, 4> regularTetrahedron(double a)
@@ -170,6 +180,48 @@ void testRandomTangency()
     }
 }
 
+void testMspThroatRadius()
+{
+    using Dumux::PoreNetwork::SpherePacking::Detail::mspForceBalance;
+
+    // reference: getMSPRcByPosRadius of YADE 2022.01a, whose bisection stops at 1e-6 of the inscribed radius
+    const double r = 1e-4;
+    const auto t = equilateralTriangle(2.0*r);
+    check(mspThroatRadius(t, std::array<double, 3>{r, r, r}), 8.83407784475557e-06, 2e-6, "MS-P radius of three touching spheres (YADE)");
+
+    const std::array<double, 3> large{1.2*r, 1.2*r, 1.2*r};
+    checkTrue(mspThroatRadius(t, large) == 0.0, "MS-P radius of a closed throat");
+
+    std::mt19937 gen(7);
+    std::uniform_real_distribution<double> radius(0.8, 1.2), gap(0.0, 0.3);
+    std::bernoulli_distribution touching(0.5);
+    for (int sample = 0; sample < 500; ++sample)
+    {
+        std::array<double, 3> rs{radius(gen), radius(gen), radius(gen)};
+        std::array<double, 3> edge;
+        for (int k = 0; k < 3; ++k)
+            edge[k] = rs[(k+1)%3] + rs[(k+2)%3] + (touching(gen) ? 0.0 : gap(gen));
+        const double cosAngle = (edge[1]*edge[1] + edge[2]*edge[2] - edge[0]*edge[0])/(2.0*edge[1]*edge[2]);
+        const std::array<P, 3> x{P{0.0, 0.0, 0.0}, P{edge[2], 0.0, 0.0}, P{edge[1]*cosAngle, edge[1]*std::sqrt(1.0 - cosAngle*cosAngle), 0.0}};
+
+        const double rc = mspThroatRadius(x, rs);
+        const double inscribed = inscribedCircle(x, rs).radius;
+        double halfGap = 0.0;
+        for (int k = 0; k < 3; ++k)
+            halfGap = std::max(halfGap, 0.5*(edge[k] - rs[(k+1)%3] - rs[(k+2)%3]));
+        checkTrue(rc > 0.0 && rc <= inscribed && rc >= (1.0 - 1e-12)*halfGap, "MS-P radius between the half gap and the inscribed radius");
+        if (rc > (1.0 + 1e-12)*halfGap && rc < inscribed)
+            check(1.0 + mspForceBalance(x, rs, rc)*rc/(rs[0] + rs[1] + rs[2]), 1.0, 1e-12, "MS-P force balance at the entry radius");
+
+        const std::array<P, 3> permuted{x[2], x[0], x[1]};
+        check(mspThroatRadius(permuted, std::array<double, 3>{rs[2], rs[0], rs[1]}), rc, 1e-12, "MS-P radius independent of the vertex order");
+        std::array<P, 3> scaled = x;
+        for (auto& p : scaled)
+            p *= r;
+        check(mspThroatRadius(scaled, std::array<double, 3>{r*rs[0], r*rs[1], r*rs[2]}), r*rc, 1e-12, "MS-P radius proportional to the size");
+    }
+}
+
 // configuration in which no sphere reaches beyond the opposite face, so the sector formulas are exact
 std::pair<std::array<P, 4>, std::array<double, 4>> randomTetrahedron()
 {
@@ -282,6 +334,7 @@ int main()
     testSolidAngle();
     testRegularConfigurations();
     testRandomTangency();
+    testMspThroatRadius();
     testMonteCarlo();
 
     if (numFailures > 0)
