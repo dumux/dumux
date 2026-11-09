@@ -18,8 +18,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
-#include "properties_conduction.hh"
-#include "properties_convection.hh"
+#include "properties.hh"
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>

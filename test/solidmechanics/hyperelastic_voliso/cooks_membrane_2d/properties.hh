@@ -4,12 +4,13 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-#ifndef DUMUX_COOKS_MEMBRANE_MIXED_PROPERTIES_HH
-#define DUMUX_COOKS_MEMBRANE_MIXED_PROPERTIES_HH
+#ifndef DUMUX_COOKS_MEMBRANE_PROPERTIES_HH
+#define DUMUX_COOKS_MEMBRANE_PROPERTIES_HH
 
 #include <dune/alugrid/grid.hh>
 
 #include <dumux/discretization/pq1bubble.hh>
+#include <dumux/discretization/pq2.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/multidomain/traits.hh>
 
@@ -80,7 +81,7 @@ template<class TypeTag>
 struct EnableGridVolumeVariablesCache<TypeTag, TTag::CooksMembraneMixedPressure>
 { static constexpr bool value = true; };
 
-// ---- Coupling manager ----
+// ---- Coupling manager (MINI) ----
 using CooksMembraneMixedMDTraits = MultiDomainTraits<
     TTag::CooksMembraneMixedMomentum,
     TTag::CooksMembraneMixedPressure>;
@@ -91,6 +92,76 @@ struct CouplingManager<TypeTag, TTag::CooksMembraneMixedMomentum>
 template<class TypeTag>
 struct CouplingManager<TypeTag, TTag::CooksMembraneMixedPressure>
 { using type = HyperelasticVolIsoCouplingManager<CooksMembraneMixedMDTraits>; };
+
+// ---- Momentum type tag (PQ2 hybrid displacement — Taylor-Hood) ----
+namespace TTag {
+struct CooksMembraneTHMomentum
+{
+    using InheritsFrom = std::tuple<HyperelasticVolIsoMomentumModel, PQ2HybridModel>;
+    using Grid = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>;
+};
+} // end TTag
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::CooksMembraneTHMomentum>
+{ using type = CooksMembraneMomentumMixedProblem<TypeTag>; };
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::CooksMembraneTHMomentum>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using type = CooksMembraneHyperelasticSpatialParams<GridGeometry, Scalar>;
+};
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::CooksMembraneTHMomentum>
+{ static constexpr bool value = true; };
+
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::CooksMembraneTHMomentum>
+{ static constexpr bool value = true; };
+
+// ---- Pressure type tag (Box/P1 bulk pressure — same as MINI) ----
+namespace TTag {
+struct CooksMembraneTHPressure
+{
+    using InheritsFrom = std::tuple<HyperelasticVolIsoPressureModel, BoxModel>;
+    using Grid = Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>;
+};
+} // end TTag
+
+template<class TypeTag>
+struct Problem<TypeTag, TTag::CooksMembraneTHPressure>
+{ using type = CooksMembranePressureMixedProblem<TypeTag>; };
+
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::CooksMembraneTHPressure>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using GridGeometry = GetPropType<TypeTag, Properties::GridGeometry>;
+    using type = CooksMembraneHyperelasticSpatialParams<GridGeometry, Scalar>;
+};
+
+template<class TypeTag>
+struct EnableGridGeometryCache<TypeTag, TTag::CooksMembraneTHPressure>
+{ static constexpr bool value = true; };
+
+template<class TypeTag>
+struct EnableGridVolumeVariablesCache<TypeTag, TTag::CooksMembraneTHPressure>
+{ static constexpr bool value = true; };
+
+// ---- Coupling manager (Taylor-Hood) ----
+using CooksMembraneTHMDTraits = MultiDomainTraits<
+    TTag::CooksMembraneTHMomentum,
+    TTag::CooksMembraneTHPressure>;
+
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::CooksMembraneTHMomentum>
+{ using type = HyperelasticVolIsoCouplingManager<CooksMembraneTHMDTraits>; };
+template<class TypeTag>
+struct CouplingManager<TypeTag, TTag::CooksMembraneTHPressure>
+{ using type = HyperelasticVolIsoCouplingManager<CooksMembraneTHMDTraits>; };
 
 } // end namespace Dumux::Properties
 #endif
