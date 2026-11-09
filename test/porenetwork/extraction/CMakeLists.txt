@@ -17,3 +17,10 @@ dumux_add_test(SOURCES test_spherepackingpermeability.cc
 if(CGAL_FOUND)
   target_link_libraries(test_spherepackingpermeability PRIVATE CGAL::CGAL)
 endif()
+
+dumux_add_test(SOURCES test_spherepackingedgebodies.cc
+               LABELS porenetwork unit
+               CMAKE_GUARD CGAL_FOUND)
+if(CGAL_FOUND)
+  target_link_libraries(test_spherepackingedgebodies PRIVATE CGAL::CGAL)
+endif()
