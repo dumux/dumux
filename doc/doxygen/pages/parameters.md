@@ -130,6 +130,15 @@ int main(int argc, char** argv)
 }
 ```
 
+Parameters that are not set at runtime and fall back to a default value given at the call site,
+e.g. `getParam<double>("Newton.MaxRelativeShift", 1e-8)`, are only logged if the parameter
+`Parameters.LogFallbackDefaults` is set to `true`, in the input file or on the command line:
+```sh
+./executable params.input -Parameters.LogFallbackDefaults true
+```
+The report then also lists these parameters with the value they fell back to, and the parameters that
+were used with different default values, at different call sites or at a call site and in the global defaults.
+
 ## Parameter input file
 
 The parameter files are expected to use the

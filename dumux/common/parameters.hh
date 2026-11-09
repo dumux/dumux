@@ -138,6 +138,9 @@ private:
     //! we do this once per simulation on call to Parameters::init();
     static void applyGlobalDefaults_(Dune::ParameterTree& params);
 
+    //! enable the optional parts of the usage log requested by runtime parameters
+    static void configureUsageLog_();
+
     //! merge source into target tree
     static void mergeTree_(Dune::ParameterTree& target, const Dune::ParameterTree& source, bool overwrite = true);
 
