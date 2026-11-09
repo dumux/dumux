@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input linear_stability.py)
+dune_symlink_to_source_files(FILES params.input run_benchmark.py linear_stability.py riaz2006_fig4_ivp.csv)
 
 # growth of a perturbation of the boundary layer at Ra = 500, k = 8 pi from t = 0.01 to t = 2, reference from linear_stability.py
 dumux_add_test(NAME test_1p2c_onesidedconvection_box

@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+# SPDX-License-Identifier: CC-BY-4.0
+# Growth rate sigma = d ln max|c| / dt of the initial-value solution (markers 'IVP') in Figure 4 of
+# Riaz, Hesse, Tchelepi and Orr (2006), J. Fluid Mech. 548, 87-111, doi:10.1017/S0022112005007494, for Ra = 500.
+# The marker positions were extracted from the vector graphic of the figure and converted with the axes of the figure
+# (t = 0 ... 4, sigma = -0.5 ... 2.5). The center of a marker is defined as the center of its bounding box, which is
+# uncertain by about 0.01 in sigma.
+k_over_pi,t,growth_rate
+4,0.4791,-0.3272
+4,0.5234,-0.1336
+4,0.5762,0.0586
+4,0.6395,0.2480
+4,0.7177,0.4348
+4,0.8148,0.6161
+4,0.9367,0.7897
+4,1.0891,0.9495
+4,1.2734,1.0892
+4,1.4872,1.2044
+4,1.7229,1.2937
+4,1.9719,1.3612
+4,2.2286,1.4115
+4,2.4891,1.4488
+4,2.7529,1.4760
+4,3.0177,1.4959
+4,3.2834,1.5100
+4,3.5496,1.5198
+8,0.2724,-0.4708
+8,0.2877,-0.2760
+8,0.3053,-0.0796
+8,0.3253,0.1181
+8,0.3481,0.3137
+8,0.3748,0.5087
+8,0.4067,0.7046
+8,0.4448,0.8991
+8,0.4920,1.0918
+8,0.5515,1.2819
+8,0.6309,1.4682
+8,0.7410,1.6453
+8,0.8981,1.8007
+8,1.1110,1.9119
+8,1.3605,1.9677
+8,1.6224,1.9813
+8,1.8848,1.9720
+8,2.1472,1.9496
+8,2.4091,1.9196
+8,2.6700,1.8868
+8,2.9315,1.8508
+8,3.1925,1.8148
+8,3.4539,1.7782
+8,3.7153,1.7420
