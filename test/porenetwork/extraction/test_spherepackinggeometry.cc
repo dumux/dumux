@@ -40,6 +40,15 @@ void check(double value, double reference, double tolerance, const std::string& 
     }
 }
 
+// a correct formula fails a Monte Carlo check with probability 6e-5
+constexpr double numStandardErrors = 4.0;
+
+// relative standard error of a Monte Carlo estimate from the fraction hits/samples
+double relativeStandardError(int hits, int samples)
+{
+    return std::sqrt((1.0 - double(hits)/samples)/hits);
+}
+
 std::array<P, 4> regularTetrahedron(double a)
 {
     const double s = a/std::sqrt(8.0);
@@ -194,7 +203,7 @@ void testMonteCarlo()
                 ++hits;
         }
         const double estimate = double(hits)/n*extent[0]*extent[1]*extent[2];
-        check(tetrahedronVoidVolume(x, r), estimate, 5e-3, "void volume vs Monte Carlo");
+        check(tetrahedronVoidVolume(x, r), estimate, numStandardErrors*relativeStandardError(hits, n), "void volume vs Monte Carlo");
     }
 
     {
@@ -218,7 +227,8 @@ void testMonteCarlo()
                 ++hits;
         }
         const double area = triangleArea(t[0], t[1], t[2]);
-        check(facetFluidArea(t, r), area*hits/inside, 5e-3, "fluid area with a circle crossing an edge vs Monte Carlo");
+        check(facetFluidArea(t, r), area*hits/inside, numStandardErrors*relativeStandardError(hits, inside),
+              "fluid area with a circle crossing an edge vs Monte Carlo");
     }
 
     {
@@ -241,23 +251,27 @@ void testMonteCarlo()
             if ((inTetrahedron(q, upper) || inTetrahedron(q, lowerTet)) && !inAnySphere(q, t, r))
                 ++hits;
         }
-        check(region.voidVolume, double(hits)/n*1.0*0.9*0.7, 5e-3, "throat void volume vs Monte Carlo");
+        check(region.voidVolume, double(hits)/n*1.0*0.9*0.7, numStandardErrors*relativeStandardError(hits, n),
+              "throat void volume vs Monte Carlo");
 
         std::normal_distribution<double> normal;
-        double surface = 0.0;
+        double surface = 0.0, variance = 0.0;
         for (int i = 0; i < 3; ++i)
         {
             int surfaceHits = 0;
-            for (int s = 0; s < n/4; ++s)
+            for (int s = 0; s < n; ++s)
             {
                 P dir{normal(gen), normal(gen), normal(gen)};
                 const P q = t[i] + dir*(r[i]/dir.two_norm());
                 if (inTetrahedron(q, upper) || inTetrahedron(q, lowerTet))
                     ++surfaceHits;
             }
-            surface += double(surfaceHits)/(n/4)*4.0*pi*r[i]*r[i];
+            const double fraction = double(surfaceHits)/n;
+            const double sphereArea = 4.0*pi*r[i]*r[i];
+            surface += fraction*sphereArea;
+            variance += fraction*(1.0 - fraction)/n*sphereArea*sphereArea;
         }
-        check(region.solidSurface, surface, 5e-3, "throat solid surface vs Monte Carlo");
+        check(region.solidSurface, surface, numStandardErrors*std::sqrt(variance)/surface, "throat solid surface vs Monte Carlo");
     }
 }
 
