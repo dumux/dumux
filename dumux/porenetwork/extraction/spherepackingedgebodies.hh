@@ -350,6 +350,7 @@ Network<Scalar> extractNetwork(const Triangulation& triangulation,
 /*!
  * \brief The network without the pores that no chain of throats connects to a pore with one of the labels
  *
+ * A pore without throats, e.g. a boundary pore whose throats are all closed, connects to nothing whatever its label.
  * Throats, facets, wall pressures and the pores of the tetrahedra are renumbered accordingly.
  */
 template<class Scalar>
@@ -365,7 +366,7 @@ Network<Scalar> connectedNetwork(const Network<Scalar>& network, const std::vect
     std::vector<char> reached(n, 0);
     std::queue<std::size_t> front;
     for (std::size_t p = 0; p < n; ++p)
-        if (std::find(labels.begin(), labels.end(), network.pores[p].label) != labels.end())
+        if (!adjacent[p].empty() && std::find(labels.begin(), labels.end(), network.pores[p].label) != labels.end())
         {
             reached[p] = 1;
             front.push(p);

@@ -338,6 +338,24 @@ void testSolidCells()
     for (const auto p : connected.cellPores)
         valid = valid && p < static_cast<long>(connected.pores.size());
     checkTrue(valid, "renumbered throats and cells");
+
+    // a boundary pore whose throats are all closed connects nothing, so every remaining pore has a throat
+    auto closed = network;
+    std::size_t boundaryPore = 0;
+    while (closed.pores[boundaryPore].label != region.boundaryLabels[0])
+        ++boundaryPore;
+    std::erase_if(closed.throats, [&](const auto& throat) {
+        return throat.pores[0] == boundaryPore || throat.pores[1] == boundaryPore;
+    });
+    const auto withoutClosed = connectedNetwork(closed, {region.boundaryLabels[0], region.boundaryLabels[1]});
+    std::vector<int> numThroats(withoutClosed.pores.size(), 0);
+    for (const auto& throat : withoutClosed.throats)
+    {
+        ++numThroats[throat.pores[0]];
+        ++numThroats[throat.pores[1]];
+    }
+    checkTrue(withoutClosed.pores.size() < connected.pores.size()
+              && std::count(numThroats.begin(), numThroats.end(), 0) == 0, "boundary pore without throats removed");
 }
 
 void testTripleOverlap()
