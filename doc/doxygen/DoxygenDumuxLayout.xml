@@ -45,6 +45,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
       <tab type="usergroup" url="@ref free-flow-benchmarks" visible="yes" title="Free flow" intro="">
         <tab type="user" url="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/blob/master/examples/liddrivencavity/README.md" visible="yes" title="Shear-driven cavity" intro=""/>
         <tab type="user" url="@ref benchmark-taylor-couette" visible="yes" title="Taylor-Couette" intro=""/>
+        <tab type="user" url="@ref benchmark-angeli" visible="yes" title="Decaying vortices (FVCA8)" intro=""/>
       </tab>
       <tab type="usergroup" url="@ref shallow-water-benchmarks" visible="yes" title="Shallow water" intro="">
         <tab type="user" url="@ref benchmark-dam-break" visible="yes" title="Wet dam break" intro=""/>

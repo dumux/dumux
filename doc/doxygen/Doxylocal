@@ -17,6 +17,7 @@ INPUT                 += @top_srcdir@/README.md \
                          @top_srcdir@/test/porousmediumflow/2p1c/heatpipe/README.md \
                          @top_srcdir@/test/porousmediumflow/1pnc/1p2c/isothermal/henry/README.md \
                          @top_srcdir@/test/freeflow/navierstokes/taylorcouette/README.md \
+                         @top_srcdir@/test/freeflow/navierstokes/angeli/README.md \
                          @top_srcdir@/test/freeflow/shallowwater/dambreak/README.md \
                          @top_srcdir@/test/freeflow/shallowwater/bowl/README.md \
                          @top_srcdir@/test/freeflow/shallowwater/lakeatrest/README.md \
