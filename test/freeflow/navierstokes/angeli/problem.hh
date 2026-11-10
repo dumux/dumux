@@ -69,6 +69,7 @@ public:
         kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         useNeumann_ = getParam<bool>("Problem.UseNeumann", false);
         interpolateExactVelocity_ = getParam<bool>("Problem.InterpolateExactVelocity", false);
+        fixPressureInOneCell_ = getParam<bool>("Problem.FixPressureInOneCell", false);
     }
 
     /*!
@@ -125,9 +126,17 @@ public:
         // If only Dirichlet BCs are set for the momentum balance, fix the pressure at some cells such that the solution is fully defined.
         if (!useNeumann_)
         {
-            const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
-            if (fvGeometry.hasBoundaryScvf())
-                values.set(Indices::pressureIdx);
+            if (fixPressureInOneCell_)
+            {
+                if (scv.dofIndex() == 0)
+                    values.set(Indices::pressureIdx);
+            }
+            else
+            {
+                const auto fvGeometry = localView(this->gridGeometry()).bindElement(element);
+                if (fvGeometry.hasBoundaryScvf())
+                    values.set(Indices::pressureIdx);
+            }
         }
 
         return values;
@@ -235,6 +244,29 @@ public:
         return values;
     }
 
+    /*!
+     * \brief Returns the gradient of the analytical velocity at a given time and position.
+     * \param globalPos The global position
+     * \param time The current simulation time
+     */
+    Dune::FieldMatrix<Scalar, 2, 2> analyticalVelocityGradient(const GlobalPosition& globalPos, Scalar time) const
+    {
+        using std::exp;
+        using std::sin;
+        using std::cos;
+
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
+        const Scalar decay = exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * time);
+
+        Dune::FieldMatrix<Scalar, 2, 2> gradient;
+        gradient[0][0] = 2.0 * M_PI * M_PI * decay * sin(M_PI * x) * sin(2.0 * M_PI * y);
+        gradient[0][1] = - 4.0 * M_PI * M_PI * decay * cos(M_PI * x) * cos(2.0 * M_PI * y);
+        gradient[1][0] = M_PI * M_PI * decay * cos(M_PI * x) * cos(2.0 * M_PI * y);
+        gradient[1][1] = - 2.0 * M_PI * M_PI * decay * sin(M_PI * x) * sin(2.0 * M_PI * y);
+        return gradient;
+    }
+
     // \}
 
     /*!
@@ -312,6 +344,7 @@ private:
     Scalar time_ = 0.0;
     bool useNeumann_;
     bool interpolateExactVelocity_;
+    bool fixPressureInOneCell_;
 };
 } // end namespace Dumux
 

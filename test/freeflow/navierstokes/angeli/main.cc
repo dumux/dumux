@@ -14,6 +14,7 @@
 #include <config.h>
 
 #include <ctime>
+#include <fstream>
 #include <iostream>
 #include <type_traits>
 #include <tuple>
@@ -42,6 +43,7 @@
 #include <test/freeflow/navierstokes/errors.hh>
 
 #include "properties.hh"
+#include "velocityerrors.hh"
 
 int main(int argc, char** argv)
 {
@@ -153,8 +155,11 @@ int main(int argc, char** argv)
 
     // the discrete L2 and Linfity errors
     const bool printErrors = getParam<bool>("Problem.PrintErrors", false);
+    const bool zeroMeanPressureErrors = getParam<bool>("Problem.ZeroMeanPressureErrors", false);
+    const bool writeOnlyFinalStep = getParam<bool>("Vtk.WriteOnlyFinalStep", false);
     NavierStokesTest::Errors errors(momentumProblem, massProblem, x);
     NavierStokesTest::ErrorCSVWriter errorCSVWriter(momentumProblem, massProblem);
+    NavierStokesTest::VelocityGradientErrors<MomentumProblem> velocityErrors(momentumProblem, massProblem->name());
 
     // time loop
     timeLoop->start(); do
@@ -173,8 +178,21 @@ int main(int argc, char** argv)
         // print discrete L2 and Linfity errors
         if (printErrors)
         {
-            errors.update(x, timeLoop->time() + timeLoop->timeStepSize());
+            // the analytical pressure has a vanishing mean value (the grid is uniform)
+            auto xErrors = x;
+            if (zeroMeanPressureErrors)
+            {
+                Scalar meanPressure = 0.0;
+                for (const auto& p : x[massIdx])
+                    meanPressure += p[0];
+                meanPressure /= x[massIdx].size();
+                for (auto& p : xErrors[massIdx])
+                    p[0] -= meanPressure;
+            }
+
+            errors.update(xErrors, timeLoop->time() + timeLoop->timeStepSize());
             errorCSVWriter.printErrors(errors);
+            velocityErrors.update(x[momentumIdx], timeLoop->time() + timeLoop->timeStepSize());
         }
 
         // update the analytical solution
@@ -185,7 +203,8 @@ int main(int argc, char** argv)
         analyticalSolVectors.update(timeLoop->time());
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        if (!writeOnlyFinalStep || timeLoop->finished())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -196,6 +215,18 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // the numbers of non-zero entries of the blocks of the Jacobian
+    if (printErrors)
+    {
+        const auto& jacobian = assembler->jacobian();
+        std::ofstream matrixFile(massProblem->name() + "_matrix.csv", std::ios::trunc);
+        matrixFile << "nnzu, nnzp, nnzup, nnzpu\n"
+                   << jacobian[momentumIdx][momentumIdx].nonzeroes() << ", "
+                   << jacobian[massIdx][massIdx].nonzeroes() << ", "
+                   << jacobian[momentumIdx][massIdx].nonzeroes() << ", "
+                   << jacobian[massIdx][momentumIdx].nonzeroes() << "\n";
+    }
 
 
     ////////////////////////////////////////////////////////////
