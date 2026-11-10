@@ -236,8 +236,6 @@ Network<Scalar> assembleNetwork(const std::vector<TetrahedronPore<Scalar>>& cell
     // throats between groups, parallel facets combined
     struct Combined
     {
-        std::size_t count = 0;
-        const FacetThroat<Scalar>* single = nullptr;
         Scalar area = 0.0, areaLength = 0.0, conductanceFactor = 0.0, areaShapeFactor = 0.0, inscribedRadius = 0.0;
     };
     std::map<std::pair<std::size_t, std::size_t>, Combined> combined;
@@ -252,8 +250,6 @@ Network<Scalar> assembleNetwork(const std::vector<TetrahedronPore<Scalar>>& cell
             continue;
         }
         auto& entry = combined[std::minmax(g0, g1)];
-        ++entry.count;
-        entry.single = &f;
         entry.area += f.fluidArea;
         entry.areaLength += f.fluidArea*f.length;
         entry.conductanceFactor += f.fluidArea*f.hydraulicRadius*f.hydraulicRadius/f.length;
@@ -280,23 +276,12 @@ Network<Scalar> assembleNetwork(const std::vector<TetrahedronPore<Scalar>>& cell
     {
         typename Network<Scalar>::Throat throat;
         throat.pores = {static_cast<std::size_t>(poreIndex[pair.first]), static_cast<std::size_t>(poreIndex[pair.second])};
-        if (entry.count == 1)
-        {
-            throat.length = entry.single->length;
-            throat.fluidArea = entry.single->fluidArea;
-            throat.inscribedRadius = entry.single->inscribedRadius;
-            throat.hydraulicRadius = entry.single->hydraulicRadius;
-            throat.shapeFactor = entry.single->shapeFactor;
-        }
-        else
-        {
-            using std::sqrt;
-            throat.length = entry.areaLength/entry.area;
-            throat.fluidArea = entry.area;
-            throat.inscribedRadius = entry.inscribedRadius;
-            throat.hydraulicRadius = sqrt(entry.conductanceFactor*throat.length/entry.area);
-            throat.shapeFactor = entry.areaShapeFactor/entry.area;
-        }
+        using std::sqrt;
+        throat.length = entry.areaLength/entry.area;
+        throat.fluidArea = entry.area;
+        throat.inscribedRadius = entry.inscribedRadius;
+        throat.hydraulicRadius = sqrt(entry.conductanceFactor*throat.length/entry.area);
+        throat.shapeFactor = entry.areaShapeFactor/entry.area;
         const int label0 = network.pores[throat.pores[0]].label, label1 = network.pores[throat.pores[1]].label;
         throat.label = Detail::throatLabel(label0, label1, boundaryLabels);
         network.throats.push_back(throat);
@@ -326,9 +311,8 @@ Network<Scalar> assembleNetwork(const std::vector<TetrahedronPore<Scalar>>& cell
  * tetrahedron without a sphere touching all four spheres, the largest sphere around the power centre.
  * Throats: facets shared by two pores, with the distance of the power centres as length, the facet
  * fluid area, the inscribed circle, the hydraulic radius of the region between facet and power
- * centres, and the shape factor A/P^2 with the wetted perimeter P of the facet.
- * Parallel throats between merged pores are combined into one throat with the summed fluid area,
- * the area-weighted mean length and the hydraulic radius that conserves the sum of A R_h^2/L.
+ * centres, and the shape factor A/P^2 with the wetted perimeter P of the facet; merged pores and parallel
+ * facets as in assembleNetwork.
  */
 template<class Scalar>
 Network<Scalar> extractNetwork(const Triangulation& triangulation,

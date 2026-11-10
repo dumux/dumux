@@ -26,20 +26,14 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
+#include <dumux/common/math.hh>
+
 namespace Dumux::PoreNetwork::SpherePacking {
 
 template<class Scalar>
 using Point = Dune::FieldVector<Scalar, 3>;
 
 namespace Detail {
-
-template<class Scalar>
-Point<Scalar> cross(const Point<Scalar>& a, const Point<Scalar>& b)
-{ return {a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]}; }
-
-template<class Scalar>
-Scalar tripleProduct(const Point<Scalar>& a, const Point<Scalar>& b, const Point<Scalar>& c)
-{ return a*cross(b, c); }
 
 //! Smallest positive root of A x^2 + 2 B x + C = 0, else the largest real root, else zero
 template<class Scalar>
@@ -108,7 +102,7 @@ Scalar solidAngle(const Point<Scalar>& apex, const Point<Scalar>& p1, const Poin
     using std::abs; using std::atan2;
     const auto a = p1 - apex, b = p2 - apex, c = p3 - apex;
     const Scalar la = a.two_norm(), lb = b.two_norm(), lc = c.two_norm();
-    const Scalar numerator = abs(Detail::tripleProduct(a, b, c));
+    const Scalar numerator = abs(tripleProduct(a, b, c));
     const Scalar denominator = la*lb*lc + (a*b)*lc + (a*c)*lb + (b*c)*la;
     return 2.0*atan2(numerator, denominator);
 }
@@ -119,19 +113,19 @@ Scalar planeAngle(const Point<Scalar>& apex, const Point<Scalar>& p1, const Poin
 {
     using std::atan2;
     const auto a = p1 - apex, b = p2 - apex;
-    return atan2(Detail::cross(a, b).two_norm(), a*b);
+    return atan2(crossProduct(a, b).two_norm(), a*b);
 }
 
 template<class Scalar>
 Scalar tetrahedronVolume(const std::array<Point<Scalar>, 4>& x)
 {
     using std::abs;
-    return abs(Detail::tripleProduct(x[1] - x[0], x[2] - x[0], x[3] - x[0]))/6.0;
+    return abs(tripleProduct(x[1] - x[0], x[2] - x[0], x[3] - x[0]))/6.0;
 }
 
 template<class Scalar>
 Scalar triangleArea(const Point<Scalar>& x0, const Point<Scalar>& x1, const Point<Scalar>& x2)
-{ return 0.5*Detail::cross(x1 - x0, x2 - x0).two_norm(); }
+{ return 0.5*crossProduct(x1 - x0, x2 - x0).two_norm(); }
 
 /*!
  * \brief Power centre of four spheres: the point c with equal power |c - x_i|^2 - r_i^2
@@ -245,7 +239,7 @@ Scalar circularSegmentBeyondEdge(const Point<Scalar>& x0, Scalar r0, const Point
     if (projection < 0.0 || projection > edgeLength2)
         return 0.0;
 
-    const Scalar distance2 = Detail::cross(x0 - x1, edge).two_norm2()/edgeLength2;
+    const Scalar distance2 = crossProduct(x0 - x1, edge).two_norm2()/edgeLength2;
     if (distance2 >= r0*r0)
         return 0.0;
 
@@ -301,7 +295,7 @@ template<class Scalar>
 ThroatRegion<Scalar> throatRegion(const std::array<Point<Scalar>, 3>& x, const std::array<Scalar, 3>& r,
                                   const Point<Scalar>& p1, const Point<Scalar>& p2)
 {
-    auto normal = Detail::cross(x[1] - x[0], x[2] - x[0]);
+    auto normal = crossProduct(x[1] - x[0], x[2] - x[0]);
     if (normal*(p1 - p2) < 0.0)
         normal *= -1.0;
 

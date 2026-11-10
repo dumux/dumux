@@ -21,7 +21,7 @@
 #include <dumux/porenetwork/extraction/spatialparams.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
-#include "problem.hh"
+#include "../1p/problem.hh"
 
 namespace Dumux::Properties {
 
@@ -31,7 +31,7 @@ struct SpherePackingPermeability { using InheritsFrom = std::tuple<PNMOneP>; };
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::SpherePackingPermeability>
-{ using type = SpherePackingPermeabilityProblem<TypeTag>; };
+{ using type = PNMOnePProblem<TypeTag>; };
 
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::SpherePackingPermeability>

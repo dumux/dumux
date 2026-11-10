@@ -8,24 +8,21 @@
  * \file
  * \brief Test for the pore-network grid manager with pores and throats given in memory
  *
- * Every vertex and element carries the parameters of the pore and throat at its position, as a grid read from a DGF
- * file of the same network does, also after grid sanitation removed a cluster not connected to the inlet.
+ * Every vertex and element carries the parameters of the pore and throat at its position, also after writing
+ * the grid to a DGF file and reading it back, and after grid sanitation removed a cluster not connected to the inlet.
  */
 #include <config.h>
 
 #include <algorithm>
 #include <array>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <map>
 #include <string>
-#include <vector>
 
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/io/grid/porenetwork/dgfwriter.hh>
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dumux/io/grid/porenetwork/networkdata.hh>
 
@@ -33,7 +30,6 @@ namespace {
 
 using GridManager = Dumux::PoreNetwork::GridManager<3>;
 using NetworkData = Dumux::PoreNetwork::NetworkData<3>;
-using Position = Dune::FieldVector<double, 3>;
 
 int numFailures = 0;
 
@@ -63,71 +59,30 @@ NetworkData network()
     return data;
 }
 
-void writeDgf(const std::string& fileName, const NetworkData& data)
-{
-    std::ofstream file(fileName);
-    file << std::setprecision(17) << "DGF\n% Vertex parameters:";
-    for (const auto& name : data.vertexParameterNames)
-        file << " " << name;
-    file << "\n% Element parameters:";
-    for (const auto& name : data.elementParameterNames)
-        file << " " << name;
-    file << "\nVertex\nparameters " << data.vertexParameterNames.size() << "\n";
-    for (std::size_t i = 0; i < data.porePositions.size(); ++i)
-    {
-        file << data.porePositions[i];
-        for (const double value : data.vertexParameters[i])
-            file << " " << value;
-        file << "\n";
-    }
-    file << "#\nSIMPLEX\nparameters " << data.elementParameterNames.size() << "\n";
-    for (std::size_t t = 0; t < data.throatPores.size(); ++t)
-    {
-        file << data.throatPores[t][0] << " " << data.throatPores[t][1];
-        for (const double value : data.elementParameters[t])
-            file << " " << value;
-        file << "\n";
-    }
-    file << "#\n";
-}
+std::size_t poreAt(const NetworkData& data, const Dune::FieldVector<double, 3>& position)
+{ return std::find(data.porePositions.begin(), data.porePositions.end(), position) - data.porePositions.begin(); }
 
-std::size_t poreAt(const NetworkData& data, const Position& position)
-{
-    const auto it = std::find(data.porePositions.begin(), data.porePositions.end(), position);
-    if (it == data.porePositions.end())
-        DUNE_THROW(Dune::InvalidStateException, "No pore at " << position);
-    return std::distance(data.porePositions.begin(), it);
-}
-
-//! check that the grid holds exactly the given pores and throats, and returns the number of vertices and elements
-std::array<std::size_t, 2> checkGrid(GridManager& gridManager, const NetworkData& data, const std::string& name)
+//! the grid holds the given pores and throats with their parameters; returns its numbers of vertices and elements
+std::array<int, 2> checkGrid(GridManager& gridManager, const NetworkData& data, const std::string& name)
 {
     const auto gridView = gridManager.grid().leafGridView();
     const auto gridData = gridManager.getGridData();
     for (const auto& vertex : vertices(gridView))
     {
         const auto i = poreAt(data, vertex.geometry().center());
-        for (std::size_t k = 0; k < data.vertexParameterNames.size(); ++k)
-            checkTrue(gridData->getParameter(vertex, data.vertexParameterNames[k]) == data.vertexParameters[i][k],
-                      name + ": " + data.vertexParameterNames[k] + " of pore " + std::to_string(i));
+        checkTrue(i < data.porePositions.size() && gridData->parameters(vertex) == data.vertexParameters[i],
+                  name + ": parameters of pore " + std::to_string(i));
     }
-
-    std::map<std::array<std::size_t, 2>, std::size_t> throatOf;
-    for (std::size_t t = 0; t < data.throatPores.size(); ++t)
-        throatOf[{std::min(data.throatPores[t][0], data.throatPores[t][1]), std::max(data.throatPores[t][0], data.throatPores[t][1])}] = t;
     for (const auto& element : elements(gridView))
     {
-        const auto i = poreAt(data, element.geometry().corner(0));
-        const auto j = poreAt(data, element.geometry().corner(1));
-        const auto t = throatOf.find({std::min(i, j), std::max(i, j)});
-        checkTrue(t != throatOf.end(), name + ": element between pores " + std::to_string(i) + " and " + std::to_string(j) + " is a throat");
-        if (t == throatOf.end())
-            continue;
-        for (std::size_t k = 0; k < data.elementParameterNames.size(); ++k)
-            checkTrue(gridData->getParameter(element, data.elementParameterNames[k]) == data.elementParameters[t->second][k],
-                      name + ": " + data.elementParameterNames[k] + " of throat " + std::to_string(t->second));
+        const std::array<std::size_t, 2> pores{poreAt(data, element.geometry().corner(0)), poreAt(data, element.geometry().corner(1))};
+        const auto t = std::find_if(data.throatPores.begin(), data.throatPores.end(), [&](const auto& p) {
+            return p == pores || p == std::array<std::size_t, 2>{pores[1], pores[0]};
+        }) - data.throatPores.begin();
+        checkTrue(t < static_cast<long>(data.throatPores.size()) && gridData->parameters(element) == data.elementParameters[t],
+                  name + ": element between pores " + std::to_string(pores[0]) + " and " + std::to_string(pores[1]));
     }
-    return {static_cast<std::size_t>(gridView.size(1)), static_cast<std::size_t>(gridView.size(0))};
+    return {gridView.size(1), gridView.size(0)};
 }
 
 template<class Function>
@@ -144,7 +99,6 @@ void checkThrows(const Function& function, const std::string& name)
 int main(int argc, char** argv)
 {
     Dumux::initialize(argc, argv);
-    writeDgf("network_data.dgf", network());
     Dumux::Parameters::init([](auto& tree) {
         tree["Dgf.Grid.File"] = "network_data.dgf";
         tree["Sanitized.Grid.Sanitize"] = "true";
@@ -155,23 +109,18 @@ int main(int argc, char** argv)
 
     GridManager given;
     given.init(data);
-    const auto [numVertices, numElements] = checkGrid(given, data, "given data");
-    checkTrue(numVertices == 7 && numElements == 5, "given data: all pores and throats");
+    checkTrue(checkGrid(given, data, "given data") == std::array<int, 2>{7, 5}, "given data: all pores and throats");
     checkThrows([&]{ given.getGridData()->assignParameters(); }, "given data: no generated parameters");
 
+    Dumux::PoreNetwork::writeDgf("network_data.dgf", given.grid().leafGridView(), *given.getGridData());
     GridManager dgf;
     dgf.init("Dgf");
-    const auto [numDgfVertices, numDgfElements] = checkGrid(dgf, data, "dgf file");
-    checkTrue(numDgfVertices == numVertices && numDgfElements == numElements, "dgf file: same grid size");
-    for (const auto& name : data.vertexParameterNames)
-        checkTrue(dgf.getGridData()->parameterIndex(name) == given.getGridData()->parameterIndex(name), "same index of " + name);
-    for (const auto& name : data.elementParameterNames)
-        checkTrue(dgf.getGridData()->parameterIndex(name) == given.getGridData()->parameterIndex(name), "same index of " + name);
+    checkTrue(checkGrid(dgf, data, "dgf file") == std::array<int, 2>{7, 5}, "dgf file: all pores and throats");
 
     GridManager sanitized;
     sanitized.init(data, "Sanitized");
-    const auto [numSanitizedVertices, numSanitizedElements] = checkGrid(sanitized, data, "sanitized");
-    checkTrue(numSanitizedVertices == 5 && numSanitizedElements == 4, "sanitized: the pair not connected to the inlet is removed");
+    checkTrue(checkGrid(sanitized, data, "sanitized") == std::array<int, 2>{5, 4},
+              "sanitized: the pair not connected to the inlet is removed");
 
     auto shortRow = data;
     shortRow.elementParameters[2].pop_back();
