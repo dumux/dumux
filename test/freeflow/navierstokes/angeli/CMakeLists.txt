@@ -25,4 +25,11 @@ dumux_add_test(NAME test_ff_navierstokes_angeli_averaged
                              -Problem.Name test_ff_navierstokes_angeli_averaged
                              -Problem.InterpolateExactVelocity true")
 
-dune_symlink_to_source_files(FILES "params.input")
+dumux_add_test(NAME test_ff_navierstokes_angeli_convergence
+              LABELS freeflow navierstokes
+              TARGET test_ff_navierstokes_angeli
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/convergencetest.py
+              CMD_ARGS test_ff_navierstokes_angeli)
+
+dune_symlink_to_source_files(FILES "params.input" "convergencetest.py" "plot_results.py")
