@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief Test for the three-phase isothermal NAPL infiltration model.
  */
 #include <config.h>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The properties for the shallow water lake-at-rest test
  */
 #ifndef DUMUX_LAKE_AT_REST_TEST_PROPERTIES_HH

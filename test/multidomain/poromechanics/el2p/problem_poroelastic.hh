@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The poro-elastic sub-problem in the el2p coupled problem.
  */
 #ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The poro-elastic sub-problem in the el2p coupled problem.
  */
 template<class TypeTag>

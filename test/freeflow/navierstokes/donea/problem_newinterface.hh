@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the (hybrid) CVFE (Navier-)Stokes models with analytical solution (Donea 2003, \cite Donea2003).
  */
 #ifndef DUMUX_DONEA_TEST_PROBLEM_NEWINTERFACE_HH
@@ -30,7 +29,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem for the (hybrid) CVFE schemes (Donea 2003, \cite Donea2003).
  *
  * A two-dimensional Stokes flow in a square domain is considered.

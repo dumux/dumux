@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Richards benchmark test
  *
  * Infiltration benchmark:

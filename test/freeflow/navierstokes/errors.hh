@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \copydoc Dumux::NavierStokesTestError
  */
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ERRORS_HH

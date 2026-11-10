@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Cook's membrane with linear elasticity: displacement field and vertical displacement
  *        of the upper right corner
  */

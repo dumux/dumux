@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Fučík's semi-analytical McWhorter-Sunada solution for counter-current imbibition.
  */
 #ifndef DUMUX_TEST_TWOP_MCWHORTERSUNADA_ANALYTICAL_SOLUTION_HH

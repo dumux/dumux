@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief Test for the outer cell states of the shallow water boundary conditions
  */
 #include <config.h>

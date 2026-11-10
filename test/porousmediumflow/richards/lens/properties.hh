@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief The properties of the water infiltration problem with a
  *        low-permeability lens embedded into a high-permeability domain which
  *        uses the Richards box model.

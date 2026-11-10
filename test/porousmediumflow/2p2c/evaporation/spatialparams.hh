@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the evaporation constant component problem.
  */
 #ifndef DUMUX_EVAPORATION_CONSTANT_COMPONENT_SPATIAL_PARAMS_HH
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCModel
  * \brief Definition of the spatial parameters for the evaporation constant component problem.
  */
 template<class GridGeometry, class Scalar>

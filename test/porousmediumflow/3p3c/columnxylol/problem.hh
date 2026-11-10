@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief Non-isothermal injection problem where water is injected into a
  *        sand column with a NAPL contamination.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCTests
  * \brief Non-isothermal injection problem where a water is injected into a
  *        sand column with a NAPL contamination.
  *

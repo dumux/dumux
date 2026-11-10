@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Properties of non-isothermal steam injection test problem for the 2p1cni model.
  */
 

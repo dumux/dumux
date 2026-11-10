@@ -3,7 +3,6 @@
 //
 /*!
  * \file
- * \ingroup Linear
  * \brief Test for the MUMPS solver backend with dofs on the element faces, on a non-overlapping
  *        and an overlapping decomposition, for one domain, for two coupled subdomains, for the
  *        two coupled fields as one system with two unknowns per dof, and for two subdomains on

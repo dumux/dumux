@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The model traits used in the tracer facet coupling test.
  */
 

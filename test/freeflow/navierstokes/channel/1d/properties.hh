@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief The properties of the test for the 1-D Navier-Stokes model with an analytical solution.
  */
 #ifndef DUMUX_DONEA_TEST_PROPERTIES_HH

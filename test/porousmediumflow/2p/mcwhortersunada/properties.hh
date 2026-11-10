@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Properties for the McWhorter-Sunada two-phase test.
  */
 #ifndef DUMUX_TEST_TWOP_MCWHORTERSUNADA_PROPERTIES_HH

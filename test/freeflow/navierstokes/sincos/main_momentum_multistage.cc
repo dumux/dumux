@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the multi-stage assembler with the instationary CVFE momentum model.
  *
  * The momentum balance is solved with the analytical pressure of the instationary sincos

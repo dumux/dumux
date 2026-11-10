@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief The properties of the non-isothermal gas injection problem where a gas (e.g. steam/air) is
  *        injected into a unsaturated porous medium with a residually trapped NAPL contamination.
  */

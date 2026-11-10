@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Test for the problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 #include <config.h>

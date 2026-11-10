@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Discretization
  * \brief Test that every degree of freedom on a periodic boundary is mapped to all its periodic images
  */
 #include <config.h>

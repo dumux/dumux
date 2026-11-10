@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for a surfactant model.
  */
 #ifndef DUMUX_TEST_2P3C_SURFACTANT_SPATIALPARAMS_HH
@@ -23,7 +22,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for a surfactant model.
  */
 template<class GridGeometry, class Scalar>

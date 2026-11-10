@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The problem setup for the convergence test with analytic solution
  */
 #ifndef DUMUX_CONVERGENCE_TEST_ONEP_PROBLEM_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief The problem setup for the convergence test with analytic solution
  */
 template <class TypeTag>

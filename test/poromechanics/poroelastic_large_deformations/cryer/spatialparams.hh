@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters for the Cryer sphere consolidation benchmark.
  */
 #ifndef DUMUX_TEST_POROELASTIC_LARGE_DEF_CRYER_SPATIALPARAMS_HH
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters for the three subdomains of the Cryer benchmark.
  */
 template<class GridDiscretization, class Scalar>

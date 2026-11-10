@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief The fine-level spatial params for the vertical equilibrium Darcy test.
  */
 

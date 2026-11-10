@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Richards benchmarks base problem
  *
  * Infiltration benchmark:
@@ -37,7 +36,6 @@ enum class BenchmarkScenario {
 };
 
 /*!
- * \ingroup RichardsTests
  * \brief Richards benchmarks base problem
  */
 template <class TypeTag>

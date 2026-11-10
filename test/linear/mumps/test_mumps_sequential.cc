@@ -3,7 +3,6 @@
 //
 /*!
  * \file
- * \ingroup Linear
  * \brief Test for the sequential MUMPS solver backend: one solver instance solves a sequence of
  *        systems whose values, sparsity pattern and size change, and reuses a factorization for
  *        several right-hand sides, one by one and in one solve, single-type (also with 4x4 blocks)

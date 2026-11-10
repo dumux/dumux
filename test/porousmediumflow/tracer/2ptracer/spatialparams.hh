@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
  */
 #ifndef DUMUX_TWOP_TRACER_TEST_SPATIAL_PARAMS_HH
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
  */
 template<class GridGeometry, class Scalar>

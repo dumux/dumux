@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the column problem.
  */
 #ifndef DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCModel
  * \brief Definition of the spatial parameters for the column problem.
  */
 template<class GridGeometry, class Scalar>

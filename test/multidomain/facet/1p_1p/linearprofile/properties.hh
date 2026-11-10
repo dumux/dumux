@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The properties for the single-phase facet coupling test.
  */
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_PROPERTIES_HH

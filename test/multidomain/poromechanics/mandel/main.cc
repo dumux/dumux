@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Mandel's problem: consolidation of a poroelastic slab between two rigid plates,
  *        solved with the coupled single-phase flow and poroelastic models.
  */

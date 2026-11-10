@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief The Henry problem of Fahs et al. \cite Fahs2016
  */
 #ifndef DUMUX_TEST_HENRY_FAHS_PROBLEM_HH
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Seawater intrusion into a confined aquifer (Henry \cite Henry1964) as defined by Fahs et al. \cite Fahs2016
  */
 template <class TypeTag>

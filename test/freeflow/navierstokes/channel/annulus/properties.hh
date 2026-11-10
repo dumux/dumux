@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Properties of the radial flow between two coaxial cylinders
  */
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANNULUS_PROPERTIES_HH

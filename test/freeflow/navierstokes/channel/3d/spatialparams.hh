@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FreeflowTests
  * \brief Definition of the spatial parameters for the 3D Channel Problems.
  */
 
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FreeflowModels
  * \brief Definition of the spatial parameters for the freeflow problems.
  */
 template<class GridGeometry, class Scalar>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully water saturated medium.
  *
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully water saturated medium.
  */
 template<class TypeTag>

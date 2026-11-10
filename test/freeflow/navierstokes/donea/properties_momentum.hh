@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the staggered grid (Navier-)Stokes model with analytical solution (Donea 2003, \cite Donea2003).
  */
 #ifndef DUMUX_DONEA_TEST_PROPERTIES_MOMENTUM_HH

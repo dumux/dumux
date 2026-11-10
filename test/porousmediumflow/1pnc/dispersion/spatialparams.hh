@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc problems.
  */
 
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc test problems.
  */
 template<class GridGeometry, class Scalar>

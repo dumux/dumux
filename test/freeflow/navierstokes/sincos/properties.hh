@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesNCTests
  * \brief The properties of the test for the Navier-Stokes models with analytical solution.
  */
 #ifndef DUMUX_SINCOS_TEST_PROPERTIES_HH

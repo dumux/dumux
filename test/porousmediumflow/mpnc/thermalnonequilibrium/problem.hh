@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Problem where hot, pure liquid water is injected from the left hand side into an initially
  *        isothermal domain.
  *
@@ -29,7 +28,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MPNCTests
  * \brief Problem where water is injected from the left hand side into a porous media filled domain,
  *        which is supplied with energy from the right hand side to evaporate the water.
  */

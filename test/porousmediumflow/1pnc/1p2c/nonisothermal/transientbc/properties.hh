@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Test for the OnePNCModel in combination with the NI model with transient boundary conditions.
  *
  * The simulation domain is a tube with an elevated temperature on the left hand side.

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief Fluid system for the tracer facet coupling test.
  */
 

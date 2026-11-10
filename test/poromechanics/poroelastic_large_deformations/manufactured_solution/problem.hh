@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters and subdomain problems of the plane-strain manufactured
  *        solution for the large-deformation poroelastic model.
  *

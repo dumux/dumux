@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup SolidEnergyTests
  * \brief Properties for the solid energy test
  */
 #ifndef DUMUX_TEST_SOLIDENERGY_PROPERTIES_HH

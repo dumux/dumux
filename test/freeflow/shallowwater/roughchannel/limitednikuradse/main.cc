@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the shallow water model in a rough channel with limited Nikuradse friction.
  */
 #include <config.h>

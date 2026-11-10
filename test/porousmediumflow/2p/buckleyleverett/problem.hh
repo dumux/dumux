@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Buckley-Leverett test problem for incompressible immiscible two-phase flow.
  */
 #ifndef DUMUX_TEST_TWOP_BUCKLEYLEVERETT_PROBLEM_HH

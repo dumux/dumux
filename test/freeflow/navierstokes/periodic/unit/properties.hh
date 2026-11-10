@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Stationary test for the staggered grid Navier-Stokes model with periodic BC
  */
 

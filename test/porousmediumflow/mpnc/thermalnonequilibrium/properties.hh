@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief The properties of the problem where hot, pure liquid water is injected from the left hand
  * side into a initially isotherm domain.
  */

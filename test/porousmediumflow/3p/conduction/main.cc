@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief Test for the 3pni CC model.
  */
 #include <config.h>

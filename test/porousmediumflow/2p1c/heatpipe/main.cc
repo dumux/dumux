@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Steady heat pipe with the 2p1cni model compared with the solution of Udell (1985).
  */
 #include <config.h>

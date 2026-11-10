@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Properties of the 2p1cni heat pipe test.
  */
 #ifndef DUMUX_TEST_2P1C_HEATPIPE_PROPERTIES_HH
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPOneCTests
  * \brief Without heat conduction, the latent heat of the counter-current flow carries the whole heat flux.
  */
 template<class Scalar>

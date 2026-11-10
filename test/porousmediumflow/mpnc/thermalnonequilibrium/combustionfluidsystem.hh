@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief @copybrief Dumux::FluidSystems::CombustionFluidsystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
@@ -27,8 +26,6 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup MPNCTests
- *
  * \brief A two-phase fluid system with water as sole component.
  *
  * Values are taken from Shi and Wang, 2011 \cite Shi2011.

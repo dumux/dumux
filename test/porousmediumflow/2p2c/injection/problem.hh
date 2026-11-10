@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCTests
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  */

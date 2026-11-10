@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */

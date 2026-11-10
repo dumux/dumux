@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief The properties of the problem where air is injected in a unsaturated porous medium.
  */
 #ifndef DUMUX_MPNC_TWOPTWOC_COMPARISON_OBSTACLE_PROPERTIES_HH

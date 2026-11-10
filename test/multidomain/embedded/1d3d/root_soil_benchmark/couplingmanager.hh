@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedCoupling
  * \brief Coupling manager for 1d-3d mixed-dimension method with distributed sources
  */
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_KERNEL_ROOTSOIL_HH
@@ -42,7 +41,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedCoupling
  * \brief Coupling manager for 1d-3d mixed-dimension method with distributed sources
  * \tparam MDTraits the multidomain traits
  * \tparam CouplingReconstruction the interface reconstruction operator

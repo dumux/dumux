@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The property specializations for the benchmark cases C1.2a/b from Schnepf et al 2023
  */
 #ifndef DUMUX_1D3D_KERNEL_ROOTSOIL_PROPERTIES_HH

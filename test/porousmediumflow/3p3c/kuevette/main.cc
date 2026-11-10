@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief Test for the three-phase three-component model.
  */
 #include <config.h>

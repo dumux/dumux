@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Geometry
  * \brief Test the queries of bounding box trees on a grid, a set of triangles and a polyline
  *
  * A regular polygon split into triangles and a polyline are intersected with a structured grid.

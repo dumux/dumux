@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Stationary test for the staggered grid Navier-Stokes model with periodic BC
  */
 
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Periodic test problem for the staggered grid
  *
  * A two-dimensional Navier-Stokes flow with a periodicity in one direction

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCMinTests
  * \brief Problem where brine is evaporating at the top boundary. The system is closed at the remaining boundaries.
  */
 #ifndef DUMUX_SALINIZATION_PROBLEM_HH
@@ -28,7 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCMinTests
  * \brief Problem where water is evaporating at the top of a porous media filled container saturated with brine and air, which causes precipitation at the top.
  *
  */

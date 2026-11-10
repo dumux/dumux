@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePTests
  * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
  *
  * The simulation domain is a tube with an elevated temperature on the left hand side.
@@ -27,7 +26,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Test for the OnePModel in combination with the NI model for a conduction problem.
  *
  * The simulation domain is a tube with an elevated temperature on the left hand side.

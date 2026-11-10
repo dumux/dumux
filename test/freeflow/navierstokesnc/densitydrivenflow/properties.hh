@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesNCTests
  * \brief The properties of the test for the compositional staggered grid (Navier-)Stokes model.
  */
 #ifndef DUMUX_DENSITY_FLOW_NC_TEST_PROPERTIES_HH

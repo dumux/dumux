@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePTests
  * \brief Tests for the OnePModel in combination with the NI model for a conduction and a convection problem.
  *
  * The simulation domain is a tube. In the conduction problem, the left hand side has an elevated temperature.

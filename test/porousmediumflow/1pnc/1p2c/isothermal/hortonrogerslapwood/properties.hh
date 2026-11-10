@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Properties of the Horton-Rogers-Lapwood benchmark
  */
 #ifndef DUMUX_TEST_HORTON_ROGERS_LAPWOOD_PROPERTIES_HH

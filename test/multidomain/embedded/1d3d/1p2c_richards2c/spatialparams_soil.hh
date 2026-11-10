@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the soil problem.
  */
 
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the soil problem.
  */
 template<class GridGeometry, class Scalar>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief Test for the one-phase facet coupling model using the box scheme,
  *        considering fractures that extend across the boundary.
  */

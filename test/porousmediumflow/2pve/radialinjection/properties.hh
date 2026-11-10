@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief The properties for the radial injection into a homogeneous confined aquifer.
  */
 

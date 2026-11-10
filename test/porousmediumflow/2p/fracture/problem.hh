@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief A discrete fracture network embedded in an impermeable matrix.
  *
  * The fracture is a 2D network embedded in 3D.
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief Trichloroethene (DNAPL) transport through a fracture network (2d in 3d).
  */
 template <class TypeTag>

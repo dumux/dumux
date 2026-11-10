@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Discretization
  * \brief Test the interpolation point data of element variables for all combinations of storing
  *        the variables and the interpolation point data for the whole grid
  *

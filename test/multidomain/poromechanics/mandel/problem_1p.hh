@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The flow sub-problem of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_ONEP_SUB_PROBLEM_HH
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The flow sub-problem of Mandel's problem
  *
  * The right boundary is drained, all other boundaries are impermeable.

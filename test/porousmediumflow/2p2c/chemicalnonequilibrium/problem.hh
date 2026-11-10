@@ -7,7 +7,6 @@
 // vi: set et ts=4 sw=4 sts=4:
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Problem for the 2p2c chemical nonequilibrium problem.
  */
 
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCTests
  * \brief Problem for the 2p2c chemical nonequilibrium problem.
  */
 template <class TypeTag>

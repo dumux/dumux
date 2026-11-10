@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters of the poroelastic sub-problem of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_POROELASTIC_SPATIALPARAMS_HH
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters of the poroelastic sub-problem of Mandel's problem
  */
 template<class Scalar, class GridGeometry, class CouplingManager>

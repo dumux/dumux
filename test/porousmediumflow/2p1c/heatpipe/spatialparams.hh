@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Spatial parameters of the 2p1cni heat pipe test.
  */
 #ifndef DUMUX_TEST_2P1C_HEATPIPE_SPATIALPARAMS_HH
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPOneCTests
  * \brief Homogeneous medium with Leverett's capillary pressure and cubic relative permeabilities.
  *
  * The cubic relative permeabilities of the HeatPipeLaw hold for arguments up to 0.95,

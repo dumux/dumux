@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
- * \ingroup SpatialParameters
  * \brief Spatial parameters for a pore-network model with non-creeping flow.
  */
 #ifndef DUMUX_PNM_NONCREEPING_SPATIAL_PARAMS_1P_HH

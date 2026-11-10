@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties for the convergence test with analytic solution
  */
 #ifndef DUMUX_CONVERGENCE_TEST_ONEP_PROPERTIES_HH

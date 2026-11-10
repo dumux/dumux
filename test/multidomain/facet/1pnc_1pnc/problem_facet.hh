@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the lower-dimensional domain in the 1pnc facet coupling test.
  */
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_FACETPROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The lower-dimensional test problem for the
  *        1pnc model with coupling across the bulk grid facets.
  */

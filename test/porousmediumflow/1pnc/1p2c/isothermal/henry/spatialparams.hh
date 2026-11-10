@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Constant spatial parameters with dispersivities for the Henry problem \cite Henry1964
  */
 #ifndef DUMUX_TEST_HENRY_FAHS_SPATIALPARAMS_HH
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Constant spatial parameters with the longitudinal and transverse dispersivities
  *        of Scheidegger's dispersion tensor
  */

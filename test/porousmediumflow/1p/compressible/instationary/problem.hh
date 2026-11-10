@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
 
@@ -23,7 +22,6 @@
 #include <dumux/material/components/tabulatedcomponent.hh>
 namespace Dumux {
 /*!
- * \ingroup OnePTests
  * \brief  Test problem for the compressible one-phase model.
  */
 template<class TypeTag>

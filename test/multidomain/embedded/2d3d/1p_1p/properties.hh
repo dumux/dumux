@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The properties for a fracture problem.
  */
 #ifndef DUMUX_FRACTURE_PROPERTIES_HH

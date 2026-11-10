@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the Poiseuille flow problem.
  */
 #ifndef DUMUX_POISEUILLE_FLOW_SPATIAL_PARAMETERS_HH
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the Poiseuille flow test.
  *
  */

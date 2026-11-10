@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1948, \cite Kovasznay1948)
  */
 
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid (Kovasznay 1948, \cite Kovasznay1948)
  *
  * A two-dimensional Navier-Stokes flow with a periodicity in one direction

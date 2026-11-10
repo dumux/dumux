@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCMinTests
  * \brief Corrected material properties of pure Calcium-Oxide \f$CaO\f$ without considering a porosity
  * change in the reaction of Calciumoxyde and Calciumhydroxyde.
  */
@@ -20,7 +19,6 @@
 namespace Dumux {
 namespace Components {
 /*!
- * \ingroup OnePNCMinTests
  * \brief A class for the ModifiedCaO properties.
  *
  * This class uses a different CaO density. It is to be used for calculating the

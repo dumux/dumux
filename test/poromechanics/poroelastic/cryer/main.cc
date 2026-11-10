@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Cryer sphere consolidation benchmark for linear poroelasticity.
  *
  * A porous sphere is loaded by a pressure on its drained surface. The pore pressure at the centre

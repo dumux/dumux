@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief Test for the compositional one-phase facet coupling model.
  */
 #include <config.h>

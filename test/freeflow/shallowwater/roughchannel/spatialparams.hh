@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the rough channel problem.
  */
 #ifndef DUMUX_ROUGH_CHANNEL_SPATIAL_PARAMETERS_HH
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the rough channel test.
  *
  */

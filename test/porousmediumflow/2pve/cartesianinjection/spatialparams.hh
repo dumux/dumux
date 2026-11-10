@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief The spatial params for the vertical equilibrium Darcy test.
  */
 
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPVETests
  * \brief The coarse-level spatial params for the vertical equilibrium Darcy test.
  */
 template<class GridGeometry, class FineGridGeometry, class Scalar>

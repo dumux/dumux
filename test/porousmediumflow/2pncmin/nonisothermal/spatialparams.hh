@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the salinization problem, where evaporation
  * from a porous medium saturated with brine and air leads to precipitation of salt.
  */
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the salinization problem, where evaporation
  * from a porous medium saturated with brine and air leads to precipitation of salt.
  */

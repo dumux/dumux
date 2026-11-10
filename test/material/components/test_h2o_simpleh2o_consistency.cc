@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief Test some components for consistency of their physical properties.
  */
 

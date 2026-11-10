@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief Test for the 1d-3d embedded mixed-dimension model coupling two
  *        one-phase porous medium flow problems.
  */

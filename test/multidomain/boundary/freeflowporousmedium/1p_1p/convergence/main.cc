@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief A convergence test for the coupled FreeFlow/Darcy problem (1p).
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief salt water intrusion test for the 1pnc model
  */
 

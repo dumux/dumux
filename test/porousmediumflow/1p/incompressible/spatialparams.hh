@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The spatial params the incompressible test
  */
 
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        incompressible 1p model
  */

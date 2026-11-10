@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Similarity solution for the injection of a less dense and less viscous fluid into a confined aquifer.
  */
 
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPVETests
  * \brief Similarity solution for radial injection into a confined aquifer with a sharp interface
  *
  * The injected fluid forms a plume of thickness \f$ h(r, t) \f$ below the top of an aquifer of height \f$ H \f$.

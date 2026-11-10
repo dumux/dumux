@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Test for the analytical solution of Mandel's problem
  *
  * The series solution at \f$t = 0\f$ has to reproduce the undrained response,

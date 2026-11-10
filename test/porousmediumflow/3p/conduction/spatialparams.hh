@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
 
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
 template<class GridGeometry, class Scalar>

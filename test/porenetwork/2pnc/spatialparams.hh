@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
- * \ingroup SpatialParameters
  * \brief Spatial parameters for a 2pnc pore-network model
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The spatial parameters class for root xylem flow.
  */
 
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief Definition of the spatial parameters for the root xylem flow.
  */
 template<class GridGeometry, class Scalar>

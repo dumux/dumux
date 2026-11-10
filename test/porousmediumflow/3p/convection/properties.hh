@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief The properties of the test for the ThreePModel in combination with the NI model for a convection problem.
  */
 

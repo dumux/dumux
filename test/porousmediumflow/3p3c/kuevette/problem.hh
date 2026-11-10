@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
  *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.
@@ -27,7 +26,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
  *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.

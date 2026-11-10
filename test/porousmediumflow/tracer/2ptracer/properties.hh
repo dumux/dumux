@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TracerTests
  * \brief The properties of the 2p tracer test.
  */
 #ifndef DUMUX_2P_TRACER_TEST_PROPERTIES_HH

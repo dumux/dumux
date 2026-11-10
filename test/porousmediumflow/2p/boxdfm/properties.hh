@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
- * \ingroup TwoPTests
  * \brief The properties for the incompressible 2p-boxdfm test.
  */
 

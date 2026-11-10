@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The free-flow sub-problem of coupled FreeFlow/Darcy convergence test
  */
 
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
  * \brief The Stokes sub-problem of coupled Stokes-Darcy convergence test
  */
 template <class TypeTag, class BaseProblem>

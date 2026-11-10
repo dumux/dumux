@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Taylor-Couette flow between two concentric rotating cylinders
  */
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_TAYLORCOUETTE_PROBLEM_HH
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief Taylor-Couette flow between two concentric rotating cylinders
  *
  * The inner cylinder of radius \f$ R_1 \f$ rotates with the angular velocity \f$ \Omega_1 \f$,

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Spatial parameters for the kinetic test-case of the mpnc model.
  *
  * "Poor-man's" coupling of free-flow and porous medium.

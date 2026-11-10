@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief A test problem for the 1p model: A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief A test problem for the 1p model: A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */

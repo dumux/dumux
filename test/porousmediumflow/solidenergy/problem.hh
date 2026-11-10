@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup SolidEnergyTests
  * \brief A piece of stone heated by a network of channels
  */
 #ifndef DUMUX_TEST_SOLIDENERGY_PROBLEM_HH
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup SolidEnergyTests
  * \brief A piece of stone heated by a network of channels
  */
 template <class TypeTag>

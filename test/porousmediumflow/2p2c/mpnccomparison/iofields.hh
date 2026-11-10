@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Adds I/O fields specific to the twop model
  */
 #ifndef DUMUX_TWOPTWOC_MPNC_IO_FIELDS_HH
@@ -17,7 +16,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCTests
  * \brief Adds I/O fields specific to the two-phase two-component model
  */
 class TwoPTwoCMPNCIOFields

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief The spatial params for the 2p cornerpoint test.
  */
 
@@ -28,7 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief The spatial params for the 2p cornerpoint test.
  */
 template<class GridGeometry, class Scalar>

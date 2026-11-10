@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Definition of a problem for a 1p3c problem:
  *        Component transport of N2, CO2 and H2 using the Maxwell-Stefan diffusion law.
  */
@@ -25,7 +24,6 @@ namespace Dumux {
 
 
 /*!
- * \ingroup OnePNCTests
  * \brief Definition of a problem for a 1p3c problem:
  *        Component transport of N2, CO2 and H2.
 

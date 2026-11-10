@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief The properties of the pore flow test for permeability upscaling
  */
 #ifndef DUMUX_UPSCALING_TEST_PROPERTIES_HH

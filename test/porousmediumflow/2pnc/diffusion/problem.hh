@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Problem of a diffusion
  *        problem which uses the isothermal 2p2c box model.
  */
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCTests
  * \brief Problem of a diffusion
  *        problem which uses the isothermal 2p2c box model.
  */

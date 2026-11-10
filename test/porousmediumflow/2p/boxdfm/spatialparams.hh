@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test.
  */
 
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test.
  */
 template<class GridGeometry, class Scalar>

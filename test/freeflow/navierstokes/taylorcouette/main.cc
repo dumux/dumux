@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Taylor-Couette flow between two concentric rotating cylinders
  */
 #include <config.h>

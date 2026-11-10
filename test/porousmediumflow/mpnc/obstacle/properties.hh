@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief The properties of the problem where liquid water is injected which has to go around an
  * obstacle with \f$10^3\f$ lower permeability.
  */

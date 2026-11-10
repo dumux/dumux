@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Test for the two-phase porousmedium flow model.
  */
 #include <config.h>

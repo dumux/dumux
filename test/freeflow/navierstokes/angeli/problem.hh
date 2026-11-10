@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the instationary staggered grid Navier-Stokes model
  *        with analytical solution (Angeli et al. 2017, \cite Angeli2017).
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid (Angeli et al. 2017, \cite Angeli2017).
  *
  * The unsteady, 2D, incompressible Navier-Stokes equations for a zero source and a Newtonian

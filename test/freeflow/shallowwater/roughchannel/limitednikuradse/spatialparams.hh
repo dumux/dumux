@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the rough channel problem with limited
  *        Nikuradse friction
  */
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the test with limited Nikuradse
  * friction.
  *

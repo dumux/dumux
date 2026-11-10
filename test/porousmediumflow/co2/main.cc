@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup CO2Tests
  * \brief Test for the two-phase two-component model.
  */
 #include <config.h>

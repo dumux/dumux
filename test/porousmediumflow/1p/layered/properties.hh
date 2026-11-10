@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties of the single-phase test with two layers of different permeability
  */
 #ifndef DUMUX_ONEP_LAYERED_TEST_PROPERTIES_HH

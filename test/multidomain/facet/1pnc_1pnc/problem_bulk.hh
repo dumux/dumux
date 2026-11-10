@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the bulk domain in the 1pnc facet coupling test.
  */
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEPNC_BULKPROBLEM_HH
@@ -27,7 +26,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief Test problem for the 1pnc model with
  *        coupling across the bulk grid facets.
  */

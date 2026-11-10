@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the two-phase flow
  *        sub-problem in the coupled poro-mechanical elp problem.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The two-phase sub problem in the el2p coupled problem.
  */
 template <class TypeTag>

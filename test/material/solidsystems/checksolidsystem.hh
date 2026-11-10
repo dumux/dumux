@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief This file provides the actual code for the solid systems test.
  *
  * It is not directly in test_solidsystems.cc so that external modules

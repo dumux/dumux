@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup RichardsTests
  * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
@@ -29,8 +28,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsTests
- *
  * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.

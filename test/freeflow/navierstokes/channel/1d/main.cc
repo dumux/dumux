@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for a 1-D staggered grid Navier-Stokes model.
  */
 

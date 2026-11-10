@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the Shallow water model in a rough channel with limited
  * Nikuradse friction.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief A simple flow in a rough channel with friction law after Nikuradse with
  * limiting.
  *

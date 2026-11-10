@@ -3,7 +3,6 @@
 //
 /*!
  * \file
- * \ingroup Linear
  * \brief Test for the MUMPS solver backend on a distributed grid: a cell-centered two-point flux
  *        system is solved, the grid is refined, the solver is updated with
  *        updateAfterGridAdaption and the refined system is solved, for one domain and for two

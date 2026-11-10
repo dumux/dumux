@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Plane-strain manufactured solution for the large-deformation poroelastic model.
  *
  * The exact solution compresses the square locally to J = 0.55 and stretches it to J = 1.29.

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the staggered grid Navier-Stokes model with analytical solution.
  */
 #ifndef DUMUX_SINCOS_TEST_PROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid.
  *
  * The 2D, incompressible Navier-Stokes equations for zero gravity and a Newtonian

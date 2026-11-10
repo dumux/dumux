@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief A test problem for the one-phase blood flow model:
  * Blood is flowing through a 1d network grid.
  */
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief Exact solution 1D-3D.
  */
 template <class TypeTag>

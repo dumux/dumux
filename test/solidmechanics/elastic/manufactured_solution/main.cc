@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Test for the linear elastic model with a manufactured solution
  */
 #include <config.h>

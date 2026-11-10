@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Definition of a test problem for the poro-elastic model.
  */
 #ifndef DUMUX_POROELASTIC_PROBLEM_HH
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsTests
  * \brief Problem definition for the deformation of a poro-elastic body.
  */
 template<class TypeTag>

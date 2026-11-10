@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model.
  */
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model.
  */

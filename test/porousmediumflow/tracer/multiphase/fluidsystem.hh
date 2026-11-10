@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup TracerTests
  * \brief A simple fluid system with two independent tracer components
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief The spatial parameters for the 2p2c chemical nonequilibrium problem.
  */
 
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /**
- * \ingroup TwoPTwoCTests
  * \brief The spatial parameters for the 2p2c chemical nonequilibrium problem.
  */
 template<class GridGeometry, class Scalar>

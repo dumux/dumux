@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Unit test for the grid and gravity requirements checked by the fine-level view of the VE model.
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief The properties for the 2p2c mpnc comparison problem.
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief A one-dimensional infiltration problem with a smooth, given solution.
  *
  * The source term is calculated analytically. Thus, this example can be used
@@ -31,8 +30,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsTests
- *
  * \brief A water infiltration problem using Richards model and comparing
  *        to an analytical solution. Implemented by using the source term
  *        defined as the analytical solution.

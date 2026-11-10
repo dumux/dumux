@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Checks that the extended Richards model's equilibrium vapor
  *        pressure follows Kelvin's equation when the fluid system provides
  *        a fluid-state dependent vapor pressure, and falls back to the

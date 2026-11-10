@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief The properties of the test for the RichardsModel in combination with the NI model for a
  * conduction problem.
  */

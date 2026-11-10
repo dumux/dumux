@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the advective momentum flux of the CVFE momentum model with variable density.
  *
  * A density interface is translated with a uniform velocity. The momentum balance with a constant

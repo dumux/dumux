@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief The properties of the problem showcasing the capabilities of the kinetic model.
  */
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_PROPERTIES_HH

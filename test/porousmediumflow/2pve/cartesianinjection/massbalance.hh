@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Helper functions to evaluate the mass balance of the gas phase in the domain. The evaluation is only valid while the gas plume tip does not reach the right boundary.
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The spatial parameters of the single-phase problem
  *        within the tracer facet coupling test.
  */
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The spatial parameters of the single-phase problem
  *        within the tracer facet coupling test.
  */

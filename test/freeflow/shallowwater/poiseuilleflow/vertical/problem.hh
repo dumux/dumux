@@ -21,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief A simple test for the 2D flow in a channel with viscous bottom friction (plane Poiseuille flow).
  * In comparison to the other Poiseuille flow test, here we assume a rectangular channel with zero friction walls
  * but viscous friction due to bottom shear stress.

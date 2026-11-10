@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Growth rate of a convection cell in the Horton-Rogers-Lapwood problem compared with linear stability theory
  */
 #include <config.h>

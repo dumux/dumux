@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Definition of a test problem for the linear elastic model with a manufactured solution.
  *
  * On the unit square, \f$ \mathbf{u} = ((x - x^2)\sin(2\pi y), \sin(2\pi x)\sin(2\pi y)) \f$ solves
@@ -35,7 +34,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsTests
  * \brief Problem definition for the deformation of an elastic body.
  */
 template<class TypeTag>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief The properties of the test for the advection of a density interface in the CVFE momentum model.
  */
 #ifndef DUMUX_DENSITY_ADVECTION_TEST_PROPERTIES_HH

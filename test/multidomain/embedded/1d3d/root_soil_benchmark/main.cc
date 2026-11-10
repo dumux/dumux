@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \author Timo Koch <timokoch@uio.no>
  * \brief Benchmark cases C1.2a/b
  * Cases are described in Schnepf et al (2020) https://doi.org/10.3389/fpls.2020.00316

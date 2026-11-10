@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Radial injection into a homogeneous confined aquifer, solved with the two-phase VE model.
  */
 
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPVETests
  * \brief Radial injection into a homogeneous confined aquifer, solved with the two-phase VE model
  *
  * The coarse grid consists of radial segments rotated about the well axis.

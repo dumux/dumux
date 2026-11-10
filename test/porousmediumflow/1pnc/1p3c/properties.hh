@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Definition of a problem for a 1p3c problem:
  *        Component transport of N2, CO2 and H2 using the Maxwell-Stefan diffusion law.
  */
@@ -58,7 +57,6 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::MaxwellStefanOnePThreeCTest> { using type = MaxwellStefanOnePThreeCTestProblem<TypeTag>; };
 
 /*!
- * \ingroup OnePNCTests
  * \brief  A simple fluid system with three components for testing the  multi-component diffusion with the Maxwell-Stefan formulation.
  */
 template<class TypeTag>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Test for the 2pnc cc model used for water management in PEM fuel cells.
  */
 #include <config.h>

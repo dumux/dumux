@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Steady solution of the horizontal heat pipe of Udell (1985) inside the two-phase zone.
  */
 #ifndef DUMUX_TEST_2P1C_HEATPIPE_ANALYTICAL_SOLUTION_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPOneCTests
  * \brief Steady solution of the horizontal heat pipe of Udell (1985) \cite Udell1985HeatPipe inside the two-phase zone.
  *
  * Without heat conduction, the vapor mass flux \f$ q/h_{fg} \f$ flows towards the cold end at \f$ x = 0 \f$

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief The properties of the Darcy-Brinkman test
  */
 #ifndef DUMUX_BRINKMAN_TEST_PROPERTIES_HH

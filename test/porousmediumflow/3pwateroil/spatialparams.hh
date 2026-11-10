@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePWaterOilTests
  * \brief Definition of the spatial parameters for the steam-assisted gravity
  *        drainage (SAGD) problem.
  */
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePWaterOilTests
  * \brief Definition of the spatial parameters for the steam-assisted gravity
  *        drainage (SAGD) problem
  */

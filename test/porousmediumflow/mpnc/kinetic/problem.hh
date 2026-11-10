@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Problem showcasing the capabilities of the kinetic model.
  *
  * The whole domain is porous medium, but the upper half has properties mimicking
@@ -36,8 +35,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MPNCTests
- *
  * \brief Problem that simulates the coupled heat and mass transfer processes
            resulting from the evaporation of liquid water from
  *        a porous medium sub-domain into a gas filled "quasi-freeflow" sub-domain.

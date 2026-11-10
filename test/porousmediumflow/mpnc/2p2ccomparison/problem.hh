@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Problem where air is injected in a unsaturated porous medium.
  *
  * This test compares a mpnc problem with a 2p2c problem.
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MPNCTests
  * \brief Problem where air is injected in a unsaturated porous medium.
  *
  * This test compares a mpnc problem with a 2p2c problem.

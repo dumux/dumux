@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the bulk domain in the single-phase facet coupling test.
  */
 
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief Test problem for the incompressible one-phase model
  *        with coupling across the bulk grid facets.
  */

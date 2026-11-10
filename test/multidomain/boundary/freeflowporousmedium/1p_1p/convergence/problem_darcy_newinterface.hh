@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The Darcy sub-problem of coupled Stokes-Darcy convergence test stated in terms of the new interfaces
  */
 
@@ -36,7 +35,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
  * \brief The Darcy sub-problem of coupled Stokes-Darcy convergence test stated in terms of the new interfaces
  *
  * The analytic solution, the source term and the boundary values are those of DarcySubProblem.

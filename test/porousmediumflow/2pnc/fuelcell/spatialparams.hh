@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for water management in PEM fuel cells.
  */
 
@@ -19,7 +18,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for water management in PEM fuel cells.
  */
 template<class GridGeometry, class Scalar>

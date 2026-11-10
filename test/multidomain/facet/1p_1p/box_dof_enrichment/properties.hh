@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The properties for the box-facet coupling dof enrichment test.
  */
 #ifndef DUMUX_TEST_FACET_BOX_DOF_ENRICHMENT_ONEP_PROPERTIES_HH

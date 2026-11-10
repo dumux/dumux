@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCMinTests
  * \brief Class for the evaluation of the reaction rate of Calciumoxide to Halciumhydroxide
  *
  * It contains simple and advanced reaction kinetics according to Nagel et al. (2014) \cite nagel2014.
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCMinTests
  * \brief Class for the evaluation of the reaction rate of Calciumoxide to Halciumhydroxide
  *
  * It contains simple and advanced reaction kinetics according to Nagel et al. (2014) \cite nagel2014.

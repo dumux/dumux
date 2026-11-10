@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Common
  * \brief A function to write a triangulation to vtk
  */
 #ifndef DUMUX_TEST_WRITE_TRIANGULATION_HH

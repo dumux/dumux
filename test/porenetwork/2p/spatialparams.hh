@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
- * \ingroup SpatialParameters
  * \brief Spatial parameters for an isothermal 2p pore-network model
  */
 #ifndef DUMUX_PNM_2P_DRAINAGE_SPATIAL_PARAMS_HH

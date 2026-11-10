@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Definition of a problem for the 1pnc problem:
  * Component transport of nitrogen dissolved in the water phase.
  */
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Definition of a problem for the 1pnc problem:
  *  Component transport of nitrogen dissolved in the water phase.
  *

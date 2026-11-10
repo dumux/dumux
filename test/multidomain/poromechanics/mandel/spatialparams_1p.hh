@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters of the flow sub-problem of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_ONEP_SPATIALPARAMS_HH
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters of the flow sub-problem of Mandel's problem
  *
  * The porosity changes with the volumetric strain and the pressure relative to the

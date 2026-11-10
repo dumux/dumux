@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief The properties of a surfactant model.
  */
 #ifndef DUMUX_TEST_2P3C_SURFACTANT_PROPERTIES_HH

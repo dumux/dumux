@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Test that control-volume schemes are exact for flow through two layers of different permeability
  *
  * The interface between the layers coincides with element faces. With a constant permeability per element,

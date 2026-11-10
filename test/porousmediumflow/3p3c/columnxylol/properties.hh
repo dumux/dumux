@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief The properties of the non-isothermal injection problem where water is injected into a sand
  * column with a NAPL contamination.
  */

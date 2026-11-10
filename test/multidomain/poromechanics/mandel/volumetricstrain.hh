@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The volumetric strain of a displacement field
  */
 #ifndef DUMUX_TEST_MANDEL_VOLUMETRIC_STRAIN_HH
@@ -17,7 +16,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The volumetric strain \f$\nabla \cdot \mathbf{u}\f$ at a position in an element
  * \note The displacement components are the first entries of the primary variables.
  */

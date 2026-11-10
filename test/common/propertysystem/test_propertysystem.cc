@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Common
- * \ingroup Tests
  * \brief Testing the Dumux property system
  */
 

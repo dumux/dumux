@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the single-phase flow
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The single-phase sub problem in the el1p coupled problem.
  */
 template <class TypeTag>

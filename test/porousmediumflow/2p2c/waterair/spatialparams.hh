@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully water saturated medium.
  */
 #ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCModel
  * \brief Definition of the spatial parameters for the water-air problem.
  */
 template<class GridGeometry, class Scalar>

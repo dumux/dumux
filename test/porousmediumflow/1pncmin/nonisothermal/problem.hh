@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCMinTests
  * \brief Definition of a problem for thermochemical heat storage using \f$ \textnormal{CaO},
  * \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
  */
@@ -26,8 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCMinTests
- *
  * \brief Test for the 1pncmin model in combination with the NI model for a quasi batch
  * reaction of Calciumoxyde to Calciumhydroxide.
  *

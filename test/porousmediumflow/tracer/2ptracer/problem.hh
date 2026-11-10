@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TracerTests
  * \brief Multiple tracer bands are diluted by diffusion and two-phase flow.
  */
 #ifndef DUMUX_TWOP_TRACER_TEST_PROBLEM_HH
@@ -18,8 +17,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup TracerTests
- *
  * \brief Definition of the tracer problem:
  * Multiple tracer bands are diluted by diffusion and two-phase flow.
  *

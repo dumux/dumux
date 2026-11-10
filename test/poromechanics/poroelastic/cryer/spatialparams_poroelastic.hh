@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters of the mechanical subdomain of the small-deformation Cryer benchmark.
  */
 #ifndef DUMUX_TEST_POROELASTIC_CRYER_POROELASTIC_SPATIALPARAMS_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters of the mechanical subdomain: Lamé parameters from the drained bulk
  *        modulus \f$ K \f$ and the shear modulus \f$ G \f$, and the Biot coefficient.
  */

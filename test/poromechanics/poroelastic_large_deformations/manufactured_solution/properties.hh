@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Properties of the plane-strain manufactured solution for the large-deformation
  *        poroelastic model: quadratic displacement (PQ2 hybrid, or PQ2 finite elements with
  *        MOMENTUM_PQ2FE), linear pressures (box).

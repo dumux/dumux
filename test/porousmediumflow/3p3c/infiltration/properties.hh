@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief The properties of the isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  */

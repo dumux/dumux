@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Properties of the lock-exchange test with the Boussinesq approximation
  */
 #ifndef DUMUX_LOCKEXCHANGE_TEST_PROBLEM_PROPERTIES_HH

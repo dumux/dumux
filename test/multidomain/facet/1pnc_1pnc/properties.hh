@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief Properties for for the bulk problem in the 1pnc facet coupling test.
  */
 #ifndef DUMUX_TEST_FACETCOUPLING_ONEPNC_BULK_PROPERTIES_HH

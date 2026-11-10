@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Test for the non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully water saturated medium.
  */
 #include <config.h>

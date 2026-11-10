@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief This is a program to test the tabulation class for of
  *        individual components.
  *

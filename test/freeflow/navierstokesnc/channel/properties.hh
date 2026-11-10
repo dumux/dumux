@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesNCTests
  * \brief The properties of the channel flow test for the multi-component staggered grid (Navier-)Stokes model.
  */
 #ifndef DUMUX_CHANNEL_NC_TEST_PROPERTIES_HH

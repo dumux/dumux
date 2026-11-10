@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Pore flow test for the staggered grid (Navier-)Stokes model.
  */
 
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem of the pore flow test for permeability upscaling
  */
 template <class TypeTag, class BaseProblem>

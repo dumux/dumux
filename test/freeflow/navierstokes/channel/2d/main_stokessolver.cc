@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Transient channel flow on the staggered grid solved with the Stokes solver and its options for
  *        transient problems: a pressure operator for small time steps and a kept matrix.
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief This file provides the actual code for the fluid systems test.
  *
  * It is not directly in test_fluidsystems.cc so that external modules

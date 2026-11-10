@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the kuevette problem.
  */
 
@@ -21,7 +20,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class GridGeometry, class Scalar>

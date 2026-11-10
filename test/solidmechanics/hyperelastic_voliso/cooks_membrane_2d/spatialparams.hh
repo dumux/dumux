@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Spatial parameters of Cook's membrane
  */
 #ifndef DUMUX_HYPERELASTIC_COOKS_MEMBRANE_SPATIAL_PARAMS_HH
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsTests
  * \brief Lamé parameters of Cook's membrane, read from the input
  *
  * Lamé's first parameter can be changed between solves, which the tests use to run a sequence of

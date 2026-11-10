@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The properties for the 1p2c tissue problem.
  */
 #ifndef DUMUX_TISSUE_PROPERTIES_HH

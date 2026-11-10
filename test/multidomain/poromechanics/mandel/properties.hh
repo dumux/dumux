@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The properties of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_PROPERTIES_HH

@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoreNetworkModels
- * \ingroup SpatialParameters
  * \brief Spatial parameters for an isothermal 1p pore-network model
  */
 #ifndef DUMUX_COMPOSITIONAL_PNM_SPATIAL_PARAMS_1P_HH

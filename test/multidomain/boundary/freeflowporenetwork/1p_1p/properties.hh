@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The properties for a simple Darcy test (cell-centered finite volume method)
  */
 #ifndef DUMUX_PNMSTOKES_PROPERTIES_HH

@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Parameter
  * \brief Test that Parameters::reset discards the parameters and the record of their use
  */
 #include <config.h>

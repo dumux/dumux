@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup SolidEnergyTests
  * \brief test for the solid energy model
  */
 #include <config.h>

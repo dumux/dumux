@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief Test for the porosity of a linear poroelastic medium.
  */
 

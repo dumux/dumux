@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties of the convergence test on lines and junctions
  */
 #ifndef DUMUX_ONEP_NETWORK_CONVERGENCE_TEST_PROPERTIES_HH

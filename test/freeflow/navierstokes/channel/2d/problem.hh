@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Channel flow test for the staggered grid (Navier-)Stokes model.
  */
 
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem for the one-phase (Navier-) Stokes problem in a channel.
  *
  * Flow from left to right in a two-dimensional channel is considered. At the inlet (left),

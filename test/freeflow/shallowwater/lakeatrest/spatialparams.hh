@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the lake-at-rest problem.
  */
 #ifndef DUMUX_LAKE_AT_REST_SPATIAL_PARAMETERS_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the lake-at-rest test.
  *
  * The bed consists of a smooth Gaussian hump superposed with a rectangular sill

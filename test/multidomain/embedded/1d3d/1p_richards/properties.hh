@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The properties for the one-phase soil problem
  */
 #ifndef DUMUX_ROOTSOIL_PROPERTIES_HH

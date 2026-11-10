@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Common
- * \ingroup Tests
  * \brief A property system example using property type aliases
  */
 

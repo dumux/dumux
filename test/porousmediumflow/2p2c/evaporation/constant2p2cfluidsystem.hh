@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief @copybrief Dumux::FluidSystems::ConstantTwoPTwoCFluidsystem
  */
 #ifndef DUMUX_CONSTANT_2P2C_FLUID_SYSTEM_HH
@@ -25,8 +24,6 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \ingroup TwoPTwoCTests
- *
  * \brief A two-phase fluid system with two components with constant properties that can be specified via the input file
  */
 template <class Scalar, class Component0, class Component1>

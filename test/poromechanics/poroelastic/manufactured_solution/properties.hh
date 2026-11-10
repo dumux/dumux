@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief The properties of a test problem for the poro-elastic model.
  */
 #ifndef DUMUX_POROELASTIC_PROPERTIES_HH

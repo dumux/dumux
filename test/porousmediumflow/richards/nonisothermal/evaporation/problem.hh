@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup RichardsTests
  * \brief Test for the extended richards problem:
  * The simulation domain is a tube a constant evaporation rate is set at the top and the soil gradually dries out.
  */
@@ -27,8 +26,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsTests
- *
  * \brief Test for the RichardsModel in combination with the NI model for evaporation
  * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref RichardsModel and \ref NIModel model.

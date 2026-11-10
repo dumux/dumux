@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the lower-dimensional domain in the single-phase facet coupling test.
  */
 
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The lower-dimensional test problem for the incompressible
  *        one-phase model with coupling across the bulk grid facets.
  */

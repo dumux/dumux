@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The properties of a test for the Shallow water model (rough channel).
  */
 #ifndef DUMUX_ROUGH_CHANNEL_TEST_PROPERTIES_HH

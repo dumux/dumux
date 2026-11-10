@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsNCTests
  * \brief Test for the RichardsNC model.
  */
 

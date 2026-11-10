@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The properties for the bulk domain in the single-phase facet coupling test.
  */
 #ifndef DUMUX_TEST_TPFAFACETCOUPLING_ONEP_BULK_PROPERTIES_HH

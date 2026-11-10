@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model.
  */

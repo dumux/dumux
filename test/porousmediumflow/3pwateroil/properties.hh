@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePWaterOilTests
  * \brief The properties of the non-isothermal steam-assisted gravity
  *        drainage (SAGD) problem.
  */

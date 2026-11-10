@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief Test for the Millington and Quirk effective diffusivity model.
  */
 

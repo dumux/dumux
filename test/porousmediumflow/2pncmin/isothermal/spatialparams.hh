@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the dissolution problem where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
 
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the dissolution problem
  * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
