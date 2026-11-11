@@ -164,9 +164,10 @@ def readCmdParameters():
         "-s",
         "--script",
         nargs=1,
+        choices=["exact", "fuzzy", "fuzzyData"],
         help=(
-            "The comparison script (choose from [fuzzy, fuzzyData, exact, <path_to_script>])"
-            " where the script takes two files as arguments."
+            "The comparison of each pair of files: exact (diff), fuzzy (mesh files)"
+            " or fuzzyData (CSV-like data files)"
         ),
     )
     parser.add_argument(
@@ -232,12 +233,15 @@ def readCmdParameters():
             )
             parser.print_help()
             sys.exit(1)
+        referenceDirectory = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
+            "test",
+            "references",
+        )
         for i in range(0, len(args["files"]) // 2):
             # delete the vtu files to compare
-            referenceDirectory = (
-                os.path.dirname(os.path.abspath(__file__)).rstrip("bin") + "test/references"
-            )
-            if os.path.dirname(args["files"][(i * 2) + 1]) == referenceDirectory:
+            currentFile = os.path.realpath(args["files"][(i * 2) + 1])
+            if os.path.dirname(currentFile) == referenceDirectory:
                 sys.stderr.write(
                     "Tried to delete a reference solution. "
                     "Specify reference file first, then the current solution. "
@@ -336,17 +340,6 @@ def _fuzzyDataComparison(args):
     return int(numFailed > 0)
 
 
-def _scriptComparison(args):
-    """Script comparison driver"""
-    returnCode = 0
-    for i in range(0, len(args["files"]) // 2):
-        print(f"\n{args['script']} comparison")
-        result = subprocess.call(args["script"], args["files"][i * 2], args["files"][(i * 2) + 1])
-        if result:
-            returnCode = 1
-    return returnCode
-
-
 def runRegressionTest(args):
     """Run regression test scripts against reference data"""
 
@@ -359,18 +352,12 @@ def runRegressionTest(args):
         sys.exit(_exactComparison(args))
 
     # fuzzy mesh comparison?
-    elif args["script"] == ["fuzzy"] or args["script"] == [
-        os.path.dirname(os.path.abspath(__file__)) + "/fuzzycomparevtu.py"
-    ]:
+    elif args["script"] == ["fuzzy"]:
         sys.exit(_fuzzyMeshComparison(args))
 
     # fuzzy comparison of CSV-like data sets?
     elif args["script"] == ["fuzzyData"]:
         sys.exit(_fuzzyDataComparison(args))
-
-    # other script?
-    else:
-        sys.exit(_scriptComparison(args))
 
 
 def runTest():
