@@ -33,6 +33,7 @@
 #include <dune/istl/multitypeblockmatrix.hh>
 #include <dune/istl/multitypeblockvector.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/mumpssolver.hh>
@@ -168,7 +169,8 @@ int main(int argc, char* argv[])
 {
     using namespace Dumux;
     using namespace Dumux::Test;
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
+    const auto& mpiHelper = Dune::MPIHelper::instance();
 
     using Grid = Dune::YaspGrid<2>;
     Grid grid({1.0, 1.0}, {8, 8});

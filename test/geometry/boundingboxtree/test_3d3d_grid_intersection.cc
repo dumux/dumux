@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include <dune/common/timer.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/common/exceptions.hh>
 
@@ -25,6 +24,7 @@
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #endif
 
+#include <dumux/common/initialize.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/intersectingentities.hh>
@@ -118,8 +118,7 @@ void runCheckVolumeTest(const GridView1& gridView1, const GridView2& gridView2, 
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
 
     using ctype = double;
     using Point = Dune::FieldVector<ctype, 3>;

@@ -19,10 +19,10 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/geometryintersection.hh>
@@ -47,7 +47,7 @@ void checkClose(double value, double expected, double tolerance, const char* wha
 int main(int argc, char* argv[])
 {
     using namespace Dumux;
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
 
     constexpr int numCells = 20;
     constexpr double cellArea = 1.0/(numCells*numCells);

@@ -20,13 +20,13 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 #include <dune/istl/multitypeblockvector.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/mumpssolver.hh>
 
@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
 {
     using namespace Dumux;
     using namespace Dumux::Test;
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
 
     DirectSolverMumps<SeqLinearSolverTraits, LinearAlgebraTraits> solver;
     {

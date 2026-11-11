@@ -29,7 +29,6 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
@@ -37,6 +36,7 @@
 #include <dune/istl/multitypeblockmatrix.hh>
 #include <dune/istl/multitypeblockvector.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/discretization/facecentered/diamond/fvgridgeometry.hh>
 #include <dumux/linear/linearsolvertraits.hh>
 #include <dumux/linear/mumpssolver.hh>
@@ -408,7 +408,7 @@ void runTwoGridsTest()
 
 int main(int argc, char* argv[])
 {
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
 
     Dumux::Test::runTest(0);
     Dumux::Test::runTest(1);
