@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Test of a evaporation problem where two components with constant properties mix and evaporate.
  */
 #include <config.h>

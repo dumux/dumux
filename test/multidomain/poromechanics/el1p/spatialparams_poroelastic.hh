@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the poro-elastic problem.
  */
 #ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the poro-elastic
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */

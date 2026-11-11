@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Material parameters of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_PARAMETERS_HH
@@ -17,7 +16,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Material parameters of Mandel's problem
  *
  * The parameters of linear poroelasticity are derived from the drained Young's modulus

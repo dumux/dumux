@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief Test for the Johansen thermal conductivity law.
  */
 

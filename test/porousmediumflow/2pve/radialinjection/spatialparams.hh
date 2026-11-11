@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief The spatial parameters for the radial injection into a homogeneous confined aquifer.
  */
 
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPVETests
  * \brief The fine-level spatial parameters of a homogeneous aquifer
  */
 template<class GridGeometry, class Scalar>
@@ -64,7 +62,6 @@ private:
 };
 
 /*!
- * \ingroup TwoPVETests
  * \brief The coarse-level spatial parameters of a homogeneous aquifer
  *
  * A small Brooks-Corey entry pressure yields a thin capillary fringe,

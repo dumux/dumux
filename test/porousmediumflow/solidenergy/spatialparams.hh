@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup SolidEnergyTests
  * \brief Definition of the spatial parameters for the solid energy test
  */
 #ifndef DUMUX_TEST_SOLIDENERGY_SPATIAL_PARAMS_HH
@@ -17,7 +16,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the solid energy test
  */
 template<class GridGeometry, class Scalar>

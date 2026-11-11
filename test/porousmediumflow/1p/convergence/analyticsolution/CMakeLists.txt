@@ -6,22 +6,27 @@ dune_symlink_to_source_files(FILES "params.input")
 # if UG is found, we use UG for all tests. Otherwise, we use
 # YaspGrid for the tests on unstructured grids and enforce
 # the tests on unstructured grids to be skipped
-add_executable(test_1p_convergence_analytic_tpfa EXCLUDE_FROM_ALL main.cc)
-add_executable(test_1p_convergence_analytic_mpfa EXCLUDE_FROM_ALL main.cc)
-add_executable(test_1p_convergence_analytic_box EXCLUDE_FROM_ALL main.cc)
-add_executable(test_1p_convergence_analytic_box_variables EXCLUDE_FROM_ALL main.cc)
-
 if (dune-uggrid_FOUND)
-    target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
-    target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
-    target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
-    target_compile_definitions(test_1p_convergence_analytic_box_variables PUBLIC "TYPETAG=OnePConvergenceBoxNewInterface" PUBLIC "GRIDTYPE=Dune::UGGrid<2>")
+    set(GRIDTYPE "Dune::UGGrid<2>")
 else()
-    target_compile_definitions(test_1p_convergence_analytic_tpfa PUBLIC "TYPETAG=OnePConvergenceTpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
-    target_compile_definitions(test_1p_convergence_analytic_mpfa PUBLIC "TYPETAG=OnePConvergenceMpfa" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
-    target_compile_definitions(test_1p_convergence_analytic_box PUBLIC "TYPETAG=OnePConvergenceBox" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
-    target_compile_definitions(test_1p_convergence_analytic_box_variables PUBLIC "TYPETAG=OnePConvergenceBoxNewInterface" PUBLIC "GRIDTYPE=Dune::YaspGrid<2>")
+    set(GRIDTYPE "Dune::YaspGrid<2>")
 endif()
+
+dumux_add_test_target(NAME test_1p_convergence_analytic_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePConvergenceTpfa" "GRIDTYPE=${GRIDTYPE}")
+
+dumux_add_test_target(NAME test_1p_convergence_analytic_mpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePConvergenceMpfa" "GRIDTYPE=${GRIDTYPE}")
+
+dumux_add_test_target(NAME test_1p_convergence_analytic_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePConvergenceBox" "GRIDTYPE=${GRIDTYPE}")
+
+dumux_add_test_target(NAME test_1p_convergence_analytic_box_variables
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePConvergenceBoxNewInterface" "GRIDTYPE=${GRIDTYPE}")
 
 # using tpfa and structured grid with zero off-diagonal permeability entries
 dumux_add_test(NAME test_1p_convergence_analytic_tpfa_structured

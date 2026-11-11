@@ -3,66 +3,70 @@
 
 dune_symlink_to_source_files(FILES "params.input")
 
-add_executable(test_md_boundary_ff1p_pm1p_convtest EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq2fe_box EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_taylorhood_fe EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq3_pq2_hybrid EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq3_pq3_hybrid EXCLUDE_FROM_ALL main.cc)
-add_executable(test_md_boundary_ff1p_pm1p_convtest_pq3_pq3_fe EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1Bubble
-                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest
+                      SOURCES main.cc)
 
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1BubbleHybrid
-                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1Bubble
+                                          TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                          TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
 
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2Hybrid
-                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface
-                                  QUADRATURE_RULE_FFMASS=Dumux::QuadratureRules::DuneQuadrature<4>)
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq1bubble_hybrid_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ1BubbleHybrid
+                                          TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                          TYPETAG_PMMASS=DarcyOnePBoxNewInterface)
+
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq2_hybrid_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2Hybrid
+                                          TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                          TYPETAG_PMMASS=DarcyOnePBoxNewInterface
+                                          QUADRATURE_RULE_FFMASS=Dumux::QuadratureRules::DuneQuadrature<4>)
+
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq2fe_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2FE
+                                          TYPETAG_FFMASS=FreeFlowOnePMassBox
+                                          TYPETAG_PMMASS=DarcyOnePBoxNewInterface
+                                          QUADRATURE_RULE_FFMASS=Dumux::QuadratureRules::DuneQuadrature<4>)
+
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_taylorhood_fe
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2FE
+                                          TYPETAG_FFMASS=FreeFlowOnePMassPQ1FE
+                                          TYPETAG_PMMASS=DarcyOnePPQ1FE)
+
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq3_pq2_hybrid
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ3Hybrid
+                                          TYPETAG_FFMASS=FreeFlowOnePMassPQ2Hybrid
+                                          TYPETAG_PMMASS=DarcyOnePPQ2Hybrid)
+
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq3_pq3_hybrid
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ3Hybrid
+                                          TYPETAG_FFMASS=FreeFlowOnePMassPQ2Hybrid
+                                          TYPETAG_PMMASS=DarcyOnePPQ3Hybrid)
+
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p_convtest_pq3_pq3_fe
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
+                                          TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ3FE
+                                          TYPETAG_FFMASS=FreeFlowOnePMassPQ2FE
+                                          TYPETAG_PMMASS=DarcyOnePPQ3FE)
 
 # pure finite element velocity: PQ2 with a Box pressure, and the full Taylor-Hood pair
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq2fe_box
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2FE
-                                  TYPETAG_FFMASS=FreeFlowOnePMassBox
-                                  TYPETAG_PMMASS=DarcyOnePBoxNewInterface
-                                  QUADRATURE_RULE_FFMASS=Dumux::QuadratureRules::DuneQuadrature<4>)
-
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_taylorhood_fe
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ2FE
-                                  TYPETAG_FFMASS=FreeFlowOnePMassPQ1FE
-                                  TYPETAG_PMMASS=DarcyOnePPQ1FE)
 
 # PQ3 velocity and PQ2 pressure, with a PQ2 or a PQ3 Darcy pressure
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq3_pq2_hybrid
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ3Hybrid
-                                  TYPETAG_FFMASS=FreeFlowOnePMassPQ2Hybrid
-                                  TYPETAG_PMMASS=DarcyOnePPQ2Hybrid)
-
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq3_pq3_hybrid
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ3Hybrid
-                                  TYPETAG_FFMASS=FreeFlowOnePMassPQ2Hybrid
-                                  TYPETAG_PMMASS=DarcyOnePPQ3Hybrid)
-
-target_compile_definitions(test_md_boundary_ff1p_pm1p_convtest_pq3_pq3_fe
-                           PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
-                                  TYPETAG_FFMOMENTUM=FreeFlowOnePMomentumPQ3FE
-                                  TYPETAG_FFMASS=FreeFlowOnePMassPQ2FE
-                                  TYPETAG_PMMASS=DarcyOnePPQ3FE)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_convtest_shiue1
               TARGET test_md_boundary_ff1p_pm1p_convtest

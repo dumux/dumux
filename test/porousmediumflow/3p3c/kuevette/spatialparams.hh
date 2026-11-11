@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem.
  */
 
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem
  */
 template<class GridGeometry, class Scalar>

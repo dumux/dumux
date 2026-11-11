@@ -176,12 +176,6 @@ DUMUX_DEFINE_PROPERTY(ViscousFluxType)   //!< The type for the calculation of th
 /////////////////////////////////////////////////////////////
 DUMUX_DEFINE_PROPERTY(CouplingManager)
 
-/////////////////////////////////////////////////////////////
-// Basic properties of by old/deprecated sequential models:
-// Do not use this unless you are dealing with such old code
-////////////////////////////////////////////////////////////
-DUMUX_DEFINE_PROPERTY(TimeManager)
-
 } // end namespace Dumux::Properties
 
 namespace Dumux::Properties::Transition {

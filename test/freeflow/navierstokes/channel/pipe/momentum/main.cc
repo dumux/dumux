@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Pipe flow Stokes test with known pressure
  */
 

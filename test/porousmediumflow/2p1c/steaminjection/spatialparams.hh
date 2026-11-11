@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Spatial parameters non-isothermal steam injection test problem for the 2p1cni model.
  */
 
@@ -19,7 +18,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPOneCTests
  * \brief Definition of the spatial parameters for various steam injection problems.
  */
 template<class GridGeometry, class Scalar>

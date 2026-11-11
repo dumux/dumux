@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Properties of the small-deformation Cryer benchmark: one-phase flow (CC-MPFA)
  *        coupled to linear poroelasticity (box).
  */

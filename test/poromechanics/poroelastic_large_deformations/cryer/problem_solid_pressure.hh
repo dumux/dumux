@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Solid pressure subdomain problem for the Cryer sphere benchmark.
  */
 #ifndef DUMUX_TEST_POROELASTIC_LARGE_DEF_CRYER_PROBLEM_SOLID_PRESSURE_HH

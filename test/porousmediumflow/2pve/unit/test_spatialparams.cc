@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Unit test for the coarse-level spatial parameters of the VE model.
  */
 

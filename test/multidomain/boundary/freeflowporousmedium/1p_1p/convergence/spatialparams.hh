@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the 1p cc model.
  */
 
@@ -35,7 +34,6 @@ using ConvergenceTestSpatialParamsBase = std::conditional_t<
 } // end namespace Detail
 
 /*!
- * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
  *        1p cc model.
  */

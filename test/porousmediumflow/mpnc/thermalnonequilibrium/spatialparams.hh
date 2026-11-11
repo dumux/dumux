@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Spatialparameters for the combustionproblem1c.
  *
  * Parameters for the actual simulation domain and an outflow region are provided.

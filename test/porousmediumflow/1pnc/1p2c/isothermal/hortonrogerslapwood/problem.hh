@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Horton-Rogers-Lapwood problem: onset of convection in a porous layer with dense fluid on top
  */
 #ifndef DUMUX_TEST_HORTON_ROGERS_LAPWOOD_PROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Closed box with solute mass fraction 1 at the top and 0 at the bottom
  *
  * The initial condition is the linear profile at rest plus the normal mode

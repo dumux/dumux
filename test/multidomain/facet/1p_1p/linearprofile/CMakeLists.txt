@@ -3,33 +3,33 @@
 
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
-add_executable(test_md_facet_1p1p_linearprofile_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_facet_1p1p_linearprofile_tpfa
-                           PUBLIC BULKTYPETAG=OnePBulkTpfa
-                                  LOWDIMTYPETAG=OnePLowDimTpfa
-                                  LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
-                                  BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
+dumux_add_test_target(NAME test_md_facet_1p1p_linearprofile_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkTpfa
+                                          LOWDIMTYPETAG=OnePLowDimTpfa
+                                          LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
+                                          BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
-add_executable(test_md_facet_1p1p_linearprofile_surface_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_facet_1p1p_linearprofile_surface_tpfa
-                           PUBLIC BULKTYPETAG=OnePBulkTpfa
-                                  LOWDIMTYPETAG=OnePLowDimTpfa
-                                  LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
-                                  BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>)
+dumux_add_test_target(NAME test_md_facet_1p1p_linearprofile_surface_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkTpfa
+                                          LOWDIMTYPETAG=OnePLowDimTpfa
+                                          LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
+                                          BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>)
 
-add_executable(test_md_facet_1p1p_linearprofile_mpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_facet_1p1p_linearprofile_mpfa
-                           PUBLIC BULKTYPETAG=OnePBulkMpfa
-                                  LOWDIMTYPETAG=OnePLowDimMpfa
-                                  LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
-                                  BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
+dumux_add_test_target(NAME test_md_facet_1p1p_linearprofile_mpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkMpfa
+                                          LOWDIMTYPETAG=OnePLowDimMpfa
+                                          LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
+                                          BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
-add_executable(test_md_facet_1p1p_linearprofile_surface_mpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_facet_1p1p_linearprofile_surface_mpfa
-                            PUBLIC BULKTYPETAG=OnePBulkMpfa
-                                   LOWDIMTYPETAG=OnePLowDimMpfa
-                                   LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
-                                   BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>)
+dumux_add_test_target(NAME test_md_facet_1p1p_linearprofile_surface_mpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkMpfa
+                                          LOWDIMTYPETAG=OnePLowDimMpfa
+                                          LOWDIMGRIDTYPE=Dune::FoamGrid<1,3>
+                                          BULKGRIDTYPE=Dune::ALUGrid<2,3,Dune::cube,Dune::nonconforming>)
 
 dumux_add_test(NAME test_md_facet_1p1p_linearprofile_xi1_tpfa
               LABELS multidomain multidomain_facet 1p

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Channel flow test for the staggered grid (Navier-)Stokes model.
  */
 

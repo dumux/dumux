@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Geometry
  * \brief Test the queries of bounding box trees on a grid, a set of triangles and a polyline
  *
  * A regular polygon split into triangles and a polyline are intersected with a structured grid.
@@ -20,10 +19,10 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/geometryintersection.hh>
@@ -48,7 +47,7 @@ void checkClose(double value, double expected, double tolerance, const char* wha
 int main(int argc, char* argv[])
 {
     using namespace Dumux;
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
 
     constexpr int numCells = 20;
     constexpr double cellArea = 1.0/(numCells*numCells);

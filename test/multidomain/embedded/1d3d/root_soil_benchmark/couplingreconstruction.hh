@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedCoupling
  * \brief Coupling reconstruction for 1d-3d mixed-dimension method with distributed sources
  */
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLING_RECONSTRUCTION_1D3D_KERNEL_ROOTSOIL_HH
@@ -29,7 +28,6 @@ namespace Dumux::Detail::RootSoil {
 
 /*!
  * \file
- * \ingroup EmbeddedCoupling
  * \brief Kirchhoff transformation for the Richards equation
  */
 class KirchhoffTransformation
@@ -67,7 +65,6 @@ public:
 
 /*!
  * \file
- * \ingroup EmbeddedCoupling
  * \brief Kirchhoff transformation for the Richards equation with values cached in a lookup table
  */
 class KirchhoffTransformationCached
@@ -109,7 +106,6 @@ public:
 
 /*!
  * \file
- * \ingroup EmbeddedCoupling
  * \brief Caching the source computation to speed up Jacobian approximation during assembly
  */
 struct SourceCache
@@ -148,7 +144,6 @@ namespace Dumux::RootSoil {
 
 /*!
  * \file
- * \ingroup EmbeddedCoupling
  * \brief Coupling reconstruction as derived in Koch et al (2022), https://doi.org/10.1016/j.jcp.2021.110823
  */
 template<class PcKrSwCurve>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Buckley-Leverett test for the two-phase porous-medium flow model.
  */
 #include <config.h>

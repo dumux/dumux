@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief A test for internal Dirichlet constraints
  */
 
@@ -20,7 +19,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup OnePTests
  * \brief A test for internal Dirichlet constraints
  */
 template<class TypeTag>

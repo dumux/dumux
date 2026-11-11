@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The poroelastic sub-problem of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_POROELASTIC_SUB_PROBLEM_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The poroelastic sub-problem of Mandel's problem
  *
  * The rigid plate on top prescribes the vertical displacement of the analytical solution.

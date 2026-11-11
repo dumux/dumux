@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Properties of Cook's membrane, assembled with local degrees of freedom
  */
 #ifndef DUMUX_TEST_ELASTIC_COOKS_MEMBRANE_PROPERTIES_HH

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCMinTests
  * \brief Problem where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
 #ifndef DUMUX_DISSOLUTION_PROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCMinTests
  * \brief Problem where water is injected to flush precipitated salt in a gas reservoir clogged due to precipitated salt.
  *
  */

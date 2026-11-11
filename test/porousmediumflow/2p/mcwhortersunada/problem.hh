@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief McWhorter-Sunada test problem for incompressible immiscible two-phase flow.
  */
 #ifndef DUMUX_TEST_TWOP_MCWHORTERSUNADA_PROBLEM_HH

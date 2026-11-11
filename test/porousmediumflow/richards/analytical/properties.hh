@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief The properties of the one-dimensional infiltration problem with a smooth, given solution.
  */
 #ifndef DUMUX_RICHARDS_ANALYTICALPROPERTIES_HH

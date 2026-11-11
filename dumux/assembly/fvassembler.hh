@@ -352,7 +352,7 @@ public:
 
     /*!
      * \brief Set time loop for instationary problems
-     * \note calling this turns this into a stationary assembler
+     * \note calling this with a null pointer turns this into a stationary assembler
      */
     void setTimeLoop(std::shared_ptr<const TimeLoop> timeLoop)
     { timeLoop_ = timeLoop; isStationaryProblem_ = !static_cast<bool>(timeLoop); }

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
 
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief  Test problem for the incompressible one-phase model.
  */
 template<class TypeTag>

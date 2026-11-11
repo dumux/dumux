@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Helper functions for analytical solutions
  */
 
@@ -31,7 +30,6 @@ namespace Dumux {
 
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Analytical solution for infiltration scenario
  * \note Root-soil benchmark paper Schnepf et al. (case M2.1, Eq. 4) https://doi.org/10.3389/fpls.2020.00316
  * \note based on Vanderborght 2005 (see Fig. 4abc and Eq. 56-60) https://doi.org/10.2113/4.1.206
@@ -177,7 +175,6 @@ private:
 
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Analytical solution for evaporation scenario
  * \note Root-soil benchmark paper Schnepf et al. (case M2.2) https://doi.org/10.3389/fpls.2020.00316
  * \note based on Vanderborght 2005 (see Fig. 5abcd and Eq. 39-47) https://doi.org/10.2113/4.1.206

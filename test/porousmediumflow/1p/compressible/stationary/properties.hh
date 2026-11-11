@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
 

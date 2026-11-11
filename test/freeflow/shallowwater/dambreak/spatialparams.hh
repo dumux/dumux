@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the dam break problem.
  */
 #ifndef DUMUX_DAM_BREAK_SPATIAL_PARAMETERS_HH
@@ -17,7 +16,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the dam break test.
  *
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup KirchhoffLovePlate
  * \brief Test that the Kirchhoff-Love plate coupling manager, used as a
  *        default-constructed sub-manager attached to an externally owned solution
  *        storage, assembles the same Jacobian and residual as the regular manager.

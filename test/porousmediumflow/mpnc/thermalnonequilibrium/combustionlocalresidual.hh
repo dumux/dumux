@@ -5,7 +5,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief This file contains the parts of the local residual to
  *        calculate the heat conservation in the thermal non-equilibrium model.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MPNCTests
  * \brief This file contains the parts of the local residual to
  *        calculate the heat conservation in the thermal non-equilibrium  model.
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief Tests the grid manager class for models using facet coupling.
  */
 

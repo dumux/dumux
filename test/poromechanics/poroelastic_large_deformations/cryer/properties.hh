@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Properties of the Cryer sphere consolidation benchmark: quadratic displacement
  *        (PQ2 hybrid), linear pressures (box).
  */

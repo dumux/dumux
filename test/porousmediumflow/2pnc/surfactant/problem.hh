@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Definition of a problem for a surfactant model.
  */
 #ifndef DUMUX_TEST_2P3C_SURFACTANT_PROBLEM_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCTests
  * \brief Problem for a surfactant model.
  *
  */

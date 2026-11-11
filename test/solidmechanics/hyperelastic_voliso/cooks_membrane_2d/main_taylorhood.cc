@@ -34,7 +34,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_alu.hh>
 
-#include "mixed/properties_taylorhood.hh"
+#include "properties.hh"
 
 int main(int argc, char** argv)
 {

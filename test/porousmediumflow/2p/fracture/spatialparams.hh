@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief The spatial parameters for a discrete fracture network embedded in an impermeable matrix.
  */
 
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief The spatial parameters for for a discrete fracture network embedded in an impermeable matrix.
  */
 template<class GridGeometry, class Scalar>

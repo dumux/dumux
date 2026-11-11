@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief Test for the primary variable names used to restart shallow water simulations
  */
 #include <config.h>

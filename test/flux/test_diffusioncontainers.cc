@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FluxTests
  * \brief This test makes sure that the diffusion coefficient containers
  *        store the proper information, and are accessed correctly.
  */

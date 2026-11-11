@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Root benchmark
  */
 
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Root benchmark spatial params
  */
 template<class GridGeometry, class Scalar>

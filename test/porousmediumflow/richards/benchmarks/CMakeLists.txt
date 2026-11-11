@@ -13,7 +13,8 @@ run_and_plot_m21.py
 run_and_plot_m22.py
 )
 
-add_executable(test_richards_benchmark_tpfa EXCLUDE_FROM_ALL main.cc)
+dumux_add_test_target(NAME test_richards_benchmark_tpfa
+                      SOURCES main.cc)
 
 dumux_add_test(NAME test_richards_benchmark_infiltration_tpfa
                TARGET test_richards_benchmark_tpfa

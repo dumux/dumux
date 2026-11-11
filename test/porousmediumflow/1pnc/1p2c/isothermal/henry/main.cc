@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Henry problem: steady isochlors compared with Tables D1 and D2 of Fahs et al. \cite Fahs2016
  */
 #include <config.h>

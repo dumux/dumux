@@ -6,7 +6,8 @@ add_subdirectory(transient)
 
 dune_symlink_to_source_files(FILES "params_horizontalflow.input" "params_verticalflow.input")
 
-add_executable(test_md_boundary_ff1p_pm1p EXCLUDE_FROM_ALL main.cc)
+dumux_add_test_target(NAME test_md_boundary_ff1p_pm1p
+                      SOURCES main.cc)
 
 dumux_add_test(NAME test_md_boundary_ff1p_pm1p_horizontal
               LABELS multidomain multidomain_boundary stokesdarcy 1p navierstokes

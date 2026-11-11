@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCMinTests
  * \brief Definition of the spatial parameters for the thermochemistry
  *        problem which uses the non-insothermal 1pncmin model.
  */
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCMinTests
  * \brief Definition of the spatial parameters for the thermochemistry
  *        problem which uses the non-insothermal 1pncmin model.
  */

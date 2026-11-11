@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the upwinded density in the mass balance of the Navier-Stokes model.
  *
  * A density step of an ideal gas is advected with a prescribed uniform velocity, once in positive and once

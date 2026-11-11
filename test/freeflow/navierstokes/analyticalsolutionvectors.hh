@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \copydoc Dumux::NavierStokesAnalyticalSolutionVectors
  */
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANALYTICALSOLVECTORS_HH
@@ -20,7 +19,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup NavierStokesTests
  * \brief Creates and provides the analytical solution in a form that can be written into the vtk output files
  */
 template<class Problem, class Scalar = double>
@@ -112,7 +110,6 @@ NavierStokesAnalyticalSolutionVectors(std::shared_ptr<Problem> p, Scalar t)
 namespace NavierStokesTest {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief Creates and provides the analytical solution in a form that can be written into the vtk output files
  * \TODO make this the new NavierStokesAnalyticalSolutionVectors once all tests are ported to the new staggered
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Properties of the linear elastic manufactured solution, assembled with local degrees of freedom
  */
 #ifndef DUMUX_ELASTIC_PROPERTIES_HH

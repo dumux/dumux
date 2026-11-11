@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Analytical solution for the Cryer spherical consolidation problem.
  *
  * The Cryer (1963) solution gives the pore pressure at position r and time t
@@ -49,7 +48,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Analytical solution for Cryer's spherical consolidation problem.
  */
 template<class Scalar = double>

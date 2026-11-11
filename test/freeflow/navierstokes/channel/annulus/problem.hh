@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Radial flow from a line source between two coaxial cylinders
  */
 #ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANNULUS_PROBLEM_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief Radial flow from a line source between two coaxial cylinders
  *
  * The velocity \f$ u_r = A/r \f$ is divergence-free and irrotational, so its viscous force vanishes

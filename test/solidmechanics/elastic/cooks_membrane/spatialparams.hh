@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Spatial parameters of Cook's membrane: a homogeneous isotropic material given by Young's
  *        modulus and Poisson's ratio
  */

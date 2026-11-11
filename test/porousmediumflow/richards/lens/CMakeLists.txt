@@ -4,18 +4,22 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 # isothermal tests
-add_executable(test_richards_lens_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_tpfa PUBLIC TYPETAG=RichardsLensCC PUBLIC DIFFMETHOD=DiffMethod::numeric)
+dumux_add_test_target(NAME test_richards_lens_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS TYPETAG=RichardsLensCC DIFFMETHOD=DiffMethod::numeric)
 
-add_executable(test_richards_lens_mpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_mpfa PUBLIC TYPETAG=RichardsLensCCMpfa PUBLIC DIFFMETHOD=DiffMethod::numeric)
+dumux_add_test_target(NAME test_richards_lens_mpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS TYPETAG=RichardsLensCCMpfa DIFFMETHOD=DiffMethod::numeric)
 
-add_executable(test_richards_lens_box EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_richards_lens_box PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric)
+dumux_add_test_target(NAME test_richards_lens_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS TYPETAG=RichardsLensBox DIFFMETHOD=DiffMethod::numeric)
 
 if (MUMPS_FOUND)
-  add_executable(test_richards_lens_box_mumps EXCLUDE_FROM_ALL main.cc)
-  target_compile_definitions(test_richards_lens_box_mumps PUBLIC TYPETAG=RichardsLensBox PUBLIC DIFFMETHOD=DiffMethod::numeric PUBLIC USE_MUMPS_SOLVER=1)
+  dumux_add_test_target(NAME test_richards_lens_box_mumps
+                        SOURCES main.cc
+                        COMPILE_DEFINITIONS TYPETAG=RichardsLensBox DIFFMETHOD=DiffMethod::numeric USE_MUMPS_SOLVER=1)
 endif()
 
 dumux_add_test(TARGET test_richards_lens_box

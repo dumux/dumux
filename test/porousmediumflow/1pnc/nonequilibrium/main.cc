@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Test for the 1pnc model
  */
 

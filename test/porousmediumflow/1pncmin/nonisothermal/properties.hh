@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCMinTests
  * \brief Definition of the properties for thermochemical heat storage using \f$ \textnormal{CaO},
  * \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
  */

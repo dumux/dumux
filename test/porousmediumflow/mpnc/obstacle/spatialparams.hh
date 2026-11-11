@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief The spatial parameters for the ObstacleProblem.
  */
 
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /**
- * \ingroup MPNCTests
  * \brief Definition of the spatial params properties for the obstacle problem.
  *
  */

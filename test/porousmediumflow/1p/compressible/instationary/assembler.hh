@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Dummy assembler that fulfills the new experimental assembly interface.
  */
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_ASSEMBLER_HH

@@ -4,11 +4,13 @@
 #add links to input files
 dune_symlink_to_source_files(FILES "params_box.input" "params_tpfa.input")
 
-add_executable(test_2p1cni_steaminjection_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_2p1cni_steaminjection_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfa")
+dumux_add_test_target(NAME test_2p1cni_steaminjection_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=TwoPOneCNICCTpfa")
 
-add_executable(test_2p1cni_steaminjection_box EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_2p1cni_steaminjection_box PUBLIC "TYPETAG=TwoPOneCNIBox")
+dumux_add_test_target(NAME test_2p1cni_steaminjection_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=TwoPOneCNIBox")
 
 dumux_add_test(NAME test_2p1cni_steaminjection_waterwet_box
               LABELS porousmediumflow 2p1c  2p1cni

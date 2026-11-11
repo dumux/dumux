@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup TracerTests
  * \brief Definition of a problem for the tracer problem:
  * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
  */
@@ -23,8 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TracerTests
- *
  * \brief Definition of a problem for the tracer problem:
  * A lens of contaminant tracer is diluted by diffusion and a rotating velocity field.
  *

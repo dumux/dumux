@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Geometry
  * \brief Test that intersectingEntities uses the given intersection policy for all entities of the trees
  *
  * Vertical and horizontal segments cross in exactly one point each and do not overlap.

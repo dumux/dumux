@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Single-phase flow on a line or on a junction of straight branches with an
  *        analytical solution
  *

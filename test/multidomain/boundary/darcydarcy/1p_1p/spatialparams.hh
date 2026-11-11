@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The spatial parameters for the incompressible test.
  */
 
@@ -40,7 +39,6 @@ bool pointInLens(const GlobalPosition& globalPos,
 } // end namespace LensSpatialParams
 
 /*!
- * \ingroup BoundaryTests
  * \brief The spatial parameters class for the test problem using the
  *        incompressible 1p model.
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesNCTests
  * \brief Density driven flow test for the multi-component staggered grid (Navier-)Stokes model.
  */
 
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNCTests
  * \brief  Test problem for the one-phase (Navier-)Stokes model.
  *
  * Density driven flow test for the multi-component staggered grid (Navier-)Stokes model.

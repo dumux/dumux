@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the Shallow water model (wet dam break).
  */
 #ifndef DUMUX_DAM_BREAK_TEST_PROBLEM_HH
@@ -24,9 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup Shallow water equations model
- * \ingroup ImplicitTestProblems
- *
  * \brief A simple dam break test (1D wet dam break).
  *
  * The domain is a long rectangle with a gate in the middle. On the left

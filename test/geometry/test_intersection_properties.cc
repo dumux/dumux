@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Geometry
  * \brief Properties of the geometry intersections for random convex geometries
  *
  * Random convex geometries of all supported element types, with corners numbered in either

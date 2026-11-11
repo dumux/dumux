@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The solver of the single-phase convergence test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_SOLVER_HH

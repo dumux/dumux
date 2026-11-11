@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the (hybrid) CVFE Navier-Stokes models with analytical solution.
  */
 #ifndef DUMUX_SINCOS_TEST_PROBLEM_NEWINTERFACE_HH
@@ -28,7 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief Test problem for the (hybrid) CVFE schemes.
  *
  * The 2D, incompressible Navier-Stokes equations for zero gravity and a Newtonian

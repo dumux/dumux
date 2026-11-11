@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup TracerTests
  * \brief The test properties
  */
 

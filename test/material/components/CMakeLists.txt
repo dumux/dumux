@@ -5,7 +5,8 @@ dumux_add_test(SOURCES test_componenttraits.cc
               COMPILE_ONLY
               LABELS unit material)
 
-add_executable(test_plot_component EXCLUDE_FROM_ALL test_plot_component.cc)
+dumux_add_test_target(NAME test_plot_component
+                      SOURCES test_plot_component.cc)
 
 dumux_add_test(NAME test_h2o_simpleh2o_consistency
                SOURCES test_h2o_simpleh2o_consistency.cc

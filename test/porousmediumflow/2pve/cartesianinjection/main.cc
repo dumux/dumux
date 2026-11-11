@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Integration test for the immiscible two-phase vertical-equilibrium model in two and three dimensions.
  *
  * The test solves a heterogeneous injection problem on the vertically

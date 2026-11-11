@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Horizontal heat pipe inside the two-phase zone for the 2p1cni model.
  */
 #ifndef DUMUX_TEST_2P1C_HEATPIPE_PROBLEM_HH
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPOneCTests
  * \brief Horizontal heat pipe inside the two-phase zone for the 2p1cni model.
  *
  * The cold end at the left boundary has a fixed gas pressure and liquid saturation. The right boundary is

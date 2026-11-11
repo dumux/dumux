@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Test for the OnePNCModel in combination with the nonequilibrium model for a thermal nonequilibrium problem problem.
  *
  * The simulation domain is a tube where warmer water is injected at the right side.
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Definition of a problem, for the 1pnc problem.
  *
  * The model domain is specified in the input file and

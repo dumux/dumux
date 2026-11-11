@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
- * \ingroup TwoPTests
  * \brief The properties for the incompressible 2p-boxdfm test.
  */
 
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief The incompressible 2p-boxdfm test problem.
  */
 template<class TypeTag>

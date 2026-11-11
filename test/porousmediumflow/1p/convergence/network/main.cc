@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Convergence test for the hybrid control-volume finite element schemes on a line
  *        and on a junction of lines embedded in three dimensions
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Definition of the spatial parameters for the poro-elastic problem.
  */
 
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsTests
  * \brief Definition of the spatial parameters for the poro-elastic problem.
  */
 template<class Scalar, class GridGeometry, class FluidSystem, class PrimaryVariables, class Indices>

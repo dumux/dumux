@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The spatial parameters for the single-phase facet coupling test.
  */
 
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The spatial parameters for the single-phase facet coupling test.
  */
 template< class GridGeometry, class Scalar >

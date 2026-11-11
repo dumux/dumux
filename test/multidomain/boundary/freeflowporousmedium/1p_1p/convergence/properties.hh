@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The properties for the coupled free-flow/porous-medium flow convergence test
  */
 #ifndef DUMUX_DARCYSTOKES_PROPERTIES_HH

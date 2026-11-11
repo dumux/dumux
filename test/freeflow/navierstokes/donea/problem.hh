@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the staggered grid (Navier-)Stokes model with analytical solution (Donea 2003, \cite Donea2003).
  */
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid (Donea 2003, \cite Donea2003).
  *
  * A two-dimensional Stokes flow in a square domain is considered.

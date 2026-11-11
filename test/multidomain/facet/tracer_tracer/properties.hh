@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The properties for the single phase + tracer test
  */
 

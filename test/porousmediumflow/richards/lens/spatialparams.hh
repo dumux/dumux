@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Spatial parameters for the RichardsLensProblem.
  */
 
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsTests
  * \brief The spatial parameters for the RichardsLensProblem.
  */
 template<class GridGeometry, class Scalar>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Unit test for column mapping.
  */
 

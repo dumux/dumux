@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief A test problem for the one-phase model:
  * Water is injected in one single point in the middle of the domain.
  */
@@ -14,11 +13,10 @@
 #ifndef DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 
-#include "../timeindependent/problem.hh"
+#include <test/porousmediumflow/1p/pointsources/timeindependent/problem.hh>
 
 namespace Dumux {
 /*!
- * \ingroup OnePTests
  * \brief  Test problem for the one-phase model:
  * Water is injected in a single point in the middle of the domain.
  *

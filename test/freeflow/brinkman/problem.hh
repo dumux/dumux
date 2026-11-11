@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Darcy Brinkman model for a single-domain evaluation of coupled freeflow and porous medium flows
  */
 
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief  Darcy Brinkman model for a single-domain evaluation of coupled freeflow and porous medium flows
  */
 template <class TypeTag, class BaseProblem>

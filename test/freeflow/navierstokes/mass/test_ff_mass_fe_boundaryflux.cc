@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test that the boundary fluxes of the problem do not enter the finite element
  *        continuity residual.
  *

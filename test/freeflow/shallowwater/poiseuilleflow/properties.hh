@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The properties for the Poiseuille flow problem.
  */
 #ifndef DUMUX_POISEUILLE_FLOW_TEST_PROPERTIES_HH
@@ -29,7 +28,6 @@
 namespace Dumux::Properties {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The properties for the Poiseuille flow problem test.
  *
  */

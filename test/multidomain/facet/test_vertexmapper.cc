@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief Tests the vertex mapper class for models using facet coupling.
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief A simple Darcy test problem (cell-centered finite volume method).
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Constant spatial parameters with dispersivities for the Horton-Rogers-Lapwood problem
  */
 #ifndef DUMUX_TEST_HORTON_ROGERS_LAPWOOD_SPATIALPARAMS_HH
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Constant spatial parameters with the longitudinal and transverse dispersivities
  *        of Scheidegger's dispersion tensor
  */

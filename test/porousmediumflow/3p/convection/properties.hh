@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief The properties of the test for the ThreePModel in combination with the NI model for a convection problem.
  */
 
@@ -23,7 +22,8 @@
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
 
-#include "../conduction/spatialparams.hh"  // reuse the conduction spatialParams
+#include <test/porousmediumflow/3p/conduction/spatialparams.hh>  // reuse the conduction spatialParams
+
 #include "problem.hh"
 
 namespace Dumux::Properties {

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief Analytical solutions and rhs for the different test cases
  */
 

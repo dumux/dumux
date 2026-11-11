@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The properties of the test for the Shallow water model (wet dam break).
  */
 #ifndef DUMUX_DAM_BREAK_TEST_PROPERTIES_HH

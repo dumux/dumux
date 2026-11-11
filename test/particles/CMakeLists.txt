@@ -9,7 +9,8 @@ dumux_add_test(
 )
 
 dune_symlink_to_source_files(FILES test_particles_fokker_planck.input)
-add_executable(test_particles_fokker_planck EXCLUDE_FROM_ALL test_particles_fokker_planck.cc)
+dumux_add_test_target(NAME test_particles_fokker_planck
+                      SOURCES test_particles_fokker_planck.cc)
 foreach(_dim 1 2)
   dumux_add_test(NAME test_particles_fokker_planck_${_dim}d
     TARGET test_particles_fokker_planck

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
  */
 
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
  * \brief  Free-flow sub-problem for the coupled 1p_1p free-flow/pore-network-model test
  *         A two-dimensional Stokes flow region coupled to a pore-network model.
  */

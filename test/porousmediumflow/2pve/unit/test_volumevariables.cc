@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Unit test for the coarse-level volume variables of the VE model.
  */
 
@@ -23,7 +22,7 @@
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
-#include "../cartesianinjection/properties.hh"
+#include <test/porousmediumflow/2pve/cartesianinjection/properties.hh>
 
 namespace {
 

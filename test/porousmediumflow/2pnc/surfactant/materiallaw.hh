@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief   Material law for a surfactant model.
  */
 #ifndef DUMUX_TEST_2P3C_SURFACTANT_MATERIALLAW_HH

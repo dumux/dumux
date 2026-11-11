@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem.
  */
 
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem.
  */
 template<class GridGeometry, class Scalar, class CouplingManager>

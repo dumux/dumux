@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup TracerTests
  * \brief Definition of a problem for the tracer problem:
  * Two tracers are diluted by diffusion and constant two-phase saturation field.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TracerTests
  * \brief A problem, where two tracers are diluted by diffusion and constant two-phase saturation field.
  */
 template <class TypeTag>

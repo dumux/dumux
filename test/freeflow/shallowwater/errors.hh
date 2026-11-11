@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief Discrete error norms of a shallow water solution with respect to an exact solution
  */
 #ifndef DUMUX_TEST_FREEFLOW_SHALLOWWATER_ERRORS_HH
@@ -28,7 +27,6 @@
 namespace Dumux::ShallowWaterTest {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief Discrete \f$ L^1 \f$ and \f$ L^2 \f$ norms of the errors in water depth and velocity
  *
  * Both norms are normalized with the area of the domain,
@@ -49,7 +47,6 @@ struct Errors
 };
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief Compute the error norms of the solution vector
  * \param gridGeometry The cell-centered finite volume grid geometry
  * \param x The solution vector with the primary variables \f$ (h, u, v) \f$
@@ -99,7 +96,6 @@ auto computeErrors(const GridGeometry& gridGeometry, const SolutionVector& x, co
 }
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief Print the error norms of a stationary solution in the format read by the convergence test scripts
  */
 template<class Scalar>
@@ -115,7 +111,6 @@ void printErrors(const Errors<Scalar>& errors)
 }
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief Print the error norms at the given time in the format read by the convergence test scripts
  */
 template<class Scalar>
@@ -126,7 +121,6 @@ void printErrors(const Errors<Scalar>& errors, Scalar time)
 }
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief Write the relative errors of water depth and velocity for the convergence test driver
  */
 template<class Scalar>

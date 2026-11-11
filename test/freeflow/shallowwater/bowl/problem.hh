@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the Shallow water model (bowl).
  */
 #ifndef DUMUX_BOWL_TEST_PROBLEM_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief A wetting and drying test with sloshing water in a bowl.
  *
  * There is no flow over the boundaries and no friction is considered.

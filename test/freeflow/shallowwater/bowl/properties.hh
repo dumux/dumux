@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The properties for the shallow water bowl test
  */
 #ifndef DUMUX_BOWL_TEST_PROPERTIES_HH

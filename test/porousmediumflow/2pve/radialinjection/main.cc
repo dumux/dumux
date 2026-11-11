@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief Radial injection into a homogeneous confined aquifer compared to the similarity solution of Nordbotten and Celia (2006).
  */
 

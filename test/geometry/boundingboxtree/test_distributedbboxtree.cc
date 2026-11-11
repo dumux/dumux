@@ -17,6 +17,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/common/initialize.hh>
 #include <dumux/geometry/geometricentityset.hh>
 #include <dumux/geometry/distributedboundingboxtree.hh>
 #include <dumux/geometry/distributedintersectingentities.hh>
@@ -29,7 +30,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
     const auto& comm = Dune::MPIHelper::getCommunication();
     const int rank = comm.rank();
     const int numProc = comm.size();

@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup ThreePTests
  * \brief Definition of a 3pni problem:
  *        Component transport of nitrogen dissolved in the water phase.
  */
@@ -28,8 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePTests
- *
  * \brief Test for the ThreePModel in combination with the NI model for a conduction problem.
  *
  * The simulation domain is a tube where with an elevated temperature on the left hand side.

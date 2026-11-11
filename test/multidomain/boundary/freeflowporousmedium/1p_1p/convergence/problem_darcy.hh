@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The Darcy sub-problem of coupled Stokes-Darcy convergence test
  */
 
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
  * \brief The Darcy sub-problem of coupled Stokes-Darcy convergence test
  */
 template <class TypeTag>

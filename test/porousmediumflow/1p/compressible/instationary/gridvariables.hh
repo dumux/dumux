@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Wrapper around the current FVGridVariables to fulfill the layout
  *        of the new grid variables to test grid variables-based assembly.
  */

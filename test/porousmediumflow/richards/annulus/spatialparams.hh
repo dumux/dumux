@@ -17,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsTests
  * \brief Spatial parameters for the Richards benchmarks
  */
 template<class GridGeometry, class Scalar>

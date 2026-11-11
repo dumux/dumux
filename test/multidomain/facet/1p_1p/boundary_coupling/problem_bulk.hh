@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the bulk domain in the box-facet coupling dof enrichment test.
  */
 #ifndef DUMUX_TEST_FACET_BOX_DOF_ENRICHMENT_ONEP_BULKPROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief Test problem for the incompressible one-phase model
  *        with coupling across the bulk grid facets.
  */

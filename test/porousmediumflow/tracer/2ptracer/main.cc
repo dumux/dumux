@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TracerTests
  * \brief Test for the 2p tracer CC model
  */
 #include <config.h>

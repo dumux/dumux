@@ -1,13 +1,11 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_subdirectory(analyticalsolution)
-
 dune_symlink_to_source_files(FILES params.input plot_results.py)
 
 dumux_add_test(NAME test_md_mandel
               LABELS multidomain poromechanics 1p poroelastic
-              SOURCES test_mandel.cc
+              SOURCES main.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
@@ -43,3 +41,8 @@ dumux_add_test(NAME test_md_mandel_convergence
                        --errors test_md_mandel_convergence-errors.csv
                        --check "L2(p) mean 1.9"
                        --check "L2(ux) mean 1.9")
+
+dumux_add_test(NAME test_md_mandel_analytical_solution
+              LABELS multidomain poromechanics 1p poroelastic
+              SOURCES test_analyticalsolution.cc
+              CMD_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/params.input)

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The root problem for the benchmark cases C1.2a/b from Schnepf et al (2020) https://doi.org/10.3389/fpls.2020.00316
  */
 #ifndef DUMUX_TEST_ROOT_SOIL_BENCHMARK_ROOT_PROBLEM_HH
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief The root problem for the benchmark cases C1.2a/b from Schnepf et al (2020) https://doi.org/10.3389/fpls.2020.00316
  */
 template <class TypeTag>

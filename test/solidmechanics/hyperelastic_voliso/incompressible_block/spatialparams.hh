@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Spatial parameters of the incompressible block
  */
 #ifndef DUMUX_HYPERELASTIC_INCOMPRESSIBLE_BLOCK_SPATIAL_PARAMS_HH
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsTests
  * \brief Lamé parameters of the incompressible block, read from the input
  *
  * The Lamé parameters are given directly because converting the nearly incompressible material from

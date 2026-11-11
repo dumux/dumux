@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Common
  * \brief Create a transformation function (translation + rotation)
  */
 #ifndef DUMUX_TEST_GEOMETRY_TRANSFORMATION_HH
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup Common
  * \brief Create a transformation function (translation) in 1D
  */
 template<class ctype>
@@ -42,7 +40,6 @@ auto make1DTransformation(const ctype scale,
 }
 
 /*!
- * \ingroup Common
  * \brief Create a transformation function (translation + rotation) in 2D
  * \note https://en.wikipedia.org/wiki/Rotation_matrix
  */
@@ -72,7 +69,6 @@ auto make2DTransformation(const ctype scale,
 }
 
 /*!
- * \ingroup Common
  * \brief Create a transformation function (translation + rotation) in 3D
  * \note https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
  */

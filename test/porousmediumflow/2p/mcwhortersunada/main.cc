@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief McWhorter-Sunada test for the two-phase porous-medium flow model.
  */
 #include <config.h>

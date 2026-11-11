@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem.
  */
 
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem.
  */
 template<class GridGeometry, class Scalar>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief A test problem for the one-phase root model:
  * Sap is flowing through a 1d network root xylem.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief Exact solution 1D-3D
  */
 template <class TypeTag>

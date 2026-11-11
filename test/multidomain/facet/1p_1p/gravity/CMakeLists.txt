@@ -4,19 +4,19 @@
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
 # test gravity using different values for xi
-add_executable(test_md_facet_1p1p_gravity_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_facet_1p1p_gravity_tpfa
-                           PUBLIC BULKTYPETAG=OnePBulkTpfa
-                                  LOWDIMTYPETAG=OnePLowDimTpfa
-                                  LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
-                                  BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
+dumux_add_test_target(NAME test_md_facet_1p1p_gravity_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkTpfa
+                                          LOWDIMTYPETAG=OnePLowDimTpfa
+                                          LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
+                                          BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
-add_executable(test_md_facet_1p1p_gravity_mpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_md_facet_1p1p_gravity_mpfa
-                           PUBLIC BULKTYPETAG=OnePBulkMpfa
-                                  LOWDIMTYPETAG=OnePLowDimMpfa
-                                  LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
-                                  BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
+dumux_add_test_target(NAME test_md_facet_1p1p_gravity_mpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS BULKTYPETAG=OnePBulkMpfa
+                                          LOWDIMTYPETAG=OnePLowDimMpfa
+                                          LOWDIMGRIDTYPE=Dune::FoamGrid<1,2>
+                                          BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>)
 
 dumux_add_test(NAME test_md_facet_1p1p_gravity_xi1_tpfa
               LABELS multidomain multidomain_facet 1p

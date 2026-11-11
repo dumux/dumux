@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Test for the mpnc porous medium flow model.
  */
 #include <config.h>

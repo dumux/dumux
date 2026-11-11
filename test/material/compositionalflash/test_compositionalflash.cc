@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief This is a program to test the flash calculation routines
  * for compositional sequential models
  *

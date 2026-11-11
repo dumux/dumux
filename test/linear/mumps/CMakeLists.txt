@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dumux_add_test(NAME test_mumps_sequential
-               SOURCES main.cc
+               SOURCES test_mumps_sequential.cc
                CMAKE_GUARD MUMPS_FOUND
                LABELS unit linear)
 

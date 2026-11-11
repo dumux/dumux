@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Problem for the 2p2c mpnc comparison problem.
  *
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCTests
  * \brief Problem for the 2p2c mpnc comparison problem.
  *
  */

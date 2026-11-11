@@ -18,7 +18,6 @@
 namespace Dumux::PoreNetwork {
 
 /*!
-* \ingroup DualNetworkCoupling
 * \brief Implements a Fourier's law assuming pyramid frustum shapes for the geometry from pore bodies to pore throats.
 */
 template<bool isFluid>
@@ -135,7 +134,6 @@ struct FluidOrGrainPyramidFouriersLaw
 };
 
 /*!
-* \ingroup DualNetworkCoupling
 * \brief Implements a Fourier's law and scales the transmissibillity with a fixed, user-defined factor.
 */
 template<bool isFluid>
@@ -199,7 +197,6 @@ struct FixedFactorFouriersLaw
 };
 
 /*!
-* \ingroup DualNetworkCoupling
 * \brief Implements a Fourier's law taking effective areas available for conduction into account.
 *
 * This Fourier's law is based on the work of Koch et al (2021) https://doi.org/10.1007/s11242-021-01602-5.
@@ -368,7 +365,6 @@ struct FluidSolidEffectiveAreasFouriersLaw
 };
 
 /*!
-* \ingroup DualNetworkCoupling
 * \brief Implements a Fourier's law and scales a fixed transmissibillity with a factor
 * depending on the position of the throat.
 */

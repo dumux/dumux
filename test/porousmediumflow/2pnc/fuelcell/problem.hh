@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Definition of a problem for water management in PEM fuel cells.
  */
 
@@ -29,7 +28,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPNCTests
  * \brief Problem for water management in PEM fuel cells.
  *
  */

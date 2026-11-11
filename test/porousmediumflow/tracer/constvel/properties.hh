@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TracerTests
  * \brief The properties for the tracer problem:
  * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
  */

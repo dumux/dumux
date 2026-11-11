@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Spatial parameters for the McWhorter-Sunada two-phase test.
  */
 #ifndef DUMUX_TEST_TWOP_MCWHORTERSUNADA_SPATIALPARAMS_HH

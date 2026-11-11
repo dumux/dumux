@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup EmbeddedTests
  * \brief The spatial parameters class for the root problem
  */
 #ifndef DUMUX_TEST_ROOT_SOIL_BENCHMARK_ROOT_SPATIALPARAMS_HH
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief The spatial parameters class for the root problem
  */
 template<class GridGeometry, class Scalar>

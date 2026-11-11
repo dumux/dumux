@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief Test for the equal dimension boundary coupling model.
  */
 

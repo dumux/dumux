@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief The immiscible 2p fine-level VE test problem.
  */
 

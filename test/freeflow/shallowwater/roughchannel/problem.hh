@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the Shallow water model (rough channel).
  */
 #ifndef DUMUX_ROUGH_CHANNEL_TEST_PROBLEM_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief A simple flow in a rough channel with friction law after Manning.
  *
  * At the left border a discharge

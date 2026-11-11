@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Definition of a problem involving salt
  *        water intrusion into a fresh water aquifer.
  */
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Definition of a problem involving salt water intrusion into a
  *        fresh water aquifer.
  *

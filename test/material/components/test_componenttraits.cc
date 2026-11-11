@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief Test the component traits.
  */
 

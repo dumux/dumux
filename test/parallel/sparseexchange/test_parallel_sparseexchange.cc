@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Parallel
  * \brief Test the byte-buffer (de)serialization helpers and the nonblocking-consensus
  *        sparse data exchange.
  */

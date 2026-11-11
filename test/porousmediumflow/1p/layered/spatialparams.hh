@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The spatial params of the single-phase test with two layers of different permeability
  */
 #ifndef DUMUX_ONEP_LAYERED_TEST_SPATIALPARAMS_HH
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Isotropic permeability that is constant per element and jumps at a plane x = const
  *
  * The permeability is defined per element, so that the local dofs on the plane, which the elements

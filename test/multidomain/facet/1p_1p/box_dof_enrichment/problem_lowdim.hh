@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the lower-dimensional domain in the box-facet coupling dof enrichment test.
  */
 #ifndef DUMUX_TEST_FACET_BOX_DOF_ENRICHMENT_ONEP_LOWDIMPROBLEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The lower-dimensional test problem for the incompressible
  *        one-phase model with coupling across the bulk grid facets.
  */

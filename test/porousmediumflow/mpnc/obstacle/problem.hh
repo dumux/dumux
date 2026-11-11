@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MPNCTests
  * \brief Problem where liquid water is injected which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
  *
@@ -27,7 +26,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup MPNCTests
  * \brief Problem where liquid water is injected which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
  *

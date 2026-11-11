@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Properties for the Buckley-Leverett two-phase test.
  */
 #ifndef DUMUX_TEST_TWOP_BUCKLEYLEVERETT_PROPERTIES_HH

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the staggered grid Navier-Stokes model (Donea 2003, \cite Donea2003).
  */
 

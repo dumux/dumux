@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup EmbeddedTests
  * \brief The matrix problem.
  */
 
@@ -28,7 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief The matrix problem.
  */
 template <class TypeTag>

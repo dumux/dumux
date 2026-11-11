@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters of the flow subdomain of the small-deformation Cryer benchmark.
  */
 #ifndef DUMUX_TEST_POROELASTIC_CRYER_ONEP_SPATIALPARAMS_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Spatial parameters of the flow subdomain.
  *
  * The porosity \f$ \phi = \phi_0 + \alpha_B \nabla \cdot \mathbf{u} + S_p p \f$ gives the storage

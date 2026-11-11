@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup MaterialTests
  * \brief This is test for the SPE5 fluid system (which uses the
  *        Peng-Robinson EOS) and the NCP flash solver.
  */

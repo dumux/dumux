@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief lock-exchange test for the 1pnc model
  */
 

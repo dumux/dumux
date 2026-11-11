@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief The properties of the 3pni conduction problem.
  */
 

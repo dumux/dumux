@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Radial flow from a line source between two coaxial cylinders, compared with the exact solution
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Flow subproblem of the small-deformation Cryer benchmark: drained sphere surface,
  *        no flow across the symmetry planes.
  */
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Flow subproblem of the small-deformation Cryer benchmark.
  */
 template<class TypeTag>

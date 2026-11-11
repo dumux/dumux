@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief The properties of the test for the RichardsModel in combination with the NI model for a
  * convection problem.
  */
@@ -22,7 +21,8 @@
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
-#include "../spatialparams.hh"
+#include <test/porousmediumflow/richards/nonisothermal/spatialparams.hh>
+
 #include "problem.hh"
 
 namespace Dumux::Properties {

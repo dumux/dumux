@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCMinTests
  * \brief Test for the nonisothermal two-phase n-component finite volume model used to model e.g. salt precipitation.
  */
 #include <config.h>

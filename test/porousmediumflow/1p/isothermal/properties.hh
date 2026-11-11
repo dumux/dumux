@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief A test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  */

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesNCTests
  * \brief Density Driven Test for the staggered grid multi-component (Navier-)Stokes model
  */
 

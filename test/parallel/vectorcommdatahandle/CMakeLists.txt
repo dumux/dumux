@@ -2,6 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 dumux_add_test(NAME test_parallel_vectorcommdatahandle_multicodim
-               SOURCES main.cc
+               SOURCES test_parallel_vectorcommdatahandle_multicodim.cc
                MPI_RANKS 1 2 4
                TIMEOUT 1200)

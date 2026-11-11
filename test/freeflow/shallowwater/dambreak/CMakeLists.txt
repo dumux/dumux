@@ -3,7 +3,8 @@
 
 dune_symlink_to_source_files(FILES params.input plot_results.py)
 
-add_executable(test_shallowwater_dambreak EXCLUDE_FROM_ALL main.cc)
+dumux_add_test_target(NAME test_shallowwater_dambreak
+                      SOURCES main.cc)
 
 dumux_add_test(NAME test_shallowwater_dambreak_sequential
                TARGET test_shallowwater_dambreak

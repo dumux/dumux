@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief A test problem for the coupled Free-Flow/PNM problem (1p).
  */
 

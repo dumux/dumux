@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief A test problem for the coupled Stokes/Darcy problem (1p).
  */
 
@@ -35,7 +34,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
-#include "../properties.hh"
+#include <test/multidomain/boundary/freeflowporousmedium/1p_1p/properties.hh>
 
 int main(int argc, char** argv)
 {

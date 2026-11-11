@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Discretization
  * \brief Test that the default grid variables select the cache depending on the element discretization
  *        and the variables depending on the type tag
  */

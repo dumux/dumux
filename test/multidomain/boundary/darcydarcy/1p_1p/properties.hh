@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The properties for the incompressible test
  */
 #ifndef DUMUX_ONEP_SUB_TEST_PROPERTIES_HH

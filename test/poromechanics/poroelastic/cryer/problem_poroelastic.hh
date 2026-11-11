@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Mechanical subproblem of the small-deformation Cryer benchmark: pressure load on the
  *        sphere surface, zero normal displacement on the symmetry planes.
  */
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Mechanical subproblem of the small-deformation Cryer benchmark.
  *
  * The surface load is the traction \f$ \boldsymbol{\sigma} \mathbf{n} = -p_0 \mathbf{N} \f$ of the

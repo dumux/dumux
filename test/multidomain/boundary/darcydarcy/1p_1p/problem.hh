@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The properties for the incompressible test.
  */
 
@@ -25,7 +24,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
  * \brief Multidomain test problem for the incompressible one-phase model.
  *
  * Two possibilities to divide the model domain are given:

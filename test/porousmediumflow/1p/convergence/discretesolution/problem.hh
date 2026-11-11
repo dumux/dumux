@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties & problem setup for the convergence test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_PROBLEM_HH
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief problem setup for the convergence test
  */
 template <class TypeTag>

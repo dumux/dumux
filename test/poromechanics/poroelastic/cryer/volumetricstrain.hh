@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Volumetric strain \f$ \nabla \cdot \mathbf{u} \f$ of a box displacement field.
  */
 #ifndef DUMUX_TEST_POROELASTIC_CRYER_VOLUMETRIC_STRAIN_HH

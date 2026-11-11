@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Discretization
  * \brief Test for the Dirichlet constraints of the local dofs on the boundary faces
  *
  * On the unit square or cube, equation 0 is constrained (by primary variable 1) on the faces at x = 0

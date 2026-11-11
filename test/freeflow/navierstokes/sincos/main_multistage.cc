@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the multi-stage multi-domain assembler with the coupled instationary CVFE
  *        Navier-Stokes mass and momentum models.
  *

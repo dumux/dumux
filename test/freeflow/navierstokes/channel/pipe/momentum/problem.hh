@@ -13,7 +13,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup NavierStokesTests
  * \brief Freeflow problem for pipe flow
  * Simulation of a radially-symmetric pipe flow with circular cross-section
  */

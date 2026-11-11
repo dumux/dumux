@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Lock-exchange test: a closed box, initially divided into a denser (left) and
  *        lighter (right) half, develops a buoyancy-driven gravity current.
  */
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePNCTests
  * \brief Lock-exchange test problem with the Boussinesq approximation
  *
  * The domain is closed. The solute mass fraction is a step across the vertical mid-plane

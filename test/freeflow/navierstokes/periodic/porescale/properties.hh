@@ -6,8 +6,6 @@
 //
 /*!
  * \file
- * \ingroup Pore Scale Simulations
- * \ingroup Basic Pore Structure
  * \brief The properties file for the evaluation of a pore geometry
  */
 

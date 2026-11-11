@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the shallow water model (lake at rest).
  */
 #ifndef DUMUX_LAKE_AT_REST_TEST_PROBLEM_HH
@@ -26,7 +25,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The lake-at-rest (well-balancing) test.
  *
  * Water at rest over a variable bed is a steady state of the shallow water equations:

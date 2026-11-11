@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Test for a diffusion
  *        problem which uses the isothermal 2p2c box model.
  */

@@ -33,7 +33,8 @@
 #
 #       An executable target which should be used for the test. Use
 #       this option over the :code:`SOURCES` parameter if you want to
-#       reuse already added targets.
+#       reuse already added targets, e.g. the executable of another test
+#       or one added with :ref:`dumux_add_test_target`.
 #
 #       You *must* specify either :code:`SOURCES` or :code:`TARGET`.
 #
@@ -172,9 +173,51 @@
 #       names for :code:`ctest -L ${label_regex}`.
 #
 #    This function defines the Dune way of adding a test to the testing suite.
-#    You may either add the executable yourself through :ref:`add_executable`
+#    You may either add the executable through :ref:`dumux_add_test_target`
 #    and pass it to the :code:`TARGET` option, or you may rely on :ref:`dumux_add_test`
 #    to do so.
+#
+# .. cmake_function:: dumux_add_test_target
+#
+#    .. cmake_brief::
+#
+#       Adds an executable that tests use through the :code:`TARGET` option of :ref:`dumux_add_test`.
+#
+#    .. cmake_param:: NAME
+#       :single:
+#       :required:
+#
+#       The name of the executable. Unlike an executable added by :ref:`dumux_add_test`,
+#       it does not have to be named after a test, e.g. if several tests share it.
+#
+#    .. cmake_param:: SOURCES
+#       :multi:
+#       :required:
+#
+#       The source files of the executable.
+#
+#    .. cmake_param:: COMPILE_DEFINITIONS
+#       :multi:
+#       :argname: def
+#
+#       A set of compile definitions to add to the target.
+#
+#    .. cmake_param:: COMPILE_FLAGS
+#       :multi:
+#       :argname: flag
+#
+#       A set of non-definition compile flags to add to the target.
+#
+#    .. cmake_param:: LINK_LIBRARIES
+#       :multi:
+#       :argname: lib
+#
+#       A list of libraries to link the target to.
+#
+#    The executable is excluded from :code:`make all` and is linked to DuMux and all
+#    packages found, like an executable added by :ref:`dumux_add_test`. It is built
+#    through the tests that use it, e.g. with :code:`make build_tests`, unless all of
+#    them are skipped by their :code:`CMAKE_GUARD`.
 #
 # .. cmake_variable:: DUNE_REENABLE_ADD_TEST
 #
@@ -367,6 +410,28 @@ function(dumux_add_test)
              "{\n  \"name\": \"${ACTUAL_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\",\n  \"source_dir\": \"${CMAKE_CURRENT_SOURCE_DIR}\"\n}\n")
     endif()
   endforeach()
+endfunction()
+
+# Adds an executable that tests use through the TARGET argument of dumux_add_test
+function(dumux_add_test_target)
+  include(CMakeParseArguments)
+  set(SINGLEARGS NAME)
+  set(MULTIARGS SOURCES COMPILE_DEFINITIONS COMPILE_FLAGS LINK_LIBRARIES)
+  cmake_parse_arguments(ADDTARGET "" "${SINGLEARGS}" "${MULTIARGS}" ${ARGN})
+
+  if(ADDTARGET_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "Unrecognized arguments ('${ADDTARGET_UNPARSED_ARGUMENTS}') for dumux_add_test_target!")
+  endif()
+  if(NOT ADDTARGET_NAME OR NOT ADDTARGET_SOURCES)
+    message(FATAL_ERROR "dumux_add_test_target needs NAME and SOURCES!")
+  endif()
+
+  add_executable(${ADDTARGET_NAME} EXCLUDE_FROM_ALL ${ADDTARGET_SOURCES})
+  target_compile_definitions(${ADDTARGET_NAME} PUBLIC ${ADDTARGET_COMPILE_DEFINITIONS})
+  target_compile_options(${ADDTARGET_NAME} PUBLIC ${ADDTARGET_COMPILE_FLAGS})
+  target_link_libraries(${ADDTARGET_NAME} PUBLIC ${ADDTARGET_LINK_LIBRARIES})
+  target_link_libraries(${ADDTARGET_NAME} PRIVATE Dumux::Dumux)
+  dune_target_enable_all_packages(${ADDTARGET_NAME})
 endfunction()
 
 # Evaluate test guards like dune_add_test internally does

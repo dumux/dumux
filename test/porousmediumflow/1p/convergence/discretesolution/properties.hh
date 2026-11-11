@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The properties & problem setup for the convergence test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_PROPERTIES_HH

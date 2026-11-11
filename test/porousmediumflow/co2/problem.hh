@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected into a reservoir.
  */
 
@@ -30,7 +29,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected into a reservoir.
  *
  * The domain is sized 200m times 100m and consists of four layers, a

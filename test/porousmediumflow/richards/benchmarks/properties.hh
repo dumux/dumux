@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsTests
  * \brief Common properties for the Richards benchmarks
  */
 #ifndef DUMUX_RICHARDS_BENCHMARKS_PROPERTIES_HH

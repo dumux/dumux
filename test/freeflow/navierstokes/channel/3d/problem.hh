@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Channel flow test for the staggered grid (Navier-)Stokes model.
  *
  * The channel is either modeled in 3D or in 2D, using an additional wall friction term

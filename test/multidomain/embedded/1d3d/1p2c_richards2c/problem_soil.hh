@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup EmbeddedTests
  * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of oxygen in interstitial fluid.
  */
@@ -28,7 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup EmbeddedTests
  * \brief Definition of a problem, for the 1p2c problem:
  * Component transport of oxygen in interstitial fluid.
  */

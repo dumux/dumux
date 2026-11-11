@@ -21,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief A simple test for the 2D flow in a channel with rough side walls (Poiseuille flow).
  *
  * The initial water depth corresponds to the analytical solution:

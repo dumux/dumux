@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Convergence test with analytic solution
  */
 #include <config.h>

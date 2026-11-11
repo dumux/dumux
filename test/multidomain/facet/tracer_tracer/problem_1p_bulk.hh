@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the bulk domain of the single-phase problem
  *        within the tracer facet coupling test.
  */
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The problem for the bulk domain of the single-phase problem
  *        within the tracer facet coupling test.
  */

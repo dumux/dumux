@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief The properties of the test for the instationary staggered grid Navier-Stokes model
  *        with analytical solution (Angeli et al. 2017, \cite Angeli2017).
  */

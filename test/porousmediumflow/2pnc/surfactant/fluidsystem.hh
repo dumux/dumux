@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief Fluidsystem for a surfactant model.
  */
 #ifndef DUMUX_TEST_2P3C_SURFACTANT_FLUIDSYSTEM_HH

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Non-isothermal steam injection test problem for the 2p1cni model.
  */
 
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
  */

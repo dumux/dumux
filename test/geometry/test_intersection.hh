@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Common
  * \brief Intersection test helpers
  */
 #ifndef DUMUX_TEST_INTERSECTION_HH
@@ -16,7 +15,6 @@ namespace Dumux {
 
 /*!
  * \file
- * \ingroup Common
  * \brief Test intersection overload for point and geometry
  */
 template<class Geometry>

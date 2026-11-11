@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Cook's membrane: a tapered panel clamped on the left edge and loaded by a shear traction
  *        on the right edge (plane strain linear elasticity).
  *

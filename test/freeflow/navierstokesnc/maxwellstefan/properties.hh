@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesNCTests
  * \brief The properties of the channel flow test for the multi-component staggered grid (Navier-)Stokes model.
  */
 #ifndef DUMUX_CHANNEL_MAXWELL_STEPHAN_TEST_PROPERTIES_HH
@@ -72,7 +71,6 @@ template<class TypeTag>
 struct MolecularDiffusionType<TypeTag, TTag::MaxwellStefanNCTest> { using type = MaxwellStefansLaw<TypeTag>; };
 
 /*!
- * \ingroup NavierStokesNCTests
  * \brief  A simple fluid system with three components for testing the  multi-component diffusion with the Maxwell-Stefan formulation.
  */
 template<class TypeTag>

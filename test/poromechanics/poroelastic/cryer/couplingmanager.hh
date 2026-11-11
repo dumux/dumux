@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Coupling manager of the small-deformation Cryer benchmark.
  */
 #ifndef DUMUX_TEST_POROELASTIC_CRYER_COUPLING_MANAGER_HH
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Coupling manager of the small-deformation Cryer benchmark.
  *
  * Permeability and fluid density do not depend on the deformation. The flow residual of an element

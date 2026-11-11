@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Root benchmark case Schnepf et al 2020 M3.1 doi: 10.3389/fpls.2020.00316
  */
 
@@ -32,7 +31,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Root benchmark case Schnepf et al 2020 M3.1 doi: 10.3389/fpls.2020.00316
  */
 template <class TypeTag>

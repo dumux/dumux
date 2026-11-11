@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Momentum problem for the Cryer sphere consolidation benchmark.
  *
  * One octant of the sphere with zero normal displacement on the symmetry planes

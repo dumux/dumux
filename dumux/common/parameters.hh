@@ -151,7 +151,7 @@ private:
 /*!
  * \ingroup Parameter
  * \brief A free function to get a parameter from the parameter tree singleton
- * \note \code auto endTime = getParam<double>("TimeManager.TEnd"); \endcode
+ * \note \code auto endTime = getParam<double>("TimeLoop.TEnd"); \endcode
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
 template<typename T = std::string, typename... Args>
@@ -161,7 +161,7 @@ T getParam(Args&&... args)
 /*!
  * \ingroup Parameter
  * \brief A free function to get a parameter from the parameter tree singleton with a model group
- * \note \code  auto endTime = getParamFromGroup<double>("FreeFlow", "TimeManager.TEnd"); \endcode
+ * \note \code  auto endTime = getParamFromGroup<double>("FreeFlow", "TimeLoop.TEnd"); \endcode
  * \note Once this has been called the first time, you cannot modify the parameter tree anymore
  */
 template<typename T = std::string, typename... Args>

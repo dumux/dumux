@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Test the grid adaptation initialization indicator for the discretization given by TYPETAG
  *
  * The problem has Dirichlet boundaries at the bottom and the top, zero-flux Neumann

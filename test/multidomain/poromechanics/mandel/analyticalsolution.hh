@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Analytical solution of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_ANALYTICAL_SOLUTION_HH
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief Analytical solution of Mandel's problem \cite Mandel1953
  *
  * A poroelastic slab \f$[-a, a] \times [-b, b]\f$ is loaded at \f$t = 0\f$ by two rigid plates

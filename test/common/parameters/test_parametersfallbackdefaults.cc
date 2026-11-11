@@ -4,7 +4,6 @@
 //
 /*!
  * \file
- * \ingroup Parameter
  * \brief Test the log of parameters that fall back to the default value given at the call site
  */
 #include <config.h>

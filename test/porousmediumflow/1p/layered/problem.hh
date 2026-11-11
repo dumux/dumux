@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief Single-phase flow through two layers of different permeability
  */
 #ifndef DUMUX_ONEP_LAYERED_TEST_PROBLEM_HH
@@ -28,7 +27,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Single-phase flow through two layers of different permeability
  *
  * The flow is in the x-direction with unit Darcy velocity in both layers. The pressure is

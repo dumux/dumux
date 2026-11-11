@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePNCTests
  * \brief Properties of the Henry problem of Fahs et al. \cite Fahs2016
  */
 #ifndef DUMUX_TEST_HENRY_FAHS_PROPERTIES_HH

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief Definition of the spatial parameters for the pore network coupled channel problem.
  */
 
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoundaryTests
  * \brief Definition of the spatial parameters for the pseudo 3D channel freeflow problems.
  */
 template<class GridGeometry, class Scalar>

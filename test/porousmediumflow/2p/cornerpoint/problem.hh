@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!
- * \ingroup TwoPTests
  * \brief The incompressible 2p cornerpoint test problem.
  */
 
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief The incompressible 2p cornerpoint test problem.
  */
 template<class TypeTag>

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test for the 1-D Navier-Stokes model with an analytical solution.
  *
  * \copydoc Dumux::NavierStokesAnalyticProblem
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief Test for the 1-D Navier-Stokes model with an analytical solution.
  */
 template <class TypeTag, class BaseProblem>

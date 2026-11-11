@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPNCTests
  * \brief The properties of a problem for water management in PEM fuel cells.
  */
 

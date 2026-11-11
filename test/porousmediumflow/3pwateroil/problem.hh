@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePWaterOilTests
  * \brief Non-isothermal steam-assisted gravity
  *        drainage (SAGD) problem.
  */
@@ -25,7 +24,6 @@ namespace Dumux {
 
 /*!
  * \file
- * \ingroup ThreePWaterOilTests
  * \brief Non-isothermal steam-assisted gravity
  *        drainage (SAGD) problem.
  */

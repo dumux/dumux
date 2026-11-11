@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ThreePTests
  * \brief The properties of the Isothermal NAPL infiltration problem.
  */
 #ifndef DUMUX_INFILTRATION_THREEP_PROPERTIES_HH

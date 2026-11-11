@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief Evaporation problem where two components with constant properties mix and evaporate.
  */
 
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCModel
  * \brief Evaporation problem where two components with constant properties mix and evaporate.
  *
  */

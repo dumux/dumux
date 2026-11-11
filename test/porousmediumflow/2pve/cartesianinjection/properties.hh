@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPVETests
  * \brief The properties for the immiscible 2p VE test.
  */
 

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The convergence test problem stated in terms of the new interfaces
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCE_TEST_PROBLEM_NEW_INTERFACE_HH
@@ -30,7 +29,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief The convergence test problem stated in terms of the new interfaces
  *
  * The analytic solution, the source term and the boundary values are those of

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The spatial params of the incompressible single-phase convergence test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_CONVERGENCETEST_SPATIAL_PARAMS_HH
@@ -18,7 +17,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief The spatial params of the incompressible single-phase convergence test
  */
 template<class GridGeometry, class Scalar>

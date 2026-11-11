@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Single-component two-phase fluid system with the assumptions of the heat pipe solution of Udell (1985).
  */
 #ifndef DUMUX_TEST_2P1C_HEATPIPE_FLUIDSYSTEM_HH
@@ -22,7 +21,6 @@
 namespace Dumux::FluidSystems {
 
 /*!
- * \ingroup TwoPOneCTests
  * \brief Constant densities and viscosities of both phases, a vapor enthalpy that exceeds the liquid
  *        enthalpy by the constant latent heat, and the saturation temperature from the Clapeyron
  *        equation with Kelvin's vapor-pressure lowering, eq. (19) in Udell (1985) \cite Udell1985HeatPipe.

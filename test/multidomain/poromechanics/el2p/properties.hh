@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Definition of the spatial parameters for the two-phase flow
  *        sub-problem in the coupled poro-mechanical elp problem.
  */

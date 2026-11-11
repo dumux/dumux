@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters of the poroelastic sub-problem of Mandel's problem
  */
 #ifndef DUMUX_TEST_MANDEL_POROELASTIC_SPATIALPARAMS_HH
@@ -18,13 +17,12 @@
 #include <dumux/poromechanics/poroelastic/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/porositylinearporoelasticity.hh>
 
-#include "analyticalsolution/analyticalsolution.hh"
+#include "analyticalsolution.hh"
 #include "volumetricstrain.hh"
 
 namespace Dumux {
 
 /*!
- * \ingroup PoromechanicsTests
  * \brief The spatial parameters of the poroelastic sub-problem of Mandel's problem
  */
 template<class Scalar, class GridGeometry, class CouplingManager>

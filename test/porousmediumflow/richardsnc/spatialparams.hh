@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup RichardsNCTests
  * \brief The spatial parameters for the RichardsWellTracerProblem.
  */
 
@@ -20,8 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsWellTracerProblem.
  */
 template<class GridGeometry, class Scalar>

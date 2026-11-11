@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief A test problem for the one-phase model:
  * Water is injected in one single point in the middle of the domain.
  */
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief  Test problem for the one-phase model:
  * Water is injected in a single point in the middle of the domain.
  *

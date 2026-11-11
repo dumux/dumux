@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters for the bowl problem.
  */
 #ifndef DUMUX_BOWL_SPATIAL_PARAMETERS_HH
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ShallowWaterTests
  * \brief The spatial parameters class for the bowl test.
  * \note Analytical solution from Thacker (1981) section 4
  *       William Thacker, "Some exact solutions to the nonlinear shallow-water wave equations", Journal

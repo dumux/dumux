@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup CO2Tests
  * \brief Definition of the spatial parameters for the heterogeneous
  *        problem which uses the non-isothermal or isothermal CO2
  *        fully implicit model.
@@ -24,7 +23,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup CO2Tests
  * \brief Definition of the spatial parameters for the heterogeneous
  *        problem which uses the non-isothermal or isothermal CO2
  *        fully implicit model.

@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup ShallowWaterTests
  * \brief A test for the shallow water model (lake at rest).
  */
 #include <config.h>

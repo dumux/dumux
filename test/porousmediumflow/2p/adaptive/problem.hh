@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */
@@ -15,12 +14,12 @@
 #define DUMUX_LENSPROBLEM_ADAPTIVE_HH
 
 #include <dumux/io/container.hh>
-#include "../incompressible/problem.hh"
+
+#include <test/porousmediumflow/2p/incompressible/problem.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTests
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */

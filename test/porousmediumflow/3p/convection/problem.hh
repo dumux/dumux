@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup ThreePTests
  * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
  */
 
@@ -27,8 +26,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePTests
- *
  * \brief Test for the ThreePModel in combination with the NI model for a convection problem.
  *
  * The simulation domain is a tube where water with an elevated temperature is injected

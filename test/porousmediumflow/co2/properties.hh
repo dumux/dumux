@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup CO2Tests
  * \brief The properties of a problem, where CO2 is injected into a reservoir.
  */
 

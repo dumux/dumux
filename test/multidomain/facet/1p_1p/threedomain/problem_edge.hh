@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup FacetTests
  * \brief The problem for the (d-2)-dimensional edge domain in the single-phase
  *        facet coupling test involving three domains.
  */
@@ -22,7 +21,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup FacetTests
  * \brief The (d-2)-dimensional test problem for the incompressible
  *        one-phase model with coupling across the bulk grid facets.
  */

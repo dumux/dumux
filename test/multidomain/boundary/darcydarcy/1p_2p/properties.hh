@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup BoundaryTests
  * \brief The properties for the incompressible test
  */
 #ifndef DUMUX_MULTIDOMAIN_ONEP_TWOP_PROPERTIES_HH

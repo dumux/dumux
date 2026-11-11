@@ -7,7 +7,6 @@
 #include <algorithm>
 
 #include <dune/grid/utility/structuredgridfactory.hh>
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/yaspgrid.hh>
@@ -19,6 +18,7 @@
 #include <dune/foamgrid/dgffoam.hh>
 #endif
 
+#include <dumux/common/initialize.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/geometry/boundingboxtree.hh>
 #include <dumux/geometry/geometricentityset.hh>
@@ -185,8 +185,7 @@ private:
 
 int main (int argc, char *argv[])
 {
-    // maybe initialize mpi
-    Dune::MPIHelper::instance(argc, argv);
+    Dumux::initialize(argc, argv);
 
     // Some aliases two type tags for tests using two grids
     constexpr int dimworld = WORLD_DIMENSION;

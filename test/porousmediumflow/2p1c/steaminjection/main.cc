@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPOneCTests
  * \brief Test for the 2p1c model.
 */
 

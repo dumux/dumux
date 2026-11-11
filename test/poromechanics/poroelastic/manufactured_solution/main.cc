@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Test for the poro-elastic model.
  */
 #include <config.h>

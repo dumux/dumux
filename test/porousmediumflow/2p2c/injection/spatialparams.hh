@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTwoCTests
  * \brief The spatial parameters of the problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 
@@ -20,7 +19,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the injection problem
  *        which uses the isothermal two-phase two-component fully implicit model.
  */

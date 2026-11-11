@@ -7,7 +7,6 @@
 
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Darcy Brinkman model for a single-domain evaluation of coupled freeflow and porous medium flows
  */
 
@@ -23,7 +22,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief The spatial parameters class for the Darcy-Brinkman model test
  */
 template<class GridGeometry, class Scalar>

@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePNCTests
  * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem.
  *
  * The simulation domain is a tube with an elevated temperature on the left hand side.
@@ -33,8 +32,9 @@
 
 
 
+#include <test/porousmediumflow/1pnc/1p2c/spatialparams.hh>
+
 #include "problem.hh"
-#include "../../spatialparams.hh"
 
 namespace Dumux::Properties {
 // Create new type tags

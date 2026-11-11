@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup TwoPTests
  * \brief Spatial parameters for the Buckley-Leverett two-phase test.
  */
 #ifndef DUMUX_TEST_TWOP_BUCKLEYLEVERETT_SPATIALPARAMS_HH

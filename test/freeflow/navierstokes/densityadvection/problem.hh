@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup NavierStokesTests
  * \brief Test problem for the advection of a density interface with uniform velocity.
  */
 #ifndef DUMUX_DENSITY_ADVECTION_TEST_PROBLEM_HH
@@ -29,7 +28,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesTests
  * \brief Momentum balance with a prescribed density field and a constant pressure
  *
  * The density \f$ \rho(x - u_0 t) \f$ is a smooth step between a left and a right value which is

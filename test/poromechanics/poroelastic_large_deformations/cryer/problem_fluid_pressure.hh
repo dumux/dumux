@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup PoromechanicsTests
  * \brief Fluid pressure subdomain problem for the Cryer sphere benchmark.
  *
  * Boundary conditions:

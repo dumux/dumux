@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup GeomechanicsTests
  * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
 
@@ -19,7 +18,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup GeomechanicsTests
  * \brief Definition of the spatial parameters for the linear elasticity problem.
  */
 template<class Scalar, class GridGeometry>

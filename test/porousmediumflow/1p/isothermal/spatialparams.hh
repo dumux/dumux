@@ -6,7 +6,6 @@
 //
 /*!
  * \file
- * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model.
  */
@@ -21,7 +20,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model.
  */

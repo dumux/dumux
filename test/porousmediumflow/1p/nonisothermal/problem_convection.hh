@@ -6,7 +6,6 @@
 //
 /**
  * \file
- * \ingroup OnePTests
  * \brief Test for the OnePModel in combination with the NI model for a convection problem.
  *
  * The simulation domain is a tube where water with an elevated temperature is injected
@@ -29,7 +28,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup OnePTests
  * \brief Test for the OnePModel in combination with the NI model for a convection problem.
  *
  * The simulation domain is a tube where water with an elevated temperature is injected
