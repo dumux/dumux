@@ -52,8 +52,11 @@ parser = argparse.ArgumentParser(
 # Optional arguments
 parser.add_argument("--dune-version", default="2.10", help="Dune version to be checked out.")
 parser.add_argument("--dumux-version", default="3.10", help="Dumux version to be checked out.")
+parser.add_argument("--download", action="store_true", default=False, help="Only download the packages.")
 parser.add_argument(
-    "--download", action="store_true", default=False, help="Only download the packages."
+    "--dumux-git-base-url",
+    default="https://git.iws.uni-stuttgart.de/dumux-repositories",
+    help="Base URL for DuMux repositories",
 )
 args = vars(parser.parse_args())
 
@@ -185,7 +188,7 @@ for module in ["common", "geometry", "grid", "localfunctions", "istl"]:
 
 # dumux
 if not os.path.exists("dumux"):
-    gitClone("https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git", dumuxBranch)
+    gitClone(f"{args['dumux_git_base_url'].rstrip('/')}/dumux.git", dumuxBranch)
 else:
     logger.info("Skip cloning dumux because the folder already exists.")
     gitSetBranch("dumux", dumuxBranch)
