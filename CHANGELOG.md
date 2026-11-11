@@ -140,6 +140,8 @@ or a single-index `periodicDofMap()` still work with the assemblers and trigger 
 ### Removed
 - __FreeFlow__: The previous implementation of the staggered grid is moved to the new dumux-repository [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered). A newer implementation (introduced in DuMu<sup>x</sup> 3.5) of the staggered grid using the coupling manager is still available on [dumux](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux). While the newer implementation covers most of the models that were previously implemented for the old-staggered, turbulence models and higher order schemes are currently only available on [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered).
 - __Testing__: The script `bin/testing/runtest.py` has been removed. Use `bin/testing/dumux_runtest.py` (`${DUMUX_RUNTEST}` in CMake) instead.
+- __Properties__: The property `TimeManager` of the old sequential models has been removed. Modules that still use these models declare such a property themselves.
+- __Grid manager__: The ALUGrid grid manager restores an adaptive grid only if `init` is called with `adaptiveRestart = true`, at the time `TimeLoop.Restart`. The parameters `Restart` and `TimeManager.Restart` of the old sequential models no longer trigger a restart.
 
 
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
