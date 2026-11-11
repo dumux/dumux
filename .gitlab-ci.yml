@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Required CI/CD variables:
+# CI_VAR_DUMUX_CONTAINER_REGISTRY: Shared dumux-docker-ci container registry.
+
 stages:
   - check-status
   - trigger dumux pipelines
@@ -9,7 +12,6 @@ variables:
   UBUNTU_VERSION: "24.04"
   UBUNTU_VERSION_NEWEST: "24.04"
   DUMUX_DOCKER_CI_BRANCH: master
-  IMAGE_REGISTRY_URL: registry.bwgit.de/st/iws/dumux/ci/dumux-docker-ci
   DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
@@ -28,7 +30,7 @@ workflow:
 # pipeline on a related merge request already. If yes, we simply return
 # to propagate that pipeline status on master. Otherwise, we trigger a new run.
 check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+  image: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
   stage: check-status
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -107,27 +109,27 @@ check-pipeline-status:
 full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
 minimal-dune-master-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
 
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
+    IMAGE: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
 
 full-dune-master-gcc-docs:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
     DUMUX_CHECK_EXAMPLE_DOCS: "true"
@@ -138,7 +140,7 @@ full-dune-master-gcc-docs:
 full-dune-master-clang:
   extends: .non-mr-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: $CI_VAR_DUMUX_CONTAINER_REGISTRY/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
     DUMUX_ENABLE_GRIDFORMAT: "ON"
 
 ################################################
