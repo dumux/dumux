@@ -45,11 +45,13 @@ check-pipeline-status:
           python3 .gitlab-ci/getpipelineinfo.py \
                       --access-token $CI_JOB_API_READ_TOKEN \
                       --look-for latest-merge \
+                      --project-api-url "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}" \
                       --print-format commit-sha
       }
 
       if ! python3 .gitlab-ci/getpipelineinfo.py --access-token $CI_JOB_API_READ_TOKEN \
                                                  --look-for HEAD \
+                                                 --project-api-url "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}" \
                                                  --print-format pipeline-id; then
           echo "No successful pipeline found."
 
