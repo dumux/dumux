@@ -64,7 +64,7 @@ check-pipeline-status:
           curl --request POST --form "token=$CI_JOB_TOKEN" \
                               --form ref=$CI_COMMIT_BRANCH \
                               --form "variables[CI_REFERENCE_SHA]=$REFERENCE_SHA" \
-                              "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
+                              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/trigger/pipeline"
       else
           echo "Found successful pipeline for the current state of the branch. Not testing again."
       fi
