@@ -60,7 +60,7 @@ This style guide is taken, modified and enhanced from [DUNE](https://dune-projec
     #ifndef DUMUX_HEADERGUARD_HH
     #define DUMUX_HEADERGUARD_HH
     ```
-    where `GroupName` is a doxygen module group, click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/blob/master/doc/doxygen/modules.txt) for an overview of existing groups.
+    where `GroupName` is a doxygen module group, click [here](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/-/tree/master/doc/doxygen/groups) for an overview of existing groups.
     Test sources are not part of the doxygen documentation and have no `\ingroup`.
 
 * Each class should be documented using the following style:
