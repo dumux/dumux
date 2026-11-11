@@ -4,8 +4,9 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 # using tpfa
-add_executable(test_2p_incompressible_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_2p_incompressible_tpfa PUBLIC TYPETAG=TwoPIncompressibleTpfa)
+dumux_add_test_target(NAME test_2p_incompressible_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa)
 
 dumux_add_test(NAME test_2p_incompressible_tpfa
               TARGET test_2p_incompressible_tpfa

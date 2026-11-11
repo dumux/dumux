@@ -3,8 +3,9 @@
 
 dune_symlink_to_source_files(FILES "params.input" "params_diffusion.input")
 
-add_executable(test_pnm_1p2c EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_pnm_1p2c PRIVATE ISOTHERMAL=1)
+dumux_add_test_target(NAME test_pnm_1p2c
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS ISOTHERMAL=1)
 
 dumux_add_test(NAME test_pnm_1p2c_advection
                TARGET test_pnm_1p2c

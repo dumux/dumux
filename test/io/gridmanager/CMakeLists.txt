@@ -11,10 +11,12 @@ dune_symlink_to_source_files(FILES "test_gmshboundaryflag.input"
                                    "test_remove-troats-on-boundary.input")
 dune_symlink_to_source_files(FILES grids periodic.dgf)
 
-add_executable(test_gridmanager_cake_ug EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
-target_compile_definitions(test_gridmanager_cake_ug PUBLIC "USEUG=1")
+dumux_add_test_target(NAME test_gridmanager_cake_ug
+                      SOURCES test_gridmanager_cake.cc
+                      COMPILE_DEFINITIONS "USEUG=1")
 
-add_executable(test_gridmanager_cake_alu EXCLUDE_FROM_ALL test_gridmanager_cake.cc)
+dumux_add_test_target(NAME test_gridmanager_cake_alu
+                      SOURCES test_gridmanager_cake.cc)
 
 dumux_add_test(NAME test_gridmanager_cake_360_ug
                TARGET test_gridmanager_cake_ug
@@ -127,8 +129,9 @@ dune_symlink_to_source_files(FILES "test_gridmanager_gmsh_3d.input"
                                    "test_gridmanager_gmsh_e_markers.input"
                                    "test_gridmanager_dgf.input")
 
-add_executable(test_gridmanager_gmsh_3d_alu EXCLUDE_FROM_ALL test_gridmanager_gmsh_3d.cc)
-target_compile_definitions(test_gridmanager_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::nonconforming>)
+dumux_add_test_target(NAME test_gridmanager_gmsh_3d_alu
+                      SOURCES test_gridmanager_gmsh_3d.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::nonconforming>)
 
 dumux_add_test(NAME test_gridmanager_gmsh_3d_alu_sequential
               TARGET test_gridmanager_gmsh_3d_alu
@@ -152,8 +155,9 @@ dumux_add_test(NAME test_gridmanager_gmsh_3d_alu_parallel
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-bifurcation-3d-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_alu_parallel-00000.pvtu)
 
-add_executable(test_gridmanager_gmsh_3d_ug EXCLUDE_FROM_ALL test_gridmanager_gmsh_3d.cc)
-target_compile_definitions(test_gridmanager_gmsh_3d_ug PUBLIC GRIDTYPE=Dune::UGGrid<3>)
+dumux_add_test_target(NAME test_gridmanager_gmsh_3d_ug
+                      SOURCES test_gridmanager_gmsh_3d.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<3>)
 
 dumux_add_test(NAME test_gridmanager_gmsh_3d_ug_sequential
               TARGET test_gridmanager_gmsh_3d_ug
@@ -179,8 +183,9 @@ dumux_add_test(NAME test_gridmanager_gmsh_3d_ug_parallel
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-bifurcation-3d-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_ug_parallel-00000.pvtu)
 
-add_executable(test_gridmanager_gmsh_e_markers_alu EXCLUDE_FROM_ALL test_gridmanager_gmsh_e_markers.cc)
-target_compile_definitions(test_gridmanager_gmsh_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
+dumux_add_test_target(NAME test_gridmanager_gmsh_e_markers_alu
+                      SOURCES test_gridmanager_gmsh_e_markers.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>)
 
 dumux_add_test(NAME test_gridmanager_gmsh_e_markers_alu_sequential
               TARGET test_gridmanager_gmsh_e_markers_alu
@@ -208,8 +213,9 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_alu_parallel
                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-refined-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-fracture_alu_parallel-00001.pvtu)
 
-add_executable(test_gridmanager_gmsh_e_markers_ug EXCLUDE_FROM_ALL test_gridmanager_gmsh_e_markers.cc)
-target_compile_definitions(test_gridmanager_gmsh_e_markers_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
+dumux_add_test_target(NAME test_gridmanager_gmsh_e_markers_ug
+                      SOURCES test_gridmanager_gmsh_e_markers.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>)
 
 dumux_add_test(NAME test_gridmanager_gmsh_e_markers_ug_sequential
               TARGET test_gridmanager_gmsh_e_markers_ug
@@ -237,8 +243,9 @@ dumux_add_test(NAME test_gridmanager_gmsh_e_markers_ug_parallel
                               ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-fracture-refined-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-fracture_ug_parallel-00001.pvtu)
 
-add_executable(test_gridmanager_dgf_alu EXCLUDE_FROM_ALL test_gridmanager_dgf.cc)
-target_compile_definitions(test_gridmanager_dgf_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
+dumux_add_test_target(NAME test_gridmanager_dgf_alu
+                      SOURCES test_gridmanager_dgf.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
 
 dumux_add_test(NAME test_gridmanager_dgf_alu_sequential
               TARGET test_gridmanager_dgf_alu
@@ -270,8 +277,9 @@ dumux_add_test(NAME test_gridmanager_dgf_alu_parallel
                                ${CMAKE_SOURCE_DIR}/test/references/test_gridmanager-co2-simpl-vertex-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-vertex-00000.pvtu)
 
-add_executable(test_gridmanager_dgf_ug EXCLUDE_FROM_ALL test_gridmanager_dgf.cc)
-target_compile_definitions(test_gridmanager_dgf_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
+dumux_add_test_target(NAME test_gridmanager_dgf_ug
+                      SOURCES test_gridmanager_dgf.cc
+                      COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>)
 
 dumux_add_test(NAME test_gridmanager_dgf_ug_sequential
               TARGET test_gridmanager_dgf_ug
@@ -409,7 +417,8 @@ dumux_add_test(NAME test_gridmanager_mmesh
               CMAKE_GUARD "( dune-mmesh_FOUND )"
               )
 
-add_executable(test_pnm_gridmanager EXCLUDE_FROM_ALL test_pnm_gridmanager.cc)
+dumux_add_test_target(NAME test_pnm_gridmanager
+                      SOURCES test_pnm_gridmanager.cc)
 
 dumux_add_test(NAME test_pnm_gridmanager_constant_params
                LABELS unit io porenetwork

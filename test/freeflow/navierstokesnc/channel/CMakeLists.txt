@@ -3,8 +3,9 @@
 
 dune_symlink_to_source_files(FILES "params_advection.input" "params_diffusion.input" "params_advectionni.input" "params_diffusionni.input")
 
-add_executable(test_ff_stokes2c_mass EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_ff_stokes2c_mass PUBLIC "USE_MOLES=0")
+dumux_add_test_target(NAME test_ff_stokes2c_mass
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "USE_MOLES=0")
 
 dumux_add_test(NAME test_ff_stokes2c_diffusion_mass
               TARGET test_ff_stokes2c_mass
@@ -17,8 +18,9 @@ dumux_add_test(NAME test_ff_stokes2c_diffusion_mass
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes2c_mass params_diffusion.input
                              -Problem.Name test_ff_stokes2c_diffusion_mass")
 
-add_executable(test_ff_stokes2c EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_ff_stokes2c PUBLIC "USE_MOLES=1")
+dumux_add_test_target(NAME test_ff_stokes2c
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "USE_MOLES=1")
 
 dumux_add_test(NAME test_ff_stokes2c_diffusion_mole
               TARGET test_ff_stokes2c
@@ -56,8 +58,9 @@ dumux_add_test(NAME test_ff_stokes2c_advection_nocaching
                              -Problem.Name test_ff_stokes2c_advection_nocaching"
                              --zeroThreshold {"velocity_liq \(m/s\)":1e-9})
 
-add_executable(test_ff_stokes2cni EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_ff_stokes2cni PUBLIC "NONISOTHERMAL=1")
+dumux_add_test_target(NAME test_ff_stokes2cni
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "NONISOTHERMAL=1")
 
 dumux_add_test(NAME test_ff_stokes2cni_advection
               TARGET test_ff_stokes2cni

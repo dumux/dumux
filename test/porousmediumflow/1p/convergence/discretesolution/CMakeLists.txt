@@ -4,12 +4,14 @@
 dune_symlink_to_source_files(FILES "params.input")
 
 # executable for tpfa tests
-add_executable(test_1p_convergence_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_convergence_tpfa PUBLIC "TYPETAG=OnePIncompressibleTpfa")
+dumux_add_test_target(NAME test_1p_convergence_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePIncompressibleTpfa")
 
 # executable for box tests
-add_executable(test_1p_convergence_box EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_convergence_box PUBLIC "TYPETAG=OnePIncompressibleBox")
+dumux_add_test_target(NAME test_1p_convergence_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePIncompressibleBox")
 
 # using tpfa and conforming refinement
 dumux_add_test(NAME test_1p_convergence_tpfa_conforming

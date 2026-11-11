@@ -4,11 +4,13 @@
 dune_symlink_to_source_files(FILES "params.input")
 dune_symlink_to_source_files(FILES "plot_results.py")
 
-add_executable(test_2p1cni_heatpipe_box EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_2p1cni_heatpipe_box PUBLIC "TYPETAG=TwoPOneCHeatPipeBox")
+dumux_add_test_target(NAME test_2p1cni_heatpipe_box
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=TwoPOneCHeatPipeBox")
 
-add_executable(test_2p1cni_heatpipe_tpfa EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_2p1cni_heatpipe_tpfa PUBLIC "TYPETAG=TwoPOneCHeatPipeTpfa")
+dumux_add_test_target(NAME test_2p1cni_heatpipe_tpfa
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=TwoPOneCHeatPipeTpfa")
 
 dumux_add_test(NAME test_2p1cni_heatpipe_box
                TARGET test_2p1cni_heatpipe_box

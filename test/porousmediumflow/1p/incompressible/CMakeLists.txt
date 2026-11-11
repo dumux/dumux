@@ -5,16 +5,19 @@ dune_symlink_to_source_files(FILES "params.input")
 dune_symlink_to_source_files(FILES grids)
 
 # using tpfa and analytical Jacobian
-add_executable(test_1p_incompressible_tpfa_anadiff EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_incompressible_tpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleTpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
+dumux_add_test_target(NAME test_1p_incompressible_tpfa_anadiff
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePIncompressibleTpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using mpfa and analytical Jacobian
-add_executable(test_1p_incompressible_mpfa_anadiff EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_incompressible_mpfa_anadiff PUBLIC "TYPETAG=OnePIncompressibleMpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
+dumux_add_test_target(NAME test_1p_incompressible_mpfa_anadiff
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePIncompressibleMpfa" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using box and analytical Jacobian
-add_executable(test_1p_incompressible_box_anadiff EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_1p_incompressible_box_anadiff PUBLIC "TYPETAG=OnePIncompressibleBox" "NUMDIFFMETHOD=DiffMethod::analytic")
+dumux_add_test_target(NAME test_1p_incompressible_box_anadiff
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "TYPETAG=OnePIncompressibleBox" "NUMDIFFMETHOD=DiffMethod::analytic")
 
 # using tpfa and analytical Jacobian
 dumux_add_test(NAME test_1p_incompressible_tpfa

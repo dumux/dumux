@@ -3,7 +3,8 @@
 
 dune_symlink_to_source_files(FILES "test_convergencetest.py")
 
-add_executable(test_convergencetest_quadrature EXCLUDE_FROM_ALL test_convergencetest_quadrature.cc)
+dumux_add_test_target(NAME test_convergencetest_quadrature
+                      SOURCES test_convergencetest_quadrature.cc)
 
 dumux_add_test(NAME test_convergencetest
                TARGET test_convergencetest_quadrature

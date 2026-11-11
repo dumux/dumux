@@ -6,7 +6,8 @@ dune_symlink_to_source_files(FILES "params.input"
                                    "params_convection.input"
                                    "params_navierstokes.input")
 
-add_executable(test_ff_channel EXCLUDE_FROM_ALL main.cc)
+dumux_add_test_target(NAME test_ff_channel
+                      SOURCES main.cc)
 
 dumux_add_test(NAME test_ff_stokes_channel_outflow
               TARGET test_ff_channel
@@ -124,8 +125,9 @@ dumux_add_test(NAME test_ff_stokes_channel_transient_stokessolver_parallel
                              -LinearSolver.Preconditioner.SSORForVelocity true -LinearSolver.MaxIterations 150
                              -LinearSolver.CheckKeptMatrix true")
 
-add_executable(test_ff_stokesni_channel EXCLUDE_FROM_ALL main.cc)
-target_compile_definitions(test_ff_stokesni_channel PUBLIC "NONISOTHERMAL=1")
+dumux_add_test_target(NAME test_ff_stokesni_channel
+                      SOURCES main.cc
+                      COMPILE_DEFINITIONS "NONISOTHERMAL=1")
 
 dumux_add_test(NAME test_ff_stokesni_channel_convection
               TARGET test_ff_stokesni_channel

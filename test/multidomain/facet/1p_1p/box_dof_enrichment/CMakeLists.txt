@@ -8,7 +8,8 @@
 
 dune_symlink_to_source_files(FILES "grids" "params.input")
 
-add_executable(test_md_facet_1p1p_box_dof_enrichment EXCLUDE_FROM_ALL main.cc)
+dumux_add_test_target(NAME test_md_facet_1p1p_box_dof_enrichment
+                      SOURCES main.cc)
 
 dumux_add_test(NAME test_md_facet_1p1p_box_dof_enrichment_extended_fracture
                TARGET test_md_facet_1p1p_box_dof_enrichment

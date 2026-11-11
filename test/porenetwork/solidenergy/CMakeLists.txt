@@ -3,7 +3,8 @@
 
 dune_symlink_to_source_files(FILES params.input)
 
-add_executable(test_porenetwork_solid_energy EXCLUDE_FROM_ALL main.cc)
+dumux_add_test_target(NAME test_porenetwork_solid_energy
+                      SOURCES main.cc)
 
 dumux_add_test(NAME test_porenetwork_solid_energy_stationary
               LABELS porenetwork solid energy
