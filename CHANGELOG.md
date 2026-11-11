@@ -135,6 +135,7 @@ to the new subdirectory.
 - __Periodic boundaries__: `periodicallyMappedDof(dofIdx)` of the grid geometries is deprecated. Use `periodicallyMappedDofs(dofIdx)`,
 which returns a range of all periodically identified degrees of freedom. Grid geometries providing only `periodicallyMappedDof`
 or a single-index `periodicDofMap()` still work with the assemblers and trigger a deprecation warning.
+- __Multidomain__: `setTimeManager` of `MultiDomainFVAssembler` and `Experimental::MultiDomainAssembler` is deprecated and will be removed after release 3.11. Use `setTimeLoop`, like for the single-domain assemblers.
 
 ### Removed
 - __FreeFlow__: The previous implementation of the staggered grid is moved to the new dumux-repository [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered). A newer implementation (introduced in DuMu<sup>x</sup> 3.5) of the staggered grid using the coupling manager is still available on [dumux](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux). While the newer implementation covers most of the models that were previously implemented for the old-staggered, turbulence models and higher order schemes are currently only available on [dumux-old-staggered](https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-old-staggered).
