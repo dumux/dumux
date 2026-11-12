@@ -9,7 +9,6 @@ variables:
   UBUNTU_VERSION: "22.04"
   UBUNTU_VERSION_NEWEST: "24.04"
   DUMUX_DOCKER_CI_BRANCH: master
-  IMAGE_REGISTRY_URL: $CI_REGISTRY/dumux-repositories/dumux-docker-ci
   DUMUX_CI_TRIGGER_LECTURE_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
@@ -29,7 +28,7 @@ workflow:
 # pipeline on a related merge request already. If yes, we simply return
 # to propagate that pipeline status on master. Otherwise, we trigger a new run.
 check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+  image: ${CI_VAR_DUMUX_CONTAINER_REGISTRY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
   stage: check-status
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -104,7 +103,7 @@ check-pipeline-status:
 full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: ${CI_VAR_DUMUX_CONTAINER_REGISTRY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
     DUMUX_CHECK_EXAMPLE_DOCS: "true"
@@ -113,12 +112,12 @@ full-dune-latest-release-gcc:
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: ${CI_VAR_DUMUX_CONTAINER_REGISTRY}/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
+    IMAGE: ${CI_VAR_DUMUX_CONTAINER_REGISTRY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
 
 ################################################
 # trigger test pipelines of downstream modules #

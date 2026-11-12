@@ -219,6 +219,11 @@ parser.add_argument(
 )
 parser.add_argument("--opm-branch", default="release/2022.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.4", help="Mmesh branch to be checked out.")
+parser.add_argument(
+    "--dumux-git-base-url",
+    default="https://git.iws.uni-stuttgart.de/dumux-repositories",
+    help="Base URL for DuMux repositories.",
+)
 
 cmdArgs = vars(parser.parse_args())
 
@@ -435,10 +440,10 @@ def installExternal(parameters):
 #################################################################
 #################################################################
 DUNE_GIT_BASEURL = "https://gitlab.dune-project.org/"
-DUMUX_GIT_BASEURL = "https://git.iws.uni-stuttgart.de/dumux-repositories/"
+DUMUX_GIT_BASEURL = cmdArgs["dumux_git_base_url"].rstrip("/")
 EXTERNAL_URLS = {
-    "dumux-lecture": DUMUX_GIT_BASEURL + "dumux-lecture.git",
-    "dumux-course": DUMUX_GIT_BASEURL + "dumux-course.git",
+    "dumux-lecture": DUMUX_GIT_BASEURL + "/dumux-lecture.git",
+    "dumux-course": DUMUX_GIT_BASEURL + "/dumux-course.git",
     "dune-uggrid": DUNE_GIT_BASEURL + "/staging/dune-uggrid.git",
     "dune-alugrid": DUNE_GIT_BASEURL + "extensions/dune-alugrid.git",
     "dune-foamgrid": DUNE_GIT_BASEURL + "extensions/dune-foamgrid.git",
