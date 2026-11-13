@@ -73,10 +73,10 @@ linters:
     # black
     - echo "Running black"
     - black --version
-    - black --check --verbose -- python
-    - black --check --verbose -- test/python
-    - black --check --verbose -- bin
-    - black --check --verbose -- dumux/porenetwork/util
+    - black --check --verbose --diff -- python
+    - black --check --verbose --diff -- test/python
+    - black --check --verbose --diff -- bin
+    - black --check --verbose --diff -- dumux/porenetwork/util
     # codespell
     - echo "Running codespell"
     - codespell --version
