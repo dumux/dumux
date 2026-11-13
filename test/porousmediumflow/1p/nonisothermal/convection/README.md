@@ -127,29 +127,24 @@ shape of the front.
 | Initial temperature              | $T_{\mathrm{init}}$  | 290   | K     |
 | Injection temperature            | $T_{\mathrm{high}}$  | 291   | K     |
 | Pressure (initial & outlet)      | $p_{\mathrm{init}}$  | 1e5   | Pa    |
+| Fluid density                    | $\rho_f$             | 1000  | kg m$^{-3}$ |
+| Fluid thermal conductivity       | $\lambda_f$          | 0.679 | W m$^{-1}$ K$^{-1}$ |
+| Fluid heat capacity              | $c_f$                | 4180  | J kg$^{-1}$ K$^{-1}$ |
+| Fluid dynamic viscosity          | $\mu_f$              | 1e-3  | Pa s  |
 | Solid density                    | $\rho_s$             | 2700  | kg m$^{-3}$ |
 | Solid thermal conductivity       | $\lambda_s$          | 2.8   | W m$^{-1}$ K$^{-1}$ |
 | Solid heat capacity              | $c_s$                | 790   | J kg$^{-1}$ K$^{-1}$ |
 
-Further, the fluid is water. The fluid properties (density, thermal conductivity and heat
-capacity) are temperature- and pressure-dependent and are evaluated using the IAPWS
-Industrial Formulation 1997 for the thermodynamic properties of water and steam
-@cite IAPWS1997. In DuMux, it is implemented by the component `Dumux::Components::H2O`
-(@ref Components), which builds on the region formulations in
-`dumux/material/components/iapws/` (@ref IAPWS). The
-pressure drop that the prescribed influx induces is only about $0.22\ \mathrm{bar}$ over
-the $20\ \mathrm{m}$ of the shipped test and $0.09\ \mathrm{bar}$ over the $8\ \mathrm{m}$
-benchmark domain, so the fluid properties stay close to those at the initial state and
-the assumption of constant material properties is well satisfied. The resulting derived
+All fluid and solid properties are constant, as assumed by the analytical solution. The fluid values are those of liquid water in `Dumux::Components::SimpleH2O` (@ref Components). The resulting derived
 quantities are
 
 | Quantity                        | Symbol                 | Value    | Unit  |
 |---------------------------------|-----------------------:|:---------|:------|
-| Effective thermal conductivity  | $\lambda_{\text{eff}}$ | 1.92     | W m$^{-1}$ K$^{-1}$ |
+| Effective thermal conductivity  | $\lambda_{\text{eff}}$ | 1.95     | W m$^{-1}$ K$^{-1}$ |
 | Total volumetric heat capacity  | $C_{\text{tot}}$       | 2.95e6   | J m$^{-3}$ K$^{-1}$ |
 | Retardation factor              | $R$                    | 1.77     | -     |
 | Retarded front velocity         | $v_T$                  | 1.42e-4  | m s$^{-1}$ |
-| Effective thermal diffusivity   | $D_T$                  | 6.50e-7  | m$^2$ s$^{-1}$ |
+| Effective thermal diffusivity   | $D_T$                  | 6.61e-7  | m$^2$ s$^{-1}$ |
 
 ##  Simulation Setup
 
