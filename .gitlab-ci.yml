@@ -3,6 +3,8 @@
 
 # Required CI/CD variables:
 # CI_VAR_DUMUX_CONTAINER_REGISTRY: Shared dumux-docker-ci container registry.
+# CI_VAR_DUMUX_PATH: Extension of base URL that contains Dumux repositories. 
+# CI_VAR_DUMUX_CI_PATH: Extension of base URL that contains Dumux CI repositories. 
 
 stages:
   - check-status
@@ -158,7 +160,7 @@ trigger lecture:
     when: manual
   stage: trigger dumux pipelines
   trigger:
-    project: dumux-repositories/dumux-lecture
+    project: $CI_VAR_DUMUX_PATH/dumux-lecture
     branch: $DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH
     strategy: depend
   variables:
@@ -177,7 +179,7 @@ trigger testing:
     when: manual
   stage: trigger dumux pipelines
   trigger:
-    project: dumux-repositories/dumux-testing
+    project: $CI_VAR_DUMUX_CI_PATH/dumux-testing
     branch: $DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH
     strategy: depend
   variables:
