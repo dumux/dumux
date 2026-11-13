@@ -24,7 +24,6 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/components/h2o.hh>
 namespace Dumux {
 
 /*!
@@ -57,7 +56,6 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using VolumeVariables = typename GridVariables::GridVolumeVariables::VolumeVariables;
     using SolutionVector = GetPropType<TypeTag, Properties::SolutionVector>;
-    using IapwsH2O = Components::H2O<Scalar>;
 
     enum { dimWorld = GridView::dimensionworld };
 
@@ -125,7 +123,7 @@ public:
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
-        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
+        const auto heatCapacityW = FluidSystem::heatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto storageW =  densityW*heatCapacityW*porosity;
         const auto densityS = volVars.solidDensity();
         const auto heatCapacityS = volVars.solidHeatCapacity();
@@ -229,7 +227,7 @@ public:
         if(globalPos[0] < eps_)
         {
             values[conti0EqIdx] = -darcyVelocity_*volVars.density();
-            values[energyEqIdx] = values[conti0EqIdx]*IapwsH2O::liquidEnthalpy(temperatureHigh_, volVars.pressure());
+            values[energyEqIdx] = values[conti0EqIdx]*FluidSystem::enthalpy(temperatureHigh_, volVars.pressure());
         }
         return values;
     }
