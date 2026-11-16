@@ -145,6 +145,7 @@ or a single-index `periodicDofMap()` still work with the assemblers and trigger 
 - __Testing__: `--script` of `dumux_runtest.py` accepts only `exact`, `fuzzy` and `fuzzyData`. The path of a custom comparison script, whose call failed with a `TypeError`, and the path of the removed `fuzzycomparevtu.py` are no longer accepted. A test that needs another comparison can run it as its `COMMAND`.
 - __Properties__: The property `TimeManager` of the old sequential models has been removed. Modules that still use these models declare such a property themselves.
 - __Grid manager__: The ALUGrid grid manager restores an adaptive grid only if `init` is called with `adaptiveRestart = true`, at the time `TimeLoop.Restart`. The parameters `Restart` and `TimeManager.Restart` of the old sequential models no longer trigger a restart.
+- __Grid I/O__: The header `dumux/io/adaptivegridrestart.hh` (`AdaptiveGridRestart`, `GridRestartCheck`), deprecated in 3.10, has been removed. It required the time manager of the old sequential models. An ALUGrid saved with `Dune::BackupRestoreFacility` as `<Problem.Name>_time=<time>_rank=<rank>.grs` is restored by the grid manager's `init` with `adaptiveRestart = true`.
 
 
 Differences Between DuMu<sup>x</sup> 3.10 and DuMu<sup>x</sup> 3.9
