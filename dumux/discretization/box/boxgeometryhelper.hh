@@ -324,7 +324,7 @@ public:
     ScvfCornerStorage getBoundaryScvfCorners(unsigned int localFacetIndex,
                                              unsigned int) const
     {
-        return ScvfCornerStorage{{ geo_.corner(localFacetIndex) }};
+        return ScvfCornerStorage{ geo_.corner(localFacetIndex) };
     }
 
     //! Create the sub control volume face geometries on the boundary
@@ -335,7 +335,7 @@ public:
                                                     unsigned int indexInFacet)
     {
         const auto& ref = Dune::referenceElement<Scalar, dim>(type);
-        return trans(ref.position(localFacetIndex, dim));
+        return ScvfCornerStorage{ trans(ref.position(localFacetIndex, dim)) };
     }
 
     //! get scvf normal vector
@@ -372,7 +372,7 @@ public:
     //! local scvf center
     static Element::Geometry::LocalCoordinate localScvfCenter(Dune::GeometryType type, unsigned int localScvfIdx)
     {
-        return Dumux::center(getScvfCorners_(type, [&](const auto& local){ return local; }, localScvfIdx));
+        return Dumux::center(getScvfCorners(type, [&](const auto& local){ return local; }, localScvfIdx));
     }
 
     //! local boundary scvf center

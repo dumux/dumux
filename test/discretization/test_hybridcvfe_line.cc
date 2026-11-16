@@ -173,7 +173,7 @@ void checkLineGeometry(const GridView& gridView, int order, const std::string& n
             for (const auto& other : localDofs(fvGeometry))
             {
                 const double expected = (other.index() == localDof.index()) ? 1.0 : 0.0;
-                check(std::abs(values[other.index()] - expected) < eps,
+                check(std::abs(values[other.index()][0] - expected) < eps,
                       name + ": basis function is not nodal at its degree of freedom");
             }
 
