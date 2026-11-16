@@ -1,6 +1,12 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Required CI/CD variables:
+# DUMUX_CONTAINER_REGISTRY: Container registry hostname.
+# DUMUX_CI_IMAGE_REPOSITORY: Container image repository path.
+# DUMUX_GITLAB_NAMESPACE: Namespace containing DuMuX repositories.
+# DUMUX_CI_GITLAB_NAMESPACE: Namespace containing DuMuX CI repositories.
+
 stages:
   - check-status
   - trigger dumux pipelines
@@ -9,7 +15,6 @@ variables:
   UBUNTU_VERSION: "24.04"
   UBUNTU_VERSION_NEWEST: "24.04"
   DUMUX_DOCKER_CI_BRANCH: master
-  IMAGE_REGISTRY_URL: registry.bwgit.de/st/iws/dumux/ci/dumux-docker-ci
   DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH: master
   DUMUX_CI_DUNE_LATEST_RELEASE: "2.10"
   GIT_SUBMODULE_STRATEGY: recursive
@@ -28,7 +33,7 @@ workflow:
 # pipeline on a related merge request already. If yes, we simply return
 # to propagate that pipeline status on master. Otherwise, we trigger a new run.
 check-pipeline-status:
-  image: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+  image: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
   stage: check-status
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -43,11 +48,13 @@ check-pipeline-status:
           python3 .gitlab-ci/getpipelineinfo.py \
                       --access-token $CI_JOB_API_READ_TOKEN \
                       --look-for latest-merge \
+                      --project-api-url "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}" \
                       --print-format commit-sha
       }
 
       if ! python3 .gitlab-ci/getpipelineinfo.py --access-token $CI_JOB_API_READ_TOKEN \
                                                  --look-for HEAD \
+                                                 --project-api-url "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}" \
                                                  --print-format pipeline-id; then
           echo "No successful pipeline found."
 
@@ -62,7 +69,7 @@ check-pipeline-status:
           curl --request POST --form "token=$CI_JOB_TOKEN" \
                               --form ref=$CI_COMMIT_BRANCH \
                               --form "variables[CI_REFERENCE_SHA]=$REFERENCE_SHA" \
-                              "https://git.iws.uni-stuttgart.de/api/v4/projects/31/trigger/pipeline"
+                              "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/trigger/pipeline"
       else
           echo "Found successful pipeline for the current state of the branch. Not testing again."
       fi
@@ -107,27 +114,27 @@ check-pipeline-status:
 full-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
 minimal-dune-latest-release-gcc:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
+    IMAGE: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-gcc-ubuntu-$UBUNTU_VERSION
 
 minimal-dune-master-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_minimal:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
 
 full-dune-latest-release-clang:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
+    IMAGE: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-$DUMUX_CI_DUNE_LATEST_RELEASE-clang-ubuntu-$UBUNTU_VERSION
 
 full-dune-master-gcc-docs:
   extends: .base-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-gcc-ubuntu-$UBUNTU_VERSION_NEWEST
     DUMUX_ENABLE_CPPCHECK: "true"
     DUMUX_ENABLE_DOXYGEN_BUILD: "true"
     DUMUX_CHECK_EXAMPLE_DOCS: "true"
@@ -138,7 +145,7 @@ full-dune-master-gcc-docs:
 full-dune-master-clang:
   extends: .non-mr-trigger
   variables:
-    IMAGE: $IMAGE_REGISTRY_URL/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
+    IMAGE: ${DUMUX_CONTAINER_REGISTRY}/${DUMUX_CI_IMAGE_REPOSITORY}/${DUMUX_DOCKER_CI_BRANCH}_full:dune-master-clang-ubuntu-$UBUNTU_VERSION_NEWEST
     DUMUX_ENABLE_GRIDFORMAT: "ON"
 
 ################################################
@@ -154,7 +161,7 @@ trigger lecture:
     when: manual
   stage: trigger dumux pipelines
   trigger:
-    project: dumux-repositories/dumux-lecture
+    project: ${DUMUX_GITLAB_NAMESPACE}/dumux-lecture
     branch: $DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH
     strategy: depend
   variables:
@@ -174,7 +181,7 @@ trigger testing:
     when: manual
   stage: trigger dumux pipelines
   trigger:
-    project: dumux-repositories/dumux-testing
+    project: ${DUMUX_CI_GITLAB_NAMESPACE}/dumux-testing
     branch: $DUMUX_CI_TRIGGER_DOWNSTREAM_PROJECT_BRANCH
     strategy: depend
   variables:
