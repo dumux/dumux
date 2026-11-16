@@ -257,7 +257,7 @@ public:
         {
             int eIdx = this->gridGeometry().elementMapper().index(element);
             // value from numerical approximation
-            Scalar numericalSolution = curSol[eIdx];
+            Scalar numericalSolution = curSol[eIdx][pwIdx];
 
             // integrate over element using a quadrature rule
             Geometry geometry = element.geometry();
