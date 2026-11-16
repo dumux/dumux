@@ -65,12 +65,6 @@ struct SpatialParams<TypeTag, TTag::RichardsLens>
                                            GetPropType<TypeTag, Properties::Scalar>>;
 };
 
-// TODO: remove after release (3.6)
-// Set the primary variables type
-template<class TypeTag>
-struct PrimaryVariables<TypeTag, TTag::RichardsLens>
-{ using type = Dune::FieldVector<GetPropType<TypeTag, Properties::Scalar>, GetPropType<TypeTag, Properties::ModelTraits>::numEq()>; };
-
 } // end namespace Dumux::Properties
 
 #endif
