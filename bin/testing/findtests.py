@@ -60,7 +60,7 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     # first we check if the CMakeLists.txt file of the test is changed
     # then we always mark the test as affected
     if f"{testConfig['source_dir']}/CMakeLists.txt" in changedFiles:
-        return True, testConfig["name"], testConfig["target"]
+        return True, testConfig
 
     # next we use the compiler to detect changed header files
     command, directory = buildCommandAndDir(testConfig, buildTreeRoot)
@@ -82,9 +82,9 @@ def isAffectedTest(testConfigFile, changedFiles, buildTreeRoot="."):
     headers.append(mainFile)
 
     if hasCommonMember(changedFiles, headers):
-        return True, testConfig["name"], testConfig["target"]
+        return True, testConfig
 
-    return False, testConfig["name"], testConfig["target"]
+    return False, testConfig
 
 
 if __name__ == "__main__":
@@ -134,11 +134,13 @@ if __name__ == "__main__":
     numProcesses = max(1, args["num_processes"])
     findAffectedTest = partial(isAffectedTest, changedFiles=changedFileList, buildTreeRoot=buildDir)
     with Pool(processes=numProcesses) as pool:
-        for affected, name, cmakeTarget in pool.imap_unordered(
-            findAffectedTest, tests, chunksize=4
-        ):
+        for affected, metaData in pool.imap_unordered(findAffectedTest, tests, chunksize=4):
             if affected:
-                affectedTests[name] = {"target": cmakeTarget}
+                name, cmakeTarget = metaData["name"], metaData["target"]
+                affectedTests[name] = {
+                    "target": cmakeTarget,
+                    "expect_compile_fail": metaData.get("expect_compile_fail", False),
+                }
                 print(f"\t- {name} (target: {cmakeTarget})")
 
     print(f"Detected {len(affectedTests)} affected tests")

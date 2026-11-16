@@ -389,6 +389,12 @@ function(dumux_add_test)
     set(ADDTEST_MPI_RANKS 1)
   endif()
 
+  if(ADDTEST_EXPECT_COMPILE_FAIL)
+    set(expect_compile_fail true)
+  else()
+    set(expect_compile_fail false)
+  endif()
+
   foreach(procnum ${ADDTEST_MPI_RANKS})
     set(ACTUAL_NAME ${ADDTEST_NAME})
     # add suffix
@@ -407,7 +413,7 @@ function(dumux_add_test)
 
       file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/TestMetaData")
       file(WRITE "${CMAKE_BINARY_DIR}/TestMetaData/${ACTUAL_NAME}.json"
-             "{\n  \"name\": \"${ACTUAL_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\",\n  \"source_dir\": \"${CMAKE_CURRENT_SOURCE_DIR}\"\n}\n")
+             "{\n  \"name\": \"${ACTUAL_NAME}\",\n  \"target\": \"${ADDTEST_TARGET}\",\n  \"source_dir\": \"${CMAKE_CURRENT_SOURCE_DIR}\",\n  \"expect_compile_fail\": ${expect_compile_fail}\n}\n")
     endif()
   endforeach()
 endfunction()
