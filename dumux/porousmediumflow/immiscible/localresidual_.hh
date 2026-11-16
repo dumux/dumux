@@ -149,7 +149,7 @@ public:
         if (useFaceTensorAverage)
         {
             const auto K = faceTensorAverage(permeability(insideVars), permeability(outsideVars), scvf.unitOuterNormal());
-            addFluxTerms([&] (const auto&, const auto&, const auto&) { return K; });
+            addFluxTerms([&] (const auto&, const auto&, const auto&, const auto&) { return K; });
         }
         else
             addFluxTerms(permeability);
@@ -197,7 +197,7 @@ public:
             if (useConductivityFaceTensorAverage)
             {
                 const auto conductivity = faceTensorAverage(conductivity_(insideVars), conductivity_(outsideVars), scvf.unitOuterNormal());
-                addConductiveFlux([&] (const auto&, const auto&, const auto&) { return conductivity; });
+                addConductiveFlux([&] (const auto&, const auto&, const auto&, const auto&) { return conductivity; });
             }
             else
                 addConductiveFlux(conductivity_);

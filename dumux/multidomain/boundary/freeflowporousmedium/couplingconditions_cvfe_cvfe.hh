@@ -129,7 +129,7 @@ public:
         typename Concept::GridVariablesCache_t<GridVariables<porousMediumIndex>>::InterpolationPointData ipCache;
         ipCache.update(context.problem, elemDisc.element(), elemDisc, context, ipData);
 
-        const auto mobilityTensor = [&](const auto& pmElemDisc, const auto& pmElemVars, const auto& pmIpData)
+        const auto mobilityTensor = [&](const auto& pmElemDisc, const auto& pmElemVars, const auto& pmIpData, const auto& pmIpCache)
         {
             return interpolate_(context, pmIpData.global(), [&](const auto& vars)
             {

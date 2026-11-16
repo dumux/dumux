@@ -36,7 +36,7 @@ namespace Dumux {
  * freedom with a control volume are tested with its indicator function, all others with their
  * basis function. The problem then provides the body force as `source(elemDisc, elemVars, ipData)`,
  * boundary terms as `boundaryFlux(elemDisc, elemVars, ipData)` and Dirichlet conditions as
- * constraints, and the spatial parameters provide `lameParams(elemDisc, ipData)`.
+ * constraints, and the spatial parameters provide `lameParams(elemDisc, elemVars, ipData, ipCache)`.
  */
 template<class TypeTag>
 class ElasticLocalResidual

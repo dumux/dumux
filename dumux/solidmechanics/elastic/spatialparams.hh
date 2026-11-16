@@ -25,7 +25,7 @@ namespace Dumux::Experimental {
  * \ingroup Elastic
  * \brief The base class for spatial parameters of linear elastic problems assembled with
  *        local degrees of freedom (`Experimental::Assembler`). The implementation provides the
- *        Lamé parameters, `lameParams(elemDisc, ipData)` or `lameParamsAtPos(globalPos)`.
+ *        Lamé parameters, `lameParams(elemDisc, elemVars, ipData, ipCache)` or `lameParamsAtPos(globalPos)`.
  */
 template<class GridDiscretization, class Scalar, class Implementation>
 class ElasticSpatialParams
@@ -38,8 +38,8 @@ public:
     using ParentType::ParentType;
 
     //! The Lamé parameters at an interpolation point
-    template<class IpData>
-    decltype(auto) lameParams(const ElementDiscretization&, const IpData& ipData) const
+    template<class ElementVariables, class IpData, class IpCache>
+    decltype(auto) lameParams(const ElementDiscretization&, const ElementVariables&, const IpData& ipData, const IpCache&) const
     { return this->asImp_().lameParamsAtPos(ipData.global()); }
 };
 

@@ -87,7 +87,7 @@ public:
      * \brief Returns the diffusive flux terms of all components of a phase at an interpolation point
      * \note The binary diffusion coefficient of components i and j is given per local dof,
      *       `diffusionCoefficient(vars, i, j)`, and then interpolated, or per interpolation point,
-     *       `diffusionCoefficient(elemDisc, elemVars, ipData, i, j)`, for instance
+     *       `diffusionCoefficient(elemDisc, elemVars, ipData, ipCache, i, j)`, for instance
      *       Experimental::CVFE::faceTensorAverageAtScvf. The fluxes vanish where a coefficient
      *       vanishes, for instance in the absence of the phase.
      */

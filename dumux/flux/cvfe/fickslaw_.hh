@@ -78,7 +78,7 @@ public:
     /*!
      * \brief Returns the diffusive flux terms of all components of a phase at an interpolation point
      * \note The diffusion coefficient of a component is given per local dof, `diffusionCoefficient(vars, compIdx)`,
-     *       and then interpolated, or per interpolation point, `diffusionCoefficient(elemDisc, elemVars, ipData, compIdx)`,
+     *       and then interpolated, or per interpolation point, `diffusionCoefficient(elemDisc, elemVars, ipData, ipCache, compIdx)`,
      *       for instance Experimental::CVFE::faceTensorAverageAtScvf. effectiveDiffusionCoefficient() gives the
      *       coefficient of the variables.
      */

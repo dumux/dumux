@@ -27,7 +27,7 @@ namespace Dumux::Experimental {
  * \f$ \boldsymbol{\sigma} = \lambda \operatorname{tr}(\boldsymbol{\varepsilon}) \mathbf{I} + 2\mu \boldsymbol{\varepsilon} \f$
  * with the strain \f$ \boldsymbol{\varepsilon} = \frac{1}{2}(\nabla \mathbf{u} + \nabla \mathbf{u}^T) \f$ of the
  * interpolated displacement. The spatial parameters provide the Lamé parameters,
- * `lameParams(elemDisc, ipData)`.
+ * `lameParams(elemDisc, elemVars, ipData, ipCache)`.
  *
  * \tparam Scalar the scalar type for scalar physical quantities
  * \tparam GridDiscretization the grid discretization
@@ -68,7 +68,7 @@ public:
                                      const IpCache& ipCache)
     {
         const auto gradU = displacementGradient(elemDisc, elemVars, ipCache);
-        const auto& lame = problem.spatialParams().lameParams(elemDisc, ipData);
+        const auto& lame = problem.spatialParams().lameParams(elemDisc, elemVars, ipData, ipCache);
 
         Scalar trace = 0.0;
         for (int i = 0; i < dim; ++i)

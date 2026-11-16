@@ -62,7 +62,7 @@ public:
      * \brief Returns the flux term of a fluid phase at an interpolation point
      * \note This term is \f$-\mathbf{T} \left( \nabla p - \rho \mathbf{g} \right)\f$. The tensor
      *       \f$\mathbf{T}\f$ is given per local dof, `tensor(vars)`, and then interpolated alongside the
-     *       potential gradient, or per interpolation point, `tensor(elemDisc, elemVars, ipData)`, for
+     *       potential gradient, or per interpolation point, `tensor(elemDisc, elemVars, ipData, ipCache)`, for
      *       instance an average over the face being integrated. A scheme that upwinds the mobility
      *       passes the permeability only.
      */
@@ -111,7 +111,7 @@ public:
             if constexpr (tensorPerLocalDof)
                 return mv(interpolatedTensor, gradPotential);
             else
-                return mv(tensor(elemDisc, elemVars, ipData), gradPotential);
+                return mv(tensor(elemDisc, elemVars, ipData, ipCache), gradPotential);
         }();
         fluxTerm *= -1.0;
         return fluxTerm;

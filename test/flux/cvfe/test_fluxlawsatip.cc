@@ -202,8 +202,8 @@ double diffusionCoefficient(const GlobalPosition& x, int compIIdx, int compJIdx)
 
 struct TestSpatialParams
 {
-    template<class ElementDiscretization, class IpData>
-    LameParams<double> lameParams(const ElementDiscretization&, const IpData&) const
+    template<class ElementDiscretization, class ElementVariables, class IpData, class IpCache>
+    LameParams<double> lameParams(const ElementDiscretization&, const ElementVariables&, const IpData&, const IpCache&) const
     { return {3.0, 2.0}; }
 };
 
@@ -468,7 +468,7 @@ void checkFluxLaws(const typename GetPropType<TypeTag, Properties::Grid>::LeafGr
                 for (int i = 0; i < dimWorld; ++i)
                     gradU[i] = fields.template grad<dimWorld>(Field::displacement + i);
 
-                const auto lame = problem.spatialParams().lameParams(elemDisc, ipData);
+                const auto lame = problem.spatialParams().lameParams(elemDisc, elemVars, ipData, ipCache);
                 double trace = 0.0;
                 for (int i = 0; i < dimWorld; ++i)
                     trace += gradU[i][i];

@@ -29,14 +29,14 @@ namespace Dumux::Experimental::CVFE {
  *
  * \param coefficient the coefficient per local dof, `coefficient(vars, args...)`, evaluated with the variables
  *        of the local dofs of the two sub-control volumes
- * \return the coefficient per interpolation point, `(elemDisc, elemVars, ipData, args...)`,
+ * \return the coefficient per interpolation point, `(elemDisc, elemVars, ipData, ipCache, args...)`,
  *         defined for points that know their sub-control volume face
  */
 template<class Coefficient>
 auto faceTensorAverageAtScvf(Coefficient&& coefficient)
 {
     return [c = std::forward<Coefficient>(coefficient)]
-           (const auto& elemDisc, const auto& elemVars, const Concept::ScvfIpData auto& ipData, const auto&... args)
+           (const auto& elemDisc, const auto& elemVars, const Concept::ScvfIpData auto& ipData, const auto& /*ipCache*/, const auto&... args)
     {
         const auto& scvf = elemDisc.scvf(ipData.scvfIndex());
         const auto& insideVars = elemVars[elemDisc.scv(scvf.insideScvIdx())];
@@ -88,7 +88,7 @@ concept LocalDofCoefficient = std::invocable<const Coefficient&, const typename 
 /*!
  * \brief The value of a coefficient at an interpolation point
  * \note A coefficient per local dof is interpolated with the shape values, any other
- *       coefficient is evaluated at the point, `coefficient(elemDisc, elemVars, ipData, args...)`.
+ *       coefficient is evaluated at the point, `coefficient(elemDisc, elemVars, ipData, ipCache, args...)`.
  */
 template<class ElementDiscretization, class ElementVariables, class IpData, class IpCache, class Coefficient, class... Args>
 auto coefficientAtIp(const ElementDiscretization& elemDisc,
@@ -102,7 +102,7 @@ auto coefficientAtIp(const ElementDiscretization& elemDisc,
         return valueAtIp(elemDisc, elemVars, ipCache,
                          [&] (const auto& vars) { return coefficient(vars, args...); });
     else
-        return coefficient(elemDisc, elemVars, ipData, args...);
+        return coefficient(elemDisc, elemVars, ipData, ipCache, args...);
 }
 
 } // end namespace Dumux::Detail::CVFE

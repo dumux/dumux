@@ -53,7 +53,7 @@ public:
     /*!
      * \brief Returns the conductive heat flux term \f$ -\boldsymbol{\lambda} \nabla T \f$ at an interpolation point
      * \note The thermal conductivity is given per local dof, `conductivity(vars)`, and then interpolated,
-     *       or per interpolation point, `conductivity(elemDisc, elemVars, ipData)`, for instance
+     *       or per interpolation point, `conductivity(elemDisc, elemVars, ipData, ipCache)`, for instance
      *       Experimental::CVFE::faceTensorAverageAtScvf.
      */
     template<class Problem, class ElementVariables, Concept::IpData IpData, class IpCache, class Conductivity>
