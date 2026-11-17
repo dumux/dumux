@@ -234,9 +234,9 @@ public:
      * at each quadrature point and provides the point source with the necessary
      * information to compute integrals (quadrature weight and integration element)
      * \param order The order of the quadrature rule for integration of sources over an intersection
-     * \param verbose If the point source computation is verbose
+     * \note The second parameter has no effect
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // initialize the maps
         // do some logging and profiling

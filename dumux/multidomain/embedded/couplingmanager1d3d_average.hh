@@ -125,9 +125,8 @@ public:
      * at each quadrature point and provides the point source with the necessary
      * information to compute integrals (quadrature weight and integration element)
      * \param order The order of the quadrature rule for integration of sources over an intersection
-     * \param verbose If the point source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // Initialize the bulk bounding box tree
         const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();

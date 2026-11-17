@@ -54,7 +54,7 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
 {
     using ThisType = Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>;
     using ParentType = Embedded1d3dCouplingManagerBase<MDTraits, ThisType>;
-    using BaseType = EmbeddedCouplingManagerBase<MDTraits, ParentType>; //TODO: Better naming?
+    using BaseType = EmbeddedCouplingManagerBase<MDTraits, ParentType>;
     using Scalar = typename MDTraits::Scalar;
     using SolutionVector = typename MDTraits::SolutionVector;
     using PointSourceData = typename BaseType::PointSourceTraits::PointSourceData;
@@ -146,9 +146,8 @@ public:
      * at each quadrature point and provides the point source with the necessary
      * information to compute integrals (quadrature weight and integration element)
      * \param order The order of the quadrature rule for integration of sources over an intersection
-     * \param verbose If the point source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // initialize the maps
         // do some logging and profiling

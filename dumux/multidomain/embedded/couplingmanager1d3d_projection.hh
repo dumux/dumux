@@ -370,9 +370,8 @@ public:
      * the centerlines to evaluate 1d quantities and set point sources (minimum distance projection)
      *
      * \param order Unused in this algorithm! (passed from default 1D3D coupling manager)
-     * \param verbose If the source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // initialize the maps
         // do some logging and profiling
@@ -538,7 +537,7 @@ public:
      */
     // \{
 
-    //! Return a reference to the bulk problem
+    //! Returns the radius of the lower dimensional element
     Scalar radius(std::size_t id) const
     {
         const auto& data = this->pointSourceData()[id];

@@ -121,9 +121,8 @@ public:
      * at each quadrature point and provides the point source with the necessary
      * information to compute integrals (quadrature weight and integration element)
      * \param order The order of the quadrature rule for integration of sources over an intersection
-     * \param verbose If the point source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // if we use the circle average as the 3D values or a point evaluation
         const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
@@ -397,9 +396,6 @@ public:
 private:
     //! the extended source stencil object
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
-
-    //! vector for the volume fraction of the lowdim domain in the bulk domain cells
-    std::vector<Scalar> lowDimVolumeInBulkElement_;
 };
 
 //! we support multithreaded assembly
