@@ -31,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/components/constant.hh>
@@ -52,6 +53,7 @@ namespace TTag {
 struct Tissue { using InheritsFrom = std::tuple<OneP>; };
 struct TissueCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
 struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
+struct TissuePQ1Bubble { using InheritsFrom = std::tuple<Tissue, PQ1BubbleModel>; };
 // Tensor-product YaspGrid: equidistant or graded cells, so the kernel coupling manager
 // locates points with the bounding box tree
 struct TissueTensorProductCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };

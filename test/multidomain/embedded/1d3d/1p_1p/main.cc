@@ -14,6 +14,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <limits>
 #include <iostream>
 #include <random>
 #include <type_traits>
@@ -28,6 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/parallel/multithreading.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/io/vtkoutputmodule.hh>
@@ -40,6 +43,7 @@
 #include <dumux/multidomain/newtonsolver.hh>
 
 #include <test/testing/convergencetest.hh>
+#include <test/multidomain/embedded/jacobiancheck.hh>
 
 #include "properties.hh"
 #include "l2norm.hh"
@@ -214,23 +218,20 @@ double integrateCouplingSource(const Problem& problem, const SolutionVector& sol
 }
 
 //! The mass that leaves the one-dimensional domain enters the bulk domain
-template<class CouplingManager, class BulkProblem, class LowDimProblem, class SolutionVector, class BulkGridVariables, class LowDimGridVariables>
+template<class BulkProblem, class LowDimProblem, class SolutionVector, class BulkGridVariables, class LowDimGridVariables>
 void checkExchangeConservation(const BulkProblem& bulkProblem, const LowDimProblem& lowDimProblem,
                                const SolutionVector& sol,
                                const BulkGridVariables& bulkGridVariables, const LowDimGridVariables& lowDimGridVariables)
 {
     using namespace Dumux;
-    if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
-    {
-        const auto bulkSource = integrateCouplingSource(bulkProblem, sol[Dune::index_constant<0>{}], bulkGridVariables);
-        const auto lowDimSource = integrateCouplingSource(lowDimProblem, sol[Dune::index_constant<1>{}], lowDimGridVariables);
-        const auto relErr = std::abs(bulkSource + lowDimSource)/std::abs(lowDimSource);
-        std::cout << "[conservation] total bulk source = " << bulkSource << ", total low-dim source = " << lowDimSource
-                  << ", rel. error = " << relErr << std::endl;
-        if (relErr > 1e-10)
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Exchange between the domains is not conservative, rel. error = " << relErr);
-    }
+    const auto bulkSource = integrateCouplingSource(bulkProblem, sol[Dune::index_constant<0>{}], bulkGridVariables);
+    const auto lowDimSource = integrateCouplingSource(lowDimProblem, sol[Dune::index_constant<1>{}], lowDimGridVariables);
+    const auto relErr = std::abs(bulkSource + lowDimSource)/std::abs(lowDimSource);
+    std::cout << "[conservation] total bulk source = " << bulkSource << ", total low-dim source = " << lowDimSource
+              << ", rel. error = " << relErr << std::endl;
+    if (relErr > 1e-10)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "Exchange between the domains is not conservative, rel. error = " << relErr);
 }
 
 int main(int argc, char** argv)
@@ -320,12 +321,14 @@ int main(int argc, char** argv)
     using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
     VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GetPropType<BulkTypeTag, Properties::IOFields>::initOutputModule(bulkVtkWriter);
-    bulkProblem->addVtkOutputFields(bulkVtkWriter);
+    if (writeVtk)
+        bulkProblem->addVtkOutputFields(bulkVtkWriter);
 
     using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
     VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
     GetPropType<LowDimTypeTag, Properties::IOFields>::initOutputModule(lowDimVtkWriter);
-    lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
+    if (writeVtk)
+        lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
 
     if (writeVtk)
     {
@@ -348,6 +351,54 @@ int main(int argc, char** argv)
                                                  std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                  std::make_tuple(bulkGridVariables, lowDimGridVariables),
                                                  couplingManager);
+
+    if (getParam<bool>("Test.CheckJacobian", false))
+    {
+        const auto result = Test::compareJacobianWithFiniteDifferences(
+            *assembler, *couplingManager, sol, {1.0, 1e-2, 1e-4, 1e-6, 1e-8}
+        );
+        double best = std::numeric_limits<double>::max();
+        for (const auto& [epsilon, relativeError] : result)
+        {
+            std::cout << "[jacobian] eps = " << epsilon << ", |J v - (R(u + eps v) - R(u))/eps|/|J v| = " << relativeError << std::endl;
+            best = std::min(best, relativeError);
+        }
+        const auto tolerance = getParam<double>("Test.JacobianTolerance", 1e-6);
+        if (!(best < tolerance))
+            DUNE_THROW(Dune::InvalidStateException, "Jacobian does not match finite differences of the residual, best relative error " << best);
+    }
+
+    if (getParam<bool>("Test.CheckMultithreading", false))
+    {
+        const auto* numThreads = std::getenv("DUMUX_NUM_THREADS");
+        if (Multithreading::isSerial() || !numThreads || std::atoi(numThreads) < 2)
+            DUNE_THROW(Dune::InvalidStateException, "The multithreading check needs a threading backend and DUMUX_NUM_THREADS > 1");
+
+        // the assemblers read the parameter when they are constructed
+        Parameters::init([](Dune::ParameterTree& params) { params["Assembly.Multithreading"] = "false"; });
+        auto serialAssembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
+                                                           std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
+                                                           std::make_tuple(bulkGridVariables, lowDimGridVariables),
+                                                           couplingManager);
+        Parameters::init([](Dune::ParameterTree& params) { params["Assembly.Multithreading"] = "true"; });
+        auto threadedAssembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
+                                                             std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
+                                                             std::make_tuple(bulkGridVariables, lowDimGridVariables),
+                                                             couplingManager);
+        couplingManager->updateSolution(sol);
+        serialAssembler->assembleJacobianAndResidual(sol);
+        threadedAssembler->assembleJacobianAndResidual(sol);
+        const auto difference = Test::compareMatrices(serialAssembler->jacobian(), threadedAssembler->jacobian());
+        auto residualDifference = serialAssembler->residual();
+        residualDifference -= threadedAssembler->residual();
+        std::cout << "[multithreading] max |J_serial - J_threaded| = " << difference.maxAbsDifference
+                  << ", max |J| = " << difference.maxAbsEntry
+                  << ", identical bit by bit: " << std::boolalpha << difference.identical
+                  << ", |R_serial - R_threaded| = " << Test::norm(residualDifference) << std::endl;
+        const auto tolerance = getParam<double>("Test.MultithreadingTolerance", 1e-12);
+        if (difference.maxAbsDifference > tolerance*difference.maxAbsEntry || Test::norm(residualDifference) > tolerance*Test::norm(serialAssembler->residual()))
+            DUNE_THROW(Dune::InvalidStateException, "Multithreaded and serial assembly differ");
+    }
 
     // the linear solver
     using LinearSolver = BlockDiagILU0BiCGSTABSolver;
@@ -388,7 +439,7 @@ int main(int argc, char** argv)
               <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
               << "\n";
 
-    checkExchangeConservation<CouplingManager>(*bulkProblem, *lowDimProblem, sol, *bulkGridVariables, *lowDimGridVariables);
+    checkExchangeConservation(*bulkProblem, *lowDimProblem, sol, *bulkGridVariables, *lowDimGridVariables);
 
     // output the source terms
     bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
