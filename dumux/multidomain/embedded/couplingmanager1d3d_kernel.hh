@@ -273,7 +273,10 @@ public:
                 // ends, e.g. if several lower-dimensional elements are embedded in one bulk element.
                 const auto avgMinDist = averageDistanceLineGeometry(a, b, outside.geometry());
                 this->averageDistanceToBulkCell().push_back(avgMinDist);
-                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
+
+                // a cell-centered bulk pressure represents the element, an interpolated one the value on the centerline
+                const auto scalingDistance = isCVFE<bulkIdx>() ? Scalar(0.0) : avgMinDist;
+                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(scalingDistance, radius, kernelWidth));
 
                 // export the lowdim coupling stencil
                 // we insert all dofs / elements and make it unique later
