@@ -12,6 +12,7 @@
 
 #include <config.h>
 
+#include <cmath>
 #include <iostream>
 #include <fstream>
 
@@ -78,6 +79,46 @@ void checkKernelConservation(const CouplingManager& couplingManager,
         if (relErr > 1e-10)
             DUNE_THROW(Dune::InvalidStateException,
                        "Kernel distribution is not conservative, rel. error = " << relErr);
+    }
+}
+
+//! The source (point sources and distributed sources) integrated over a domain
+template<class Problem, class SolutionVector, class GridVariables>
+double integrateCouplingSource(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
+{
+    using namespace Dumux;
+    double total = 0.0;
+    auto fvGeometry = localView(problem.gridGeometry());
+    auto elemVolVars = localView(gridVars.curGridVolVars());
+    for (const auto& element : elements(problem.gridGeometry().gridView()))
+    {
+        fvGeometry.bindElement(element);
+        elemVolVars.bindElement(element, fvGeometry, sol);
+        for (const auto& scv : scvs(fvGeometry))
+            total += (problem.scvPointSources(element, fvGeometry, elemVolVars, scv)[0]
+                      + problem.source(element, fvGeometry, elemVolVars, scv)[0])
+                     *scv.volume()*elemVolVars[scv].extrusionFactor();
+    }
+    return total;
+}
+
+//! The mass that leaves the one-dimensional domain enters the bulk domain
+template<class CouplingManager, class BulkProblem, class LowDimProblem, class SolutionVector, class BulkGridVariables, class LowDimGridVariables>
+void checkExchangeConservation(const BulkProblem& bulkProblem, const LowDimProblem& lowDimProblem,
+                               const SolutionVector& sol,
+                               const BulkGridVariables& bulkGridVariables, const LowDimGridVariables& lowDimGridVariables)
+{
+    using namespace Dumux;
+    if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
+    {
+        const auto bulkSource = integrateCouplingSource(bulkProblem, sol[Dune::index_constant<0>{}], bulkGridVariables);
+        const auto lowDimSource = integrateCouplingSource(lowDimProblem, sol[Dune::index_constant<1>{}], lowDimGridVariables);
+        const auto relErr = std::abs(bulkSource + lowDimSource)/std::abs(lowDimSource);
+        std::cout << "[conservation] total bulk source = " << bulkSource << ", total low-dim source = " << lowDimSource
+                  << ", rel. error = " << relErr << std::endl;
+        if (relErr > 1e-10)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Exchange between the domains is not conservative, rel. error = " << relErr);
     }
 }
 
@@ -234,6 +275,8 @@ int main(int argc, char** argv)
               <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
               <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
               << "\n";
+
+    checkExchangeConservation<CouplingManager>(*bulkProblem, *lowDimProblem, sol, *bulkGridVariables, *lowDimGridVariables);
 
     // output the source terms
     bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
