@@ -39,6 +39,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
@@ -157,6 +158,19 @@ int testGrid(const Grid& grid, const std::string& gridName)
     }
 
     {
+        // the sub-control volumes of the vertex dofs and the element dof overlap
+        PQ1BubbleFVGridGeometry<double, typename Grid::LeafGridView, true> gridGeometry(gridView);
+        std::size_t numEntries = 0;
+        if (!testConservation(gridGeometry, false, gridName + ", pq1bubble", numEntries))
+            ++failures;
+        if (!testThrowsOverlappingLumping(gridGeometry))
+        {
+            std::cout << gridName << ": no exception for lumping in overlapping sub-control volumes" << std::endl;
+            ++failures;
+        }
+    }
+
+    {
         CCTpfaFVGridGeometry<typename Grid::LeafGridView> gridGeometry(gridView);
         std::size_t numEntries = 0;
         if (!testConservation(gridGeometry, true, gridName + ", cctpfa", numEntries))
@@ -191,15 +205,30 @@ bool testThrowsOutsideElement(const GridGeometry& gridGeometry)
     return false;
 }
 
-struct PQ1BubbleGridGeometry
-{ static constexpr auto discMethod = DiscretizationMethods::pq1bubble; };
+struct FCStaggeredGridGeometry
+{
+    using DiscretizationMethod = DiscretizationMethods::FCStaggered;
+    static constexpr auto discMethod = DiscretizationMethods::fcstaggered;
+};
+
+// point sources in overlapping sub-control volumes cannot be assigned by their location
+template<class GridGeometry>
+bool testThrowsOverlappingLumping(const GridGeometry& gridGeometry)
+{
+    std::map<std::pair<std::size_t, std::size_t>, std::vector<TestSource>> pointSourceMap;
+    const std::vector<TestSource> sources{ TestSource(GlobalPosition(0.5), 0, 1.0, 1.0, 0) };
+    setLumping(true);
+    try { IntegrationPointSourceHelper::computePointSourceMap(gridGeometry, sources, pointSourceMap); }
+    catch (const Dune::NotImplemented&) { return true; }
+    return false;
+}
 
 // discretization methods the point source map is not implemented for must throw
 bool testThrowsUnsupportedMethod()
 {
     std::map<std::pair<std::size_t, std::size_t>, std::vector<TestSource>> pointSourceMap;
     const std::vector<TestSource> sources{ TestSource(GlobalPosition(0.5), 0, 1.0, 1.0, 0) };
-    try { IntegrationPointSourceHelper::computePointSourceMap(PQ1BubbleGridGeometry{}, sources, pointSourceMap); }
+    try { IntegrationPointSourceHelper::computePointSourceMap(FCStaggeredGridGeometry{}, sources, pointSourceMap); }
     catch (const Dune::NotImplemented&) { return true; }
     return false;
 }

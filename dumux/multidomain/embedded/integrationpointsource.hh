@@ -20,6 +20,7 @@
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -113,9 +114,11 @@ public:
         {
             // get the index of the element in which the point source falls
             const auto eIdx = source.elementIndex();
-            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
-                || GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+            if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
             {
+                static_assert(!Detail::LocalDofs::hasNonCVLocalDofsInterface<typename GridGeometry::LocalView>(),
+                              "Point sources in the sub control volumes need a scheme where every local dof has a control volume, "
+                              "use the interface with the element variables otherwise");
                 auto fvGeometry = localView(gridGeometry);
                 // check in which subcontrolvolume(s) we are
                 const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
@@ -125,11 +128,18 @@ public:
                 if (boxPointSourceLumping)
                 {
                     // loop over all sub control volumes and check if the point source is inside
-                    constexpr int dim = GridGeometry::GridView::dimension;
-                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
+                    Dune::ReservedVector<std::size_t, Detail::LocalDofs::maxNumLocalDofs<typename GridGeometry::LocalView>()> scvIndices;
                     for (const auto& scv : scvs(fvGeometry))
+                    {
+                        if constexpr (requires { scv.isOverlapping(); })
+                            if (scv.isOverlapping())
+                                DUNE_THROW(Dune::NotImplemented,
+                                           "Point sources in overlapping sub control volumes, "
+                                           "set PointSource.EnableBoxLumping to false to distribute them with the basis functions");
+
                         if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
                             scvIndices.push_back(scv.indexInElement());
+                    }
 
                     if (scvIndices.empty())
                         DUNE_THROW(Dune::InvalidStateException,

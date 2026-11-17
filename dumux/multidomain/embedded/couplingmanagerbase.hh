@@ -31,6 +31,7 @@
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/glue.hh>
 #include <dumux/multidomain/embedded/elementdofs.hh>
@@ -101,13 +102,13 @@ class EmbeddedCouplingManagerBase
     template<std::size_t id>
     static constexpr bool isSupportedDiscretizationMethod()
     {
-        return GridGeometry<id>::discMethod == DiscretizationMethods::box
-            || GridGeometry<id>::discMethod == DiscretizationMethods::cctpfa
-            || GridGeometry<id>::discMethod == DiscretizationMethods::ccmpfa;
+        return GridGeometry<id>::discMethod == DiscretizationMethods::cctpfa
+            || GridGeometry<id>::discMethod == DiscretizationMethods::ccmpfa
+            || isCVFE<id>();
     }
 
     static_assert(isSupportedDiscretizationMethod<bulkIdx>() && isSupportedDiscretizationMethod<lowDimIdx>(),
-                  "The embedded coupling managers support the discretization methods box, cctpfa and ccmpfa only");
+                  "The embedded coupling managers support the cell-centered methods and the control-volume finite element methods");
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
     using GlueType = MultiDomainGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
@@ -217,6 +218,8 @@ public:
 
             const auto& element = localAssemblerI.element();
             const auto& fvGeometry = localAssemblerI.fvGeometry();
+            static_assert(!Detail::LocalDofs::hasNonCVLocalDofsInterface<std::decay_t<decltype(fvGeometry)>>(),
+                          "Local dofs without a control volume need the element variables interface");
             const auto& curElemVolVars = localAssemblerI.curElemVolVars();
 
             residual.resize(fvGeometry.numScv());
