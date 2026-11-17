@@ -107,6 +107,7 @@ public:
                                       PointSourceMap& pointSourceMap,
                                       const std::string& paramGroup = "")
     {
+        [[maybe_unused]] const bool boxPointSourceLumping = getParamFromGroup<bool>(paramGroup, "PointSource.EnableBoxLumping", true);
         for (const auto& source : sources)
         {
             // get the index of the element in which the point source falls
@@ -120,7 +121,6 @@ public:
                 fvGeometry.bindElement(element);
                 const auto globalPos = source.position();
 
-                static const bool boxPointSourceLumping = getParamFromGroup<bool>(paramGroup, "PointSource.EnableBoxLumping", true);
                 if (boxPointSourceLumping)
                 {
                     // loop over all sub control volumes and check if the point source is inside

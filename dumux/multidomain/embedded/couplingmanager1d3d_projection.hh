@@ -412,7 +412,7 @@ public:
 
         // construct a bounding box that may be used to determine coupled faces
         // the shrinking factor shrinks this bounding box
-        static const auto bBoxShrinking
+        const auto bBoxShrinking
             = getParam<Scalar>("MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor", 1e-2);
         const GlobalPosition threshold(
             bBoxShrinking*( bulkFvGridGeometry.bBoxMax()-bulkFvGridGeometry.bBoxMin() ).two_norm()
@@ -431,12 +431,12 @@ public:
         };
 
         // setup simplex "quadrature" rule
-        static const auto quadSimplexRefineMaxLevel
+        const auto quadSimplexRefineMaxLevel
             = getParam<std::size_t>("MixedDimension.Projection.SimplexIntegrationRefine", 4);
         const auto indicator = Detail::NetworkIndicatorFunction { network };
 
         // estimate number of point sources for memory allocation
-        static const auto estimateNumberOfPointSources
+        const auto estimateNumberOfPointSources
             = getParam<std::size_t>("MixedDimension.Projection.EstimateNumberOfPointSources", bulkFvGridGeometry.gridView().size(0));
 
         this->pointSources(bulkIdx).reserve(estimateNumberOfPointSources);

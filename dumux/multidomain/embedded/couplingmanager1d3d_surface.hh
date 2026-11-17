@@ -126,7 +126,7 @@ public:
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
         // if we use the circle average as the 3D values or a point evaluation
-        static const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
+        const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
 
         // Initialize the bulk bounding box tree
         const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
@@ -152,6 +152,7 @@ public:
 
         // iterate over all intersection and add point sources
         const auto& lowDimProblem = this->problem(lowDimIdx);
+        const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
@@ -186,7 +187,6 @@ public:
                 // get points on the cylinder surface at the integration point
                 ////////////////////////////////////////////////////////////////
 
-                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
                 const auto normal = intersectionGeometry.corner(1)-intersectionGeometry.corner(0);
                 const auto integrationElement = intersectionGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);

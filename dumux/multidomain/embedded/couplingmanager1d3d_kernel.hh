@@ -164,10 +164,10 @@ public:
 
         // generate a bunch of random vectors and values for
         // Monte-carlo integration on the cylinder defined by line and radius
-        static const double characteristicRelativeLength = getParam<double>("MixedDimension.KernelIntegrationCRL", 0.1);
+        const double characteristicRelativeLength = getParam<double>("MixedDimension.KernelIntegrationCRL", 0.1);
         EmbeddedCoupling::CylinderIntegration<Scalar> cylIntegration(characteristicRelativeLength, 1);
 
-        static const bool writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
+        const bool writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
         if (writeIntegrationPointsToFile)
         {
             std::ofstream ipPointFile("kernel_points.log", std::ios::trunc);

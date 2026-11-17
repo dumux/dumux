@@ -153,6 +153,7 @@ public:
 
         // iterate over all intersection and add point sources
         const auto& lowDimProblem = this->problem(lowDimIdx);
+        const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
@@ -187,7 +188,6 @@ public:
                 // get circle average connectivity and interpolation data
                 //////////////////////////////////////////////////////////
 
-                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
                 const auto normal = intersectionGeometry.corner(1)-intersectionGeometry.corner(0);
                 const auto circleAvgWeight = 2*M_PI*radius/numIp;
