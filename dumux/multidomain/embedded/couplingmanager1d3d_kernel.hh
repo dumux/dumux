@@ -13,11 +13,13 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_KERNEL_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_KERNEL_HH
 
+#include <array>
+#include <type_traits>
 #include <vector>
 
 #include <dune/common/timer.hh>
 #include <dune/geometry/quadraturerules.hh>
-#include <dune/grid/common/capabilities.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
@@ -29,6 +31,20 @@
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+//! YaspGrids with equidistant cells admit a direct computation of the cell containing a point
+template<class Grid>
+inline constexpr bool isEquidistantYaspGrid = false;
+
+template<int dim, class ctype>
+inline constexpr bool isEquidistantYaspGrid<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ctype, dim>>> = true;
+
+template<int dim, class ctype>
+inline constexpr bool isEquidistantYaspGrid<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ctype, dim>>> = true;
+
+} // end namespace Detail
 
 namespace Embedded1d3dCouplingMode {
 struct Kernel : public Utility::Tag<Kernel> {
@@ -76,9 +92,10 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
     static constexpr bool isBox()
     { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
-    //! Cartesian bulk grids allow an O(1) point lookup; otherwise the bounding box tree is used
-    static constexpr bool bulkIsCartesian
-        = Dune::Capabilities::isCartesian<typename GridView<bulkIdx>::Grid>::v;
+    //! Equidistant YaspGrids allow an O(1) point lookup; otherwise the bounding box tree is used
+    static constexpr bool bulkHasCartesianLookup
+        = Detail::isEquidistantYaspGrid<typename GridView<bulkIdx>::Grid>
+          && std::is_same_v<GridView<bulkIdx>, typename GridView<bulkIdx>::Grid::LeafGridView>;
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
@@ -321,17 +338,19 @@ private:
                              const CylIntegration& cylIntegration, int embeddings)
     {
         // Monte-carlo integration on the cylinder defined by line and radius
-        // The bounding box is taken from the grid itself so that unstructured grids, which
-        // have no Grid.LowerLeft/UpperRight/Cells parameters, work unchanged. Only the
-        // Cartesian fast path needs the cell counts.
         const auto& min = this->problem(bulkIdx).gridGeometry().bBoxMin();
         const auto& max = this->problem(bulkIdx).gridGeometry().bBoxMax();
+
+        // the direct cell computation needs the global cell counts, so it is only valid on a single process
         std::array<int, bulkDim> cells{};
-        if constexpr (bulkIsCartesian)
+        bool useCartesianLookup = false;
+        if constexpr (bulkHasCartesianLookup)
         {
-            static const auto bulkParamGroup = this->problem(bulkIdx).paramGroup();
-            static const auto cartesianCells = getParamFromGroup<std::array<int, bulkDim>>(bulkParamGroup, "Grid.Cells");
-            cells = cartesianCells;
+            const auto& gridView = this->gridView(bulkIdx);
+            useCartesianLookup = gridView.comm().size() == 1;
+            if (useCartesianLookup)
+                for (int d = 0; d < bulkDim; ++d)
+                    cells[d] = gridView.grid().levelSize(gridView.grid().maxLevel(), d);
         }
         const auto cylSamples = cylIntegration.size();
         const auto& a = line.corner(0);
@@ -356,7 +375,7 @@ private:
             const auto& point = cylIntegration.integrationPoint(i);
             if (const bool hasIntersection = intersectsPointBoundingBox(point, min, max); hasIntersection)
             {
-                const auto bulkElementIdx = bulkElementIndex_(point, min, max, cells);
+                const auto bulkElementIdx = bulkElementIndex_(point, min, max, cells, useCartesianLookup);
                 if (bulkElementIdx == invalidElement_)
                     continue;
                 assert(bulkElementIdx < this->problem(bulkIdx).gridGeometry().gridView().size(0));
@@ -410,23 +429,22 @@ private:
     /*!
      * \brief Locate the bulk element containing a point.
      *
-     *        A Cartesian grid allows an O(1) index computation; any other grid needs the
-     *        bounding box tree, which is general but markedly slower. The distinction is a
-     *        compile-time grid capability, so unstructured grids pay only for what they use.
+     *        An equidistant YaspGrid on a single process allows an O(1) index computation;
+     *        any other grid needs the bounding box tree.
      */
     GridIndex<bulkIdx> bulkElementIndex_(const GlobalPosition& point,
                                         const GlobalPosition& min,
                                         const GlobalPosition& max,
-                                        const std::array<int, bulkDim>& cells) const
+                                        const std::array<int, bulkDim>& cells,
+                                        bool useCartesianLookup) const
     {
-        if constexpr (bulkIsCartesian)
-            return intersectingEntityCartesianGrid(point, min, max, cells);
-        else
-        {
-            const auto candidates = intersectingEntities(
-                point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
-            return candidates.empty() ? invalidElement_ : GridIndex<bulkIdx>(candidates[0]);
-        }
+        if constexpr (bulkHasCartesianLookup)
+            if (useCartesianLookup)
+                return intersectingEntityCartesianGrid(point, min, max, cells);
+
+        const auto candidates = intersectingEntities(
+            point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
+        return candidates.empty() ? invalidElement_ : GridIndex<bulkIdx>(candidates[0]);
     }
 
     void prepareDataStructures_()
