@@ -30,6 +30,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 
@@ -442,7 +443,7 @@ public:
         // temporarily represent the network domain as a list of segments
         // a more efficient data structure
         const auto& lowDimProblem = this->problem(lowDimIdx);
-        const auto& lowDimFvGridGeometry = lowDimProblem.gridGeometry();
+        const auto& lowDimFvGridGeometry = gridDiscretization(lowDimProblem);
         const auto& lowDimGridView = lowDimFvGridGeometry.gridView();
         localAreaFactor_.assign(lowDimGridView.size(0), 0.0);
         const auto radiusFunc = [&](const GridIndex<lowDimIdx> eIdx) {
@@ -457,7 +458,7 @@ public:
         this->precomputeElementDofIndices(lowDimIdx);
 
         const auto& bulkProblem = this->problem(bulkIdx);
-        const auto& bulkFvGridGeometry = bulkProblem.gridGeometry();
+        const auto& bulkFvGridGeometry = gridDiscretization(bulkProblem);
         const auto& bulkGridView = bulkFvGridGeometry.gridView();
         bulkElementMarker_.assign(bulkGridView.size(0), 0);
         bulkVertexMarker_.assign(bulkGridView.size(bulkDim), 0);
@@ -646,8 +647,8 @@ private:
         this->pointSources(lowDimIdx).emplace_back(projPoint, id, qpweight, integrationElement, lowDimElementIdx);
         localAreaFactor_[lowDimElementIdx] += qpweight*integrationElement;
 
-        const auto& bulkFvGridGeometry = this->problem(bulkIdx).gridGeometry();
-        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).gridGeometry();
+        const auto& bulkFvGridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& lowDimFvGridGeometry = gridDiscretization(this->problem(lowDimIdx));
 
         // pre compute additional data used for the evaluation of
         // the actual solution dependent source term
@@ -656,7 +657,7 @@ private:
         if constexpr (isCVFE<lowDimIdx>())
         {
             std::vector<Dune::FieldVector<Scalar, 1> > shapeValues;
-            const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
+            const auto lowDimGeometry = gridDiscretization(this->problem(lowDimIdx)).element(lowDimElementIdx).geometry();
             this->getShapeValues(lowDimIdx, lowDimFvGridGeometry, lowDimGeometry, projPoint, shapeValues);
             psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
         }

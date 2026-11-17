@@ -17,6 +17,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/indextraits.hh>
 
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
@@ -88,7 +89,7 @@ public:
                  "from dumux/multidomain/embedded/lowdimvolume.hh.")]]
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
+        const auto eIdx = gridDiscretization(this->problem(bulkIdx)).elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
 
@@ -99,7 +100,7 @@ public:
                  "from dumux/multidomain/embedded/lowdimvolume.hh by the element volume.")]]
     Scalar lowDimVolumeFraction(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
+        const auto eIdx = gridDiscretization(this->problem(bulkIdx)).elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx] / element.geometry().volume();
     }
 
@@ -111,8 +112,8 @@ private:
         // resize the storage vector
         lowDimVolumeInBulkElement_.resize(this->gridView(bulkIdx).size(0));
         // get references to the grid geometries
-        const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
-        const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
+        const auto& lowDimGridGeometry = gridDiscretization(this->problem(lowDimIdx));
+        const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
 
         // compute the low dim volume fractions
         for (const auto& is : intersections(this->glue()))

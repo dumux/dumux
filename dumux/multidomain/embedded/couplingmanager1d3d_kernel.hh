@@ -23,6 +23,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/indextraits.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/geometry/distance.hh>
@@ -176,8 +177,8 @@ public:
         prepareDataStructures_();
         std::cout << "[coupling] Resized data structures." << std::endl;
 
-        const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
-        const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
+        const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& lowDimGridGeometry = gridDiscretization(this->problem(lowDimIdx));
 
         // generate a bunch of random vectors and values for
         // Monte-carlo integration on the cylinder defined by line and radius
@@ -239,9 +240,9 @@ public:
                 if constexpr (isCVFE<lowDimIdx>())
                 {
                     using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                    const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
+                    const auto lowDimGeometry = gridDiscretization(this->problem(lowDimIdx)).element(lowDimElementIdx).geometry();
                     ShapeValues shapeValues;
-                    this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, center, shapeValues);
+                    this->getShapeValues(lowDimIdx, gridDiscretization(this->problem(lowDimIdx)), lowDimGeometry, center, shapeValues);
                     psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                 }
                 else
@@ -253,9 +254,9 @@ public:
                 if constexpr (isCVFE<bulkIdx>())
                 {
                     using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                    const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
+                    const auto bulkGeometry = gridDiscretization(this->problem(bulkIdx)).element(bulkElementIdx).geometry();
                     ShapeValues shapeValues;
-                    this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, center, shapeValues);
+                    this->getShapeValues(bulkIdx, gridDiscretization(this->problem(bulkIdx)), bulkGeometry, center, shapeValues);
                     psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                 }
                 else
@@ -343,8 +344,8 @@ private:
                              const CylIntegration& cylIntegration, int embeddings)
     {
         // Monte-carlo integration on the cylinder defined by line and radius
-        const auto& min = this->problem(bulkIdx).gridGeometry().bBoxMin();
-        const auto& max = this->problem(bulkIdx).gridGeometry().bBoxMax();
+        const auto& min = gridDiscretization(this->problem(bulkIdx)).bBoxMin();
+        const auto& max = gridDiscretization(this->problem(bulkIdx)).bBoxMax();
 
         // the direct cell computation needs the global cell counts, so it is only valid on a single process
         std::array<int, bulkDim> cells{};
@@ -383,14 +384,14 @@ private:
                 const auto bulkElementIdx = bulkElementIndex_(point, min, max, cells, useCartesianLookup);
                 if (bulkElementIdx == invalidElement_)
                     continue;
-                assert(bulkElementIdx < this->problem(bulkIdx).gridGeometry().gridView().size(0));
+                assert(bulkElementIdx < gridDiscretization(this->problem(bulkIdx)).gridView().size(0));
                 const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/Scalar(embeddings);
                 integral += localWeight;
 
                 if constexpr (isCVFE<bulkIdx>())
                 {
                     using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                    const auto& gg = this->problem(bulkIdx).gridGeometry();
+                    const auto& gg = gridDiscretization(this->problem(bulkIdx));
                     ShapeValues shapeValues;
                     this->getShapeValues(bulkIdx, gg, gg.element(bulkElementIdx).geometry(), point, shapeValues);
 
@@ -421,6 +422,12 @@ private:
                         addBulkSourceStencils_(bulkElementIdx, lowDimElementIdx, coupledBulkElementIdx);
                     }
                 }
+
+                // the sample as a point source for problems with point sources of the element discretization interface
+                if constexpr (BaseType::template usesElementVariables<bulkIdx>())
+                {
+                    this->additionalPointSourceContexts(bulkIdx).emplace_back(point, id, localWeight, bulkElementIdx, 1);
+                }
             }
         }
 
@@ -448,7 +455,7 @@ private:
                 return intersectingEntityCartesianGrid(point, min, max, cells);
 
         const auto candidates = intersectingEntities(
-            point, this->problem(bulkIdx).gridGeometry().boundingBoxTree());
+            point, gridDiscretization(this->problem(bulkIdx)).boundingBoxTree());
         return candidates.empty() ? invalidElement_ : GridIndex<bulkIdx>(candidates[0]);
     }
 

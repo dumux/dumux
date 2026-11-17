@@ -20,6 +20,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/indextraits.hh>
 
 #include <dumux/geometry/distance.hh>
@@ -129,8 +130,8 @@ public:
     void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // Initialize the bulk bounding box tree
-        const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
-        const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
+        const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& lowDimGridGeometry = gridDiscretization(this->problem(lowDimIdx));
         const auto& bulkTree = bulkGridGeometry.boundingBoxTree();
 
         // initialize the maps

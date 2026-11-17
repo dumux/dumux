@@ -18,6 +18,7 @@
 #include <dune/common/indices.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
 #include <dumux/assembly/numericepsilon.hh>
@@ -64,14 +65,14 @@ public:
             const auto& dofs = extendedSourceStencil_(couplingManager, domainI, element);
             if constexpr (isCVFE<domainI>())
             {
-                const auto eIdx = couplingManager.problem(domainI).gridGeometry().elementMapper().index(element);
+                const auto eIdx = gridDiscretization(couplingManager.problem(domainI)).elementMapper().index(element);
                 for (const auto globalI : couplingManager.elementDofIndices(domainI, eIdx))
                     for (const auto globalJ : dofs)
                         pattern.add(globalI, globalJ);
             }
             else
             {
-                const auto globalI = couplingManager.problem(domainI).gridGeometry().elementMapper().index(element);
+                const auto globalI = gridDiscretization(couplingManager.problem(domainI)).elementMapper().index(element);
                 for (const auto globalJ : dofs)
                     pattern.add(globalI, globalJ);
             }
@@ -186,7 +187,7 @@ private:
     {
         if constexpr (domainId == bulkIdx)
         {
-            const auto bulkElementIdx = couplingManager.problem(bulkIdx).gridGeometry().elementMapper().index(element);
+            const auto bulkElementIdx = gridDiscretization(couplingManager.problem(bulkIdx)).elementMapper().index(element);
             if (auto stencil = sourceStencils_.find(bulkElementIdx); stencil != sourceStencils_.end())
                 return stencil->second;
         }
