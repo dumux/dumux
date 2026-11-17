@@ -14,8 +14,6 @@
 
 #include <vector>
 
-#include <dune/common/exceptions.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
@@ -96,12 +94,6 @@ public:
             // Make sure we don't iterate over quadrature points if there are no hybrid dofs
             if (nonCVLocalDofs(elemDisc).empty())
                 return;
-
-            if constexpr (requires { problem.pointSources(); })
-            {
-                if (!problem.pointSources().empty())
-                    DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid mass schemes.");
-            }
 
             using GlobalPosition = typename GridDiscretization_t<ElementDiscretization>::GlobalCoordinate;
 
