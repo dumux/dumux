@@ -23,6 +23,7 @@
 #include <dumux/assembly/numericepsilon.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux::EmbeddedCoupling {
 
@@ -45,8 +46,8 @@ class ExtendedSourceStencil
     static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 public:
     /*!
      * \brief extend the jacobian pattern of the diagonal block of domain i
@@ -61,11 +62,12 @@ public:
         for (const auto& element : elements(couplingManager.gridView(domainI)))
         {
             const auto& dofs = extendedSourceStencil_(couplingManager, domainI, element);
-            if constexpr (isBox<domainI>())
+            if constexpr (isCVFE<domainI>())
             {
-                for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
+                const auto eIdx = couplingManager.problem(domainI).gridGeometry().elementMapper().index(element);
+                for (const auto globalI : couplingManager.elementDofIndices(domainI, eIdx))
                     for (const auto globalJ : dofs)
-                        pattern.add(couplingManager.problem(domainI).gridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
+                        pattern.add(globalI, globalJ);
             }
             else
             {
@@ -81,7 +83,6 @@ public:
      *        to dofs in the same domain that are not in the regular stencil (per default this is not the case)
      * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
      *       term depends on a non-local average of a quantity of the same domain
-     * \note This is the same for box and cc
      */
     template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
     void evalAdditionalDomainDerivatives(CouplingManager& couplingManager,
@@ -137,16 +138,25 @@ public:
                     else
                         return localAssemblerI.fvGeometry();
                 }();
-                for (const auto& scvJ : scvs(elemDiscI))
+                if constexpr (isCVFE<i>())
                 {
-                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                    for (const auto& localDof : localDofs(elemDiscI))
                     {
-                        // A[i][col][eqIdx][pvIdx] is the rate of change of
-                        // the residual of equation 'eqIdx' at dof 'i'
-                        // depending on the primary variable 'pvIdx' at dof
-                        // 'col'.
-                        A[scvJ.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        {
+                            // A[i][col][eqIdx][pvIdx] is the rate of change of
+                            // the residual of equation 'eqIdx' at dof 'i'
+                            // depending on the primary variable 'pvIdx' at dof
+                            // 'col'.
+                            A[localDof.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[localDof.index()][eqIdx];
+                        }
                     }
+                }
+                else
+                {
+                    for (const auto& scvJ : scvs(elemDiscI))
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                            A[scvJ.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
                 }
 
                 // restore the current element solution

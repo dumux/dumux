@@ -470,18 +470,29 @@ public:
         auto connectedElementsLowDim = Detail::computeConnectedElements(lowDimGG);
 
         // to the elements from the own domain, we have to add the extended source stencil (non-local couplings)
-        // we consider this only in the bulk domain
+        // we consider this only in the bulk domain: the elements whose extended source stencil contains a dof
+        std::vector<std::vector<std::size_t>> extendedSourceElements(bulkGG.numDofs());
         for (const auto& element : elements(bulkGG.gridView()))
         {
             const auto eIdx = bulkGG.elementMapper().index(element);
-            const auto& extendedSourceStencil = asImp_().extendedSourceStencil(eIdx);
-            for (auto dofIdx : extendedSourceStencil)
+            for (auto dofIdx : asImp_().extendedSourceStencil(eIdx))
+                extendedSourceElements[dofIdx].push_back(eIdx);
+        }
+
+        // and the elements reading a dof, connectedElementsBulk is indexed by vertex for
+        // the control-volume finite element methods
+        std::vector<std::vector<std::size_t>> dofElementsBulk;
+        if constexpr (isCVFE<bulkIdx>())
+        {
+            dofElementsBulk.resize(bulkGG.numDofs());
+            for (const auto& element : elements(bulkGG.gridView()))
             {
-                const auto& elems = connectedElementsBulk[dofIdx];
-                if (std::find(elems.begin(), elems.end(), eIdx) == elems.end())
-                    connectedElementsBulk[dofIdx].push_back(eIdx);
+                const auto eIdx = bulkGG.elementMapper().index(element);
+                for (const auto dofIdx : elementDofIndices(bulkIdx, eIdx))
+                    dofElementsBulk[dofIdx].push_back(eIdx);
             }
         }
+        const auto& readingElementsBulk = isCVFE<bulkIdx>() ? dofElementsBulk : connectedElementsBulk;
 
         // then we also need a similar container that tells us
         // which elements _from the other domain_ modify our dofs.
@@ -534,12 +545,31 @@ public:
                 {
                     // make sure we also add all elements in the extended source stencil
                     // Detail::addNeighborColors only adds direct neighbors
-                    // add everyone that also modifies the extended source stencil dofs
+                    // add everyone that also reads or modifies the extended source stencil dofs
                     const auto eIdx = bulkGG.elementMapper().index(element);
-                    const auto& extendedSourceStencil = asImp_().extendedSourceStencil(eIdx);
-                    for (auto dofIdx : extendedSourceStencil)
-                        for (const auto nIdx : connectedElementsBulk[dofIdx])
+                    const auto addModifyingElementColors = [&](const auto dofIdx)
+                    {
+                        for (const auto nIdx : extendedSourceElements[dofIdx])
                             neighborColors.push_back(colors[nIdx]);
+                    };
+                    for (const auto dofIdx : asImp_().extendedSourceStencil(eIdx))
+                    {
+                        for (const auto nIdx : readingElementsBulk[dofIdx])
+                            neighborColors.push_back(colors[nIdx]);
+                        addModifyingElementColors(dofIdx);
+                    }
+
+                    // add everyone whose extended source stencil modifies the dofs this element reads
+                    if constexpr (isCVFE<bulkIdx>())
+                    {
+                        for (const auto dofIdx : elementDofIndices(bulkIdx, eIdx))
+                            addModifyingElementColors(dofIdx);
+                    }
+                    else
+                    {
+                        for (const auto nIdx : connectedElementsBulk[eIdx])
+                            addModifyingElementColors(nIdx);
+                    }
                 }
 
                 // add neighbor colors based on coupling stencil
