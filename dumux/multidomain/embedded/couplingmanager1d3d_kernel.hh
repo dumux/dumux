@@ -121,10 +121,6 @@ public:
               const SolutionVector& curSol)
     {
         ParentType::init(bulkProblem, lowDimProblem, curSol);
-
-        const auto refinement = getParamFromGroup<int>(bulkProblem->paramGroup(), "Grid.Refinement", 0);
-        if (refinement > 0)
-            DUNE_THROW(Dune::NotImplemented, "The current intersection detection may likely fail for refined grids.");
     }
 
     /*!
