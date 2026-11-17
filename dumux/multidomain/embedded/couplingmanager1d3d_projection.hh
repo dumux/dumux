@@ -309,7 +309,9 @@ class Embedded1d3dCouplingManager;
  *   - MixedDimension.Projection.CoupledRadiusFactor
  *         threshold distance in which to search for coupled elements (specified as multiple of radius, default 0.1)
  *   - MixedDimension.Projection.CoupledAngleFactor
- *         angle threshold in which to search for coupled elements (angle in radians from surface normal vector, default 0.3)
+ *         threshold for the cosine of the angle between the surface normal vector and the vector
+ *         from the face center to its closest point on the centerline, a face is only coupled if the cosine
+ *         exceeds this value (default 0.3, i.e. angles up to about 72.5 degrees)
  *   - MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled
  *         determines if all 3D boundary facets within the mesh bounding box should be considered as coupling faces
  *   - MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor
