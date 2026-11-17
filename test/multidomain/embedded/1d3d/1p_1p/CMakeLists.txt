@@ -106,6 +106,17 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_graded
                        -Tissue.Grid.Positions1 "-1 -0.3 0.2 1" -Tissue.Grid.Cells1 "6 5 6"
                        -Tissue.Grid.Positions2 "0 1" -Tissue.Grid.Cells2 20)
 
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_refinement
+              LABELS multidomain multidomain_embedded 1p
+              TARGET test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
+              COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/compare_errors.py
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS --command-a "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel params.input -Problem.Name kernel_cells -Vtk.EnableVtkOutput false -Tissue.Grid.Cells '40 40 40'"
+                       --command-b "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel params.input -Problem.Name kernel_refined -Vtk.EnableVtkOutput false -Tissue.Grid.Refinement 1"
+                       --errors-a kernel_cells-errors.csv
+                       --errors-b kernel_refined-errors.csv
+                       --tolerance 1e-10)
+
 # The kernel (distributed source) method with vertex-centred dofs. The bulk source is spread
 # over the sub-control volumes of the element containing each sample point, so the exchange
 # term is a load vector rather than a single cell value.
