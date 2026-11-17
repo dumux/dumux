@@ -31,6 +31,7 @@
 
 #include <dumux/geometry/refinementquadraturerule.hh>
 #include <dumux/geometry/triangulation.hh>
+#include <dumux/geometry/distance.hh>
 #include <dumux/geometry/grahamconvexhull.hh>
 
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
@@ -376,11 +377,12 @@ public:
         Dune::Timer watch;
         std::cout << "Initializing the coupling manager (projection)" << std::endl;
 
+        // clear all internal members like point source vectors and stencils
+        this->clear();
+
         // debug VTK output
         const bool enableIntersectionOutput = getParam<bool>("MixedDimension.Projection.EnableIntersectionOutput", false);
         std::unique_ptr<Detail::DebugIntersectionVTKOutput> vtkCoupledFaces =
-            enableIntersectionOutput ? std::make_unique<Detail::DebugIntersectionVTKOutput>() : nullptr;
-        std::unique_ptr<Detail::DebugIntersectionVTKOutput> vtkIntersections =
             enableIntersectionOutput ? std::make_unique<Detail::DebugIntersectionVTKOutput>() : nullptr;
 
         // temporarily represent the network domain as a list of segments
@@ -388,7 +390,7 @@ public:
         const auto& lowDimProblem = this->problem(lowDimIdx);
         const auto& lowDimFvGridGeometry = lowDimProblem.gridGeometry();
         const auto& lowDimGridView = lowDimFvGridGeometry.gridView();
-        localAreaFactor_.resize(lowDimGridView.size(0), 0.0);
+        localAreaFactor_.assign(lowDimGridView.size(0), 0.0);
         const auto radiusFunc = [&](const GridIndex<lowDimIdx> eIdx) {
             return lowDimProblem.spatialParams().radius(eIdx);
         };
@@ -486,6 +488,7 @@ public:
 
                     addPointSourceAtIP_(bulkGeometry, interfaceGeometry, qp, bulkElementIdx, closestSegmentIdx, surfacePoint, projPoint);
                     addStencilEntries_(bulkElementIdx, closestSegmentIdx);
+                    this->averageDistanceToBulkCell().push_back(averageDistancePointGeometry(surfacePoint, bulkGeometry));
                 }
             }
         }
