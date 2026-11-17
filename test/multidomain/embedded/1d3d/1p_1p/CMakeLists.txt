@@ -281,6 +281,21 @@ foreach(JACOBIAN_TEST boxbox_average boxbox_kernel tpfatpfa_average boxtpfa_kern
                 CMD_ARGS ${JACOBIAN_ARGS} ${LUMPING_ARGS} -Problem.Name test_md_embedded_1d3d_1p1p_${JACOBIAN_TEST}_jacobian)
 endforeach()
 
+foreach(COLORING_TEST tpfatpfa_average tpfatpfa_kernel boxbox_average boxtpfa_kernel pq1bubbletpfa_average)
+  set(LUMPING_ARGS "")
+  if(COLORING_TEST MATCHES "pq1bubble")
+    set(LUMPING_ARGS -PointSource.EnableBoxLumping false)
+  endif()
+  dumux_add_test(NAME test_md_embedded_1d3d_1p1p_${COLORING_TEST}_coloring
+                LABELS multidomain multidomain_embedded 1p
+                TARGET test_md_embedded_1d3d_1p1p_${COLORING_TEST}
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_${COLORING_TEST}
+                CMAKE_GUARD dune-foamgrid_FOUND
+                CMD_ARGS params.input -Vtk.EnableVtkOutput false -Test.CheckColoring true ${LUMPING_ARGS}
+                         -Tissue.Grid.Cells "16 16 16" -Vessel.Grid.Cells 8 -MixedDimension.NumCircleSegments 4
+                         -SpatialParams.Radius 0.5 -Problem.Name test_md_embedded_1d3d_1p1p_${COLORING_TEST}_coloring)
+endforeach()
+
 foreach(THREADED_TEST pq1bubbletpfa_average boxbox_kernel)
   set(LUMPING_ARGS "")
   if(THREADED_TEST MATCHES "pq1bubble")

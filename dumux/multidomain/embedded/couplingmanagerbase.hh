@@ -557,6 +557,9 @@ public:
                     };
                     for (const auto dofIdx : asImp_().extendedSourceStencil(eIdx))
                     {
+                        // the element of a cell-centered dof reads it too
+                        if constexpr (!isCVFE<bulkIdx>())
+                            neighborColors.push_back(colors[dofIdx]);
                         for (const auto nIdx : readingElementsBulk[dofIdx])
                             neighborColors.push_back(colors[nIdx]);
                         addModifyingElementColors(dofIdx);
@@ -570,6 +573,7 @@ public:
                     }
                     else
                     {
+                        addModifyingElementColors(eIdx);
                         for (const auto nIdx : connectedElementsBulk[eIdx])
                             addModifyingElementColors(nIdx);
                     }
@@ -611,6 +615,11 @@ public:
             );
         });
     }
+
+    //! The sets of elements of domain i that can be assembled in parallel, as seeds of the elements
+    template<std::size_t i>
+    const auto& elementSets(Dune::index_constant<i> domainId) const
+    { return std::get<i>(elementSets_); }
 
     /*!
      * \brief Execute assembly kernel in parallel

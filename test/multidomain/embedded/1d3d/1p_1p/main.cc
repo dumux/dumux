@@ -44,6 +44,7 @@
 
 #include <test/testing/convergencetest.hh>
 #include <test/multidomain/embedded/jacobiancheck.hh>
+#include <test/multidomain/embedded/coloringcheck.hh>
 
 #include "properties.hh"
 #include "l2norm.hh"
@@ -366,6 +367,15 @@ int main(int argc, char** argv)
         const auto tolerance = getParam<double>("Test.JacobianTolerance", 1e-6);
         if (!(best < tolerance))
             DUNE_THROW(Dune::InvalidStateException, "Jacobian does not match finite differences of the residual, best relative error " << best);
+    }
+
+    if (getParam<bool>("Test.CheckColoring", false))
+    {
+        couplingManager->computeColorsForAssembly();
+        const auto numConflicts = Test::countColoringConflicts(*couplingManager);
+        std::cout << "[coloring] conflicts between elements of the same color: " << numConflicts << std::endl;
+        if (numConflicts > 0)
+            DUNE_THROW(Dune::InvalidStateException, "Elements of the same color conflict");
     }
 
     if (getParam<bool>("Test.CheckMultithreading", false))
