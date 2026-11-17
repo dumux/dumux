@@ -172,7 +172,8 @@ public:
                     }
                 }
             }
-            else
+            else if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa
+                    || GridGeometry::discMethod == DiscretizationMethods::ccmpfa)
             {
                 // add the pointsource to the DOF map
                 const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
@@ -181,6 +182,8 @@ public:
                 else
                     pointSourceMap.insert({key, {source}});
             }
+            else
+                DUNE_THROW(Dune::NotImplemented, "IntegrationPointSourceHelper for discretization method " << GridGeometry::discMethod);
         }
     }
 };

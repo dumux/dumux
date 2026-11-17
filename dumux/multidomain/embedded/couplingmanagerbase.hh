@@ -97,6 +97,17 @@ class EmbeddedCouplingManagerBase
     static constexpr bool isBox()
     { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
 
+    template<std::size_t id>
+    static constexpr bool isSupportedDiscretizationMethod()
+    {
+        return GridGeometry<id>::discMethod == DiscretizationMethods::box
+            || GridGeometry<id>::discMethod == DiscretizationMethods::cctpfa
+            || GridGeometry<id>::discMethod == DiscretizationMethods::ccmpfa;
+    }
+
+    static_assert(isSupportedDiscretizationMethod<bulkIdx>() && isSupportedDiscretizationMethod<lowDimIdx>(),
+                  "The embedded coupling managers support the discretization methods box, cctpfa and ccmpfa only");
+
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
     using GlueType = MultiDomainGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
 
