@@ -12,11 +12,16 @@
 
 #include <config.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <random>
+#include <type_traits>
+#include <vector>
 #include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/geometry/referenceelements.hh>
 #include <dune/common/timer.hh>
 
 #include <dumux/common/initialize.hh>
@@ -79,6 +84,113 @@ void checkKernelConservation(const CouplingManager& couplingManager,
         if (relErr > 1e-10)
             DUNE_THROW(Dune::InvalidStateException,
                        "Kernel distribution is not conservative, rel. error = " << relErr);
+    }
+}
+
+/*!
+ * \brief Check that the kernel mass of each bulk element is the mass of the kernel inside it.
+ *
+ *        The kernel is constant, 1/(pi rho^2), inside the cylinder of radius rho around each
+ *        segment, so the kernel mass of a bulk element is the volume of its intersection with
+ *        the cylinders divided by pi rho^2. This volume is estimated by uniform random sampling
+ *        of the element, independently of the coupling manager. The check fails if the
+ *        manager assigns kernel mass to elements that do not contain it.
+ */
+template<class CouplingManager, class BulkGG, class LowDimGG, class LowDimSpatialParams>
+void checkKernelPlacement(const CouplingManager& couplingManager,
+                          const BulkGG& bulkGG, const LowDimGG& lowDimGG,
+                          const LowDimSpatialParams& lowDimSpatialParams)
+{
+    using namespace Dumux;
+    if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
+    {
+        constexpr int dim = BulkGG::GridView::dimension;
+        constexpr int nScv = (BulkGG::discMethod == DiscretizationMethods::box) ? (1 << dim) : 1;
+        const auto kernelWidthFactor = getParam<double>("MixedDimension.KernelWidthFactor");
+
+        using GlobalPosition = typename BulkGG::GridView::template Codim<0>::Geometry::GlobalCoordinate;
+        struct Segment { GlobalPosition a, b; double rho; };
+        std::vector<Segment> segments;
+        for (const auto& element : elements(lowDimGG.gridView()))
+        {
+            const auto geometry = element.geometry();
+            const auto rho = kernelWidthFactor*lowDimSpatialParams.radius(lowDimGG.elementMapper().index(element));
+            segments.push_back({geometry.corner(0), geometry.corner(1), rho});
+        }
+
+        const auto distanceToAxis = [](const GlobalPosition& p, const Segment& s, double& t)
+        {
+            const auto ab = s.b - s.a;
+            t = (p - s.a)*ab/ab.two_norm2();
+            auto proj = s.a; proj.axpy(t, ab);
+            return (p - proj).two_norm();
+        };
+
+        std::mt19937 generator(42);
+        std::uniform_real_distribution<double> uniform(0.0, 1.0);
+        constexpr int numSamples = 4000;
+
+        double misplaced = 0.0, total = 0.0;
+        for (const auto& element : elements(bulkGG.gridView()))
+        {
+            const auto eIdx = bulkGG.elementMapper().index(element);
+            double weight = 0.0;
+            for (int s = 0; s < nScv; ++s)
+                for (const auto w : couplingManager.bulkSourceWeights(eIdx, s))
+                    weight += w;
+
+            const auto geometry = element.geometry();
+            const auto center = geometry.center();
+            double diameter = 0.0;
+            for (int i = 0; i < geometry.corners(); ++i)
+                diameter = std::max(diameter, 2.0*(geometry.corner(i) - center).two_norm());
+
+            std::vector<const Segment*> nearSegments;
+            for (const auto& s : segments)
+            {
+                double t;
+                const auto length = (s.b - s.a).two_norm();
+                if (distanceToAxis(center, s, t) < s.rho + diameter && t > -diameter/length && t < 1.0 + diameter/length)
+                    nearSegments.push_back(&s);
+            }
+
+            double reference = 0.0;
+            if (!nearSegments.empty())
+            {
+                const bool isSimplex = geometry.type().isSimplex();
+                const auto refVolume = Dune::referenceElement(geometry).volume();
+                for (int i = 0; i < numSamples; ++i)
+                {
+                    typename std::decay_t<decltype(geometry)>::LocalCoordinate local;
+                    for (int d = 0; d < dim; ++d)
+                        local[d] = uniform(generator);
+                    if (isSimplex)
+                    {
+                        std::sort(local.begin(), local.end());
+                        for (int d = dim-1; d > 0; --d)
+                            local[d] -= local[d-1];
+                    }
+
+                    const auto global = geometry.global(local);
+                    for (const auto* s : nearSegments)
+                    {
+                        double t;
+                        if (distanceToAxis(global, *s, t) <= s->rho && t >= 0.0 && t <= 1.0)
+                            reference += geometry.integrationElement(local)*refVolume/(M_PI*s->rho*s->rho);
+                    }
+                }
+                reference /= numSamples;
+            }
+
+            misplaced += std::abs(weight - reference);
+            total += reference;
+        }
+
+        const auto misplacedFraction = 0.5*misplaced/total;
+        std::cout << "[placement] fraction of the kernel mass in wrong bulk elements = " << misplacedFraction << std::endl;
+        if (misplacedFraction > 0.05)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Kernel mass assigned to wrong bulk elements, misplaced fraction = " << misplacedFraction);
     }
 }
 
@@ -193,6 +305,7 @@ int main(int argc, char** argv)
     lowDimProblem->computePointSourceMap();
 
     checkKernelConservation(*couplingManager, *bulkFvGridGeometry, *lowDimFvGridGeometry);
+    checkKernelPlacement(*couplingManager, *bulkFvGridGeometry, *lowDimFvGridGeometry, lowDimProblem->spatialParams());
 
     // the grid variables
     using BulkGridVariables = GetPropType<BulkTypeTag, Properties::GridVariables>;
