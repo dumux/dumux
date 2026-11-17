@@ -439,7 +439,7 @@ private:
                 return intersectingEntityCartesianGrid(point, min, max, cells);
 
         const auto candidates = intersectingEntities(
-            point, this->problem(bulkIdx).gridGeometry().boundingBoxTree(), true);
+            point, this->problem(bulkIdx).gridGeometry().boundingBoxTree());
         return candidates.empty() ? invalidElement_ : GridIndex<bulkIdx>(candidates[0]);
     }
 
