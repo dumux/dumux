@@ -63,7 +63,7 @@ public:
     { return integrationElement_; }
 
     void setQuadratureWeight(const Scalar qpWeight)
-    { return qpweight_ = qpWeight; }
+    { qpweight_ = qpWeight; }
 
     void setIntegrationElement(const Scalar ie)
     { integrationElement_ = ie; }
