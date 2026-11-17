@@ -12,3 +12,7 @@ add_subdirectory(2d3d)
 dumux_add_test(NAME test_integrationpointsource
               SOURCES test_integrationpointsource.cc
               LABELS unit multidomain multidomain_embedded)
+
+dumux_add_test(NAME test_embedded_elementdofs
+              SOURCES test_elementdofs.cc
+              LABELS unit multidomain multidomain_embedded)

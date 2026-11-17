@@ -398,8 +398,8 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Projection
     static constexpr int dimWorld = GridView<bulkIdx>::dimensionworld;
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
@@ -452,9 +452,9 @@ public:
             lowDimFvGridGeometry, radiusFunc
         };
 
-        // precompute the vertex indices for efficiency (box method)
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // precompute the dof indices for efficiency (control-volume finite element methods)
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
 
         const auto& bulkProblem = this->problem(bulkIdx);
         const auto& bulkFvGridGeometry = bulkProblem.gridGeometry();
@@ -653,23 +653,23 @@ private:
         // the actual solution dependent source term
         PointSourceData psData;
 
-        if constexpr (isBox<lowDimIdx>())
+        if constexpr (isCVFE<lowDimIdx>())
         {
             std::vector<Dune::FieldVector<Scalar, 1> > shapeValues;
             const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
             this->getShapeValues(lowDimIdx, lowDimFvGridGeometry, lowDimGeometry, projPoint, shapeValues);
-            psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+            psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
         }
         else
         {
             psData.addLowDimInterpolation(lowDimElementIdx);
         }
 
-        if constexpr (isBox<bulkIdx>())
+        if constexpr (isCVFE<bulkIdx>())
         {
             std::vector<Dune::FieldVector<Scalar, 1> > shapeValues;
             this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, surfacePoint, shapeValues);
-            psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+            psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
         }
         else
         {
@@ -683,12 +683,12 @@ private:
     void addStencilEntries_(const GridIndex<bulkIdx> bulkElementIdx, const GridIndex<lowDimIdx> lowDimElementIdx)
     {
         // export the bulk coupling stencil
-        if constexpr (isBox<lowDimIdx>())
+        if constexpr (isCVFE<lowDimIdx>())
         {
-            const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
+            const auto& dofs = this->elementDofIndices(lowDimIdx, lowDimElementIdx);
             this->couplingStencils(bulkIdx)[bulkElementIdx].insert(
                 this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                vertices.begin(), vertices.end()
+                dofs.begin(), dofs.end()
             );
 
         }
@@ -698,12 +698,12 @@ private:
         }
 
         // export the lowdim coupling stencil
-        if constexpr (isBox<bulkIdx>())
+        if constexpr (isCVFE<bulkIdx>())
         {
-            const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+            const auto& dofs = this->elementDofIndices(bulkIdx, bulkElementIdx);
             this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(
                 this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                vertices.begin(), vertices.end()
+                dofs.begin(), dofs.end()
             );
         }
         else

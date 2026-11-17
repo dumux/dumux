@@ -65,8 +65,7 @@ void checkKernelConservation(const CouplingManager& couplingManager,
     using namespace Dumux;
     if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
     {
-        constexpr int nScv = (BulkGG::discMethod == DiscretizationMethods::box)
-                           ? (1 << int(BulkGG::GridView::dimension)) : 1;
+        constexpr int nScv = CouplingManager::maxNumBulkElementDofs();
         double total = 0.0;
         for (std::size_t eIdx = 0; eIdx < bulkGG.gridView().size(0); ++eIdx)
             for (int s = 0; s < nScv; ++s)
@@ -105,7 +104,7 @@ void checkKernelPlacement(const CouplingManager& couplingManager,
     if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
     {
         constexpr int dim = BulkGG::GridView::dimension;
-        constexpr int nScv = (BulkGG::discMethod == DiscretizationMethods::box) ? (1 << dim) : 1;
+        constexpr int nScv = CouplingManager::maxNumBulkElementDofs();
         const auto kernelWidthFactor = getParam<double>("MixedDimension.KernelWidthFactor");
 
         using GlobalPosition = typename BulkGG::GridView::template Codim<0>::Geometry::GlobalCoordinate;

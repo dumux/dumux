@@ -392,9 +392,9 @@ private:
         bulkSourceWeights_.clear();
         extendedSourceStencil_.stencil().clear();
 
-        // precompute the vertex indices for efficiency for the box method
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // precompute the dof indices of the elements for efficiency
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
 
         bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
         bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));

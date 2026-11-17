@@ -33,6 +33,7 @@
 #include <dumux/discretization/method.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/glue.hh>
+#include <dumux/multidomain/embedded/elementdofs.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
 #include <dumux/multidomain/assemblytraits.hh>
@@ -94,8 +95,8 @@ class EmbeddedCouplingManagerBase
     static constexpr int dimWorld = GridView<bulkIdx>::dimensionworld;
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
     template<std::size_t id>
     static constexpr bool isSupportedDiscretizationMethod()
@@ -252,9 +253,9 @@ public:
         // initializes the point source id counter
         clear();
 
-        // precompute the vertex indices for efficiency for the box method
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // precompute the dof indices for efficiency for the control-volume finite element methods
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
 
         const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
         const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
@@ -298,13 +299,13 @@ public:
                     // the actual solution dependent source term
                     PointSourceData psData;
 
-                    if constexpr (isBox<lowDimIdx>())
+                    if constexpr (isCVFE<lowDimIdx>())
                     {
                         using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                         const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
                         ShapeValues shapeValues;
                         this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, globalPos, shapeValues);
-                        psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                        psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else
                     {
@@ -312,13 +313,13 @@ public:
                     }
 
                     // add data needed to compute integral over the circle
-                    if constexpr (isBox<bulkIdx>())
+                    if constexpr (isCVFE<bulkIdx>())
                     {
                         using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                         const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
                         ShapeValues shapeValues;
                         this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, globalPos, shapeValues);
-                        psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                        psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                     }
                     else
                     {
@@ -332,12 +333,12 @@ public:
                     averageDistanceToBulkCell_.push_back(averageDistancePointGeometry(globalPos, outside.geometry()));
 
                     // export the lowdim coupling stencil
-                    // we insert all vertices / elements and make it unique later
-                    if (isBox<bulkIdx>())
+                    // we insert all dofs / elements and make it unique later
+                    if (isCVFE<bulkIdx>())
                     {
-                        const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+                        const auto& dofs = this->elementDofIndices(bulkIdx, bulkElementIdx);
                         this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   vertices.begin(), vertices.end());
+                                                                                   dofs.begin(), dofs.end());
                     }
                     else
                     {
@@ -345,12 +346,12 @@ public:
                     }
 
                     // export the bulk coupling stencil
-                    // we insert all vertices / elements and make it unique later
-                    if (isBox<lowDimIdx>())
+                    // we insert all dofs / elements and make it unique later
+                    if (isCVFE<lowDimIdx>())
                     {
-                        const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
+                        const auto& dofs = this->elementDofIndices(lowDimIdx, lowDimElementIdx);
                         this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                                                                               vertices.begin(), vertices.end());
+                                                                               dofs.begin(), dofs.end());
 
                     }
                     else
@@ -427,6 +428,14 @@ public:
     template<std::size_t i>
     const CouplingStencil<i>& emptyStencil(Dune::index_constant<i> dom) const
     { return std::get<i>(emptyStencil_); }
+
+    /*!
+     * \brief The global indices of the degrees of freedom of an element of domain i
+     *        for the control-volume finite element methods, in the order of the basis functions
+     */
+    template<std::size_t i>
+    const std::vector<GridIndex<i>>& elementDofIndices(Dune::index_constant<i> dom, GridIndex<i> eIdx) const
+    { return std::get<i>(elementDofIndices_)[eIdx]; }
 
     /*!
      * \brief the solution vector of the subproblem
@@ -607,37 +616,37 @@ public:
 
 protected:
 
-    //! computes the vertex indices per element for the box method
+    //! computes the dof indices per element for the control-volume finite element methods
     template<std::size_t id>
-    void precomputeVertexIndices(Dune::index_constant<id> domainIdx)
+    void precomputeElementDofIndices(Dune::index_constant<id> domainIdx)
     {
-        // fill helper structure for box discretization
-        if constexpr (isBox<domainIdx>())
+        if constexpr (isCVFE<domainIdx>())
         {
-            this->vertexIndices(domainIdx).resize(gridView(domainIdx).size(0));
+            auto& dofIndices = std::get<id>(elementDofIndices_);
+            dofIndices.resize(gridView(domainIdx).size(0));
+            auto elemDisc = localView(this->problem(domainIdx).gridGeometry());
             for (const auto& element : elements(gridView(domainIdx)))
             {
-                constexpr int dim = GridView<domainIdx>::dimension;
-                const auto eIdx = this->problem(domainIdx).gridGeometry().elementMapper().index(element);
-                this->vertexIndices(domainIdx, eIdx).resize(element.subEntities(dim));
-                for (int i = 0; i < element.subEntities(dim); ++i)
-                    this->vertexIndices(domainIdx, eIdx)[i] = this->problem(domainIdx).gridGeometry().vertexMapper().subIndex(element, i, dim);
+                elemDisc.bindElement(element);
+                dofIndices[elemDisc.elementIndex()] = EmbeddedCoupling::elementDofIndices(elemDisc);
             }
         }
     }
+
+    //! computes the vertex indices per element for the box method
+    template<std::size_t id>
+    [[deprecated("Will be removed after release 3.11. Use precomputeElementDofIndices.")]]
+    void precomputeVertexIndices(Dune::index_constant<id> domainIdx)
+    { precomputeElementDofIndices(domainIdx); }
 
     //! compute the shape function for a given point and geometry
     template<std::size_t i, class FVGG, class Geometry, class ShapeValues>
     void getShapeValues(Dune::index_constant<i> domainI, const FVGG& gridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
-        if constexpr (FVGG::discMethod == DiscretizationMethods::box)
-        {
-            const auto ipLocal = geo.local(globalPos);
-            const auto& localBasis = this->problem(domainI).gridGeometry().feCache().get(geo.type()).localBasis();
-            localBasis.evaluateFunction(ipLocal, shapeValues);
-        }
+        if constexpr (DiscretizationMethods::isCVFE<typename FVGG::DiscretizationMethod>)
+            EmbeddedCoupling::basisFunctionValues(gridGeometry, geo, globalPos, shapeValues);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
+            DUNE_THROW(Dune::InvalidStateException, "Shape values requested for a discretization without basis functions!");
     }
 
     //! Clear all internal data members
@@ -647,8 +656,8 @@ protected:
         pointSources(lowDimIdx).clear();
         couplingStencils(bulkIdx).clear();
         couplingStencils(lowDimIdx).clear();
-        vertexIndices(bulkIdx).clear();
-        vertexIndices(lowDimIdx).clear();
+        std::get<bulkIdx>(elementDofIndices_).clear();
+        std::get<lowDimIdx>(elementDofIndices_).clear();
         pointSourceData_.clear();
         averageDistanceToBulkCell_.clear();
 
@@ -685,13 +694,15 @@ protected:
 
     //! Return a reference to the vertex indices
     template<std::size_t i>
+    [[deprecated("Will be removed after release 3.11. Use elementDofIndices.")]]
     std::vector<GridIndex<i>>& vertexIndices(Dune::index_constant<i> dom, GridIndex<i> eIdx)
-    { return std::get<i>(vertexIndices_)[eIdx]; }
+    { return std::get<i>(elementDofIndices_)[eIdx]; }
 
     //! Return a reference to the vertex indices container
     template<std::size_t i>
+    [[deprecated("Will be removed after release 3.11. Use elementDofIndices.")]]
     std::vector<std::vector<GridIndex<i>>>& vertexIndices(Dune::index_constant<i> dom)
-    { return std::get<i>(vertexIndices_); }
+    { return std::get<i>(elementDofIndices_); }
 
     const GlueType& glue() const
     { return *glue_; }
@@ -716,7 +727,7 @@ private:
 
     //! Stencil data
     std::tuple<std::vector<std::vector<GridIndex<bulkIdx>>>,
-               std::vector<std::vector<GridIndex<lowDimIdx>>>> vertexIndices_;
+               std::vector<std::vector<GridIndex<lowDimIdx>>>> elementDofIndices_;
     std::tuple<CouplingStencils<bulkIdx>, CouplingStencils<lowDimIdx>> couplingStencils_;
     std::tuple<CouplingStencil<bulkIdx>, CouplingStencil<lowDimIdx>> emptyStencil_;
 

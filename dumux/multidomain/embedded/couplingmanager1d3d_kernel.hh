@@ -24,6 +24,7 @@
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/indextraits.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/geometry/distance.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
@@ -89,8 +90,12 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
+
+    //! the maximum number of local dofs of a bulk element
+    static constexpr std::size_t maxNumBulkLocalDofs = isCVFE<bulkIdx>()
+        ? Detail::LocalDofs::maxNumLocalDofs<typename GridGeometry<bulkIdx>::LocalView>() : 1;
 
     //! Equidistant YaspGrids allow an O(1) point lookup; otherwise the bounding box tree is used
     static constexpr bool bulkHasCartesianLookup
@@ -231,13 +236,13 @@ public:
                 PointSourceData psData;
 
                 // lowdim interpolation (evaluate at center)
-                if constexpr (isBox<lowDimIdx>())
+                if constexpr (isCVFE<lowDimIdx>())
                 {
                     using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                     const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
                     ShapeValues shapeValues;
                     this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).gridGeometry(), lowDimGeometry, center, shapeValues);
-                    psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                    psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                 }
                 else
                 {
@@ -245,13 +250,13 @@ public:
                 }
 
                 // bulk interpolation (evaluate at center)
-                if constexpr (isBox<bulkIdx>())
+                if constexpr (isCVFE<bulkIdx>())
                 {
                     using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                     const auto bulkGeometry = this->problem(bulkIdx).gridGeometry().element(bulkElementIdx).geometry();
                     ShapeValues shapeValues;
                     this->getShapeValues(bulkIdx, this->problem(bulkIdx).gridGeometry(), bulkGeometry, center, shapeValues);
-                    psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                    psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                 }
                 else
                 {
@@ -270,12 +275,12 @@ public:
                 fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(avgMinDist, radius, kernelWidth));
 
                 // export the lowdim coupling stencil
-                // we insert all vertices / elements and make it unique later
-                if constexpr (isBox<bulkIdx>())
+                // we insert all dofs / elements and make it unique later
+                if constexpr (isCVFE<bulkIdx>())
                 {
-                    const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+                    const auto& dofs = this->elementDofIndices(bulkIdx, bulkElementIdx);
                     this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                               vertices.begin(), vertices.end());
+                                                                               dofs.begin(), dofs.end());
                 }
                 else
                 {
@@ -299,13 +304,17 @@ public:
     // \{
 
 
-    //! return all source ids for a bulk elements
-    const std::vector<std::size_t>& bulkSourceIds(GridIndex<bulkIdx> eIdx, int scvIdx = 0) const
-    { return bulkSourceIds_[eIdx][scvIdx]; }
+    //! the maximum number of local dofs of a bulk element, i.e. the range of the local dof index
+    static constexpr std::size_t maxNumBulkElementDofs()
+    { return maxNumBulkLocalDofs; }
 
-    //! return all source ids for a bulk elements
-    const std::vector<Scalar>& bulkSourceWeights(GridIndex<bulkIdx> eIdx, int scvIdx = 0) const
-    { return bulkSourceWeights_[eIdx][scvIdx]; }
+    //! return all source ids for the local dof with index localDofIdx of a bulk element
+    const std::vector<std::size_t>& bulkSourceIds(GridIndex<bulkIdx> eIdx, int localDofIdx = 0) const
+    { return bulkSourceIds_[eIdx][localDofIdx]; }
+
+    //! return the source weights for the local dof with index localDofIdx of a bulk element
+    const std::vector<Scalar>& bulkSourceWeights(GridIndex<bulkIdx> eIdx, int localDofIdx = 0) const
+    { return bulkSourceWeights_[eIdx][localDofIdx]; }
 
     //! The flux scaling factor for a source with id
     Scalar fluxScalingFactor(std::size_t id) const
@@ -378,7 +387,7 @@ private:
                 const auto localWeight = evalConstKernel_(a, b, point, radius, kernelWidth)*cylIntegration.integrationElement(i)/Scalar(embeddings);
                 integral += localWeight;
 
-                if constexpr (isBox<bulkIdx>())
+                if constexpr (isCVFE<bulkIdx>())
                 {
                     using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                     const auto& gg = this->problem(bulkIdx).gridGeometry();
@@ -452,9 +461,9 @@ private:
         bulkSourceWeights_.clear();
         extendedSourceStencil_.stencil().clear();
 
-        // precompute the vertex indices for efficiency for the box method
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // precompute the dof indices for efficiency for the control-volume finite element methods
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
 
         bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
         bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
@@ -487,10 +496,10 @@ private:
             std::sort(stencil.second.begin(), stencil.second.end());
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
 
-            // remove the vertices element (box)
-            if constexpr (isBox<bulkIdx>())
+            // remove the dofs of the element (control-volume finite element methods)
+            if constexpr (isCVFE<bulkIdx>())
             {
-                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
+                const auto& indices = this->elementDofIndices(bulkIdx, stencil.first);
                 stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
                                                    [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
                                      stencil.second.end());
@@ -520,11 +529,11 @@ private:
     void addBulkSourceStencils_(GridIndex<bulkIdx> bulkElementIdx, GridIndex<lowDimIdx> coupledLowDimElementIdx, GridIndex<bulkIdx> coupledBulkElementIdx)
     {
         // add the lowdim element to the coupling stencil of this bulk element
-        if constexpr (isBox<lowDimIdx>())
+        if constexpr (isCVFE<lowDimIdx>())
         {
-            const auto& vertices = this->vertexIndices(lowDimIdx, coupledLowDimElementIdx);
+            const auto& dofs = this->elementDofIndices(lowDimIdx, coupledLowDimElementIdx);
             this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                                                                   vertices.begin(), vertices.end());
+                                                                   dofs.begin(), dofs.end());
 
         }
         else
@@ -535,11 +544,11 @@ private:
 
         // the extended source stencil, every 3d element with a source is coupled to
         // the element/dofs where the 3d quantities are measured
-        if constexpr (isBox<bulkIdx>())
+        if constexpr (isCVFE<bulkIdx>())
         {
-            const auto& vertices = this->vertexIndices(bulkIdx, coupledBulkElementIdx);
+            const auto& dofs = this->elementDofIndices(bulkIdx, coupledBulkElementIdx);
             extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                    vertices.begin(), vertices.end());
+                                                                    dofs.begin(), dofs.end());
         }
         else
         {
@@ -596,9 +605,9 @@ private:
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
 
     //! kernel sources to integrate for each bulk element
-    std::vector<std::array<std::vector<std::size_t>, isBox<bulkIdx>() ? 1<<bulkDim : 1>> bulkSourceIds_;
+    std::vector<std::array<std::vector<std::size_t>, maxNumBulkLocalDofs>> bulkSourceIds_;
     //! the integral of the kernel for each point source / integration point, i.e. weight for the source
-    std::vector<std::array<std::vector<Scalar>, isBox<bulkIdx>() ? 1<<bulkDim : 1>> bulkSourceWeights_;
+    std::vector<std::array<std::vector<Scalar>, maxNumBulkLocalDofs>> bulkSourceWeights_;
 
     //! the flux scaling factor for the respective source id
     std::vector<Scalar> fluxScalingFactor_;
