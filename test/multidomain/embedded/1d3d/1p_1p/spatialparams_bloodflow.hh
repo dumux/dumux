@@ -37,6 +37,7 @@ public:
     : ParentType(gridGeometry)
     {
         radius_ = getParam<Scalar>("SpatialParams.Radius");
+        permeabilityVariation_ = getParam<Scalar>("SpatialParams.PermeabilityVariation", 1.0);
     }
 
     /*!
@@ -46,7 +47,7 @@ public:
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& ipGlobal) const
     {
-        return (1 + ipGlobal[2] + 0.5*ipGlobal[2]*ipGlobal[2])/(M_PI*radius(0)*radius(0));
+        return (1 + permeabilityVariation_*(ipGlobal[2] + 0.5*ipGlobal[2]*ipGlobal[2]))/(M_PI*radius(0)*radius(0));
     }
 
     //! we evaluate the permeability directly at the scvf since we have an analytical expression for it
@@ -91,6 +92,7 @@ public:
 
 private:
     Scalar radius_;
+    Scalar permeabilityVariation_;
 };
 
 } // end namespace Dumux

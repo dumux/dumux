@@ -83,6 +83,22 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxtpfa_line
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxtpfa_line)
 
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxbox_line
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Line
+              COMMAND ./test_md_embedded_1d3d_1p1p_boxbox_line
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxbox_line)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxbox_surface
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+              COMMAND ./test_md_embedded_1d3d_1p1p_boxbox_surface
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxbox_surface)
+
 dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc

@@ -33,6 +33,9 @@
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/linearsolvertraits.hh>
+#include <dumux/linear/linearalgebratraits.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/grid/gridmanager_foam.hh>
@@ -413,6 +416,9 @@ int main(int argc, char** argv)
     // the linear solver
     using LinearSolver = BlockDiagILU0BiCGSTABSolver;
     auto linearSolver = std::make_shared<LinearSolver>();
+    using DirectSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+    const bool useDirectSolver = getParam<bool>("Test.DirectSolver", false);
+    auto directSolver = std::make_shared<DirectSolver>();
 
     Dune::Timer assembleTimer(false), solveTimer(false), updateTimer(false);
     std::cout << "\nAssembling linear system... " << std::flush;
@@ -425,12 +431,13 @@ int main(int argc, char** argv)
 
     std::cout << "done.\n";
     std::cout << "Solving linear system ("
-              << linearSolver->name() << ") ... " << std::flush;
+              << (useDirectSolver ? directSolver->name() : linearSolver->name()) << ") ... " << std::flush;
 
     // solve linear system
     solveTimer.start();
     auto deltaSol = sol;
-    const bool converged = linearSolver->solve(assembler->jacobian(), deltaSol, assembler->residual());
+    const bool converged = useDirectSolver ? directSolver->solve(assembler->jacobian(), deltaSol, assembler->residual())
+                                           : linearSolver->solve(assembler->jacobian(), deltaSol, assembler->residual());
     if (!converged) DUNE_THROW(Dune::MathError, "Linear solver did not converge!");
     solveTimer.stop();
 

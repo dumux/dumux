@@ -71,19 +71,33 @@ def main():
     parser.add_argument("--levels", nargs="+", required=True)
     parser.add_argument("--level-args", required=True)
     parser.add_argument("--tolerance", type=float, default=0.0)
+    parser.add_argument("--max-error-ratio", type=float, default=None,
+                        help="Also check that the error of the first command on the finest level is at most this multiple of the second")
+    parser.add_argument("--min-rate", type=float, default=None,
+                        help="Also check that the mean rates of both commands are at least this value")
     args = parser.parse_args()
 
-    ratesA = meanRates(runLevels(args.command_a, args.errors_a, args.levels, args.level_args))
-    ratesB = meanRates(runLevels(args.command_b, args.errors_b, args.levels, args.level_args))
+    rowsA = runLevels(args.command_a, args.errors_a, args.levels, args.level_args)
+    rowsB = runLevels(args.command_b, args.errors_b, args.levels, args.level_args)
+    ratesA, ratesB = meanRates(rowsA), meanRates(rowsB)
 
     success = True
     for name, rateA in ratesA.items():
         ok = rateA >= ratesB[name] - args.tolerance
         print(f"{name}: mean rate {rateA:.3f} (a), {ratesB[name]:.3f} (b), {'ok' if ok else 'a is lower than b'}")
         success = success and ok
+        if args.min_rate is not None:
+            rateOk = min(rateA, ratesB[name]) >= args.min_rate
+            print(f"{name}: mean rates at least {args.min_rate}: {'ok' if rateOk else 'too low'}")
+            success = success and rateOk
+        if args.max_error_ratio is not None:
+            ratio = rowsA[-1][name] / rowsB[-1][name]
+            ratioOk = ratio <= args.max_error_ratio
+            print(f"{name}: error on the finest level {ratio:.2f} times that of b, {'ok' if ratioOk else 'too large'}")
+            success = success and ratioOk
 
     if not success:
-        sys.exit(f"A rate of the first command is lower than that of the second by more than {args.tolerance}")
+        sys.exit("A check of the rates or errors failed")
 
 
 if __name__ == "__main__":

@@ -62,6 +62,7 @@ public:
     {
         // read parameters from input file
         name_  =  getParam<std::string>("Vtk.OutputName") + "_" + getParamFromGroup<std::string>(this->paramGroup(), "Problem.Name");
+        dirichletOnly_ = getParam<bool>("Problem.DirichletOnly", false);
 
         exactPressure_.resize(this->gridGeometry().numDofs());
         auto fvGeometry = localView(this->gridGeometry());
@@ -98,7 +99,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_  || globalPos[2] < this->gridGeometry().bBoxMin()[2] + eps_)
+        if (!dirichletOnly_ && (globalPos[2] > this->gridGeometry().bBoxMax()[2] - eps_  || globalPos[2] < this->gridGeometry().bBoxMin()[2] + eps_))
             values.setAllNeumann();
         else
             values.setAllDirichlet();
@@ -367,6 +368,7 @@ private:
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
+    bool dirichletOnly_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

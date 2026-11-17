@@ -39,6 +39,8 @@ def main():
     parser.add_argument("--errors-a", required=True)
     parser.add_argument("--errors-b", required=True)
     parser.add_argument("--tolerance", type=float, default=1e-10)
+    parser.add_argument("--columns", nargs="+", default=None,
+                        help="Compare only these columns (default: all, which have to be the same in both files)")
     args = parser.parse_args()
 
     for command in (args.command_a, args.command_b):
@@ -46,11 +48,14 @@ def main():
 
     headerA, valuesA = readErrors(args.errors_a)
     headerB, valuesB = readErrors(args.errors_b)
-    if headerA != headerB:
+    if args.columns is None and headerA != headerB:
         sys.exit(f"Different columns: {headerA} and {headerB}")
 
+    columnsA = dict(zip(headerA, valuesA))
+    columnsB = dict(zip(headerB, valuesB))
     success = True
-    for name, a, b in zip(headerA, valuesA, valuesB):
+    for name in (args.columns if args.columns is not None else headerA):
+        a, b = columnsA[name], columnsB[name]
         relDiff = abs(a - b) / max(abs(a), abs(b)) if a != b else 0.0
         print(f"{name}: {a:.16e} {b:.16e} relative difference {relDiff:.2e}")
         success = success and relDiff <= args.tolerance
