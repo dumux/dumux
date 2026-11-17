@@ -73,8 +73,6 @@ def main():
     parser.add_argument("--tolerance", type=float, default=0.0)
     parser.add_argument("--max-error-ratio", type=float, default=None,
                         help="Also check that the error of the first command on the finest level is at most this multiple of the second")
-    parser.add_argument("--min-rate", type=float, default=None,
-                        help="Also check that the mean rates of both commands are at least this value")
     args = parser.parse_args()
 
     rowsA = runLevels(args.command_a, args.errors_a, args.levels, args.level_args)
@@ -86,10 +84,6 @@ def main():
         ok = rateA >= ratesB[name] - args.tolerance
         print(f"{name}: mean rate {rateA:.3f} (a), {ratesB[name]:.3f} (b), {'ok' if ok else 'a is lower than b'}")
         success = success and ok
-        if args.min_rate is not None:
-            rateOk = min(rateA, ratesB[name]) >= args.min_rate
-            print(f"{name}: mean rates at least {args.min_rate}: {'ok' if rateOk else 'too low'}")
-            success = success and rateOk
         if args.max_error_ratio is not None:
             ratio = rowsA[-1][name] / rowsB[-1][name]
             ratioOk = ratio <= args.max_error_ratio

@@ -89,7 +89,7 @@ public:
             [&] (const auto& elemDisc, const auto& boundaryFace, const auto& localDof)
             {
                 ConstraintInfo info;
-                if (dirichletOnly_ || !isFluxPosition_(ipData(elemDisc, localDof).global()))
+                if (dirichletOnly_ || isLateralPosition_(ipData(elemDisc, localDof).global()))
                     info.setAll();
                 return info;
             },
@@ -149,10 +149,7 @@ public:
         if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
         {
             static const auto rho = getParam<Scalar>("MixedDimension.KernelWidthFactor")*R;
-            if (r > rho)
-                return -1.0*p1DExact(globalPos)/(2*M_PI)*std::log(r);
-            else
-                return -1.0*p1DExact(globalPos)/(2*M_PI)*(r*r/(2.0*rho*rho) + std::log(rho) - 0.5);
+            return -1.0*p1DExact(globalPos)/(2*M_PI)*radialProfile_(r, rho);
         }
         else if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::surface)
         {
@@ -170,19 +167,52 @@ public:
     {
         using std::log;
         static const Scalar beta = 2*M_PI/(2*M_PI + log(R));
-        static const Scalar kernelWidthFactorLog = log(rho/R);
-        return r < rho ? 1.0/(1.0 + R*beta/(2*M_PI*R)*(r*r/(2*rho*rho) + kernelWidthFactorLog - 0.5))
-                       : 1.0/(1.0 + R*beta/(2*M_PI*R)*log(r/R));
+        return 1.0/(1.0 + beta/(2*M_PI)*(radialProfile_(r, rho) - log(R)));
     }
 
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
 private:
+    /*!
+     * \brief The radial profile g of the pressure -q/(2 pi) g(r) around a line source of strength q
+     *        distributed with a kernel of width rho
+     *
+     * Outside of the kernel, g = ln(r). Inside, with u = r^2/rho^2, the uniform kernel gives
+     * g = ln(rho) - (1 - u)/2 and the kernel 3/(pi rho^2) (1 - u)^2 (the second-moment kernel
+     * of the coupling manager with second moment rho^2/4) gives
+     * g = ln(rho) - (3(1 - u) - 3(1 - u^2)/2 + (1 - u^3)/3)/2.
+     */
+    Scalar radialProfile_(const Scalar r, const Scalar rho) const
+    {
+        using std::log;
+        if (r > rho)
+            return log(r);
+
+        const auto u = r*r/(rho*rho);
+        static const bool smoothKernel = hasParam("MixedDimension.KernelSecondMoment");
+        if (!smoothKernel)
+            return log(rho) - 0.5*(1.0 - u);
+
+        static const auto secondMoment = getParam<Scalar>("MixedDimension.KernelSecondMoment");
+        if (std::abs(secondMoment - 0.25*rho*rho) > 1e-12*rho*rho)
+            DUNE_THROW(Dune::NotImplemented, "Exact solution for a kernel second moment other than rho^2/4");
+
+        return log(rho) - 0.5*(3.0*(1.0 - u) - 1.5*(1.0 - u*u) + (1.0 - u*u*u)/3.0);
+    }
+
     bool isFluxPosition_(const GlobalPosition& globalPos) const
     {
         return globalPos[2] > this->gridDiscretization().bBoxMax()[2] - eps_
                || globalPos[2] < this->gridDiscretization().bBoxMin()[2] + eps_;
+    }
+
+    bool isLateralPosition_(const GlobalPosition& globalPos) const
+    {
+        const auto& bBoxMin = this->gridDiscretization().bBoxMin();
+        const auto& bBoxMax = this->gridDiscretization().bBoxMax();
+        return globalPos[0] < bBoxMin[0] + eps_ || globalPos[0] > bBoxMax[0] - eps_
+               || globalPos[1] < bBoxMin[1] + eps_ || globalPos[1] > bBoxMax[1] - eps_;
     }
 
     static constexpr Scalar eps_ = 1.5e-7;

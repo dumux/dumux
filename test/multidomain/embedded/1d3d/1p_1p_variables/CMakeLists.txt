@@ -60,12 +60,33 @@ foreach(VARIANT pq2hybrid_box_average pq1fe_box_kernel pq2hybrid_pq2hybrid_avera
                           -MixedDimension.KernelIntegrationCRL 0.1 -Problem.Name ${PREFIX}_${VARIANT}_multithreading)
 endforeach()
 
-foreach(VARIANT pq1bubblehybrid_box_average pq2hybrid_box_average pq1fe_box_average pq1fe_box_kernel
-                pq2fe_box_average pq2hybrid_pq2hybrid_average)
-  string(REGEX MATCH "(average|kernel)$" METHOD ${VARIANT})
-  if(METHOD STREQUAL "kernel")
-    set(RATE_ARGS --levels "10 20" "20 40" --min-rate 1.75 --tolerance 0.25)
-  elseif(VARIANT MATCHES "^pq2hybrid")
+set(KERNEL_ARGS "-SpatialParams.Radius 0.1 -MixedDimension.KernelWidthFactor 3 -MixedDimension.KernelSecondMoment 0.0225 -MixedDimension.KernelIntegrationCRL 0.02 -MixedDimension.KernelIntegrationOrder 3 -L2Error.IntegrationOrder 6")
+function(add_kernel_convergence_test VARIANT CHECKS)
+  set(CHECK_ARGS "")
+  foreach(CHECK ${CHECKS})
+    list(APPEND CHECK_ARGS --check "${CHECK}")
+  endforeach()
+  dumux_add_test(NAME ${PREFIX}_${VARIANT}_convergence
+                 LABELS multidomain multidomain_embedded 1p
+                 TARGET ${PREFIX}_${VARIANT}
+                 COMMAND ${DUMUX_CONVERGENCETEST}
+                 CMAKE_GUARD dune-foamgrid_FOUND
+                 CMD_ARGS --command "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_${VARIANT} params.input -Problem.Name ${PREFIX}_${VARIANT}_convergence -Vtk.EnableVtkOutput false ${KERNEL_ARGS}"
+                          --levels ${ARGN}
+                          --level-args "-Vessel.Grid.Cells {0} -Tissue.Grid.Cells '{1} {1} {0}'"
+                          --errors ${PREFIX}_${VARIANT}_convergence-errors.csv
+                          ${CHECK_ARGS})
+endfunction()
+set(SECOND_ORDER "L2Rel(p_3d) mean 1.9" "L2Rel(p_1d) mean 1.9")
+add_kernel_convergence_test(box_box_kernel "${SECOND_ORDER}" "10 20" "20 40")
+add_kernel_convergence_test(pq1fe_box_kernel "${SECOND_ORDER}" "10 20" "20 40")
+add_kernel_convergence_test(pq2hybrid_box_kernel "${SECOND_ORDER}" "8 16" "12 24")
+add_kernel_convergence_test(pq2hybrid_pq2hybrid_kernel "${SECOND_ORDER}" "8 16" "12 24")
+add_kernel_convergence_test(pq2fe_box_kernel "L2Rel(p_3d) mean 2.8;L2Rel(p_1d) mean 1.9" "8 16" "12 24")
+
+foreach(VARIANT pq1bubblehybrid_box_average pq2hybrid_box_average pq1fe_box_average pq2fe_box_average
+                pq2hybrid_pq2hybrid_average)
+  if(VARIANT MATCHES "^pq2hybrid")
     set(RATE_ARGS --levels "4 8" "8 16" "16 32" --tolerance 0.05)
   else()
     set(RATE_ARGS --levels "4 8" "8 16" "16 32" --tolerance 0.6 --max-error-ratio 3)
@@ -77,12 +98,12 @@ foreach(VARIANT pq1bubblehybrid_box_average pq2hybrid_box_average pq1fe_box_aver
                  CMAKE_GUARD dune-foamgrid_FOUND
                  CMD_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../1p_1p/compare_rates.py
                           --command-a "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_${VARIANT} params.input -Problem.Name ${PREFIX}_${VARIANT}_convergence -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
-                          --command-b "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_box_box_${METHOD} params.input -Problem.Name ${PREFIX}_${VARIANT}_convergence_box -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
+                          --command-b "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_box_box_average params.input -Problem.Name ${PREFIX}_${VARIANT}_convergence_box -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
                           --errors-a ${PREFIX}_${VARIANT}_convergence-errors.csv
                           --errors-b ${PREFIX}_${VARIANT}_convergence_box-errors.csv
                           --level-args "-Vessel.Grid.Cells {0} -Tissue.Grid.Cells '{1} {1} {0}'"
                           ${RATE_ARGS})
-  add_dependencies(${PREFIX}_${VARIANT} ${PREFIX}_box_box_${METHOD})
+  add_dependencies(${PREFIX}_${VARIANT} ${PREFIX}_box_box_average)
 endforeach()
 
 foreach(METHOD average line surface)

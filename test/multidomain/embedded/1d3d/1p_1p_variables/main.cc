@@ -249,7 +249,7 @@ int main(int argc, char** argv)
     const auto exchangeError = std::abs(bulkSource + lowDimSource)/std::abs(lowDimSource);
     std::cout << "[conservation] total bulk source = " << bulkSource << ", total low-dim source = " << lowDimSource
               << ", rel. error = " << exchangeError << std::endl;
-    if (exchangeError > 1e-10)
+    if (!(exchangeError <= 1e-10))
         DUNE_THROW(Dune::InvalidStateException, "Exchange between the domains is not conservative, rel. error = " << exchangeError);
 
     // the control volumes receive the total source
@@ -258,7 +258,7 @@ int main(int argc, char** argv)
         const auto bulkCVSource = totalControlVolumeSource(*bulkProblem);
         const auto cvError = std::abs(bulkCVSource - bulkSource)/std::abs(bulkSource);
         std::cout << "[conservation] bulk source of the control volumes = " << bulkCVSource << ", rel. error = " << cvError << std::endl;
-        if (cvError > 1e-10)
+        if (!(cvError <= 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "The control volumes do not receive the bulk source, rel. error = " << cvError);
     }
     if constexpr (hasSubControlVolumes<LowDimGridGeometry>)
@@ -266,13 +266,16 @@ int main(int argc, char** argv)
         const auto lowDimCVSource = totalControlVolumeSource(*lowDimProblem);
         const auto cvError = std::abs(lowDimCVSource - lowDimSource)/std::abs(lowDimSource);
         std::cout << "[conservation] low-dim source of the control volumes = " << lowDimCVSource << ", rel. error = " << cvError << std::endl;
-        if (cvError > 1e-10)
+        if (!(cvError <= 1e-10))
             DUNE_THROW(Dune::InvalidStateException, "The control volumes do not receive the low-dim source, rel. error = " << cvError);
     }
 
     static const int order = getParam<int>("L2Error.IntegrationOrder");
     const auto norm3D = relativeL2Error(*bulkGridGeometry, sol[bulkIdx], [&](const auto& pos) { return bulkProblem->exactSolution(pos); }, order);
     const auto norm1D = relativeL2Error(*lowDimGridGeometry, sol[lowDimIdx], [&](const auto& pos) { return lowDimProblem->exactSolution(pos); }, order);
+
+    if (!std::isfinite(norm3D) || !std::isfinite(norm1D))
+        DUNE_THROW(Dune::InvalidStateException, "The error norms are not finite");
 
     double hMaxBulk = 0.0;
     for (const auto& element : elements(bulkGridView))
