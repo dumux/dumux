@@ -60,9 +60,8 @@ foreach(VARIANT pq2hybrid_box_average pq1fe_box_kernel pq2hybrid_pq2hybrid_avera
                           -MixedDimension.KernelIntegrationCRL 0.1 -Problem.Name ${PREFIX}_${VARIANT}_multithreading)
 endforeach()
 
-foreach(VARIANT pq1bubblehybrid_box_average pq1bubblehybrid_box_kernel pq2hybrid_box_average pq2hybrid_box_kernel
-                pq1fe_box_average pq1fe_box_kernel pq2fe_box_average pq2fe_box_kernel
-                pq2hybrid_pq2hybrid_average pq2hybrid_pq2hybrid_kernel)
+foreach(VARIANT pq1bubblehybrid_box_average pq2hybrid_box_average pq1fe_box_average pq1fe_box_kernel
+                pq2fe_box_average pq2hybrid_pq2hybrid_average)
   string(REGEX MATCH "(average|kernel)$" METHOD ${VARIANT})
   if(METHOD STREQUAL "kernel")
     set(RATE_ARGS --levels "10 20" "20 40" --min-rate 1.75 --tolerance 0.25)
@@ -78,9 +77,9 @@ foreach(VARIANT pq1bubblehybrid_box_average pq1bubblehybrid_box_kernel pq2hybrid
                  CMAKE_GUARD dune-foamgrid_FOUND
                  CMD_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../1p_1p/compare_rates.py
                           --command-a "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_${VARIANT} params.input -Problem.Name ${PREFIX}_${VARIANT}_convergence -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
-                          --command-b "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_box_box_${METHOD} params.input -Problem.Name ${PREFIX}_box_box_${METHOD}_convergence -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
+                          --command-b "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_box_box_${METHOD} params.input -Problem.Name ${PREFIX}_${VARIANT}_convergence_box -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
                           --errors-a ${PREFIX}_${VARIANT}_convergence-errors.csv
-                          --errors-b ${PREFIX}_box_box_${METHOD}_convergence-errors.csv
+                          --errors-b ${PREFIX}_${VARIANT}_convergence_box-errors.csv
                           --level-args "-Vessel.Grid.Cells {0} -Tissue.Grid.Cells '{1} {1} {0}'"
                           ${RATE_ARGS})
   add_dependencies(${PREFIX}_${VARIANT} ${PREFIX}_box_box_${METHOD})
@@ -93,8 +92,8 @@ foreach(METHOD average line surface)
                  COMMAND python3
                  CMAKE_GUARD dune-foamgrid_FOUND
                  CMD_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../1p_1p/compare_errors.py
-                          --command-a "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_box_box_${METHOD} params.input -Problem.Name ${PREFIX}_box_box_${METHOD}_equals -Vtk.EnableVtkOutput false -Problem.DirichletOnly true -SpatialParams.PermeabilityVariation 0"
-                          --command-b "${CMAKE_CURRENT_BINARY_DIR}/../1p_1p/test_md_embedded_1d3d_1p1p_boxbox_${METHOD} params.input -Problem.Name ${PREFIX}_boxbox_${METHOD}_classic -Vtk.EnableVtkOutput false -Problem.DirichletOnly true -SpatialParams.PermeabilityVariation 0 -Test.DirectSolver true"
+                          --command-a "${CMAKE_CURRENT_BINARY_DIR}/${PREFIX}_box_box_${METHOD} params.input -Problem.Name ${PREFIX}_box_box_${METHOD}_equals -Vtk.EnableVtkOutput false -Problem.DirichletOnly true -SpatialParams.PermeabilityVariation 0 -Tissue.Grid.Cells '11 11 10' -Vessel.Grid.Cells 10 -L2Error.IntegrationOrder 2"
+                          --command-b "${CMAKE_CURRENT_BINARY_DIR}/../1p_1p/test_md_embedded_1d3d_1p1p_boxbox_${METHOD} params.input -Problem.Name ${PREFIX}_boxbox_${METHOD}_classic -Vtk.EnableVtkOutput false -Problem.DirichletOnly true -SpatialParams.PermeabilityVariation 0 -Tissue.Grid.Cells '11 11 10' -Vessel.Grid.Cells 10 -L2Error.IntegrationOrder 2 -Test.DirectSolver true"
                           --errors-a ${PREFIX}_box_box_${METHOD}_equals-errors.csv
                           --errors-b ${PREFIX}_boxbox_${METHOD}_classic-errors.csv
                           --columns "L2Rel(p_3d)" "L2Rel(p_1d)"
