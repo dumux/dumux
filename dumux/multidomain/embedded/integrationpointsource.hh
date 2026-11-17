@@ -16,6 +16,7 @@
 #define DUMUX_INTEGRATION_POINTSOURCE_HH
 
 #include <type_traits>
+#include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/common/parameters.hh>
@@ -129,6 +130,10 @@ public:
                     for (const auto& scv : scvs(fvGeometry))
                         if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
                             scvIndices.push_back(scv.indexInElement());
+
+                    if (scvIndices.empty())
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Point source at " << globalPos << " is not inside any sub control volume of element " << eIdx);
 
                     // for all scvs that where tested positive add the point sources
                     // to the element/scv to point source map

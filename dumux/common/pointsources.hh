@@ -252,6 +252,10 @@ auto makePointSourceMap(const GridDiscretization& gridDiscretization,
                     if (intersectsPointGeometry(ctx.position(), elemDisc.geometry(scv)))
                         scvIndices.push_back(scv.indexInElement());
 
+                if (scvIndices.empty())
+                    DUNE_THROW(Dune::InvalidStateException,
+                               "Point source at " << ctx.position() << " is not inside any sub control volume of element " << eIdx);
+
                 for (const auto scvIdx : scvIndices)
                 {
                     auto entry = ctx;
