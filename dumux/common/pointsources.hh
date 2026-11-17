@@ -27,6 +27,7 @@
 #include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/concepts.hh>
 
 namespace Dumux::Experimental {
 
@@ -144,28 +145,93 @@ private:
 
 /*!
  * \ingroup Core
- * \brief Combines a point source map with a user-provided evaluation function.
+ * \brief Point source context enriched with the index of the element that contains the point.
+ *
+ * Contexts of this kind are located by `makePointSourceMap` without a search of the grid.
+ * A point shared by several elements is given as one context per element,
+ * each with the number of those elements as embeddings.
+ */
+template<class Context>
+class ElementIndexPointSourceContext : public Context
+{
+public:
+    ElementIndexPointSourceContext() = default;
+    ElementIndexPointSourceContext(const Context& ctx, std::size_t eIdx)
+    : Context(ctx)
+    , elementIndex_(eIdx)
+    {}
+
+    std::size_t elementIndex() const
+    { return elementIndex_; }
+
+private:
+    std::size_t elementIndex_ = 0;
+};
+
+/*!
+ * \ingroup Core
+ * \brief Point source context enriched with the position in the local coordinates of an element.
+ * \tparam Context the base context type
+ * \tparam LocalPositionType the position type in local element coordinates
+ */
+template<class Context, class LocalPositionType>
+class LocalPointSourceContext : public Context
+{
+public:
+    using LocalPosition = LocalPositionType;
+
+    LocalPointSourceContext() = default;
+    LocalPointSourceContext(const Context& ctx, LocalPosition localPosition)
+    : Context(ctx)
+    , localPosition_(std::move(localPosition))
+    {}
+
+    const LocalPosition& localPosition() const
+    { return localPosition_; }
+
+private:
+    LocalPosition localPosition_;
+};
+
+/*!
+ * \ingroup Core
+ * \brief Combines point source maps with a user-provided evaluation function.
+ *
+ * A point source acts on a local dof with a control volume if it lies in its sub-control volume (`contexts(elemDisc, scv)`),
+ * and on a local dof without control volume, which includes all local dofs of finite element discretizations,
+ * with the value of its basis function at the point (`contexts(elemDisc, element)`).
  *
  * \tparam Context the point source context type (e.g. PointSourceContext)
  * \tparam Function callable with signature
  *         `Values(const ElementDiscretization&, const ElementVariables&, const ScvPointSourceContext<Context>&)`
+ *         and with `const LocalPointSourceContext<Context, LocalPosition>&` as last argument if the discretization has
+ *         local dofs without control volume
+ * \tparam LocalPosition the position type in local element coordinates
  */
-template<class Context, class Function>
+template<class Context, class Function, class LocalPosition = typename Context::GlobalPosition>
 class PointSources
 {
     using ScvContext = ScvPointSourceContext<Context>;
+    using ElementContext = LocalPointSourceContext<Context, LocalPosition>;
     using Scalar = typename Context::GlobalPosition::value_type;
 
 public:
+    //! The contexts of the sub-control volumes, keyed by element index and index of the scv in the element
     using MapType = std::map<std::pair<std::size_t, std::size_t>, std::vector<ScvContext>>;
+    //! The contexts of the elements, keyed by element index
+    using ElementMapType = std::map<std::size_t, std::vector<ElementContext>>;
 
     PointSources() = default;
     PointSources(MapType map, Function f)
     : map_(std::move(map)), f_(std::move(f))
     {}
 
+    PointSources(MapType map, ElementMapType elementMap, Function f)
+    : map_(std::move(map)), elementMap_(std::move(elementMap)), f_(std::move(f))
+    {}
+
     //! Returns whether no point sources have been registered.
-    bool empty() const { return map_.empty(); }
+    bool empty() const { return map_.empty() && elementMap_.empty(); }
 
     //! Return the context range of a sub-control volume.
     template<class ElementDiscretization>
@@ -179,22 +245,27 @@ public:
                                   : std::span<const ScvContext>{};
     }
 
-    //! Return the context range of the whole element.
+    /*!
+     * \brief Return the context range of the whole element, used for the local dofs without control volume.
+     * \note Each context is weighted such that the point is counted once in total, also if it lies
+     *       in several elements. This holds for the contexts of the sub-control volumes as well.
+     * \note The range is empty for discretizations whose local dofs all have a control volume.
+     */
     template<class ElementDiscretization>
-    auto contexts(const ElementDiscretization& elemDisc,
-                  const typename ElementDiscretization::Element& element) const
+    std::span<const ElementContext> contexts(const ElementDiscretization& elemDisc,
+                                             const typename ElementDiscretization::Element& element) const
     {
-        return scvs(elemDisc)
-             | std::views::transform([this, &elemDisc](const auto& scv)
-               { return this->contexts(elemDisc, scv); })
-             | std::views::join;
+        const auto eIdx = elemDisc.gridDiscretization().elementMapper().index(element);
+        const auto it = elementMap_.find(eIdx);
+        return (it != elementMap_.end()) ? std::span<const ElementContext>(it->second)
+                                         : std::span<const ElementContext>{};
     }
 
-    //! Evaluate the source for a given context.
-    template<class ElementDiscretization, class ElementVariables>
+    //! Evaluate the source for a given context, divided by the number of embeddings of the context.
+    template<class ElementDiscretization, class ElementVariables, class Ctx>
     auto eval(const ElementDiscretization& elemDisc,
               const ElementVariables& elemVars,
-              const ScvContext& context) const
+              const Ctx& context) const
     {
         auto values = f_(elemDisc, elemVars, context);
         values /= static_cast<Scalar>(context.embeddings());
@@ -203,16 +274,113 @@ public:
 
 private:
     MapType map_;
+    ElementMapType elementMap_;
     Function f_;
 };
 
+#ifndef DOXYGEN
+namespace PointSourceImpl {
+
+template<class ScvMap, class ElementMap>
+struct PointSourceMaps
+{
+    ScvMap scvMap;
+    ElementMap elementMap;
+};
+
+template<class GridDiscretization, class Context>
+auto makePointSourceMaps(const GridDiscretization& gridDiscretization,
+                         const std::vector<Context>& contexts)
+{
+    using Element = typename GridDiscretization::GridView::template Codim<0>::Entity;
+    using LocalPosition = typename Element::Geometry::LocalCoordinate;
+    using ScvContext = ScvPointSourceContext<Context>;
+    using ElementContext = LocalPointSourceContext<Context, LocalPosition>;
+    using ElemDisc = typename GridDiscretization::LocalView;
+
+    PointSourceMaps<std::map<std::pair<std::size_t, std::size_t>, std::vector<ScvContext>>,
+                    std::map<std::size_t, std::vector<ElementContext>>> maps;
+
+    constexpr bool locatedContexts = requires (const Context& c) { c.elementIndex(); };
+
+    for (const auto& ctx : contexts)
+    {
+        // the element indices that contain the point and the number of contexts it is shared by
+        std::vector<std::size_t> entities;
+        std::size_t elementEmbeddings = ctx.embeddings();
+        if constexpr (locatedContexts)
+            entities.push_back(ctx.elementIndex());
+        else
+        {
+            entities = intersectingEntities(ctx.position(), gridDiscretization.boundingBoxTree());
+            elementEmbeddings *= entities.size();
+        }
+
+        if (entities.empty())
+            continue;
+
+        auto elemDisc = localView(gridDiscretization);
+        for (const auto eIdx : entities)
+        {
+            const auto element = gridDiscretization.element(eIdx);
+
+            if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElemDisc>())
+            {
+                auto elementEntry = ElementContext(ctx, element.geometry().local(ctx.position()));
+                elementEntry.setEmbeddings(elementEmbeddings);
+                maps.elementMap[eIdx].push_back(std::move(elementEntry));
+            }
+
+            if constexpr (Concepts::FVElementDiscretization<ElemDisc>
+                          && DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>)
+            {
+                elemDisc.bindElement(element);
+
+                Dune::ReservedVector<std::size_t, Dumux::Detail::LocalDofs::maxNumLocalDofs<ElemDisc>()> scvIndices;
+                for (const auto& scv : scvs(elemDisc))
+                    if (intersectsPointGeometry(ctx.position(), elemDisc.geometry(scv)))
+                        scvIndices.push_back(scv.indexInElement());
+
+                if (scvIndices.empty())
+                    DUNE_THROW(Dune::InvalidStateException,
+                               "Point source at " << ctx.position() << " is not inside any sub control volume of element " << eIdx);
+
+                for (const auto scvIdx : scvIndices)
+                {
+                    auto entry = ctx;
+                    entry.setEmbeddings(elementEmbeddings * scvIndices.size());
+                    maps.scvMap[{eIdx, scvIdx}].emplace_back(entry, scvIdx);
+                }
+            }
+            else if constexpr (GridDiscretization::discMethod == DiscretizationMethods::cctpfa
+                            || GridDiscretization::discMethod == DiscretizationMethods::ccmpfa)
+            {
+                auto entry = ctx;
+                entry.setEmbeddings(elementEmbeddings);
+                maps.scvMap[{eIdx, std::size_t(0)}].emplace_back(entry, std::size_t(0));
+            }
+            else if constexpr (!Concepts::FEElementDiscretization<ElemDisc>)
+                DUNE_THROW(Dune::NotImplemented,
+                           "makePointSourceMap for discretization method " << GridDiscretization::discMethod);
+        }
+    }
+    return maps;
+}
+
+} // end namespace PointSourceImpl
+#endif
+
 /*!
  * \ingroup Core
- * \brief Build a point source map from a list of point source contexts.
+ * \brief Build the point source map of the sub-control volumes from a list of point source contexts.
  *
  * Returns `std::map<std::pair<elementIndex, scvIndex>, std::vector<ScvPointSourceContext<Context>>>`.
  * The scv index and embeddings count are set automatically based on the
  * bounding-box-tree intersection of each context's position with the grid.
+ * The map is empty for finite element discretizations, which have no sub-control volumes.
+ * If the context provides `elementIndex()` (see ElementIndexPointSourceContext), the context is
+ * assigned to that element without searching the grid, and its embeddings are the number of
+ * elements sharing the point.
  *
  * \tparam GridDiscretization the grid discretization type
  * \tparam Context the point source context type; must provide `position()` and
@@ -226,60 +394,31 @@ auto makePointSourceMap(const GridDiscretization& gridDiscretization,
 template<class GridDiscretization, class Context>
 auto makePointSourceMap(const GridDiscretization& gridDiscretization,
                         const std::vector<Context>& contexts)
-{
-    using ScvContext = ScvPointSourceContext<Context>;
-    std::map<std::pair<std::size_t, std::size_t>, std::vector<ScvContext>> map;
-    const auto& boundingBoxTree = gridDiscretization.boundingBoxTree();
+{ return PointSourceImpl::makePointSourceMaps(gridDiscretization, contexts).scvMap; }
 
-    for (const auto& ctx : contexts)
-    {
-        const auto entities = intersectingEntities(ctx.position(), boundingBoxTree);
-        if (entities.empty())
-            continue;
+/*!
+ * \ingroup Core
+ * \brief Build the point source map of the elements from a list of point source contexts.
+ *
+ * Returns `std::map<elementIndex, std::vector<LocalPointSourceContext<Context, LocalPosition>>>`.
+ * The position in the local coordinates of the element is computed once. The embeddings count is
+ * the number of elements that contain the point, such that the weights of its contexts sum to one.
+ * The location of the point is determined as in makePointSourceMap.
+ * The map is empty for discretizations whose local dofs all have a control volume.
+ *
+ * \tparam GridDiscretization the grid discretization type
+ * \tparam Context the point source context type; must provide `position()` and
+ *         `setEmbeddings()`
+ */
+template<class GridDiscretization, class Context>
+auto makeElementPointSourceMap(const GridDiscretization& gridDiscretization,
+                               std::initializer_list<Context> contexts)
+{ return makeElementPointSourceMap(gridDiscretization, std::vector<Context>(contexts)); }
 
-        static constexpr bool isCVFE = DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>;
-        if constexpr (isCVFE)
-        {
-            auto elemDisc = localView(gridDiscretization);
-            for (const auto eIdx : entities)
-            {
-                const auto element = boundingBoxTree.entitySet().entity(eIdx);
-                elemDisc.bindElement(element);
-
-                using ElemDisc = typename GridDiscretization::LocalView;
-                Dune::ReservedVector<std::size_t, Dumux::Detail::LocalDofs::maxNumLocalDofs<ElemDisc>()> scvIndices;
-                for (const auto& scv : scvs(elemDisc))
-                    if (intersectsPointGeometry(ctx.position(), elemDisc.geometry(scv)))
-                        scvIndices.push_back(scv.indexInElement());
-
-                if (scvIndices.empty())
-                    DUNE_THROW(Dune::InvalidStateException,
-                               "Point source at " << ctx.position() << " is not inside any sub control volume of element " << eIdx);
-
-                for (const auto scvIdx : scvIndices)
-                {
-                    auto entry = ctx;
-                    entry.setEmbeddings(ctx.embeddings() * entities.size() * scvIndices.size());
-                    map[{eIdx, scvIdx}].emplace_back(entry, scvIdx);
-                }
-            }
-        }
-        else if constexpr (GridDiscretization::discMethod == DiscretizationMethods::cctpfa
-                        || GridDiscretization::discMethod == DiscretizationMethods::ccmpfa)
-        {
-            for (const auto eIdx : entities)
-            {
-                auto entry = ctx;
-                entry.setEmbeddings(ctx.embeddings() * entities.size());
-                map[{eIdx, std::size_t(0)}].emplace_back(entry, std::size_t(0));
-            }
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented,
-                       "makePointSourceMap for discretization method " << GridDiscretization::discMethod);
-    }
-    return map;
-}
+template<class GridDiscretization, class Context>
+auto makeElementPointSourceMap(const GridDiscretization& gridDiscretization,
+                               const std::vector<Context>& contexts)
+{ return PointSourceImpl::makePointSourceMaps(gridDiscretization, contexts).elementMap; }
 
 /*!
  * \ingroup Core
@@ -289,6 +428,8 @@ auto makePointSourceMap(const GridDiscretization& gridDiscretization,
  * \tparam Context the point source context type
  * \tparam Function callable with signature
  *         `Values(const ElementDiscretization&, const ElementVariables&, const ScvPointSourceContext<Context>&)`
+ *         and with `const LocalPointSourceContext<Context, LocalPosition>&` as last argument if the discretization has
+ *         local dofs without control volume
  */
 template<class GridDiscretization, class Context, class Function>
 auto makePointSources(const GridDiscretization& gridDiscretization,
@@ -301,9 +442,11 @@ auto makePointSources(const GridDiscretization& gridDiscretization,
                       const std::vector<Context>& contexts,
                       Function f)
 {
-    return PointSources<Context, Function>(
-        makePointSourceMap(gridDiscretization, contexts),
-        std::move(f)
+    using Element = typename GridDiscretization::GridView::template Codim<0>::Entity;
+    using LocalPosition = typename Element::Geometry::LocalCoordinate;
+    auto maps = PointSourceImpl::makePointSourceMaps(gridDiscretization, contexts);
+    return PointSources<Context, Function, LocalPosition>(
+        std::move(maps.scvMap), std::move(maps.elementMap), std::move(f)
     );
 }
 

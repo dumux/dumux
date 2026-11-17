@@ -271,24 +271,27 @@ public:
      * - `bool empty() const`
      *   Returns `true` if no point sources are registered; otherwise `false`.
      *
-     * - For **finite-volume** schemes:
+     * - For local dofs with a control volume (finite-volume schemes and the control-volume part of hybrid schemes):
      *   \code
      *   auto contexts(const ElementDiscretization& elemDisc,
      *                 const SubControlVolume& scv) const;
      *   \endcode
-     *   Returns a range of `contexts` related to the `scv`.
+     *   Returns a range of `contexts` related to the `scv`. The point source acts on the control volume that contains it.
      *
-     * - For **finite-element** schemes:
+     * - For local dofs without control volume (finite-element schemes and the finite-element part of hybrid schemes):
      *   \code
      *   auto contexts(const ElementDiscretization& elemDisc,
      *                 const Element& element) const;
      *   \endcode
-     *   Returns a range of `contexts` related to the `element`.
+     *   Returns a range of `contexts` related to the `element`. Each context provides `localPosition()`, the position of
+     *   the point source in the local coordinates of the element. The point source acts on a local dof with the value
+     *   of its basis function at this position.
      *
      * - `auto eval(const ElementDiscretization& elemDisc,
      *              const ElementVariables& elemVars,
      *              const Context& context) const`
-     *   Evaluates the point source for the given context.
+     *   Evaluates the point source for the given context. A point source that lies in several
+     *   elements (on their boundaries) is split among them by the embeddings of its contexts.
      */
     EmptyPointSources pointSources() const
     {
