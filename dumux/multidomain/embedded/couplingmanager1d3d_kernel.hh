@@ -90,6 +90,14 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Kernel>
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
+    //! a straight piece of the centerline
+    struct Segment
+    {
+        GlobalPosition a, b;
+        const GlobalPosition& corner(int i) const { return i == 0 ? a : b; }
+        Scalar volume() const { return (b - a).two_norm(); }
+    };
+
     template<std::size_t id>
     static constexpr bool isCVFE()
     { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
@@ -163,10 +171,13 @@ public:
      * This method uses grid glue to intersect the given grids. Over each intersection
      * we later need to integrate a source term. This method places point sources
      * at each quadrature point and provides the point source with the necessary
-     * information to compute integrals (quadrature weight and integration element)
-     * \param order The order of the quadrature rule for integration of sources over an intersection
+     * information to compute integrals (quadrature weight and integration element).
+     * The kernel of a quadrature point is distributed over the cross-section through the point,
+     * with the part of the intersection length given by the quadrature weight.
+     * The order of the quadrature rule is MixedDimension.KernelIntegrationOrder (default 1).
+     * \note The parameters have no effect
      */
-    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
+    void computePointSourceData(std::size_t /*order*/ = 1, bool /*verbose*/ = false)
     {
         // initialize the maps
         // do some logging and profiling
@@ -184,6 +195,7 @@ public:
         // Monte-carlo integration on the cylinder defined by line and radius
         const double characteristicRelativeLength = getParam<double>("MixedDimension.KernelIntegrationCRL", 0.1);
         EmbeddedCoupling::CylinderIntegration<Scalar> cylIntegration(characteristicRelativeLength, 1);
+        const int integrationOrder = getParam<int>("MixedDimension.KernelIntegrationOrder", 1);
 
         const bool writeIntegrationPointsToFile = getParam<bool>("MixedDimension.WriteIntegrationPointsToFile", false);
         if (writeIntegrationPointsToFile)
@@ -207,88 +219,101 @@ public:
             const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
             const auto kernelWidthFactor = kernelWidthFactor_(this->problem(lowDimIdx).spatialParams(), lowDimElementIdx);
             const auto kernelWidth = kernelWidthFactor*radius;
-            const auto a = intersectionGeometry.corner(0);
-            const auto b = intersectionGeometry.corner(1);
-            cylIntegration.setGeometry(a, b, kernelWidth);
-
-            // we can have multiple 3d elements per 1d intersection
-            for (int outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(intersectionGeometry.type(), integrationOrder);
+            for (const auto& qp : quad)
             {
-                // compute source id
-                // for each id we have
-                // (1) a point source for the 1d domain
-                // (2) a bulk source weight for the each element in the 3d domain (the fraction of the total source/sink for the 1d element with the point source)
-                //     TODO: i.e. one integration of the kernel should be enough (for each of the weights it's weight/embeddings)
-                // (3) the flux scaling factor for each outside element, i.e. each id
-                const auto id = this->idCounter_++;
-
-                // compute the weights for the bulk volume sources
-                const auto& outside = is.domainEntity(outsideIdx);
-                const auto bulkElementIdx = bulkGridGeometry.elementMapper().index(outside);
-                const auto surfaceFactor = computeBulkSource(intersectionGeometry, radius, kernelWidth, id, lowDimElementIdx, bulkElementIdx, cylIntegration, is.numDomainNeighbors());
-
-                // place a point source at the intersection center
-                const auto center = intersectionGeometry.center();
-                this->pointSources(lowDimIdx).emplace_back(center, id, surfaceFactor, intersectionGeometry.volume(), lowDimElementIdx);
-                this->pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
-
-                // pre compute additional data used for the evaluation of
-                // the actual solution dependent source term
-                PointSourceData psData;
-
-                // lowdim interpolation (evaluate at center)
-                if constexpr (isCVFE<lowDimIdx>())
+                // the part of the intersection that belongs to the quadrature point, centered at the point
+                const auto center = intersectionGeometry.global(qp.position());
+                auto a = intersectionGeometry.corner(0);
+                auto b = intersectionGeometry.corner(1);
+                if (quad.size() > 1)
                 {
-                    using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                    const auto lowDimGeometry = gridDiscretization(this->problem(lowDimIdx)).element(lowDimElementIdx).geometry();
-                    ShapeValues shapeValues;
-                    this->getShapeValues(lowDimIdx, gridDiscretization(this->problem(lowDimIdx)), lowDimGeometry, center, shapeValues);
-                    psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                    auto halfSegment = b - a;
+                    halfSegment *= 0.5*qp.weight();
+                    a = center - halfSegment;
+                    b = center + halfSegment;
                 }
-                else
-                {
-                    psData.addLowDimInterpolation(lowDimElementIdx);
-                }
+                const Segment segment{a, b};
+                cylIntegration.setGeometry(a, b, kernelWidth);
 
-                // bulk interpolation (evaluate at center)
-                if constexpr (isCVFE<bulkIdx>())
+                // we can have multiple 3d elements per 1d intersection
+                for (int outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
                 {
-                    using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
-                    const auto bulkGeometry = gridDiscretization(this->problem(bulkIdx)).element(bulkElementIdx).geometry();
-                    ShapeValues shapeValues;
-                    this->getShapeValues(bulkIdx, gridDiscretization(this->problem(bulkIdx)), bulkGeometry, center, shapeValues);
-                    psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
-                }
-                else
-                {
-                    psData.addBulkInterpolation(bulkElementIdx);
-                }
+                    // compute source id
+                    // for each id we have
+                    // (1) a point source for the 1d domain
+                    // (2) a bulk source weight for the each element in the 3d domain (the fraction of the total source/sink for the 1d element with the point source)
+                    //     TODO: i.e. one integration of the kernel should be enough (for each of the weights it's weight/embeddings)
+                    // (3) the flux scaling factor for each outside element, i.e. each id
+                    const auto id = this->idCounter_++;
 
-                // publish point source data in the global vector
-                this->pointSourceData().emplace_back(std::move(psData));
+                    // compute the weights for the bulk volume sources
+                    const auto& outside = is.domainEntity(outsideIdx);
+                    const auto bulkElementIdx = bulkGridGeometry.elementMapper().index(outside);
+                    const auto surfaceFactor = computeBulkSource(segment, radius, kernelWidth, id, lowDimElementIdx, bulkElementIdx, cylIntegration, is.numDomainNeighbors());
 
-                // the flux scaling factor assumes the radially symmetric solution around a straight
-                // line, so the distance is measured to the line through the segment. The distance to
-                // the segment itself would grow with the parts of the bulk element beyond the segment
-                // ends, e.g. if several lower-dimensional elements are embedded in one bulk element.
-                const auto avgMinDist = averageDistanceLineGeometry(a, b, outside.geometry());
-                this->averageDistanceToBulkCell().push_back(avgMinDist);
+                    // place a point source at the quadrature point
+                    this->pointSources(lowDimIdx).emplace_back(center, id, surfaceFactor, segment.volume(), lowDimElementIdx);
+                    this->pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
 
-                // a cell-centered bulk pressure represents the element, an interpolated one the value on the centerline
-                const auto scalingDistance = isCVFE<bulkIdx>() ? Scalar(0.0) : avgMinDist;
-                fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(scalingDistance, radius, kernelWidth));
+                    // pre compute additional data used for the evaluation of
+                    // the actual solution dependent source term
+                    PointSourceData psData;
 
-                // export the lowdim coupling stencil
-                // we insert all dofs / elements and make it unique later
-                if constexpr (isCVFE<bulkIdx>())
-                {
-                    const auto& dofs = this->elementDofIndices(bulkIdx, bulkElementIdx);
-                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                               dofs.begin(), dofs.end());
-                }
-                else
-                {
-                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
+                    // lowdim interpolation (evaluate at the quadrature point)
+                    if constexpr (isCVFE<lowDimIdx>())
+                    {
+                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                        const auto lowDimGeometry = gridDiscretization(this->problem(lowDimIdx)).element(lowDimElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues(lowDimIdx, gridDiscretization(this->problem(lowDimIdx)), lowDimGeometry, center, shapeValues);
+                        psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                    }
+                    else
+                    {
+                        psData.addLowDimInterpolation(lowDimElementIdx);
+                    }
+
+                    // bulk interpolation (evaluate at the quadrature point)
+                    if constexpr (isCVFE<bulkIdx>())
+                    {
+                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                        const auto bulkGeometry = gridDiscretization(this->problem(bulkIdx)).element(bulkElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues(bulkIdx, gridDiscretization(this->problem(bulkIdx)), bulkGeometry, center, shapeValues);
+                        psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                    }
+                    else
+                    {
+                        psData.addBulkInterpolation(bulkElementIdx);
+                    }
+
+                    // publish point source data in the global vector
+                    this->pointSourceData().emplace_back(std::move(psData));
+
+                    // the flux scaling factor assumes the radially symmetric solution around a straight
+                    // line, so the distance is measured to the line through the segment. The distance to
+                    // the segment itself would grow with the parts of the bulk element beyond the segment
+                    // ends, e.g. if several lower-dimensional elements are embedded in one bulk element.
+                    const auto avgMinDist = averageDistanceLineGeometry(a, b, outside.geometry());
+                    this->averageDistanceToBulkCell().push_back(avgMinDist);
+
+                    // a cell-centered bulk pressure represents the element, an interpolated one the value on the centerline
+                    const auto scalingDistance = isCVFE<bulkIdx>() ? Scalar(0.0) : avgMinDist;
+                    fluxScalingFactor_.push_back(this->problem(bulkIdx).fluxScalingFactor(scalingDistance, radius, kernelWidth));
+
+                    // export the lowdim coupling stencil
+                    // we insert all dofs / elements and make it unique later
+                    if constexpr (isCVFE<bulkIdx>())
+                    {
+                        const auto& dofs = this->elementDofIndices(bulkIdx, bulkElementIdx);
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
+                                                                                   dofs.begin(), dofs.end());
+                    }
+                    else
+                    {
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
+                    }
                 }
             }
         }
