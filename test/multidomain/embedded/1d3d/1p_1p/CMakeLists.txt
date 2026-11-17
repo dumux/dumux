@@ -83,6 +83,19 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_tpfatpfa_kernel)
 
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueTensorProductCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+              COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/compare_errors.py
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS --command-a "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel params.input -Problem.Name kernel_yasp -Vtk.EnableVtkOutput false"
+                       --command-b "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct params.input -Problem.Name kernel_tensorproduct -Vtk.EnableVtkOutput false -Tissue.Grid.Positions0 '-1 1' -Tissue.Grid.Positions1 '-1 1' -Tissue.Grid.Positions2 '0 1' -Tissue.Grid.Cells0 20 -Tissue.Grid.Cells1 20 -Tissue.Grid.Cells2 20"
+                       --errors-a kernel_yasp-errors.csv
+                       --errors-b kernel_tensorproduct-errors.csv
+                       --tolerance 1e-10)
+add_dependencies(test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct test_md_embedded_1d3d_1p1p_tpfatpfa_kernel)
+
 # The kernel (distributed source) method with vertex-centred dofs. The bulk source is spread
 # over the sub-control volumes of the element containing each sample point, so the exchange
 # term is a load vector rather than a single cell value.
