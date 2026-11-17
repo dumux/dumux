@@ -17,7 +17,11 @@
 
 #include <vector>
 #include <algorithm>
+#include <limits>
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -29,6 +33,8 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/distance.hh>
 #include <dumux/geometry/refinementquadraturerule.hh>
 #include <dumux/geometry/triangulation.hh>
 #include <dumux/geometry/distance.hh>
@@ -57,6 +63,8 @@ class SegmentNetwork
     using GlobalPosition = typename GridView::template Codim<0>::Geometry::GlobalCoordinate;
     using GridIndex = typename IndexTraits<GridView>::GridIndex;
 
+    using BoundingBoxTree = std::decay_t<decltype(std::declval<const GridGeometry&>().boundingBoxTree())>;
+
     struct Segment
     {
         GlobalPosition a, b;
@@ -67,6 +75,7 @@ class SegmentNetwork
 public:
     template <class RadiusFunction>
     SegmentNetwork(const GridGeometry& gg, const RadiusFunction& radiusFunction)
+    : tree_(&gg.boundingBoxTree())
     {
         const auto& gridView = gg.gridView();
         segments_.resize(gridView.size(0));
@@ -77,6 +86,7 @@ public:
             const auto radius = radiusFunction(eIdx);
 
             segments_[eIdx] = Segment{ geometry.corner(0), geometry.corner(1), radius, eIdx };
+            maxRadius_ = std::max(maxRadius_, static_cast<double>(radius));
         }
 
         std::cout << "-- Extracted " << segments_.size() << " segments.\n";
@@ -94,25 +104,40 @@ public:
     const auto& segments() const
     { return segments_; }
 
-    //! find the closest segment (the segment from which the signed distance to its surface is the closest to zero)
-    //! \note minDist is a positive distance
+    //! find the segment with the smallest signed distance from its surface to the position (lowest index on ties)
+    //! \note the returned distance is the absolute value of that signed distance
     auto findClosestSegmentSurface(const GlobalPosition& globalPos) const
+    { return findClosestSegmentSurface(globalPos, closestSegmentSurfaceCandidates(globalPos)); }
+
+    /*!
+     * \brief Indices (ascending) of all segments that can be the closest segment surface
+     *        for a point within the given distance from the position
+     * \note Let c be the segment with the closest centerline (distance d_c, radius r_c). The
+     *       segment s that minimizes the signed surface distance has d_s - r_s <= d_c - r_c at the
+     *       position. For a point within the margin the distances change by at most the margin.
+     *       Hence d_s <= d_c + 2*margin + r_max - r_c at the position.
+     */
+    std::vector<GridIndex> closestSegmentSurfaceCandidates(const GlobalPosition& globalPos,
+                                                           double margin = 0.0) const
     {
-        GridIndex eIdx = 0;
-        double minSignedDist = std::numeric_limits<double>::max();
+        std::vector<GridIndex> candidates;
+        if (segments_.empty())
+            return candidates;
 
-        for (const auto &segment : segments_)
-        {
-            const auto signedDist = computeSignedDistance_(globalPos, segment);
-            if (signedDist < minSignedDist)
-            {
-                minSignedDist = signedDist;
-                eIdx = segment.eIdx;
-            }
-        }
+        using std::sqrt;
+        const auto [squaredDist, closestIdx] = closestEntity(globalPos, *tree_);
+        auto radius = sqrt(squaredDist) + 2.0*margin + maxRadius_ - segments_[closestIdx].r;
 
-        using std::abs;
-        return std::make_tuple(eIdx, abs(minSignedDist));
+        // slack for the round-off in the distance evaluations
+        const auto* rootBox = tree_->getBoundingBoxCoordinates(tree_->numBoundingBoxes() - 1);
+        double extent = 0.0;
+        for (int i = 0; i < GlobalPosition::dimension; ++i)
+            extent = std::max(extent, rootBox[i + GlobalPosition::dimension] - rootBox[i]);
+        radius += 1e-9*(radius + extent);
+
+        collectCandidates_(globalPos, tree_->numBoundingBoxes() - 1, radius*radius, candidates);
+        std::sort(candidates.begin(), candidates.end());
+        return candidates;
     }
 
     //! same as overload with taking a position but only look at the segments specified by the index vector
@@ -146,6 +171,23 @@ public:
     }
 
 private:
+    // collect the segments whose bounding box is within the given squared distance of p
+    void collectCandidates_(const GlobalPosition& p, std::size_t node, double squaredRadius,
+                            std::vector<GridIndex>& candidates) const
+    {
+        const auto& box = tree_->getBoundingBoxNode(node);
+        if (squaredDistancePointBoundingBox(p, tree_->getBoundingBoxCoordinates(node)) > squaredRadius)
+            return;
+
+        if (tree_->isLeaf(box, node))
+            candidates.push_back(box.child1);
+        else
+        {
+            collectCandidates_(p, box.child0, squaredRadius, candidates);
+            collectCandidates_(p, box.child1, squaredRadius, candidates);
+        }
+    }
+
     // Compute the projection of p onto the segment
     // returns the closest end point if the orthogonal projection onto the line implied by the segment
     // is outside the segment
@@ -175,7 +217,9 @@ private:
         return (p-projPoint).two_norm()-segment.r;
     }
 
+    const BoundingBoxTree* tree_;
     std::vector<Segment> segments_;
+    double maxRadius_ = 0.0;
 };
 
 /*!
@@ -183,32 +227,41 @@ private:
  * \brief Get the closest segment for a given surface point
  * \note The point does not necessarily be exactly on the virtual surface
  *       implied by the networks radius function
+ * \note Only the segments given by the hints are considered
  */
-template<class Network>
+template<class Network, class HintContainer>
 class NetworkIndicatorFunction
 {
 public:
-    NetworkIndicatorFunction(const Network& n)
+    NetworkIndicatorFunction(const Network& n, const HintContainer& hints)
     : network_(n)
+    , hints_(hints)
     {}
 
     template<class Pos>
     auto operator()(const Pos& pos) const
     {
-        const auto& [closestSegmentIdx, _] = network_.findClosestSegmentSurface(pos);
-        return closestSegmentIdx;
-    }
-
-    template <class Pos, class HintContainer>
-    auto operator()(const Pos& pos, const HintContainer& hints) const
-    {
-        const auto& [closestSegmentIdx, _] = network_.findClosestSegmentSurface(pos, hints);
+        const auto& [closestSegmentIdx, _] = network_.findClosestSegmentSurface(pos, hints_);
         return closestSegmentIdx;
     }
 
 private:
     const Network& network_;
+    const HintContainer& hints_;
 };
+
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief The largest distance of a corner of the geometry to the given position
+ */
+template<class Geometry, class Position>
+double maxCornerDistance(const Geometry& geometry, const Position& position)
+{
+    double maxDistance = 0.0;
+    for (int i = 0; i < geometry.corners(); ++i)
+        maxDistance = std::max(maxDistance, (geometry.corner(i) - position).two_norm());
+    return maxDistance;
+}
 
 /*!
  * \ingroup EmbeddedCoupling
@@ -432,7 +485,6 @@ public:
         // setup simplex "quadrature" rule
         const auto quadSimplexRefineMaxLevel
             = getParam<std::size_t>("MixedDimension.Projection.SimplexIntegrationRefine", 4);
-        const auto indicator = Detail::NetworkIndicatorFunction { network };
 
         // estimate number of point sources for memory allocation
         const auto estimateNumberOfPointSources
@@ -456,15 +508,21 @@ public:
                 if (!intersection.boundary())
                     continue;
 
+                // only segments that can be closest for some point on the facet are searched
+                const auto interfaceGeometry = intersection.geometry();
+                const auto center = interfaceGeometry.center();
+                const auto candidates = network.closestSegmentSurfaceCandidates(
+                    center, Detail::maxCornerDistance(interfaceGeometry, center)
+                );
+
                 // check if we are close enough to the coupling interface
-                const auto [isCoupled, closestSegmentIdx, minDist] = isCoupled_(network, intersection, insideBBox);
+                const auto [isCoupled, closestSegmentIdx, minDist] = isCoupled_(network, candidates, intersection, insideBBox);
                 if (!isCoupled)
                     continue;
 
                 // we found an intersection on the coupling interface: mark as coupled element
                 bulkElementMarker_[bulkElementIdx] = 1;
 
-                const auto interfaceGeometry = intersection.geometry();
                 for (int i = 0; i < interfaceGeometry.corners(); ++i)
                 {
                     const auto localVIdx = refElement.subEntity(intersection.indexInInside(), 1, i, bulkDim);
@@ -478,6 +536,7 @@ public:
                         { interfaceGeometry.corner(0), interfaceGeometry.corner(1), interfaceGeometry.corner(2)}
                     }, closestSegmentIdx);
 
+                const auto indicator = Detail::NetworkIndicatorFunction { network, candidates };
                 const auto quadSimplex = LocalRefinementSimplexQuadrature{ interfaceGeometry, quadSimplexRefineMaxLevel, indicator };
 
                 // iterate over all quadrature points (children simplices)
@@ -653,11 +712,12 @@ private:
         }
     }
 
-    template<class BoundaryIntersection, class BBoxCheck>
-    auto isCoupled_(const SegmentNetwork& network, const BoundaryIntersection& intersection, const BBoxCheck& insideBBox) const
+    template<class Candidates, class BoundaryIntersection, class BBoxCheck>
+    auto isCoupled_(const SegmentNetwork& network, const Candidates& candidates,
+                    const BoundaryIntersection& intersection, const BBoxCheck& insideBBox) const
     {
         const auto center = intersection.geometry().center();
-        const auto [eIdx, minDist] = network.findClosestSegmentSurface(center);
+        const auto [eIdx, minDist] = network.findClosestSegmentSurface(center, candidates);
 
         // all elements in the bounding box are coupled if this is enabled
         // this is a simplified check that can be enabled for box-shaped domains
