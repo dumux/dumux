@@ -4,7 +4,7 @@
 Dt1 = 0.1 # [s], coarse time step until T1 (development of the periodic flow)
 T1 = 3.5 # [s]
 Dt2 = 0.001 # [s], fine time step from T1 until T2
-T2 = 30.0 # [s]
+T2 = 10.0 # [s]
 
 [Grid]
 File = meshes/cylinder_channel.msh

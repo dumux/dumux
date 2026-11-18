@@ -77,12 +77,10 @@ The benchmark indicators are the drag coefficient $C_D = 2 F_D/(\rho\bar{U}^2 D)
 $C_L = 2 F_L/(\rho\bar{U}^2 D)$ and the pressure difference $\Delta p = p(A) - p(B)$.
 For case 2D-3, $\bar{U} = 1$ is the mean velocity of the peak inflow profile (not of $U(t)$).
 
-For case 2D-2, the frequency $f$ of the vortex shedding defines the Strouhal number $\text{St} = D f/\bar{U}$.
+For case 2D-2, $f$ denotes the frequency of the vortex shedding.
 
-The FeatFlow reference values are listed below (see the references at the end):
-
-* 2D-2 and 2D-3: $Q_2/P_1^\text{disc}$ elements on level 6, Crank-Nicolson method with $\Delta t = 1/1600\,\text{s}$;
-* 2D-2: the Strouhal number is taken from the FeatFlow benchmark page (level 6, $\Delta t = 1/200\,\text{s}$).
+The FeatFlow reference values are listed below (see the references at the end). For 2D-2 and 2D-3, they are
+computed with $Q_2/P_1^\text{disc}$ elements on level 6 and the Crank-Nicolson method with $\Delta t = 1/1600\,\text{s}$.
 
 | Case | Quantity | Reference value |
 | :--- | :--- | :--- |
@@ -91,7 +89,6 @@ The FeatFlow reference values are listed below (see the references at the end):
 | 2D-1 | $\Delta p$ | $0.11752016697$ |
 | 2D-2 | $C_{D,\max}$ | $3.22739$ |
 | 2D-2 | $C_{L,\max}$ | $0.98657$ |
-| 2D-2 | $\text{St}$ | $0.30188$ |
 | 2D-3 | $C_{D,\max}$ at $t$ | $2.9437637214$ at $t = 3.9365625\,\text{s}$ |
 | 2D-3 | $C_{L,\max}$ at $t$ | $0.47748781595$ at $t = 5.6928125\,\text{s}$ |
 | 2D-3 | $\Delta p(t = 8\,\text{s})$ | $-0.11154138872$ |
@@ -177,14 +174,15 @@ The indicators of every time step are written to the JSON file `<Problem.Name>.j
 ## Running the tests
 
 ```bash
-cd build-cmake/test/freeflow/navierstokes/flow_around_cylinder
+cd build-cmake/test/freeflow/navierstokes/flowaroundcylinder
 make test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
 ./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_1.input  # case 2D-1
 ./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_2.input  # case 2D-2 (days)
 ./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_3.input  # case 2D-3 (days)
 ```
 
-The ctest regression tests only cover the stationary case 2D-1.
+The ctest regression tests only cover the stationary case 2D-1. The time-dependent cases are run
+with `benchmark.py` (see below).
 
 The tests come in two variants:
 
@@ -237,7 +235,7 @@ The geometric error of this polygon does not vanish under refinement. It eventua
 convergence of all indicators.
 
 ```bash
-cd build-cmake/test/freeflow/navierstokes/flow_around_cylinder
+cd build-cmake/test/freeflow/navierstokes/flowaroundcylinder
 make test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa \
      test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box \
      test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
@@ -255,13 +253,128 @@ python3 visualize.py
 | `-- <parameters>` | further parameters passed to the simulations |
 | `visualize.py` | plots the indicators with the FeatFlow reference values and the bounds of the paper over $N$ to `results/convergence_2d1.png` |
 
-Each run has its own folder `runs/2d1/<scheme>_r<level>/` in the build directory:
+In addition, each scheme runs once on the default mesh of the regression tests (`<scheme>_default`).
+This mesh resolves the cylinder twice as fine as the coarse meshes (about 157 instead of 79 edges).
+The plot shows these runs as unfilled markers, and the table lists them in a separate row.
+
+Each run has its own folder `runs/2d1/<scheme>_r<level>/` (or `runs/2d1/<scheme>_default/`) in the build directory:
 
 * the log file;
 * the JSON file with the grid size, the number of unknowns and the indicators;
 * the VTK output in `vtk/`.
 
 A failed run is reported and skipped (missing data in the table and the plot).
+
+## Running and evaluating the cases 2D-2 and 2D-3
+
+`benchmark.py --case 2` and `--case 3` run one time-dependent case with the PQ1Bubble/Box variant.
+The runs take days on the default grid, so they are started in the background, detached from the terminal.
+
+```bash
+cd build-cmake/test/freeflow/navierstokes/flowaroundcylinder
+python3 benchmark.py --case 2                        # 2D-2, default grid and time steps
+python3 benchmark.py --case 3 --dt 0.00125 --tend 8  # 2D-3 with a larger time step
+python3 visualize.py --case 2                        # evaluate (also while a run is going on)
+python3 visualize.py --case 3
+```
+
+| Option | Purpose |
+| :--- | :--- |
+| `--level` | `Grid.Refinement` of the default mesh (default 0) |
+| `--dt` | fixed time step size (2D-2: the fine one after $3.5\,\text{s}$) |
+| `--tend` | end time |
+| `--foreground` | wait for the run instead of starting it in the background |
+| `--overwrite` | replace the results of an existing run |
+| `--tstart` (`visualize.py`) | 2D-2: the periodic regime is evaluated for $t \geq$ `tstart` (default $25\,\text{s}$) |
+
+Each run has its own folder `runs/2d<case>/pq1bubble_box_r<level>[_dt<dt>]/`:
+
+* the log file and the process id (`<name>.pid`, stop the run with `kill $(cat <name>.pid)`);
+* the JSON file with the time series of the indicators;
+* the VTK output in `vtk/`.
+
+On the default grid, one time step takes about $10$ to $15\,\text{s}$ on a single core:
+
+| Case | Time steps | Run time |
+| :--- | :--- | :--- |
+| 2D-2 | about 26500 | about four days |
+| 2D-3 | 12800 | about two days |
+
+### Evaluation
+
+`visualize.py` evaluates all runs of a case:
+
+* **2D-2**: the last full period $[t_0, t_0 + 1/f]$ after `--tstart`, where $t_0$ is a minimum of $C_L$
+  (FeatFlow convention).
+  * Max, min, mean $= (\max + \min)/2$ and amplitude $= \max - \min$ of $C_D$, $C_L$ and $\Delta p$.
+  * The period $1/f$ and $\Delta p(t_0 + 1/(2f))$, where $t_0$ is the time of the maximum of $C_L$ in the
+    evaluated period, as defined in @cite SchaeferTurek1996.
+  * Minima of $C_L$ closer than $0.2\,\text{s}$ are merged, so noise near a minimum does not
+    produce spurious periods.
+* **2D-3**: the maxima of $C_D$ and $C_L$ and their times, and $\Delta p$ at the last half step before $t = 8\,\text{s}$.
+
+The results go to three files in `results/`:
+
+| File | Content |
+| :--- | :--- |
+| `case_2d_<case>.md` | all quantities of each run, compared with the bounds of @cite SchaeferTurek1996 and the finest FeatFlow $Q_2/P_1^\text{disc}$ run (level 6, $\Delta t = 1/1600\,\text{s}$) |
+| `indicators_2d_<case>.png` | $C_{D,\max}$, $C_{L,\max}$ and $\Delta p$ of each run over its number of unknowns $N$, together with the FeatFlow results of all levels and time step sizes and the bounds of the paper |
+| `case_2d_<case>.png` | the time series of each run (2D-2: $t \in [9, 10]\,\text{s}$, see below), plus `case_2d_2_olddata.png` with the old FeatFlow data |
+
+If the FeatFlow time series have been downloaded (see below), the time series plots also show FeatFlow results
+on level 6:
+
+* `case_2d_2.png`: the DuMux runs and FeatFlow $Q_2/P_1^\text{disc}$ (new data, $\Delta t = 1/1600\,\text{s}$),
+  restricted to $t \in [9, 10]\,\text{s}$, the interval of the new data.
+* `case_2d_2_olddata.png`: the old data of both discretizations on the same level and time step size,
+  $Q_2/P_1^\text{disc}$ and $\tilde{Q}_1/Q_0$ with $\Delta t = 1/800\,\text{s}$ (the old $Q_2/P_1^\text{disc}$ run
+  with $1/1600\,\text{s}$ stops at $t = 0.025\,\text{s}$), on the same interval. The runs start from different
+  states, so their phases differ.
+* `case_2d_3.png`: the DuMux runs and FeatFlow $Q_2/P_1^\text{disc}$ ($\Delta t = 1/1600\,\text{s}$).
+  FeatFlow provides no $\tilde{Q}_1/Q_0$ data for 2D-3.
+
+### Reference data
+
+| File | Content |
+| :--- | :--- |
+| `reference/1996.json` | lower and upper bounds of @cite SchaeferTurek1996 per case |
+| `reference/featflow.json` | FeatFlow results per case, written by `reference/fetch_featflow.py` |
+
+`reference/featflow.json` holds the quantities of all FeatFlow runs of the cases 2D-2 and 2D-3. They are sorted by
+the discretization, the time step size (coarse to fine) and the number of unknowns:
+
+```
+{"<case>": {"q2p1" | "q1p0": {"1/<steps per second>": [{"level", "numElements", "numDofs", "CDMax", ...}]}}}
+```
+
+* `q2p1` stands for $Q_2/P_1^\text{disc}$, `q1p0` for $\tilde{Q}_1/Q_0$ (rotated bilinear velocity, constant pressure).
+* `numDofs` is the total number of scalar unknowns, as in the DuMux runs. The tables of the FeatFlow pages
+  list a different number of degrees of freedom.
+
+The FeatFlow time series (about $80\,\text{MB}$ with the archives) are not part of the repository.
+`reference/fetch_featflow.py` handles them:
+
+* It downloads the archives of the FeatFlow benchmark pages into `reference/featflow/<dataset>/` (ignored by git)
+  and unpacks them there.
+* It evaluates all runs with the same functions as the DuMux results (`visualize.py`).
+* It writes the results to `reference/featflow.json`.
+
+| Dataset | FeatFlow data | Used for |
+| :--- | :--- | :--- |
+| `2dcase2new` | 2D-2, $Q_2/P_1^\text{disc}$, levels 2 to 6, $\Delta t = 1/100, 1/400, 1/1600\,\text{s}$, $t \in [9, 10]\,\text{s}$ ("new reference results", higher-order integration of the forces) | 2D-2, `q2p1` |
+| `2dcase2old` | 2D-2, $\tilde{Q}_1/Q_0$ and $Q_2/P_1^\text{disc}$, levels 2/3 to 6, $\Delta t = 1/200$ to $1/1600\,\text{s}$, $t \in [0, 10]\,\text{s}$ | 2D-2, `q1p0` (the old $Q_2/P_1^\text{disc}$ data is superseded) |
+| `2dcase3` | 2D-3, $Q_2/P_1^\text{disc}$, levels 1 to 6, $\Delta t = 1/1600\,\text{s}$ | 2D-3, `q2p1` |
+
+In the old data set, the forces are evaluated with a lower-order line integration. Compared with the new data set,
+the drag is about $2\,\%$ too low on level 2 and $0.2\,\%$ on level 6 (pressure and period are identical).
+Therefore, `indicators_2d_2.png` marks the $\tilde{Q}_1/Q_0$ results as old data.
+
+Without DuMux runs, `visualize.py --case 2` and `--case 3` plot the references only.
+
+```bash
+python3 reference/fetch_featflow.py               # download (once), unpack and regenerate featflow.json
+python3 reference/fetch_featflow.py --no-download # regenerate from the unpacked data
+```
 
 ## Known limitations
 
