@@ -4,8 +4,12 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROBLEM_HH
-#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_3D_CHANNEL_PROBLEM_HH
+/*!
+ * \file
+ * \brief The problem for the DFG benchmark of the laminar flow around a cylinder (Navier-Stokes)
+ */
+#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_FLOW_AROUND_CYLINDER_PROBLEM_HH
+#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_FLOW_AROUND_CYLINDER_PROBLEM_HH
 
 #include <cmath>
 #include <numeric>
@@ -26,13 +30,8 @@
 namespace Dumux {
 
 /*!
- * \brief Test problem for the (Navier-) Stokes model in a 3D channel
- *
- * Benchmark case from
- *   Turek, Schaefer et a (1996) Benchmark computations of laminar flow around cylinder.
- *   Flow Simulation with High-Performance Computers II,
- *   Notes on Numerical Fluid Mechanics 52, 547-566, Vieweg 1996
- *   https://doi.org/10.1007/978-3-322-89849-4_39
+ * \brief Stationary laminar flow around a cylinder in a 2D channel (case 2D-1, Re = 20)
+ *        of the DFG benchmark \cite SchaeferTurek1996
  */
 template <class TypeTag, class BaseProblem>
 class DFGChannelTestProblem : public BaseProblem
@@ -186,7 +185,7 @@ public:
             const auto fvGeometry = localView(gg).bindElement(element);
             const auto elemVolVars = localView(gridVariables.curGridVolVars()).bindElement(element, fvGeometry, p);
             const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-            return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos)[0];
+            return evalSolution(element, element.geometry(), fvGeometry.gridGeometry(), elemSol, pos)[Indices::pressureIdx];
         };
 
         return evalPressure(evalPoint1, true) - evalPressure(evalPoint2, false);
@@ -231,7 +230,7 @@ public:
                         BoundaryFluxes normalStress(0.0);
                         for (int dir = 0; dir < dim; ++dir)
                         {
-                            // Add pressure contribuition
+                            // Add pressure contribution
                             stress[dir][dir] -= this->pressure(element, fvGeometry, scvf);
                             normalStress[dir] = stress[dir]*scvf.unitOuterNormal();
                         }

@@ -1,5 +1,6 @@
+# DFG benchmark, case 2D-1: stationary flow at Re = 20
 [Grid]
-File = cylinder_channel.msh
+File = meshes/cylinder_channel.msh
 
 [Problem]
 Name = benchmark_stationary

@@ -4,14 +4,16 @@
 // SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
+/*!
+ * \file
+ * \brief Test for the DFG benchmark of the laminar flow around a cylinder (Navier-Stokes)
+ */
 #include <config.h>
 
 #include <iostream>
-#include <random>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
-#include <dune/common/version.hh>
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -89,7 +91,7 @@ int main(int argc, char** argv)
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
+    // run stationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
@@ -181,12 +183,16 @@ int main(int argc, char** argv)
     // evaluate benchmark indicators (only valid with inertia term at Re=20)
     if (momentumProblem->enableInertiaTerms())
     {
-        static constexpr double cDrafReference = 5.57953523384;
+        // the evaluation of the indicators is not parallelized (no reduction of the forces over the processes)
+        if (leafGridView.comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "Evaluation of the benchmark indicators in parallel");
+
+        static constexpr double cDragReference = 5.57953523384;
         static constexpr double cLiftReference = 0.010618948146;
         static constexpr double pDiffReference = 0.11752016697;
         const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx]);
         std::cout << "cDrag: " << cDrag
-                << " (reference: " << cDrafReference << ")"
+                << " (reference: " << cDragReference << ")"
                 << "\n"
                 << "cLift: " << cLift
                 << " (reference: " << cLiftReference << ")"
@@ -201,10 +207,10 @@ int main(int argc, char** argv)
         if (getParam<bool>("Problem.CheckIndicators", false))
         {
             using std::abs;
-            if (abs(cDrag - cDrafReference) > 0.002)
+            if (abs(cDrag - cDragReference) > 0.002)
                 DUNE_THROW(Dune::Exception,
                     "Deviation from reference too large for drag coefficient: "
-                    << cDrag << " (ref: " << cDrafReference << ")"
+                    << cDrag << " (ref: " << cDragReference << ")"
                 );
             if (abs(cLift - cLiftReference) > 0.002)
                 DUNE_THROW(Dune::Exception,

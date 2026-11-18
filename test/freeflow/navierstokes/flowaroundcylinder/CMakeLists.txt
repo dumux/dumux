@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dune_symlink_to_source_files(FILES params.input cylinder_channel.msh cylinder_channel_quad.msh)
+dune_symlink_to_source_files(FILES params_1.input meshes)
 
 # Navier-Stokes version of the test (Re=20)
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
@@ -14,7 +14,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params_1.input
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa -Problem.EnableInertiaTerms true")
 
 # Stokes version of the test (no inertia)
@@ -27,7 +27,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa params_1.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_diamond_tpfa -Problem.EnableInertiaTerms false
                              -LinearSolver.UseIterativeSolver true")
 
@@ -42,7 +42,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_1.input
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box -Problem.EnableInertiaTerms true")
 
 # Stokes version of the test (no inertia)
@@ -55,7 +55,7 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_1.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box -Problem.EnableInertiaTerms false
                              -LinearSolver.UseIterativeSolver true")
 
@@ -70,9 +70,9 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diam
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params_1.input
                              -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms true
-                             -Grid.File cylinder_channel_quad.msh")
+                             -Grid.File meshes/cylinder_channel_quad.msh")
 
 # Stokes version of the test (no inertia)
 dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond
@@ -83,6 +83,6 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond
                CMD_ARGS      --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params.input
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond params_1.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_pq1bubble_diamond -Problem.EnableInertiaTerms false
-                             -Grid.File cylinder_channel_quad.msh")
+                             -Grid.File meshes/cylinder_channel_quad.msh")
