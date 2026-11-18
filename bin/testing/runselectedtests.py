@@ -24,7 +24,9 @@ def buildTests(config, flags=None):
 
     flags = flags or ["-j8", "--keep-going"]
 
-    if not config:
+    # a test expected to fail compilation builds its target itself when it is run
+    targets = [tc["target"] for tc in config.values() if not tc.get("expect_compile_fail", False)]
+    if not targets:
         print("No tests to be built")
         return
 
@@ -39,7 +41,7 @@ def buildTests(config, flags=None):
 
         # define a new target composed of the test targets
         makeFile.write("testselection: ")
-        makeFile.write(" ".join([tc["target"] for tc in config.values()]))
+        makeFile.write(" ".join(targets))
 
     subprocess.run(["make", "-f", "TestMakeFile"] + flags + ["testselection"], check=True)
 

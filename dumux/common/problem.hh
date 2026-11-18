@@ -13,6 +13,7 @@
 #define DUMUX_COMMON_DEFAULT_PROBLEM_HH
 
 #include <memory>
+#include <vector>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -198,6 +199,10 @@ public:
      */
     NumEqVector boundaryFluxAtPos(const GlobalPosition& globalPos) const
     {
+        static_assert(!definesNeumann_(),
+                      "Problems derived from Experimental::Problem define their boundary fluxes with boundaryFlux "
+                      "or boundaryFluxAtPos, neumann and neumannAtPos are not called");
+
         //! As a default, i.e. if the user's problem does not overload any boundary flux method
         //! return no-flux boundary conditions at all boundaries
         return NumEqVector(0.0);
@@ -286,7 +291,12 @@ public:
      *   Evaluates the point source for the given context.
      */
     EmptyPointSources pointSources() const
-    { return {}; }
+    {
+        static_assert(!definesAddPointSources_(),
+                      "Problems derived from Experimental::Problem return their point sources from pointSources(), "
+                      "addPointSources is not called");
+        return {};
+    }
 
     //! The grid discretization
     [[deprecated("Use gridDiscretization() instead")]]
@@ -311,6 +321,33 @@ protected:
     { return *static_cast<const Implementation *>(this); }
 
 private:
+    //! Whether the implementation adds point sources through the interface of FVProblem
+    static constexpr bool definesAddPointSources_()
+    {
+        if constexpr (Properties::hasDefinedType<TypeTag, Properties::PointSource>())
+            return requires(Implementation& problem,
+                            std::vector<GetPropType<TypeTag, Properties::PointSource>>& pointSources)
+            { problem.addPointSources(pointSources); };
+        else
+            return false;
+    }
+
+    //! Converts to any argument type, so that a call is valid for any parameter types of the function
+    struct AnyArgument_
+    {
+        template<class T>
+        operator T&() const;
+    };
+
+    //! Whether the implementation defines a boundary flux through the interface of FVProblem
+    static constexpr bool definesNeumann_()
+    {
+        return requires(const Implementation& problem, const GlobalPosition& globalPos)
+               { problem.neumannAtPos(globalPos); }
+            || requires(const Implementation& problem, const AnyArgument_& any)
+               { problem.neumann(any, any, any, any, any); };
+    }
+
     //! The grid discretization
     std::shared_ptr<const GridDiscretization> gridDiscretization_;
 

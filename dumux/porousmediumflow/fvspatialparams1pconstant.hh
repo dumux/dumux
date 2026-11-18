@@ -44,6 +44,9 @@ public:
     ))
     {}
 
+    using ParentType::permeability;
+    using ParentType::porosity;
+
     /*!
      * \brief The (intrinsic) permeability \f$[m^2]\f$
      */
@@ -51,9 +54,27 @@ public:
     { return permeability_; }
 
     /*!
+     * \brief The (intrinsic) permeability \f$[m^2]\f$ at an interpolation point
+     */
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    PermeabilityType permeability(const ElementDiscretization& elemDisc,
+                                  const IpData& ipData,
+                                  const ElementSolution& elemSol) const
+    { return permeability_; }
+
+    /*!
      * \brief The porosity \f$[-]\f$
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
+
+    /*!
+     * \brief The porosity \f$[-]\f$ at an interpolation point
+     */
+    template<class ElementDiscretization, class IpData, class ElementSolution>
+    Scalar porosity(const ElementDiscretization& elemDisc,
+                    const IpData& ipData,
+                    const ElementSolution& elemSol) const
     { return porosity_; }
 
     /*!
