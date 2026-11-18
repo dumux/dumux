@@ -36,6 +36,7 @@ dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
                SOURCES main.cc
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1Bubble
                COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
                LABELS freeflow navierstokes
                CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
                COMMAND ${DUMUX_RUNTEST}

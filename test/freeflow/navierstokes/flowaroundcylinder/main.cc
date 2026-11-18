@@ -27,6 +27,7 @@
 #include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/assembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
 
@@ -45,18 +46,33 @@ auto dirichletDofs(std::shared_ptr<MomGG> momentumGridGeometry,
     dirichletDofs[massIdx].resize(massGridGeometry->numDofs());
     dirichletDofs = 0.0;
 
-    auto fvGeometry = localView(*momentumGridGeometry);
-    for (const auto& element : elements(momentumGridGeometry->gridView()))
+    // only the momentum problem has Dirichlet dofs
+    if constexpr (requires { momentumProblem->constraints(); })
     {
-        fvGeometry.bind(element);
-        for (const auto& scv : scvs(fvGeometry))
+        for (const auto& constraintData : momentumProblem->constraints())
         {
-            if (momentumGridGeometry->dofOnBoundary(scv.dofIndex()))
+            const auto& constraintInfo = constraintData.constraintInfo();
+            const auto dofIdx = constraintData.dofIndex();
+            for (int eqIdx = 0; eqIdx < constraintInfo.size(); ++eqIdx)
+                if (constraintInfo.isConstraintEquation(eqIdx))
+                    dirichletDofs[momentumIdx][dofIdx][eqIdx] = 1.0;
+        }
+    }
+    else
+    {
+        auto fvGeometry = localView(*momentumGridGeometry);
+        for (const auto& element : elements(momentumGridGeometry->gridView()))
+        {
+            fvGeometry.bind(element);
+            for (const auto& scv : scvs(fvGeometry))
             {
-                const auto bcTypes = momentumProblem->boundaryTypes(element, scv);
-                for (int i = 0; i < bcTypes.size(); ++i)
-                    if (bcTypes.isDirichlet(i))
-                        dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                if (momentumGridGeometry->dofOnBoundary(scv.dofIndex()))
+                {
+                    const auto bcTypes = momentumProblem->boundaryTypes(element, scv);
+                    for (int i = 0; i < bcTypes.size(); ++i)
+                        if (bcTypes.isDirichlet(i))
+                            dirichletDofs[momentumIdx][scv.dofIndex()][i] = 1.0;
+                }
             }
         }
     }
@@ -138,7 +154,11 @@ int main(int argc, char** argv)
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
 
+#if NEW_PROBLEM_INTERFACE
+    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#else
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#endif
     auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                  std::make_tuple(momentumGridGeometry, massGridGeometry),
                                                  std::make_tuple(momentumGridVariables, massGridVariables),

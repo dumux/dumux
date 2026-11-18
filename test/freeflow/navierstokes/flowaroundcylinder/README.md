@@ -88,6 +88,15 @@ The momentum balance and the mass balance are discretized separately and coupled
 | @ref PQ1BubbleDiscretization | @ref BoxDiscretization | triangles |
 | @ref PQ1BubbleDiscretization | @ref DiamondDiscretization | quadrilaterals |
 
+The PQ1Bubble/Box variant uses the new CVFE problem and variables interfaces (`problem_newinterface.hh`,
+compile definition `NEW_PROBLEM_INTERFACE=1`). The other two variants use the established interface (`problem.hh`).
+The two problem files differ as follows:
+
+| | `problem.hh` | `problem_newinterface.hh` |
+| :--- | :--- | :--- |
+| Dirichlet conditions | boundary types per control volume | constraints on the boundary dofs |
+| Drag and lift | traction per boundary face, gradient integrated with a quadrature rule of order 5 and divided by the face area, pressure at the face integration point | traction evaluated and integrated with a quadrature rule of order 5 |
+
 The advective term is discretized with central differences (`Flux.UpwindWeight = 0.5`).
 
 The unstructured grids are generated with Gmsh. Both use a mesh size of $h = 0.01$ in the channel and

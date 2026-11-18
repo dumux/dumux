@@ -19,14 +19,22 @@
 #define TYPETAG_MASS DFGChannelTestMassTpfa
 #endif
 
+#ifndef NEW_PROBLEM_INTERFACE
+#define NEW_PROBLEM_INTERFACE 0
+#endif
+
 #include <dune/grid/uggrid.hh>
 
 #include <dumux/discretization/fcdiamond.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/cvfe/gridvariablescache_.hh>
+#include <dumux/discretization/cvfe/interpolationpointdata.hh>
+#include <dumux/discretization/gridvariables.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/cvfe/model.hh>
+#include <dumux/freeflow/navierstokes/momentum/cvfe/variables.hh>
 #include <dumux/freeflow/navierstokes/mass/1p/model.hh>
 #include <dumux/freeflow/navierstokes/momentum/problem.hh>
 #include <dumux/freeflow/navierstokes/mass/problem.hh>
@@ -37,6 +45,7 @@
 #include <dumux/multidomain/traits.hh>
 
 #include "problem.hh"
+#include "problem_newinterface.hh"
 
 namespace Dumux::Properties {
 
@@ -68,11 +77,66 @@ struct Grid<TypeTag, TTag::DFGChannelTest>
 // Set the problem property
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TYPETAG_MOMENTUM>
-{ using type = DFGChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>> ; };
+{
+#if NEW_PROBLEM_INTERFACE
+    using type = DFGChannelTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMomentumProblem<TypeTag>>;
+#else
+    using type = DFGChannelTestProblem<TypeTag, Dumux::NavierStokesMomentumProblem<TypeTag>>;
+#endif
+};
 
 template<class TypeTag>
 struct Problem<TypeTag, TTag::TYPETAG_MASS>
-{ using type = DFGChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>> ; };
+{
+#if NEW_PROBLEM_INTERFACE
+    using type = DFGChannelTestProblemNewInterface<TypeTag, Dumux::CVFENavierStokesMassProblem<TypeTag>>;
+#else
+    using type = DFGChannelTestProblem<TypeTag, Dumux::NavierStokesMassProblem<TypeTag>>;
+#endif
+};
+
+#if NEW_PROBLEM_INTERFACE
+//! The grid variables with the CVFE grid variables cache (momentum and mass)
+template<class TypeTag>
+using DFGChannelTestCVFEGridVariables = Dumux::Experimental::GridVariables<
+    GetPropType<TypeTag, Properties::GridGeometry>,
+    Dumux::Experimental::CVFE::CVFEGridVariablesCache<
+        Dumux::Experimental::CVFE::CVFEDefaultGridVariablesCacheTraits<
+            GetPropType<TypeTag, Properties::Problem>,
+            Dumux::Detail::CVFE::VariablesAdapter<GetPropType<TypeTag, Properties::VolumeVariables>>,
+            Dumux::CVFE::LocalBasisInterpolationPointData<GetPropType<TypeTag, Properties::GridGeometry>>
+        >,
+        getPropValue<TypeTag, Properties::EnableGridVolumeVariablesCache>()
+    >
+>;
+
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
+{ using type = DFGChannelTestCVFEGridVariables<TypeTag>; };
+
+template<class TypeTag>
+struct GridVariables<TypeTag, TTag::TYPETAG_MASS>
+{ using type = DFGChannelTestCVFEGridVariables<TypeTag>; };
+
+//! The CVFE variables for the momentum problem
+template<class TypeTag>
+struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
+{
+private:
+    using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;
+    using FSY = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FST = GetPropType<TypeTag, Properties::FluidState>;
+    using MT = GetPropType<TypeTag, Properties::ModelTraits>;
+
+    static_assert(FSY::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numFluidPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
+    using Traits = NavierStokesMomentumCVFEVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesMomentumCVFEVariables<Traits>;
+};
+#endif
 
 template<class TypeTag>
 struct EnableGridGeometryCache<TypeTag, TTag::DFGChannelTest> { static constexpr bool value = true; };
