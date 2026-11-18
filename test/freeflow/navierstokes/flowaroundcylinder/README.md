@@ -134,6 +134,64 @@ values. This only passes on refined grids.
 | PQ1Bubble / Diamond (quadrilaterals) | $5.61234$ | $0.00387379$ | $0.118366$ |
 | Reference (FeatFlow) | $5.57953523384$ | $0.010618948146$ | $0.11752016697$ |
 
+## Grid convergence study (case 2D-1)
+
+`benchmark.py` runs case 2D-1 for all three variants on a sequence of uniformly refined grids.
+The advective term uses central differences (`Flux.UpwindWeight = 0.5`).
+
+The sequence starts from two coarse Gmsh meshes. Each level is refined uniformly with `Grid.Refinement`
+(each element is split into four), so the mesh size halves from level to level.
+
+| Mesh | Mesh size channel / cylinder | Elements on level 0 |
+| :--- | :---: | :--- |
+| `meshes/cylinder_channel_coarse.geo` | $0.04$ / $0.004$ | 2416 triangles |
+| `meshes/cylinder_channel_quad_coarse.geo` | $0.04$ / $0.004$ | 1236 quadrilaterals |
+
+The FeatFlow reference values are only given for one (very fine) discretization. Therefore, the
+errors are plotted over the total number of unknowns $N$ (velocity components and pressure):
+
+* $N$ is the natural measure to compare discretizations with different dofs per element.
+* The number of elements is listed in the tables as well.
+
+The experimental order of convergence is computed with respect to $h \sim N^{-1/2}$:
+
+$$
+\text{EOC} = -2\,\frac{\log(e_l/e_{l-1})}{\log(N_l/N_{l-1})},
+$$
+
+where $e_l$ is the absolute error of $C_D$, $C_L$ or $\Delta p$ on level $l$.
+
+Keep in mind that the refined grids keep the polygonal cylinder of level 0, which has 79 edges.
+The geometric error of this polygon does not vanish under refinement. It eventually limits the
+convergence of all indicators.
+
+```bash
+cd build-cmake/test/freeflow/navierstokes/flow_around_cylinder
+make test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa \
+     test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box \
+     test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
+python3 benchmark.py                                       # all schemes, levels 0 to 3
+python3 benchmark.py --schemes pq1bubble_box --levels 0 1  # a subset
+python3 visualize.py
+```
+
+| Script / option | Purpose |
+| :--- | :--- |
+| `benchmark.py` | runs the simulations, writes `results/convergence_2d1.md` (errors and EOCs) |
+| `--schemes`, `--levels` | subset of the variants and the refinement levels (default: all, 0 to 3) |
+| `--memory-limit` | address space limit per run in GB (default 6), a run exceeding it fails |
+| `--overwrite` | rerun runs that already have results |
+| `-- <parameters>` | further parameters passed to the simulations |
+| `visualize.py` | plots the indicators with the FeatFlow reference values and the bounds of the paper over $N$ to `results/convergence_2d1.png` |
+
+Each run has its own folder `runs/2d1/<scheme>_r<level>/` in the build directory:
+
+* the log file;
+* the JSON file with the grid size, the number of unknowns and the indicators;
+* the VTK output in `vtk/`.
+
+A failed run is reported and skipped (missing data in the table and the plot).
+
 ## Known limitations
 
 * Only the stationary case 2D-1 is implemented. The time-dependent cases 2D-2 and 2D-3 ($\text{Re} = 100$)

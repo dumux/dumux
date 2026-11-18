@@ -11,6 +11,7 @@
 #include <config.h>
 
 #include <iostream>
+#include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -19,6 +20,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/metadata.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
@@ -222,6 +224,21 @@ int main(int argc, char** argv)
         std::cout << "pDiff: " << pDiff
                 << " (reference: " << pDiffReference << ")"
                 << std::endl;
+
+        // write the benchmark indicators and the grid size to a JSON file for the convergence study
+        const int dim = MomentumGridGeometry::GridView::dimension;
+        MetaData::Collector collector;
+        collector["refinement"] = getParam<int>("Grid.Refinement", 0);
+        collector["upwindWeight"] = getParam<double>("Flux.UpwindWeight");
+        collector["numElements"] = leafGridView.size(0);
+        collector["numVertices"] = leafGridView.size(dim);
+        collector["numDofs"]["momentum"] = momentumGridGeometry->numDofs();
+        collector["numDofs"]["mass"] = massGridGeometry->numDofs();
+        collector["numDofs"]["total"] = momentumGridGeometry->numDofs()*dim + massGridGeometry->numDofs();
+        collector["cDrag"] = cDrag;
+        collector["cLift"] = cLift;
+        collector["pDiff"] = pDiff;
+        MetaData::writeJsonFile(collector, getParam<std::string>("Problem.IndicatorFile", massProblem->name()));
 
         // To be close to the reference values the grid needs to be refined
         if (getParam<bool>("Problem.CheckIndicators", false))
