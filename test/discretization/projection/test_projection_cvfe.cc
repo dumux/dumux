@@ -10,6 +10,7 @@
  */
 #include <config.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <string>
@@ -208,6 +209,31 @@ int main(int argc, char** argv)
         if (diff > 1e-12)
             DUNE_THROW(Dune::MathError, "Default and order-20 projections differ by " << diff);
         std::cout << "Default order against order 20: difference = " << diff << std::endl;
+    }
+
+    // a function of the global position in the target space is reproduced by the projection onto it
+    {
+        const auto quadratic = [] (const Dune::FieldVector<double, 2>& p) { return 0.5 + p[0]*p[1] - 2.0*p[1]*p[1]; };
+        const L2Projection<P2Basis> projection(targetBasis);
+        typename L2Projection<P2Basis>::Params projectionParams;
+        projectionParams.residualReduction = 1e-16;
+        const auto error = maxDifference(projection.project(quadratic, projectionParams), interpolate(targetBasis, quadratic));
+        if (error > 1e-12)
+            DUNE_THROW(Dune::MathError, "L2 projection of a global function in the P2 space failed, error = " << error);
+        std::cout << "L2 projection of a global quadratic function: error = " << error << std::endl;
+
+        const auto vectorValued = [] (const Dune::FieldVector<double, 2>& p) { return Dune::FieldVector<double, 2>{p[0], 1.0 - p[0]*p[1]}; };
+        const auto projected = projection.project(vectorValued, projectionParams);
+        const auto firstComponent = [&] (const auto& p) { return vectorValued(p)[0]; };
+        const auto secondComponent = [&] (const auto& p) { return vectorValued(p)[1]; };
+        const auto first = interpolate(targetBasis, firstComponent);
+        const auto second = interpolate(targetBasis, secondComponent);
+        double vectorError = 0.0;
+        for (std::size_t i = 0; i < projected.size(); ++i)
+            vectorError = std::max({vectorError, std::abs(projected[i][0] - first[i][0]), std::abs(projected[i][1] - second[i][0])});
+        if (vectorError > 1e-12)
+            DUNE_THROW(Dune::MathError, "L2 projection of a vector-valued global function failed, error = " << vectorError);
+        std::cout << "L2 projection of a vector-valued global function: error = " << vectorError << std::endl;
     }
 
     std::cout << "All CVFE projection checks passed" << std::endl;
