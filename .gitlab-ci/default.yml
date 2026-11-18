@@ -256,6 +256,9 @@ test cpp:
     - |
       source build-cmake/ci-env/bin/activate
       pushd build-cmake
+        # the time stamps of the build directory restored from the artifacts are not consistent with the fresh checkout,
+        # so tests building a target (EXPECT_COMPILE_FAIL) would regenerate the build system concurrently
+        find . -exec touch -h -d "@$(date +%s)" {} +
         TESTFLAGS="-j${DUMUX_CI_NUM_CORES} --output-on-failure -LE python"
         if [ -s ../affectedtests.json ]; then
           python3 ../bin/testing/runselectedtests.py -c ../affectedtests.json -t --testflags="${TESTFLAGS}"
