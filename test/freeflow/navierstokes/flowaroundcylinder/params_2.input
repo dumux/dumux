@@ -1,0 +1,44 @@
+# DFG benchmark, case 2D-2: periodic vortex shedding at Re = 100
+# The benchmark quantities are evaluated in the fully developed periodic regime (t >= 25 s)
+[TimeLoop]
+Dt1 = 0.1 # [s], coarse time step until T1 (development of the periodic flow)
+T1 = 3.5 # [s]
+Dt2 = 0.001 # [s], fine time step from T1 until T2
+T2 = 30.0 # [s]
+
+[Grid]
+File = meshes/cylinder_channel.msh
+Refinement = 0
+
+[Problem]
+Name = dfg_benchmark2
+EnableGravity = false
+EnableInertiaTerms = true
+Instationary = true
+InflowMaxVelocity = 1.5 # [m/s], mean inflow velocity 1.0 m/s
+
+[Vtk]
+OutputInterval = 100 # write the VTK output every 100th time step
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Flux]
+UpwindWeight = 0.5
+
+[Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1e-3
+
+[Mass.Assembly.NumericDifference]
+PriVarMagnitude = 1.0
+BaseEpsilon = 0.01
+
+[Momentum.Assembly.NumericDifference]
+PriVarMagnitude = 1.0 1.0
+BaseEpsilon = 0.01
+
+[Newton]
+# the multi-stage assembler cannot assemble the residual alone, so only the shift criterion is used
+MinSteps = 1
+MaxRelativeShift = 1e-8

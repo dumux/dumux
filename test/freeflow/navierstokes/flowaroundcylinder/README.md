@@ -7,7 +7,10 @@ The benchmark defines a two-dimensional channel flow around a circular obstacle.
 reference values are available for three quantities: the drag coefficient, the lift coefficient
 and a pressure difference.
 
-Currently, the stationary case 2D-1 ($\text{Re} = 20$) is implemented.
+All three 2D cases are implemented:
+
+* the stationary case 2D-1 ($\text{Re} = 20$) for all discretization variants;
+* the time-dependent cases 2D-2 and 2D-3 ($\text{Re} = 100$) for the PQ1Bubble/Box variant.
 
 ## Problem description
 
@@ -15,7 +18,8 @@ The incompressible Navier-Stokes equations
 
 $$
 \begin{aligned}
-\rho\, \nabla\cdot(\mathbf{v}\otimes\mathbf{v}) - \mu\Delta\mathbf{v} + \nabla p &= \mathbf{0}, \\
+\rho\left(\frac{\partial \mathbf{v}}{\partial t} + \nabla\cdot(\mathbf{v}\otimes\mathbf{v})\right)
+  - \mu\Delta\mathbf{v} + \nabla p &= \mathbf{0}, \\
 \nabla\cdot\mathbf{v} &= 0
 \end{aligned}
 $$
@@ -33,19 +37,31 @@ channel centre line, so the setup is not symmetric and the lift coefficient is n
 | Kinematic viscosity | $\nu = \mu/\rho$ | $10^{-3}$ | $\text{m}^2\text{/s}$ |
 | Cylinder diameter | $D$ | $0.1$ | $\text{m}$ |
 | Channel height | $H$ | $0.41$ | $\text{m}$ |
-| Inflow peak velocity | $U$ | $0.3$ | $\text{m/s}$ |
-| Mean inflow velocity | $\bar{U} = \tfrac{2}{3}U$ | $0.2$ | $\text{m/s}$ |
-| Reynolds number | $\text{Re} = \bar{U}D/\nu$ | $20$ | $-$ |
 | Pressure evaluation point (cylinder front) | $A$ | $(0.15, 0.2)$ | $\text{m}$ |
 | Pressure evaluation point (cylinder back) | $B$ | $(0.25, 0.2)$ | $\text{m}$ |
 
-### Boundary conditions
+### The three 2D cases
 
-* **Inflow** ($x = 0$): parabolic velocity profile $\mathbf{v}(0, y) = \left(4U y (H - y)/H^2,\ 0\right)^T$.
+The mean inflow velocity $\bar{U} = \tfrac{2}{3}U$ and the cylinder diameter $D$ define the Reynolds number
+$\text{Re} = \bar{U}D/\nu$.
+
+| Case | Inflow peak velocity $U(t)$ [m/s] | $\bar{U}$ [m/s] | Re | Character | Parameter file |
+| :--- | :---: | :---: | :---: | :--- | :--- |
+| 2D-1 | $0.3$ | $0.2$ | $20$ | stationary | `params_1.input` |
+| 2D-2 | $1.5$ | $1.0$ | $100$ | periodic (Kármán vortex street) | `params_2.input` |
+| 2D-3 | $1.5\sin(\pi t/8)$, $t \in [0, 8]\,\text{s}$ | $1.0$ | $0 \to 100 \to 0$ | time-dependent inflow | `params_3.input` |
+
+The parameters `Problem.InflowMaxVelocity` ($U$), `Problem.InflowTimeDependent` (multiplies $U$ by
+$\sin(\pi t/8)$) and `Problem.Instationary` (time loop) select the case.
+
+### Boundary and initial conditions
+
+* **Inflow** ($x = 0$): parabolic velocity profile $\mathbf{v}(0, y, t) = \left(4U(t)\, y (H - y)/H^2,\ 0\right)^T$.
 * **Walls** ($y = 0$, $y = H$) and **cylinder**: no-slip, $\mathbf{v} = \mathbf{0}$.
 * **Outflow** ($x = 2.2$): do-nothing condition.
   * The advective momentum flux $\rho(\mathbf{v}\cdot\mathbf{n})\mathbf{v}$ leaves the domain.
   * The viscous and pressure contributions of the normal stress are zero.
+* **Initial condition** (cases 2D-2 and 2D-3): $\mathbf{v} = \mathbf{0}$, $p = 0$.
 
 ## Quantities of interest (benchmark indicators)
 
@@ -57,15 +73,28 @@ F_D = \int_S \left(\rho\nu\frac{\partial v_\tau}{\partial \mathbf{n}} n_y - p\, 
 F_L = -\int_S \left(\rho\nu\frac{\partial v_\tau}{\partial \mathbf{n}} n_x + p\, n_y\right) \text{d}S .
 $$
 
-The benchmark indicators are
+The benchmark indicators are the drag coefficient $C_D = 2 F_D/(\rho\bar{U}^2 D)$, the lift coefficient
+$C_L = 2 F_L/(\rho\bar{U}^2 D)$ and the pressure difference $\Delta p = p(A) - p(B)$.
+For case 2D-3, $\bar{U} = 1$ is the mean velocity of the peak inflow profile (not of $U(t)$).
 
-| Quantity | Definition | Reference value (FeatFlow) |
+For case 2D-2, the frequency $f$ of the vortex shedding defines the Strouhal number $\text{St} = D f/\bar{U}$.
+
+The FeatFlow reference values are listed below (see the references at the end):
+
+* 2D-2 and 2D-3: $Q_2/P_1^\text{disc}$ elements on level 6, Crank-Nicolson method with $\Delta t = 1/1600\,\text{s}$;
+* 2D-2: the Strouhal number is taken from the FeatFlow benchmark page (level 6, $\Delta t = 1/200\,\text{s}$).
+
+| Case | Quantity | Reference value |
 | :--- | :--- | :--- |
-| Drag coefficient | $C_D = 2 F_D/(\rho\bar{U}^2 D)$ | $5.57953523384$ |
-| Lift coefficient | $C_L = 2 F_L/(\rho\bar{U}^2 D)$ | $0.010618948146$ |
-| Pressure difference | $\Delta p = p(A) - p(B)$ | $0.11752016697$ |
-
-The reference values are taken from the FeatFlow benchmark page (see the references below).
+| 2D-1 | $C_D$ | $5.57953523384$ |
+| 2D-1 | $C_L$ | $0.010618948146$ |
+| 2D-1 | $\Delta p$ | $0.11752016697$ |
+| 2D-2 | $C_{D,\max}$ | $3.22739$ |
+| 2D-2 | $C_{L,\max}$ | $0.98657$ |
+| 2D-2 | $\text{St}$ | $0.30188$ |
+| 2D-3 | $C_{D,\max}$ at $t$ | $2.9437637214$ at $t = 3.9365625\,\text{s}$ |
+| 2D-3 | $C_{L,\max}$ at $t$ | $0.47748781595$ at $t = 5.6928125\,\text{s}$ |
+| 2D-3 | $\Delta p(t = 8\,\text{s})$ | $-0.11154138872$ |
 
 ### Evaluation in the code
 
@@ -107,13 +136,55 @@ $h = 0.002$ on the cylinder surface.
 | `meshes/cylinder_channel.geo` | 28948 triangles |
 | `meshes/cylinder_channel_quad.geo` | 13826 quadrilaterals |
 
+## Time discretization (cases 2D-2 and 2D-3)
+
+The time-dependent cases use the Crank-Nicolson method ($\theta$-scheme with $\theta = 0.5$), as the FeatFlow
+reference computations.
+
+* It is second-order accurate. First-order schemes such as the implicit Euler method damp the oscillations
+  @cite SchaeferTurek1996.
+* It is run with the multi-stage assembler and time stepper (`Experimental::MultiStageMultiDomainAssembler`,
+  `Experimental::MultiStageTimeStepper`). These are only available for the CVFE schemes with the new problem
+  interface, i.e. the PQ1Bubble/Box variant.
+* The time-dependent inflow (Dirichlet constraints) is updated at each stage time.
+* Newton's method uses the shift criterion (`Newton.MaxRelativeShift`), since the multi-stage assembler
+  cannot assemble the residual alone.
+
+Fixed time step sizes are used, following the benchmark description:
+
+| Case | Time steps | Parameters |
+| :--- | :--- | :--- |
+| 2D-2 | coarse step $0.1\,\text{s}$ until $3.5\,\text{s}$ to develop the periodic flow, then $0.001\,\text{s}$ until $30\,\text{s}$ | `TimeLoop.Dt1`, `T1`, `Dt2`, `T2` |
+| 2D-3 | $1/1600\,\text{s}$ on $[0, 8]\,\text{s}$ | `TimeLoop.Dt`, `TEnd` |
+
+If Newton's method fails, the step is repeated with a reduced step size. Afterwards, the fixed step size is used again.
+
+### Evaluation at the half step
+
+With $\theta = 0.5$, the weighting also applies to the pressure, which is the Lagrange multiplier of the
+incompressibility constraint, and to the continuity equation. Therefore:
+
+* Only the average $\tfrac{1}{2}(p^n + p^{n+1})$ is determined. It approximates the pressure at $t^{n+1/2}$.
+* The pressure at the time levels $t^n$ shows an undamped odd-even oscillation, excited by the inconsistent
+  initial pressure $p^0 = 0$. The VTK output (time levels) contains this oscillation.
+* The benchmark indicators are evaluated from the averaged solution $\tfrac{1}{2}(\mathbf{x}^n + \mathbf{x}^{n+1})$
+  at $t^{n+1/2}$. They are free of the oscillation, and the FeatFlow reference time series are given at
+  the half steps as well.
+
+The indicators of every time step are written to the JSON file `<Problem.Name>.json` (arrays `time`, `cDrag`,
+`cLift`, `pDiff`). The file is written at the end of the simulation and also if it fails (`finished`, `error`).
+
 ## Running the tests
 
 ```bash
 cd build-cmake/test/freeflow/navierstokes/flow_around_cylinder
 make test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
-./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_1.input
+./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_1.input  # case 2D-1
+./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_2.input  # case 2D-2 (days)
+./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_3.input  # case 2D-3 (days)
 ```
+
+The ctest regression tests only cover the stationary case 2D-1.
 
 The tests come in two variants:
 
@@ -194,10 +265,13 @@ A failed run is reported and skipped (missing data in the table and the plot).
 
 ## Known limitations
 
-* Only the stationary case 2D-1 is implemented. The time-dependent cases 2D-2 and 2D-3 ($\text{Re} = 100$)
-  are not.
+* The time-dependent cases 2D-2 and 2D-3 are only implemented for the PQ1Bubble/Box variant.
+* The Crank-Nicolson method is not L-stable. The impulsive start of case 2D-2 from rest may cause
+  oscillations in the beginning, which are not damped.
 * The polygonal approximation of the cylinder limits the accuracy of all indicators on coarse grids.
 
 ## References
 * FeatFlow benchmark suite, TU Dortmund:
-  [2D-1 (Re = 20)](https://wwwold.mathematik.tu-dortmund.de/~featflow/en/benchmarks/cfdbenchmarking/flow/dfg_benchmark1_re20.html).
+  [2D-1 (Re = 20)](https://wwwold.mathematik.tu-dortmund.de/~featflow/en/benchmarks/cfdbenchmarking/flow/dfg_benchmark1_re20.html),
+  [2D-2 (Re = 100, periodic)](https://wwwold.mathematik.tu-dortmund.de/~featflow/en/benchmarks/cfdbenchmarking/flow/dfg_benchmark2_re100.html),
+  [2D-3 (Re = 100, fixed time interval)](https://wwwold.mathematik.tu-dortmund.de/~featflow/en/benchmarks/cfdbenchmarking/flow/dfg_benchmark3_re100.html).

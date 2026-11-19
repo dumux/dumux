@@ -21,6 +21,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/metadata.hh>
+#include <dumux/common/timeloop.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_ug.hh>
@@ -30,8 +31,12 @@
 
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/assembler.hh>
+#include <dumux/multidomain/multistagemultidomainassembler.hh>
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/newtonsolver.hh>
+
+#include <dumux/experimental/timestepping/multistagemethods.hh>
+#include <dumux/experimental/timestepping/multistagetimestepper.hh>
 
 #include <dumux/freeflow/navierstokes/momentum/velocityoutput.hh>
 
@@ -109,7 +114,7 @@ int main(int argc, char** argv)
     gridManager.init();
 
     ////////////////////////////////////////////////////////////
-    // run stationary non-linear problem on this grid
+    // run the (in)stationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
@@ -141,6 +146,7 @@ int main(int argc, char** argv)
     SolutionVector x;
     x[momentumIdx].resize(momentumGridGeometry->numDofs());
     x[massIdx].resize(massGridGeometry->numDofs());
+    x = 0.0;
     std::cout << "Total number of dofs on rank " << mpiHelper.rank() << ": "
         << massGridGeometry->numDofs() + momentumGridGeometry->numDofs()*MomentumGridGeometry::GridView::dimension
         << std::endl;
@@ -151,20 +157,21 @@ int main(int argc, char** argv)
     using MassGridVariables = GetPropType<MassTypeTag, Properties::GridVariables>;
     auto massGridVariables = std::make_shared<MassGridVariables>(massProblem, massGridGeometry);
 
+    // the instationary cases (2D-2, 2D-3) are only implemented for the CVFE schemes with the new problem interface
+    const bool isStationary = !getParam<bool>("Problem.Instationary", false);
+#if !NEW_PROBLEM_INTERFACE
+    if (!isStationary)
+        DUNE_THROW(Dune::NotImplemented, "The instationary cases require the new problem interface (PQ1Bubble/Box)");
+#endif
+
     // compute coupling stencil and afterwards initialize grid variables (need coupling information)
-    couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    auto xOld = x;
+    if (isStationary)
+        couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x);
+    else
+        couplingManager->init(momentumProblem, massProblem, std::make_tuple(momentumGridVariables, massGridVariables), x, xOld);
     massGridVariables->init(x[massIdx]);
     momentumGridVariables->init(x[momentumIdx]);
-
-#if NEW_PROBLEM_INTERFACE
-    using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
-#else
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
-#endif
-    auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
-                                                 std::make_tuple(momentumGridGeometry, massGridGeometry),
-                                                 std::make_tuple(momentumGridVariables, massGridVariables),
-                                                 couplingManager);
 
     // initialize the vtk output module
     constexpr bool isDiamond = MassGridGeometry::discMethod == DiscretizationMethods::fcdiamond;
@@ -175,92 +182,211 @@ int main(int argc, char** argv)
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
     vtkWriter.write(0.0);
 
-    // the linearize and solve
-    if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
+    // the benchmark indicators are only evaluated with inertia terms (Navier-Stokes)
+    const bool evalIndicators = momentumProblem->enableInertiaTerms();
+    if (evalIndicators && leafGridView.comm().size() > 1)
+        DUNE_THROW(Dune::NotImplemented, "Evaluation of the benchmark indicators in parallel");
+
+    // the benchmark indicators and the grid size are written to a JSON file
+    const int dim = MomentumGridGeometry::GridView::dimension;
+    MetaData::Collector collector;
+    collector["refinement"] = getParam<int>("Grid.Refinement", 0);
+    collector["upwindWeight"] = getParam<double>("Flux.UpwindWeight");
+    collector["numElements"] = leafGridView.size(0);
+    collector["numVertices"] = leafGridView.size(dim);
+    collector["numDofs"]["momentum"] = momentumGridGeometry->numDofs();
+    collector["numDofs"]["mass"] = massGridGeometry->numDofs();
+    collector["numDofs"]["total"] = momentumGridGeometry->numDofs()*dim + massGridGeometry->numDofs();
+    const auto indicatorFile = getParam<std::string>("Problem.IndicatorFile", massProblem->name());
+
+    // create a Newton solver with the chosen linear solver for the given assembler and pass it to apply
+    const auto withNewtonSolver = [&](auto assembler, auto&& apply)
     {
-        using Matrix = typename Assembler::JacobianMatrix;
-        using Vector = typename Assembler::ResidualType;
-        using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
-        auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
-        auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
-        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
-    }
-    else
-    {
-        using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-        auto linearSolver = std::make_shared<LinearSolver>();
-        using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-        NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
-        nonLinearSolver.solve(x);
-    }
-
-    // write vtk output
-    vtkWriter.write(1.0);
-
-    // update coupling manager for output
-    couplingManager->updateSolution(x);
-
-    // evaluate benchmark indicators (only valid with inertia term at Re=20)
-    if (momentumProblem->enableInertiaTerms())
-    {
-        // the evaluation of the indicators is not parallelized (no reduction of the forces over the processes)
-        if (leafGridView.comm().size() > 1)
-            DUNE_THROW(Dune::NotImplemented, "Evaluation of the benchmark indicators in parallel");
-
-        static constexpr double cDragReference = 5.57953523384;
-        static constexpr double cLiftReference = 0.010618948146;
-        static constexpr double pDiffReference = 0.11752016697;
-        const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx]);
-        std::cout << "cDrag: " << cDrag
-                << " (reference: " << cDragReference << ")"
-                << "\n"
-                << "cLift: " << cLift
-                << " (reference: " << cLiftReference << ")"
-                << std::endl;
-
-        const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, x[massIdx]);
-        std::cout << "pDiff: " << pDiff
-                << " (reference: " << pDiffReference << ")"
-                << std::endl;
-
-        // write the benchmark indicators and the grid size to a JSON file for the convergence study
-        const int dim = MomentumGridGeometry::GridView::dimension;
-        MetaData::Collector collector;
-        collector["refinement"] = getParam<int>("Grid.Refinement", 0);
-        collector["upwindWeight"] = getParam<double>("Flux.UpwindWeight");
-        collector["numElements"] = leafGridView.size(0);
-        collector["numVertices"] = leafGridView.size(dim);
-        collector["numDofs"]["momentum"] = momentumGridGeometry->numDofs();
-        collector["numDofs"]["mass"] = massGridGeometry->numDofs();
-        collector["numDofs"]["total"] = momentumGridGeometry->numDofs()*dim + massGridGeometry->numDofs();
-        collector["cDrag"] = cDrag;
-        collector["cLift"] = cLift;
-        collector["pDiff"] = pDiff;
-        MetaData::writeJsonFile(collector, getParam<std::string>("Problem.IndicatorFile", massProblem->name()));
-
-        // To be close to the reference values the grid needs to be refined
-        if (getParam<bool>("Problem.CheckIndicators", false))
+        using Assembler = typename decltype(assembler)::element_type;
+        if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
         {
-            using std::abs;
-            if (abs(cDrag - cDragReference) > 0.002)
-                DUNE_THROW(Dune::Exception,
-                    "Deviation from reference too large for drag coefficient: "
-                    << cDrag << " (ref: " << cDragReference << ")"
-                );
-            if (abs(cLift - cLiftReference) > 0.002)
-                DUNE_THROW(Dune::Exception,
-                    "Deviation from reference too large for lift coefficient: "
-                    << cLift << " (ref: " << cLiftReference << ")"
-                );
-            if (abs(pDiff - pDiffReference) > 0.003)
-                DUNE_THROW(Dune::Exception,
-                    "Deviation from reference too large for pressure difference: "
-                    << pDiff << " (ref: " << pDiffReference << ")"
-                );
+            using Matrix = typename Assembler::JacobianMatrix;
+            using Vector = typename Assembler::ResidualType;
+            using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
+            auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
+            auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            apply(std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager));
+        }
+        else
+        {
+            using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
+            auto linearSolver = std::make_shared<LinearSolver>();
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            apply(std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager));
+        }
+    };
+
+    if (isStationary)
+    {
+#if NEW_PROBLEM_INTERFACE
+        using Assembler = Experimental::MultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#else
+        using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+#endif
+        auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                     std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                     std::make_tuple(momentumGridVariables, massGridVariables),
+                                                     couplingManager);
+        withNewtonSolver(assembler, [&](auto nonLinearSolver) { nonLinearSolver->solve(x); });
+        vtkWriter.write(1.0);
+        couplingManager->updateSolution(x);
+
+        // evaluate benchmark indicators (the reference values are only valid for case 2D-1 at Re = 20)
+        if (evalIndicators)
+        {
+            static constexpr double cDragReference = 5.57953523384;
+            static constexpr double cLiftReference = 0.010618948146;
+            static constexpr double pDiffReference = 0.11752016697;
+            const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx]);
+            const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, x[massIdx]);
+            std::cout << "cDrag: " << cDrag << " (reference: " << cDragReference << ")\n"
+                      << "cLift: " << cLift << " (reference: " << cLiftReference << ")\n"
+                      << "pDiff: " << pDiff << " (reference: " << pDiffReference << ")" << std::endl;
+
+            collector["cDrag"] = cDrag;
+            collector["cLift"] = cLift;
+            collector["pDiff"] = pDiff;
+            MetaData::writeJsonFile(collector, indicatorFile);
+
+            // To be close to the reference values the grid needs to be refined
+            if (getParam<bool>("Problem.CheckIndicators", false))
+            {
+                using std::abs;
+                if (abs(cDrag - cDragReference) > 0.002)
+                    DUNE_THROW(Dune::Exception,
+                        "Deviation from reference too large for drag coefficient: "
+                        << cDrag << " (ref: " << cDragReference << ")"
+                    );
+                if (abs(cLift - cLiftReference) > 0.002)
+                    DUNE_THROW(Dune::Exception,
+                        "Deviation from reference too large for lift coefficient: "
+                        << cLift << " (ref: " << cLiftReference << ")"
+                    );
+                if (abs(pDiff - pDiffReference) > 0.003)
+                    DUNE_THROW(Dune::Exception,
+                        "Deviation from reference too large for pressure difference: "
+                        << pDiff << " (ref: " << pDiffReference << ")"
+                    );
+            }
         }
     }
+#if NEW_PROBLEM_INTERFACE
+    else
+    {
+        // Crank-Nicolson method (theta scheme with theta = 0.5), as in the FeatFlow reference computations
+        using Scalar = typename Traits::Scalar;
+        auto method = std::make_shared<Experimental::MultiStage::Theta<Scalar>>(0.5);
+        using Assembler = Experimental::MultiStageMultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
+        auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
+                                                     std::make_tuple(momentumGridGeometry, massGridGeometry),
+                                                     std::make_tuple(momentumGridVariables, massGridVariables),
+                                                     couplingManager, method, xOld);
+
+        // Fixed time step sizes: Dt until TEnd (case 2D-3), or a coarse step Dt1 until T1 followed
+        // by a fine step Dt2 until T2 (case 2D-2, the coarse phase develops the periodic flow)
+        const bool twoPhases = hasParam("TimeLoop.T1");
+        const auto tEnd = getParam<Scalar>(twoPhases ? "TimeLoop.T2" : "TimeLoop.TEnd");
+        const auto dt = getParam<Scalar>(twoPhases ? "TimeLoop.Dt2" : "TimeLoop.Dt");
+        const auto startupTEnd = twoPhases ? getParam<Scalar>("TimeLoop.T1") : 0.0;
+        const auto startupDt = twoPhases ? getParam<Scalar>("TimeLoop.Dt1") : dt;
+        const auto fixedTimeStepSize = [&](const Scalar time)
+        {
+            // the last coarse step ends exactly at T1 (unless it would be shorter than half a step)
+            using std::min;
+            return time < startupTEnd - 0.5*startupDt ? min(startupDt, startupTEnd - time) : dt;
+        };
+
+        auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, fixedTimeStepSize(0.0), tEnd);
+        using std::max;
+        timeLoop->setMaxTimeStepSize(max(dt, startupDt));
+        const auto vtkOutputInterval = getParam<int>("Vtk.OutputInterval", 1);
+
+        // With theta = 0.5, the pressure (Lagrange multiplier of the incompressibility constraint)
+        // is only determined as the average of the old and the new time level, i.e. at the half step.
+        // The pressure at the time levels oscillates. Therefore, the indicators are evaluated from
+        // the averaged solution at t^{n+1/2}, which is also the time of the FeatFlow reference values.
+        const auto collectIndicators = [&](const Scalar time)
+        {
+            auto xHalf = xOld;
+            xHalf += x;
+            xHalf *= 0.5;
+            couplingManager->updateSolution(xHalf);
+            const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, xHalf[momentumIdx], false);
+            const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, xHalf[massIdx]);
+            couplingManager->updateSolution(x);
+
+            std::cout << "Benchmark indicators at t = " << time << ": cDrag = " << cDrag
+                      << ", cLift = " << cLift << ", pDiff = " << pDiff << std::endl;
+            collector["time"].push_back(time);
+            collector["cDrag"].push_back(cDrag);
+            collector["cLift"].push_back(cLift);
+            collector["pDiff"].push_back(pDiff);
+        };
+
+        // the indicators are written at the end and if the simulation fails
+        const auto writeIndicators = [&](const bool finished, const std::string& message)
+        {
+            if (!evalIndicators)
+                return;
+            collector["finished"] = finished;
+            if (!finished)
+                collector["error"] = message;
+            MetaData::writeJsonFile(collector, indicatorFile);
+        };
+
+        try
+        {
+            withNewtonSolver(assembler, [&](auto nonLinearSolver)
+            {
+                using NewtonSolver = typename decltype(nonLinearSolver)::element_type;
+                Experimental::MultiStageTimeStepper<NewtonSolver> timeStepper(nonLinearSolver, method);
+
+                timeLoop->start(); do
+                {
+                    // solve the time step (with a reduced time step size if Newton's method fails)
+                    timeStepper.step(x, *timeLoop);
+
+                    if (evalIndicators)
+                        collectIndicators(timeLoop->time() + 0.5*timeLoop->timeStepSize());
+
+                    xOld = x;
+                    momentumGridVariables->advanceTimeStep();
+                    massGridVariables->advanceTimeStep();
+                    timeLoop->advanceTimeStep();
+
+                    if (timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
+                        vtkWriter.write(timeLoop->time());
+
+                    timeLoop->reportTimeStep();
+
+                    // continue with the fixed time step size (also after a reduction on failure)
+                    timeLoop->setTimeStepSize(fixedTimeStepSize(timeLoop->time()));
+
+                } while (!timeLoop->finished());
+
+                timeLoop->finalize(leafGridView.comm());
+            });
+        }
+        catch (const Dune::Exception& e)
+        {
+            writeIndicators(false, e.what());
+            throw;
+        }
+        catch (const std::exception& e)
+        {
+            writeIndicators(false, e.what());
+            throw;
+        }
+
+        writeIndicators(true, "");
+    }
+#endif
 
     timer.stop();
     const auto& comm = leafGridView.comm();

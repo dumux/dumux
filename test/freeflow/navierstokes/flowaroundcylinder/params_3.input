@@ -1,0 +1,42 @@
+# DFG benchmark, case 2D-3: time-dependent inflow U(t) = 1.5 sin(pi t/8) for t in [0, 8] s, Re = 0 -> 100 -> 0
+[TimeLoop]
+Dt = 0.000625 # [s], 1/1600 s as in the FeatFlow reference computations
+TEnd = 8.0 # [s]
+
+[Grid]
+File = meshes/cylinder_channel.msh
+Refinement = 0
+
+[Problem]
+Name = dfg_benchmark3
+EnableGravity = false
+EnableInertiaTerms = true
+Instationary = true
+InflowMaxVelocity = 1.5 # [m/s], peak of the mean inflow velocity 1.0 m/s
+InflowTimeDependent = true
+
+[Vtk]
+OutputInterval = 50 # write the VTK output every 50th time step
+
+[FreeFlow]
+EnableUnsymmetrizedVelocityGradient = true
+
+[Flux]
+UpwindWeight = 0.5
+
+[Component]
+LiquidDensity = 1
+LiquidDynamicViscosity = 1e-3
+
+[Mass.Assembly.NumericDifference]
+PriVarMagnitude = 1.0
+BaseEpsilon = 0.01
+
+[Momentum.Assembly.NumericDifference]
+PriVarMagnitude = 1.0 1.0
+BaseEpsilon = 0.01
+
+[Newton]
+# the multi-stage assembler cannot assemble the residual alone, so only the shift criterion is used
+MinSteps = 1
+MaxRelativeShift = 1e-8

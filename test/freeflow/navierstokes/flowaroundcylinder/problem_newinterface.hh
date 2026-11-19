@@ -36,7 +36,7 @@
 namespace Dumux {
 
 /*!
- * \brief Stationary laminar flow around a cylinder in a 2D channel (case 2D-1, Re = 20)
+ * \brief Laminar flow around a cylinder in a 2D channel (cases 2D-1, 2D-2 and 2D-3)
  *        of the DFG benchmark \cite SchaeferTurek1996 using the new CVFE problem interface
  *
  * The boundary conditions are the same as in problem.hh (old problem interface). The Dirichlet
@@ -76,6 +76,8 @@ public:
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");
         viscosity_ = getParam<Scalar>("Component.LiquidDynamicViscosity");
+        inflowMaxVelocity_ = getParam<Scalar>("Problem.InflowMaxVelocity", 0.3);
+        inflowTimeDependent_ = getParam<bool>("Problem.InflowTimeDependent", false);
 
         for (int i = 0; i < dimWorld; ++i)
             domainSize_[i] = gridDiscretization->bBoxMax()[i] - gridDiscretization->bBoxMin()[i];
@@ -172,8 +174,23 @@ public:
         return viscosity_;
     }
 
+    /*!
+     * \brief Set the time at which the Dirichlet constraints are evaluated
+     *
+     * Only the inflow of case 2D-3 depends on time (peak velocity multiplied by sin(pi t/8)).
+     * This is const because the multi-stage assembler sets the stage time through a const problem.
+     */
+    void setTime(const Scalar time) const
+    {
+        if (!ParentType::isMomentumProblem() || !inflowTimeDependent_ || time == time_)
+            return;
+
+        time_ = time;
+        updateConstraints_();
+    }
+
     //! Computes pressure difference benchmark indicator
-    //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
+    //! (only works for the domain size 2.2 x 0.41 of the benchmark)
     template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<!P::isMomentumProblem(), int> = 0>
     Scalar evalPressureDifference(const GridVariables&, const SolutionVector& p) const
     {
@@ -202,9 +219,9 @@ public:
     }
 
     //! Computes drag and lift coefficient benchmark indicator
-    //! (only works for correct domain size 2.2 x 0.41 and boundary conditions, Re=20)
+    //! (only works for the domain size 2.2 x 0.41 and the cylinder of the benchmark)
     template<class SolutionVector, class GridVariables, class P = ParentType, typename std::enable_if_t<P::isMomentumProblem(), int> = 0>
-    auto evalDragAndLiftCoefficient(const GridVariables&, const SolutionVector& v) const
+    auto evalDragAndLiftCoefficient(const GridVariables&, const SolutionVector& v, const bool verbose = true) const
     {
         const auto& gridDiscretization = Dumux::gridDiscretization(*this);
         auto elemDisc = localView(gridDiscretization);
@@ -245,14 +262,14 @@ public:
         const Scalar dragForce = -forces[0];
         const Scalar liftForce = -forces[1];
 
-        const Scalar uMean = 0.2;
+        // the mean velocity of the peak inflow profile, also for the time-dependent inflow of case 2D-3
+        const Scalar uMean = 2.0/3.0*inflowMaxVelocity_;
         const Scalar lChar = 0.1;
         const Scalar coefficientFactor = 2.0/(uMean*uMean*lChar);
 
-        std::cout << "Reynolds number: " << uMean*lChar/viscosity_ << std::endl;
-        std::cout << "Cylinder surface: " << cylinderSurface
-                  << " (reference: 0.31415926535)"
-                  << std::endl;
+        if (verbose)
+            std::cout << "Reynolds number: " << uMean*lChar/viscosity_ << "\n"
+                      << "Cylinder surface: " << cylinderSurface << " (reference: 0.31415926535)" << std::endl;
 
         return std::make_pair( coefficientFactor*dragForce, coefficientFactor*liftForce );
     }
@@ -269,7 +286,8 @@ private:
 
     DirichletValues inflowVelocity_(Scalar y) const
     {
-        constexpr Scalar maxVelocity = 0.3;
+        using std::sin;
+        const Scalar maxVelocity = inflowTimeDependent_ ? inflowMaxVelocity_*sin(M_PI*time_/8.0) : inflowMaxVelocity_;
         return { 4*maxVelocity*y*(domainSize_[1]-y)/(domainSize_[1]*domainSize_[1]), 0.0 };
     }
 
@@ -309,6 +327,9 @@ private:
 
     static constexpr Scalar eps_ = 1e-10;
     Scalar density_, viscosity_;
+    Scalar inflowMaxVelocity_;
+    bool inflowTimeDependent_;
+    mutable Scalar time_ = 0.0;
     std::array<Scalar, dimWorld> domainSize_;
     mutable std::vector<DirichletConstraintData> constraints_;
 };
