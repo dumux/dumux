@@ -18,7 +18,8 @@ Instationary = true
 InflowMaxVelocity = 1.5 # [m/s], mean inflow velocity 1.0 m/s
 
 [Vtk]
-OutputInterval = 100 # write the VTK output every 100th time step
+# shedding period about 1/3 s (Strouhal number 0.3): about 33 frames per period
+OutputTimeInterval = 0.01 # [s]
 
 [FreeFlow]
 EnableUnsymmetrizedVelocityGradient = true

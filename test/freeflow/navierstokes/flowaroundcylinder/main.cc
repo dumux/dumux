@@ -10,7 +10,10 @@
  */
 #include <config.h>
 
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <string>
 
 #include <dune/common/parallel/mpihelper.hh>
@@ -180,7 +183,8 @@ int main(int argc, char** argv)
     VtkOutputModule vtkWriter(*massGridVariables, x[massIdx], massProblem->name(), "", mode);
     IOFields::initOutputModule(vtkWriter); // Add model specific output fields
     vtkWriter.addVelocityOutput(std::make_shared<NavierStokesVelocityOutput<MassGridVariables>>());
-    vtkWriter.write(0.0);
+    const auto vtkOutputType = isStationary ? Dune::VTK::ascii : Dune::VTK::appendedraw;
+    vtkWriter.write(0.0, vtkOutputType);
 
     // the benchmark indicators are only evaluated with inertia terms (Navier-Stokes)
     const bool evalIndicators = momentumProblem->enableInertiaTerms();
@@ -324,7 +328,30 @@ int main(int argc, char** argv)
         auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, fixedTimeStepSize(0.0), tEnd);
         using std::max;
         timeLoop->setMaxTimeStepSize(max(dt, startupDt));
-        const auto vtkOutputInterval = getParam<int>("Vtk.OutputInterval", 1);
+        // VTK output at fixed times (every step if not set), independent of the time step size
+        const auto vtkOutputTimeInterval = getParam<Scalar>("Vtk.OutputTimeInterval", 0.0);
+        Scalar nextVtkOutputTime = vtkOutputTimeInterval;
+        const auto isVtkOutputTime = [&](const Scalar time)
+        {
+            if (vtkOutputTimeInterval <= 0.0)
+                return true;
+            const Scalar eps = 1e-6*timeLoop->timeStepSize();
+            if (time < nextVtkOutputTime - eps)
+                return false;
+            while (nextVtkOutputTime <= time + eps)
+                nextVtkOutputTime += vtkOutputTimeInterval;
+            return true;
+        };
+
+        // the indicators are appended to a CSV file at every time step (flushed), so they survive an aborted
+        // run (e.g. killed by the wall-time limit of a cluster); the JSON file is only written at the end
+        std::ofstream indicatorCsv;
+        if (evalIndicators)
+        {
+            indicatorCsv.open(indicatorFile + ".csv");
+            indicatorCsv << "time,cDrag,cLift,pDiff" << std::endl;
+            indicatorCsv << std::setprecision(std::numeric_limits<Scalar>::max_digits10);
+        }
 
         const auto collectIndicators = [&](const Scalar time)
         {
@@ -339,6 +366,7 @@ int main(int argc, char** argv)
             collector["cDrag"].push_back(cDrag);
             collector["cLift"].push_back(cLift);
             collector["pDiff"].push_back(pDiff);
+            indicatorCsv << time << "," << cDrag << "," << cLift << "," << pDiff << std::endl;
         };
 
         // the indicators are written at the end and if the simulation fails
@@ -372,8 +400,8 @@ int main(int argc, char** argv)
                     massGridVariables->advanceTimeStep();
                     timeLoop->advanceTimeStep();
 
-                    if (timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
-                        vtkWriter.write(timeLoop->time());
+                    if (isVtkOutputTime(timeLoop->time()) || timeLoop->finished())
+                        vtkWriter.write(timeLoop->time(), vtkOutputType);
 
                     timeLoop->reportTimeStep();
 

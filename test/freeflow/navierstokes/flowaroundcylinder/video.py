@@ -28,7 +28,6 @@ Usage (in the build directory test/freeflow/navierstokes/flowaroundcylinder):
 """
 
 import argparse
-import json
 import os
 import sys
 import xml.etree.ElementTree as ET
@@ -39,6 +38,7 @@ from matplotlib.animation import FFMpegWriter, PillowWriter
 import pyvista as pv
 
 from benchmark import RESULTS_DIR, runsDir
+from visualize import readRun
 
 plt.rcParams.update({"mathtext.fontset": "cm", "font.family": "serif", "font.size": 11})
 
@@ -224,8 +224,11 @@ def main():
         sys.exit(f"{pvdFile} not found")
     frames, window = selectFrames(args.case, pvdFile, args)
     print(f"{len(frames)} frames in [{frames[0][0]:g}, {frames[-1][0]:g}] s")
-    with open(os.path.join(runFolder, f"{args.run}.json"), encoding="utf-8") as jsonFile:
-        indicators = json.load(jsonFile)
+    indicators, note = readRun(runFolder, args.run)
+    if indicators is None:
+        sys.exit(f"No indicators found for {args.run}")
+    if note is not None:
+        print(note)
 
     image = samplingImage(args.resolution)
     ranges = colorRanges(frames, image)

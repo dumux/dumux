@@ -135,9 +135,8 @@ def readReferences():
 
 def readLog(fileName):
     """
-    The number of unknowns and the time series of the indicators of a run that is still going
-    (the JSON file is only written at the end), parsed from the log file. None if the log
-    contains no indicators yet.
+    The number of unknowns and the time series of the indicators of a run without JSON file,
+    parsed from the log file. None if the log contains no indicators yet.
     """
     indicators = re.compile(
         r"Benchmark indicators at t = (\S+): cDrag = (\S+), cLift = (\S+), pDiff = (\S+)"
@@ -154,24 +153,62 @@ def readLog(fileName):
     return run if run["time"] else None
 
 
+def readCsv(fileName):
+    """The time series of the indicators written at every time step (CSV file), None if empty"""
+    data = np.genfromtxt(fileName, delimiter=",", names=True, ndmin=1)
+    if data.size == 0:
+        return None
+    run = {key: data[key].tolist() for key in ["time", "cDrag", "cLift", "pDiff"]}
+    run["finished"] = False
+    return run
+
+
+def readRun(folder, name):
+    """
+    The results of a run: the JSON file written at the end, otherwise (run still going or
+    aborted) the CSV file written at every time step, otherwise the log file. Returns the run
+    and a note on its source (None for a complete JSON file), or (None, None) if there are no
+    results.
+    """
+    jsonName = os.path.join(folder, f"{name}.json")
+    if os.path.exists(jsonName):
+        try:
+            with open(jsonName, encoding="utf-8") as jsonFile:
+                return json.load(jsonFile), None
+        except json.JSONDecodeError:
+            print(f"{name}: incomplete JSON file, using the CSV or log file")
+
+    logName = os.path.join(folder, f"{name}.log")
+    csvName = os.path.join(folder, f"{name}.csv")
+    csvRun = readCsv(csvName) if os.path.exists(csvName) else None
+    logRun = readLog(logName) if os.path.exists(logName) else None
+    run = dict(csvRun or logRun or {})
+    if not run:
+        return None, None
+
+    numDofs = dict(logRun or {}).get("numDofs")
+    if numDofs is not None:
+        run.setdefault("numDofs", numDofs)
+    source = "CSV" if csvRun else "log"
+    return run, f"no JSON file, using the {source} file (up to t = {run['time'][-1]} s)"
+
+
 def readRuns(case, pattern="*"):
     """
-    The results of all runs of a case as {name: result}. For runs without a JSON file (still
-    going), the indicators written to the log file so far are used.
+    The results of all runs of a case as {name: result}. Runs without a complete JSON file
+    (still going or aborted) are marked with "(running)".
     """
     runs = {}
     for folder in sorted(glob.glob(os.path.join(runsDir(case), pattern))):
         name = os.path.basename(folder)
-        jsonName = os.path.join(folder, f"{name}.json")
-        logName = os.path.join(folder, f"{name}.log")
-        if os.path.exists(jsonName):
-            with open(jsonName, encoding="utf-8") as jsonFile:
-                runs[name] = json.load(jsonFile)
-        elif os.path.exists(logName):
-            run = readLog(logName)
-            if run is not None:
-                print(f"{name}: no JSON file yet, using the log (up to t = {run['time'][-1]} s)")
-                runs[f"{name} (running)"] = run
+        run, note = readRun(folder, name)
+        if run is None:
+            continue
+        if note is None:
+            runs[name] = run
+        else:
+            print(f"{name}: {note}")
+            runs[f"{name} (running)"] = run
     return runs
 
 

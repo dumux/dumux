@@ -168,8 +168,15 @@ The benchmark indicators are evaluated from the solution at the new time level $
   $-1.9$ and $6.9$ in case 2D-2). With `CrankNicolson`, the pressure-dependent indicators are not meaningful.
 
 The FeatFlow time series are given at the half steps of their Crank-Nicolson method, so the times of their extrema
-are shifted by $\Delta t/2$ with respect to the DuMux values. The indicators of every time step are written to the JSON file `<Problem.Name>.json` (arrays `time`, `cDrag`,
-`cLift`, `pDiff`). The file is written at the end of the simulation and also if it fails (`finished`, `error`).
+are shifted by $\Delta t/2$ with respect to the DuMux values.
+
+Output of the time-dependent cases (file names from `Problem.IndicatorFile`, default `Problem.Name`):
+
+| File | Content | Written |
+| :--- | :--- | :--- |
+| `<name>.csv` | `time`, `cDrag`, `cLift`, `pDiff` of every time step | appended and flushed at every step, so it survives an aborted run (e.g. the wall-time limit of a cluster) |
+| `<name>.json` | the same time series plus grid size, time stepping scheme, `finished` and `error` | at the end of the simulation and if it fails with an exception |
+| `<Problem.Name>-*.vtu`, `.pvd` | velocity and pressure fields (binary) | every `Vtk.OutputTimeInterval` = 0.01 s, i.e. about 33 frames per shedding period ($1/f \approx 1/3\,\text{s}$), independent of the time step size |
 
 ## Running the tests
 
@@ -292,7 +299,7 @@ Each run has its own folder `runs/2d<case>/pq1bubble_box_r<level>[_dt<dt>]_<time
 `runs/2d2/pq1bubble_box_r0_dirk2/`:
 
 * the log file and the process id (`<name>.pid`, stop the run with `kill $(cat <name>.pid)`);
-* the JSON file with the time series of the indicators;
+* the CSV and JSON files with the time series of the indicators (the CSV file grows during the run);
 * the VTK output in `vtk/`.
 
 On the default grid (102341 unknowns, UMFPack, multithreaded assembly), one Newton iteration takes about

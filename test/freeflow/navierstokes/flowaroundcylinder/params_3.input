@@ -16,7 +16,8 @@ InflowMaxVelocity = 1.5 # [m/s], peak of the mean inflow velocity 1.0 m/s
 InflowTimeDependent = true
 
 [Vtk]
-OutputInterval = 50 # write the VTK output every 50th time step
+# shedding period about 1/3 s (Strouhal number 0.3 at the peak inflow): about 33 frames per period
+OutputTimeInterval = 0.01 # [s]
 
 [FreeFlow]
 EnableUnsymmetrizedVelocityGradient = true
