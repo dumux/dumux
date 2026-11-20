@@ -1,2 +1,6 @@
 SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
 SPDX-License-Identifier: CC-BY-4.0
+Based on data from Schäfer, M., Turek, S., Durst, F., Krause, E., Rannacher, R. (1996). Benchmark Computations of Laminar Flow Around a Cylinder.
+In: Hirschel, E.H. (ed) Flow Simulation with High-Performance Computers II. Notes on Numerical Fluid Mechanics, vol 52. Vieweg+Teubner Verlag.
+https://doi.org/10.1007/978-3-322-89849-4_39
+Processed data (lower and upper bounds of the benchmark quantities). All changes are licensed under DuMux Project contributors CC-BY-4.0
