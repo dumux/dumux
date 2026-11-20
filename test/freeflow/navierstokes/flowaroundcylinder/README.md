@@ -334,6 +334,23 @@ on level 6:
 * `case_2d_3.png`: the DuMux runs and FeatFlow $Q_2/P_1^\text{disc}$ ($\Delta t = 1/1600\,\text{s}$).
   FeatFlow provides no $\tilde{Q}_1/Q_0$ data for 2D-3.
 
+### Videos
+
+`video.py` renders a video of a run from its VTK output and the indicator time series (pyvista and matplotlib, MP4
+by default, `--format gif` for a GIF):
+
+```bash
+python3 video.py --case 2 --run pq1bubble_box_r0_dirk2   # last three shedding periods
+python3 video.py --case 3 --run pq1bubble_box_r0_dirk2   # whole run, t in [0, 8] s
+```
+
+* Panels: velocity magnitude, vorticity $\omega = \partial_x v - \partial_y u$ (vortex street), pressure, and
+  $C_D$, $C_L$ over time with a marker at the current time.
+* The fields are sampled on a uniform image of the channel (`--resolution`, pixels in $x$). The color ranges are
+  fixed for the whole video: the 1st and 99th percentiles over up to 40 frames (symmetric for the vorticity).
+* `--tstart`, `--tend` and `--stride` select the frames, `--fps` the frame rate. The video goes to
+  `results/video_2d<case>_<run>.<format>` unless `--output` is given.
+
 ### Reference data
 
 | File | Content |
