@@ -50,6 +50,8 @@ REFERENCE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "refer
 
 # minimum time between two minima of the lift coefficient in case 2D-2 (period about 0.33 s)
 MIN_PERIOD = 0.2
+# cylinder diameter [m] and mean inflow velocity [m/s] of the cases 2D-2 and 2D-3
+DIAMETER, MEAN_VELOCITY = 0.1, 1.0
 
 LABELS = {
     "diamond_tpfa": "Diamond / CCTpfa",
@@ -111,7 +113,11 @@ PERIODIC_ROWS = [
         ("Mean", "mean"),
         ("Amplitude", "amplitude"),
     ]
-] + [("period", r"period $1/f$ [s]"), ("dP", r"$\Delta p(t_0 + 1/(2f))$")]
+] + [
+    ("period", r"period $1/f$ [s]"),
+    ("St", r"Strouhal number $\mathrm{St} = D f / \bar{U}$"),
+    ("dP", r"$\Delta p(t_0 + 1/(2f))$"),
+]
 TRANSIENT_ROWS = [
     ("CDMax", r"$\max C_D$"),
     ("TCDMax", r"$t(\max C_D)$ [s]"),
@@ -316,39 +322,70 @@ def localMinima(time, signal, minSeparation):
     return np.array([refinedMinimum(time, signal, i) for i in selected])
 
 
+def valueAt(time, signal, t):
+    """
+    Linear interpolation of a signal at time t, linear extrapolation from the last two samples
+    if t lies after the end of the series (e.g. FeatFlow series given at the half steps)
+    """
+    if t <= time[-1]:
+        return np.interp(t, time, signal)
+    slope = (signal[-1] - signal[-2]) / (time[-1] - time[-2])
+    return signal[-1] + slope * (t - time[-1])
+
+
 def evaluatePeriodic(series, tStart):
     """
-    Evaluate the quantities of case 2D-2 over the last full period [t0, t0 + 1/f] of the lift
-    coefficient after tStart, where t0 is a minimum of the lift coefficient (FeatFlow convention,
-    mean = (max + min)/2, amplitude = max - min). The pressure difference is taken half a period
-    after the maximum of the lift coefficient in this period, since the paper defines t0 for
-    Delta p(t0 + 1/(2f)) as the time of the maximum lift. Returns None if there is no full period.
+    Evaluate the quantities of case 2D-2 over the last full period [ts, ts + 1/f] of the lift
+    coefficient after tStart, where ts is a minimum of the lift coefficient (FeatFlow convention,
+    mean = (max + min)/2, amplitude = max - min). The paper defines t0 as the time of the maximum
+    lift and evaluates Delta p(t0 + 1/(2f)). If t0 + 1/(2f) lies after the end of the series, the
+    periodic value Delta p(t0 - 1/(2f)) is used. Returns None if there is no full period.
     """
     mask = series["time"] >= tStart
     minima = localMinima(series["time"][mask], series["cLift"][mask], MIN_PERIOD)
     if len(minima) < 2:
         return None
 
-    t0, t1 = minima[-2], minima[-1]
-    period = t1 - t0
-    cycle = (series["time"] >= t0) & (series["time"] <= t1)
-    result = {"t0": t0, "period": period}
+    periodStart, periodEnd = minima[-2], minima[-1]
+    period = periodEnd - periodStart
+    cycle = (series["time"] >= periodStart) & (series["time"] <= periodEnd)
+    result = {
+        "periodStart": periodStart,
+        "period": period,
+        "St": DIAMETER / (period * MEAN_VELOCITY),
+    }
     for name, key in KEYS.items():
         values = series[name][cycle]
         result[key + "Max"] = values.max()
         result[key + "Min"] = values.min()
         result[key + "Mean"] = 0.5 * (values.max() + values.min())
         result[key + "Amplitude"] = values.max() - values.min()
-    tLiftMax = series["time"][cycle][np.argmax(series["cLift"][cycle])]
-    result["dP"] = np.interp(tLiftMax + 0.5 * period, series["time"], series["pDiff"])
+
+    result["dP"] = pressureDifferenceAfterMaxLift(series, cycle, period)
     return result
+
+
+def pressureDifferenceAfterMaxLift(series, cycle, period):
+    """
+    Delta p(t0 + 1/(2f)) with t0 the (refined) time of the maximum lift in the cycle, or the
+    periodic value Delta p(t0 - 1/(2f)) if t0 + 1/(2f) lies after the end of the series
+    """
+    cycleTime, cycleLift = series["time"][cycle], series["cLift"][cycle]
+    iMax = int(np.argmax(cycleLift))
+    t0 = cycleTime[iMax]
+    if 0 < iMax < len(cycleLift) - 1:
+        t0 = refinedMinimum(cycleTime, -cycleLift, iMax)
+    target = t0 + 0.5 * period
+    if target > series["time"][-1]:
+        target = t0 - 0.5 * period
+    return valueAt(series["time"], series["pDiff"], target)
 
 
 def evaluateTransient(series):
     """
     Evaluate the quantities of case 2D-3: maxima of the drag and lift coefficients and their
-    times, and the pressure difference at the end time t = 8 s.
-    Returns None if the run did not reach t = 8 s.
+    times, and the pressure difference at t = 8 s (FeatFlow series end at the last half step,
+    their value is extrapolated to t = 8 s). Returns None if the run did not reach t = 8 s.
     """
     if series["time"][-1] < 8.0 - 0.01:
         return None
@@ -359,7 +396,7 @@ def evaluateTransient(series):
         "TCDMax": series["time"][iDrag],
         "CLMax": series["cLift"][iLift],
         "TCLMax": series["time"][iLift],
-        "dP": series["pDiff"][-1],
+        "dP": valueAt(series["time"], series["pDiff"], 8.0),
     }
 
 

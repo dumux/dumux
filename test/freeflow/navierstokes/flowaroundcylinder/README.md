@@ -320,14 +320,18 @@ one time step takes about $12$ to $22\,\text{s}$:
 
 `visualize.py` evaluates all runs of a case:
 
-* **2D-2**: the last full period $[t_0, t_0 + 1/f]$ after `--tstart`, where $t_0$ is a minimum of $C_L$
+* **2D-2**: the last full period $[t_s, t_s + 1/f]$ after `--tstart`, where $t_s$ is a minimum of $C_L$
   (FeatFlow convention).
   * Max, min, mean $= (\max + \min)/2$ and amplitude $= \max - \min$ of $C_D$, $C_L$ and $\Delta p$.
-  * The period $1/f$ and $\Delta p(t_0 + 1/(2f))$, where $t_0$ is the time of the maximum of $C_L$ in the
-    evaluated period, as defined in @cite SchaeferTurek1996.
+  * The period $1/f$ and the Strouhal number $\mathrm{St} = D f/\bar{U}$.
+  * $\Delta p(t_0 + 1/(2f))$, where $t_0$ is the time of the maximum of $C_L$ in the evaluated period, as
+    defined in @cite SchaeferTurek1996. If $t_0 + 1/(2f)$ lies after the end of the run, the periodic value
+    $\Delta p(t_0 - 1/(2f))$ is used.
+  * Extrema of $C_L$ are refined with a parabola through three samples.
   * Minima of $C_L$ closer than $0.2\,\text{s}$ are merged, so noise near a minimum does not
     produce spurious periods.
-* **2D-3**: the maxima of $C_D$ and $C_L$ and their times, and $\Delta p$ at $t = 8\,\text{s}$.
+* **2D-3**: the maxima of $C_D$ and $C_L$ and their times, and $\Delta p$ at $t = 8\,\text{s}$
+  (the FeatFlow series end at the last half step $8 - \Delta t/2$, their value is extrapolated linearly).
 
 The results go to three files in `results/`:
 

@@ -205,7 +205,7 @@ def evaluateRun(case, forcesFile):
     if case == 2:
         result = evaluation().evaluatePeriodic(series, tStart=0.0)
         if result is not None:
-            del result["t0"]
+            del result["periodStart"]
     else:
         result = evaluation().evaluateTransient(series)
     if result is None:
