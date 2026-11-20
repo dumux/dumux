@@ -3,7 +3,7 @@
 File = meshes/cylinder_channel.msh
 
 [Problem]
-Name = benchmark_stationary
+Name = dfg_benchmark1
 EnableGravity = false
 EnableInertiaTerms = true
 

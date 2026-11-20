@@ -74,9 +74,10 @@ def readCollection(pvdFile):
 
 def samplingImage(resolution):
     """Uniform image of the channel with the given number of pixels in x direction"""
-    spacing = CHANNEL[0] / (resolution - 1)
-    numY = int(round(CHANNEL[1] / spacing)) + 1
-    return pv.ImageData(dimensions=(resolution, numY, 1), spacing=(spacing, spacing, 1.0))
+    spacingX = CHANNEL[0] / (resolution - 1)
+    numY = int(round(CHANNEL[1] / spacingX)) + 1
+    spacingY = CHANNEL[1] / (numY - 1)
+    return pv.ImageData(dimensions=(resolution, numY, 1), spacing=(spacingX, spacingY, 1.0))
 
 
 def sampleFields(fileName, image):
@@ -87,9 +88,8 @@ def sampleFields(fileName, image):
     sampled = image.sample(mesh)
     shape = (image.dimensions[1], image.dimensions[0])
     velocity = [sampled.point_data[VELOCITY][:, i].reshape(shape) for i in range(2)]
-    spacing = image.spacing[0]
-    dvdx = np.gradient(velocity[1], spacing, axis=1)
-    dudy = np.gradient(velocity[0], spacing, axis=0)
+    dvdx = np.gradient(velocity[1], image.spacing[0], axis=1)
+    dudy = np.gradient(velocity[0], image.spacing[1], axis=0)
     fields = {
         "speed": np.hypot(*velocity),
         "vorticity": dvdx - dudy,
@@ -101,7 +101,7 @@ def sampleFields(fileName, image):
 
 def fluidMask(image):
     """Pixels of the image outside of the cylinder"""
-    x, y = np.meshgrid(*(np.arange(n) * image.spacing[0] for n in image.dimensions[:2]))
+    x, y = np.meshgrid(*(np.arange(n) * h for n, h in zip(image.dimensions[:2], image.spacing[:2])))
     (centerX, centerY), radius = CYLINDER
     return (x - centerX) ** 2 + (y - centerY) ** 2 > radius**2
 

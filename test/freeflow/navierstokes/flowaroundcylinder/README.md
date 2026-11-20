@@ -193,6 +193,8 @@ make test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
 ./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_3.input  # case 2D-3 (days)
 ```
 
+The executable is named after its regression test (case 2D-1), but runs all three cases.
+
 The ctest regression tests only cover the stationary case 2D-1. The time-dependent cases are run
 with `benchmark.py` (see below).
 

@@ -7,12 +7,12 @@ Download the FeatFlow time series of the DFG cases 2D-2 and 2D-3 and extract the
 
 The archives of the FeatFlow benchmark pages
 (https://wwwold.mathematik.tu-dortmund.de/~featflow/en/benchmarks/cfdbenchmarking/flow.html)
-are downloaded into featflow/<dataset>/ next to this script and unpacked there (about 60 MB,
+are downloaded into featflow/<dataset>/ next to this script and unpacked there (about 80 MB,
 excluded from git). Archives that exist are not downloaded again (unless --force is given).
 
 | dataset    | content                                                                         |
 | :--------- | :------------------------------------------------------------------------------ |
-| 2dcase2new | 2D-2, Q2/P1disc, levels 2-6, dt = 1/200, 1/400, 1/1600, t in [9, 10] s          |
+| 2dcase2new | 2D-2, Q2/P1disc, levels 2-6, dt = 1/100, 1/400, 1/1600, t in [9, 10] s          |
 |            | ("new reference results", higher-order line integration of the forces)          |
 | 2dcase2old | 2D-2, Q1~/Q0 and Q2/P1disc, levels 2/3-6, dt = 1/200 to 1/1600, t in [0, 10] s  |
 | 2dcase3    | 2D-3, Q2/P1disc, levels 1-6, dt = 1/1600, t in [0, 8] s                         |

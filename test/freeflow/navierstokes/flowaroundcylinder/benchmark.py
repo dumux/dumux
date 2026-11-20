@@ -28,7 +28,7 @@ Usage (in the build directory test/freeflow/navierstokes/flowaroundcylinder):
     python3 benchmark.py
     python3 benchmark.py --schemes pq1bubble_box --levels 0 1 2
     python3 benchmark.py --case 2
-    python3 benchmark.py --case 3 --dt 0.00125 --tend 1
+    python3 benchmark.py --case 3 --dt 0.00125
     python3 benchmark.py -- -Newton.MaxRelativeShift 1e-10   # further simulation parameters
     python3 visualize.py --case 1
 """
