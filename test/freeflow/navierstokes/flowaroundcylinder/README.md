@@ -325,8 +325,9 @@ If the FeatFlow time series have been downloaded (see below), the time series pl
 on level 6:
 
 * `case_2d_2.png`: the DuMux runs and FeatFlow $Q_2/P_1^\text{disc}$ (new data, $\Delta t = 1/1600\,\text{s}$),
-  restricted to $t \in [9, 10]\,\text{s}$, the interval of the new data.
-* `case_2d_2_olddata.png`: the old data of both discretizations on the same level and time step size,
+  restricted to $t \in [9, 10]\,\text{s}$, the interval of the new data (the whole time range as long as no
+  DuMux run has reached it).
+* `case_2d_2_olddata.png`: the DuMux runs and the old data of both discretizations on the same level and time step size,
   $Q_2/P_1^\text{disc}$ and $\tilde{Q}_1/Q_0$ with $\Delta t = 1/800\,\text{s}$ (the old $Q_2/P_1^\text{disc}$ run
   with $1/1600\,\text{s}$ stops at $t = 0.025\,\text{s}$), on the same interval. The runs start from different
   states, so their phases differ.

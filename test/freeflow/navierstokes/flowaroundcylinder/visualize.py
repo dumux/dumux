@@ -34,6 +34,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import sys
 
 import numpy as np
@@ -132,12 +133,45 @@ def readReferences():
     return references
 
 
+def readLog(fileName):
+    """
+    The number of unknowns and the time series of the indicators of a run that is still going
+    (the JSON file is only written at the end), parsed from the log file. None if the log
+    contains no indicators yet.
+    """
+    indicators = re.compile(
+        r"Benchmark indicators at t = (\S+): cDrag = (\S+), cLift = (\S+), pDiff = (\S+)"
+    )
+    run = {"time": [], "cDrag": [], "cLift": [], "pDiff": [], "finished": False}
+    with open(fileName, encoding="utf-8", errors="replace") as logFile:
+        for line in logFile:
+            if line.startswith("Total number of dofs"):
+                run["numDofs"] = {"total": int(line.split(":")[-1])}
+            match = indicators.search(line)
+            if match:
+                for key, value in zip(["time", "cDrag", "cLift", "pDiff"], match.groups()):
+                    run[key].append(float(value))
+    return run if run["time"] else None
+
+
 def readRuns(case, pattern="*"):
-    """The results of all runs of a case as {name: result}"""
+    """
+    The results of all runs of a case as {name: result}. For runs without a JSON file (still
+    going), the indicators written to the log file so far are used.
+    """
     runs = {}
-    for fileName in sorted(glob.glob(os.path.join(runsDir(case), pattern, "*.json"))):
-        with open(fileName, encoding="utf-8") as jsonFile:
-            runs[os.path.splitext(os.path.basename(fileName))[0]] = json.load(jsonFile)
+    for folder in sorted(glob.glob(os.path.join(runsDir(case), pattern))):
+        name = os.path.basename(folder)
+        jsonName = os.path.join(folder, f"{name}.json")
+        logName = os.path.join(folder, f"{name}.log")
+        if os.path.exists(jsonName):
+            with open(jsonName, encoding="utf-8") as jsonFile:
+                runs[name] = json.load(jsonFile)
+        elif os.path.exists(logName):
+            run = readLog(logName)
+            if run is not None:
+                print(f"{name}: no JSON file yet, using the log (up to t = {run['time'][-1]} s)")
+                runs[f"{name} (running)"] = run
     return runs
 
 
@@ -391,17 +425,18 @@ def decorateAxes(figure, axes):
     return (len(labels) + 1) // 2
 
 
-def timeWindow(case):
+def timeWindow(case, seriesOfRuns):
     """
     Plotted time interval: for case 2D-2 the interval of the new FeatFlow data (t in [9, 10] s)
-    if it has been downloaded, else everything (None)
+    if it has been downloaded, else everything (None). Everything is also shown as long as no
+    DuMux run has reached this interval yet, such that the progress of running runs is visible.
     """
-    if case != 2:
-        return None
-    curves = featflowCurves(case)
+    curves = featflowCurves(case) if case == 2 else []
     if not curves:
         return None
     time = curves[0][1]["time"]
+    if seriesOfRuns and all(series["time"][-1] < time[0] for series in seriesOfRuns.values()):
+        return None
     return time[0], time[-1]
 
 
@@ -444,9 +479,9 @@ def plotTimeSeries(curves, seriesOfRuns, window, title, fileName):
 def plotAllTimeSeries(case, seriesOfRuns, resultsDir):
     """
     Time series of all runs with the finest FeatFlow run (case_2d_<case>.png), and for case 2D-2
-    the old FeatFlow data of both discretizations (case_2d_2_olddata.png)
+    with the old FeatFlow data of both discretizations (case_2d_2_olddata.png)
     """
-    window = timeWindow(case)
+    window = timeWindow(case, seriesOfRuns)
     name = r"$\mathrm{Re} = 100$, periodic" if case == 2 else r"$\mathrm{Re} = 0 \to 100 \to 0$"
     fileName = os.path.join(resultsDir, f"case_2d_{case}.png")
     plotTimeSeries(featflowCurves(case), seriesOfRuns, window, f"Case 2D-{case} ({name})", fileName)
@@ -454,7 +489,7 @@ def plotAllTimeSeries(case, seriesOfRuns, resultsDir):
     if oldCurves:
         title = f"Case 2D-2 ({name}): old FeatFlow data"
         fileName = os.path.join(resultsDir, "case_2d_2_olddata.png")
-        plotTimeSeries(oldCurves, {}, window, title, fileName)
+        plotTimeSeries(oldCurves, seriesOfRuns, window, title, fileName)
 
 
 def timeStepShades(featflow):
