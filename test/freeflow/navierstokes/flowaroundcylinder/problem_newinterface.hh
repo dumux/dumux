@@ -78,6 +78,9 @@ public:
         viscosity_ = getParam<Scalar>("Component.LiquidDynamicViscosity");
         inflowMaxVelocity_ = getParam<Scalar>("Problem.InflowMaxVelocity", 0.3);
         inflowTimeDependent_ = getParam<bool>("Problem.InflowTimeDependent", false);
+        unsymmetrizedVelocityGradient_ = getParamFromGroup<bool>(
+            this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false
+        );
 
         for (int i = 0; i < dimWorld; ++i)
             domainSize_[i] = gridDiscretization->bBoxMax()[i] - gridDiscretization->bBoxMin()[i];
@@ -226,7 +229,7 @@ public:
         const auto& gridDiscretization = Dumux::gridDiscretization(*this);
         auto elemDisc = localView(gridDiscretization);
 
-        // integrate the traction (mu grad(v) - pI)n over the cylinder surface
+        // integrate the traction (mu grad(v) [+ mu grad(v)^T] - pI)n over the cylinder surface
         BoundaryFluxes forces(0.0);
         Scalar cylinderSurface = 0.0;
         for (const auto& element : elements(gridDiscretization.gridView()))
@@ -249,9 +252,16 @@ public:
                     const auto gradV = evalGradientsAtLocalPos(element, elemDisc.elementGeometry(), gridDiscretization, elemSol, ipData.local());
                     const auto pressure = this->pressure(element, elemDisc, ipData);
 
+                    // the same viscous stress as in the discretization
+                    auto stress = gradV;
+                    if (!unsymmetrizedVelocityGradient_)
+                        for (int i = 0; i < dim; ++i)
+                            for (int j = 0; j < dim; ++j)
+                                stress[i][j] += gradV[j][i];
+
                     BoundaryFluxes traction(0.0);
                     for (int dir = 0; dir < dim; ++dir)
-                        traction[dir] = viscosity_*(gradV[dir]*normal) - pressure*normal[dir];
+                        traction[dir] = viscosity_*(stress[dir]*normal) - pressure*normal[dir];
 
                     forces.axpy(qpData.weight(), traction);
                     cylinderSurface += qpData.weight();
@@ -328,7 +338,7 @@ private:
     static constexpr Scalar eps_ = 1e-10;
     Scalar density_, viscosity_;
     Scalar inflowMaxVelocity_;
-    bool inflowTimeDependent_;
+    bool inflowTimeDependent_, unsymmetrizedVelocityGradient_;
     mutable Scalar time_ = 0.0;
     std::array<Scalar, dimWorld> domainSize_;
     mutable std::vector<DirichletConstraintData> constraints_;

@@ -97,6 +97,11 @@ computed with $Q_2/P_1^\text{disc}$ elements on level 6 and the Crank-Nicolson m
 
 * **Drag and lift**: the traction is integrated over the boundary faces on the cylinder.
   On the no-slip cylinder wall, this is equivalent to the formula above.
+  The viscous stress is the one of the discretization: $\mu \nabla \mathbf{v}$ with
+  `FreeFlow.EnableUnsymmetrizedVelocityGradient = true` (set in all input files), otherwise
+  $\mu (\nabla \mathbf{v} + \nabla \mathbf{v}^T)$. The input files use the unsymmetrized gradient, since the
+  natural (do-nothing) outflow condition of the symmetrized form, $\boldsymbol{\sigma}\mathbf{n} = 0$, changes the
+  flow near the outlet (Diamond/CCTpfa: $C_D = 4.72$ instead of $5.57$ on the default grid).
 * **Pressure difference**: the pressure is interpolated at $A$ and $B$.
   * The cylinder surface is approximated by a polygon, so $A$ and $B$ may lie outside the grid.
   * In that case, they are moved upstream ($A$) or downstream ($B$) in steps of $1\,\text{mm}$ until

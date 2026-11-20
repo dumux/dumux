@@ -65,6 +65,10 @@ public:
     {
         density_ = getParam<Scalar>("Component.LiquidDensity");
         viscosity_ = getParam<Scalar>("Component.LiquidDynamicViscosity");
+        inflowMaxVelocity_ = getParam<Scalar>("Problem.InflowMaxVelocity", 0.3);
+        unsymmetrizedVelocityGradient_ = getParamFromGroup<bool>(
+            this->paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false
+        );
 
         for (int i = 0; i < dimWorld; ++i)
             domainSize_[i] = gridGeometry->bBoxMax()[i] -  gridGeometry->bBoxMin()[i];
@@ -224,6 +228,14 @@ public:
                             stressLocal *= qp.weight()*isgeometry.integrationElement(qp.position());
                             stress = stress + stressLocal;
                         }
+                        // the same viscous stress as in the discretization
+                        if (!unsymmetrizedVelocityGradient_)
+                        {
+                            const auto gradient = stress;
+                            for (int i = 0; i < dim; ++i)
+                                for (int j = 0; j < dim; ++j)
+                                    stress[i][j] += gradient[j][i];
+                        }
                         stress *= viscosity_;
                         stress /= scvf.area();
 
@@ -245,7 +257,7 @@ public:
         const Scalar dragForce = -forces[0];
         const Scalar liftForce = -forces[1];
 
-        const Scalar uMean = 0.2;
+        const Scalar uMean = 2.0/3.0*inflowMaxVelocity_;
         const Scalar lChar = 0.1;
         const Scalar coefficientFactor = 2.0/(uMean*uMean*lChar);
 
@@ -270,12 +282,12 @@ private:
 
     DirichletValues inflowVelocity_(Scalar y) const
     {
-        constexpr Scalar maxVelocity = 0.3;
-        return { 4*maxVelocity*y*(domainSize_[1]-y)/(domainSize_[1]*domainSize_[1]), 0.0 };
+        return { 4*inflowMaxVelocity_*y*(domainSize_[1]-y)/(domainSize_[1]*domainSize_[1]), 0.0 };
     }
 
     static constexpr Scalar eps_ = 1e-10;
-    Scalar density_, viscosity_;
+    Scalar density_, viscosity_, inflowMaxVelocity_;
+    bool unsymmetrizedVelocityGradient_;
     std::array<Scalar, dimWorld> domainSize_;
 };
 
