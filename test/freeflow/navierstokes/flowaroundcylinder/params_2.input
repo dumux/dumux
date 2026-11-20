@@ -1,5 +1,5 @@
 # DFG benchmark, case 2D-2: periodic vortex shedding at Re = 100
-# The benchmark quantities are evaluated in the fully developed periodic regime (t >= 25 s)
+# The benchmark quantities are evaluated in the fully developed periodic regime (t >= 9 s)
 [TimeLoop]
 Dt1 = 0.1 # [s], coarse time step until T1 (development of the periodic flow)
 T1 = 3.5 # [s]

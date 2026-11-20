@@ -135,11 +135,11 @@ $h = 0.002$ on the cylinder surface.
 
 ## Time discretization (cases 2D-2 and 2D-3)
 
-The time-dependent cases use the Crank-Nicolson method ($\theta$-scheme with $\theta = 0.5$), as the FeatFlow
-reference computations.
+The time-dependent cases use the second-order DIRK scheme of Alexander @cite Alexander1977 (`TimeLoop.Scheme = DIRK2`, default).
+`DIRK3`, `ImplicitEuler` and `CrankNicolson` can be chosen as well.
 
-* It is second-order accurate. First-order schemes such as the implicit Euler method damp the oscillations
-  @cite SchaeferTurek1996.
+* DIRK2 is second-order accurate, L-stable and stiffly accurate. First-order schemes such as the implicit Euler
+  method damp the oscillations @cite SchaeferTurek1996.
 * It is run with the multi-stage assembler and time stepper (`Experimental::MultiStageMultiDomainAssembler`,
   `Experimental::MultiStageTimeStepper`). These are only available for the CVFE schemes with the new problem
   interface, i.e. the PQ1Bubble/Box variant.
@@ -151,24 +151,24 @@ Fixed time step sizes are used, following the benchmark description:
 
 | Case | Time steps | Parameters |
 | :--- | :--- | :--- |
-| 2D-2 | coarse step $0.1\,\text{s}$ until $3.5\,\text{s}$ to develop the periodic flow, then $0.001\,\text{s}$ until $30\,\text{s}$ | `TimeLoop.Dt1`, `T1`, `Dt2`, `T2` |
+| 2D-2 | coarse step $0.1\,\text{s}$ until $3.5\,\text{s}$ to develop the periodic flow, then $0.001\,\text{s}$ until $10\,\text{s}$ | `TimeLoop.Dt1`, `T1`, `Dt2`, `T2` |
 | 2D-3 | $1/1600\,\text{s}$ on $[0, 8]\,\text{s}$ | `TimeLoop.Dt`, `TEnd` |
 
 If Newton's method fails, the step is repeated with a reduced step size. Afterwards, the fixed step size is used again.
 
-### Evaluation at the half step
+### Evaluation at the time levels
 
-With $\theta = 0.5$, the weighting also applies to the pressure, which is the Lagrange multiplier of the
-incompressibility constraint, and to the continuity equation. Therefore:
+The benchmark indicators are evaluated from the solution at the new time level $t^{n+1}$.
 
-* Only the average $\tfrac{1}{2}(p^n + p^{n+1})$ is determined. It approximates the pressure at $t^{n+1/2}$.
-* The pressure at the time levels $t^n$ shows an undamped odd-even oscillation, excited by the inconsistent
-  initial pressure $p^0 = 0$. The VTK output (time levels) contains this oscillation.
-* The benchmark indicators are evaluated from the averaged solution $\tfrac{1}{2}(\mathbf{x}^n + \mathbf{x}^{n+1})$
-  at $t^{n+1/2}$. They are free of the oscillation, and the FeatFlow reference time series are given at
-  the half steps as well.
+* The DIRK schemes do not use the spatial terms of the old time level. The pressure, the Lagrange multiplier of the
+  incompressibility constraint, is therefore determined at each time level.
+* The Crank-Nicolson method ($\theta = 0.5$) weights all spatial terms with $\tfrac{1}{2}$, including the
+  pressure gradient and the continuity equation. Only $\tfrac{1}{2}(p^n + p^{n+1})$ is determined, and the
+  pressure at the time levels shows an undamped odd-even oscillation (e.g. $\Delta p$ alternating between
+  $-1.9$ and $6.9$ in case 2D-2). With `CrankNicolson`, the pressure-dependent indicators are not meaningful.
 
-The indicators of every time step are written to the JSON file `<Problem.Name>.json` (arrays `time`, `cDrag`,
+The FeatFlow time series are given at the half steps of their Crank-Nicolson method, so the times of their extrema
+are shifted by $\Delta t/2$ with respect to the DuMux values. The indicators of every time step are written to the JSON file `<Problem.Name>.json` (arrays `time`, `cDrag`,
 `cLift`, `pDiff`). The file is written at the end of the simulation and also if it fails (`finished`, `error`).
 
 ## Running the tests
@@ -283,22 +283,26 @@ python3 visualize.py --case 3
 | `--level` | `Grid.Refinement` of the default mesh (default 0) |
 | `--dt` | fixed time step size (2D-2: the fine one after $3.5\,\text{s}$) |
 | `--tend` | end time |
+| `--time-scheme` | `TimeLoop.Scheme`: `DIRK2` (default), `DIRK3`, `ImplicitEuler` or `CrankNicolson` |
 | `--foreground` | wait for the run instead of starting it in the background |
 | `--overwrite` | replace the results of an existing run |
-| `--tstart` (`visualize.py`) | 2D-2: the periodic regime is evaluated for $t \geq$ `tstart` (default $25\,\text{s}$) |
+| `--tstart` (`visualize.py`) | 2D-2: the periodic regime is evaluated for $t \geq$ `tstart` (default $9\,\text{s}$, as the FeatFlow time series) |
 
-Each run has its own folder `runs/2d<case>/pq1bubble_box_r<level>[_dt<dt>]/`:
+Each run has its own folder `runs/2d<case>/pq1bubble_box_r<level>[_dt<dt>]_<time scheme in lower case>/`, e.g.
+`runs/2d2/pq1bubble_box_r0_dirk2/`:
 
 * the log file and the process id (`<name>.pid`, stop the run with `kill $(cat <name>.pid)`);
 * the JSON file with the time series of the indicators;
 * the VTK output in `vtk/`.
 
-On the default grid, one time step takes about $10$ to $15\,\text{s}$ on a single core:
+On the default grid (102341 unknowns, UMFPack, multithreaded assembly), one Newton iteration takes about
+$2$ to $4\,\text{s}$ depending on the machine load. With DIRK2 (two stages with about three Newton iterations each),
+one time step takes about $12$ to $22\,\text{s}$:
 
-| Case | Time steps | Run time |
+| Case | Time steps | Run time (DIRK2) |
 | :--- | :--- | :--- |
-| 2D-2 | about 26500 | about four days |
-| 2D-3 | 12800 | about two days |
+| 2D-2 | 6535 | about one to one and a half days |
+| 2D-3 | 12800 | about two to three days |
 
 ### Evaluation
 
@@ -311,7 +315,7 @@ On the default grid, one time step takes about $10$ to $15\,\text{s}$ on a singl
     evaluated period, as defined in @cite SchaeferTurek1996.
   * Minima of $C_L$ closer than $0.2\,\text{s}$ are merged, so noise near a minimum does not
     produce spurious periods.
-* **2D-3**: the maxima of $C_D$ and $C_L$ and their times, and $\Delta p$ at the last half step before $t = 8\,\text{s}$.
+* **2D-3**: the maxima of $C_D$ and $C_L$ and their times, and $\Delta p$ at $t = 8\,\text{s}$.
 
 The results go to three files in `results/`:
 
@@ -397,8 +401,7 @@ python3 reference/fetch_featflow.py --no-download # regenerate from the unpacked
 ## Known limitations
 
 * The time-dependent cases 2D-2 and 2D-3 are only implemented for the PQ1Bubble/Box variant.
-* The Crank-Nicolson method is not L-stable. The impulsive start of case 2D-2 from rest may cause
-  oscillations in the beginning, which are not damped.
+* The Crank-Nicolson method is not suitable for the pressure-dependent indicators (see above).
 * The polygonal approximation of the cylinder limits the accuracy of all indicators on coarse grids.
 
 ## References

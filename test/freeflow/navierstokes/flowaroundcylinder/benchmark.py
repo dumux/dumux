@@ -15,8 +15,8 @@ The errors with respect to the FeatFlow reference values (reference/featflow.jso
 experimental orders of convergence are written to results/convergence_2d1.md.
 
 Cases 2D-2 and 2D-3 (--case 2, --case 3): one time-dependent run (Re = 100) with the PQ1Bubble/Box
-scheme and the Crank-Nicolson method. These runs take days, so they are started in the background,
-detached from the terminal (--foreground waits for them). The process id is written to
+scheme and the DIRK2 method (--time-scheme). These runs take days, so they are started in the
+background, detached from the terminal (--foreground waits for them). The process id is written to
 <name>.pid in the run folder, and the run is stopped with kill $(cat <run folder>/<name>.pid).
 
 All cases use central differences for the advective term (Flux.UpwindWeight = 0.5). Each run gets
@@ -84,10 +84,12 @@ def runsDir(case):
     return os.path.join("runs", f"2d{case}")
 
 
-def runName(scheme, level=None, dt=None):
+def runName(scheme, level=None, dt=None, timeScheme=None):
     """Name of a run (folder, problem name and JSON file), level None for the default mesh"""
     name = f"{scheme}_default" if level is None else f"{scheme}_r{level}"
-    return name if dt is None else f"{name}_dt{dt:g}"
+    if dt is not None:
+        name += f"_dt{dt:g}"
+    return name if timeScheme is None else f"{name}_{timeScheme.lower()}"
 
 
 def resultFile(case, name):
@@ -277,6 +279,7 @@ def transientArgs(case, args):
     """Mesh, grid level, time step size and end time of a time-dependent run"""
     mesh = os.path.abspath(os.path.join("meshes", "cylinder_channel.msh"))
     result = ["-Grid.File", mesh, "-Grid.Refinement", str(args.level)]
+    result += ["-TimeLoop.Scheme", args.time_scheme]
     if args.dt is not None:
         result += ["-TimeLoop.Dt2" if case == 2 else "-TimeLoop.Dt", str(args.dt)]
     if args.tend is not None:
@@ -290,7 +293,7 @@ def runTransient(case, args, extraArgs):
     if not os.path.exists(executable):
         sys.exit(f"Executable {executable} not found, build it first.")
 
-    name = runName(TRANSIENT_SCHEME, args.level, args.dt)
+    name = runName(TRANSIENT_SCHEME, args.level, args.dt, args.time_scheme)
     folder = os.path.join(runsDir(case), name)
     pidFile = os.path.join(folder, f"{name}.pid")
     pid = runningProcess(pidFile)
@@ -358,6 +361,13 @@ def main():
         "--dt", type=float, default=None, help="2D-2 (fine step), 2D-3: fixed time step size"
     )
     parser.add_argument("--tend", type=float, default=None, help="2D-2, 2D-3: end time")
+    # the choices of TimeLoop.Scheme in main.cc
+    parser.add_argument(
+        "--time-scheme",
+        choices=["DIRK2", "DIRK3", "ImplicitEuler", "CrankNicolson"],
+        default="DIRK2",
+        help="2D-2, 2D-3: time stepping scheme (TimeLoop.Scheme)",
+    )
     parser.add_argument(
         "--foreground", action="store_true", help="2D-2, 2D-3: wait for the run to finish"
     )

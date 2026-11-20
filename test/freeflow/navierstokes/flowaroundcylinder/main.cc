@@ -279,9 +279,28 @@ int main(int argc, char** argv)
 #if NEW_PROBLEM_INTERFACE
     else
     {
-        // Crank-Nicolson method (theta scheme with theta = 0.5), as in the FeatFlow reference computations
+        // DIRK schemes do not weight the pressure of the old time level, so the indicators can be evaluated at
+        // the new time level; with Crank-Nicolson the pressure oscillates (see README, evaluation at the time levels)
         using Scalar = typename Traits::Scalar;
-        auto method = std::make_shared<Experimental::MultiStage::Theta<Scalar>>(0.5);
+        const auto scheme = getParam<std::string>("TimeLoop.Scheme", "DIRK2");
+        const auto method = [&]() -> std::shared_ptr<Experimental::MultiStageMethod<Scalar>>
+        {
+            if (scheme == "DIRK2")
+                return std::make_shared<Experimental::MultiStage::DIRKSecondOrderAlexander<Scalar>>();
+            else if (scheme == "DIRK3")
+                return std::make_shared<Experimental::MultiStage::DIRKThirdOrderAlexander<Scalar>>();
+            else if (scheme == "ImplicitEuler")
+                return std::make_shared<Experimental::MultiStage::ImplicitEuler<Scalar>>();
+            else if (scheme == "CrankNicolson")
+                return std::make_shared<Experimental::MultiStage::Theta<Scalar>>(0.5);
+            else
+                DUNE_THROW(ParameterException, "Unknown time stepping scheme " << scheme
+                           << ". Possible values are DIRK2, DIRK3, ImplicitEuler and CrankNicolson.");
+        }();
+        collector["timeSteppingScheme"] = method->name();
+        if (scheme == "CrankNicolson" && evalIndicators)
+            std::cout << "Warning: with Crank-Nicolson, the pressure at the time levels oscillates and the"
+                      << " pressure-dependent benchmark indicators are not meaningful" << std::endl;
         using Assembler = Experimental::MultiStageMultiDomainAssembler<Traits, CouplingManager, DiffMethod::numeric>;
         auto assembler = std::make_shared<Assembler>(std::make_tuple(momentumProblem, massProblem),
                                                      std::make_tuple(momentumGridGeometry, massGridGeometry),
@@ -307,19 +326,12 @@ int main(int argc, char** argv)
         timeLoop->setMaxTimeStepSize(max(dt, startupDt));
         const auto vtkOutputInterval = getParam<int>("Vtk.OutputInterval", 1);
 
-        // With theta = 0.5, the pressure (Lagrange multiplier of the incompressibility constraint)
-        // is only determined as the average of the old and the new time level, i.e. at the half step.
-        // The pressure at the time levels oscillates. Therefore, the indicators are evaluated from
-        // the averaged solution at t^{n+1/2}, which is also the time of the FeatFlow reference values.
         const auto collectIndicators = [&](const Scalar time)
         {
-            auto xHalf = xOld;
-            xHalf += x;
-            xHalf *= 0.5;
-            couplingManager->updateSolution(xHalf);
-            const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, xHalf[momentumIdx], false);
-            const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, xHalf[massIdx]);
+            // the traction on the cylinder uses the pressure of the coupling manager
             couplingManager->updateSolution(x);
+            const auto [cDrag, cLift] = momentumProblem->evalDragAndLiftCoefficient(*momentumGridVariables, x[momentumIdx], false);
+            const auto pDiff = massProblem->evalPressureDifference(*massGridVariables, x[massIdx]);
 
             std::cout << "Benchmark indicators at t = " << time << ": cDrag = " << cDrag
                       << ", cLift = " << cLift << ", pDiff = " << pDiff << std::endl;
@@ -353,7 +365,7 @@ int main(int argc, char** argv)
                     timeStepper.step(x, *timeLoop);
 
                     if (evalIndicators)
-                        collectIndicators(timeLoop->time() + 0.5*timeLoop->timeStepSize());
+                        collectIndicators(timeLoop->time() + timeLoop->timeStepSize());
 
                     xOld = x;
                     momentumGridVariables->advanceTimeStep();

@@ -310,7 +310,7 @@ def evaluatePeriodic(series, tStart):
 def evaluateTransient(series):
     """
     Evaluate the quantities of case 2D-3: maxima of the drag and lift coefficients and their
-    times, and the pressure difference at the end time (the last half step before t = 8 s).
+    times, and the pressure difference at the end time t = 8 s.
     Returns None if the run did not reach t = 8 s.
     """
     if series["time"][-1] < 8.0 - 0.01:
@@ -604,8 +604,8 @@ def main():
     parser.add_argument(
         "--tstart",
         type=float,
-        default=25.0,
-        help="2D-2: the periodic regime is evaluated for t >= tstart",
+        default=9.0,
+        help="2D-2: the periodic regime is evaluated for t >= tstart (FeatFlow window [9, 10] s)",
     )
     parser.add_argument("--results-dir", default=RESULTS_DIR, help="output folder")
     args = parser.parse_args()
