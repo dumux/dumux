@@ -135,6 +135,7 @@ segment could intersect a convex polygon in 2D that it misses, and a segment nev
 elements). The intersections of polygons and polyhedra no longer allocate heap memory for the edges and faces of the
 geometries, the intersections of a segment with a polygon or a polyhedron no longer allocate heap memory at all, and
 `intersectingEntities` no longer copies the geometries of entity sets that store them (e.g. `GeometriesEntitySet`).
+- __Newton__: With `Newton.EnableJacobianReuse = true`, `NewtonSolver` keeps the Jacobian matrix of an earlier iteration and assembles only the residual while successive updates contract at least by the factor `Newton.JacobianReuseMaxContraction` (default 0.1), a simplified Newton method. The linear solver keeps the matrix (`setMatrix(A)`, `solve(x, b)`), so a direct solver factorizes only the reassembled Jacobian matrices. With assemblers that provide the weights of the storage and the spatial terms of the current stage (`currentStageWeights()`, e.g. `Experimental::MultiStageAssembler`), the Jacobian matrix is also reused over stages and time steps until these weights change. The assembler has to implement `assembleResidual`.
 
 ### Immediate interface changes not allowing/requiring a deprecation period:
 - __Navier-Stokes__: The advective momentum flux of the control-volume finite element momentum model upwinds the momentum

@@ -20,3 +20,6 @@ dumux_add_test(SOURCES test_newton_parallel.cc
 # cubic backtracking line search
 dumux_add_test(SOURCES test_newton_linesearch_cubicbacktracking.cc
                LABELS unit nonlinear)
+
+dumux_add_test(SOURCES test_newton_jacobianreuse.cc
+               LABELS unit nonlinear)
