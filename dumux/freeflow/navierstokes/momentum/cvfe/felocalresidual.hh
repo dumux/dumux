@@ -108,12 +108,6 @@ public:
             if (nonCVLocalDofs(elemDisc).empty())
                 return;
 
-            if constexpr (requires { problem.pointSources(); })
-            {
-                if (!problem.pointSources().empty())
-                    DUNE_THROW(Dune::NotImplemented, "Point sources are not implemented for hybrid momentum schemes.");
-            }
-
             using GridDiscretization = GridDiscretization_t<ElementDiscretization>;
             using FluxTerms = Experimental::CVFENavierStokesMomentumFluxAtIp<Scalar, GridDiscretization>;
 

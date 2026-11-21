@@ -31,6 +31,7 @@
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/cvfelocalassembler_.hh>
+#include <dumux/discretization/concepts.hh>
 #include <dumux/discretization/cvfe/localdof.hh>
 
 namespace Dumux::Experimental {
@@ -185,17 +186,17 @@ public:
      */
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVariables& elemVars) const
     {
-        static_assert(!Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>(), "Separate source calculation not implemented for hybrid schemes.");
-
-        // initialize the residual vector for all scvs in this element
+        // initialize the residual vector for all local dofs in this element
         ElementResidualVector residual(Dumux::Detail::LocalDofs::numLocalDofs(this->elemDisc()));
 
         // evaluate the source term
         // forward to the local residual specialized for the discretization methods
-        for (const auto& scv : scvs(this->elemDisc()))
-        {
-            residual[scv.localDofIndex()] = this->localResidual().sourceIntegral(this->elemDisc(), elemVars, scv);
-        }
+        if constexpr (Dumux::Experimental::Concepts::FVElementDiscretization<ElementDiscretization>)
+            for (const auto& scv : scvs(this->elemDisc()))
+                residual[scv.localDofIndex()] = -this->localResidual().sourceIntegral(this->elemDisc(), elemVars, scv);
+
+        // point sources of the local dofs without control volume
+        this->localResidual().addPointSourcesOfNonCVLocalDofs(residual, this->problem(), this->elemDisc(), elemVars);
 
         return residual;
     }

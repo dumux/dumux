@@ -12,9 +12,15 @@
 
 #include <config.h>
 
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <fstream>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
@@ -40,6 +46,101 @@ void addElementMarkerForProjection(const CouplingManager& couplingManager, Write
 {
     if constexpr(CouplingManager::couplingMode == Dumux::Embedded1d3dCouplingMode::projection)
         w.addField(couplingManager.bulkElementMarker(), "element marker");
+}
+
+// The coupling area is the area of the coupled bulk boundary faces. Each coupled face carries
+// quadrature weights that sum to the face area, and a second initialization does not change anything.
+template<class CouplingManager, class BulkGridGeometry>
+void checkProjectionPointSources(CouplingManager& couplingManager, const BulkGridGeometry& bulkGridGeometry)
+{
+    if constexpr(CouplingManager::couplingMode == Dumux::Embedded1d3dCouplingMode::projection)
+    {
+        using namespace Dumux;
+        const auto couplingArea = [&]{
+            double area = 0.0;
+            for (const auto& s : couplingManager.bulkPointSources())
+                area += s.quadratureWeight()*s.integrationElement();
+            return area;
+        };
+
+        // Per element, the weights of its point sources sum to the area of its coupled boundary faces.
+        // A boundary face is coupled if a point source lies on its plane and on no other boundary face plane
+        // of the element (quadrature points may also lie on an edge shared by two faces).
+        const auto coupledFaceArea = [&]{
+            std::vector<std::vector<const std::decay_t<decltype(couplingManager.bulkPointSources()[0])>*>> sourcesInElement(bulkGridGeometry.gridView().size(0));
+            for (const auto& s : couplingManager.bulkPointSources())
+                sourcesInElement[s.elementIndex()].push_back(&s);
+
+            double totalArea = 0.0;
+            for (const auto& element : elements(bulkGridGeometry.gridView()))
+            {
+                const auto eIdx = bulkGridGeometry.elementMapper().index(element);
+                if (sourcesInElement[eIdx].empty())
+                    continue;
+
+                double weight = 0.0, area = 0.0;
+                for (const auto* s : sourcesInElement[eIdx])
+                    weight += s->quadratureWeight()*s->integrationElement();
+
+                for (const auto& intersection : intersections(bulkGridGeometry.gridView(), element))
+                {
+                    if (!intersection.boundary())
+                        continue;
+
+                    const auto faceArea = intersection.geometry().volume();
+                    const auto isOnPlane = [&](const auto& s, const auto& is) {
+                        return std::abs((s.position() - is.geometry().center())*is.centerUnitOuterNormal()) < 1e-9*std::sqrt(faceArea);
+                    };
+
+                    const bool isCoupledFace = std::any_of(sourcesInElement[eIdx].begin(), sourcesInElement[eIdx].end(), [&](const auto* s) {
+                        if (!isOnPlane(*s, intersection))
+                            return false;
+                        for (const auto& other : intersections(bulkGridGeometry.gridView(), element))
+                            if (other.boundary() && other.indexInInside() != intersection.indexInInside() && isOnPlane(*s, other))
+                                return false;
+                        return true;
+                    });
+
+                    if (isCoupledFace)
+                        area += faceArea;
+                }
+
+                if (std::abs(weight - area) > 1e-12*area)
+                    DUNE_THROW(Dune::InvalidStateException, "The point source weights of element " << eIdx << " sum to "
+                               << weight << ", the area of its coupled faces is " << area);
+                totalArea += area;
+            }
+            return totalArea;
+        };
+
+        const auto numSources = couplingManager.bulkPointSources().size();
+        const auto area = couplingArea();
+        if (numSources == 0 || std::abs(area - coupledFaceArea()) > 1e-12*area)
+            DUNE_THROW(Dune::InvalidStateException, "Coupling area " << area << " is not the area of the coupled faces " << coupledFaceArea());
+
+        const auto localAreaFactor = couplingManager.localAreaFactor();
+        couplingManager.computePointSourceData();
+
+        if (couplingManager.bulkPointSources().size() != numSources
+            || couplingManager.lowDimPointSources().size() != numSources
+            || std::as_const(couplingManager).pointSourceData().size() != numSources)
+            DUNE_THROW(Dune::InvalidStateException, "Number of point sources changed on re-initialization from " << numSources
+                       << " to " << couplingManager.bulkPointSources().size());
+
+        if (std::abs(couplingArea() - area) > 1e-12*area)
+            DUNE_THROW(Dune::InvalidStateException, "Coupling area changed on re-initialization from " << area << " to " << couplingArea());
+
+        const auto& newLocalAreaFactor = couplingManager.localAreaFactor();
+        for (std::size_t i = 0; i < localAreaFactor.size(); ++i)
+            if (std::abs(newLocalAreaFactor[i] - localAreaFactor[i]) > 1e-12)
+                DUNE_THROW(Dune::InvalidStateException, "Local area factor of segment " << i << " changed on re-initialization");
+
+        for (std::size_t id = 0; id < numSources; ++id)
+            if (!(couplingManager.averageDistance(id) >= 0.0))
+                DUNE_THROW(Dune::InvalidStateException, "Invalid average distance for point source " << id);
+
+        std::cout << "Checked " << numSources << " projection point sources, coupling area " << area << std::endl;
+    }
 }
 
 int main(int argc, char** argv)
@@ -115,6 +216,7 @@ int main(int argc, char** argv)
     auto oldSol = sol;
 
     couplingManager->init(bulkProblem, lowDimProblem, sol);
+    checkProjectionPointSources(*couplingManager, *bulkFvGridGeometry);
     bulkProblem->computePointSourceMap();
     lowDimProblem->computePointSourceMap();
 

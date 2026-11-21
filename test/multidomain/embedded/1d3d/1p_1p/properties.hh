@@ -31,6 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box.hh>
 #include <dumux/discretization/cctpfa.hh>
+#include <dumux/discretization/pq1bubble.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/material/components/constant.hh>
@@ -52,6 +53,10 @@ namespace TTag {
 struct Tissue { using InheritsFrom = std::tuple<OneP>; };
 struct TissueCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
 struct TissueBox { using InheritsFrom = std::tuple<Tissue, BoxModel>; };
+struct TissuePQ1Bubble { using InheritsFrom = std::tuple<Tissue, PQ1BubbleModel>; };
+// Tensor-product YaspGrid: equidistant or graded cells, so the kernel coupling manager
+// locates points with the bounding box tree
+struct TissueTensorProductCC { using InheritsFrom = std::tuple<Tissue, CCTpfaModel>; };
 #if HAVE_DUNE_ALUGRID
 // Unstructured bulk grid: ALUGrid is not Cartesian, so the kernel coupling manager falls back
 // to the bounding-box-tree lookup instead of the O(1) structured one. Same domain and same
@@ -65,6 +70,10 @@ struct TissueALUBox { using InheritsFrom = std::tuple<TissueALU, BoxModel>; };
 // Set the grid type
 template<class TypeTag>
 struct Grid<TypeTag, TTag::Tissue> { using type = Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
+
+template<class TypeTag>
+struct Grid<TypeTag, TTag::TissueTensorProductCC>
+{ using type = Dune::YaspGrid<3, Dune::TensorProductCoordinates<GetPropType<TypeTag, Properties::Scalar>, 3> >; };
 
 #if HAVE_DUNE_ALUGRID
 template<class TypeTag>

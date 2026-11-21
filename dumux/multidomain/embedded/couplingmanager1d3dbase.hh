@@ -17,6 +17,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/indextraits.hh>
 
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
@@ -59,17 +60,60 @@ public:
               const SolutionVector& curSol)
     {
         ParentType::init(bulkProblem, lowDimProblem, curSol);
-        computeLowDimVolumeFractions();
+        computeLowDimVolumeFractions_();
     }
 
     //! Compute the low dim volume fraction in the bulk domain cells
+    [[deprecated("Will be removed after release 3.11. Only needed for the deprecated lowDimVolume and lowDimVolumeFraction.")]]
     void computeLowDimVolumeFractions()
+    { computeLowDimVolumeFractions_(); }
+
+    /*!
+     * \brief Methods to be accessed by the subproblems
+     */
+    // \{
+
+    //! Returns the radius of the lower dimensional element
+    Scalar radius(std::size_t id) const
+    {
+        const auto& data = this->pointSourceData()[id];
+        return this->problem(lowDimIdx).spatialParams().radius(data.lowDimElementIdx());
+    }
+
+    //! The volume the lower dimensional domain occupies in the bulk domain element
+    // For one-dimensional low dim domain we assume radial tubes
+    [[deprecated("Will be removed after release 3.11. This is not a general implementation: the volume of "
+                 "a cylinder around a segment is counted in full in every bulk element containing the segment "
+                 "(several for a segment on a face or an edge) and not in the elements the cylinder reaches "
+                 "beyond the segment. Use EmbeddedCoupling::lowDimVolumePerBulkElement "
+                 "from dumux/multidomain/embedded/lowdimvolume.hh.")]]
+    Scalar lowDimVolume(const Element<bulkIdx>& element) const
+    {
+        const auto eIdx = gridDiscretization(this->problem(bulkIdx)).elementMapper().index(element);
+        return lowDimVolumeInBulkElement_[eIdx];
+    }
+
+    //! The volume fraction the lower dimensional domain occupies in the bulk domain element
+    // For one-dimensional low dim domain we assume radial tubes
+    [[deprecated("Will be removed after release 3.11. This is not a general implementation: see lowDimVolume. "
+                 "Divide the result of EmbeddedCoupling::lowDimVolumePerBulkElement "
+                 "from dumux/multidomain/embedded/lowdimvolume.hh by the element volume.")]]
+    Scalar lowDimVolumeFraction(const Element<bulkIdx>& element) const
+    {
+        const auto eIdx = gridDiscretization(this->problem(bulkIdx)).elementMapper().index(element);
+        return lowDimVolumeInBulkElement_[eIdx] / element.geometry().volume();
+    }
+
+    // \}
+
+private:
+    void computeLowDimVolumeFractions_()
     {
         // resize the storage vector
         lowDimVolumeInBulkElement_.resize(this->gridView(bulkIdx).size(0));
         // get references to the grid geometries
-        const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
-        const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
+        const auto& lowDimGridGeometry = gridDiscretization(this->problem(lowDimIdx));
+        const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
 
         // compute the low dim volume fractions
         for (const auto& is : intersections(this->glue()))
@@ -90,37 +134,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Methods to be accessed by the subproblems
-     */
-    // \{
-
-    //! Returns the radius of the lower dimensional element
-    Scalar radius(std::size_t id) const
-    {
-        const auto& data = this->pointSourceData()[id];
-        return this->problem(lowDimIdx).spatialParams().radius(data.lowDimElementIdx());
-    }
-
-    //! The volume the lower dimensional domain occupies in the bulk domain element
-    // For one-dimensional low dim domain we assume radial tubes
-    Scalar lowDimVolume(const Element<bulkIdx>& element) const
-    {
-        const auto eIdx = this->problem(bulkIdx).gridGeometry().elementMapper().index(element);
-        return lowDimVolumeInBulkElement_[eIdx];
-    }
-
-    //! The volume fraction the lower dimensional domain occupies in the bulk domain element
-    // For one-dimensional low dim domain we assume radial tubes
-    Scalar lowDimVolumeFraction(const Element<bulkIdx>& element) const
-    {
-        const auto totalVolume = element.geometry().volume();
-        return lowDimVolume(element) / totalVolume;
-    }
-
-    // \}
-
-private:
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
 };

@@ -2313,6 +2313,11 @@
             "The characteristic relative length"
         ]
     },
+    "MixedDimension.KernelIntegrationOrder": {
+        "explanation": [
+            "The order of the quadrature rule along each intersection of the centerline with a bulk element for the kernel coupling"
+        ]
+    },
     "MixedDimension.KernelWidthFactor": {
         "explanation": [
             "The kernel width factor"

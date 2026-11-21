@@ -16,9 +16,11 @@
 #define DUMUX_INTEGRATION_POINTSOURCE_HH
 
 #include <type_traits>
+#include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/discretization/method.hh>
 
 namespace Dumux {
@@ -63,7 +65,7 @@ public:
     { return integrationElement_; }
 
     void setQuadratureWeight(const Scalar qpWeight)
-    { return qpweight_ = qpWeight; }
+    { qpweight_ = qpWeight; }
 
     void setIntegrationElement(const Scalar ie)
     { integrationElement_ = ie; }
@@ -107,28 +109,41 @@ public:
                                       PointSourceMap& pointSourceMap,
                                       const std::string& paramGroup = "")
     {
+        [[maybe_unused]] const bool boxPointSourceLumping = getParamFromGroup<bool>(paramGroup, "PointSource.EnableBoxLumping", true);
         for (const auto& source : sources)
         {
             // get the index of the element in which the point source falls
             const auto eIdx = source.elementIndex();
-            if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
-                || GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
+            if constexpr (DiscretizationMethods::isCVFE<typename GridGeometry::DiscretizationMethod>)
             {
+                static_assert(!Detail::LocalDofs::hasNonCVLocalDofsInterface<typename GridGeometry::LocalView>(),
+                              "Point sources in the sub control volumes need a scheme where every local dof has a control volume, "
+                              "use the interface with the element variables otherwise");
                 auto fvGeometry = localView(gridGeometry);
                 // check in which subcontrolvolume(s) we are
                 const auto element = gridGeometry.boundingBoxTree().entitySet().entity(eIdx);
                 fvGeometry.bindElement(element);
                 const auto globalPos = source.position();
 
-                static const bool boxPointSourceLumping = getParamFromGroup<bool>(paramGroup, "PointSource.EnableBoxLumping", true);
                 if (boxPointSourceLumping)
                 {
                     // loop over all sub control volumes and check if the point source is inside
-                    constexpr int dim = GridGeometry::GridView::dimension;
-                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
+                    Dune::ReservedVector<std::size_t, Detail::LocalDofs::maxNumLocalDofs<typename GridGeometry::LocalView>()> scvIndices;
                     for (const auto& scv : scvs(fvGeometry))
+                    {
+                        if constexpr (requires { scv.isOverlapping(); })
+                            if (scv.isOverlapping())
+                                DUNE_THROW(Dune::NotImplemented,
+                                           "Point sources in overlapping sub control volumes, "
+                                           "set PointSource.EnableBoxLumping to false to distribute them with the basis functions");
+
                         if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
                             scvIndices.push_back(scv.indexInElement());
+                    }
+
+                    if (scvIndices.empty())
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Point source at " << globalPos << " is not inside any sub control volume of element " << eIdx);
 
                     // for all scvs that where tested positive add the point sources
                     // to the element/scv to point source map
@@ -167,7 +182,8 @@ public:
                     }
                 }
             }
-            else
+            else if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa
+                    || GridGeometry::discMethod == DiscretizationMethods::ccmpfa)
             {
                 // add the pointsource to the DOF map
                 const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
@@ -176,6 +192,8 @@ public:
                 else
                     pointSourceMap.insert({key, {source}});
             }
+            else
+                DUNE_THROW(Dune::NotImplemented, "IntegrationPointSourceHelper for discretization method " << GridGeometry::discMethod);
         }
     }
 };

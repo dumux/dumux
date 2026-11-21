@@ -20,6 +20,7 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/indextraits.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
@@ -72,8 +73,8 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Surface>
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
@@ -121,16 +122,15 @@ public:
      * at each quadrature point and provides the point source with the necessary
      * information to compute integrals (quadrature weight and integration element)
      * \param order The order of the quadrature rule for integration of sources over an intersection
-     * \param verbose If the point source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // if we use the circle average as the 3D values or a point evaluation
-        static const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
+        const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
 
         // Initialize the bulk bounding box tree
-        const auto& bulkGridGeometry = this->problem(bulkIdx).gridGeometry();
-        const auto& lowDimGridGeometry = this->problem(lowDimIdx).gridGeometry();
+        const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& lowDimGridGeometry = gridDiscretization(this->problem(lowDimIdx));
         const auto& bulkTree = bulkGridGeometry.boundingBoxTree();
 
         // initialize the maps
@@ -143,15 +143,16 @@ public:
         this->clear();
         extendedSourceStencil_.stencil().clear();
 
-        // precompute the vertex indices for efficiency
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // precompute the dof indices for efficiency
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
 
         // intersect the bounding box trees
         this->glueGrids();
 
         // iterate over all intersection and add point sources
         const auto& lowDimProblem = this->problem(lowDimIdx);
+        const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
         for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
@@ -186,7 +187,6 @@ public:
                 // get points on the cylinder surface at the integration point
                 ////////////////////////////////////////////////////////////////
 
-                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = lowDimProblem.spatialParams().radius(lowDimElementIdx);
                 const auto normal = intersectionGeometry.corner(1)-intersectionGeometry.corner(0);
                 const auto integrationElement = intersectionGeometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
@@ -197,8 +197,8 @@ public:
                 std::vector<std::vector<std::size_t>> circleBulkElementIndices(circlePoints.size());
                 std::vector<Scalar> circleIpWeight; circleIpWeight.reserve(circlePoints.size());
                 std::vector<GridIndex<bulkIdx>> circleStencil; circleStencil.reserve(circlePoints.size());
-                // for box
-                std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices;
+                // for the control-volume finite element methods
+                std::vector<const std::vector<GridIndex<bulkIdx>>*> circleDofIndices;
                 using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                 std::vector<ShapeValues> circleShapeValues;
 
@@ -215,11 +215,11 @@ public:
                         circleStencil.push_back(bulkElementIdx);
                         circleIpWeight.push_back(localCircleAvgWeight);
 
-                        // precompute interpolation data for box scheme for each cut bulk element
-                        if constexpr (isBox<bulkIdx>())
+                        // precompute interpolation data for the control-volume finite element methods for each cut bulk element
+                        if constexpr (isCVFE<bulkIdx>())
                         {
                             const auto bulkElement = bulkGridGeometry.element(bulkElementIdx);
-                            circleCornerIndices.push_back(&(this->vertexIndices(bulkIdx, bulkElementIdx)));
+                            circleDofIndices.push_back(&(this->elementDofIndices(bulkIdx, bulkElementIdx)));
 
                             // evaluate shape functions at the integration point
                             const auto bulkGeometry = bulkElement.geometry();
@@ -231,13 +231,13 @@ public:
                 }
 
                 // export low dim circle stencil
-                if constexpr (isBox<bulkIdx>())
+                if constexpr (isCVFE<bulkIdx>())
                 {
-                    // we insert all vertices and make it unique later
-                    for (const auto& vertices : circleCornerIndices)
+                    // we insert all dofs and make it unique later
+                    for (const auto& dofs : circleDofIndices)
                     {
                         this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   vertices->begin(), vertices->end());
+                                                                                   dofs->begin(), dofs->end());
 
                     }
                 }
@@ -270,12 +270,12 @@ public:
                         // the actual solution dependent source term
                         PointSourceData psData;
 
-                        if constexpr (isBox<lowDimIdx>())
+                        if constexpr (isCVFE<lowDimIdx>())
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             ShapeValues shapeValues;
                             this->getShapeValues(lowDimIdx, lowDimGridGeometry, lowDimElement.geometry(), globalPos, shapeValues);
-                            psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                            psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                         }
                         else
                         {
@@ -283,16 +283,16 @@ public:
                         }
 
                         // add data needed to compute integral over the circle
-                        if constexpr (isBox<bulkIdx>())
+                        if constexpr (isCVFE<bulkIdx>())
                         {
                             if (useCircleAverage)
-                                psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
+                                psData.addCircleInterpolation(circleDofIndices, circleShapeValues, circleIpWeight, circleStencil);
 
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             const auto bulkGeometry = bulkGridGeometry.element(bulkElementIdx).geometry();
                             ShapeValues shapeValues;
                             this->getShapeValues(bulkIdx, bulkGridGeometry, bulkGeometry, circlePos, shapeValues);
-                            psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                            psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                         }
                         else
                         {
@@ -306,12 +306,12 @@ public:
                         this->pointSourceData().emplace_back(std::move(psData));
 
                         // export the bulk coupling stencil
-                        // we insert all vertices / elements and make it unique later
-                        if constexpr (isBox<lowDimIdx>())
+                        // we insert all dofs / elements and make it unique later
+                        if constexpr (isCVFE<lowDimIdx>())
                         {
-                            const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
+                            const auto& dofs = this->elementDofIndices(lowDimIdx, lowDimElementIdx);
                             this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                                                                                   vertices.begin(), vertices.end());
+                                                                                   dofs.begin(), dofs.end());
 
                         }
                         else
@@ -322,13 +322,13 @@ public:
                         // export bulk circle stencil (only needed for circle average)
                         if (useCircleAverage)
                         {
-                            if constexpr (isBox<bulkIdx>())
+                            if constexpr (isCVFE<bulkIdx>())
                             {
-                                // we insert all vertices and make it unique later
-                                for (const auto& vertices : circleCornerIndices)
+                                // we insert all dofs and make it unique later
+                                for (const auto& dofs : circleDofIndices)
                                 {
                                     extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                               vertices->begin(), vertices->end());
+                                                                               dofs->begin(), dofs->end());
 
                                 }
                             }
@@ -349,10 +349,10 @@ public:
             std::sort(stencil.second.begin(), stencil.second.end());
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
 
-            // remove the vertices element (box)
-            if constexpr (isBox<bulkIdx>())
+            // remove the dofs of the element (control-volume finite element methods)
+            if constexpr (isCVFE<bulkIdx>())
             {
-                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
+                const auto& indices = this->elementDofIndices(bulkIdx, stencil.first);
                 stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
                                                    [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
                                      stencil.second.end());
@@ -397,9 +397,6 @@ public:
 private:
     //! the extended source stencil object
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
-
-    //! vector for the volume fraction of the lowdim domain in the bulk domain cells
-    std::vector<Scalar> lowDimVolumeInBulkElement_;
 };
 
 //! we support multithreaded assembly

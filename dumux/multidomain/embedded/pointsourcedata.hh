@@ -43,50 +43,62 @@ class PointSourceData
     static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
 public:
+    /*!
+     * \brief Add the interpolation data in the bulk domain
+     * \param shapeValues the values of the basis functions of the local dofs at the point source
+     * \param dofIndices the global indices of the local dofs, in the order of the basis functions
+     * \param eIdx the index of the element containing the point source
+     */
     void addBulkInterpolation(const ShapeValues& shapeValues,
-                              const std::vector<GridIndex<bulkIdx>>& cornerIndices,
+                              const std::vector<GridIndex<bulkIdx>>& dofIndices,
                               GridIndex<bulkIdx> eIdx)
     {
-        static_assert(isBox<bulkIdx>(), "This interface is only available for the box method.");
+        static_assert(isCVFE<bulkIdx>(), "This interface is only available for control-volume finite element methods.");
         bulkElementIdx_ = eIdx;
-        bulkCornerIndices_ = cornerIndices;
+        bulkDofIndices_ = dofIndices;
         bulkShapeValues_ = shapeValues;
     }
 
+    /*!
+     * \brief Add the interpolation data in the lower-dimensional domain
+     * \param shapeValues the values of the basis functions of the local dofs at the point source
+     * \param dofIndices the global indices of the local dofs, in the order of the basis functions
+     * \param eIdx the index of the element containing the point source
+     */
     void addLowDimInterpolation(const ShapeValues& shapeValues,
-                                const std::vector<GridIndex<lowDimIdx>>& cornerIndices,
+                                const std::vector<GridIndex<lowDimIdx>>& dofIndices,
                                 GridIndex<lowDimIdx> eIdx)
     {
-        static_assert(isBox<lowDimIdx>(), "This interface is only available for the box method.");
+        static_assert(isCVFE<lowDimIdx>(), "This interface is only available for control-volume finite element methods.");
         lowDimElementIdx_ = eIdx;
-        lowDimCornerIndices_ = cornerIndices;
+        lowDimDofIndices_ = dofIndices;
         lowDimShapeValues_ = shapeValues;
     }
 
     void addBulkInterpolation(GridIndex<bulkIdx> eIdx)
     {
-        static_assert(!isBox<bulkIdx>(), "This interface is not available for the box method.");
+        static_assert(!isCVFE<bulkIdx>(), "This interface is not available for control-volume finite element methods.");
         bulkElementIdx_ = eIdx;
     }
 
     void addLowDimInterpolation(GridIndex<lowDimIdx> eIdx)
     {
-        static_assert(!isBox<lowDimIdx>(), "This interface is not available for the box method.");
+        static_assert(!isCVFE<lowDimIdx>(), "This interface is not available for control-volume finite element methods.");
         lowDimElementIdx_ = eIdx;
     }
 
     PrimaryVariables<bulkIdx> interpolateBulk(const SolutionVector<bulkIdx>& sol) const
     {
         PrimaryVariables<bulkIdx> bulkPriVars(0.0);
-        if (isBox<bulkIdx>())
+        if (isCVFE<bulkIdx>())
         {
-            for (int i = 0; i < bulkCornerIndices_.size(); ++i)
+            for (int i = 0; i < bulkDofIndices_.size(); ++i)
                 for (int priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
-                    bulkPriVars[priVarIdx] += sol[bulkCornerIndices_[i]][priVarIdx]*bulkShapeValues_[i][0];
+                    bulkPriVars[priVarIdx] += sol[bulkDofIndices_[i]][priVarIdx]*bulkShapeValues_[i][0];
         }
         else
         {
@@ -98,11 +110,11 @@ public:
     PrimaryVariables<lowDimIdx> interpolateLowDim(const SolutionVector<lowDimIdx>& sol) const
     {
         PrimaryVariables<lowDimIdx> lowDimPriVars(0.0);
-        if (isBox<lowDimIdx>())
+        if (isCVFE<lowDimIdx>())
         {
-            for (int i = 0; i < lowDimCornerIndices_.size(); ++i)
+            for (int i = 0; i < lowDimDofIndices_.size(); ++i)
                 for (int priVarIdx = 0; priVarIdx < lowDimPriVars.size(); ++priVarIdx)
-                    lowDimPriVars[priVarIdx] += sol[lowDimCornerIndices_[i]][priVarIdx]*lowDimShapeValues_[i][0];
+                    lowDimPriVars[priVarIdx] += sol[lowDimDofIndices_[i]][priVarIdx]*lowDimShapeValues_[i][0];
         }
         else
         {
@@ -119,8 +131,8 @@ public:
 
 private:
     ShapeValues bulkShapeValues_, lowDimShapeValues_;
-    std::vector<GridIndex<bulkIdx>> bulkCornerIndices_;
-    std::vector<GridIndex<lowDimIdx>> lowDimCornerIndices_;
+    std::vector<GridIndex<bulkIdx>> bulkDofIndices_;
+    std::vector<GridIndex<lowDimIdx>> lowDimDofIndices_;
     GridIndex<bulkIdx> bulkElementIdx_;
     GridIndex<lowDimIdx> lowDimElementIdx_;
 };
@@ -152,8 +164,8 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
     static constexpr auto lowDimIdx = typename MDTraits::template SubDomain<1>::Index();
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
 public:
     PointSourceDataCircleAverage() : enableBulkCircleInterpolation_(false) {}
@@ -169,19 +181,19 @@ public:
         {
             // compute the average of the bulk privars over the circle around the integration point
             // this computes $\bar{p} = \frac{1}{2\pi R} int_0^2*\pi p R \text{d}\theta.
-            if (isBox<bulkIdx>())
+            if (isCVFE<bulkIdx>())
             {
-                assert(circleCornerIndices_.size() == circleShapeValues_.size());
+                assert(circleDofIndices_.size() == circleShapeValues_.size());
 
                 Scalar weightSum = 0.0;
                 for (std::size_t j = 0; j < circleStencil_.size(); ++j)
                 {
                     PrimaryVariables<bulkIdx> priVars(0.0);
-                    const auto& cornerIndices = *(circleCornerIndices_[j]);
+                    const auto& dofIndices = *(circleDofIndices_[j]);
                     const auto& shapeValues = circleShapeValues_[j];
-                    for (int i = 0; i < cornerIndices.size(); ++i)
+                    for (int i = 0; i < dofIndices.size(); ++i)
                     {
-                        const auto& localSol = sol[cornerIndices[i]];
+                        const auto& localSol = sol[dofIndices[i]];
                         const auto& shapeValue = shapeValues[i];
                         for (int priVarIdx = 0; priVarIdx < PrimaryVariables<bulkIdx>::size(); ++priVarIdx)
                             priVars[priVarIdx] += localSol[priVarIdx]*shapeValue[0];
@@ -213,12 +225,12 @@ public:
         }
     }
 
-    void addCircleInterpolation(const std::vector<const std::vector<GridIndex<bulkIdx>>*>& circleCornerIndices,
+    void addCircleInterpolation(const std::vector<const std::vector<GridIndex<bulkIdx>>*>& circleDofIndices,
                                 const std::vector<ShapeValues>& circleShapeValues,
                                 const std::vector<Scalar>& circleIpWeight,
                                 const std::vector<GridIndex<bulkIdx>>& circleStencil)
     {
-        circleCornerIndices_ = circleCornerIndices;
+        circleDofIndices_ = circleDofIndices;
         circleShapeValues_ = circleShapeValues;
         circleIpWeight_ = circleIpWeight;
         circleStencil_ = circleStencil;
@@ -238,7 +250,7 @@ public:
     { return circleStencil_; }
 
 private:
-    std::vector<const std::vector<GridIndex<bulkIdx>>*> circleCornerIndices_;
+    std::vector<const std::vector<GridIndex<bulkIdx>>*> circleDofIndices_;
     std::vector<ShapeValues> circleShapeValues_;
     std::vector<Scalar> circleIpWeight_;
     std::vector<GridIndex<bulkIdx>> circleStencil_;

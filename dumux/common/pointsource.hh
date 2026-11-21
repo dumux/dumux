@@ -309,6 +309,10 @@ public:
                         if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
                             scvIndices.push_back(scv.indexInElement());
 
+                    if (scvIndices.empty())
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Point source at " << globalPos << " is not inside any sub control volume of element " << eIdx);
+
                     // for all scvs that tested positive add the point sources
                     // to the element/scv to point source map
                     for (const auto scvIdx : scvIndices)

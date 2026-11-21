@@ -75,6 +75,30 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_line
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_tpfatpfa_line)
 
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxtpfa_line
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Line
+              COMMAND ./test_md_embedded_1d3d_1p1p_boxtpfa_line
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxtpfa_line)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxbox_line
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Line
+              COMMAND ./test_md_embedded_1d3d_1p1p_boxbox_line
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxbox_line)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxbox_surface
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=BloodFlowBox COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+              COMMAND ./test_md_embedded_1d3d_1p1p_boxbox_surface
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxbox_surface)
+
 dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc
@@ -82,6 +106,40 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               COMMAND ./test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_tpfatpfa_kernel)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissueTensorProductCC LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+              COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/compare_errors.py
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS --command-a "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel params.input -Problem.Name kernel_yasp -Vtk.EnableVtkOutput false"
+                       --command-b "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct params.input -Problem.Name kernel_tensorproduct -Vtk.EnableVtkOutput false -Tissue.Grid.Positions0 '-1 1' -Tissue.Grid.Positions1 '-1 1' -Tissue.Grid.Positions2 '0 1' -Tissue.Grid.Cells0 20 -Tissue.Grid.Cells1 20 -Tissue.Grid.Cells2 20"
+                       --errors-a kernel_yasp-errors.csv
+                       --errors-b kernel_tensorproduct-errors.csv
+                       --tolerance 1e-10)
+add_dependencies(test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct test_md_embedded_1d3d_1p1p_tpfatpfa_kernel)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_graded
+              LABELS multidomain multidomain_embedded 1p
+              TARGET test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_tensorproduct
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Problem.Name kernel_graded -Vtk.EnableVtkOutput false
+                       -Tissue.Grid.Positions0 "-1 -0.2 0.3 1" -Tissue.Grid.Cells0 "6 5 6"
+                       -Tissue.Grid.Positions1 "-1 -0.3 0.2 1" -Tissue.Grid.Cells1 "6 5 6"
+                       -Tissue.Grid.Positions2 "0 1" -Tissue.Grid.Cells2 20)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_refinement
+              LABELS multidomain multidomain_embedded 1p
+              TARGET test_md_embedded_1d3d_1p1p_tpfatpfa_kernel
+              COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/compare_errors.py
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS --command-a "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel params.input -Problem.Name kernel_cells -Vtk.EnableVtkOutput false -Tissue.Grid.Cells '40 40 40'"
+                       --command-b "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_tpfatpfa_kernel params.input -Problem.Name kernel_refined -Vtk.EnableVtkOutput false -Tissue.Grid.Refinement 1"
+                       --errors-a kernel_cells-errors.csv
+                       --errors-b kernel_refined-errors.csv
+                       --tolerance 1e-10)
 
 # The kernel (distributed source) method with vertex-centred dofs. The bulk source is spread
 # over the sub-control volumes of the element containing each sample point, so the exchange
@@ -183,6 +241,92 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_tpfatpfa_kernel_convergence
                        --check "L2Rel(p_3d) mean 2.0083 2.1083"
                        --check "L2Rel(p_1d) mean 2.0427 2.1427"
                        --check "L2Rel(q) mean 2.5322 2.6322")
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_pq1bubbletpfa_line
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissuePQ1Bubble LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Line
+              COMMAND ./test_md_embedded_1d3d_1p1p_pq1bubbletpfa_line
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.EnableVtkOutput false -PointSource.EnableBoxLumping false -Tissue.Grid.Cells "10 10 10" -Vessel.Grid.Cells 10)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_pq1bubbletpfa_average
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissuePQ1Bubble LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Average
+              COMMAND ./test_md_embedded_1d3d_1p1p_pq1bubbletpfa_average
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.EnableVtkOutput false -PointSource.EnableBoxLumping false -Tissue.Grid.Cells "10 10 10" -Vessel.Grid.Cells 10)
+
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_pq1bubbletpfa_kernel
+              LABELS multidomain multidomain_embedded 1p
+              SOURCES main.cc
+              COMPILE_DEFINITIONS BULKTYPETAG=TissuePQ1Bubble LOWDIMTYPETAG=BloodFlowCC COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+              COMMAND ./test_md_embedded_1d3d_1p1p_pq1bubbletpfa_kernel
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.EnableVtkOutput false -PointSource.EnableBoxLumping false -Tissue.Grid.Cells "10 10 10" -Vessel.Grid.Cells 10)
+
+foreach(COUPLING average line)
+  dumux_add_test(NAME test_md_embedded_1d3d_1p1p_pq1bubbletpfa_${COUPLING}_convergence
+                LABELS multidomain multidomain_embedded 1p
+                TARGET test_md_embedded_1d3d_1p1p_pq1bubbletpfa_${COUPLING}
+                COMMAND python3
+                CMAKE_GUARD dune-foamgrid_FOUND
+                CMD_ARGS ${CMAKE_CURRENT_SOURCE_DIR}/compare_rates.py --command-a "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_pq1bubbletpfa_${COUPLING} params.input -Problem.Name pq1bubbletpfa_${COUPLING}_convergence -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false -PointSource.EnableBoxLumping false"
+                         --command-b "${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_boxtpfa_${COUPLING} params.input -Problem.Name boxtpfa_${COUPLING}_convergence -SpatialParams.Radius 0.1 -Vtk.EnableVtkOutput false"
+                         --errors-a pq1bubbletpfa_${COUPLING}_convergence-errors.csv
+                         --errors-b boxtpfa_${COUPLING}_convergence-errors.csv
+                         --levels "6 12" "12 24" "24 48"
+                         --level-args "-Vessel.Grid.Cells {0} -Tissue.Grid.Cells '{1} {1} {0}'"
+                         --tolerance 0.05)
+  add_dependencies(test_md_embedded_1d3d_1p1p_pq1bubbletpfa_${COUPLING} test_md_embedded_1d3d_1p1p_boxtpfa_${COUPLING})
+endforeach()
+
+set(JACOBIAN_ARGS params.input -Vtk.EnableVtkOutput false -Test.CheckJacobian true
+    -Tissue.Grid.Cells "6 6 6" -Vessel.Grid.Cells 6 -MixedDimension.NumCircleSegments 16 -MixedDimension.KernelIntegrationCRL 0.1)
+foreach(JACOBIAN_TEST boxbox_average boxbox_kernel tpfatpfa_average boxtpfa_kernel pq1bubbletpfa_average pq1bubbletpfa_kernel)
+  set(LUMPING_ARGS "")
+  if(JACOBIAN_TEST MATCHES "pq1bubble")
+    set(LUMPING_ARGS -PointSource.EnableBoxLumping false)
+  endif()
+  dumux_add_test(NAME test_md_embedded_1d3d_1p1p_${JACOBIAN_TEST}_jacobian
+                LABELS multidomain multidomain_embedded 1p
+                TARGET test_md_embedded_1d3d_1p1p_${JACOBIAN_TEST}
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_${JACOBIAN_TEST}
+                CMAKE_GUARD dune-foamgrid_FOUND
+                CMD_ARGS ${JACOBIAN_ARGS} ${LUMPING_ARGS} -Problem.Name test_md_embedded_1d3d_1p1p_${JACOBIAN_TEST}_jacobian)
+endforeach()
+
+foreach(COLORING_TEST tpfatpfa_average tpfatpfa_kernel boxbox_average boxtpfa_kernel pq1bubbletpfa_average)
+  set(LUMPING_ARGS "")
+  if(COLORING_TEST MATCHES "pq1bubble")
+    set(LUMPING_ARGS -PointSource.EnableBoxLumping false)
+  endif()
+  dumux_add_test(NAME test_md_embedded_1d3d_1p1p_${COLORING_TEST}_coloring
+                LABELS multidomain multidomain_embedded 1p
+                TARGET test_md_embedded_1d3d_1p1p_${COLORING_TEST}
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_${COLORING_TEST}
+                CMAKE_GUARD dune-foamgrid_FOUND
+                CMD_ARGS params.input -Vtk.EnableVtkOutput false -Test.CheckColoring true ${LUMPING_ARGS}
+                         -Tissue.Grid.Cells "16 16 16" -Vessel.Grid.Cells 8 -MixedDimension.NumCircleSegments 4
+                         -SpatialParams.Radius 0.5 -Problem.Name test_md_embedded_1d3d_1p1p_${COLORING_TEST}_coloring)
+endforeach()
+
+foreach(THREADED_TEST pq1bubbletpfa_average boxbox_kernel)
+  set(LUMPING_ARGS "")
+  if(THREADED_TEST MATCHES "pq1bubble")
+    set(LUMPING_ARGS -PointSource.EnableBoxLumping false)
+  endif()
+  dumux_add_test(NAME test_md_embedded_1d3d_1p1p_${THREADED_TEST}_multithreading
+                LABELS multidomain multidomain_embedded 1p
+                THREADS 4
+                TARGET test_md_embedded_1d3d_1p1p_${THREADED_TEST}
+                COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_md_embedded_1d3d_1p1p_${THREADED_TEST}
+                CMAKE_GUARD dune-foamgrid_FOUND
+                CMD_ARGS params.input -Vtk.EnableVtkOutput false -Test.CheckMultithreading true ${LUMPING_ARGS}
+                         -Tissue.Grid.Cells "10 10 10" -Vessel.Grid.Cells 10 -MixedDimension.NumCircleSegments 16
+                         -Problem.Name test_md_embedded_1d3d_1p1p_${THREADED_TEST}_multithreading)
+endforeach()
 
 dune_symlink_to_source_files(FILES "params.input" "params_unstructured.input"
                                    "plot_convergence.py" "box.geo")

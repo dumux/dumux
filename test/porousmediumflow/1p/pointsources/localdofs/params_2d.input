@@ -1,0 +1,14 @@
+[Grid]
+UpperRight = 1.0 1.0
+Cells = 8 8
+
+[Problem]
+EnableGravity = false
+
+[PointSource]
+Position = 0.3 0.41
+Strength = 2.5
+
+[Component]
+LiquidDensity = 1.0
+LiquidKinematicViscosity = 1.0

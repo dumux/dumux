@@ -13,6 +13,8 @@
 #define DUMUX_BASE_LOCAL_RESIDUAL_HH
 
 #include <cassert>
+#include <type_traits>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 
@@ -159,6 +161,9 @@ public:
         // allow for additional contributions (e.g. hybrid CVFE / FE schemes)
         this->asImp().addToElementFluxAndSourceResidual(residual, this->problem(), element, elemDisc, elemVars);
 
+        // point sources of local dofs without control volume
+        this->addPointSourcesOfNonCVLocalDofs(residual, this->problem(), elemDisc, elemVars);
+
         // add boundary flux contributions
         this->asImp().addBoundaryFluxIntegral(residual, this->problem(), elemDisc, elemVars);
 
@@ -192,6 +197,48 @@ public:
                                            const ElementDiscretization& elemDisc,
                                            const ElementVariables& curElemVars) const
     {}
+
+    /*!
+     * \brief Add the point sources to the local dofs without control volume
+     *
+     * The point source integrated against the basis function of the local dof (Galerkin
+     * integral of a delta distribution) is the point source multiplied by the value of
+     * the basis function at its position. For finite element discretizations this applies to
+     * all local dofs. The point sources of the local dofs with control volume are part of
+     * the source integral of the control volume.
+     *
+     * \param residual The element residual vector to add to
+     * \param problem The problem providing the point sources
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element
+     */
+    void addPointSourcesOfNonCVLocalDofs(ElementResidualVector& residual,
+                                         const Problem& problem,
+                                         const ElementDiscretization& elemDisc,
+                                         const ElementVariables& elemVars) const
+    {
+        if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElementDiscretization>()
+                      && requires { problem.pointSources(); })
+        {
+            const auto& pointSources = problem.pointSources();
+            if constexpr (!std::is_same_v<std::decay_t<decltype(pointSources)>, EmptyPointSources>)
+            {
+                if (pointSources.empty())
+                    return;
+
+                const auto& localBasis = elemDisc.feLocalBasis();
+                using ShapeValue = typename std::decay_t<decltype(localBasis)>::Traits::RangeType;
+                thread_local std::vector<ShapeValue> shapeValues;
+                for (const auto& context : pointSources.contexts(elemDisc, elemDisc.element()))
+                {
+                    const auto source = pointSources.eval(elemDisc, elemVars, context);
+                    localBasis.evaluateFunction(context.localPosition(), shapeValues);
+                    for (const auto& localDof : nonCVLocalDofs(elemDisc))
+                        residual[localDof.index()].axpy(-shapeValues[localDof.index()][0], source);
+                }
+            }
+        }
+    }
 
     //! add boundary flux contributions
     void addBoundaryFluxIntegral(ElementResidualVector& residual,

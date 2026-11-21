@@ -17,7 +17,11 @@
 
 #include <vector>
 #include <algorithm>
+#include <limits>
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -26,11 +30,15 @@
 
 #include <dumux/common/tag.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/indextraits.hh>
 
+#include <dumux/geometry/boundingboxtree.hh>
+#include <dumux/geometry/distance.hh>
 #include <dumux/geometry/refinementquadraturerule.hh>
 #include <dumux/geometry/triangulation.hh>
+#include <dumux/geometry/distance.hh>
 #include <dumux/geometry/grahamconvexhull.hh>
 
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
@@ -56,6 +64,8 @@ class SegmentNetwork
     using GlobalPosition = typename GridView::template Codim<0>::Geometry::GlobalCoordinate;
     using GridIndex = typename IndexTraits<GridView>::GridIndex;
 
+    using BoundingBoxTree = std::decay_t<decltype(std::declval<const GridGeometry&>().boundingBoxTree())>;
+
     struct Segment
     {
         GlobalPosition a, b;
@@ -66,6 +76,7 @@ class SegmentNetwork
 public:
     template <class RadiusFunction>
     SegmentNetwork(const GridGeometry& gg, const RadiusFunction& radiusFunction)
+    : tree_(&gg.boundingBoxTree())
     {
         const auto& gridView = gg.gridView();
         segments_.resize(gridView.size(0));
@@ -76,6 +87,7 @@ public:
             const auto radius = radiusFunction(eIdx);
 
             segments_[eIdx] = Segment{ geometry.corner(0), geometry.corner(1), radius, eIdx };
+            maxRadius_ = std::max(maxRadius_, static_cast<double>(radius));
         }
 
         std::cout << "-- Extracted " << segments_.size() << " segments.\n";
@@ -93,25 +105,40 @@ public:
     const auto& segments() const
     { return segments_; }
 
-    //! find the closest segment (the segment from which the signed distance to its surface is the closest to zero)
-    //! \note minDist is a positive distance
+    //! find the segment with the smallest signed distance from its surface to the position (lowest index on ties)
+    //! \note the returned distance is the absolute value of that signed distance
     auto findClosestSegmentSurface(const GlobalPosition& globalPos) const
+    { return findClosestSegmentSurface(globalPos, closestSegmentSurfaceCandidates(globalPos)); }
+
+    /*!
+     * \brief Indices (ascending) of all segments that can be the closest segment surface
+     *        for a point within the given distance from the position
+     * \note Let c be the segment with the closest centerline (distance d_c, radius r_c). The
+     *       segment s that minimizes the signed surface distance has d_s - r_s <= d_c - r_c at the
+     *       position. For a point within the margin the distances change by at most the margin.
+     *       Hence d_s <= d_c + 2*margin + r_max - r_c at the position.
+     */
+    std::vector<GridIndex> closestSegmentSurfaceCandidates(const GlobalPosition& globalPos,
+                                                           double margin = 0.0) const
     {
-        GridIndex eIdx = 0;
-        double minSignedDist = std::numeric_limits<double>::max();
+        std::vector<GridIndex> candidates;
+        if (segments_.empty())
+            return candidates;
 
-        for (const auto &segment : segments_)
-        {
-            const auto signedDist = computeSignedDistance_(globalPos, segment);
-            if (signedDist < minSignedDist)
-            {
-                minSignedDist = signedDist;
-                eIdx = segment.eIdx;
-            }
-        }
+        using std::sqrt;
+        const auto [squaredDist, closestIdx] = closestEntity(globalPos, *tree_);
+        auto radius = sqrt(squaredDist) + 2.0*margin + maxRadius_ - segments_[closestIdx].r;
 
-        using std::abs;
-        return std::make_tuple(eIdx, abs(minSignedDist));
+        // slack for the round-off in the distance evaluations
+        const auto* rootBox = tree_->getBoundingBoxCoordinates(tree_->numBoundingBoxes() - 1);
+        double extent = 0.0;
+        for (int i = 0; i < GlobalPosition::dimension; ++i)
+            extent = std::max(extent, rootBox[i + GlobalPosition::dimension] - rootBox[i]);
+        radius += 1e-9*(radius + extent);
+
+        collectCandidates_(globalPos, tree_->numBoundingBoxes() - 1, radius*radius, candidates);
+        std::sort(candidates.begin(), candidates.end());
+        return candidates;
     }
 
     //! same as overload with taking a position but only look at the segments specified by the index vector
@@ -145,6 +172,23 @@ public:
     }
 
 private:
+    // collect the segments whose bounding box is within the given squared distance of p
+    void collectCandidates_(const GlobalPosition& p, std::size_t node, double squaredRadius,
+                            std::vector<GridIndex>& candidates) const
+    {
+        const auto& box = tree_->getBoundingBoxNode(node);
+        if (squaredDistancePointBoundingBox(p, tree_->getBoundingBoxCoordinates(node)) > squaredRadius)
+            return;
+
+        if (tree_->isLeaf(box, node))
+            candidates.push_back(box.child1);
+        else
+        {
+            collectCandidates_(p, box.child0, squaredRadius, candidates);
+            collectCandidates_(p, box.child1, squaredRadius, candidates);
+        }
+    }
+
     // Compute the projection of p onto the segment
     // returns the closest end point if the orthogonal projection onto the line implied by the segment
     // is outside the segment
@@ -174,7 +218,9 @@ private:
         return (p-projPoint).two_norm()-segment.r;
     }
 
+    const BoundingBoxTree* tree_;
     std::vector<Segment> segments_;
+    double maxRadius_ = 0.0;
 };
 
 /*!
@@ -182,32 +228,41 @@ private:
  * \brief Get the closest segment for a given surface point
  * \note The point does not necessarily be exactly on the virtual surface
  *       implied by the networks radius function
+ * \note Only the segments given by the hints are considered
  */
-template<class Network>
+template<class Network, class HintContainer>
 class NetworkIndicatorFunction
 {
 public:
-    NetworkIndicatorFunction(const Network& n)
+    NetworkIndicatorFunction(const Network& n, const HintContainer& hints)
     : network_(n)
+    , hints_(hints)
     {}
 
     template<class Pos>
     auto operator()(const Pos& pos) const
     {
-        const auto& [closestSegmentIdx, _] = network_.findClosestSegmentSurface(pos);
-        return closestSegmentIdx;
-    }
-
-    template <class Pos, class HintContainer>
-    auto operator()(const Pos& pos, const HintContainer& hints) const
-    {
-        const auto& [closestSegmentIdx, _] = network_.findClosestSegmentSurface(pos, hints);
+        const auto& [closestSegmentIdx, _] = network_.findClosestSegmentSurface(pos, hints_);
         return closestSegmentIdx;
     }
 
 private:
     const Network& network_;
+    const HintContainer& hints_;
 };
+
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief The largest distance of a corner of the geometry to the given position
+ */
+template<class Geometry, class Position>
+double maxCornerDistance(const Geometry& geometry, const Position& position)
+{
+    double maxDistance = 0.0;
+    for (int i = 0; i < geometry.corners(); ++i)
+        maxDistance = std::max(maxDistance, (geometry.corner(i) - position).two_norm());
+    return maxDistance;
+}
 
 /*!
  * \ingroup EmbeddedCoupling
@@ -308,7 +363,9 @@ class Embedded1d3dCouplingManager;
  *   - MixedDimension.Projection.CoupledRadiusFactor
  *         threshold distance in which to search for coupled elements (specified as multiple of radius, default 0.1)
  *   - MixedDimension.Projection.CoupledAngleFactor
- *         angle threshold in which to search for coupled elements (angle in radians from surface normal vector, default 0.3)
+ *         threshold for the cosine of the angle between the surface normal vector and the vector
+ *         from the face center to its closest point on the centerline, a face is only coupled if the cosine
+ *         exceeds this value (default 0.3, i.e. angles up to about 72.5 degrees)
  *   - MixedDimension.Projection.ConsiderFacesWithinBoundingBoxCoupled
  *         determines if all 3D boundary facets within the mesh bounding box should be considered as coupling faces
  *   - MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor
@@ -342,8 +399,8 @@ class Embedded1d3dCouplingManager<MDTraits, Embedded1d3dCouplingMode::Projection
     static constexpr int dimWorld = GridView<bulkIdx>::dimensionworld;
 
     template<std::size_t id>
-    static constexpr bool isBox()
-    { return GridGeometry<id>::discMethod == DiscretizationMethods::box; }
+    static constexpr bool isCVFE()
+    { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
 
@@ -367,28 +424,28 @@ public:
      * the centerlines to evaluate 1d quantities and set point sources (minimum distance projection)
      *
      * \param order Unused in this algorithm! (passed from default 1D3D coupling manager)
-     * \param verbose If the source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
         std::cout << "Initializing the coupling manager (projection)" << std::endl;
 
+        // clear all internal members like point source vectors and stencils
+        this->clear();
+
         // debug VTK output
         const bool enableIntersectionOutput = getParam<bool>("MixedDimension.Projection.EnableIntersectionOutput", false);
         std::unique_ptr<Detail::DebugIntersectionVTKOutput> vtkCoupledFaces =
-            enableIntersectionOutput ? std::make_unique<Detail::DebugIntersectionVTKOutput>() : nullptr;
-        std::unique_ptr<Detail::DebugIntersectionVTKOutput> vtkIntersections =
             enableIntersectionOutput ? std::make_unique<Detail::DebugIntersectionVTKOutput>() : nullptr;
 
         // temporarily represent the network domain as a list of segments
         // a more efficient data structure
         const auto& lowDimProblem = this->problem(lowDimIdx);
-        const auto& lowDimFvGridGeometry = lowDimProblem.gridGeometry();
+        const auto& lowDimFvGridGeometry = gridDiscretization(lowDimProblem);
         const auto& lowDimGridView = lowDimFvGridGeometry.gridView();
-        localAreaFactor_.resize(lowDimGridView.size(0), 0.0);
+        localAreaFactor_.assign(lowDimGridView.size(0), 0.0);
         const auto radiusFunc = [&](const GridIndex<lowDimIdx> eIdx) {
             return lowDimProblem.spatialParams().radius(eIdx);
         };
@@ -396,19 +453,19 @@ public:
             lowDimFvGridGeometry, radiusFunc
         };
 
-        // precompute the vertex indices for efficiency (box method)
-        this->precomputeVertexIndices(bulkIdx);
-        this->precomputeVertexIndices(lowDimIdx);
+        // precompute the dof indices for efficiency (control-volume finite element methods)
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
 
         const auto& bulkProblem = this->problem(bulkIdx);
-        const auto& bulkFvGridGeometry = bulkProblem.gridGeometry();
+        const auto& bulkFvGridGeometry = gridDiscretization(bulkProblem);
         const auto& bulkGridView = bulkFvGridGeometry.gridView();
         bulkElementMarker_.assign(bulkGridView.size(0), 0);
         bulkVertexMarker_.assign(bulkGridView.size(bulkDim), 0);
 
         // construct a bounding box that may be used to determine coupled faces
         // the shrinking factor shrinks this bounding box
-        static const auto bBoxShrinking
+        const auto bBoxShrinking
             = getParam<Scalar>("MixedDimension.Projection.CoupledBoundingBoxShrinkingFactor", 1e-2);
         const GlobalPosition threshold(
             bBoxShrinking*( bulkFvGridGeometry.bBoxMax()-bulkFvGridGeometry.bBoxMin() ).two_norm()
@@ -427,12 +484,11 @@ public:
         };
 
         // setup simplex "quadrature" rule
-        static const auto quadSimplexRefineMaxLevel
+        const auto quadSimplexRefineMaxLevel
             = getParam<std::size_t>("MixedDimension.Projection.SimplexIntegrationRefine", 4);
-        const auto indicator = Detail::NetworkIndicatorFunction { network };
 
         // estimate number of point sources for memory allocation
-        static const auto estimateNumberOfPointSources
+        const auto estimateNumberOfPointSources
             = getParam<std::size_t>("MixedDimension.Projection.EstimateNumberOfPointSources", bulkFvGridGeometry.gridView().size(0));
 
         this->pointSources(bulkIdx).reserve(estimateNumberOfPointSources);
@@ -453,15 +509,21 @@ public:
                 if (!intersection.boundary())
                     continue;
 
+                // only segments that can be closest for some point on the facet are searched
+                const auto interfaceGeometry = intersection.geometry();
+                const auto center = interfaceGeometry.center();
+                const auto candidates = network.closestSegmentSurfaceCandidates(
+                    center, Detail::maxCornerDistance(interfaceGeometry, center)
+                );
+
                 // check if we are close enough to the coupling interface
-                const auto [isCoupled, closestSegmentIdx, minDist] = isCoupled_(network, intersection, insideBBox);
+                const auto [isCoupled, closestSegmentIdx, minDist] = isCoupled_(network, candidates, intersection, insideBBox);
                 if (!isCoupled)
                     continue;
 
                 // we found an intersection on the coupling interface: mark as coupled element
                 bulkElementMarker_[bulkElementIdx] = 1;
 
-                const auto interfaceGeometry = intersection.geometry();
                 for (int i = 0; i < interfaceGeometry.corners(); ++i)
                 {
                     const auto localVIdx = refElement.subEntity(intersection.indexInInside(), 1, i, bulkDim);
@@ -475,6 +537,7 @@ public:
                         { interfaceGeometry.corner(0), interfaceGeometry.corner(1), interfaceGeometry.corner(2)}
                     }, closestSegmentIdx);
 
+                const auto indicator = Detail::NetworkIndicatorFunction { network, candidates };
                 const auto quadSimplex = LocalRefinementSimplexQuadrature{ interfaceGeometry, quadSimplexRefineMaxLevel, indicator };
 
                 // iterate over all quadrature points (children simplices)
@@ -486,6 +549,7 @@ public:
 
                     addPointSourceAtIP_(bulkGeometry, interfaceGeometry, qp, bulkElementIdx, closestSegmentIdx, surfacePoint, projPoint);
                     addStencilEntries_(bulkElementIdx, closestSegmentIdx);
+                    this->averageDistanceToBulkCell().push_back(averageDistancePointGeometry(surfacePoint, bulkGeometry));
                 }
             }
         }
@@ -533,7 +597,7 @@ public:
      */
     // \{
 
-    //! Return a reference to the bulk problem
+    //! Returns the radius of the lower dimensional element
     Scalar radius(std::size_t id) const
     {
         const auto& data = this->pointSourceData()[id];
@@ -583,30 +647,30 @@ private:
         this->pointSources(lowDimIdx).emplace_back(projPoint, id, qpweight, integrationElement, lowDimElementIdx);
         localAreaFactor_[lowDimElementIdx] += qpweight*integrationElement;
 
-        const auto& bulkFvGridGeometry = this->problem(bulkIdx).gridGeometry();
-        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).gridGeometry();
+        const auto& bulkFvGridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& lowDimFvGridGeometry = gridDiscretization(this->problem(lowDimIdx));
 
         // pre compute additional data used for the evaluation of
         // the actual solution dependent source term
         PointSourceData psData;
 
-        if constexpr (isBox<lowDimIdx>())
+        if constexpr (isCVFE<lowDimIdx>())
         {
             std::vector<Dune::FieldVector<Scalar, 1> > shapeValues;
-            const auto lowDimGeometry = this->problem(lowDimIdx).gridGeometry().element(lowDimElementIdx).geometry();
+            const auto lowDimGeometry = gridDiscretization(this->problem(lowDimIdx)).element(lowDimElementIdx).geometry();
             this->getShapeValues(lowDimIdx, lowDimFvGridGeometry, lowDimGeometry, projPoint, shapeValues);
-            psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+            psData.addLowDimInterpolation(shapeValues, this->elementDofIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
         }
         else
         {
             psData.addLowDimInterpolation(lowDimElementIdx);
         }
 
-        if constexpr (isBox<bulkIdx>())
+        if constexpr (isCVFE<bulkIdx>())
         {
             std::vector<Dune::FieldVector<Scalar, 1> > shapeValues;
             this->getShapeValues(bulkIdx, bulkFvGridGeometry, bulkGeometry, surfacePoint, shapeValues);
-            psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+            psData.addBulkInterpolation(shapeValues, this->elementDofIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
         }
         else
         {
@@ -620,12 +684,12 @@ private:
     void addStencilEntries_(const GridIndex<bulkIdx> bulkElementIdx, const GridIndex<lowDimIdx> lowDimElementIdx)
     {
         // export the bulk coupling stencil
-        if constexpr (isBox<lowDimIdx>())
+        if constexpr (isCVFE<lowDimIdx>())
         {
-            const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
+            const auto& dofs = this->elementDofIndices(lowDimIdx, lowDimElementIdx);
             this->couplingStencils(bulkIdx)[bulkElementIdx].insert(
                 this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                vertices.begin(), vertices.end()
+                dofs.begin(), dofs.end()
             );
 
         }
@@ -635,12 +699,12 @@ private:
         }
 
         // export the lowdim coupling stencil
-        if constexpr (isBox<bulkIdx>())
+        if constexpr (isCVFE<bulkIdx>())
         {
-            const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+            const auto& dofs = this->elementDofIndices(bulkIdx, bulkElementIdx);
             this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(
                 this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                vertices.begin(), vertices.end()
+                dofs.begin(), dofs.end()
             );
         }
         else
@@ -649,11 +713,12 @@ private:
         }
     }
 
-    template<class BoundaryIntersection, class BBoxCheck>
-    auto isCoupled_(const SegmentNetwork& network, const BoundaryIntersection& intersection, const BBoxCheck& insideBBox) const
+    template<class Candidates, class BoundaryIntersection, class BBoxCheck>
+    auto isCoupled_(const SegmentNetwork& network, const Candidates& candidates,
+                    const BoundaryIntersection& intersection, const BBoxCheck& insideBBox) const
     {
         const auto center = intersection.geometry().center();
-        const auto [eIdx, minDist] = network.findClosestSegmentSurface(center);
+        const auto [eIdx, minDist] = network.findClosestSegmentSurface(center, candidates);
 
         // all elements in the bounding box are coupled if this is enabled
         // this is a simplified check that can be enabled for box-shaped domains

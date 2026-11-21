@@ -160,6 +160,12 @@ public:
         for (const auto& qpData : CVFE::quadratureRule(elemDisc, scv))
             source.axpy(qpData.weight(), problem.source(elemDisc, elemVars, qpData.ipData()));
         source *= elemVars[scv].extrusionFactor();
+
+        const auto& pointSources = problem.pointSources();
+        if (!pointSources.empty())
+            for (const auto& context : pointSources.contexts(elemDisc, scv))
+                source += pointSources.eval(elemDisc, elemVars, context);
+
         return source;
     }
 

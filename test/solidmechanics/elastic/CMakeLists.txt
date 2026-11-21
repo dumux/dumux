@@ -3,3 +3,4 @@
 
 add_subdirectory(cooks_membrane)
 add_subdirectory(manufactured_solution)
+add_subdirectory(pointsource)
