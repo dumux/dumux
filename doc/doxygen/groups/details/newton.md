@@ -222,6 +222,28 @@ and $\theta_\mathrm{max}$ is set by `Newton.ReassemblyMaxThreshold` (default val
 $\omega$ is a weight (default value $10^{-3}$), and $\epsilon_\textrm{shift}$
 is the maximum relative shift threshold parameter (`Newton.MaxRelativeShift`) described above.
 
+## Reuse of the Jacobian (simplified Newton method)
+
+With `Newton.EnableJacobianReuse = true` (default value is `false`), the Newton solver keeps the Jacobian matrix of an earlier iteration
+and only assembles the residual, as long as the updates contract fast enough.
+With $\epsilon_k$ the maximum relative shift of iteration $k$, the Jacobian matrix is kept for the next iteration only if
+
+```math
+\epsilon_k \leq c \, \epsilon_{k-1},
+```
+
+where $c$ is set by `Newton.JacobianReuseMaxContraction` (default value $0.1$). Far from the solution, an update with an old Jacobian matrix can lead to
+an iterate from which Newton's method diverges, so a Jacobian matrix assembled in the first iteration of a solve, where no contraction has been observed yet,
+is assembled again in the second iteration. The Jacobian matrix is also reassembled after a failed solve and at the beginning of each solve,
+unless the assembler provides the weights of the storage and the spatial terms of the current stage (`currentStageWeights()`, e.g. @ref Dumux::Experimental::MultiStageAssembler).
+Then the Jacobian matrix is reused over stages and time steps until these weights change, for example with the time step size.
+
+The linear solver has to keep the matrix for several solves with `setMatrix(A)` and `solve(x, b)`; the direct solvers keep the factorization
+and the iterative solvers the preconditioner. The assembler has to assemble the residual without the Jacobian matrix (`assembleResidual`).
+The converged solution solves the same nonlinear system, but the iterates converge linearly instead of quadratically,
+so the solver needs more iterations, each of which is cheaper. As the adaptive time stepping counts iterations, `Newton.TargetSteps` may have to be increased.
+Jacobian reuse cannot be combined with partial reassembly.
+
 ## Primary variable switching
 
 Switching primary variables during Newton's method is a form of nonlinear preconditioning.

@@ -25,4 +25,15 @@ dumux_add_test(
               --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box_gridformat_io params.input -Problem.Name test_hyperelastic_box_gridformat_io"
 )
 
+dumux_add_test(
+    NAME test_hyperelastic_box_jacobianreuse
+    TARGET test_hyperelastic_box
+    LABELS solidmechanics elastic
+    COMMAND ${DUMUX_RUNTEST}
+    CMD_ARGS  --script fuzzy
+              --files ${CMAKE_SOURCE_DIR}/test/references/test_hyperelastic_box-reference.vtu
+                      ${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box_jacobianreuse-00001.vtu
+              --command "${CMAKE_CURRENT_BINARY_DIR}/test_hyperelastic_box params.input -Problem.Name test_hyperelastic_box_jacobianreuse -Newton.EnableJacobianReuse true"
+)
+
 add_subdirectory(dynamic_manufactured_solution)

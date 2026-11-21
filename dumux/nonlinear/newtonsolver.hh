@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <numeric>
+#include <utility>
 
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
@@ -79,6 +80,18 @@ struct supportsPartialReassembly
                                               std::declval<const PartialReassembler<Assembler>*>()))
     {}
 };
+
+//! a linear solver that keeps a matrix (e.g. its factorization or preconditioner) for several solves
+template<class LinearSolver, class Matrix, class Vector>
+concept LinearSolverWithReusableMatrix = requires(LinearSolver& s, Matrix& A, Vector& x, Vector& b)
+{
+    s.setMatrix(A);
+    s.solve(x, b);
+};
+
+//! an assembler that provides the weights of the storage and the spatial terms of the current stage
+template<class Assembler>
+concept AssemblerWithStageWeights = requires(const Assembler& a) { a.currentStageWeights(); };
 
 // helpers to implement max relative shift
 template<class C> using dynamicIndexAccess = decltype(std::declval<C>()[0]);
@@ -193,6 +206,10 @@ private:
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector, ResidualVector>;
     using TimeLoop = TimeLoopBase<Scalar>;
+
+    static constexpr bool linearSolverCanReuseMatrix
+        = Detail::Newton::LinearSolverWithReusableMatrix<LinearSolver, JacobianMatrix, ResidualVector>;
+    static constexpr bool assemblerHasStageWeights = Detail::Newton::AssemblerWithStageWeights<Assembler>;
 
     // enable models with primary variable switch
     // TODO: Always use ParentType::Variables once we require assemblers to export variables
@@ -417,6 +434,10 @@ public:
             partialReassembler_->resetColors();
             resizeDistanceFromLastLinearization_(initSol, distanceFromLastLinearization_);
         }
+
+        // without stage weights, a change of the time step size cannot be detected
+        if constexpr (!assemblerHasStageWeights)
+            reusableJacobian_ = false;
     }
 
     /*!
@@ -468,10 +489,31 @@ public:
      */
     virtual void assembleLinearSystem(const Variables& vars)
     {
+        if (enableJacobianReuse_ && reusableJacobian_ && jacobianWeights_ == currentStageWeights_())
+        {
+            if constexpr (!assemblerExportsVariables)
+                this->assembler().assembleResidual(Backend::dofs(vars));
+            else
+                this->assembler().assembleResidual(vars);
+
+            jacobianAssembledInThisIteration_ = false;
+            endIterMsgStream_ << ", reused Jacobian";
+            return;
+        }
+
         assembleLinearSystem_(this->assembler(), vars);
 
         if (enablePartialReassembly_)
             partialReassembler_->report(comm_, endIterMsgStream_);
+
+        if (enableJacobianReuse_)
+        {
+            reusableJacobian_ = true;
+            jacobianWeights_ = currentStageWeights_();
+            jacobianAssembledInThisIteration_ = true;
+            linearSolverHasJacobian_ = false;
+            ++numJacobianAssemblies_;
+        }
     }
 
     /*!
@@ -562,8 +604,18 @@ public:
             }
         });
 
-        if (enableShiftCriterion_ || enablePartialReassembly_)
+        if (enableShiftCriterion_ || enablePartialReassembly_ || enableJacobianReuse_)
             newtonComputeShift_(Backend::dofs(vars), uLastIter);
+
+        // far from the solution, an update with an old Jacobian can lead to an iterate from which
+        // Newton's method diverges, so the Jacobian is only kept after an update that contracted
+        if (enableJacobianReuse_)
+        {
+            if (numSteps_ > 0)
+                reusableJacobian_ = shift_ <= jacobianReuseMaxContraction_*lastShift_;
+            else if (jacobianAssembledInThisIteration_)
+                reusableJacobian_ = false;
+        }
 
         if (enablePartialReassembly_) {
             // Determine the threshold 'eps' that is used for the partial reassembly.
@@ -726,8 +778,10 @@ public:
              << "-- Total wasted iterations:            " << totalWastedIter_ << '\n'
              << "-- Total succeeded iterations:         " << totalSucceededIter_ << '\n'
              << "-- Average iterations per solve:       " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
-             << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n'
-             << std::endl;
+             << "-- Number of linear solver breakdowns: " << numLinearSolverBreakdowns_ << '\n';
+        if (enableJacobianReuse_)
+            sout << "-- Jacobian assemblies:                " << numJacobianAssemblies_ << '\n';
+        sout << std::endl;
     }
 
     /*!
@@ -739,6 +793,7 @@ public:
         totalSucceededIter_ = 0;
         numConverged_ = 0;
         numLinearSolverBreakdowns_ = 0;
+        numJacobianAssemblies_ = 0;
     }
 
     /*!
@@ -751,6 +806,7 @@ public:
         if (useLineSearch_) sout << " -- " << solverName_ << ".UseLineSearch = true\n";
         if (useChop_) sout << " -- " << solverName_ << ".EnableChop = true\n";
         if (enablePartialReassembly_) sout << " -- " << solverName_ << ".EnablePartialReassembly = true\n";
+        if (enableJacobianReuse_) sout << " -- " << solverName_ << ".EnableJacobianReuse = true\n";
         if (enableAbsoluteResidualCriterion_) sout << " -- " << solverName_ << ".EnableAbsoluteResidualCriterion = true\n";
         if (enableShiftCriterion_) sout << " -- " << solverName_ << ".EnableShiftCriterion = true (relative shift convergence criterion)\n";
         if (enableResidualCriterion_) sout << " -- " << solverName_ << ".EnableResidualCriterion = true\n";
@@ -768,6 +824,8 @@ public:
             sout << " -- " << solverName_ << ".ReassemblyMaxThreshold = " << reassemblyMaxThreshold_ << '\n';
             sout << " -- " << solverName_ << ".ReassemblyShiftWeight = " << reassemblyShiftWeight_ << '\n';
         }
+        if (enableJacobianReuse_)
+            sout << " -- " << solverName_ << ".JacobianReuseMaxContraction = " << jacobianReuseMaxContraction_ << '\n';
         sout << " -- " << solverName_ << ".RetryTimeStepReductionFactor = " << retryTimeStepReductionFactor_ << '\n';
         sout << " -- " << solverName_ << ".MaxTimeStepDivisions = " << maxTimeStepDivisions_ << '\n';
         sout << std::endl;
@@ -958,6 +1016,7 @@ private:
         else
         {
             totalWastedIter_ += numSteps_;
+            reusableJacobian_ = false;
             newtonFail(vars);
         }
 
@@ -1115,6 +1174,15 @@ private:
         this->assembler().assembleJacobianAndResidual(vars);
     }
 
+    //! the weights of the storage and the spatial terms the Jacobian is assembled with
+    std::pair<Scalar, Scalar> currentStageWeights_() const
+    {
+        if constexpr (assemblerHasStageWeights)
+            return this->assembler().currentStageWeights();
+        else
+            return {1.0, 1.0};
+    }
+
     /*!
      * \brief Update the maximum relative shift of the solution compared to
      *        the previous iteration. Overload for "normal" solution vectors.
@@ -1202,6 +1270,20 @@ private:
     {
         assert(this->checkSizesOfSubMatrices(this->assembler().jacobian()) && "Matrix blocks have wrong sizes!");
 
+        if constexpr (linearSolverCanReuseMatrix)
+        {
+            if (enableJacobianReuse_)
+            {
+                if (!linearSolverHasJacobian_)
+                {
+                    this->linearSolver().setMatrix(this->assembler().jacobian());
+                    linearSolverHasJacobian_ = true;
+                }
+
+                return this->linearSolver().solve(deltaU, this->assembler().residual());
+            }
+        }
+
         return this->linearSolver().solve(
             this->assembler().jacobian(),
             deltaU,
@@ -1242,6 +1324,14 @@ private:
         reassemblyMinThreshold_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyMinThreshold", 1e-1*shiftTolerance_);
         reassemblyMaxThreshold_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyMaxThreshold", 1e2*shiftTolerance_);
         reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, solverName_ + ".ReassemblyShiftWeight", 1e-3);
+
+        enableJacobianReuse_ = getParamFromGroup<bool>(group, solverName_ + ".EnableJacobianReuse", false);
+        jacobianReuseMaxContraction_ = getParamFromGroup<Scalar>(group, solverName_ + ".JacobianReuseMaxContraction", 0.1);
+        if (enableJacobianReuse_ && enablePartialReassembly_)
+            DUNE_THROW(Dune::InvalidStateException, "Use either partial reassembly OR Jacobian reuse!");
+        if (enableJacobianReuse_ && !linearSolverCanReuseMatrix)
+            DUNE_THROW(Dune::InvalidStateException,
+                       solverName_ << ".EnableJacobianReuse requires a linear solver with setMatrix(A) and solve(x, b)");
 
         maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, solverName_ + ".MaxTimeStepDivisions", 10);
         retryTimeStepReductionFactor_ = getParamFromGroup<Scalar>(group, solverName_ + ".RetryTimeStepReductionFactor", 0.5);
@@ -1337,11 +1427,20 @@ private:
     Scalar reassemblyMaxThreshold_;
     Scalar reassemblyShiftWeight_;
 
+    // infrastructure for reusing the Jacobian
+    bool enableJacobianReuse_;
+    Scalar jacobianReuseMaxContraction_;
+    bool reusableJacobian_ = false;
+    bool jacobianAssembledInThisIteration_ = false;
+    bool linearSolverHasJacobian_ = false;
+    std::pair<Scalar, Scalar> jacobianWeights_ = {0.0, 0.0};
+
     // statistics for the optional report
     std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
     std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
     std::size_t numConverged_ = 0; //! total number of converged solves
     std::size_t numLinearSolverBreakdowns_ = 0; //! total number of linear solves that failed
+    std::size_t numJacobianAssemblies_ = 0; //! Jacobian assemblies if the Jacobian is reused
 
     //! the class handling the primary variable switch
     std::unique_ptr<PrimaryVariableSwitchAdapter> priVarSwitchAdapter_;

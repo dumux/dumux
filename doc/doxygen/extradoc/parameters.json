@@ -2423,6 +2423,18 @@
             "bool"
         ]
     },
+    "Newton.EnableJacobianReuse": {
+        "defaultValue": [
+            "false"
+        ],
+        "explanation": [
+            "Reuse the Jacobian matrix of an earlier iteration (and the factorization or preconditioner of the linear solver) while successive updates contract at least by the factor JacobianReuseMaxContraction; over stages and time steps only with assemblers that provide the stage weights."
+        ],
+        "mode": "manual",
+        "type": [
+            "bool"
+        ]
+    },
     "Newton.EnablePartialReassembly": {
         "defaultValue": [
             "false"
@@ -2457,6 +2469,18 @@
         "mode": "manual",
         "type": [
             "bool"
+        ]
+    },
+    "Newton.JacobianReuseMaxContraction": {
+        "defaultValue": [
+            "0.1"
+        ],
+        "explanation": [
+            "With EnableJacobianReuse, the Jacobian matrix is only kept for the next iteration if the maximum relative shift of an update is at most this factor times the shift of the previous update."
+        ],
+        "mode": "manual",
+        "type": [
+            "double"
         ]
     },
     "Newton.LineSearchArmijoC1": {
