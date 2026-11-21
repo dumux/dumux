@@ -31,6 +31,7 @@
 #include <dumux/assembly/jacobianpattern.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/assembler.hh>
+#include <dumux/assembly/periodicconstraints.hh>
 
 #include <dumux/parallel/multithreading.hh>
 #include <dumux/parallel/parallel_for.hh>
@@ -147,6 +148,9 @@ public:
             for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
                 (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
 
+        Dumux::Detail::PeriodicConstraints::enforceInResidual(*gridGeometry_, *residual_, curSol);
+        Dumux::Detail::PeriodicConstraints::enforceInJacobian(*gridGeometry_, *jacobian_);
+
         applyDirichletConstraints_(curSol);
     }
 
@@ -181,6 +185,8 @@ public:
         for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
             for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
                 (*residual_)[i][ii] += constrainedDofs_[i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
+
+        Dumux::Detail::PeriodicConstraints::enforceInResidual(*gridGeometry_, *residual_, curSol);
 
         applyDirichletResidual_(curSol);
     }
