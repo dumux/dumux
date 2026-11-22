@@ -40,7 +40,8 @@ namespace Dumux::Detail {
  *
  * \note Collective over \a comm. Each rank only needs to know its own destinations;
  *       who sends to it (and how much) is discovered on the fly, so there is no
- *       O(number of ranks) memory or all-to-all collective involved.
+ *       O(number of ranks) memory or all-to-all collective involved. Consecutive exchanges
+ *       may use the same tag.
  */
 template<class Communication>
 std::vector<char> exchangeSparse(const Communication& comm,
@@ -119,6 +120,10 @@ std::vector<char> exchangeSparse(const Communication& comm,
             }
         }
     }
+
+    // A process that has seen the barrier complete may start a subsequent exchange with the same tag
+    // while others still probe for messages of this one and would receive its messages here.
+    MPI_Barrier(mpiComm);
 #else
     assert(comm.size() == 1 && "Sparse data exchange between multiple ranks requires MPI");
     (void)sendBufs;

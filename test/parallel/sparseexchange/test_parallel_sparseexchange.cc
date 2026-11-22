@@ -11,6 +11,7 @@
  */
 #include <config.h>
 
+#include <algorithm>
 #include <set>
 #include <vector>
 #include <cstddef>
@@ -130,6 +131,55 @@ void testExchange(const Communication& comm)
         DUNE_THROW(Dune::Exception, "the set of senders does not match the expected sparse pattern");
 }
 
+//! Exchange in many consecutive rounds with the same tag and verify each rank gets exactly the messages of the round
+template<class Communication>
+void testConsecutiveExchanges(const Communication& comm, int numRounds)
+{
+    using namespace Dumux::Detail;
+
+    const int myRank = comm.rank();
+    const int numProc = comm.size();
+    const auto destination = [&](int sender, int round)
+    { return (sender + 1 + round % std::max(numProc - 1, 1)) % numProc; };
+
+    int numFailedRounds = 0;
+    for (int round = 0; round < numRounds; ++round)
+    {
+        std::vector<std::vector<char>> sendBufs(numProc);
+        if (const int to = destination(myRank, round); to != myRank)
+        {
+            packValue(sendBufs[to], myRank);
+            packValue(sendBufs[to], round);
+        }
+
+        const auto recvBuf = exchangeSparse(comm, sendBufs);
+
+        std::set<int> expectedSenders;
+        for (int s = 0; s < numProc; ++s)
+            if (s != myRank && destination(s, round) == myRank)
+                expectedSenders.insert(s);
+
+        bool failed = false;
+        std::set<int> gotSenders;
+        const char* cursor = recvBuf.data();
+        const char* const end = recvBuf.data() + recvBuf.size();
+        while (cursor < end)
+        {
+            gotSenders.insert(unpackValue<int>(cursor));
+            if (unpackValue<int>(cursor) != round)
+                failed = true;
+        }
+
+        if (failed || gotSenders != expectedSenders)
+            ++numFailedRounds;
+    }
+
+    numFailedRounds = comm.sum(numFailedRounds);
+    if (numFailedRounds > 0)
+        DUNE_THROW(Dune::Exception, "consecutive exchanges received messages of other rounds in "
+                                    << numFailedRounds << " rounds");
+}
+
 } // end anonymous namespace
 
 int main(int argc, char** argv)
@@ -139,6 +189,7 @@ int main(int argc, char** argv)
 
     testPacking();
     testExchange(mpiHelper.getCommunication());
+    testConsecutiveExchanges(mpiHelper.getCommunication(), 10000);
 
     if (mpiHelper.rank() == 0)
         std::cout << "All sparse-exchange tests passed on " << mpiHelper.size() << " rank(s)" << std::endl;
