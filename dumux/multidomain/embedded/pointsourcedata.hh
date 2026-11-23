@@ -13,6 +13,8 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_POINTSOURCEDATA_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_POINTSOURCEDATA_HH
 
+#include <algorithm>
+#include <memory>
 #include <vector>
 #include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
@@ -168,93 +170,127 @@ class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
     { return DiscretizationMethods::isCVFE<typename GridGeometry<id>::DiscretizationMethod>; }
 
 public:
-    PointSourceDataCircleAverage() : enableBulkCircleInterpolation_(false) {}
+    /*!
+     * \brief The circle average of the bulk solution: a weight per bulk degree of freedom (the weights add
+     *        up to one) and the bulk elements on the circle
+     */
+    struct CircleInterpolation
+    {
+        std::vector<GridIndex<bulkIdx>> dofs;
+        std::vector<Scalar> weights;
+        std::vector<GridIndex<bulkIdx>> stencil;
+    };
+
+    /*!
+     * \brief The circle average from the interpolation data of the circle points (control-volume finite element methods)
+     * \param circleDofIndices the bulk dofs of the element of each circle point
+     * \param circleShapeValues the values of the basis functions at each circle point
+     * \param circleIpWeight the weight of each circle point
+     * \param circleStencil the bulk element of each circle point
+     */
+    static std::shared_ptr<const CircleInterpolation>
+    makeCircleInterpolation(const std::vector<const std::vector<GridIndex<bulkIdx>>*>& circleDofIndices,
+                            const std::vector<ShapeValues>& circleShapeValues,
+                            const std::vector<Scalar>& circleIpWeight,
+                            const std::vector<GridIndex<bulkIdx>>& circleStencil)
+    {
+        auto circle = std::make_shared<CircleInterpolation>();
+        Scalar weightSum = 0.0;
+        for (std::size_t j = 0; j < circleStencil.size(); ++j)
+        {
+            weightSum += circleIpWeight[j];
+            const auto& dofIndices = *circleDofIndices[j];
+            for (std::size_t i = 0; i < dofIndices.size(); ++i)
+                addWeight_(circle->dofs, circle->weights, dofIndices[i], circleIpWeight[j]*circleShapeValues[j][i][0]);
+        }
+        finish_(*circle, circleStencil, weightSum);
+        return circle;
+    }
+
+    /*!
+     * \brief The circle average from the interpolation data of the circle points (cell-centered methods)
+     * \param circleIpWeight the weight of each circle point
+     * \param circleStencil the bulk element of each circle point
+     */
+    static std::shared_ptr<const CircleInterpolation>
+    makeCircleInterpolation(const std::vector<Scalar>& circleIpWeight,
+                            const std::vector<GridIndex<bulkIdx>>& circleStencil)
+    {
+        auto circle = std::make_shared<CircleInterpolation>();
+        Scalar weightSum = 0.0;
+        for (std::size_t j = 0; j < circleStencil.size(); ++j)
+        {
+            weightSum += circleIpWeight[j];
+            addWeight_(circle->dofs, circle->weights, circleStencil[j], circleIpWeight[j]);
+        }
+        finish_(*circle, circleStencil, weightSum);
+        return circle;
+    }
 
     PrimaryVariables<bulkIdx> interpolateBulk(const SolutionVector<bulkIdx>& sol) const
     {
         // bulk interpolation on the circle is only enabled for source in the
         // lower dimensional domain if we use a circle distributed bulk sources
         // (see coupling manager circle sources)
-        PrimaryVariables<bulkIdx> bulkPriVars(sol[0]);
-        bulkPriVars = 0.0;
-        if (enableBulkCircleInterpolation_)
+        if (circle_)
         {
             // compute the average of the bulk privars over the circle around the integration point
             // this computes $\bar{p} = \frac{1}{2\pi R} int_0^2*\pi p R \text{d}\theta.
-            if (isCVFE<bulkIdx>())
-            {
-                assert(circleDofIndices_.size() == circleShapeValues_.size());
-
-                Scalar weightSum = 0.0;
-                for (std::size_t j = 0; j < circleStencil_.size(); ++j)
-                {
-                    PrimaryVariables<bulkIdx> priVars(0.0);
-                    const auto& dofIndices = *(circleDofIndices_[j]);
-                    const auto& shapeValues = circleShapeValues_[j];
-                    for (int i = 0; i < dofIndices.size(); ++i)
-                    {
-                        const auto& localSol = sol[dofIndices[i]];
-                        const auto& shapeValue = shapeValues[i];
-                        for (int priVarIdx = 0; priVarIdx < PrimaryVariables<bulkIdx>::size(); ++priVarIdx)
-                            priVars[priVarIdx] += localSol[priVarIdx]*shapeValue[0];
-                    }
-                    // multiply with weight and add
-                    priVars *= circleIpWeight_[j];
-                    weightSum += circleIpWeight_[j];
-                    bulkPriVars += priVars;
-                }
-                bulkPriVars /= weightSum;
-            }
-            else
-            {
-                Scalar weightSum = 0.0;
-                for (int j = 0; j < circleStencil_.size(); ++j)
-                {
-                    for (int priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
-                        bulkPriVars[priVarIdx] += sol[circleStencil_[j]][priVarIdx]*circleIpWeight_[j];
-
-                    weightSum += circleIpWeight_[j];
-                }
-                bulkPriVars /= weightSum;
-            }
+            PrimaryVariables<bulkIdx> bulkPriVars(0.0);
+            for (std::size_t i = 0; i < circle_->dofs.size(); ++i)
+                for (int priVarIdx = 0; priVarIdx < PrimaryVariables<bulkIdx>::size(); ++priVarIdx)
+                    bulkPriVars[priVarIdx] += sol[circle_->dofs[i]][priVarIdx]*circle_->weights[i];
             return bulkPriVars;
         }
         else
-        {
             return ParentType::interpolateBulk(sol);
-        }
     }
+
+    //! Use the circle average for the bulk values, shared with the other point sources on the circle
+    void addCircleInterpolation(std::shared_ptr<const CircleInterpolation> circle)
+    { circle_ = std::move(circle); }
 
     void addCircleInterpolation(const std::vector<const std::vector<GridIndex<bulkIdx>>*>& circleDofIndices,
                                 const std::vector<ShapeValues>& circleShapeValues,
                                 const std::vector<Scalar>& circleIpWeight,
                                 const std::vector<GridIndex<bulkIdx>>& circleStencil)
-    {
-        circleDofIndices_ = circleDofIndices;
-        circleShapeValues_ = circleShapeValues;
-        circleIpWeight_ = circleIpWeight;
-        circleStencil_ = circleStencil;
-        enableBulkCircleInterpolation_ = true;
-
-    }
+    { circle_ = makeCircleInterpolation(circleDofIndices, circleShapeValues, circleIpWeight, circleStencil); }
 
     void addCircleInterpolation(const std::vector<Scalar>& circleIpWeight,
                                 const std::vector<GridIndex<bulkIdx>>& circleStencil)
+    { circle_ = makeCircleInterpolation(circleIpWeight, circleStencil); }
+
+    //! The bulk elements on the circle, each once
+    const std::vector<GridIndex<bulkIdx>>& circleStencil() const
     {
-        circleIpWeight_ = circleIpWeight;
-        circleStencil_ = circleStencil;
-        enableBulkCircleInterpolation_ = true;
+        static const std::vector<GridIndex<bulkIdx>> empty;
+        return circle_ ? circle_->stencil : empty;
     }
 
-    const std::vector<GridIndex<bulkIdx>>& circleStencil() const
-    { return circleStencil_; }
-
 private:
-    std::vector<const std::vector<GridIndex<bulkIdx>>*> circleDofIndices_;
-    std::vector<ShapeValues> circleShapeValues_;
-    std::vector<Scalar> circleIpWeight_;
-    std::vector<GridIndex<bulkIdx>> circleStencil_;
-    bool enableBulkCircleInterpolation_;
+    static void addWeight_(std::vector<GridIndex<bulkIdx>>& dofs, std::vector<Scalar>& weights,
+                           GridIndex<bulkIdx> dof, Scalar weight)
+    {
+        const auto it = std::find(dofs.begin(), dofs.end(), dof);
+        if (it != dofs.end())
+            weights[it - dofs.begin()] += weight;
+        else
+        {
+            dofs.push_back(dof);
+            weights.push_back(weight);
+        }
+    }
+
+    static void finish_(CircleInterpolation& circle, const std::vector<GridIndex<bulkIdx>>& circleStencil, Scalar weightSum)
+    {
+        for (auto& w : circle.weights)
+            w /= weightSum;
+        circle.stencil = circleStencil;
+        std::sort(circle.stencil.begin(), circle.stencil.end());
+        circle.stencil.erase(std::unique(circle.stencil.begin(), circle.stencil.end()), circle.stencil.end());
+    }
+
+    std::shared_ptr<const CircleInterpolation> circle_;
 };
 
 } // end namespace Dumux

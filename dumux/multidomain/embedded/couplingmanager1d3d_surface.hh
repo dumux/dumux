@@ -13,6 +13,8 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_SURFACE_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_SURFACE_HH
 
+#include <algorithm>
+#include <memory>
 #include <vector>
 
 #include <dune/common/timer.hh>
@@ -230,21 +232,25 @@ public:
                     }
                 }
 
-                // export low dim circle stencil
+                // the circle average, shared by the point sources of this quadrature point
+                std::shared_ptr<const typename PointSourceData::CircleInterpolation> circleInterpolation;
                 if constexpr (isCVFE<bulkIdx>())
-                {
-                    // we insert all dofs and make it unique later
-                    for (const auto& dofs : circleDofIndices)
-                    {
-                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   dofs->begin(), dofs->end());
-
-                    }
-                }
+                    circleInterpolation = PointSourceData::makeCircleInterpolation(circleDofIndices, circleShapeValues, circleIpWeight, circleStencil);
                 else
+                    circleInterpolation = PointSourceData::makeCircleInterpolation(circleIpWeight, circleStencil);
+
+                // export low dim circle stencil (the bulk dofs of the circle average, made unique later)
+                auto& lowDimStencil = this->couplingStencils(lowDimIdx)[lowDimElementIdx];
+                lowDimStencil.insert(lowDimStencil.end(), circleInterpolation->dofs.begin(), circleInterpolation->dofs.end());
+
+                // export bulk circle stencil (only needed for circle average), once per bulk element of the circle
+                if (useCircleAverage)
                 {
-                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                               circleStencil.begin(), circleStencil.end());
+                    for (const auto bulkElementIdx : circleInterpolation->stencil)
+                    {
+                        auto& stencil = extendedSourceStencil_.stencil()[bulkElementIdx];
+                        stencil.insert(stencil.end(), circleInterpolation->dofs.begin(), circleInterpolation->dofs.end());
+                    }
                 }
 
                 for (int k = 0; k < circlePoints.size(); ++k)
@@ -283,11 +289,11 @@ public:
                         }
 
                         // add data needed to compute integral over the circle
+                        if (useCircleAverage)
+                            psData.addCircleInterpolation(circleInterpolation);
+
                         if constexpr (isCVFE<bulkIdx>())
                         {
-                            if (useCircleAverage)
-                                psData.addCircleInterpolation(circleDofIndices, circleShapeValues, circleIpWeight, circleStencil);
-
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             const auto bulkGeometry = bulkGridGeometry.element(bulkElementIdx).geometry();
                             ShapeValues shapeValues;
@@ -296,47 +302,25 @@ public:
                         }
                         else
                         {
-                            if (useCircleAverage)
-                                psData.addCircleInterpolation(circleIpWeight, circleStencil);
-
                             psData.addBulkInterpolation(bulkElementIdx);
                         }
 
                         // publish point source data in the global vector
                         this->pointSourceData().emplace_back(std::move(psData));
 
-                        // export the bulk coupling stencil
-                        // we insert all dofs / elements and make it unique later
+                        // export the bulk coupling stencil, made unique later; the point sources of a circle
+                        // in the same bulk element follow each other, so their dofs are added once
+                        auto& bulkStencil = this->couplingStencils(bulkIdx)[bulkElementIdx];
                         if constexpr (isCVFE<lowDimIdx>())
                         {
                             const auto& dofs = this->elementDofIndices(lowDimIdx, lowDimElementIdx);
-                            this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                                                                                   dofs.begin(), dofs.end());
-
+                            if (bulkStencil.size() < dofs.size() || !std::equal(dofs.begin(), dofs.end(), bulkStencil.end() - dofs.size()))
+                                bulkStencil.insert(bulkStencil.end(), dofs.begin(), dofs.end());
                         }
                         else
                         {
-                            this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
-                        }
-
-                        // export bulk circle stencil (only needed for circle average)
-                        if (useCircleAverage)
-                        {
-                            if constexpr (isCVFE<bulkIdx>())
-                            {
-                                // we insert all dofs and make it unique later
-                                for (const auto& dofs : circleDofIndices)
-                                {
-                                    extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                               dofs->begin(), dofs->end());
-
-                                }
-                            }
-                            else
-                            {
-                                extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                           circleStencil.begin(), circleStencil.end());
-                            }
+                            if (bulkStencil.empty() || bulkStencil.back() != lowDimElementIdx)
+                                bulkStencil.push_back(lowDimElementIdx);
                         }
                     }
                 }

@@ -13,6 +13,8 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_AVERAGE_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_AVERAGE_HH
 
+#include <algorithm>
+#include <memory>
 #include <vector>
 
 #include <dune/common/timer.hh>
@@ -238,22 +240,16 @@ public:
                 if (circleStencil.empty())
                     continue;
 
-                // export low dim circle stencil
+                // the circle average, shared by the point sources of this quadrature point
+                std::shared_ptr<const typename PointSourceData::CircleInterpolation> circleInterpolation;
                 if constexpr (isCVFE<bulkIdx>())
-                {
-                    // we insert all dofs and make it unique later
-                    for (const auto& dofs : circleDofIndices)
-                    {
-                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                                   dofs->begin(), dofs->end());
-
-                    }
-                }
+                    circleInterpolation = PointSourceData::makeCircleInterpolation(circleDofIndices, circleShapeValues, circleIpWeight, circleStencil);
                 else
-                {
-                    this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
-                                                                               circleStencil.begin(), circleStencil.end());
-                }
+                    circleInterpolation = PointSourceData::makeCircleInterpolation(circleIpWeight, circleStencil);
+
+                // export low dim circle stencil (the bulk dofs of the circle average, made unique later)
+                auto& lowDimStencil = this->couplingStencils(lowDimIdx)[lowDimElementIdx];
+                lowDimStencil.insert(lowDimStencil.end(), circleInterpolation->dofs.begin(), circleInterpolation->dofs.end());
 
                 // surface fraction that is inside the domain (only different than 1.0 on the boundary)
                 const auto surfaceFraction = Scalar(insideCirclePoints)/Scalar(circlePoints.size());
@@ -284,10 +280,9 @@ public:
                     }
 
                     // add data needed to compute integral over the circle
+                    psData.addCircleInterpolation(circleInterpolation);
                     if constexpr (isCVFE<bulkIdx>())
                     {
-                        psData.addCircleInterpolation(circleDofIndices, circleShapeValues, circleIpWeight, circleStencil);
-
                         const auto bulkGeometry = bulkGridGeometry.element(bulkElementIdx).geometry();
                         ShapeValues shapeValues;
                         this->getShapeValues(bulkIdx, bulkGridGeometry, bulkGeometry, globalPos, shapeValues);
@@ -295,7 +290,6 @@ public:
                     }
                     else
                     {
-                        psData.addCircleInterpolation(circleIpWeight, circleStencil);
                         psData.addBulkInterpolation(bulkElementIdx);
                     }
 
@@ -319,22 +313,9 @@ public:
                         this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
                     }
 
-                    // export bulk circle stencil
-                    if constexpr (isCVFE<bulkIdx>())
-                    {
-                        // we insert all dofs and make it unique later
-                        for (const auto& dofs : circleDofIndices)
-                        {
-                            extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                                    dofs->begin(), dofs->end());
-
-                        }
-                    }
-                    else
-                    {
-                        extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
-                                                                   circleStencil.begin(), circleStencil.end());
-                    }
+                    // export bulk circle stencil (the bulk dofs of the circle average, made unique later)
+                    auto& stencil = extendedSourceStencil_.stencil()[bulkElementIdx];
+                    stencil.insert(stencil.end(), circleInterpolation->dofs.begin(), circleInterpolation->dofs.end());
                 }
             }
         }
