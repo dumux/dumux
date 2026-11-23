@@ -128,7 +128,7 @@ public:
     explicit BoundingBoxTree(std::shared_ptr<const GeometricEntitySet> set)
     { build(set); }
 
-    //! Build the bounding box tree for the entities of the given set
+    //! Build the bounding box tree for the entities of the given set (empty for an empty set)
     void build(std::shared_ptr<const GeometricEntitySet> set)
     {
         // set the pointer to the entity set
@@ -140,6 +140,8 @@ public:
 
         // Create bounding boxes for all elements
         const auto numLeaves = set->size();
+        if (numLeaves == 0)
+            return;
 
         // reserve enough space for the nodes and the coordinates
         const auto numNodes = 2*numLeaves - 1;
