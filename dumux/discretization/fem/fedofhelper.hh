@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Default Dof helper for finite-element discretizations providing dof-related utility functions.
  *        Assuming that all dofs map directly to grid entities (vertices, edges, faces, elements).
  */
@@ -24,7 +24,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Default Dof helper for finite-element discretizations providing dof-related utility functions.
  *        Assuming that all dofs map directly to grid entities (vertices, edges, faces, elements).
  * \tparam GridView the grid view type

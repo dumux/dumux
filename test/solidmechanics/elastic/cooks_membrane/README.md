@@ -16,7 +16,7 @@ displacement \f$ u_y \f$ of the upper right corner \f$ A = (48, 60) \f$. For the
 \f$ E \f$ with \f$ \nu = 0.4999999 \f$, Chen and Sukumar @cite Chen2024 quote the reference value
 \f$ u_y(A) = 7.769 \f$.
 
-## Discretization
+## Discretization {#benchmark-cooks-membrane-elastic-discretization}
 
 | Test | Scheme |
 | :--- | :--- |
@@ -31,7 +31,7 @@ constraints of the local degrees of freedom (`constraints()`) and the traction w
 `boundaryFluxAtPos`. The mesh `test/solidmechanics/cooksmembrane.msh` has 233 triangles; `Grid.Refinement` refines it
 by conforming bisection, which roughly doubles the number of triangles per level.
 
-## Results
+## Results {#benchmark-cooks-membrane-elastic-results}
 
 Vertical displacement \f$ u_y(A) \f$ under refinement:
 

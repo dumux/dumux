@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Default class for the local finite element discretization.
  *        All schemes share the same structure. The only scheme-specific behavior is
  *        in `localDofs(elemDisc, boundaryFace)`, which is provided by the DofHelper.
@@ -29,7 +29,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Default class for the local finite element discretization.
  *        All schemes share the same structure. The only scheme-specific behavior is
  *        in `localDofs(elemDisc, boundaryFace)`, which is provided by the DofHelper.

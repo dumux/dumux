@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief The element variables class
  */
 #ifndef DUMUX_DISCRETIZATION_FE_ELEMENT_VARIABLES_HH
@@ -30,7 +30,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief The (stencil) element variables class for finite element schemes
  * \note The class is specialized for versions with and without caching
  * \tparam GVC the grid variables cache type
@@ -40,7 +40,7 @@ template<class GVC, bool cachingEnabled>
 class FEElementVariables;
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief The (stencil) element variables class for finite element schemes with caching
  * \note the variables are stored for the whole grid view in the corresponding GridVariables class
  */
@@ -211,7 +211,7 @@ private:
 };
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief The local (stencil) element variables class for finite element schemes without caching
  */
 template<class GVC>

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief Finite element grid discretization for the PQ1 FE method.
  */
 #ifndef DUMUX_DISCRETIZATION_PQ1_FE_GRID_DISCRETIZATION_HH
@@ -25,7 +25,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief Quadrature rule traits for PQ1 FE discretization
  */
 template<class GridView,
@@ -40,7 +40,7 @@ struct PQ1FEQuadratureTraits
 };
 
 /*!
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief Mapper traits for PQ1 FE discretization (vertex dofs only)
  */
 template<class GridView>
@@ -58,7 +58,7 @@ struct PQ1FEMapperTraits : public Dumux::DefaultMapperTraits<GridView>
 };
 
 /*!
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief The default traits for the PQ1 finite element grid discretization
  * \tparam GridView the grid view type
  * \tparam Scalar the scalar type (used for the FE cache)
@@ -82,7 +82,7 @@ struct PQ1FEDefaultGridDiscretizationTraits
 };
 
 /*!
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief Finite element grid discretization for the PQ1 FE method.
  */
 template<class Scalar,

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Default class for finite element grid discretizations.
  */
 #ifndef DUMUX_DISCRETIZATION_FE_GRID_DISCRETIZATION_HH
@@ -33,7 +33,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Default class for finite element grid discretizations.
  * \tparam GV the grid view type
  * \tparam Traits the grid geometry traits; must provide FeCache and DofHelper

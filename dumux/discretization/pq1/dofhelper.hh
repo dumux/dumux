@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief Helper class providing degree of freedom information for the PQ1 Lagrange basis.
  */
 #ifndef DUMUX_DISCRETIZATION_PQ1_LAGRANGE_DOF_HELPER_HH
@@ -24,7 +24,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PQ1Discretization
+ * \ingroup BoxDiscretization
  * \brief Helper class providing degree of freedom information for the PQ1 Lagrange basis.
  *        The pq1 basis uses vertex-only dofs.
  */

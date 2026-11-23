@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Helper class providing degree of freedom information for the PQ1 nonconforming scheme.
  */
 #ifndef DUMUX_DISCRETIZATION_PQ1_NONCONFORMING_DOF_HELPER_HH
@@ -21,7 +21,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Helper class providing degree of freedom information for the PQ1 nonconforming scheme.
  *        It uses face-centered dofs: exactly one dof per face/intersection.
  */

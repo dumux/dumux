@@ -146,7 +146,20 @@ public:
         return 1.0 - this->asImp_().porosity(element, scv, elemSol);
     }
 
-    //! \copydoc inertVolumeFraction
+    /*!
+     * \brief Function for defining the solid volume fraction at an interpolation point.
+     *        That is possibly solution dependent.
+     *
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param ipData The interpolation point data
+     * \param elemSol The solution at the dofs connected to the element.
+     * \param compIdx The solid component index
+     * \return the volume fraction of the inert solid component with index compIdx
+     *
+     * \note this overload is enabled if there is only one inert solid component and the
+     *       user didn't choose to implement an inertVolumeFractionAtPos overload.
+     *       It then forwards to the porosity interface at an interpolation point.
+     */
     template<class SolidSystem, class IpData, class ElementSolution>
         requires (SolidSystem::isInert()
                   && SolidSystem::numInertComponents == 1
@@ -170,7 +183,10 @@ public:
         return 0.0;
     }
 
-    //! \copydoc inertVolumeFraction
+    /*!
+     * \brief Function for defining the solid volume fraction at an interpolation point.
+     * \note this overload is enabled if there are no inert solid components.
+     */
     template<class SolidSystem, class IpData, class ElementSolution>
         requires (SolidSystem::numInertComponents == 0)
     Scalar inertVolumeFraction(const FVElementGeometry& fvGeometry,
