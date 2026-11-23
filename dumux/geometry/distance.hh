@@ -511,7 +511,7 @@ void closestEntity(const Dune::FieldVector<ctype, dimworld>& point,
  *       this estimate to be larger than the expected result. If the minSquaredDistance is smaller
  *       or equal to the result the returned entity index will be zero and the distance is equal
  *       to the estimate. However, this can also be the correct result. When in doubt, use the
- *       default parameter value.
+ *       default parameter value. For an empty tree, the result is the estimate and index zero.
  */
 template<class EntitySet, class ctype, int dimworld>
 std::pair<ctype, std::size_t> closestEntity(const Dune::FieldVector<ctype, dimworld>& point,
@@ -519,7 +519,8 @@ std::pair<ctype, std::size_t> closestEntity(const Dune::FieldVector<ctype, dimwo
                                             ctype minSquaredDistance = std::numeric_limits<ctype>::max())
 {
     std::size_t eIdx = 0;
-    Detail::closestEntity(point, tree, tree.numBoundingBoxes() - 1, minSquaredDistance, eIdx);
+    if (tree.numBoundingBoxes() > 0)
+        Detail::closestEntity(point, tree, tree.numBoundingBoxes() - 1, minSquaredDistance, eIdx);
     using std::sqrt;
     return { minSquaredDistance, eIdx };
 }

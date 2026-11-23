@@ -107,7 +107,8 @@ intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
 {
     // Call the recursive find function to find candidates
     std::vector<std::size_t> entities;
-    intersectingEntities(point, tree, tree.numBoundingBoxes() - 1, entities, isCartesianGrid);
+    if (tree.numBoundingBoxes() > 0)
+        intersectingEntities(point, tree, tree.numBoundingBoxes() - 1, entities, isCartesianGrid);
     return entities;
 }
 
@@ -202,7 +203,8 @@ inline std::vector<std::size_t>
 intersectingBoxes(const ctype* box, const BoundingBoxTree<EntitySet>& tree)
 {
     std::vector<std::size_t> entities;
-    intersectingBoxes(box, tree, tree.numBoundingBoxes() - 1, entities);
+    if (tree.numBoundingBoxes() > 0)
+        intersectingBoxes(box, tree, tree.numBoundingBoxes() - 1, entities);
     return entities;
 }
 
@@ -270,7 +272,8 @@ intersectingBoxes(const BoundingBoxTree<EntitySet0>& treeA, const BoundingBoxTre
         "Can only intersect bounding box trees of same world dimension");
 
     std::vector<std::pair<std::size_t, std::size_t>> pairs;
-    intersectingBoxes(treeA, treeB, treeA.numBoundingBoxes() - 1, treeB.numBoundingBoxes() - 1, pairs);
+    if (treeA.numBoundingBoxes() > 0 && treeB.numBoundingBoxes() > 0)
+        intersectingBoxes(treeA, treeB, treeA.numBoundingBoxes() - 1, treeB.numBoundingBoxes() - 1, pairs);
     return pairs;
 }
 
@@ -334,9 +337,10 @@ intersectingEntities(const Geometry& geometry,
     }
 
     // Call the recursive find function to find candidates
-    intersectingEntities(geometry, tree,
-                         bBox, tree.numBoundingBoxes() - 1,
-                         intersections, intersectionPolicy);
+    if (tree.numBoundingBoxes() > 0)
+        intersectingEntities(geometry, tree,
+                             bBox, tree.numBoundingBoxes() - 1,
+                             intersections, intersectionPolicy);
 
     return intersections;
 }
@@ -453,10 +457,11 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
     std::vector<IntersectionInfo<EntitySet0::dimensionworld, typename EntitySet0::ctype, typename EntitySet1::ctype>> intersections;
 
     // Call the recursive find function to find candidates
-    intersectingEntities(treeA, treeB,
-                         treeA.numBoundingBoxes() - 1,
-                         treeB.numBoundingBoxes() - 1,
-                         intersections, intersectionPolicy);
+    if (treeA.numBoundingBoxes() > 0 && treeB.numBoundingBoxes() > 0)
+        intersectingEntities(treeA, treeB,
+                             treeA.numBoundingBoxes() - 1,
+                             treeB.numBoundingBoxes() - 1,
+                             intersections, intersectionPolicy);
 
     return intersections;
 }
