@@ -8,6 +8,7 @@ from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 from dumux.common import Property
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
+from dumux.common.validation import validateProblem, validateSpatialParams
 
 
 @cppWrapperCreator
@@ -42,6 +43,7 @@ def _createPorousMediumFlowProblemDecorator(
         return module
 
     def decoratePorousMediumFlowProblem(cls):
+        validateProblem(cls)
         module = createModule(cls.numEq)
 
         def createPorousMediumFlowProblem():
@@ -101,6 +103,7 @@ def _createFVSpatialParamsOnePDecorator(gridGeometry):
     permType = f"Dune::FieldMatrix<{scalarType}, {dim}, {dim}>"
 
     def decorateFVSpatialParamsOneP(cls):
+        validateSpatialParams(cls)
         ggType = gridGeometry._typeName
         spatialParamsType = f"Dumux::Python::FVSpatialParamsOneP<{ggType}, {permType}>"
         includes = gridGeometry._includes + ["dumux/python/porousmediumflow/spatialparams.hh"]
@@ -138,13 +141,27 @@ def _createFVSpatialParamsOnePDecorator(gridGeometry):
                 result = self.permeabilityFunction(globalPos)
                 return maybeConvertScalarToMatrix(result)
 
+        class ConvertingSpatialParams:
+            """Forwards to a spatial params instance, widening a scalar permeability to a tensor.
+
+            The conversion is attached to the instance that is handed to C++, so the state the
+            other callbacks read is the state the permeability was computed from, and creating a
+            second instance neither disturbs the first nor stacks a second conversion on it.
+            """
+
+            def __init__(self, spatialParams):
+                self._spatialParams = spatialParams
+                # C++ asks which of the two the object has, so only forward what it really has
+                if hasattr(spatialParams, "permeability"):
+                    self.permeability = Permeability(spatialParams.permeability)
+                if hasattr(spatialParams, "permeabilityAtPos"):
+                    self.permeabilityAtPos = PermeabilityAtPos(spatialParams.permeabilityAtPos)
+
+            def __getattr__(self, name):
+                return getattr(self._spatialParams, name)
+
         def createFVSpatialParamsOneP():
-            spatialParams = cls()
-            if hasattr(cls, "permeability"):
-                cls.permeability = Permeability(spatialParams.permeability)
-            if hasattr(cls, "permeabilityAtPos"):
-                cls.permeabilityAtPos = PermeabilityAtPos(spatialParams.permeabilityAtPos)
-            return module.FVSpatialParamsOneP(gridGeometry, cls())
+            return module.FVSpatialParamsOneP(gridGeometry, ConvertingSpatialParams(cls()))
 
         return createFVSpatialParamsOneP
 

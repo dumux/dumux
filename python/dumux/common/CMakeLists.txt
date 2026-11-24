@@ -7,6 +7,7 @@ add_python_targets(common
   fvproblem
   fvspatialparams
   properties
+  validation
 )
 
 # currently the Python bindings only work with
