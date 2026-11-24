@@ -17,8 +17,10 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/grid/common/gridenums.hh>
+#include <dune/istl/matrix.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -492,6 +494,93 @@ public:
     }
 
 }; // implicit CVFEAssembler with numeric Jacobian
+
+/*!
+ * \ingroup Assembly
+ * \ingroup CVFEDiscretization
+ * \brief Control volume finite element local assembler using analytic differentiation and implicit time discretization
+ */
+template<class TypeTag, class Assembler, class Implementation>
+class CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true, Implementation>
+: public CVFELocalAssemblerBase<TypeTag, Assembler,
+                                Detail::CVFE::Impl<Implementation, CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true, Implementation>>,
+                                true>
+{
+    using ThisType = CVFELocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true, Implementation>;
+    using ParentType = CVFELocalAssemblerBase<TypeTag, Assembler, Detail::CVFE::Impl<Implementation, ThisType>, true>;
+    using GridVariables = GetPropType<TypeTag, Properties::GridVariables>;
+    using JacobianMatrix = GetPropType<TypeTag, Properties::JacobianMatrix>;
+
+public:
+
+    using LocalResidual = typename ParentType::LocalResidual;
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    //! the dense element Jacobian the local residual fills, indexed by local dof index
+    using ElementJacobianMatrix = Dune::Matrix<typename JacobianMatrix::block_type>;
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     *
+     * \return The element residual at the current solution.
+     */
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
+    {
+        const auto& elemDisc = this->elemDisc();
+        const auto& problem = this->asImp_().problem();
+        const auto numLocalDofs = Dumux::Detail::LocalDofs::numLocalDofs(elemDisc);
+
+        // get the vector of the actual element residuals
+        const auto origResiduals = this->evalLocalResidual();
+
+        // Filling an element-local block and scattering it once is measurably faster than writing
+        // into the sparse matrix from inside the quadrature loops, where every write searches a
+        // row. The block is per-thread rather than per-element or on the stack because it can get
+        // large: pq3 in 3D couples 64 local dofs, which at numEq 3 is a 288 kB block — too big for
+        // a worker stack, and a malloc/free of that size per element is an mmap pair per element.
+        // (At the 2 kB of a scalar 2D problem a per-element Dune::Matrix measures the same, so
+        // this buys nothing there; it is a guard for the large end.)
+        static thread_local ElementJacobianMatrix elemJac;
+        if (elemJac.N() != numLocalDofs || elemJac.M() != numLocalDofs)
+            elemJac.setSize(numLocalDofs, numLocalDofs);
+        elemJac = 0.0;
+
+        // The local residual knows the derivative of every term it assembles. Unlike the
+        // per-sub-control-volume hooks of the finite-volume assembler this also reaches a hybrid
+        // scheme's Galerkin-tested dofs, which have no sub-control volume of their own.
+        this->localResidual().addFluxAndSourceJacobian(
+            elemJac, problem, this->element(), elemDisc, this->curElemVars()
+        );
+
+        if (!this->assembler().isStationaryProblem())
+            this->localResidual().addStorageJacobian(
+                elemJac, problem, this->element(), elemDisc, this->curElemVars()
+            );
+
+        for (const auto& localDofI : localDofs(elemDisc))
+        {
+            // don't add derivatives for green dofs, exactly as the numeric assembler filters
+            // them. Note that PartialReassemblerEngine has no specialization for the CVFE
+            // schemes yet, so this is currently unreachable rather than exercised.
+            if (partialReassembler
+                && partialReassembler->dofColor(localDofI.dofIndex()) == EntityColor::green)
+                continue;
+
+            auto& row = A[localDofI.dofIndex()];
+            for (const auto& localDofJ : localDofs(elemDisc))
+                row[localDofJ.dofIndex()] += elemJac[localDofI.index()][localDofJ.index()];
+        }
+
+        // evaluate additional derivatives that might arise from the coupling (no-op if not coupled)
+        this->asImp_().maybeEvalAdditionalDomainDerivatives(origResiduals, A, gridVariables);
+
+        return origResiduals;
+    }
+
+}; // implicit CVFEAssembler with analytic Jacobian
 
 } // end namespace Dumux
 

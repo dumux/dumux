@@ -41,6 +41,8 @@
 #include <dumux/parallel/parallel_for.hh>
 
 #include "cvfelocalassembler_.hh"
+#include "cclocalassembler.hh"
+#include "fclocalassembler.hh"
 
 namespace Dumux::Experimental::Detail {
 
@@ -52,6 +54,20 @@ struct LocalAssemblerChooser<DiscretizationMethods::CVFE<DM>>
 {
     template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
     using type = Dumux::Experimental::CVFELocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethods::CCTpfa>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = Dumux::CCLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
+};
+
+template<>
+struct LocalAssemblerChooser<DiscretizationMethods::FCStaggered>
+{
+    template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
+    using type = Dumux::FaceCenteredLocalAssembler<TypeTag, Impl, diffMethod, isImplicit>;
 };
 
 template<class TypeTag, class Impl, DiffMethod diffMethod, bool isImplicit>
@@ -400,7 +416,7 @@ private:
     void maybeComputeColors_()
     {
         if (enableMultithreading_)
-            elementSets_ = computeColoring(gridDiscretization()).sets;
+            elementSets_ = computeColoring(gridDiscretization(), getParam<int>("Assembly.Verbosity", 1)).sets;
     }
 
     // reset the residual vector to 0.0

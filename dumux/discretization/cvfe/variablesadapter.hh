@@ -11,6 +11,7 @@
 #ifndef DUMUX_CVFE_LOCAL_VARIABLES_ADAPTER_HH
 #define DUMUX_CVFE_LOCAL_VARIABLES_ADAPTER_HH
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/std/type_traits.hh>
 #include <dumux/common/concepts/ipdata_.hh>
 
@@ -67,7 +68,20 @@ public:
                                               typename FVElementGeometry::Element,
                                               typename FVElementGeometry::SubControlVolume>();
         })
+        {
+            // that assumption fails for a hybrid scheme, whose Galerkin-tested local dofs have no
+            // sub-control volume. Note that an *unconstrained* update template also satisfies the
+            // detection above, so this branch can be reached by volume variables that meant to
+            // offer only the interpolation-point interface.
+            if (ipData.localDofIndex() >= fvGeometry.numScv())
+                DUNE_THROW(Dune::InvalidStateException,
+                    "These volume variables are updated from a sub-control volume, which local dof "
+                    << ipData.localDofIndex() << " does not have. Constrain the update overload "
+                    "with Concept::LocalDofIpData so that this one is not selected, or implement "
+                    "update(elemSol, problem, fvGeometry, ipData).");
+
             VolumeVariables::update(elemSol, problem, fvGeometry.element(), fvGeometry.scv(ipData.localDofIndex()));
+        }
         else
             VolumeVariables::update(elemSol, problem, fvGeometry, ipData);
     };
