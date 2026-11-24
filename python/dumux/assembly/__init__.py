@@ -31,7 +31,9 @@ MySimpleGenerator = type("MySimpleGenerator", (object,), myAttributes)
 
 
 @cppWrapperCreator
-def _createFVAssembler(*, problem, gridVariables, model, diffMethod="numeric", isImplicit=True):
+def _createFVAssembler(
+    *, problem, gridVariables, model, diffMethod="numeric", isImplicit=True, multithreading=False
+):
     """
     Create an FVAssembler object
 
@@ -41,6 +43,8 @@ def _createFVAssembler(*, problem, gridVariables, model, diffMethod="numeric", i
         model: A DuMux model configuration instance
         diffMethod (str): The method to compute derivatives of the residual (numeric or analytic)
         isImplicit (bool): If the time discretization method is implicit or explicit
+        multithreading (bool): Keep the configured backend instead of forcing Serial. Only for a
+            problem that enters no Python code during assembly; the default cannot.
 
     Returns:
         An assembler object (Python-bindings of the corresponding C++ type)
@@ -64,17 +68,19 @@ def _createFVAssembler(*, problem, gridVariables, model, diffMethod="numeric", i
     )
     includes += ["dumux/python/assembly/fvassembler.hh"]
 
-    moduleName = "fvassembler_" + hashIt(assemblerType)
+    moduleName = "fvassembler_" + hashIt(assemblerType + str(multithreading))
     # remark: use SimpleGenerator again starting with dune 2.9
-    generator = MySimpleGenerator("FVAssembler", "Dumux::Python")
+    generator = (SimpleGenerator if multithreading else MySimpleGenerator)(
+        "FVAssembler", "Dumux::Python"
+    )
     module = generator.load(
         includes,
         assemblerType,
         moduleName,
         holder="std::shared_ptr",
         preamble=model.cppHeader,
-        # make sure the assembler is compiled with the Serial backend
-        # as currently the assembly in combination with Python is not thread-safe
+        # by default the assembler is compiled with the Serial backend, as a problem that calls
+        # into Python during assembly is not thread-safe
         # the following is nicer but only works with dune > 2.8
         # extraCMake=[
         #     "target_compile_definitions(TARGET PUBLIC DUMUX_MULTITHREADING_BACKEND=Serial)"
