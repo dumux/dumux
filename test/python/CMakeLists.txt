@@ -10,6 +10,30 @@ dune_python_add_test(NAME test_python_gridgeometry
                      LABELS python unit)
 set_tests_properties(test_python_gridgeometry PROPERTIES TIMEOUT 1200)
 
+dune_python_add_test(NAME test_python_validation
+                     SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_validation.py
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     LABELS python unit)
+set_tests_properties(test_python_validation PROPERTIES TIMEOUT 1200)
+
+dune_python_add_test(NAME test_python_parameters
+                     SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_parameters.py
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     LABELS python unit)
+set_tests_properties(test_python_parameters PROPERTIES TIMEOUT 1200)
+
+dune_python_add_test(NAME test_python_spatialparams
+                     SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_spatialparams.py
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     LABELS python unit)
+set_tests_properties(test_python_spatialparams PROPERTIES TIMEOUT 1200)
+
+dune_python_add_test(NAME test_python_properties
+                     SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_properties.py
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     LABELS python unit)
+set_tests_properties(test_python_properties PROPERTIES TIMEOUT 1200)
+
 dune_python_add_test(NAME test_python_fvproblem
                      SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_fvproblem.py
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

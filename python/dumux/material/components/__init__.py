@@ -17,8 +17,13 @@ _components = {
 }
 
 
+def availableComponents():
+    """The components that can be created by name, and the header each one comes from"""
+    return dict(_components)
+
+
 def listComponents():
-    """List all available component names"""
+    """Print the available component names"""
     print("The following components are available:")
     print(_components.keys())
 

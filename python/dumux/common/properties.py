@@ -141,8 +141,13 @@ _typeTags = {
 }
 
 
+def availableTypeTags():
+    """The TypeTags that can be inherited from by name, with their include and description"""
+    return {name: dict(entry) for name, entry in _typeTags.items()}
+
+
 def listTypeTags():
-    """List all available TypeTags/Models that can be inherited from"""
+    """Print all available TypeTags/Models that can be inherited from"""
 
     print("\n**********************************\n")
     print("The following TypeTags are available:")
@@ -237,7 +242,9 @@ class TypeTag:
     knownProperties = predefinedProperties()
 
     def __init__(self, name, *, inheritsFrom=None, gridGeometry=None):
-        self.inheritsFrom = inheritsFrom
+        # the names in here are resolved to TypeTag objects in place further down, so take a copy:
+        # a caller that reuses one list for several type tags owns that list, not this one
+        self.inheritsFrom = None if inheritsFrom is None else list(inheritsFrom)
         self.includes = []
         self.properties = {}
         self.newPropertyDefinitions = []
@@ -283,6 +290,23 @@ class TypeTag:
                 if parentTypeTag.includes is not None:
                     for include in parentTypeTag.includes:
                         self.includes.append(include)
+
+    def describe(self):
+        """What this type tag is, as data rather than as generated C++
+
+        The same question ``cppHeader`` answers, in a form a script, a test or a notebook can
+        read: which type tags it inherits from, and what every property it sets resolves to.
+        """
+        return {
+            "typeTag": self.name,
+            "inheritsFrom": [parent.name for parent in (self.inheritsFrom or [])],
+            "gridGeometry": None if self.gridGeometry is None else self.gridGeometry._typeName,
+            "properties": {
+                key: (prop.cppType if prop.value is None else prop.value)
+                for key, prop in self.properties.items()
+            },
+            "includes": list(self.includes),
+        }
 
     def __setitem__(self, key, value: Property):
         """the [] operator for setting values"""
@@ -366,6 +390,10 @@ class Model(TypeTag):
     """A DuMux model specifies all properties necessary to build a DuMux simulator"""
 
     def __init__(self, *, inheritsFrom, gridGeometry, scalar: str = "double"):
+
+        # the discretization tag is appended below, so build on a copy: a caller that reuses one
+        # list to create several models would otherwise pass the previous model's parents in
+        inheritsFrom = list(inheritsFrom)
 
         inheritsFromNames = []
         for parentModel in inheritsFrom:
