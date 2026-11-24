@@ -345,6 +345,73 @@ public:
         DUNE_THROW(Dune::NotImplemented, "This model does not implement a fluxIntegral method!");
     }
 
+    /*!
+     * \brief Add the analytic derivatives of the storage term to the element Jacobian
+     *
+     * \param elemJac The element Jacobian, indexed by *local* dof index
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity the derivatives are computed for
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element at the current time level
+     *
+     * Add \f$ \partial/\partial u_j \f$ of everything \ref evalStorage contributes — including its
+     * division by the time step size — into \c elemJac[i][j][eqIdx][pvIdx], for every pair of
+     * local dofs \f$ (i,j) \f$ of this element.
+     *
+     * \note only called for instationary problems, as \ref evalStorage is
+     * \note has to be implemented by the model specific residual class to use DiffMethod::analytic
+     */
+    template<class ElementJacobianMatrix>
+    void addStorageJacobian(ElementJacobianMatrix& elemJac,
+                            const Problem& problem,
+                            const Element& element,
+                            const ElementDiscretization& elemDisc,
+                            const ElementVariables& elemVars) const
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "This model does not implement an addStorageJacobian method, which "
+                   "DiffMethod::analytic requires for an instationary problem. "
+                   "Use DiffMethod::numeric instead.");
+    }
+
+    /*!
+     * \brief Add the analytic derivatives of the flux and source terms to the element Jacobian
+     *
+     * \param elemJac The element Jacobian, indexed by *local* dof index
+     * \param problem The problem to solve
+     * \param element The DUNE Codim<0> entity the derivatives are computed for
+     * \param elemDisc The element discretization
+     * \param elemVars The variables for all local dofs of the element at the current time level
+     *
+     * Add \f$ \partial/\partial u_j \f$ of everything \ref evalFluxAndSource contributes — the
+     * fluxes, the negated sources, the boundary flux integrals and the element integrals a hybrid
+     * scheme adds for its Galerkin-tested dofs — into \c elemJac[i][j][eqIdx][pvIdx].
+     *
+     * Three things about the shape of this interface:
+     *
+     * - It is **element-level**, not one method per term. A hybrid scheme's Galerkin-tested local
+     *   dofs have no sub-control volume, so no per-scv or per-scvf hook can reach their rows.
+     * - It fills an **element-local block that the assembler owns**, zeroes before the call and
+     *   scatters afterwards, so the quadrature loops never search a sparse row and the assembler
+     *   can filter what it scatters, as a partial reassembler requires.
+     * - It is **split from the storage derivatives** the same way \ref evalFluxAndSource is split
+     *   from \ref evalStorage, so that an assembler which weights the two terms differently — a
+     *   multi-stage time discretization — can scale them independently.
+     *
+     * \note has to be implemented by the model specific residual class to use DiffMethod::analytic
+     */
+    template<class ElementJacobianMatrix>
+    void addFluxAndSourceJacobian(ElementJacobianMatrix& elemJac,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const ElementDiscretization& elemDisc,
+                                  const ElementVariables& elemVars) const
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "This model does not implement an addFluxAndSourceJacobian method, which "
+                   "DiffMethod::analytic requires. Use DiffMethod::numeric instead.");
+    }
+
     // \}
 
     /*!
