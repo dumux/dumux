@@ -822,6 +822,18 @@ public:
     { return useLineSearch_; }
 
     /*!
+     * \brief Specify whether the chopped update strategy is enabled or not
+     */
+    void setUseChop(bool val = true)
+    { useChop_ = val; }
+
+    /*!
+     * \brief Return whether the chopped update strategy is enabled or not
+     */
+    bool useChop() const
+    { return useChop_; }
+
+    /*!
      * \brief Returns the parameter group
      */
     const std::string& paramGroup() const
