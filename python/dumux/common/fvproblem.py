@@ -9,6 +9,7 @@ from dune.generator.generator import SimpleGenerator
 from dune.common.hashit import hashIt
 
 from dumux.wrapping import cppWrapperCreator, cppWrapperClassAlias
+from dumux.common.validation import validateProblem
 
 
 @cppWrapperCreator
@@ -43,6 +44,7 @@ def _createFVProblemDecorator(
         return module
 
     def decorateFVProblem(cls):
+        validateProblem(cls)
         module = createModule(cls.numEq)
 
         def createFVProblem():
