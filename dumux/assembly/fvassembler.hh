@@ -19,6 +19,7 @@
 
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/gridcapabilities.hh>
@@ -414,7 +415,7 @@ private:
     void maybeComputeColors_()
     {
         if (enableMultithreading_)
-            elementSets_ = computeColoring(gridGeometry()).sets;
+            elementSets_ = computeColoring(gridGeometry(), getParam<int>("Assembly.Verbosity", 1)).sets;
     }
 
     // reset the residual vector to 0.0
