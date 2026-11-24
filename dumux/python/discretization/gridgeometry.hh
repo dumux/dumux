@@ -87,7 +87,7 @@ void registerFVElementGeometry(pybind11::handle scope)
     {
         using pybind11::operator""_a;
 
-        cls.def_property_readonly("numScvf", &FVEG::numScv);
+        cls.def_property_readonly("numScvf", &FVEG::numScvf);
         cls.def_property_readonly("numScv", &FVEG::numScv);
         cls.def_property_readonly("hasBoundaryScvf", &FVEG::hasBoundaryScvf);
 
