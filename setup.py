@@ -8,6 +8,9 @@
 # Therefore, this file is only updated then building a new package for PyPI.
 # This also generates a new pyproject.toml file.
 
+import os
+import re
+
 try:
     from dune.packagemetadata import metaData
 except ImportError:
@@ -15,12 +18,26 @@ except ImportError:
 from setuptools import find_packages
 from skbuild import setup
 
-# When building a new package, update the version numbers below and run:
+# To build a new package run:
 # > python setup.py sdist
 # > python -m twine upload dist/*
 
-dumuxVersion = "3.4.0.dev20210308"
-duneVersion = "2.8.0.dev20210308"
+
+def duneModuleField(field):
+    """Read a field of dune.module, which is where this module states its own versions"""
+
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dune.module")
+    with open(path, encoding="utf-8") as duneModule:
+        for line in duneModule:
+            if line.startswith(field + ":"):
+                return line.split(":", 1)[1].strip()
+    raise RuntimeError(f"dune.module declares no {field}")
+
+
+# derived rather than written down, so a released package cannot claim a version this module
+# does not have; "3.11-dev" is spelled "3.11.dev0" the way Python orders pre-releases
+dumuxVersion = duneModuleField("Version").replace("-dev", ".dev0")
+duneVersion = re.search(r"dune-common \(>=\s*([^)]+)\)", duneModuleField("Depends")).group(1)
 
 metadata = metaData(duneVersion)[1]
 metadata["version"] = dumuxVersion
