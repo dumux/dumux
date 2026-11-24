@@ -14,6 +14,8 @@
 
 #include <dumux/common/timeloop.hh>
 
+#include <memory>
+
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
 
@@ -58,7 +60,10 @@ void registerTimeLoop(pybind11::handle scope,
 template<class Scalar>
 void registerTimeLoop(pybind11::handle scope, const char *clsName = "TimeLoop")
 {
-    pybind11::class_<CheckPointTimeLoop<Scalar>> cls(scope, clsName);
+    // shared_ptr holder so a time loop can be handed to an assembler or a nonlinear solver,
+    // both of which keep one
+    pybind11::class_<CheckPointTimeLoop<Scalar>,
+                     std::shared_ptr<CheckPointTimeLoop<Scalar>>> cls(scope, clsName);
     registerTimeLoop(scope, cls);
 }
 

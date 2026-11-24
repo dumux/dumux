@@ -52,6 +52,17 @@ void registerFVAssembler(pybind11::handle scope, pybind11::class_<FVAssembler, o
             self.assembleJacobianAndResidual(curSol);
         }, "curSol"_a, "prevSol"_a, "dt"_a);
 
+    // a nonlinear solver drives the iteration itself and calls the stationary assembly, so the
+    // time level has to be set on the assembler once per step rather than passed per call
+    cls.def("setTimeLoop", [](FVAssembler& self,
+                              std::shared_ptr<const CheckPointTimeLoop<Scalar>> timeLoop){
+        self.setTimeLoop(timeLoop);
+    }, "timeLoop"_a);
+
+    cls.def("setPreviousSolution", [](FVAssembler& self, const SolutionVector& prevSol){
+        self.setPreviousSolution(prevSol);
+    }, "prevSol"_a);
+
     cls.def_property_readonly("numDofs", &FVAssembler::numDofs);
     cls.def_property_readonly("problem", &FVAssembler::problem);
     cls.def_property_readonly("gridGeometry", &FVAssembler::gridGeometry);
