@@ -108,7 +108,6 @@ public:
      * \param elemDisc The element discretization
      * \param ipData The interpolation point data
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the intrinsic permeability
      */
     template<class ElementDiscretization, class IpData, class ElementSolution>
     void permeability(const ElementDiscretization& elemDisc,

@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 /*!\file
- * \ingroup Common
+ * \ingroup Core
  * \brief Adapter to expose a multi-DOF mapper interface for single- and multi-DOF mappers.
  */
 #ifndef DUMUX_COMMON_MULTIMAPPERVIEW_HH

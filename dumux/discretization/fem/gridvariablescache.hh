@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief The grid local variables class for finite element methods
  */
 #ifndef DUMUX_DISCRETIZATION_FE_GRID_LOCAL_VARIABLES_HH
@@ -42,7 +42,7 @@ struct FEDefaultGridVariablesCacheTraits
 };
 
 /*!
- * \ingroup FEDiscretization
+ * \ingroup FEMDiscretization
  * \brief Base class for the grid local variables
  * \tparam Traits the traits
  * \tparam enableCaching whether the variables are stored for the whole grid

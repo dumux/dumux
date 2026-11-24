@@ -9,7 +9,7 @@ large-deformation poroelastic model (@ref PoroElasticLargeDef,
 Cryer's solution. With larger loads, the large-deformation model shows the effect of finite deformation
 and of a permeability that depends on the deformation.
 
-## Problem
+## Problem {#benchmark-cryer-problem}
 
 The sphere has the radius $R_0 = 1$ m; one octant is modelled.
 - Sphere surface: the pressure load $p_0$, the traction $-p_0 \mathbf{N}$ with the radial unit vector
@@ -46,7 +46,7 @@ $\phi(J) = 1 - (1 - \phi_0)/J$ and the particle diameter $d_p$ chosen such that 
 (`SpatialParams.PermeabilityModel`). In linear poroelasticity, the permeability is constant, and
 $p_f/p_0$ does not depend on the load.
 
-## Cryer's solution
+## Cryer's solution {#benchmark-cryer-solution}
 
 In linear poroelasticity, the pore pressure is
 
@@ -65,7 +65,7 @@ $B$ is Skempton's coefficient, the uniform pore pressure $B p_0$ right after loa
 parameters above, $m = 0.5$, $c_v = 3 \times 10^{-3}$ m²/s, $\beta = 1$, $B = 1$, and the centre
 pressure has its maximum 1.575 $p_0$ at $t c_v/R_0^2 = 0.0625$. `test/poromechanics/cryeranalyticalsolution.hh` implements the series.
 
-## Discretization
+## Discretization {#benchmark-cryer-discretization}
 
 Linear poroelasticity: the pressure is cell-centred with the multi-point flux approximation
 (@ref CCMpfaDiscretization), since the two-point flux approximation is not consistent on the
@@ -88,7 +88,7 @@ time stepper with the third-order diagonally implicit Runge–Kutta method DIRK3
 implicit Euler is also available). The time step starts at 1 s and grows by the factor 1.3 per step up
 to 20 s, which reaches $R_0^2/c_v = 333.33$ s in 25 steps.
 
-## Results
+## Results {#benchmark-cryer-results}
 
 Centre pressure $p/p_0$ and volume ratio $J$ at the centre, mesh `sphere_eighth.msh` (gmsh 4.13.1), DIRK3,
 25 steps:
@@ -114,7 +114,7 @@ $t c_v/R_0^2 = 1$.
 
 ![Centre pressure (top) and volume ratio at the centre (bottom) for the three loads of the large-deformation model, constant (left) and Kozeny–Carman permeability (right); dash-dotted: linear poroelasticity, dashed: Cryer's solution](cryer_overview.png)
 
-## Tests
+## Tests {#benchmark-cryer-tests}
 
 - `test_cryer_poroelastic_small_def`: linear poroelasticity, coarse mesh, implicit Euler, five steps of
   1 s. The test fails if the centre pressure deviates from Cryer's solution by more than 0.07 $p_0$
@@ -127,7 +127,7 @@ $t c_v/R_0^2 = 1$.
 - `test_cryer_poroelastic_large_def_compressible`: large-deformation model, otherwise as
   `test_cryer_poroelastic_small_def_compressible`; the deviation is 0.043 $p_0$.
 
-## Running the benchmark
+## Running the benchmark {#benchmark-cryer-running}
 
 In `test/poromechanics/poroelastic_large_deformations/cryer` of the build directory, `run_benchmark.py`
 generates `sphere_eighth.msh` with gmsh if it does not exist, runs the cases of the table and plots them

@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Finite element grid discretization for the PQ1 non-conforming (face-centered) method.
  */
 #ifndef DUMUX_DISCRETIZATION_FACECENTERED_PQ1NONCONFORMING_FE_GRID_DISCRETIZATION_HH
@@ -24,7 +24,7 @@
 namespace Dumux::Experimental {
 
 /*!
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Quadrature rule traits for the PQ1 non-conforming (face-centered) FE discretization
  */
 template<class GridView,
@@ -39,7 +39,7 @@ struct PQ1NonconformingFEQuadratureTraits
 };
 
 /*!
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Mapper traits for the PQ1 non-conforming (face-centered) FE discretization (face/codim-1 dofs only)
  */
 template<class GridView>
@@ -55,7 +55,7 @@ struct PQ1NonconformingFEMapperTraits : public Dumux::DefaultMapperTraits<GridVi
 };
 
 /*!
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief The default traits for the PQ1 non-conforming (face-centered) finite element grid discretization
  * \tparam GridView the grid view type
  * \tparam Scalar the scalar type (used for the FE cache)
@@ -79,7 +79,7 @@ struct PQ1NonconformingFEDefaultGridDiscretizationTraits
 };
 
 /*!
- * \ingroup PQ1NonconformingDiscretization
+ * \ingroup DiamondDiscretization
  * \brief Finite element grid discretization for the PQ1 non-conforming (face-centered) method.
  *        Uses Crouzeix-Raviart elements on simplices and Rannacher-Turek elements on cubes.
  */
