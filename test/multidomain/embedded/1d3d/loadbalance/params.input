@@ -1,0 +1,7 @@
+[Grid]
+Cells = 12
+
+[LoadBalance]
+Method = ALUGrid
+PieceWeight = 10
+MaxImbalance = 1.2
