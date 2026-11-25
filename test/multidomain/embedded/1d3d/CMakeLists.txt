@@ -5,6 +5,7 @@ add_subdirectory(1p_1p)
 add_subdirectory(1p_1p_variables)
 add_subdirectory(1p_richards)
 add_subdirectory(1p2c_richards2c)
+add_subdirectory(lowdimpartition)
 add_subdirectory(projection_search)
 add_subdirectory(root_soil_benchmark)
 
