@@ -14,6 +14,7 @@
 #define DUMUX_MULTIDOMAIN_EMBEDDED_POINTSOURCEDATA_HH
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 #include <dune/common/fvector.hh>
@@ -135,8 +136,8 @@ private:
     ShapeValues bulkShapeValues_, lowDimShapeValues_;
     std::vector<GridIndex<bulkIdx>> bulkDofIndices_;
     std::vector<GridIndex<lowDimIdx>> lowDimDofIndices_;
-    GridIndex<bulkIdx> bulkElementIdx_;
-    GridIndex<lowDimIdx> lowDimElementIdx_;
+    GridIndex<bulkIdx> bulkElementIdx_ = std::numeric_limits<GridIndex<bulkIdx>>::max();
+    GridIndex<lowDimIdx> lowDimElementIdx_ = std::numeric_limits<GridIndex<lowDimIdx>>::max();
 };
 
 /*!

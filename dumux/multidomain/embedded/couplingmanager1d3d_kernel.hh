@@ -13,8 +13,13 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_KERNEL_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_KERNEL_HH
 
+#include <algorithm>
 #include <array>
+#include <cassert>
+#include <limits>
 #include <type_traits>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <dune/common/timer.hh>
@@ -29,6 +34,7 @@
 #include <dumux/geometry/distance.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
+#include <dumux/multidomain/embedded/distributedpointsources.hh>
 #include <dumux/multidomain/embedded/cylinderintegration.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 
@@ -179,6 +185,12 @@ public:
      */
     void computePointSourceData(std::size_t /*order*/ = 1, bool /*verbose*/ = false)
     {
+        if (this->gridView(bulkIdx).comm().size() > 1)
+        {
+            computeDistributedPointSourceData_();
+            return;
+        }
+
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
@@ -687,8 +699,367 @@ private:
     //! the integral of the kernel for each point source / integration point, i.e. weight for the source
     std::vector<std::array<std::vector<Scalar>, maxNumBulkLocalDofs>> bulkSourceWeights_;
 
+    using SampleSpec = typename ParentType::SampleSpec;
+    using DistributedKey = typename ParentType::DistributedKey;
+    static constexpr auto bulkSample = ParentType::bulkSample;
+    static constexpr auto lowDimSample = ParentType::lowDimSample;
+    static constexpr std::size_t noId_ = std::numeric_limits<std::size_t>::max();
+
+    //! a kernel source sent by the owner of the lower-dimensional element to the processes the kernel may reach
+    struct KernelRecord
+    {
+        DistributedKey key;
+        GlobalPosition a, b;
+        Scalar radius;
+        Scalar kernelWidth;
+        int embeddings;
+        Scalar fluxScalingFactor;
+        Scalar distance;
+        int bulkRank;
+        std::size_t bulkElementIdx;
+        DistributedKey bulkSampleKey;
+        DistributedKey lowDimSampleKey;
+    };
+
+    /*!
+     * \brief The kernel coupling on distributed grids
+     *
+     * The owner of a lower-dimensional element creates the point sources as in the sequential setup and
+     * sends each kernel to the processes whose partition it may reach. Every process integrates the kernel
+     * over its interior bulk elements and returns its part of the integral, which gives the weight of the
+     * lower-dimensional point source. A sample point of the kernel belongs to exactly one bulk element: on
+     * an equidistant YaspGrid the one of the Cartesian lookup of the sequential setup, otherwise the one
+     * with the smallest global id among the elements containing it.
+     */
+    void computeDistributedPointSourceData_()
+    {
+        Dune::Timer watch;
+        const auto pieces = this->beginDistributedSetup();
+        const auto& comm = this->bulkComm();
+        const int rank = comm.rank();
+
+        const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& bulkGridView = bulkGridGeometry.gridView();
+        bulkSourceIds_.assign(bulkGridView.size(0), {});
+        bulkSourceWeights_.assign(bulkGridView.size(0), {});
+        extendedSourceStencil_.stencil().clear();
+        fluxScalingFactor_.clear();
+        prepareDistributedLookup_();
+
+        const double characteristicRelativeLength = getParam<double>("MixedDimension.KernelIntegrationCRL", 0.1);
+        EmbeddedCoupling::CylinderIntegration<Scalar> cylIntegration(characteristicRelativeLength, 1);
+        const int integrationOrder = getParam<int>("MixedDimension.KernelIntegrationOrder", 1);
+        const auto bulkTree = this->makeDistributedBulkTree();
+
+        struct OwnedSource
+        {
+            std::size_t id;
+            GridIndex<lowDimIdx> lowDimElementIdx;
+            GlobalPosition center;
+            Scalar length;
+            int embeddings;
+            std::size_t bulkSpec;
+            std::size_t lowDimSpec;
+            Scalar integral = 0.0;
+        };
+
+        std::vector<SampleSpec> specs;
+        std::vector<OwnedSource> ownedSources;
+        std::vector<std::vector<char>> kernelMessages(comm.size());
+        for (const auto& piece : pieces)
+        {
+            const auto lowDimElementIdx = piece.lowDimElementIdx;
+            const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
+            const auto kernelWidth = kernelWidthFactor_(this->problem(lowDimIdx).spatialParams(), lowDimElementIdx)*radius;
+            const auto geometry = piece.geometry();
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(geometry.type(), integrationOrder);
+            const int embeddings = piece.bulkElements.size();
+            for (const auto& qp : quad)
+            {
+                const auto center = geometry.global(qp.position());
+                auto a = geometry.corner(0);
+                auto b = geometry.corner(1);
+                if (quad.size() > 1)
+                {
+                    auto halfSegment = b - a;
+                    halfSegment *= 0.5*qp.weight();
+                    a = center - halfSegment;
+                    b = center + halfSegment;
+                }
+
+                const auto lowDimKey = this->newSampleKey(lowDimSample);
+                const auto lowDimSpec = specs.size();
+                specs.push_back(SampleSpec{lowDimSample, lowDimKey, {rank}, {rank}, {{rank, lowDimElementIdx, center, 1.0}}});
+
+                std::array<Scalar, 2*dimWorld> cylinderBox;
+                for (int d = 0; d < dimWorld; ++d)
+                {
+                    cylinderBox[d] = std::min(a[d], b[d]) - kernelWidth;
+                    cylinderBox[d + dimWorld] = std::max(a[d], b[d]) + kernelWidth;
+                }
+                const auto kernelRanks = EmbeddedCoupling::Detail::ranksIntersectingBox(*bulkTree, cylinderBox);
+
+                for (int n = 0; n < embeddings; ++n)
+                {
+                    const auto [bulkRank, bulkElementIdx] = piece.bulkElements[n];
+                    const auto id = this->addOwnedPointSource(lowDimElementIdx, center);
+
+                    const auto distance = averageDistanceLineGeometry(a, b, piece.bulkGeometries[n]);
+                    this->setAverageDistance(id, distance);
+                    const auto scalingDistance = isCVFE<bulkIdx>() ? Scalar(0.0) : distance;
+                    const auto xi = this->problem(bulkIdx).fluxScalingFactor(scalingDistance, radius, kernelWidth);
+                    setFluxScalingFactor_(id, xi);
+
+                    const auto bulkKey = this->newSampleKey(bulkSample);
+                    ownedSources.push_back(OwnedSource{id, lowDimElementIdx, center, (a-b).two_norm(), embeddings, specs.size(), lowDimSpec});
+                    specs.push_back(SampleSpec{bulkSample, bulkKey, {bulkRank}, {rank}, {{bulkRank, bulkElementIdx, center, 1.0}}});
+                    this->setPointSourceSamples(id, bulkKey, lowDimKey);
+
+                    const KernelRecord record{this->ownedPointSourceKey(id), a, b, radius, kernelWidth, embeddings, xi, distance,
+                                              bulkRank, bulkElementIdx, bulkKey, lowDimKey};
+                    for (const int p : kernelRanks)
+                        writeKernelRecord_(kernelMessages[p], record);
+                }
+            }
+        }
+
+        // integrate the kernels over the interior bulk elements of this process
+        std::vector<std::vector<char>> integralMessages(comm.size());
+        for (const auto& [sender, message] : EmbeddedCoupling::Detail::exchangeMessages(comm, kernelMessages))
+        {
+            EmbeddedCoupling::Detail::MessageReader reader(message);
+            EmbeddedCoupling::Detail::MessageWriter writer(integralMessages[sender]);
+            while (!reader.done())
+            {
+                const auto record = readKernelRecord_(reader);
+                const auto [integral, hasSources] = integrateKernel_(record, cylIntegration);
+                writer.put(record.key.second);
+                writer.put(integral);
+                writer.put(hasSources);
+            }
+        }
+
+        for (const auto& [sender, message] : EmbeddedCoupling::Detail::exchangeMessages(comm, integralMessages))
+        {
+            EmbeddedCoupling::Detail::MessageReader reader(message);
+            while (!reader.done())
+            {
+                const auto id = reader.get<std::size_t>();
+                const auto integral = reader.get<Scalar>();
+                const auto hasSources = reader.get<bool>();
+                auto& source = ownedSources[ownedSourceIndex_(ownedSources, id)];
+                source.integral += integral;
+                if (hasSources)
+                {
+                    specs[source.bulkSpec].consumers.push_back(sender);
+                    specs[source.lowDimSpec].consumers.push_back(sender);
+                }
+            }
+        }
+
+        for (const auto& source : ownedSources)
+        {
+            const auto surfaceFactor = source.integral/(source.length/Scalar(source.embeddings));
+            this->pointSources(lowDimIdx).emplace_back(source.center, source.id, surfaceFactor, source.length, source.lowDimElementIdx);
+            this->pointSources(lowDimIdx).back().setEmbeddings(source.embeddings);
+        }
+
+        this->distributeSamples(specs);
+        this->addOwnedLowDimCouplingStencils();
+        this->makeExtendedSourceStencilsUnique(extendedSourceStencil_.stencil());
+        fluxScalingFactor_.resize(this->idCounter_);
+        this->finishDistributedSetup();
+        this->printDistributedSetup(watch);
+    }
+
+    //! The index of the owned source with point source id in the sorted vector of owned sources
+    template<class OwnedSources>
+    static std::size_t ownedSourceIndex_(const OwnedSources& sources, std::size_t id)
+    {
+        const auto it = std::lower_bound(sources.begin(), sources.end(), id, [](const auto& s, std::size_t i){ return s.id < i; });
+        assert(it != sources.end() && it->id == id);
+        return std::distance(sources.begin(), it);
+    }
+
+    static void writeKernelRecord_(std::vector<char>& message, const KernelRecord& record)
+    {
+        EmbeddedCoupling::Detail::MessageWriter writer(message);
+        writer.put(record.key);
+        writer.put(record.a);
+        writer.put(record.b);
+        writer.put(record.radius);
+        writer.put(record.kernelWidth);
+        writer.put(record.embeddings);
+        writer.put(record.fluxScalingFactor);
+        writer.put(record.distance);
+        writer.put(record.bulkRank);
+        writer.put(record.bulkElementIdx);
+        writer.put(record.bulkSampleKey);
+        writer.put(record.lowDimSampleKey);
+    }
+
+    static KernelRecord readKernelRecord_(EmbeddedCoupling::Detail::MessageReader& reader)
+    {
+        KernelRecord record;
+        record.key = reader.get<DistributedKey>();
+        record.a = reader.get<GlobalPosition>();
+        record.b = reader.get<GlobalPosition>();
+        record.radius = reader.get<Scalar>();
+        record.kernelWidth = reader.get<Scalar>();
+        record.embeddings = reader.get<int>();
+        record.fluxScalingFactor = reader.get<Scalar>();
+        record.distance = reader.get<Scalar>();
+        record.bulkRank = reader.get<int>();
+        record.bulkElementIdx = reader.get<std::size_t>();
+        record.bulkSampleKey = reader.get<DistributedKey>();
+        record.lowDimSampleKey = reader.get<DistributedKey>();
+        return record;
+    }
+
+    /*!
+     * \brief Integrate a kernel over the interior bulk elements of this process
+     * \return the part of the kernel integral on this process and whether it has bulk sources of the kernel
+     */
+    template<class CylIntegration>
+    std::pair<Scalar, bool> integrateKernel_(const KernelRecord& record, CylIntegration& cylIntegration)
+    {
+        const int rank = this->bulkComm().rank();
+        cylIntegration.setGeometry(record.a, record.b, record.kernelWidth);
+
+        Scalar integral = 0.0;
+        std::size_t id = noId_;
+        for (std::size_t i = 0; i < cylIntegration.size(); ++i)
+        {
+            const auto& point = cylIntegration.integrationPoint(i);
+            const auto bulkElementIdx = distributedBulkElementIndex_(point);
+            if (bulkElementIdx == invalidElement_)
+                continue;
+
+            const auto localWeight = evalConstKernel_(record.a, record.b, point, record.radius, record.kernelWidth)
+                                     *cylIntegration.integrationElement(i)/Scalar(record.embeddings);
+            integral += localWeight;
+
+            if (id == noId_)
+            {
+                id = this->pointSourceId(record.key);
+                setFluxScalingFactor_(id, record.fluxScalingFactor);
+                this->setAverageDistance(id, record.distance);
+                this->setPointSourceSamples(id, record.bulkSampleKey, record.lowDimSampleKey);
+            }
+
+            bool addedSource = false;
+            const auto addWeight = [&](int localDofIdx, Scalar weight)
+            {
+                auto& ids = bulkSourceIds_[bulkElementIdx][localDofIdx];
+                auto& weights = bulkSourceWeights_[bulkElementIdx][localDofIdx];
+                if (!ids.empty() && ids.back() == id)
+                    weights.back() += weight;
+                else
+                {
+                    ids.push_back(id);
+                    weights.push_back(weight);
+                    addedSource = true;
+                }
+            };
+
+            if constexpr (isCVFE<bulkIdx>())
+            {
+                std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                const auto& gridGeometry = gridDiscretization(this->problem(bulkIdx));
+                this->getShapeValues(bulkIdx, gridGeometry, gridGeometry.element(bulkElementIdx).geometry(), point, shapeValues);
+                for (int v = 0; v < static_cast<int>(shapeValues.size()); ++v)
+                    addWeight(v, localWeight*shapeValues[v][0]);
+            }
+            else
+                addWeight(0, localWeight);
+
+            if (addedSource)
+            {
+                if (record.key.first == rank)
+                    this->addToCouplingStencil(bulkIdx, bulkElementIdx, lowDimIdx, this->pointSourceData(id).lowDimElementIdx());
+                if (record.bulkRank == rank)
+                {
+                    auto& stencil = extendedSourceStencil_.stencil()[bulkElementIdx];
+                    if constexpr (isCVFE<bulkIdx>())
+                    {
+                        const auto& dofs = this->elementDofIndices(bulkIdx, record.bulkElementIdx);
+                        stencil.insert(stencil.end(), dofs.begin(), dofs.end());
+                    }
+                    else
+                        stencil.push_back(record.bulkElementIdx);
+                }
+            }
+
+            if constexpr (BaseType::template usesElementVariables<bulkIdx>())
+                this->additionalPointSourceContexts(bulkIdx).emplace_back(point, id, localWeight, bulkElementIdx, 1);
+        }
+
+        return {integral, id != noId_};
+    }
+
+    /*!
+     * \brief Prepare the lookup of the interior bulk element of this process containing a sample point
+     * \note On an equidistant YaspGrid the lookup uses the Cartesian index of the whole grid, otherwise
+     *       the bounding box tree and the global ids of the candidates, which needs a layer of overlap or
+     *       ghost elements so that a process sees the other candidates of a point on its partition boundary.
+     */
+    void prepareDistributedLookup_()
+    {
+        const auto& gridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& gridView = gridGeometry.gridView();
+        cartesianToInterior_.clear();
+        if constexpr (bulkHasCartesianLookup)
+        {
+            for (int d = 0; d < dimWorld; ++d)
+                cells_[d] = gridView.grid().levelSize(gridView.grid().maxLevel(), d);
+
+            for (const auto& element : elements(gridView, Dune::Partitions::interior))
+            {
+                const auto cell = intersectingEntityCartesianGrid(element.geometry().center(), gridGeometry.bBoxMin(), gridGeometry.bBoxMax(), cells_);
+                cartesianToInterior_[cell] = gridGeometry.elementMapper().index(element);
+            }
+        }
+        else if (gridView.overlapSize(0) == 0 && gridView.ghostSize(0) == 0)
+            DUNE_THROW(Dune::NotImplemented, "The kernel coupling on a distributed grid without overlap or ghost elements"
+                                             " that is not an equidistant YaspGrid");
+    }
+
+    //! The interior bulk element of this process a sample point belongs to, invalidElement_ if there is none
+    GridIndex<bulkIdx> distributedBulkElementIndex_(const GlobalPosition& point) const
+    {
+        const auto& gridGeometry = gridDiscretization(this->problem(bulkIdx));
+        if (!intersectsPointBoundingBox(point, gridGeometry.bBoxMin(), gridGeometry.bBoxMax()))
+            return invalidElement_;
+
+        if constexpr (bulkHasCartesianLookup)
+        {
+            const auto cell = intersectingEntityCartesianGrid(point, gridGeometry.bBoxMin(), gridGeometry.bBoxMax(), cells_);
+            const auto it = cartesianToInterior_.find(cell);
+            return it == cartesianToInterior_.end() ? invalidElement_ : it->second;
+        }
+        else
+        {
+            const auto candidates = intersectingEntities(point, gridGeometry.boundingBoxTree());
+            if (candidates.empty())
+                return invalidElement_;
+            const auto eIdx = smallestIdElement_(candidates);
+            return gridGeometry.element(eIdx).partitionType() == Dune::InteriorEntity ? eIdx : invalidElement_;
+        }
+    }
+
+    void setFluxScalingFactor_(std::size_t id, Scalar factor)
+    {
+        if (fluxScalingFactor_.size() <= id)
+            fluxScalingFactor_.resize(id + 1);
+        fluxScalingFactor_[id] = factor;
+    }
+
     //! the flux scaling factor for the respective source id
     std::vector<Scalar> fluxScalingFactor_;
+
+    //! the Cartesian lookup of the interior bulk elements on distributed equidistant YaspGrids
+    std::array<int, bulkDim> cells_;
+    std::unordered_map<std::size_t, GridIndex<bulkIdx>> cartesianToInterior_;
 };
 
 //! we support multithreaded assembly

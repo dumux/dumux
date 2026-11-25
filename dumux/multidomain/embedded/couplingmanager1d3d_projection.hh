@@ -427,6 +427,9 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
+        if (this->gridView(bulkIdx).comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "The projection coupling on distributed grids");
+
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;

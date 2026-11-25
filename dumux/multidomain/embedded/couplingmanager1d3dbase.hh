@@ -13,6 +13,8 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_BASE_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_BASE_HH
 
+#include <limits>
+#include <span>
 #include <vector>
 
 #include <dumux/common/tag.hh>
@@ -59,6 +61,10 @@ public:
               std::shared_ptr<Problem<lowDimIdx>> lowDimProblem,
               const SolutionVector& curSol)
     {
+        if (radiusValue_ == invalidValue_)
+            radiusValue_ = this->addLowDimElementValues(1, [this](std::size_t eIdx, std::span<Scalar> values)
+            { values[0] = this->problem(lowDimIdx).spatialParams().radius(eIdx); });
+
         ParentType::init(bulkProblem, lowDimProblem, curSol);
         computeLowDimVolumeFractions_();
     }
@@ -76,6 +82,9 @@ public:
     //! Returns the radius of the lower dimensional element
     Scalar radius(std::size_t id) const
     {
+        if (this->isDistributed())
+            return this->lowDimElementValue(id, radiusValue_);
+
         const auto& data = this->pointSourceData()[id];
         return this->problem(lowDimIdx).spatialParams().radius(data.lowDimElementIdx());
     }
@@ -89,6 +98,8 @@ public:
                  "from dumux/multidomain/embedded/lowdimvolume.hh.")]]
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
+        if (this->isDistributed())
+            DUNE_THROW(Dune::NotImplemented, "lowDimVolume on distributed grids");
         const auto eIdx = gridDiscretization(this->problem(bulkIdx)).elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
@@ -100,6 +111,8 @@ public:
                  "from dumux/multidomain/embedded/lowdimvolume.hh by the element volume.")]]
     Scalar lowDimVolumeFraction(const Element<bulkIdx>& element) const
     {
+        if (this->isDistributed())
+            DUNE_THROW(Dune::NotImplemented, "lowDimVolumeFraction on distributed grids");
         const auto eIdx = gridDiscretization(this->problem(bulkIdx)).elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx] / element.geometry().volume();
     }
@@ -136,6 +149,10 @@ private:
 
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
+
+    static constexpr std::size_t invalidValue_ = std::numeric_limits<std::size_t>::max();
+    //! the index of the radius in the values of the lower-dimensional elements of the parent
+    std::size_t radiusValue_ = invalidValue_;
 };
 
 } // end namespace Dumux

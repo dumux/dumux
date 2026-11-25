@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <dune/common/timer.hh>
+#include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/tag.hh>
@@ -30,6 +31,7 @@
 #include <dumux/discretization/elementscontainingpoint.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
+#include <dumux/multidomain/embedded/distributedpointsources.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 #include <dumux/multidomain/embedded/circleaveragepointsourcetraits.hh>
@@ -133,6 +135,12 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
+        if (this->gridView(bulkIdx).comm().size() > 1)
+        {
+            computeDistributedPointSourceData_(order);
+            return;
+        }
+
         // Initialize the bulk bounding box tree
         const auto& bulkGridGeometry = gridDiscretization(this->problem(bulkIdx));
         const auto& lowDimGridGeometry = gridDiscretization(this->problem(lowDimIdx));
@@ -373,6 +381,145 @@ public:
     }
 
 private:
+    using SampleSpec = typename ParentType::SampleSpec;
+    using BulkGeometryCopy = Dune::MultiLinearGeometry<Scalar, bulkDim, dimWorld>;
+    static constexpr auto bulkSample = ParentType::bulkSample;
+    static constexpr auto lowDimSample = ParentType::lowDimSample;
+
+    /*!
+     * \brief The average coupling on distributed grids
+     *
+     * The owner of a lower-dimensional element locates the quadrature points and the circle points in the
+     * bulk grid of all processes and creates a point source for every quadrature point and bulk element
+     * containing it, as in the sequential setup. The circle average is a sample with terms on every
+     * process holding a bulk element on the circle.
+     */
+    void computeDistributedPointSourceData_(std::size_t order)
+    {
+        Dune::Timer watch;
+        const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
+
+        const auto pieces = this->beginDistributedSetup();
+        extendedSourceStencil_.clear();
+        const auto& comm = this->bulkComm();
+        const int rank = comm.rank();
+
+        struct QuadraturePoint
+        {
+            GridIndex<lowDimIdx> lowDimElementIdx;
+            GlobalPosition position;
+            Scalar quadratureWeight;
+            Scalar integrationElement;
+            Scalar circleWeight;
+        };
+
+        // the circle points of quadrature point q are numIp consecutive entries starting at q*numIp
+        std::vector<QuadraturePoint> quadraturePoints;
+        std::vector<GlobalPosition> positions, circlePoints;
+        const auto& lowDimProblem = this->problem(lowDimIdx);
+        for (const auto& piece : pieces)
+        {
+            const auto geometry = piece.geometry();
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(geometry.type(), order);
+            const auto radius = lowDimProblem.spatialParams().radius(piece.lowDimElementIdx);
+            const auto normal = geometry.corner(1) - geometry.corner(0);
+            for (const auto& qp : quad)
+            {
+                auto& point = quadraturePoints.emplace_back();
+                point.lowDimElementIdx = piece.lowDimElementIdx;
+                point.position = geometry.global(qp.position());
+                point.integrationElement = geometry.integrationElement(qp.position());
+                point.quadratureWeight = qp.weight();
+                point.circleWeight = 2*M_PI*radius/numIp;
+                positions.push_back(point.position);
+                const auto circle = EmbeddedCoupling::circlePoints(point.position, normal, radius, numIp);
+                circlePoints.insert(circlePoints.end(), circle.begin(), circle.end());
+            }
+        }
+
+        const auto bulkTree = this->makeDistributedBulkTree();
+        const auto removeElements = [&](auto& elementIndices, const auto& point)
+        { removeElementsNotContainingPoint(elementIndices, gridDiscretization(this->problem(bulkIdx)), point); };
+        const auto locatedPositions = EmbeddedCoupling::Detail::interiorElementsContaining(*bulkTree, positions, true, removeElements);
+        const auto locatedCirclePoints = EmbeddedCoupling::Detail::interiorElementsContaining(*bulkTree, circlePoints);
+
+        std::vector<SampleSpec> specs;
+        std::vector<std::vector<char>> sourceMessages(comm.size());
+        for (std::size_t q = 0; q < quadraturePoints.size(); ++q)
+        {
+            const auto& point = quadraturePoints[q];
+            const auto bulkElements = locatedPositions[q];
+            if (bulkElements.empty())
+                continue;
+
+            const auto circle = [&](int k){ return locatedCirclePoints[q*numIp + k]; };
+            SampleSpec circleSpec{bulkSample, this->newSampleKey(bulkSample), {}, {rank}, {}};
+            Scalar weightSum = 0.0;
+            int insideCirclePoints = 0;
+            for (int k = 0; k < numIp; ++k)
+            {
+                if (!circle(k).empty())
+                    ++insideCirclePoints;
+                for (std::size_t n = 0; n < circle(k).size(); ++n)
+                    weightSum += point.circleWeight/circle(k).size();
+            }
+
+            if (insideCirclePoints == 0)
+                continue;
+
+            for (int k = 0; k < numIp; ++k)
+            {
+                for (const auto& element : circle(k))
+                {
+                    this->addSampleTerm(circleSpec, {element.rank, element.index, circlePoints[q*numIp + k],
+                                                     point.circleWeight/circle(k).size()/weightSum});
+                    circleSpec.contributors.push_back(element.rank);
+                    circleSpec.consumers.push_back(element.rank);
+                }
+            }
+
+            const auto surfaceFraction = Scalar(insideCirclePoints)/Scalar(numIp);
+            const auto integrationElement = point.integrationElement*surfaceFraction;
+            const auto lowDimKey = this->newSampleKey(lowDimSample);
+            SampleSpec lowDimSpec{lowDimSample, lowDimKey, {rank}, {rank}, {{rank, point.lowDimElementIdx, point.position, 1.0}}};
+            const int embeddings = bulkElements.size();
+            for (const auto& element : bulkElements)
+            {
+                const auto id = this->addOwnedPointSource(point.lowDimElementIdx, point.position);
+                this->pointSources(lowDimIdx).emplace_back(point.position, id, point.quadratureWeight,
+                                                           integrationElement, point.lowDimElementIdx);
+                this->pointSources(lowDimIdx).back().setEmbeddings(embeddings);
+
+                const BulkGeometryCopy bulkGeometry(Dune::GeometryType(element.topologyId, bulkDim), element.corners);
+                const auto distance = averageDistancePointGeometry(point.position, bulkGeometry);
+                this->setAverageDistance(id, distance);
+
+                circleSpec.consumers.push_back(element.rank);
+                lowDimSpec.consumers.push_back(element.rank);
+                this->setPointSourceSamples(id, circleSpec.key, lowDimKey);
+                this->writeBulkPointSource(sourceMessages[element.rank], {
+                    this->ownedPointSourceKey(id), point.position, point.quadratureWeight,
+                    integrationElement, embeddings, element.index, circleSpec.key, lowDimKey, distance
+                });
+            }
+
+            specs.push_back(std::move(lowDimSpec));
+            specs.push_back(std::move(circleSpec));
+        }
+
+        this->distributeSamples(specs);
+        this->receiveBulkPointSources(sourceMessages, [&](std::size_t id, const auto& record)
+        {
+            const auto& dofs = this->sampleDofs(bulkSample, record.bulkSampleKey);
+            auto& stencil = extendedSourceStencil_.stencil()[record.bulkElementIdx];
+            stencil.insert(stencil.end(), dofs.begin(), dofs.end());
+        });
+        this->addOwnedLowDimCouplingStencils();
+        this->makeExtendedSourceStencilsUnique(extendedSourceStencil_.stencil());
+        this->finishDistributedSetup();
+        this->printDistributedSetup(watch);
+    }
+
     //! the extended source stencil object
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
 

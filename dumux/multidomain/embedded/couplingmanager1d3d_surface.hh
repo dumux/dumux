@@ -14,6 +14,7 @@
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGER_1D3D_SURFACE_HH
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -28,6 +29,7 @@
 #include <dumux/discretization/elementscontainingpoint.hh>
 
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
+#include <dumux/multidomain/embedded/distributedpointsources.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 #include <dumux/multidomain/embedded/circleaveragepointsourcetraits.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
@@ -129,6 +131,12 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
+        if (this->gridView(bulkIdx).comm().size() > 1)
+        {
+            computeDistributedPointSourceData_(order);
+            return;
+        }
+
         // if we use the circle average as the 3D values or a point evaluation
         const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
 
@@ -381,6 +389,148 @@ public:
     }
 
 private:
+    using SampleSpec = typename ParentType::SampleSpec;
+    using DistributedKey = typename ParentType::DistributedKey;
+    static constexpr auto bulkSample = ParentType::bulkSample;
+    static constexpr auto lowDimSample = ParentType::lowDimSample;
+
+    /*!
+     * \brief The surface coupling on distributed grids
+     *
+     * The owner of a lower-dimensional element locates the quadrature points and the circle points in the
+     * bulk grid of all processes and creates a point source for every circle point and bulk element
+     * containing it, as in the sequential setup. The circle average is a sample with terms on every
+     * process holding a bulk element on the circle.
+     */
+    void computeDistributedPointSourceData_(std::size_t order)
+    {
+        Dune::Timer watch;
+        const bool useCircleAverage = getParam<bool>("MixedDimension.UseCircleAverage", true);
+        const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
+
+        const auto pieces = this->beginDistributedSetup();
+        extendedSourceStencil_.stencil().clear();
+        const auto& comm = this->bulkComm();
+        const int rank = comm.rank();
+
+        struct QuadraturePoint
+        {
+            GridIndex<lowDimIdx> lowDimElementIdx;
+            GlobalPosition position;
+            Scalar quadratureWeight;
+            Scalar integrationElement;
+            Scalar circleWeight;
+        };
+
+        // the circle points of quadrature point q are numIp consecutive entries starting at q*numIp
+        std::vector<QuadraturePoint> quadraturePoints;
+        std::vector<GlobalPosition> positions, circlePoints;
+        const auto& lowDimProblem = this->problem(lowDimIdx);
+        for (const auto& piece : pieces)
+        {
+            const auto geometry = piece.geometry();
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(geometry.type(), order);
+            const auto radius = lowDimProblem.spatialParams().radius(piece.lowDimElementIdx);
+            const auto normal = geometry.corner(1) - geometry.corner(0);
+            for (const auto& qp : quad)
+            {
+                auto& point = quadraturePoints.emplace_back();
+                point.lowDimElementIdx = piece.lowDimElementIdx;
+                point.position = geometry.global(qp.position());
+                point.integrationElement = geometry.integrationElement(qp.position())*2*M_PI*radius/Scalar(numIp);
+                point.quadratureWeight = qp.weight()/(2*M_PI*radius);
+                point.circleWeight = 2*M_PI*radius/numIp;
+                positions.push_back(point.position);
+                const auto circle = EmbeddedCoupling::circlePoints(point.position, normal, radius, numIp);
+                circlePoints.insert(circlePoints.end(), circle.begin(), circle.end());
+            }
+        }
+
+        const auto bulkTree = this->makeDistributedBulkTree();
+        const auto removeElements = [&](auto& elementIndices, const auto& point)
+        { removeElementsNotContainingPoint(elementIndices, gridDiscretization(this->problem(bulkIdx)), point); };
+        const auto locatedPositions = EmbeddedCoupling::Detail::interiorElementsContaining(*bulkTree, positions);
+        const auto locatedCirclePoints = EmbeddedCoupling::Detail::interiorElementsContaining(*bulkTree, circlePoints, false, removeElements);
+
+        std::vector<SampleSpec> specs;
+        std::vector<std::vector<char>> sourceMessages(comm.size());
+        for (std::size_t q = 0; q < quadraturePoints.size(); ++q)
+        {
+            const auto& point = quadraturePoints[q];
+            if (locatedPositions[q].empty())
+                continue;
+
+            const auto circle = [&](int k){ return locatedCirclePoints[q*numIp + k]; };
+            const auto circlePoint = [&](int k) -> const GlobalPosition& { return circlePoints[q*numIp + k]; };
+            SampleSpec circleSpec{bulkSample, this->newSampleKey(bulkSample), {}, {rank}, {}};
+            Scalar weightSum = 0.0;
+            for (int k = 0; k < numIp; ++k)
+                for (std::size_t n = 0; n < circle(k).size(); ++n)
+                    weightSum += point.circleWeight/circle(k).size();
+            for (int k = 0; k < numIp; ++k)
+            {
+                for (const auto& element : circle(k))
+                {
+                    this->addSampleTerm(circleSpec, {element.rank, element.index, circlePoint(k),
+                                                     point.circleWeight/circle(k).size()/weightSum});
+                    circleSpec.contributors.push_back(element.rank);
+                    circleSpec.consumers.push_back(element.rank);
+                }
+            }
+
+            const auto lowDimKey = this->newSampleKey(lowDimSample);
+            SampleSpec lowDimSpec{lowDimSample, lowDimKey, {rank}, {rank}, {{rank, point.lowDimElementIdx, point.position, 1.0}}};
+            for (int k = 0; k < numIp; ++k)
+            {
+                const int embeddings = circle(k).size();
+                for (const auto& element : circle(k))
+                {
+                    const auto id = this->addOwnedPointSource(point.lowDimElementIdx, point.position);
+                    this->pointSources(lowDimIdx).emplace_back(point.position, id, point.quadratureWeight,
+                                                               point.integrationElement, point.lowDimElementIdx);
+                    this->pointSources(lowDimIdx).back().setEmbeddings(embeddings);
+
+                    auto bulkKey = circleSpec.key;
+                    if (!useCircleAverage)
+                    {
+                        bulkKey = this->newSampleKey(bulkSample);
+                        specs.push_back(SampleSpec{bulkSample, bulkKey, {element.rank}, {rank, element.rank},
+                                                   {{element.rank, element.index, circlePoint(k), 1.0}}});
+                    }
+
+                    lowDimSpec.consumers.push_back(element.rank);
+                    this->setPointSourceSamples(id, bulkKey, lowDimKey);
+                    this->writeBulkPointSource(sourceMessages[element.rank], {
+                        this->ownedPointSourceKey(id), circlePoint(k), point.quadratureWeight,
+                        point.integrationElement, embeddings, element.index, bulkKey, lowDimKey, 0.0
+                    });
+                }
+            }
+
+            specs.push_back(std::move(lowDimSpec));
+            if (useCircleAverage && !circleSpec.terms.empty())
+                specs.push_back(std::move(circleSpec));
+        }
+
+        this->distributeSamples(specs);
+        // the point sources of a circle in the same bulk element follow each other, so their dofs are added once
+        std::pair<std::size_t, DistributedKey> lastStencil{std::numeric_limits<std::size_t>::max(), {}};
+        this->receiveBulkPointSources(sourceMessages, [&](std::size_t id, const auto& record)
+        {
+            if (useCircleAverage && std::pair<std::size_t, DistributedKey>{record.bulkElementIdx, record.bulkSampleKey} != lastStencil)
+            {
+                lastStencil = {record.bulkElementIdx, record.bulkSampleKey};
+                const auto& dofs = this->sampleDofs(bulkSample, record.bulkSampleKey);
+                auto& stencil = extendedSourceStencil_.stencil()[record.bulkElementIdx];
+                stencil.insert(stencil.end(), dofs.begin(), dofs.end());
+            }
+        });
+        this->addOwnedLowDimCouplingStencils();
+        this->makeExtendedSourceStencilsUnique(extendedSourceStencil_.stencil());
+        this->finishDistributedSetup();
+        this->printDistributedSetup(watch);
+    }
+
     //! the extended source stencil object
     EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
 };

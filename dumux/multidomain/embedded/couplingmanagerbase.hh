@@ -14,13 +14,22 @@
 #ifndef DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGERBASE_HH
 #define DUMUX_MULTIDOMAIN_EMBEDDED_COUPLINGMANAGERBASE_HH
 
+#include <algorithm>
+#include <array>
+#include <functional>
 #include <iostream>
 #include <fstream>
+#include <limits>
+#include <map>
+#include <span>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <unordered_map>
 
 #include <dune/common/timer.hh>
+#include <dune/geometry/affinegeometry.hh>
+#include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/io/format.hh>
@@ -35,8 +44,11 @@
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/glue.hh>
+#include <dumux/multidomain/distributedglue.hh>
+#include <dumux/parallel/distributedsums.hh>
 #include <dumux/common/pointsources.hh>
 #include <dumux/common/concepts/variables_.hh>
+#include <dumux/multidomain/embedded/distributedpointsources.hh>
 #include <dumux/multidomain/embedded/elementdofs.hh>
 #include <dumux/multidomain/embedded/pointsourcecontext.hh>
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
@@ -116,6 +128,10 @@ class EmbeddedCouplingManagerBase
 
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
     using GlueType = MultiDomainGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
+    using BulkGeometryCopy = Dune::MultiLinearGeometry<Scalar, bulkDim, dimWorld>;
+    using PieceGeometry = Dune::AffineGeometry<Scalar, lowDimDim, dimWorld>;
+
+    static constexpr std::size_t invalidIndex = std::numeric_limits<std::size_t>::max();
 
 public:
     //! export traits
@@ -142,6 +158,7 @@ public:
                                  std::shared_ptr<const GridGeometry<lowDimIdx>> lowDimGridGeometry)
     {
         glue_ = std::make_shared<GlueType>();
+        distributed_ = false;
     }
 
     /*!
@@ -158,15 +175,56 @@ public:
      */
     // \{
 
+    /*!
+     * \brief Initialize the coupling: compute the point sources
+     * \note On distributed grids this is collective over the processes of the bulk grid.
+     */
     void init(std::shared_ptr<Problem<bulkIdx>> bulkProblem,
               std::shared_ptr<Problem<lowDimIdx>> lowDimProblem,
               const SolutionVector& curSol)
     {
-        this->updateSolution(curSol);
+        ParentType::updateSolution(curSol);
         this->setSubProblems(std::make_tuple(bulkProblem, lowDimProblem));
 
         integrationOrder_ = getParam<int>("MixedDimension.IntegrationOrder", 1);
         asImp_().computePointSourceData(integrationOrder_);
+    }
+
+    /*!
+     * \brief Update the solution the coupling terms are evaluated with
+     * \note On distributed grids this is collective over the processes of the bulk grid: the processes
+     *       exchange the parts of the coupling data that depend on degrees of freedom of other processes.
+     */
+    void updateSolution(const SolutionVector& curSol)
+    {
+        ParentType::updateSolution(curSol);
+        if (distributed_)
+            exchangeDistributedValues_();
+    }
+
+    /*!
+     * \brief Set values of the lower-dimensional elements that the coupling terms need
+     * \param numValues the number of values per element
+     * \param f the function f(lowDimElementIdx, values) writing the values of an element into the
+     *        std::span<Scalar> values of size numValues
+     * \note Call this before init. The values are read with lowDimElementData(id, i), also on processes
+     *       that do not hold the lower-dimensional element of the point source id: on distributed grids they
+     *       are sent along with the solution whenever the solution is updated.
+     */
+    template<class Function>
+    void setLowDimElementData(std::size_t numValues, Function&& f)
+    {
+        if (userElementValues_ != invalidIndex)
+            DUNE_THROW(Dune::InvalidStateException, "The data of the lower-dimensional elements can only be set once");
+        userElementValues_ = addLowDimElementValues(numValues, std::forward<Function>(f));
+    }
+
+    //! The value i set with setLowDimElementData of the lower-dimensional element of the point source id
+    Scalar lowDimElementData(std::size_t id, std::size_t i) const
+    {
+        if (userElementValues_ == invalidIndex)
+            DUNE_THROW(Dune::InvalidStateException, "No data of the lower-dimensional elements was set");
+        return lowDimElementValue(id, userElementValues_ + i);
     }
 
     // \}
@@ -261,6 +319,12 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool /*verbose*/ = false)
     {
+        if (gridView(bulkIdx).comm().size() > 1)
+        {
+            computeDistributedPointSourceData_(order);
+            return;
+        }
+
         // initialize the maps
         // do some logging and profiling
         Dune::Timer watch;
@@ -398,7 +462,12 @@ public:
      */
     // \{
 
-    //! Return a reference to the pointSource data
+    /*!
+     * \brief Return a reference to the pointSource data
+     * \note On distributed grids an element index of the data is only valid on the process holding the
+     *       element as interior element. Values of the lower-dimensional element that are needed where the
+     *       bulk sources are can be passed with setLowDimElementData.
+     */
     const PointSourceData& pointSourceData(std::size_t id) const
     { return pointSourceData_[id]; }
 
@@ -409,11 +478,19 @@ public:
 
     //! Return data for a bulk point source with the identifier id
     PrimaryVariables<bulkIdx> bulkPriVars(std::size_t id) const
-    { return pointSourceData_[id].interpolateBulk(this->curSol(bulkIdx)); }
+    {
+        if (distributed_)
+            return sampleValue_<PrimaryVariables<bulkIdx>>(samples_[bulkSample][idBulkSample_[id]], this->curSol(bulkIdx));
+        return pointSourceData_[id].interpolateBulk(this->curSol(bulkIdx));
+    }
 
     //! Return data for a low dim point source with the identifier id
     PrimaryVariables<lowDimIdx> lowDimPriVars(std::size_t id) const
-    { return pointSourceData_[id].interpolateLowDim(this->curSol(lowDimIdx)); }
+    {
+        if (distributed_)
+            return sampleValue_<PrimaryVariables<lowDimIdx>>(samples_[lowDimSample][idLowDimSample_[id]], this->curSol(lowDimIdx));
+        return pointSourceData_[id].interpolateLowDim(this->curSol(lowDimIdx));
+    }
 
     //! return the average distance to the coupled bulk cell center
     Scalar averageDistance(std::size_t id) const
@@ -756,6 +833,19 @@ protected:
         std::get<bulkIdx>(additionalPointSourceContexts_).clear();
         std::get<lowDimIdx>(additionalPointSourceContexts_).clear();
 
+        distributed_ = false;
+        distributedSums_ = DistributedSums<Scalar>();
+        for (auto& samples : samples_)
+            samples.clear();
+        for (auto& indices : sampleIndices_)
+            indices.clear();
+        sumSamples_.clear();
+        idBulkSample_.clear();
+        idLowDimSample_.clear();
+        pointSourceSampleKeys_.clear();
+        importedPointSources_.clear();
+        numOwnedSamples_ = 0;
+
         idCounter_ = 0;
     }
 
@@ -807,6 +897,585 @@ protected:
     const GlueType& glue() const
     { return *glue_; }
 
+    /*!
+     * \name Point sources on distributed grids
+     *
+     * The owner of a lower-dimensional element creates the point sources of the element and numbers them,
+     * so a point source is identified by the key (owner rank, number). A process holds the point sources
+     * whose lower-dimensional element it owns and those with a bulk source in one of its interior bulk
+     * elements, under process-local ids. The values of a point source are samples of the solution, sums of
+     * terms on the processes holding the sampled elements; the processes holding a point source receive
+     * the terms of the other processes whenever the solution is updated.
+     */
+    // \{
+
+    //! the key of a point source or a sample: the rank of the owner and the number on the owner
+    using DistributedKey = typename DistributedSums<Scalar>::Key;
+
+    //! the two kinds of samples
+    enum SampleKind : int { bulkSample = 0, lowDimSample = 1 };
+
+    //! a term of a sample: the value at a point of an element of the given rank, times a weight
+    struct SampleTerm
+    {
+        int rank;
+        std::size_t element;
+        GlobalPosition point;
+        Scalar weight;
+    };
+
+    //! a sample as created by the owner of the lower-dimensional element
+    struct SampleSpec
+    {
+        SampleKind kind;
+        DistributedKey key;
+        std::vector<int> contributors;
+        std::vector<int> consumers;
+        std::vector<SampleTerm> terms;
+    };
+
+    //! a part of a lower-dimensional element of this process inside one or more bulk elements of any process
+    struct DistributedPiece
+    {
+        GridIndex<lowDimIdx> lowDimElementIdx;
+        std::vector<GlobalPosition> corners;
+        std::vector<std::pair<int, std::size_t>> bulkElements;
+        std::vector<BulkGeometryCopy> bulkGeometries;
+
+        PieceGeometry geometry() const
+        { return PieceGeometry(Dune::GeometryTypes::simplex(lowDimDim), corners); }
+    };
+
+    //! whether the point sources are set up for distributed grids
+    bool isDistributed() const
+    { return distributed_; }
+
+    //! the communication of the bulk grid
+    decltype(auto) bulkComm() const
+    { return gridView(bulkIdx).comm(); }
+
+    /*!
+     * \brief Start the setup on distributed grids: clear the data and compute the pieces
+     * \return the pieces of the lower-dimensional elements of this process, see computeDistributedPieces
+     * \note Collective.
+     */
+    std::vector<DistributedPiece> beginDistributedSetup()
+    {
+        if constexpr (lowDimDim != 1)
+            DUNE_THROW(Dune::NotImplemented, "Embedded coupling on distributed grids for lower-dimensional domains of dimension " << lowDimDim);
+
+        if (gridView(lowDimIdx).comm().size() != bulkComm().size())
+            DUNE_THROW(Dune::InvalidStateException, "The bulk and the lower-dimensional grid have to be distributed over the same processes,"
+                       << " but they are distributed over " << bulkComm().size() << " and " << gridView(lowDimIdx).comm().size() << " processes");
+
+        clear();
+        this->precomputeElementDofIndices(bulkIdx);
+        this->precomputeElementDofIndices(lowDimIdx);
+        distributed_ = true;
+        distributedSums_ = DistributedSums<Scalar>(bulkComm());
+
+        return computeDistributedPieces();
+    }
+
+    /*!
+     * \brief The parts of the interior lower-dimensional elements of this process inside the bulk elements
+     *
+     * The intersections are computed on the processes of the bulk elements, as the sequential glue
+     * computes them, and sent to the owner of the lower-dimensional element. Intersections of one
+     * lower-dimensional element with identical corners, e.g. a segment on a face shared by two bulk
+     * elements, are merged into one piece with several bulk elements, as in the sequential glue.
+     * \note Collective.
+     */
+    std::vector<DistributedPiece> computeDistributedPieces() const
+    {
+        using namespace EmbeddedCoupling::Detail;
+        const auto& comm = bulkComm();
+
+        std::vector<std::vector<char>> messages(comm.size());
+        {
+            const auto glue = makeDistributedGlue(gridDiscretization(this->problem(bulkIdx)),
+                                                  gridDiscretization(this->problem(lowDimIdx)));
+            for (const auto& is : intersections(glue))
+            {
+                MessageWriter writer(messages[is.targetRank()]);
+                writer.put(is.targetIndex());
+                writer.put(is.domainIndex());
+                const auto geometry = is.geometry();
+                writer.put(geometry.corners());
+                for (int c = 0; c < geometry.corners(); ++c)
+                    writer.put(geometry.corner(c));
+                const auto bulkGeometry = is.domainEntity().geometry();
+                writer.put(bulkGeometry.type().id());
+                writer.put(bulkGeometry.corners());
+                for (int c = 0; c < bulkGeometry.corners(); ++c)
+                    writer.put(bulkGeometry.corner(c));
+            }
+        }
+
+        struct RawPiece
+        {
+            std::size_t lowDimElementIdx;
+            int rank;
+            std::size_t bulkElementIdx;
+            std::vector<GlobalPosition> corners;
+            BulkGeometryCopy bulkGeometry;
+        };
+
+        std::vector<RawPiece> rawPieces;
+        for (const auto& [sender, message] : exchangeMessages(comm, messages))
+        {
+            MessageReader reader(message);
+            while (!reader.done())
+            {
+                const auto lowDimElementIdx = reader.get<std::size_t>();
+                const auto bulkElementIdx = reader.get<std::size_t>();
+                std::vector<GlobalPosition> corners(reader.get<int>());
+                for (auto& corner : corners)
+                    corner = reader.get<GlobalPosition>();
+                const auto topologyId = reader.get<unsigned int>();
+                std::vector<GlobalPosition> bulkCorners(reader.get<int>());
+                for (auto& corner : bulkCorners)
+                    corner = reader.get<GlobalPosition>();
+                rawPieces.push_back(RawPiece{
+                    lowDimElementIdx, sender, bulkElementIdx, std::move(corners),
+                    BulkGeometryCopy(Dune::GeometryType(topologyId, bulkDim), bulkCorners)
+                });
+            }
+        }
+
+        std::sort(rawPieces.begin(), rawPieces.end(), [](const auto& a, const auto& b)
+        {
+            return std::tie(a.lowDimElementIdx, a.rank, a.bulkElementIdx)
+                 < std::tie(b.lowDimElementIdx, b.rank, b.bulkElementIdx);
+        });
+
+        std::vector<DistributedPiece> pieces;
+        std::size_t firstPieceOfElement = 0;
+        for (const auto& raw : rawPieces)
+        {
+            if (pieces.empty() || pieces.back().lowDimElementIdx != raw.lowDimElementIdx)
+                firstPieceOfElement = pieces.size();
+
+            auto piece = std::find_if(pieces.begin() + firstPieceOfElement, pieces.end(),
+                                      [&](const auto& p){ return cornersMatch_(raw.corners, p.corners); });
+            if (piece == pieces.end())
+            {
+                pieces.push_back(DistributedPiece{static_cast<GridIndex<lowDimIdx>>(raw.lowDimElementIdx), raw.corners, {}, {}});
+                piece = std::prev(pieces.end());
+            }
+
+            piece->bulkElements.emplace_back(raw.rank, raw.bulkElementIdx);
+            piece->bulkGeometries.push_back(raw.bulkGeometry);
+        }
+
+        return pieces;
+    }
+
+    //! A new point source owned by this process, with the lower-dimensional interpolation at the given point
+    std::size_t addOwnedPointSource(GridIndex<lowDimIdx> lowDimElementIdx, const GlobalPosition& point)
+    {
+        const auto id = addPointSourceId_();
+        addInterpolation(lowDimIdx, pointSourceData_[id], lowDimElementIdx, point);
+        return id;
+    }
+
+    //! The key of a point source owned by this process
+    DistributedKey ownedPointSourceKey(std::size_t id) const
+    { return {bulkComm().rank(), id}; }
+
+    //! The process-local id of the point source with the given key, added if this process does not hold it yet
+    std::size_t pointSourceId(const DistributedKey& key)
+    {
+        if (key.first == bulkComm().rank())
+            return key.second;
+
+        const auto [it, inserted] = importedPointSources_.try_emplace(key, idCounter_);
+        if (inserted)
+            addPointSourceId_();
+        return it->second;
+    }
+
+    //! The keys of the samples of the bulk and the lower-dimensional values of point source id
+    void setPointSourceSamples(std::size_t id, const DistributedKey& bulkKey, const DistributedKey& lowDimKey)
+    { pointSourceSampleKeys_[id] = {bulkKey, lowDimKey}; }
+
+    //! Set the average distance of point source id to its bulk element
+    void setAverageDistance(std::size_t id, Scalar distance)
+    { averageDistanceToBulkCell_[id] = distance; }
+
+    //! Add the interpolation of domain i at a point of an element to the point source data
+    template<std::size_t i>
+    void addInterpolation(Dune::index_constant<i> domainI, PointSourceData& data, std::size_t eIdx, const GlobalPosition& point)
+    {
+        if constexpr (isCVFE<i>())
+        {
+            const auto& gg = gridDiscretization(this->problem(domainI));
+            std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+            this->getShapeValues(domainI, gg, gg.element(eIdx).geometry(), point, shapeValues);
+            if constexpr (i == bulkIdx)
+                data.addBulkInterpolation(shapeValues, this->elementDofIndices(domainI, eIdx), eIdx);
+            else
+                data.addLowDimInterpolation(shapeValues, this->elementDofIndices(domainI, eIdx), eIdx);
+        }
+        else
+        {
+            if constexpr (i == bulkIdx)
+                data.addBulkInterpolation(eIdx);
+            else
+                data.addLowDimInterpolation(eIdx);
+        }
+    }
+
+    //! Add the dofs of an element of domain j to the coupling stencil of an element of domain i
+    template<std::size_t i, std::size_t j>
+    void addToCouplingStencil(Dune::index_constant<i> domainI, std::size_t eIdxI,
+                               Dune::index_constant<j> domainJ, std::size_t eIdxJ)
+    {
+        auto& stencil = this->couplingStencils(domainI)[eIdxI];
+        if constexpr (isCVFE<j>())
+        {
+            const auto& dofs = this->elementDofIndices(domainJ, eIdxJ);
+            stencil.insert(stencil.end(), dofs.begin(), dofs.end());
+        }
+        else
+            stencil.push_back(eIdxJ);
+    }
+
+    //! A new key for a sample of the given kind created by this process
+    DistributedKey newSampleKey(SampleKind kind)
+    { return {bulkComm().rank(), 2*numOwnedSamples_++ + kind}; }
+
+    //! Add a term to a sample; for a cell-centered domain the point does not matter, so terms of the same element are added up
+    void addSampleTerm(SampleSpec& spec, const SampleTerm& term)
+    {
+        const bool cellCentered = spec.kind == bulkSample ? !isCVFE<bulkIdx>() : !isCVFE<lowDimIdx>();
+        if (cellCentered)
+        {
+            const auto it = std::find_if(spec.terms.begin(), spec.terms.end(), [&](const auto& t){
+                return t.rank == term.rank && t.element == term.element;
+            });
+            if (it != spec.terms.end())
+            {
+                it->weight += term.weight;
+                return;
+            }
+        }
+        spec.terms.push_back(term);
+    }
+
+    /*!
+     * \brief Set up the samples on all processes that contribute terms to them or need their values
+     * \param specs the samples created by this process
+     * \note Collective.
+     */
+    void distributeSamples(const std::vector<SampleSpec>& specs)
+    {
+        using namespace EmbeddedCoupling::Detail;
+        const auto& comm = bulkComm();
+
+        std::vector<std::vector<char>> messages(comm.size());
+        for (const auto& spec : specs)
+        {
+            auto ranks = spec.contributors;
+            ranks.insert(ranks.end(), spec.consumers.begin(), spec.consumers.end());
+            std::sort(ranks.begin(), ranks.end());
+            ranks.erase(std::unique(ranks.begin(), ranks.end()), ranks.end());
+
+            for (const int p : ranks)
+            {
+                MessageWriter writer(messages[p]);
+                writer.put(static_cast<int>(spec.kind));
+                writer.put(spec.key);
+                writer.put(spec.contributors);
+                writer.put(spec.consumers);
+                writer.put(static_cast<std::size_t>(std::count_if(spec.terms.begin(), spec.terms.end(),
+                                                                  [&](const auto& t){ return t.rank == p; })));
+                for (const auto& term : spec.terms)
+                {
+                    if (term.rank != p)
+                        continue;
+                    writer.put(term.element);
+                    writer.put(term.point);
+                    writer.put(term.weight);
+                }
+            }
+        }
+
+        const int rank = comm.rank();
+        for (const auto& [sender, message] : exchangeMessages(comm, messages))
+        {
+            MessageReader reader(message);
+            while (!reader.done())
+            {
+                const auto kind = static_cast<SampleKind>(reader.get<int>());
+                const auto key = reader.get<DistributedKey>();
+                const auto contributors = reader.getVector<int>();
+                const auto consumers = reader.getVector<int>();
+
+                const auto s = sampleIndex_(kind, key);
+                const auto numTerms = reader.get<std::size_t>();
+                for (std::size_t t = 0; t < numTerms; ++t)
+                {
+                    const auto element = reader.get<std::size_t>();
+                    const auto point = reader.get<GlobalPosition>();
+                    const auto weight = reader.get<Scalar>();
+                    addSampleTerm_(kind, samples_[kind][s], element, point, weight);
+                }
+
+                const auto contains = [](const auto& ranks, int r){ return std::find(ranks.begin(), ranks.end(), r) != ranks.end(); };
+                const auto hasOther = [&](const auto& ranks){ return std::any_of(ranks.begin(), ranks.end(), [&](int r){ return r != rank; }); };
+                const bool contributes = contains(contributors, rank);
+                const bool consumes = contains(consumers, rank);
+                if ((contributes && hasOther(consumers)) || (consumes && hasOther(contributors)))
+                {
+                    auto& sample = samples_[kind][s];
+                    sample.sum = distributedSums_.insert(key, numSampleComponents_(kind));
+                    if (contributes)
+                        for (const int p : consumers)
+                            distributedSums_.addDestination(sample.sum, p);
+                    if (consumes)
+                        for (const int p : contributors)
+                            distributedSums_.addSource(sample.sum, p);
+                }
+            }
+        }
+    }
+
+    /*!
+     * \brief Finish the setup on distributed grids: connect the point sources to their samples, fix the
+     *        communication pattern and exchange the values of the current solution
+     * \note Collective.
+     */
+    void finishDistributedSetup()
+    {
+        idBulkSample_.resize(idCounter_);
+        idLowDimSample_.resize(idCounter_);
+        for (std::size_t id = 0; id < idCounter_; ++id)
+        {
+            const auto& [bulkKey, lowDimKey] = pointSourceSampleKeys_[id];
+            idBulkSample_[id] = sampleIndices_[bulkSample].at(bulkKey);
+            idLowDimSample_[id] = sampleIndices_[lowDimSample].at(lowDimKey);
+        }
+
+        sumSamples_.assign(distributedSums_.size(), {bulkSample, invalidIndex});
+        for (const auto kind : {bulkSample, lowDimSample})
+            for (std::size_t s = 0; s < samples_[kind].size(); ++s)
+                if (samples_[kind][s].sum != invalidIndex)
+                    sumSamples_[samples_[kind][s].sum] = {kind, s};
+
+        distributedSums_.finalize();
+
+        for (auto& indices : sampleIndices_)
+            indices.clear();
+        importedPointSources_.clear();
+        pointSourceSampleKeys_.clear();
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(std::integral_constant<std::size_t, MDTraits::numSubDomains>{}), [&](const auto domainIdx)
+        {
+            for (auto&& stencil : this->couplingStencils(domainIdx))
+            {
+                std::sort(stencil.second.begin(), stencil.second.end());
+                stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+            }
+        });
+
+        exchangeDistributedValues_();
+    }
+
+    //! a bulk point source, sent by the owner of the lower-dimensional element to the process of the bulk element
+    struct BulkPointSourceRecord
+    {
+        DistributedKey key;
+        GlobalPosition position;
+        Scalar quadratureWeight;
+        Scalar integrationElement;
+        int embeddings;
+        std::size_t bulkElementIdx;
+        DistributedKey bulkSampleKey;
+        DistributedKey lowDimSampleKey;
+        Scalar distance;
+    };
+
+    //! Append a bulk point source to a message
+    static void writeBulkPointSource(std::vector<char>& message, const BulkPointSourceRecord& record)
+    {
+        EmbeddedCoupling::Detail::MessageWriter writer(message);
+        writer.put(record.key);
+        writer.put(record.position);
+        writer.put(record.quadratureWeight);
+        writer.put(record.integrationElement);
+        writer.put(record.embeddings);
+        writer.put(record.bulkElementIdx);
+        writer.put(record.bulkSampleKey);
+        writer.put(record.lowDimSampleKey);
+        writer.put(record.distance);
+    }
+
+    /*!
+     * \brief Create the bulk point sources sent by the owners of the lower-dimensional elements
+     * \param messages per rank the bulk point sources written with writeBulkPointSource
+     * \param f called as f(id, record) for every bulk point source, with the process-local id of the point source
+     * \note Collective.
+     */
+    template<class Function>
+    void receiveBulkPointSources(std::vector<std::vector<char>>& messages, Function&& f)
+    {
+        using namespace EmbeddedCoupling::Detail;
+        const int rank = bulkComm().rank();
+        for (const auto& [sender, message] : exchangeMessages(bulkComm(), messages))
+        {
+            MessageReader reader(message);
+            while (!reader.done())
+            {
+                BulkPointSourceRecord record;
+                record.key = reader.get<DistributedKey>();
+                record.position = reader.get<GlobalPosition>();
+                record.quadratureWeight = reader.get<Scalar>();
+                record.integrationElement = reader.get<Scalar>();
+                record.embeddings = reader.get<int>();
+                record.bulkElementIdx = reader.get<std::size_t>();
+                record.bulkSampleKey = reader.get<DistributedKey>();
+                record.lowDimSampleKey = reader.get<DistributedKey>();
+                record.distance = reader.get<Scalar>();
+
+                const auto id = pointSourceId(record.key);
+                pointSources(bulkIdx).emplace_back(record.position, id, record.quadratureWeight,
+                                                   record.integrationElement, record.bulkElementIdx);
+                pointSources(bulkIdx).back().setEmbeddings(record.embeddings);
+                addInterpolation(bulkIdx, pointSourceData_[id], record.bulkElementIdx, record.position);
+                setAverageDistance(id, record.distance);
+                setPointSourceSamples(id, record.bulkSampleKey, record.lowDimSampleKey);
+
+                if (sender == rank)
+                    addToCouplingStencil(bulkIdx, record.bulkElementIdx, lowDimIdx, pointSourceData_[id].lowDimElementIdx());
+
+                f(id, record);
+            }
+        }
+    }
+
+    //! \copydoc receiveBulkPointSources
+    void receiveBulkPointSources(std::vector<std::vector<char>>& messages)
+    { receiveBulkPointSources(messages, [](std::size_t, const BulkPointSourceRecord&){}); }
+
+    /*!
+     * \brief Couple the lower-dimensional elements of this process to the dofs of this process in the bulk
+     *        samples of their point sources
+     * \note Call after distributeSamples.
+     */
+    void addOwnedLowDimCouplingStencils()
+    {
+        for (std::size_t id = 0; id < idCounter_; ++id)
+        {
+            const auto lowDimElementIdx = pointSourceData_[id].lowDimElementIdx();
+            if (lowDimElementIdx == std::numeric_limits<GridIndex<lowDimIdx>>::max())
+                continue;
+
+            const auto& dofs = sampleDofs(bulkSample, pointSourceSampleKeys_[id][bulkSample]);
+            auto& stencil = this->couplingStencils(lowDimIdx)[lowDimElementIdx];
+            stencil.insert(stencil.end(), dofs.begin(), dofs.end());
+        }
+    }
+
+    //! The dofs of this process in the terms of a sample, during the setup
+    const std::vector<std::size_t>& sampleDofs(SampleKind kind, const DistributedKey& key)
+    { return samples_[kind][sampleIndex_(kind, key)].dofs; }
+
+    //! The distributed bounding box tree of the bulk elements
+    auto makeDistributedBulkTree() const
+    {
+        using EntitySet = GridViewGeometricEntitySet<GridView<bulkIdx>, 0, ElementMapper<bulkIdx>>;
+        const auto& gridGeometry = gridDiscretization(this->problem(bulkIdx));
+        return std::make_shared<DistributedBoundingBoxTree<EntitySet>>(
+            std::make_shared<EntitySet>(gridGeometry.gridView(), gridGeometry.elementMapper())
+        );
+    }
+
+    /*!
+     * \brief Sort the extended source stencils and remove duplicates and the dofs of the element itself
+     */
+    template<class Stencils>
+    void makeExtendedSourceStencilsUnique(Stencils& stencils) const
+    {
+        for (auto&& stencil : stencils)
+        {
+            std::sort(stencil.second.begin(), stencil.second.end());
+            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+
+            if constexpr (isCVFE<bulkIdx>())
+            {
+                const auto& indices = this->elementDofIndices(bulkIdx, stencil.first);
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                    [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
+                                     stencil.second.end());
+            }
+            else
+            {
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                    [&](auto i){ return i == stencil.first; }),
+                                     stencil.second.end());
+            }
+        }
+    }
+
+    //! Print the number of point sources and the setup time
+    void printDistributedSetup(const Dune::Timer& watch) const
+    {
+        const auto& comm = bulkComm();
+        const auto numSources = comm.sum(pointSources(lowDimIdx).size());
+        if (comm.rank() == 0)
+            std::cout << "Initialized " << numSources << " point sources on " << comm.size()
+                      << " processes in " << watch.elapsed() << " seconds." << std::endl;
+    }
+
+    /*!
+     * \brief Add values of the lower-dimensional elements that the coupling terms need
+     * \param numValues the number of values per element
+     * \param f the function f(lowDimElementIdx, values) writing the values into the std::span<Scalar> values
+     * \return the index of the first of these values, see lowDimElementValue
+     */
+    template<class Function>
+    std::size_t addLowDimElementValues(std::size_t numValues, Function&& f)
+    {
+        if (distributed_)
+            DUNE_THROW(Dune::InvalidStateException, "Values of the lower-dimensional elements have to be added before the point sources are computed");
+
+        const auto first = numLowDimElementValues_;
+        lowDimElementValueFunctions_.emplace_back(first, numValues, std::forward<Function>(f));
+        numLowDimElementValues_ += numValues;
+        return first;
+    }
+
+    /*!
+     * \brief The value i of the lower-dimensional element of point source id, see addLowDimElementValues
+     * \note On distributed grids the values are those of the last solution update on every process.
+     */
+    Scalar lowDimElementValue(std::size_t id, std::size_t i) const
+    {
+        if (distributed_)
+        {
+            const auto s = idLowDimSample_[id];
+            const auto& sample = samples_[lowDimSample][s];
+            if (sample.lowDimElement == invalidIndex)
+                return distributedSums_.received(sample.sum)[PrimaryVariables<lowDimIdx>::size() + i];
+            return lowDimElementValues_[s*numLowDimElementValues_ + i];
+        }
+
+        for (const auto& [first, numValues, f] : lowDimElementValueFunctions_)
+        {
+            if (i < first || i >= first + numValues)
+                continue;
+            std::vector<Scalar> values(numValues);
+            f(pointSourceData_[id].lowDimElementIdx(), std::span<Scalar>(values));
+            return values[i - first];
+        }
+
+        DUNE_THROW(Dune::RangeError, "No value " << i << " of the lower-dimensional elements");
+    }
+
+    // \}
+
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
@@ -819,6 +1488,203 @@ protected:
     std::size_t idCounter_ = 0;
 
 private:
+    //! the terms of a sample on this process and its sum over the processes
+    struct Sample
+    {
+        std::vector<std::size_t> dofs;
+        std::vector<Scalar> weights;
+        std::size_t sum = invalidIndex;
+        std::size_t lowDimElement = invalidIndex;
+    };
+
+    //! the line mode on distributed grids: a point source per quadrature point of a piece and bulk element
+    void computeDistributedPointSourceData_(std::size_t order)
+    {
+        Dune::Timer watch;
+        const auto pieces = beginDistributedSetup();
+        const auto& comm = bulkComm();
+        const int rank = comm.rank();
+
+        std::vector<SampleSpec> specs;
+        std::vector<std::vector<char>> sourceMessages(comm.size());
+        for (const auto& piece : pieces)
+        {
+            const auto geometry = piece.geometry();
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(geometry.type(), order);
+            const int embeddings = piece.bulkElements.size();
+            for (const auto& qp : quad)
+            {
+                const auto globalPos = geometry.global(qp.position());
+                const auto qpweight = qp.weight();
+                const auto ie = geometry.integrationElement(qp.position());
+
+                const auto lowDimKey = newSampleKey(lowDimSample);
+                const auto lowDimSpec = specs.size();
+                specs.push_back(SampleSpec{lowDimSample, lowDimKey, {rank}, {rank}, {{rank, piece.lowDimElementIdx, globalPos, 1.0}}});
+
+                for (int n = 0; n < embeddings; ++n)
+                {
+                    const auto [bulkRank, bulkElementIdx] = piece.bulkElements[n];
+                    const auto id = addOwnedPointSource(piece.lowDimElementIdx, globalPos);
+                    pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, piece.lowDimElementIdx);
+                    pointSources(lowDimIdx).back().setEmbeddings(embeddings);
+
+                    const auto distance = averageDistancePointGeometry(globalPos, piece.bulkGeometries[n]);
+                    setAverageDistance(id, distance);
+
+                    const auto bulkKey = newSampleKey(bulkSample);
+                    specs.push_back(SampleSpec{bulkSample, bulkKey, {bulkRank}, {rank, bulkRank}, {{bulkRank, bulkElementIdx, globalPos, 1.0}}});
+                    specs[lowDimSpec].consumers.push_back(bulkRank);
+                    setPointSourceSamples(id, bulkKey, lowDimKey);
+
+                    writeBulkPointSource(sourceMessages[bulkRank], BulkPointSourceRecord{
+                        ownedPointSourceKey(id), globalPos, qpweight, ie, embeddings, bulkElementIdx, bulkKey, lowDimKey, distance
+                    });
+                }
+            }
+        }
+
+        distributeSamples(specs);
+        receiveBulkPointSources(sourceMessages);
+        addOwnedLowDimCouplingStencils();
+        finishDistributedSetup();
+        printDistributedSetup(watch);
+    }
+
+    //! A new point source id with default data
+    std::size_t addPointSourceId_()
+    {
+        pointSourceData_.emplace_back();
+        averageDistanceToBulkCell_.push_back(0.0);
+        pointSourceSampleKeys_.emplace_back();
+        return idCounter_++;
+    }
+
+    //! The local index of the sample with the given key, added if this process does not have it yet
+    std::size_t sampleIndex_(SampleKind kind, const DistributedKey& key)
+    {
+        const auto [it, inserted] = sampleIndices_[kind].try_emplace(key, samples_[kind].size());
+        if (inserted)
+            samples_[kind].emplace_back();
+        return it->second;
+    }
+
+    //! Add the value at a point of an element of this process times weight to a sample
+    void addSampleTerm_(SampleKind kind, Sample& sample, std::size_t eIdx, const GlobalPosition& point, Scalar weight)
+    {
+        const auto addWeight = [&](std::size_t dof, Scalar w)
+        {
+            const auto it = std::find(sample.dofs.begin(), sample.dofs.end(), dof);
+            if (it != sample.dofs.end())
+                sample.weights[it - sample.dofs.begin()] += w;
+            else
+            {
+                sample.dofs.push_back(dof);
+                sample.weights.push_back(w);
+            }
+        };
+
+        const auto addTerm = [&](auto domainI)
+        {
+            if constexpr (isCVFE<decltype(domainI)::value>())
+            {
+                const auto& gg = gridDiscretization(this->problem(domainI));
+                std::vector<Dune::FieldVector<Scalar, 1>> shapeValues;
+                this->getShapeValues(domainI, gg, gg.element(eIdx).geometry(), point, shapeValues);
+                const auto& dofs = this->elementDofIndices(domainI, eIdx);
+                for (std::size_t j = 0; j < dofs.size(); ++j)
+                    addWeight(dofs[j], weight*shapeValues[j][0]);
+            }
+            else
+                addWeight(eIdx, weight);
+        };
+
+        if (kind == bulkSample)
+            addTerm(bulkIdx);
+        else
+        {
+            addTerm(lowDimIdx);
+            sample.lowDimElement = eIdx;
+        }
+    }
+
+    //! The number of values of a sample: the primary variables, for lower-dimensional samples also the element values
+    std::size_t numSampleComponents_(SampleKind kind) const
+    {
+        return kind == bulkSample ? PrimaryVariables<bulkIdx>::size()
+                                  : PrimaryVariables<lowDimIdx>::size() + numLowDimElementValues_;
+    }
+
+    //! Add the terms of this process of a sample for the solution sol to values
+    template<class Sol, class Values>
+    static void addLocalTerms_(const Sample& sample, const Sol& sol, Values& values, std::size_t numComponents)
+    {
+        for (std::size_t j = 0; j < sample.dofs.size(); ++j)
+            for (std::size_t c = 0; c < numComponents; ++c)
+                values[c] += sol[sample.dofs[j]][c]*sample.weights[j];
+    }
+
+    //! The value of a sample: the terms of this process for the current solution and the received terms
+    template<class Values, class Sol>
+    Values sampleValue_(const Sample& sample, const Sol& sol) const
+    {
+        Values values(0.0);
+        addLocalTerms_(sample, sol, values, Values::size());
+        if (sample.sum != invalidIndex)
+        {
+            const auto received = distributedSums_.received(sample.sum);
+            for (std::size_t c = 0; c < Values::size(); ++c)
+                values[c] += received[c];
+        }
+        return values;
+    }
+
+    //! Evaluate the element values of the lower-dimensional samples of this process and send the terms of
+    //! this process of the samples to the processes that need them
+    void exchangeDistributedValues_()
+    {
+        const auto& lowDimSamples = samples_[lowDimSample];
+        const auto n = numLowDimElementValues_;
+        lowDimElementValues_.resize(lowDimSamples.size()*n);
+        for (std::size_t s = 0; s < lowDimSamples.size(); ++s)
+            if (lowDimSamples[s].lowDimElement != invalidIndex)
+                for (const auto& [first, numValues, f] : lowDimElementValueFunctions_)
+                    f(lowDimSamples[s].lowDimElement, std::span<Scalar>(lowDimElementValues_.data() + s*n + first, numValues));
+
+        static constexpr std::size_t numLowDimPriVars = PrimaryVariables<lowDimIdx>::size();
+        distributedSums_.exchange([&](std::size_t sum, std::span<Scalar> values)
+        {
+            const auto [kind, s] = sumSamples_[sum];
+            const auto& sample = samples_[kind][s];
+            if (kind == bulkSample)
+                addLocalTerms_(sample, this->curSol(bulkIdx), values, PrimaryVariables<bulkIdx>::size());
+            else
+            {
+                addLocalTerms_(sample, this->curSol(lowDimIdx), values, numLowDimPriVars);
+                if (sample.lowDimElement != invalidIndex)
+                    std::copy_n(lowDimElementValues_.begin() + s*n, n, values.begin() + numLowDimPriVars);
+            }
+        });
+    }
+
+    //! Whether two intersections are identical, with the tolerance of the sequential glue
+    static bool cornersMatch_(const std::vector<GlobalPosition>& corners, const std::vector<GlobalPosition>& otherCorners)
+    {
+        if (otherCorners.size() != corners.size())
+            return false;
+
+        using std::max;
+        Scalar eps2 = std::numeric_limits<Scalar>::min();
+        for (std::size_t i = 1; i < corners.size(); ++i)
+            eps2 = max(eps2, (corners[i] - corners[0]).two_norm2());
+        eps2 *= 1.5e-7*1.5e-7;
+
+        return std::all_of(corners.begin(), corners.end(), [&](const auto& corner)
+        {
+            return std::any_of(otherCorners.begin(), otherCorners.end(),
+                               [&](const auto& other){ return (corner - other).two_norm2() < eps2; });
+        });
+    }
 
     //! the point source in both domains
     std::tuple<std::vector<PointSource<bulkIdx>>, std::vector<PointSource<lowDimIdx>>> pointSources_;
@@ -843,6 +1709,25 @@ private:
         std::deque<std::vector<ElementSeed<bulkIdx>>>,
         std::deque<std::vector<ElementSeed<lowDimIdx>>>
     > elementSets_;
+
+    //! point sources on distributed grids
+    bool distributed_ = false;
+    DistributedSums<Scalar> distributedSums_;
+    std::array<std::vector<Sample>, 2> samples_;
+    std::array<std::map<DistributedKey, std::size_t>, 2> sampleIndices_;
+    std::vector<std::pair<SampleKind, std::size_t>> sumSamples_;
+    std::vector<std::size_t> idBulkSample_;
+    std::vector<std::size_t> idLowDimSample_;
+    std::vector<std::array<DistributedKey, 2>> pointSourceSampleKeys_;
+    std::map<DistributedKey, std::size_t> importedPointSources_;
+    std::size_t numOwnedSamples_ = 0;
+
+    //! values of the lower-dimensional elements the coupling terms need: first value, number of values, function
+    std::vector<std::tuple<std::size_t, std::size_t, std::function<void(std::size_t, std::span<Scalar>)>>> lowDimElementValueFunctions_;
+    std::size_t numLowDimElementValues_ = 0;
+    //! the values of the lower-dimensional elements of the samples of this process at the last solution update
+    std::vector<Scalar> lowDimElementValues_;
+    std::size_t userElementValues_ = invalidIndex;
 };
 
 } // end namespace Dumux
