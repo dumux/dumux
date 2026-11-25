@@ -484,7 +484,34 @@ private:
 
         const auto candidates = intersectingEntities(
             point, gridDiscretization(this->problem(bulkIdx)).boundingBoxTree());
-        return candidates.empty() ? invalidElement_ : GridIndex<bulkIdx>(candidates[0]);
+        return candidates.empty() ? invalidElement_ : smallestIdElement_(candidates);
+    }
+
+    /*!
+     * \brief Of the bulk elements containing a point, the one with the smallest global id
+     *
+     * A point on a face, an edge or a vertex lies in several elements. Choosing by the global id gives the
+     * same element on every process that holds the candidates, independent of the order of a tree query.
+     */
+    GridIndex<bulkIdx> smallestIdElement_(const std::vector<std::size_t>& candidates) const
+    {
+        const auto& gridGeometry = gridDiscretization(this->problem(bulkIdx));
+        const auto& idSet = gridGeometry.gridView().grid().globalIdSet();
+        auto best = candidates[0];
+        if (candidates.size() > 1)
+        {
+            auto bestId = idSet.id(gridGeometry.element(best));
+            for (std::size_t i = 1; i < candidates.size(); ++i)
+            {
+                const auto id = idSet.id(gridGeometry.element(candidates[i]));
+                if (id < bestId)
+                {
+                    bestId = id;
+                    best = candidates[i];
+                }
+            }
+        }
+        return best;
     }
 
     void prepareDataStructures_()
