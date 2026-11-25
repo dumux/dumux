@@ -13,7 +13,9 @@
 #define DUMUX_GEOMETRY_NORMAL_HH
 
 #include <algorithm>
-#include <dune/common/float_cmp.hh>
+#include <cmath>
+#include <limits>
+#include <type_traits>
 
 namespace Dumux {
 
@@ -21,6 +23,7 @@ namespace Dumux {
  * \ingroup Geometry
  * \brief Create a vector normal to the given one (v is expected to be non-zero)
  * \note This returns some orthogonal vector with arbitrary length
+ * \note Components of v that are round-off compared to the largest one do not change the direction of the result
  */
 template<class Vector>
 inline Vector normal(const Vector& v)
@@ -30,7 +33,11 @@ inline Vector normal(const Vector& v)
     if constexpr (Vector::size() == 2)
         return Vector({-v[1], v[0]});
 
-    const auto it = std::find_if(v.begin(), v.end(), [](const auto& x) { return Dune::FloatCmp::ne(x, 0.0); });
+    using std::abs; using std::sqrt;
+    using Scalar = std::decay_t<decltype(v[0])>;
+    const auto maxComponent = abs(*std::max_element(v.begin(), v.end(), [](const auto& a, const auto& b){ using std::abs; return abs(a) < abs(b); }));
+    const auto threshold = sqrt(std::numeric_limits<Scalar>::epsilon())*maxComponent;
+    const auto it = std::find_if(v.begin(), v.end(), [&](const auto& x){ using std::abs; return abs(x) > threshold; });
     const auto index = std::distance(v.begin(), it);
     if (index != Vector::size()-1)
     {
