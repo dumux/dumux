@@ -49,6 +49,15 @@ public:
     using Graph = std::vector<std::vector<IndexType>>;
 
     ScotchGraph(const Graph& graph)
+    : ScotchGraph(graph, {})
+    {}
+
+    /*!
+     * \brief A graph with vertex weights
+     * \param graph the adjacency list
+     * \param vertexWeights a positive weight per vertex, or none for unit weights
+     */
+    ScotchGraph(const Graph& graph, const std::vector<IndexType>& vertexWeights)
     {
         // Number of local graph vertices
         const SCOTCH_Num numNodes = graph.size();
@@ -74,6 +83,13 @@ public:
         vertTab_.shrink_to_fit();
         edgeTab_.shrink_to_fit();
 
+        if (!vertexWeights.empty())
+        {
+            if (vertexWeights.size() != graph.size())
+                DUNE_THROW(Dune::Exception, "The number of vertex weights differs from the number of graph vertices");
+            veloTab_.assign(vertexWeights.begin(), vertexWeights.end());
+        }
+
         if (SCOTCH_graphInit(&scotchGraph_) != 0)
             DUNE_THROW(Dune::Exception, "Error initializing SCOTCH graph!");
 
@@ -83,7 +99,8 @@ public:
 
         // build graph
         const SCOTCH_Num baseValue = 0; // C-style array indexing
-        if (SCOTCH_graphBuild(&scotchGraph_, baseValue, numNodes, vertTab_.data(), vertTab_.data()+1, NULL, NULL, numEdges, edgeTab_.data(), NULL))
+        if (SCOTCH_graphBuild(&scotchGraph_, baseValue, numNodes, vertTab_.data(), vertTab_.data()+1,
+                              veloTab_.empty() ? NULL : veloTab_.data(), NULL, numEdges, edgeTab_.data(), NULL))
             DUNE_THROW(Dune::Exception, "Error building SCOTCH graph!");
     }
 
@@ -102,6 +119,7 @@ private:
     // we have to maintain these ourselves to keep the Scotch graph valid
     std::vector<SCOTCH_Num> vertTab_;
     std::vector<SCOTCH_Num> edgeTab_;
+    std::vector<SCOTCH_Num> veloTab_;
 };
 
 /*!

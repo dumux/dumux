@@ -81,8 +81,30 @@ public:
     static void partition(const Graph& graph, std::size_t numProcessors,
                           std::vector<IndexType>& targetProcessors)
     {
+        partition(graph, {}, numProcessors, targetProcessors);
+    }
+
+    //! Compute a partition that balances the sum of the vertex weights
+    static std::vector<IndexType> partition(const Graph& graph, const std::vector<IndexType>& vertexWeights,
+                                            std::size_t numProcessors)
+    {
+        std::vector<IndexType> targetProcessors;
+        partition(graph, vertexWeights, numProcessors, targetProcessors);
+        return targetProcessors;
+    }
+
+    /*!
+     * \brief Compute a partition that balances the sum of the vertex weights
+     * \param graph the adjacency list
+     * \param vertexWeights a positive weight per vertex, or none for unit weights
+     * \param numProcessors the number of parts
+     * \param targetProcessors the part of each vertex
+     */
+    static void partition(const Graph& graph, const std::vector<IndexType>& vertexWeights,
+                          std::size_t numProcessors, std::vector<IndexType>& targetProcessors)
+    {
 #if HAVE_PTSCOTCH
-        ScotchGraph<IndexType> scotchGraph(graph);
+        ScotchGraph<IndexType> scotchGraph(graph, vertexWeights);
         ScotchGraphMapStrategy strategy(numProcessors);
 
         // architecture and graphMap are created and called within graphPart
