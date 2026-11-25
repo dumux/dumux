@@ -48,12 +48,12 @@ namespace Dumux {
  * - BoundarySegments : whether to insert boundary segments into the grid
  * - DomainMarkers : weather domain marker information should be read from the grid file
  */
-template<int dim, int dimworld>
-class GridManager<Dune::FoamGrid<dim, dimworld>>
-: public GridManagerBase<Dune::FoamGrid<dim, dimworld>>
+template<int dim, int dimworld, class... Args>
+class GridManager<Dune::FoamGrid<dim, dimworld, Args...>>
+: public GridManagerBase<Dune::FoamGrid<dim, dimworld, Args...>>
 {
 public:
-    using Grid = Dune::FoamGrid<dim, dimworld>;
+    using Grid = Dune::FoamGrid<dim, dimworld, Args...>;
     using ParentType = GridManagerBase<Grid>;
 
     /*!
@@ -109,12 +109,12 @@ public:
  * - BoundarySegments : whether to insert boundary segments into the grid
  * - DomainMarkers : weather domain marker information should be read from the grid file
  */
-template<int dimworld>
-class GridManager<Dune::FoamGrid<1, dimworld>>
-: public GridManagerBase<Dune::FoamGrid<1, dimworld>>
+template<int dimworld, class... Args>
+class GridManager<Dune::FoamGrid<1, dimworld, Args...>>
+: public GridManagerBase<Dune::FoamGrid<1, dimworld, Args...>>
 {
 public:
-    using Grid = Dune::FoamGrid<1, dimworld>;
+    using Grid = Dune::FoamGrid<1, dimworld, Args...>;
     using ParentType = GridManagerBase<Grid>;
 
     /*!
@@ -166,8 +166,8 @@ namespace Grid::Capabilities {
 
 // To the best of our knowledge FoamGrid is view thread-safe
 // This specialization can be removed after we depend on Dune release 2.9 in which this is guaranteed by FoamGrid itself
-template<int dim, int dimworld>
-struct MultithreadingSupported<Dune::FoamGrid<dim, dimworld>>
+template<int dim, int dimworld, class... Args>
+struct MultithreadingSupported<Dune::FoamGrid<dim, dimworld, Args...>>
 {
     template<class GV>
     static bool eval(const GV&) // default is independent of the grid view
