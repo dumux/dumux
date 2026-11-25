@@ -174,3 +174,35 @@ dumux_add_test(NAME test_md_embedded_1d3d_parallel_kernel_gradedtpfa
                MPI_RANKS 1 2 4
                TIMEOUT 1200
                CMD_ARGS params.input -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_line_tpfatpfa_emptyprocesses
+               TARGET test_md_embedded_1d3d_parallel_line_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.UpperRight "3 1 1" -Tissue.Grid.Cells "30 10 10")
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_surface_tpfatpfa_emptyprocesses
+               TARGET test_md_embedded_1d3d_parallel_surface_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.UpperRight "3 1 1" -Tissue.Grid.Cells "30 10 10")
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_average_tpfatpfa_emptyprocesses
+               TARGET test_md_embedded_1d3d_parallel_average_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.UpperRight "3 1 1" -Tissue.Grid.Cells "30 10 10")
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_kernel_tpfatpfa_emptyprocesses
+               TARGET test_md_embedded_1d3d_parallel_kernel_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.UpperRight "3 1 1" -Tissue.Grid.Cells "30 10 10")
