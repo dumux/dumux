@@ -16,6 +16,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/common/typeregistry.hh>
+#include <dumux/common/concepts/variables_.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux::Python {
@@ -47,12 +48,8 @@ void registerElementSolution(pybind11::handle scope)
     }
 }
 
-} // end namespace Impl
-
-
-// see python/dumux/discretization/__init__.py for how this is used for JIT compilation
 template <class GV, class... Options>
-void registerGridVariables(pybind11::handle scope, pybind11::class_<GV, Options...> cls)
+void registerFVGridVariables(pybind11::handle scope, pybind11::class_<GV, Options...> cls)
 {
     using pybind11::operator""_a;
 
@@ -82,14 +79,51 @@ void registerGridVariables(pybind11::handle scope, pybind11::class_<GV, Options.
         return self.resetTimeStep(sol);
     });
 
-    cls.def("update", [](GV& self, const SolutionVector& sol, const bool forceFluxCacheUpdate = false){
+    cls.def("update", [](GV& self, const SolutionVector& sol, const bool forceFluxCacheUpdate){
         return self.update(sol, forceFluxCacheUpdate);
-    });
+    }, "sol"_a, "forceFluxCacheUpdate"_a = false);
 
     using ElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element>(),
                                                                   std::declval<SolutionVector>(),
                                                                   std::declval<GridGeometry>()))>;
-    Impl::registerElementSolution<ElementSolution>(scope);
+    registerElementSolution<ElementSolution>(scope);
+}
+
+template <class GV, class... Options>
+void registerGeneralGridVariables(pybind11::handle scope, pybind11::class_<GV, Options...> cls)
+{
+    using pybind11::operator""_a;
+
+    using Problem = typename GV::GridVariablesCache::Problem;
+    using GridDiscretization = typename GV::GridDiscretization;
+    using SolutionVector = Dune::BlockVector<typename GV::PrimaryVariables>;
+
+    cls.def(pybind11::init([](std::shared_ptr<const Problem> problem,
+                              std::shared_ptr<const GridDiscretization> gridDiscretization){
+        return std::make_shared<GV>(problem, gridDiscretization);
+    }));
+
+    cls.def("init", [](GV& self, const SolutionVector& sol) { self.init(sol); });
+    cls.def("update", [](GV& self, const SolutionVector& sol) { self.update(sol); }, "sol"_a);
+    cls.def("advanceTimeStep", &GV::advanceTimeStep);
+    cls.def("resetTimeStep", [](GV& self, const SolutionVector& sol) { self.resetTimeStep(sol); });
+    cls.def("updateAfterGridAdaption", [](GV& self, const SolutionVector& sol){
+        self.updateAfterGridAdaption(sol);
+    });
+    cls.def_property_readonly("gridGeometry", &GV::gridDiscretization);
+    cls.def_property_readonly("gridDiscretization", &GV::gridDiscretization);
+}
+
+} // end namespace Impl
+
+// see python/dumux/discretization/__init__.py for how this is used for JIT compilation
+template <class GV, class... Options>
+void registerGridVariables(pybind11::handle scope, pybind11::class_<GV, Options...> cls)
+{
+    if constexpr (Dumux::Concept::FVGridVariables<GV>)
+        Impl::registerFVGridVariables(scope, cls);
+    else
+        Impl::registerGeneralGridVariables(scope, cls);
 }
 
 } // namespace Dumux::Python
