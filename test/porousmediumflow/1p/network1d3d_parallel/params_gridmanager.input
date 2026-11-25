@@ -1,0 +1,12 @@
+[Problem]
+Name = test_1p_network1d3d_gridmanager
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1050
+LiquidKinematicViscosity = 4.0e-3
+
+[Grid]
+File = network.dgf
+Overlap = 1
+BulkCells = 8

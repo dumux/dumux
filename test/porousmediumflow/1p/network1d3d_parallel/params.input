@@ -1,0 +1,7 @@
+[Problem]
+Name = test_1p_network1d3d_parallel
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1050 # blood density
+LiquidKinematicViscosity = 4.0e-3 # blood viscosity
