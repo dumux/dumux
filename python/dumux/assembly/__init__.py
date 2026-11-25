@@ -55,18 +55,63 @@ def _createFVAssembler(
         )
     """
 
-    if diffMethod == "numeric":
-        cppDiffMethod = "Dumux::DiffMethod::numeric"
-    elif diffMethod == "analytic":
-        cppDiffMethod = "Dumux::DiffMethod::analytic"
-    else:
-        raise ValueError(f"Unknown diffMethod {diffMethod}")
-
-    assemblerType = f"Dumux::FVAssembler<{model.cppType}, {cppDiffMethod}, {int(isImplicit)}>"
-    includes = (
-        problem._includes + problem.gridGeometry()._includes + ["dumux/assembly/fvassembler.hh"]
+    assemblerType = (
+        f"Dumux::FVAssembler<{model.cppType}, {_cppDiffMethod(diffMethod)}, {int(isImplicit)}>"
     )
-    includes += ["dumux/python/assembly/fvassembler.hh"]
+    return _loadAssembler(
+        assemblerType,
+        ["dumux/assembly/fvassembler.hh", "dumux/python/assembly/fvassembler.hh"],
+        problem=problem,
+        gridVariables=gridVariables,
+        model=model,
+        multithreading=multithreading,
+    )
+
+
+@cppWrapperClassAlias(creator=_createFVAssembler)
+class FVAssembler:
+    """Class alias used to instantiate an FVAssembler"""
+
+
+@cppWrapperCreator
+def _createAssembler(
+    *, problem, gridVariables, model, diffMethod="numeric", isImplicit=True, multithreading=False
+):
+    """
+    Create the assembler the model's type tag needs
+
+    A model on finite-volume grid variables gets an FVAssembler, a model on the general grid
+    variables the general assembler, which is the only one that can assemble it. The arguments are
+    those of FVAssembler.
+    """
+
+    diff = _cppDiffMethod(diffMethod)
+    assemblerType = f"Dumux::Python::AssemblerFor<{model.cppType}, {diff}, {int(isImplicit)}>"
+    return _loadAssembler(
+        assemblerType,
+        ["dumux/python/assembly/assembler.hh"],
+        problem=problem,
+        gridVariables=gridVariables,
+        model=model,
+        multithreading=multithreading,
+    )
+
+
+@cppWrapperClassAlias(creator=_createAssembler)
+class Assembler:
+    """Class alias used to instantiate the assembler a model needs"""
+
+
+def _cppDiffMethod(diffMethod):
+    if diffMethod == "numeric":
+        return "Dumux::DiffMethod::numeric"
+    if diffMethod == "analytic":
+        return "Dumux::DiffMethod::analytic"
+    raise ValueError(f"Unknown diffMethod {diffMethod}")
+
+
+def _loadAssembler(assemblerType, headers, *, problem, gridVariables, model, multithreading):
+    includes = problem._includes + problem.gridGeometry()._includes + headers
 
     moduleName = "fvassembler_" + hashIt(assemblerType + str(multithreading))
     # remark: use SimpleGenerator again starting with dune 2.9
@@ -89,8 +134,3 @@ def _createFVAssembler(
         # ],
     )
     return module.FVAssembler(problem, problem.gridGeometry(), gridVariables)
-
-
-@cppWrapperClassAlias(creator=_createFVAssembler)
-class FVAssembler:
-    """Class alias used to instantiate an FVAssembler"""
