@@ -1,0 +1,33 @@
+[Tissue.Grid]
+LowerLeft = 0 0 0
+UpperRight = 1 1 1
+Cells = 10 10 10
+Overlap = 1
+
+[Network.Grid]
+Overlap = 1
+
+[Network]
+Partition = Tissue
+
+[Tissue.Problem]
+Name = tissue
+
+[Network.Problem]
+Name = network
+
+[Problem]
+EnableGravity = false
+
+[MixedDimension]
+IntegrationOrder = 2
+NumCircleSegments = 12
+KernelWidthFactor = 4
+KernelIntegrationCRL = 0.1
+
+[Assembly]
+Multithreading = false
+
+[Component]
+LiquidKinematicViscosity = 1
+LiquidDensity = 1
