@@ -12,6 +12,7 @@
 #ifndef DUMUX_POINTSOURCES_HH
 #define DUMUX_POINTSOURCES_HH
 
+#include <algorithm>
 #include <map>
 #include <ranges>
 #include <span>
@@ -24,10 +25,10 @@
 #include <dumux/common/numeqvector.hh>
 #include <dumux/discretization/localview.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
-#include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/discretization/concepts.hh>
+#include <dumux/discretization/elementscontainingpoint.hh>
 
 namespace Dumux::Experimental {
 
@@ -302,49 +303,52 @@ auto makePointSourceMaps(const GridDiscretization& gridDiscretization,
                     std::map<std::size_t, std::vector<ElementContext>>> maps;
 
     constexpr bool locatedContexts = requires (const Context& c) { c.elementIndex(); };
+    constexpr bool hasScvs = Concepts::FVElementDiscretization<ElemDisc>
+                             && DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>;
+    using ScvIndices = Dune::ReservedVector<std::size_t, Dumux::Detail::LocalDofs::maxNumLocalDofs<ElemDisc>()>;
 
+    auto elemDisc = localView(gridDiscretization);
     for (const auto& ctx : contexts)
     {
-        // the element indices that contain the point and the number of contexts it is shared by
-        std::vector<std::size_t> entities;
-        std::size_t elementEmbeddings = ctx.embeddings();
+        // the elements that contain the point, for schemes with control volumes with the sub-control volumes containing it
+        std::vector<std::pair<std::size_t, ScvIndices>> located;
         if constexpr (locatedContexts)
-            entities.push_back(ctx.elementIndex());
+            located.emplace_back(ctx.elementIndex(), ScvIndices{});
         else
+            for (const auto eIdx : intersectingEntities(ctx.position(), gridDiscretization.boundingBoxTree()))
+                located.emplace_back(eIdx, ScvIndices{});
+
+        if constexpr (hasScvs)
         {
-            entities = intersectingEntities(ctx.position(), gridDiscretization.boundingBoxTree());
-            elementEmbeddings *= entities.size();
+            for (auto& [eIdx, scvIndices] : located)
+            {
+                elemDisc.bindElement(gridDiscretization.element(eIdx));
+                scvIndices = scvsContainingPoint<Dumux::Detail::LocalDofs::maxNumLocalDofs<ElemDisc>()>(elemDisc, ctx.position());
+                if constexpr (locatedContexts)
+                    if (scvIndices.empty())
+                        DUNE_THROW(Dune::InvalidStateException,
+                                   "Point source at " << ctx.position() << " is not inside any sub control volume of element " << eIdx);
+            }
+            std::erase_if(located, [](const auto& l){ return l.second.empty(); });
         }
 
-        if (entities.empty())
+        if (located.empty())
             continue;
 
-        auto elemDisc = localView(gridDiscretization);
-        for (const auto eIdx : entities)
+        // the number of contexts the point is shared by
+        const std::size_t elementEmbeddings = locatedContexts ? ctx.embeddings() : ctx.embeddings()*located.size();
+        for (const auto& [eIdx, scvIndices] : located)
         {
-            const auto element = gridDiscretization.element(eIdx);
-
             if constexpr (Dumux::Detail::LocalDofs::hasNonCVLocalDofsInterface<ElemDisc>())
             {
+                const auto element = gridDiscretization.element(eIdx);
                 auto elementEntry = ElementContext(ctx, element.geometry().local(ctx.position()));
                 elementEntry.setEmbeddings(elementEmbeddings);
                 maps.elementMap[eIdx].push_back(std::move(elementEntry));
             }
 
-            if constexpr (Concepts::FVElementDiscretization<ElemDisc>
-                          && DiscretizationMethods::isCVFE<typename GridDiscretization::DiscretizationMethod>)
+            if constexpr (hasScvs)
             {
-                elemDisc.bindElement(element);
-
-                Dune::ReservedVector<std::size_t, Dumux::Detail::LocalDofs::maxNumLocalDofs<ElemDisc>()> scvIndices;
-                for (const auto& scv : scvs(elemDisc))
-                    if (intersectsPointGeometry(ctx.position(), elemDisc.geometry(scv)))
-                        scvIndices.push_back(scv.indexInElement());
-
-                if (scvIndices.empty())
-                    DUNE_THROW(Dune::InvalidStateException,
-                               "Point source at " << ctx.position() << " is not inside any sub control volume of element " << eIdx);
-
                 for (const auto scvIdx : scvIndices)
                 {
                     auto entry = ctx;

@@ -13,6 +13,9 @@
  * any) and once in total on the elements. The positions in local element coordinates have to map
  * back to the point. Contexts that know their element have to give the same maps as the search
  * of the grid.
+ * Points just outside of interior faces, which the search of the grid also finds in the element they lie
+ * outside of, are counted once in total on the control volumes of the elements that contain them, also by the
+ * `BoundingBoxTreePointSourceHelper`.
  */
 #include <config.h>
 
@@ -21,6 +24,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -42,8 +46,10 @@
 
 #include <dumux/common/initialize.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/pointsource.hh>
 #include <dumux/common/pointsources.hh>
 #include <dumux/discretization/box.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/discretization/pq1.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/pq2.hh>
@@ -295,6 +301,136 @@ void testMaps(Checker& checker, const std::string& name, std::mt19937& rng)
               << elementMap.size() << " elements, " << locatedContexts.size() << " located contexts" << std::endl;
 }
 
+template<class GlobalPosition>
+struct PointNearFace
+{
+    GlobalPosition facePoint;
+    GlobalPosition point;
+};
+
+//! points on the interior faces, moved out of the element by fractions of the tolerance of the element search
+template<class GridView>
+auto pointsNearFaces(const GridView& gridView)
+{
+    using GlobalPosition = typename GridView::template Codim<0>::Geometry::GlobalCoordinate;
+    std::vector<PointNearFace<GlobalPosition>> points;
+    for (const auto& element : elements(gridView))
+    {
+        const auto geometry = element.geometry();
+        auto shortestEdge = std::numeric_limits<double>::max();
+        for (int i = 0; i < geometry.corners(); ++i)
+            for (int j = i + 1; j < geometry.corners(); ++j)
+                shortestEdge = std::min(shortestEdge, (geometry.corner(i) - geometry.corner(j)).two_norm());
+
+        for (const auto& intersection : intersections(gridView, element))
+        {
+            if (!intersection.neighbor())
+                continue;
+
+            const auto faceGeometry = intersection.geometry();
+            typename decltype(faceGeometry)::LocalCoordinate local(0.0);
+            for (int i = 0; i < local.size(); ++i)
+                local[i] = faceGeometry.type().isSimplex() ? 0.2 + 0.1*i : 0.3 + 0.3*i;
+            const auto facePoint = faceGeometry.global(local);
+            for (const double fraction : {0.3, 0.6, 0.9})
+            {
+                auto point = intersection.centerUnitOuterNormal();
+                point *= fraction*1e-7*shortestEdge;
+                point += facePoint;
+                points.push_back({facePoint, point});
+            }
+        }
+    }
+    return points;
+}
+
+/*!
+ * The search of the grid accepts a point near a face also for the element on the other side, where it can lie
+ * outside of all sub-control volumes; such an element does not contain the point. Every point has to be counted
+ * once in total on the sub-control volumes, which have to contain the point and the point on the face it was moved
+ * from, and some of the points have to be found by the search in an element none of whose sub-control volumes
+ * contains them.
+ */
+template<class GridDiscretization, class Map, class Points, class IdOf>
+void checkPointsNearFaces(Checker& checker, const std::string& name, const GridDiscretization& gridDiscretization,
+                          const Map& map, const Points& points, IdOf&& idOf)
+{
+    std::vector<double> weights(points.size(), 0.0);
+    auto fvGeometry = localView(gridDiscretization);
+    for (const auto& [key, entries] : map)
+    {
+        fvGeometry.bindElement(gridDiscretization.element(key.first));
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            if (scv.indexInElement() != key.second)
+                continue;
+
+            const auto scvGeometry = fvGeometry.geometry(scv);
+            for (const auto& entry : entries)
+            {
+                const auto id = idOf(entry);
+                weights[id] += 1.0/entry.embeddings();
+                checker.check(intersectsPointGeometry(points[id].point, scvGeometry)
+                              && intersectsPointGeometry(points[id].facePoint, scvGeometry),
+                              name + ": the scv of a point near a face contains the point and the point on the face");
+            }
+        }
+    }
+
+    std::size_t foundOutsideAllScvs = 0;
+    for (const auto& p : points)
+    {
+        for (const auto eIdx : intersectingEntities(p.point, gridDiscretization.boundingBoxTree()))
+        {
+            fvGeometry.bindElement(gridDiscretization.element(eIdx));
+            bool inScv = false;
+            for (const auto& scv : scvs(fvGeometry))
+                inScv = inScv || intersectsPointGeometry(p.point, fvGeometry.geometry(scv));
+            if (!inScv)
+                ++foundOutsideAllScvs;
+        }
+    }
+
+    for (std::size_t i = 0; i < points.size(); ++i)
+        checker.check(std::abs(weights[i] - 1.0) < 1e-14,
+                      name + ": scv weights of point near a face " + std::to_string(i) + " sum to " + std::to_string(weights[i]));
+    checker.check(foundOutsideAllScvs > 0, name + ": the search finds no point near a face in an element without an scv containing it");
+    std::cout << name << ": " << points.size() << " points near faces, " << foundOutsideAllScvs
+              << " found by the search in an element without an scv containing them" << std::endl;
+}
+
+template<class TypeTag>
+void testPointsNearFaces(Checker& checker, const std::string& name)
+{
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using GridDiscretization = GetPropType<TypeTag, Properties::GridGeometry>;
+    using GlobalPosition = typename GridDiscretization::GlobalCoordinate;
+
+    auto grid = makeGrid<Grid>();
+    const GridDiscretization gridDiscretization(grid->leafGridView());
+    const auto points = pointsNearFaces(gridDiscretization.gridView());
+
+    using Base = Experimental::PointSourceContext<GlobalPosition>;
+    using Context = Experimental::IdPointSourceContext<Base, std::size_t>;
+    std::vector<Context> contexts;
+    for (std::size_t i = 0; i < points.size(); ++i)
+        contexts.emplace_back(Base(points[i].point), i);
+    checkPointsNearFaces(checker, name, gridDiscretization, Experimental::makePointSourceMap(gridDiscretization, contexts),
+                         points, [](const auto& context) { return context.id(); });
+
+    if constexpr (GridDiscretization::discMethod == DiscretizationMethods::box)
+    {
+        using Source = PointSource<GlobalPosition, Dune::FieldVector<double, 1>>;
+        std::vector<Source> sources;
+        for (std::size_t i = 0; i < points.size(); ++i)
+            sources.emplace_back(points[i].point, Dune::FieldVector<double, 1>(i));
+        std::map<std::pair<std::size_t, std::size_t>, std::vector<Source>> map;
+        BoundingBoxTreePointSourceHelper::computePointSourceMap(gridDiscretization, sources, map);
+        checkPointsNearFaces(checker, name + " (BoundingBoxTreePointSourceHelper)", gridDiscretization, map,
+                             points, [](const auto& source) { return static_cast<std::size_t>(source.values()[0]); });
+    }
+}
+
 template<class Discretization>
 void runGrids(const std::string& name, Checker& checker, std::mt19937& rng)
 {
@@ -304,6 +440,17 @@ void runGrids(const std::string& name, Checker& checker, std::mt19937& rng)
 #if HAVE_DUNE_UGGRID
     testMaps<Properties::TTag::PointSourceMapTest<Discretization, Dune::UGGrid<2>>>(checker, name + " simplex 2D", rng);
     testMaps<Properties::TTag::PointSourceMapTest<Discretization, Dune::UGGrid<3>>>(checker, name + " simplex 3D", rng);
+#endif
+}
+
+template<class Discretization>
+void runGridsPointsNearFaces(const std::string& name, Checker& checker)
+{
+    testPointsNearFaces<Properties::TTag::PointSourceMapTest<Discretization, Dune::YaspGrid<2>>>(checker, name + " cube 2D");
+    testPointsNearFaces<Properties::TTag::PointSourceMapTest<Discretization, Dune::YaspGrid<3>>>(checker, name + " cube 3D");
+#if HAVE_DUNE_UGGRID
+    testPointsNearFaces<Properties::TTag::PointSourceMapTest<Discretization, Dune::UGGrid<2>>>(checker, name + " simplex 2D");
+    testPointsNearFaces<Properties::TTag::PointSourceMapTest<Discretization, Dune::UGGrid<3>>>(checker, name + " simplex 3D");
 #endif
 }
 
@@ -325,6 +472,10 @@ int main(int argc, char** argv)
     Test::runGrids<TTag::PQ2HybridModel>("pq2 hybrid", checker, rng);
     Test::runGrids<TTag::PQ1FEModel>("pq1 fe", checker, rng);
     Test::runGrids<TTag::PQ2FEModel>("pq2 fe", checker, rng);
+
+    Test::runGridsPointsNearFaces<TTag::BoxModel>("box", checker);
+    Test::runGridsPointsNearFaces<TTag::PQ1BubbleHybridModel>("pq1bubble hybrid", checker);
+    Test::runGridsPointsNearFaces<TTag::PQ2HybridModel>("pq2 hybrid", checker);
 
     if (checker.failures > 0)
     {

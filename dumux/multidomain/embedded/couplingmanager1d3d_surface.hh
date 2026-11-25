@@ -25,6 +25,8 @@
 #include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/indextraits.hh>
 
+#include <dumux/discretization/elementscontainingpoint.hh>
+
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 #include <dumux/multidomain/embedded/circleaveragepointsourcetraits.hh>
@@ -207,7 +209,7 @@ public:
                 // go over all points of the average operator
                 for (int k = 0; k < circlePoints.size(); ++k)
                 {
-                    circleBulkElementIndices[k] = intersectingEntities(circlePoints[k], bulkTree);
+                    circleBulkElementIndices[k] = elementsContainingPoint(bulkGridGeometry, circlePoints[k]);
                     if (circleBulkElementIndices[k].empty())
                         continue;
 

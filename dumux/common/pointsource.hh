@@ -15,6 +15,8 @@
 #define DUMUX_POINTSOURCE_HH
 
 #include <functional>
+#include <utility>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
@@ -22,10 +24,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numeqvector.hh>
 #include <dumux/geometry/boundingboxtree.hh>
-#include <dumux/geometry/intersectspointgeometry.hh>
 #include <dumux/geometry/intersectingentities.hh>
 
 #include <dumux/discretization/method.hh>
+#include <dumux/discretization/elementscontainingpoint.hh>
 
 namespace Dumux {
 
@@ -287,34 +289,28 @@ public:
             // make local copy of point source for the map
             auto source = s;
 
-            // split the source values equally among all concerned entities
-            source.setEmbeddings(entities.size()*source.embeddings());
-
             if constexpr (GridGeometry::discMethod == DiscretizationMethods::box
                 || GridGeometry::discMethod == DiscretizationMethods::fcdiamond)
             {
-                // loop over all concerned elements
+                // the elements one of whose sub-control volumes contains the point, with these sub-control volumes
+                constexpr int dim = GridGeometry::GridView::dimension;
+                std::vector<std::pair<std::size_t, Dune::ReservedVector<std::size_t, 1<<dim>>> located;
                 auto fvGeometry = localView(gridGeometry);
                 for (const auto eIdx : entities)
                 {
-                    // check in which subcontrolvolume(s) we are
-                    const auto element = boundingBoxTree.entitySet().entity(eIdx);
-                    fvGeometry.bindElement(element);
+                    fvGeometry.bindElement(boundingBoxTree.entitySet().entity(eIdx));
+                    const auto scvIndices = scvsContainingPoint<(1<<dim)>(fvGeometry, source.position());
+                    if (!scvIndices.empty())
+                        located.emplace_back(eIdx, scvIndices);
+                }
 
-                    const auto globalPos = source.position();
-                    // loop over all sub control volumes and check if the point source is inside
-                    constexpr int dim = GridGeometry::GridView::dimension;
-                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
-                    for (const auto& scv : scvs(fvGeometry))
-                        if (intersectsPointGeometry(globalPos, fvGeometry.geometry(scv)))
-                            scvIndices.push_back(scv.indexInElement());
+                // split the source values equally among all concerned entities
+                source.setEmbeddings(located.size()*source.embeddings());
 
-                    if (scvIndices.empty())
-                        DUNE_THROW(Dune::InvalidStateException,
-                                   "Point source at " << globalPos << " is not inside any sub control volume of element " << eIdx);
-
-                    // for all scvs that tested positive add the point sources
-                    // to the element/scv to point source map
+                // for all scvs that tested positive add the point sources
+                // to the element/scv to point source map
+                for (const auto& [eIdx, scvIndices] : located)
+                {
                     for (const auto scvIdx : scvIndices)
                     {
                         const auto key = std::make_pair(eIdx, scvIdx);
@@ -331,6 +327,8 @@ public:
             else if constexpr (GridGeometry::discMethod == DiscretizationMethods::cctpfa
                     || GridGeometry::discMethod == DiscretizationMethods::ccmpfa)
             {
+                // split the source values equally among all concerned entities
+                source.setEmbeddings(entities.size()*source.embeddings());
                 for (const auto eIdx : entities)
                 {
                     // add the pointsource to the DOF map
