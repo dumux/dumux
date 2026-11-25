@@ -37,16 +37,13 @@ class GridGeometry:
 
 @cppWrapperCreator
 def _createGridVariables(*, problem, model):
-    """Construct a GridGeometry from problem and the model"""
+    """Construct the grid variables the model's type tag declares"""
 
     includes = [
         "dumux/discretization/fvgridvariables.hh",
         "dumux/python/discretization/gridvariables.hh",
     ]
-    ggeo = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridGeometry>"
-    gvv = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridVolumeVariables>"
-    gfc = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridFluxVariablesCache>"
-    typeName = f"Dumux::FVGridVariables<{ggeo}, {gvv}, {gfc}>"
+    typeName = f"Dumux::GetPropType<{model.cppType}, Dumux::Properties::GridVariables>"
 
     moduleName = "gridvariables_" + hashIt(typeName)
     holderType = f"std::shared_ptr<{typeName}>"
