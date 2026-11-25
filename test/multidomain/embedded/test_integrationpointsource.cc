@@ -12,13 +12,16 @@
  * is split among all elements and sub-control volumes that contain the point.
  * Summed over all entries of the point source map, the split weights have to
  * recover the weight of the original point source, also for points that lie on
- * element boundaries and sub-control volume boundaries.
+ * element boundaries and sub-control volume boundaries, and for points just outside
+ * of an element that the search of the grid still finds in it, located as in the coupling managers.
  */
 #include <config.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <random>
 #include <string>
@@ -41,7 +44,7 @@
 #include <dumux/discretization/cctpfa.hh>
 #include <dumux/discretization/pq1bubble.hh>
 #include <dumux/discretization/method.hh>
-#include <dumux/geometry/intersectingentities.hh>
+#include <dumux/discretization/elementscontainingpoint.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
 
 namespace Dumux {
@@ -73,6 +76,34 @@ std::vector<GlobalPosition> testPositions(const GridGeometry& gridGeometry)
                 positions.push_back(geometry.global(refElement.position(i, codim)));
     }
 
+    // points on the interior faces, moved out of the element by fractions of the tolerance of the element search,
+    // which can lie outside of all sub-control volumes of that element
+    for (const auto& element : elements(gridView))
+    {
+        const auto geometry = element.geometry();
+        auto shortestEdge = std::numeric_limits<double>::max();
+        for (int i = 0; i < geometry.corners(); ++i)
+            for (int j = i + 1; j < geometry.corners(); ++j)
+                shortestEdge = std::min(shortestEdge, (geometry.corner(i) - geometry.corner(j)).two_norm());
+
+        for (const auto& intersection : intersections(gridView, element))
+        {
+            if (!intersection.neighbor())
+                continue;
+
+            const auto faceGeometry = intersection.geometry();
+            const auto local = faceGeometry.type().isSimplex() ? Dune::FieldVector<double, dim-1>({0.2, 0.3})
+                                                               : Dune::FieldVector<double, dim-1>({0.3, 0.6});
+            for (const double fraction : {0.3, 0.6, 0.9})
+            {
+                auto position = intersection.centerUnitOuterNormal();
+                position *= fraction*1e-7*shortestEdge;
+                position += faceGeometry.global(local);
+                positions.push_back(position);
+            }
+        }
+    }
+
     // random points
     std::mt19937 generator(42);
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -97,20 +128,19 @@ bool testConservation(const GridGeometry& gridGeometry, bool lumping, const std:
     std::vector<TestSource> sources;
     double inputWeight = 0.0;
     std::size_t id = 0;
-    const auto& tree = gridGeometry.boundingBoxTree();
     for (const auto& position : testPositions(gridGeometry))
     {
-        const auto entities = intersectingEntities(position, tree);
-        if (entities.empty())
+        const auto elementIndices = elementsContainingPoint(gridGeometry, position);
+        if (elementIndices.empty())
             continue;
 
         const auto weight = distribution(generator);
         const auto integrationElement = distribution(generator);
         inputWeight += weight*integrationElement;
-        for (const auto eIdx : entities)
+        for (const auto eIdx : elementIndices)
         {
             sources.emplace_back(position, id, weight, integrationElement, eIdx);
-            sources.back().setEmbeddings(entities.size());
+            sources.back().setEmbeddings(elementIndices.size());
         }
         ++id;
     }

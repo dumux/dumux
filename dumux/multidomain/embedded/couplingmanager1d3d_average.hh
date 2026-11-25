@@ -27,6 +27,8 @@
 
 #include <dumux/geometry/distance.hh>
 
+#include <dumux/discretization/elementscontainingpoint.hh>
+
 #include <dumux/multidomain/embedded/couplingmanager1d3dbase.hh>
 #include <dumux/multidomain/embedded/circlepoints.hh>
 #include <dumux/multidomain/embedded/extendedsourcestencil.hh>
@@ -179,7 +181,7 @@ public:
                 // global position of the quadrature point
                 const auto globalPos = intersectionGeometry.global(qp.position());
 
-                const auto bulkElementIndices = intersectingEntities(globalPos, bulkTree);
+                const auto bulkElementIndices = elementsContainingPoint(bulkGridGeometry, globalPos);
 
                 // do not add a point source if the qp is outside of the 3d grid
                 // this is equivalent to having a source of zero for that qp
