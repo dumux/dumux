@@ -59,6 +59,7 @@ LABELS = {
     "pq1bubble_box": "PQ1Bubble / Box",
     "pq1bubble_diamond": "PQ1Bubble / Diamond (quadrilaterals)",
     "hybrid_pq1bubble_box": "PQ1Bubble (hybrid) / Box",
+    "hybrid_pq1bubble_box_quad": "PQ1Bubble (hybrid) / Box (quadrilaterals)",
 }
 # the marker shows the grid cell shape (also of the FeatFlow results), the color the scheme
 CELL_MARKERS = {"triangles": "^", "quadrilaterals": "s"}
@@ -67,6 +68,7 @@ CELL_SHAPES = {
     "pq1bubble_box": "triangles",
     "pq1bubble_diamond": "quadrilaterals",
     "hybrid_pq1bubble_box": "triangles",
+    "hybrid_pq1bubble_box_quad": "quadrilaterals",
 }
 MARKERS = {scheme: CELL_MARKERS[shape] for scheme, shape in CELL_SHAPES.items()}
 COLORS = {scheme: f"C{i}" for i, scheme in enumerate(SCHEMES)}

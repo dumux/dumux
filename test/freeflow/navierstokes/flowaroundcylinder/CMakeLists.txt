@@ -87,6 +87,32 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box params_1.input
                              -Problem.Name test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box -Problem.EnableInertiaTerms false")
 
+# Navier-Stokes version of the test (Re=20) on quadrilaterals
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad
+               TARGET test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box params_1.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad -Problem.EnableInertiaTerms true
+                             -Grid.File meshes/cylinder_channel_quad.msh")
+
+# Stokes version of the test (no inertia) on quadrilaterals
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad
+               TARGET test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box params_1.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box_quad -Problem.EnableInertiaTerms false
+                             -Grid.File meshes/cylinder_channel_quad.msh")
+
 # Navier-Stokes version of the test (Re=20)
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
                SOURCES main.cc

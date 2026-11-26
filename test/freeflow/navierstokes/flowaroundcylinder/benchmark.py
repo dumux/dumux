@@ -14,10 +14,11 @@ resolves the cylinder twice as fine as the coarse meshes.
 The errors with respect to the FeatFlow reference values (reference/featflow.json) and the
 experimental orders of convergence are written to results/convergence_2d1.md.
 
-Cases 2D-2 and 2D-3 (--case 2, --case 3): one time-dependent run (Re = 100) with the PQ1Bubble/Box
-or the hybrid PQ1Bubble/Box scheme (--scheme) and the DIRK2 method (--time-scheme). These runs take
-hours, so they are started in the background, detached from the terminal (--foreground waits for
-them). The process id is written to <name>.pid in the run folder, and the run is stopped with
+Cases 2D-2 and 2D-3 (--case 2, --case 3): one time-dependent run (Re = 100) with the DIRK2 method
+(--time-scheme) on the default mesh of the scheme (--scheme): PQ1Bubble/Box, hybrid PQ1Bubble/Box
+on triangles or hybrid PQ1Bubble/Box on quadrilaterals. These runs take hours, so they are started
+in the background, detached from the terminal (--foreground waits for them). The process id is
+written to <name>.pid in the run folder, and the run is stopped with
 kill $(cat <run folder>/<name>.pid).
 
 All cases use central differences for the advective term (Flux.UpwindWeight = 0.5). Each run gets
@@ -64,6 +65,10 @@ SCHEMES = {
         "test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box",
         "meshes/cylinder_channel_coarse.msh",
     ),
+    "hybrid_pq1bubble_box_quad": (
+        "test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box",
+        "meshes/cylinder_channel_quad_coarse.msh",
+    ),
 }
 
 # default meshes of the regression tests (mesh size 0.01 in the channel, 0.002 on the cylinder)
@@ -72,10 +77,11 @@ DEFAULT_MESHES = {
     "pq1bubble_box": "meshes/cylinder_channel.msh",
     "pq1bubble_diamond": "meshes/cylinder_channel_quad.msh",
     "hybrid_pq1bubble_box": "meshes/cylinder_channel.msh",
+    "hybrid_pq1bubble_box_quad": "meshes/cylinder_channel_quad.msh",
 }
 
 # the time-dependent cases are only implemented for the schemes with the new problem interface
-TRANSIENT_SCHEMES = ["pq1bubble_box", "hybrid_pq1bubble_box"]
+TRANSIENT_SCHEMES = ["pq1bubble_box", "hybrid_pq1bubble_box", "hybrid_pq1bubble_box_quad"]
 
 
 def readReferences():
@@ -287,8 +293,11 @@ def runningProcess(pidFile):
 
 
 def transientArgs(case, args):
-    """Mesh, grid level, time step size and end time of a time-dependent run"""
-    mesh = os.path.abspath(os.path.join("meshes", "cylinder_channel.msh"))
+    """
+    Mesh (default mesh of the scheme), grid level, time step size and end time of a
+    time-dependent run
+    """
+    mesh = os.path.abspath(DEFAULT_MESHES[args.scheme])
     result = ["-Grid.File", mesh, "-Grid.Refinement", str(args.level)]
     result += ["-TimeLoop.Scheme", args.time_scheme]
     if args.dt is not None:
