@@ -16,11 +16,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <fstream>
 #include <limits>
 #include <map>
+#include <set>
 #include <span>
 #include <string>
 #include <tuple>
@@ -37,11 +39,15 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/griddiscretization.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/assembly/coloring.hh>
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/intersectingentities.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
+#include <dumux/common/typetraits/boundary_.hh>
+#include <dumux/common/typetraits/periodic.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/glue.hh>
 #include <dumux/multidomain/distributedglue.hh>
@@ -304,6 +310,160 @@ public:
             }
             return residual;
         }
+    }
+
+    /*!
+     * \brief Evaluate the derivatives of the element residual with respect to the coupling values whose
+     *        terms come from other processes, see forEachRemoteJacobianEntry
+     * \note Does nothing on grids that are not distributed. The local assemblers call this for every element.
+     */
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector&,
+                                         JacobianMatrixDiagBlock&,
+                                         GridVariables&)
+    { evalRemoteDerivatives(domainI, localAssemblerI); }
+
+    /*!
+     * \brief Evaluate the derivatives of the element residual with respect to the coupling values whose
+     *        terms come from other processes
+     *
+     * A coupling value is a sum of the solution at degrees of freedom times weights. The terms of other
+     * processes are received in updateSolution and do not change during the assembly, so the local
+     * matrices have no entries for their degrees of freedom. This computes the derivative of the source
+     * residual of the element with respect to each such value by numeric differentiation.
+     */
+    template<std::size_t i, class LocalAssemblerI>
+    void evalRemoteDerivatives(Dune::index_constant<i> domainI, const LocalAssemblerI& localAssemblerI)
+    {
+        if (!distributed_)
+            return;
+
+        const auto& element = localAssemblerI.element();
+        const auto eIdx = gridDiscretization(this->problem(domainI)).elementMapper().index(element);
+        const auto& offsets = remoteSumOffsets_[i];
+        if (offsets[eIdx] == offsets[eIdx+1])
+            return;
+
+        const auto origResidual = localAssemblerI.evalLocalSourceResidual(element);
+        auto partialDerivs = origResidual;
+        constexpr auto numEq = PrimaryVariables<i>::size();
+        static const int numDiffMethod = getParamFromGroup<int>(localAssemblerI.problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+
+        for (std::size_t m = offsets[eIdx]; m < offsets[eIdx+1]; ++m)
+        {
+            const auto sum = remoteSums_[i][m];
+            const auto [kind, s] = sumSamples_[sum];
+            Scalar* derivatives = remoteDerivatives_[i].data() + remoteDerivativeOffsets_[i][m];
+
+            const auto differentiate = [&](auto domainJ)
+            {
+                using Values = PrimaryVariables<domainJ>;
+                constexpr auto numComponents = Values::size();
+                static const auto eps = this->numericEpsilon(domainJ, this->problem(domainJ).paramGroup());
+                const auto value = sampleValue_<Values>(samples_[kind][s], this->curSol(domainJ));
+                for (std::size_t c = 0; c < numComponents; ++c)
+                {
+                    partialDerivs = 0.0;
+                    const auto evalResiduals = [&](Scalar deflected)
+                    {
+                        sumDeflection_ = SumDeflection{this, sum, c, deflected - value[c]};
+                        return localAssemblerI.evalLocalSourceResidual(element);
+                    };
+                    NumericDifferentiation::partialDerivative(evalResiduals, value[c], partialDerivs, origResidual,
+                                                              eps(value[c], c), numDiffMethod);
+                    sumDeflection_ = SumDeflection{};
+
+                    for (std::size_t k = 0; k < partialDerivs.size(); ++k)
+                        for (std::size_t eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            derivatives[(k*numEq + eqIdx)*numComponents + c] = partialDerivs[k][eqIdx];
+                }
+            };
+
+            if (kind == bulkSample)
+                differentiate(bulkIdx);
+            else
+                differentiate(lowDimIdx);
+        }
+
+        zeroConstrainedDerivatives_(domainI, localAssemblerI);
+    }
+
+    /*!
+     * \brief Receive the columns of the Jacobian entries whose column is a degree of freedom of another process
+     * \param globalIndex the function globalIndex(domainIdx, dofIdx) returning a global index (std::int64_t) of
+     *        the first primary variable of a degree of freedom of this process; the primary variable pvIdx has
+     *        the index globalIndex(domainIdx, dofIdx) + pvIdx
+     * \note Collective. Call it again if the global indices change.
+     */
+    template<class GlobalIndex>
+    void updateRemoteColumns(GlobalIndex&& globalIndex)
+    {
+        if (!distributed_)
+            return;
+
+        remoteColumns_ = distributedSums_.template exchangeLists<RemoteColumn>([&](std::size_t sum)
+        {
+            const auto [kind, s] = sumSamples_[sum];
+            const auto& sample = samples_[kind][s];
+            std::vector<RemoteColumn> columns(sample.dofs.size());
+            for (std::size_t j = 0; j < sample.dofs.size(); ++j)
+            {
+                const std::int64_t index = kind == bulkSample ? globalIndex(bulkIdx, sample.dofs[j])
+                                                              : globalIndex(lowDimIdx, sample.dofs[j]);
+                columns[j] = RemoteColumn{index, sample.weights[j]};
+            }
+            return columns;
+        });
+    }
+
+    /*!
+     * \brief Call f(domainI, dofIdx, eqIdx, column, value) for every Jacobian entry whose column is a
+     *        degree of freedom of another process
+     *
+     * The row is the equation eqIdx of the degree of freedom dofIdx of domain domainI on this process, the
+     * column a global index as given to updateRemoteColumns. Entries are given in the same order as long as
+     * the point sources do not change; a column can appear several times in a row, the values are to be added.
+     * The values are those of the last assembly of the Jacobian.
+     */
+    template<class Function>
+    void forEachRemoteJacobianEntry(Function&& f) const
+    {
+        if (!distributed_)
+            return;
+
+        if (remoteColumns_.size() != distributedSums_.size())
+            DUNE_THROW(Dune::InvalidStateException, "Call updateRemoteColumns before forEachRemoteJacobianEntry");
+
+        forEachRemoteDerivative_([&](auto domainI, std::size_t dofIdx, std::size_t eqIdx, std::size_t sum, std::size_t c, Scalar derivative)
+        {
+            for (const auto& column : remoteColumns_[sum])
+                f(domainI, dofIdx, eqIdx, column.index + static_cast<std::int64_t>(c), derivative*column.weight);
+        });
+    }
+
+    /*!
+     * \brief Add the product of the Jacobian entries whose column is a degree of freedom of another process
+     *        with x to y
+     * \note Collective. Every process uses its values of x of the degrees of freedom it sends terms of.
+     */
+    void addRemoteJacobianProduct(const SolutionVector& x, SolutionVector& y)
+    {
+        if (!distributed_)
+            return;
+
+        distributedSums_.exchange([&](std::size_t sum, std::span<Scalar> values)
+        {
+            const auto [kind, s] = sumSamples_[sum];
+            if (kind == bulkSample)
+                addLocalTerms_(samples_[kind][s], x[bulkIdx], values, PrimaryVariables<bulkIdx>::size());
+            else
+                addLocalTerms_(samples_[kind][s], x[lowDimIdx], values, PrimaryVariables<lowDimIdx>::size());
+        }, remoteProductValues_);
+
+        forEachRemoteDerivative_([&](auto domainI, std::size_t dofIdx, std::size_t eqIdx, std::size_t sum, std::size_t c, Scalar derivative)
+        { y[domainI][dofIdx][eqIdx] += derivative*distributedSums_.received(sum, remoteProductValues_)[c]; });
     }
 
     // \}
@@ -842,6 +1002,11 @@ protected:
         sumSamples_.clear();
         idBulkSample_.clear();
         idLowDimSample_.clear();
+        for (auto& v : remoteSumOffsets_) v.clear();
+        for (auto& v : remoteSums_) v.clear();
+        for (auto& v : remoteDerivativeOffsets_) v.clear();
+        for (auto& v : remoteDerivatives_) v.clear();
+        remoteColumns_.clear();
         pointSourceSampleKeys_.clear();
         importedPointSources_.clear();
         numOwnedSamples_ = 0;
@@ -1280,7 +1445,19 @@ protected:
             }
         });
 
+        setupRemoteDerivatives_();
         exchangeDistributedValues_();
+    }
+
+    /*!
+     * \brief Call f(eIdx, id) for every point source id whose values enter the source term of the bulk element eIdx
+     * \note Coupling managers whose bulk sources are not point sources of the bulk domain implement their own.
+     */
+    template<class Function>
+    void forEachBulkElementSourceId(Function&& f) const
+    {
+        for (const auto& source : std::get<bulkIdx>(pointSources_))
+            f(source.elementIndex(), source.id());
     }
 
     //! a bulk point source, sent by the owner of the lower-dimensional element to the process of the bulk element
@@ -1497,6 +1674,196 @@ private:
         std::size_t lowDimElement = invalidIndex;
     };
 
+    //! a column of the Jacobian entries of a sum: the global index of a degree of freedom of another process and its weight
+    struct RemoteColumn
+    {
+        std::int64_t index;
+        Scalar weight;
+    };
+
+    //! a received sum of a coupling manager deflected for numeric differentiation on this thread
+    struct SumDeflection
+    {
+        const void* manager = nullptr;
+        std::size_t sum = invalidIndex;
+        std::size_t component = 0;
+        Scalar delta = 0.0;
+    };
+
+    //! The number of rows of the element residual of an element of domain i
+    template<std::size_t i>
+    std::size_t numElementResidualRows_(Dune::index_constant<i> domainI, std::size_t eIdx) const
+    {
+        if constexpr (isCVFE<i>())
+            return this->elementDofIndices(domainI, eIdx).size();
+        else
+            return 1;
+    }
+
+    //! For every element, the received sums of the samples of its point sources, and storage for the derivatives
+    void setupRemoteDerivatives_()
+    {
+        std::array<std::vector<std::vector<std::size_t>>, 2> elementSums;
+        elementSums[bulkIdx].resize(gridView(bulkIdx).size(0));
+        elementSums[lowDimIdx].resize(gridView(lowDimIdx).size(0));
+        const auto addSums = [&](std::size_t domain, std::size_t eIdx, std::size_t id)
+        {
+            for (const auto* sample : {&samples_[bulkSample][idBulkSample_[id]], &samples_[lowDimSample][idLowDimSample_[id]]})
+                if (sample->sum != invalidIndex && distributedSums_.receives(sample->sum))
+                    elementSums[domain][eIdx].push_back(sample->sum);
+        };
+        asImp_().forEachBulkElementSourceId([&](std::size_t eIdx, std::size_t id){ addSums(bulkIdx, eIdx, id); });
+        for (const auto& source : pointSources(lowDimIdx))
+            addSums(lowDimIdx, source.elementIndex(), source.id());
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(std::integral_constant<std::size_t, MDTraits::numSubDomains>{}), [&](const auto domainIdx)
+        {
+            using GG = std::decay_t<decltype(gridDiscretization(this->problem(domainIdx)))>;
+            if constexpr (Dumux::Detail::hasPeriodicDofMap<GG>())
+                if (!gridDiscretization(this->problem(domainIdx)).periodicDofMap().empty())
+                    DUNE_THROW(Dune::NotImplemented, "Embedded coupling on distributed grids with periodic boundaries");
+
+            constexpr auto numEq = PrimaryVariables<domainIdx>::size();
+            auto& offsets = remoteSumOffsets_[domainIdx];
+            auto& sums = remoteSums_[domainIdx];
+            auto& derivativeOffsets = remoteDerivativeOffsets_[domainIdx];
+            offsets.assign(1, 0);
+            sums.clear();
+            derivativeOffsets.clear();
+            std::size_t numDerivatives = 0;
+            for (std::size_t eIdx = 0; eIdx < elementSums[domainIdx].size(); ++eIdx)
+            {
+                auto& elementSumsOfElement = elementSums[domainIdx][eIdx];
+                std::sort(elementSumsOfElement.begin(), elementSumsOfElement.end());
+                elementSumsOfElement.erase(std::unique(elementSumsOfElement.begin(), elementSumsOfElement.end()), elementSumsOfElement.end());
+                for (const auto sum : elementSumsOfElement)
+                {
+                    sums.push_back(sum);
+                    derivativeOffsets.push_back(numDerivatives);
+                    const auto numComponents = sumSamples_[sum].first == bulkSample ? PrimaryVariables<bulkIdx>::size()
+                                                                                     : PrimaryVariables<lowDimIdx>::size();
+                    numDerivatives += numElementResidualRows_(domainIdx, eIdx)*numEq*numComponents;
+                }
+                offsets.push_back(sums.size());
+            }
+            remoteDerivatives_[domainIdx].assign(numDerivatives, 0.0);
+        });
+        remoteColumns_.clear();
+    }
+
+    /*!
+     * \brief Set the derivatives with respect to received sums of the equations of the bound element to zero that
+     *        the local assembler replaces by Dirichlet conditions or internal Dirichlet constraints
+     */
+    template<std::size_t i, class LocalAssemblerI>
+    void zeroConstrainedDerivatives_(Dune::index_constant<i> domainI, const LocalAssemblerI& localAssemblerI)
+    {
+        constexpr auto numEq = PrimaryVariables<i>::size();
+        const auto& elemDisc = [&]() -> decltype(auto) {
+            if constexpr (requires { localAssemblerI.elemDisc(); })
+                return localAssemblerI.elemDisc();
+            else
+                return localAssemblerI.fvGeometry();
+        }();
+        using ElementDiscretization = std::decay_t<decltype(elemDisc)>;
+        [[maybe_unused]] const auto& problem = localAssemblerI.problem();
+        const auto& element = localAssemblerI.element();
+        const auto eIdx = gridDiscretization(this->problem(domainI)).elementMapper().index(element);
+
+        [[maybe_unused]] const auto zeroEquation = [&](std::size_t localRow, std::size_t eqIdx)
+        {
+            for (std::size_t m = remoteSumOffsets_[i][eIdx]; m < remoteSumOffsets_[i][eIdx+1]; ++m)
+            {
+                const auto numComponents = sumSamples_[remoteSums_[i][m]].first == bulkSample ? PrimaryVariables<bulkIdx>::size()
+                                                                                                : PrimaryVariables<lowDimIdx>::size();
+                Scalar* derivatives = remoteDerivatives_[i].data() + remoteDerivativeOffsets_[i][m];
+                std::fill_n(derivatives + (localRow*numEq + eqIdx)*numComponents, numComponents, 0.0);
+            }
+        };
+
+        // element discretizations without control volumes only have constraints of the problem
+        if constexpr (requires { scvs(elemDisc); })
+        {
+            for (const auto& scv : scvs(elemDisc))
+            {
+                const std::size_t localRow = [&]() -> std::size_t {
+                    if constexpr (isCVFE<i>())
+                        return scv.localDofIndex();
+                    else
+                        return 0;
+                }();
+                if constexpr (isCVFE<i>() && !Dumux::Detail::hasProblemBoundaryTypesForFaceFunction<std::decay_t<decltype(problem)>, ElementDiscretization>()
+                              && requires { localAssemblerI.elemBcTypes(); })
+                {
+                    if (localAssemblerI.elemBcTypes().hasDirichlet())
+                    {
+                        const auto bcTypes = localAssemblerI.elemBcTypes().get(elemDisc, scv);
+                        for (std::size_t eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            if (bcTypes.isDirichlet(eqIdx) && !bcTypes.isCouplingDirichlet(eqIdx))
+                                zeroEquation(localRow, eqIdx);
+                    }
+                }
+
+                using ProblemI = std::decay_t<decltype(problem)>;
+                if constexpr (requires { ProblemI::enableInternalDirichletConstraints(); })
+                {
+                    if constexpr (ProblemI::enableInternalDirichletConstraints())
+                    {
+                        const auto constraints = problem.hasInternalDirichletConstraint(element, scv);
+                        for (std::size_t eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            if (constraints[eqIdx])
+                                zeroEquation(localRow, eqIdx);
+                    }
+                }
+            }
+        }
+    }
+
+    //! Call f(domainI, dofIdx, eqIdx, sum, pvIdx, derivative) for every derivative with respect to a received sum
+    template<class Function>
+    void forEachRemoteDerivative_(Function&& f) const
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(std::integral_constant<std::size_t, MDTraits::numSubDomains>{}), [&](const auto domainIdx)
+        {
+            constexpr auto numEq = PrimaryVariables<domainIdx>::size();
+
+            // the equations the assembler replaces by the constraints of the problem
+            std::set<std::pair<std::size_t, std::size_t>> constrained;
+            if constexpr (Dumux::Detail::hasSubProblemGlobalConstraints<Problem<domainIdx>>())
+                for (const auto& constraintData : this->problem(domainIdx).constraints())
+                    for (std::size_t eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                        if (constraintData.constraintInfo().isConstraintEquation(eqIdx))
+                            constrained.emplace(constraintData.dofIndex(), eqIdx);
+
+            const auto& offsets = remoteSumOffsets_[domainIdx];
+            for (std::size_t eIdx = 0; eIdx + 1 < offsets.size(); ++eIdx)
+            {
+                for (std::size_t m = offsets[eIdx]; m < offsets[eIdx+1]; ++m)
+                {
+                    const auto sum = remoteSums_[domainIdx][m];
+                    const auto numComponents = sumSamples_[sum].first == bulkSample ? PrimaryVariables<bulkIdx>::size()
+                                                                                     : PrimaryVariables<lowDimIdx>::size();
+                    const Scalar* derivatives = remoteDerivatives_[domainIdx].data() + remoteDerivativeOffsets_[domainIdx][m];
+                    for (std::size_t k = 0; k < numElementResidualRows_(domainIdx, eIdx); ++k)
+                    {
+                        const std::size_t dofIdx = [&]{
+                            if constexpr (isCVFE<domainIdx>())
+                                return static_cast<std::size_t>(this->elementDofIndices(domainIdx, eIdx)[k]);
+                            else
+                                return eIdx;
+                        }();
+                        for (std::size_t eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                            if (!constrained.contains({dofIdx, eqIdx}))
+                                for (std::size_t c = 0; c < numComponents; ++c)
+                                    f(domainIdx, dofIdx, eqIdx, sum, c, derivatives[(k*numEq + eqIdx)*numComponents + c]);
+                    }
+                }
+            }
+        });
+    }
+
     //! the line mode on distributed grids: a point source per quadrature point of a piece and bulk element
     void computeDistributedPointSourceData_(std::size_t order)
     {
@@ -1635,6 +2002,8 @@ private:
             const auto received = distributedSums_.received(sample.sum);
             for (std::size_t c = 0; c < Values::size(); ++c)
                 values[c] += received[c];
+            if (sumDeflection_.manager == this && sumDeflection_.sum == sample.sum)
+                values[sumDeflection_.component] += sumDeflection_.delta;
         }
         return values;
     }
@@ -1718,6 +2087,15 @@ private:
     std::vector<std::pair<SampleKind, std::size_t>> sumSamples_;
     std::vector<std::size_t> idBulkSample_;
     std::vector<std::size_t> idLowDimSample_;
+
+    //! per domain and element (CSR) the received sums its source term depends on, and the derivatives with respect to them
+    std::array<std::vector<std::size_t>, 2> remoteSumOffsets_;
+    std::array<std::vector<std::size_t>, 2> remoteSums_;
+    std::array<std::vector<std::size_t>, 2> remoteDerivativeOffsets_;
+    std::array<std::vector<Scalar>, 2> remoteDerivatives_;
+    std::vector<std::vector<RemoteColumn>> remoteColumns_;
+    std::vector<Scalar> remoteProductValues_;
+    static inline thread_local SumDeflection sumDeflection_{};
     std::vector<std::array<DistributedKey, 2>> pointSourceSampleKeys_;
     std::map<DistributedKey, std::size_t> importedPointSources_;
     std::size_t numOwnedSamples_ = 0;

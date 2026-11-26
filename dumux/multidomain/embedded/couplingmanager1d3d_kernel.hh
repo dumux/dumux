@@ -170,6 +170,7 @@ public:
                                          GridVariables& gridVariables)
     {
         extendedSourceStencil_.evalAdditionalDomainDerivatives(*this, domainI, localAssemblerI, A, gridVariables);
+        this->evalRemoteDerivatives(domainI, localAssemblerI);
     }
 
     /* \brief Compute integration point point sources and associated data
@@ -356,6 +357,16 @@ public:
     //! return the source weights for the local dof with index localDofIdx of a bulk element
     const std::vector<Scalar>& bulkSourceWeights(GridIndex<bulkIdx> eIdx, int localDofIdx = 0) const
     { return bulkSourceWeights_[eIdx][localDofIdx]; }
+
+    //! Call f(eIdx, id) for every point source id whose values enter the source term of the bulk element eIdx
+    template<class Function>
+    void forEachBulkElementSourceId(Function&& f) const
+    {
+        for (std::size_t eIdx = 0; eIdx < bulkSourceIds_.size(); ++eIdx)
+            for (const auto& ids : bulkSourceIds_[eIdx])
+                for (const auto id : ids)
+                    f(eIdx, id);
+    }
 
     //! The flux scaling factor for a source with id
     Scalar fluxScalingFactor(std::size_t id) const
