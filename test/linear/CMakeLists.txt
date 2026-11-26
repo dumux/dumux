@@ -6,6 +6,11 @@ dune_symlink_to_source_files(FILES "params.input")
 dumux_add_test(NAME test_linearsolver
                SOURCES test_linearsolver.cc
                LABELS linear unit)
+dumux_add_test(NAME test_linearsolver_sequential
+               SOURCES test_linearsolver_sequential.cc
+               LABELS linear unit
+               CMAKE_GUARD MPI_FOUND
+               MPI_RANKS 1 2)
 dumux_add_test(NAME test_parallel_amg_smoothers
                SOURCES test_parallel_amg_smoothers.cc
                LABELS linear unit)
