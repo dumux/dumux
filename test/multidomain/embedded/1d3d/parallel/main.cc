@@ -87,6 +87,8 @@ CouplingResult computeCoupling(const BulkGridView& bulkGridView, const LowDimGri
     auto couplingManager = std::make_shared<CouplingManager>(bulkGridGeometry, lowDimGridGeometry);
     couplingManager->setLowDimElementData(1, [lowDimGridGeometry](std::size_t eIdx, std::span<double> values)
     { values[0] = 1.0 + lowDimGridGeometry->element(eIdx).geometry().center()[1]; });
+    couplingManager->setPointSourceValues(1, [](const auto& source, std::span<double> values)
+    { values[0] = 1.0 + 0.5*source.quadratureWeight(); });
 
     using BulkProblem = GetPropType<BulkTypeTag, Properties::Problem>;
     using LowDimProblem = GetPropType<LowDimTypeTag, Properties::Problem>;

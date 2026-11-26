@@ -97,6 +97,8 @@ struct CoupledProblem
         couplingManager = std::make_shared<TestCouplingManager>(bulkGridGeometry, lowDimGridGeometry);
         couplingManager->setLowDimElementData(1, [gg = lowDimGridGeometry](std::size_t eIdx, std::span<double> values)
         { values[0] = 1.0 + gg->element(eIdx).geometry().center()[1]; });
+        couplingManager->setPointSourceValues(1, [](const auto& source, std::span<double> values)
+        { values[0] = 1.0 + 0.5*source.quadratureWeight(); });
 
         bulkProblem = std::make_shared<BulkProblem>(bulkGridGeometry, couplingManager);
         bulkProblem->setDirichletBoundary(dirichlet);

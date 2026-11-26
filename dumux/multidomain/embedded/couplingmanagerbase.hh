@@ -194,6 +194,7 @@ public:
 
         integrationOrder_ = getParam<int>("MixedDimension.IntegrationOrder", 1);
         asImp_().computePointSourceData(integrationOrder_);
+        computePointSourceValues_();
     }
 
     /*!
@@ -231,6 +232,30 @@ public:
         if (userElementValues_ == invalidIndex)
             DUNE_THROW(Dune::InvalidStateException, "No data of the lower-dimensional elements was set");
         return lowDimElementValue(id, userElementValues_ + i);
+    }
+
+    /*!
+     * \brief Set values of the point sources that the coupling terms need
+     * \param numValues the number of values per point source
+     * \param f the function f(lowDimPointSource, values) writing the values of a point source into the
+     *        std::span<Scalar> values of size numValues
+     * \note Call this before init. f is evaluated once the point sources are computed, for the lower-dimensional
+     *       point sources of this process. The values are read with pointSourceValue(id, i), on distributed grids
+     *       also on the processes that hold only bulk point sources with this id.
+     */
+    template<class Function>
+    void setPointSourceValues(std::size_t numValues, Function&& f)
+    {
+        numPointSourceValues_ = numValues;
+        pointSourceValueFunction_ = std::forward<Function>(f);
+    }
+
+    //! The value i set with setPointSourceValues of the point source id
+    Scalar pointSourceValue(std::size_t id, std::size_t i) const
+    {
+        if (i >= numPointSourceValues_)
+            DUNE_THROW(Dune::InvalidStateException, "No point source value " << i << " was set");
+        return pointSourceValues_[id*numPointSourceValues_ + i];
     }
 
     // \}
@@ -1432,7 +1457,6 @@ protected:
 
         for (auto& indices : sampleIndices_)
             indices.clear();
-        importedPointSources_.clear();
         pointSourceSampleKeys_.clear();
 
         using namespace Dune::Hybrid;
@@ -2008,6 +2032,58 @@ private:
         return values;
     }
 
+    //! Evaluate the values set with setPointSourceValues and, on distributed grids, send them to the processes that
+    //! hold point sources with the same id
+    void computePointSourceValues_()
+    {
+        const auto n = numPointSourceValues_;
+        pointSourceValues_.assign(idCounter_*n, std::numeric_limits<Scalar>::quiet_NaN());
+        if (n > 0)
+            for (const auto& source : pointSources(lowDimIdx))
+                pointSourceValueFunction_(source, std::span<Scalar>(pointSourceValues_.data() + source.id()*n, n));
+
+        if (n == 0 || !distributed_)
+        {
+            importedPointSources_.clear();
+            return;
+        }
+
+        using namespace EmbeddedCoupling::Detail;
+        const auto& comm = bulkComm();
+        std::vector<std::vector<char>> requests(comm.size());
+        for (const auto& [key, id] : importedPointSources_)
+        {
+            MessageWriter writer(requests[key.first]);
+            writer.put(key.second);
+        }
+
+        std::vector<std::vector<char>> answers(comm.size());
+        for (const auto& [sender, message] : exchangeMessages(comm, requests))
+        {
+            MessageReader reader(message);
+            MessageWriter writer(answers[sender]);
+            while (!reader.done())
+            {
+                const auto id = reader.get<std::size_t>();
+                writer.put(id);
+                for (std::size_t i = 0; i < n; ++i)
+                    writer.put(pointSourceValues_[id*n + i]);
+            }
+        }
+
+        for (const auto& [sender, message] : exchangeMessages(comm, answers))
+        {
+            MessageReader reader(message);
+            while (!reader.done())
+            {
+                const auto id = importedPointSources_.at(DistributedKey{sender, reader.get<std::size_t>()});
+                for (std::size_t i = 0; i < n; ++i)
+                    pointSourceValues_[id*n + i] = reader.get<Scalar>();
+            }
+        }
+        importedPointSources_.clear();
+    }
+
     //! Evaluate the element values of the lower-dimensional samples of this process and send the terms of
     //! this process of the samples to the processes that need them
     void exchangeDistributedValues_()
@@ -2106,6 +2182,9 @@ private:
     //! the values of the lower-dimensional elements of the samples of this process at the last solution update
     std::vector<Scalar> lowDimElementValues_;
     std::size_t userElementValues_ = invalidIndex;
+    std::size_t numPointSourceValues_ = 0;
+    std::function<void(const PointSource<lowDimIdx>&, std::span<Scalar>)> pointSourceValueFunction_;
+    std::vector<Scalar> pointSourceValues_;
 };
 
 } // end namespace Dumux

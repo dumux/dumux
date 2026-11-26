@@ -36,7 +36,8 @@ auto embeddedParallelExchange(const CouplingManager& couplingManager, std::size_
 {
     const auto p3D = couplingManager.bulkPriVars(id)[0];
     const auto p1D = couplingManager.lowDimPriVars(id)[0];
-    auto exchange = 2.0*M_PI*couplingManager.radius(id)*couplingManager.lowDimElementData(id, 0)*(p1D - p3D);
+    auto exchange = 2.0*M_PI*couplingManager.radius(id)*couplingManager.lowDimElementData(id, 0)
+                    *couplingManager.pointSourceValue(id, 0)*(p1D - p3D);
 
     if constexpr (CouplingManager::couplingMode == Embedded1d3dCouplingMode::kernel)
         exchange *= couplingManager.fluxScalingFactor(id);
