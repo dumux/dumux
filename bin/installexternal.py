@@ -220,7 +220,7 @@ parser.add_argument(
 parser.add_argument("--opm-branch", default="release/2022.10", help="Opm branch to be checked out.")
 parser.add_argument("--mmesh-branch", default="release/1.4", help="Mmesh branch to be checked out.")
 parser.add_argument(
-    "--dumux-git-base-url",
+    "--dumux-git-group-url",
     default="https://git.iws.uni-stuttgart.de/dumux-repositories",
     help="Base URL for DuMux repositories.",
 )
@@ -440,7 +440,7 @@ def installExternal(parameters):
 #################################################################
 #################################################################
 DUNE_GIT_BASEURL = "https://gitlab.dune-project.org/"
-DUMUX_GIT_BASEURL = cmdArgs["dumux_git_base_url"].rstrip("/")
+DUMUX_GIT_BASEURL = cmdArgs["dumux_git_group_url"].rstrip("/")
 EXTERNAL_URLS = {
     "dumux-lecture": DUMUX_GIT_BASEURL + "/dumux-lecture.git",
     "dumux-course": DUMUX_GIT_BASEURL + "/dumux-course.git",
