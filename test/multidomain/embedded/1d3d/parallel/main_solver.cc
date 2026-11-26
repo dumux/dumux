@@ -328,7 +328,8 @@ int main(int argc, char** argv)
 
     failures = comm.sum(failures);
     if (comm.rank() == 0)
-        std::cout << (failures == 0 ? "PASSED" : "FAILED") << " on " << comm.size() << " processes (" << krylov << ")" << std::endl;
+        std::cout << (failures == 0 ? "PASSED" : "FAILED") << " on " << comm.size() << " processes (" << krylov << ", "
+                  << getParam<std::string>("LinearSolver.BlockPreconditioner", "Jacobi") << ")" << std::endl;
 
     return failures == 0 ? 0 : 1;
 }

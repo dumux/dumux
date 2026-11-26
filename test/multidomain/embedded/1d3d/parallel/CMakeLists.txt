@@ -424,3 +424,35 @@ dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_boxtpfa_gmres
                MPI_RANKS 1 2 4
                TIMEOUT 1200
                CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Partition Bisection -Test.Krylov GMRes)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_kernel_tpfatpfa_gaussseidel
+               TARGET test_md_embedded_1d3d_parallel_solver_kernel_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -LinearSolver.BlockPreconditioner GaussSeidel)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_kernel_boxbox_gaussseidel
+               TARGET test_md_embedded_1d3d_parallel_solver_kernel_boxbox
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection -LinearSolver.BlockPreconditioner GaussSeidel)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_boxtpfa_gaussseidel
+               TARGET test_md_embedded_1d3d_parallel_solver_surface_boxtpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Partition Bisection -LinearSolver.BlockPreconditioner GaussSeidel)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_tpfatpfa_gmres_gaussseidel
+               TARGET test_md_embedded_1d3d_parallel_solver_surface_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Test.Krylov GMRes -LinearSolver.BlockPreconditioner GaussSeidel)

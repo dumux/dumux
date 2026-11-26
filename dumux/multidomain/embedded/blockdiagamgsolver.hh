@@ -40,6 +40,8 @@
 #include <dune/istl/schwarz.hh>
 #endif
 
+#include <dumux/common/exceptions.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/linear/istlsolvers.hh>
 #include <dumux/linear/linearsolverparameters.hh>
 #include <dumux/linear/linearsolvertraits.hh>
@@ -91,13 +93,17 @@ public:
     template<class Vector>
     void makeConsistent(Vector& v) const
     {
-#if HAVE_MPI
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::index_constant<n>{}), [&](auto i)
-        {
-            if (categories_[i] != Dune::SolverCategory::sequential)
-                comms_[i]->copyOwnerToAll(v[i], v[i]);
-        });
+        forEach(integralRange(Dune::index_constant<n>{}), [&](auto i){ makeConsistent(v, i); });
+    }
+
+    //! Copy the values of the owners of subdomain i to all other processes
+    template<class Vector, std::size_t i>
+    void makeConsistent(Vector& v, Dune::index_constant<i> id) const
+    {
+#if HAVE_MPI
+        if (categories_[i] != Dune::SolverCategory::sequential)
+            comms_[i]->copyOwnerToAll(v[id], v[id]);
 #endif
     }
 
@@ -105,20 +111,24 @@ public:
     template<class Vector>
     void completeProduct(Vector& y) const
     {
-#if HAVE_MPI
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::index_constant<n>{}), [&](auto i)
+        forEach(integralRange(Dune::index_constant<n>{}), [&](auto i){ completeProduct(y, i); });
+    }
+
+    //! Bring the partial products of the rows of subdomain i into the representation of its operator
+    template<class Vector, std::size_t i>
+    void completeProduct(Vector& y, Dune::index_constant<i> id) const
+    {
+#if HAVE_MPI
+        if (categories_[i] == Dune::SolverCategory::overlapping)
+            comms_[i]->project(y[id]);
+        else if (categories_[i] == Dune::SolverCategory::nonoverlapping)
         {
-            if (categories_[i] == Dune::SolverCategory::overlapping)
-                comms_[i]->project(y[i]);
-            else if (categories_[i] == Dune::SolverCategory::nonoverlapping)
-            {
-                for (const auto& pair : comms_[i]->indexSet())
-                    if (pair.local().attribute() == Dune::OwnerOverlapCopyAttributeSet::overlap)
-                        y[i][pair.local().local()] = 0.0;
-                comms_[i]->addOwnerCopyToOwnerCopy(y[i], y[i]);
-            }
-        });
+            for (const auto& pair : comms_[i]->indexSet())
+                if (pair.local().attribute() == Dune::OwnerOverlapCopyAttributeSet::overlap)
+                    y[id][pair.local().local()] = 0.0;
+            comms_[i]->addOwnerCopyToOwnerCopy(y[id], y[id]);
+        }
 #endif
     }
 
@@ -161,6 +171,33 @@ public:
         Vector z(y);
         apply(x, z);
         y.axpy(alpha, z);
+    }
+
+    /*!
+     * \brief Subtract the product of the off-diagonal block (i, j) with the subdomain j of x from the subdomain i of y,
+     *        in the representation of the operator of subdomain i
+     * \note Collective. The product with the Jacobian entries whose column is a degree of freedom of another process
+     *       adds to subdomain i only the terms of subdomain j, as the other subdomains of its argument are zero.
+     */
+    template<std::size_t i, std::size_t j>
+    void subtractCouplingProduct(Dune::index_constant<i> id, Dune::index_constant<j> jd, const Vector& x, Vector& y) const
+    {
+        static_assert(i != j, "The coupling product is the product with an off-diagonal block");
+        Vector xj(x);
+        Vector z(y);
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::index_constant<n>{}), [&](auto k)
+        {
+            if (k != j)
+                xj[k] = 0.0;
+            z[k] = 0.0;
+        });
+
+        communication_.makeConsistent(xj, jd);
+        A_[id][jd].umv(xj[jd], z[id]);
+        couplingManager_.addRemoteJacobianProduct(xj, z);
+        communication_.completeProduct(z, id);
+        y[id] -= z[id];
     }
 
     Dune::SolverCategory::Category category() const override
@@ -208,6 +245,51 @@ private:
     Dune::SolverCategory::Category category_;
 };
 
+/*!
+ * \brief A preconditioner per subdomain of two subdomains applied in their order (block Gauss-Seidel): the defect of
+ *        the second subdomain is corrected by the coupling with the correction of the first one
+ */
+template<class Vector, class Preconditioners, class Operator>
+class BlockGaussSeidelPreconditioner : public Dune::Preconditioner<Vector, Vector>
+{
+public:
+    BlockGaussSeidelPreconditioner(const Preconditioners& preconditioners, std::shared_ptr<const Operator> op,
+                                   Dune::SolverCategory::Category category)
+    : preconditioners_(preconditioners), op_(std::move(op)), category_(category)
+    {}
+
+    void pre(Vector& x, Vector& b) override
+    {
+        using namespace Dune::Indices;
+        std::get<0>(preconditioners_)->pre(x[_0], b[_0]);
+        std::get<1>(preconditioners_)->pre(x[_1], b[_1]);
+    }
+
+    void apply(Vector& v, const Vector& d) override
+    {
+        using namespace Dune::Indices;
+        std::get<0>(preconditioners_)->apply(v[_0], d[_0]);
+        Vector defect(d);
+        op_->subtractCouplingProduct(_1, _0, v, defect);
+        std::get<1>(preconditioners_)->apply(v[_1], defect[_1]);
+    }
+
+    void post(Vector& x) override
+    {
+        using namespace Dune::Indices;
+        std::get<0>(preconditioners_)->post(x[_0]);
+        std::get<1>(preconditioners_)->post(x[_1]);
+    }
+
+    Dune::SolverCategory::Category category() const override
+    { return category_; }
+
+private:
+    Preconditioners preconditioners_;
+    std::shared_ptr<const Operator> op_;
+    Dune::SolverCategory::Category category_;
+};
+
 //! An AMG preconditioner for a linear operator of a single subdomain, as in the AMG solvers of a single domain
 template<class LinearOperator>
 auto makeAmg(std::shared_ptr<LinearOperator> op, const Dune::ParameterTree& params)
@@ -248,10 +330,13 @@ namespace Dumux {
  *
  * The operator is the assembled Jacobian plus the Jacobian entries of the coupling whose column is a degree of
  * freedom of another process (`addRemoteJacobianProduct` of the coupling manager). The preconditioner applies an AMG
- * to each diagonal block with the communication of its domain, set up as in the AMG solvers of a single domain, so
- * it neglects the off-diagonal blocks and is meant for weak coupling. On one process the same solver runs
- * sequentially. The domains may have different decompositions, e.g. a non-overlapping one for a box discretization
- * and an overlapping one for a cell-centered discretization with overlap.
+ * to each diagonal block with the communication of its domain, set up as in the AMG solvers of a single domain. With
+ * `LinearSolver.BlockPreconditioner = Jacobi` (default) it neglects the off-diagonal blocks, which suits weak
+ * coupling. With `GaussSeidel` it neglects only the block above the diagonal: the defect of the lower-dimensional
+ * domain is corrected by the coupling with the correction of the bulk domain, for one product with the coupling block
+ * per application. On one process the same solver runs sequentially. The domains may have different decompositions,
+ * e.g. a non-overlapping one for a box discretization and an overlapping one for a cell-centered discretization with
+ * overlap.
  *
  * Parameters (group `LinearSolver`) as for the other dune-istl solvers; the Krylov solver reads its parameters from
  * the tree of the first domain, the AMG of each domain from the tree of its domain.
@@ -347,6 +432,12 @@ public:
         communication_ = std::make_unique<Communication>(comms, categories);
         params_ = std::get<0>(domains_).params;
 
+        const auto blockPreconditioner = getParamFromGroup<std::string>(paramGroup, "LinearSolver.BlockPreconditioner", "Jacobi");
+        if (blockPreconditioner != "Jacobi" && blockPreconditioner != "GaussSeidel")
+            DUNE_THROW(ParameterException, "Unknown LinearSolver.BlockPreconditioner " << blockPreconditioner
+                                           << ", use Jacobi or GaussSeidel");
+        gaussSeidel_ = blockPreconditioner == "GaussSeidel";
+
 #if HAVE_MPI
         if (category_ != Dune::SolverCategory::sequential)
             scalarProduct_ = std::make_shared<ParallelMultiTypeScalarProduct<Vector, Comm>>(comms);
@@ -372,10 +463,16 @@ public:
         auto op = std::make_shared<Operator>(A, *couplingManager_, *communication_, category_);
 
         using Preconditioners = std::tuple<std::shared_ptr<BlockPreconditioner<0>>, std::shared_ptr<BlockPreconditioner<1>>>;
-        using Preconditioner = Detail::EmbeddedBlockDiagAMG::BlockDiagonalPreconditioner<Vector, Preconditioners, numDomains>;
-        auto preconditioner = std::make_shared<Preconditioner>(
-            Preconditioners{std::get<0>(domains_).preconditioner, std::get<1>(domains_).preconditioner}, category_
-        );
+        const Preconditioners preconditioners{std::get<0>(domains_).preconditioner, std::get<1>(domains_).preconditioner};
+        std::shared_ptr<Dune::Preconditioner<Vector, Vector>> preconditioner;
+        if (gaussSeidel_)
+            preconditioner = std::make_shared<Detail::EmbeddedBlockDiagAMG::BlockGaussSeidelPreconditioner<Vector, Preconditioners, Operator>>(
+                preconditioners, op, category_
+            );
+        else
+            preconditioner = std::make_shared<Detail::EmbeddedBlockDiagAMG::BlockDiagonalPreconditioner<Vector, Preconditioners, numDomains>>(
+                preconditioners, category_
+            );
 
         InverseOperator<Vector> solver(op, scalarProduct_, preconditioner, params_);
         Dune::InverseOperatorResult result;
@@ -479,6 +576,7 @@ private:
     Dune::SolverCategory::Category category_;
     std::unique_ptr<Communication> communication_;
     Dune::ParameterTree params_;
+    bool gaussSeidel_;
     std::shared_ptr<Dune::ScalarProduct<Vector>> scalarProduct_;
 };
 
