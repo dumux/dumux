@@ -9,16 +9,19 @@
  * \ingroup NavierStokesTests
  * \brief Errors of the velocity gradient and divergence for the face-centered staggered scheme on a Cartesian grid.
  */
-#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANGELI_VELOCITY_ERRORS_HH
-#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANGELI_VELOCITY_ERRORS_HH
+#ifndef DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANGELI_VELOCITYERRORS_HH
+#define DUMUX_TEST_FREEFLOW_NAVIERSTOKES_ANGELI_VELOCITYERRORS_HH
 
 #include <cmath>
 #include <fstream>
 #include <memory>
 #include <string>
 
-#include <dumux/io/format.hh>
+#include <dune/grid/common/rangegenerators.hh>
+
 #include <dumux/common/typetraits/problem.hh>
+#include <dumux/discretization/localview.hh>
+#include <dumux/io/format.hh>
 
 namespace Dumux::NavierStokesTest {
 

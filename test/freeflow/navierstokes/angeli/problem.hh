@@ -13,6 +13,10 @@
 #ifndef DUMUX_ANGELI_TEST_PROBLEM_HH
 #define DUMUX_ANGELI_TEST_PROBLEM_HH
 
+#include <bitset>
+#include <cmath>
+
+#include <dune/common/fmatrix.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/common/parameters.hh>
