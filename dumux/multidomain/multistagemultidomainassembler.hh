@@ -194,9 +194,47 @@ public:
         });
     }
 
-    //! Assembling the residual without the Jacobian is not supported
-    void assembleResidual(const SolutionVector&)
-    { DUNE_THROW(Dune::NotImplemented, "assembleResidual without Jacobian for multi-stage multi-domain assembly"); }
+    /*!
+     * \brief Assembles the residual of the current stage for the given solution
+     * \note Only the operators of the current stage are evaluated, the ones of the
+     *       previous stages are stored. This allows a Newton solver to reuse the Jacobian matrix.
+     */
+    void assembleResidual(const SolutionVector& curSol)
+    {
+        resetResidual_();
+
+        if (stageParams_->size() != spatialOperatorEvaluations_.size())
+            DUNE_THROW(Dune::InvalidStateException, "Wrong number of stage residuals. Call prepareStage first.");
+
+        assembleOperatorEvaluations_(curSol);
+
+        const auto curStage = stageParams_->size() - 1;
+        using namespace Dune::Hybrid;
+        forEach(std::make_index_sequence<JacobianMatrix::N()>(), [&](const auto domainId)
+        {
+            auto& residual = (*residual_)[domainId];
+            if (!stageParams_->skipTemporal(curStage))
+                residual.axpy(stageParams_->temporalWeight(curStage), temporalOperatorEvaluations_.back()[domainId]);
+            if (!stageParams_->skipSpatial(curStage))
+                residual.axpy(stageParams_->spatialWeight(curStage), spatialOperatorEvaluations_.back()[domainId]);
+
+            auto constantResidualComponent = residual;
+            constantResidualComponent = 0.0;
+            for (std::size_t k = 0; k < curStage; ++k)
+            {
+                if (!stageParams_->skipTemporal(k))
+                    constantResidualComponent.axpy(stageParams_->temporalWeight(k), temporalOperatorEvaluations_[k][domainId]);
+                if (!stageParams_->skipSpatial(k))
+                    constantResidualComponent.axpy(stageParams_->spatialWeight(k), spatialOperatorEvaluations_[k][domainId]);
+            }
+
+            for (std::size_t i = 0; i < constantResidualComponent.size(); ++i)
+                for (std::size_t ii = 0; ii < constantResidualComponent[i].size(); ++ii)
+                    residual[i][ii] += constrainedDofs_[domainId][i][ii] > 0.5 ? 0.0 : constantResidualComponent[i][ii];
+
+            enforceProblemConstraintsInResidual_(domainId, residual, curSol[domainId]);
+        });
+    }
 
     //! Set up the Jacobian and residual storage
     void setLinearSystem()
@@ -528,6 +566,24 @@ private:
                 for (int eqIdx = 0; eqIdx < info.size(); ++eqIdx)
                     if (info.isConstraintEquation(eqIdx))
                         applyDirichletConstraint(dofIdx, values, eqIdx, info.eqToPriVarIndex(eqIdx));
+            }
+        }
+    }
+
+    //! Enforce the Dirichlet constraints of problem.constraints() in the residual of domain i
+    template<std::size_t i, class Res, class Sol>
+    void enforceProblemConstraintsInResidual_(Dune::index_constant<i> domainI, Res& res, const Sol& curSol) const
+    {
+        if constexpr (Dumux::Detail::hasSubProblemGlobalConstraints<Problem<domainI>>())
+        {
+            for (const auto& constraintData : this->problem(domainI).constraints())
+            {
+                const auto& info = constraintData.constraintInfo();
+                const auto& values = constraintData.values();
+                const auto dofIdx = constraintData.dofIndex();
+                for (int eqIdx = 0; eqIdx < info.size(); ++eqIdx)
+                    if (info.isConstraintEquation(eqIdx))
+                        res[dofIdx][eqIdx] = curSol[dofIdx][info.eqToPriVarIndex(eqIdx)] - values[info.eqToPriVarIndex(eqIdx)];
             }
         }
     }

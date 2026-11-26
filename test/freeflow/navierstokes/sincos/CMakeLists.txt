@@ -226,6 +226,31 @@ dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq1bubble
                        -LinearPDESolver.Verbosity 0
                        -MultiStageTest.RateTolerance 0.2)
 
+dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq1bubble_jacobianreuse
+              TARGET test_ff_navierstokes_sincos_multistage_pq1bubble
+              LABELS freeflow navierstokes
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_sincos_multistage_pq1bubble
+              CMD_ARGS params.input
+                       -Grid.UpperRight "1 1"
+                       -Grid.Cells "8 8"
+                       -Problem.Name test_ff_navierstokes_sincos_multistage_pq1bubble_jacobianreuse
+                       -Problem.IsStationary false
+                       -Problem.EnableInertiaTerms false
+                       -Component.LiquidKinematicViscosity 0.001
+                       -TimeLoop.TEnd 1.0
+                       -Newton.MaxRelativeShift 1e-12
+                       -Newton.EnableAbsoluteResidualCriterion false
+                       -Newton.SatisfyResidualAndShiftCriterion false
+                       -Newton.Verbosity 0
+                       -Newton.EnableJacobianReuse true
+                       -MultiStageTest.NumStepsCoarse 4
+                       -MultiStageTest.NumTimeStepRefinements 4
+                       -MultiStageTest.EquivalenceTolerance 1e-8
+                       -MultiStageTest.SingleSolveTolerance 1e-5
+                       -LinearPDESolver.Verbosity 0
+                       -MultiStageTest.RateTolerance 0.2)
+
 dumux_add_test(NAME test_ff_navierstokes_sincos_multistage_pq2
               SOURCES main_multistage.cc
               LABELS freeflow navierstokes
