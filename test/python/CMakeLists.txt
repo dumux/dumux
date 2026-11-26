@@ -34,6 +34,12 @@ dune_python_add_test(NAME test_python_properties
                      LABELS python unit)
 set_tests_properties(test_python_properties PROPERTIES TIMEOUT 1200)
 
+dune_python_add_test(NAME test_python_generalgridvariables
+                     SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_generalgridvariables.py
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     LABELS python unit)
+set_tests_properties(test_python_generalgridvariables PROPERTIES TIMEOUT 1200)
+
 dune_python_add_test(NAME test_python_fvproblem
                      SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_fvproblem.py
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -69,6 +75,16 @@ dune_python_add_test(NAME test_python_1p_incompressible_box_anadiff
                                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_analytic-00000.vtu
                                 --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py -DiscMethod box -DiffMethod analytic")
 set_tests_properties(test_python_1p_incompressible_box_anadiff PROPERTIES TIMEOUT 1200)
+
+dune_python_add_test(NAME test_python_1p_incompressible_box_numdiff_assembler
+                     LABELS python
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     SCRIPT ${DUMUX_RUNTEST}
+                                --script fuzzy
+                                --files ${CMAKE_SOURCE_DIR}/test/references/test_1p_box-reference.vtu
+                                        ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box_numeric_assembler-00000.vtu
+                                --command "${CMAKE_CURRENT_SOURCE_DIR}/test_1p.py -DiscMethod box -DiffMethod numeric -Assembler Assembler")
+set_tests_properties(test_python_1p_incompressible_box_numdiff_assembler PROPERTIES TIMEOUT 1200)
 
 dune_python_add_test(NAME test_python_1p_incompressible_cctpfa_numdiff
                      LABELS python

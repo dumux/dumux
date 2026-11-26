@@ -11,7 +11,7 @@ from dune.istl import blockVector, CGSolver, SeqSSOR
 from dumux.common import initParameters, printParameters, getParam
 from dumux.common import BoundaryTypes, Model, Property
 from dumux.discretization import GridGeometry, GridVariables
-from dumux.assembly import FVAssembler
+from dumux.assembly import Assembler, FVAssembler
 from dumux.porousmediumflow import (
     PorousMediumFlowProblem,
     PorousMediumFlowVelocityOutput,
@@ -37,6 +37,12 @@ if discMethod not in ["box", "cctpfa"]:
 diffMethod = getParam("DiffMethod", default="numeric")
 if diffMethod not in ["analytic", "numeric"]:
     raise NotImplementedError(diffMethod + " must be analytic or numeric")
+
+# Assembler picks the assembler the model's grid variables need, which for 1p is the FVAssembler
+assemblerName = getParam("Assembler", default="FVAssembler")
+assemblerCreators = {"FVAssembler": FVAssembler, "Assembler": Assembler}
+if assemblerName not in assemblerCreators:
+    raise NotImplementedError(assemblerName + " must be FVAssembler or Assembler")
 
 
 # Set up the grid and the grid geometry
@@ -132,7 +138,9 @@ model["Problem"] = Property.fromInstance(problem)
 sol = blockVector(gridGeometry.numDofs)
 gridVars = GridVariables(problem=problem, model=model)
 gridVars.init(sol)
-assembler = FVAssembler(problem=problem, gridVariables=gridVars, model=model, diffMethod=diffMethod)
+assembler = assemblerCreators[assemblerName](
+    problem=problem, gridVariables=gridVars, model=model, diffMethod=diffMethod
+)
 print("num dofs: ", assembler.numDofs)
 
 # Assemble the Jacobian and the residual
@@ -151,6 +159,8 @@ if not converged:
 
 # Write to vtk
 testName = "test_1p_" + discMethod + "_" + diffMethod
+if assemblerName != "FVAssembler":
+    testName += "_" + assemblerName.lower()
 output = VtkOutputModule(gridVariables=gridVars, solutionVector=sol, name=testName)
 velocityoutput = PorousMediumFlowVelocityOutput(gridVariables=gridVars)
 output.addVelocityOutput(velocityoutput)
