@@ -10,7 +10,7 @@ dumux_add_test(NAME test_2pnc_maxwellstefan_tpfa
               COMMAND ${DUMUX_RUNTEST}
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_diffusion_tpfa-reference.vtu
-                                 ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_maxwellstefan_tpfa-00027.vtu
+                                 ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_maxwellstefan_tpfa-00026.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_maxwellstefan_tpfa params.input -Problem.Name test_2pnc_maxwellstefan_tpfa")
 
 dumux_add_test(NAME test_2pnc_fickslaw_tpfa
@@ -20,5 +20,5 @@ dumux_add_test(NAME test_2pnc_fickslaw_tpfa
               COMMAND  ${DUMUX_RUNTEST}
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_2pnc_diffusion_tpfa-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fickslaw_tpfa-00027.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fickslaw_tpfa-00026.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_fickslaw_tpfa params.input -Problem.Name test_2pnc_fickslaw_tpfa")

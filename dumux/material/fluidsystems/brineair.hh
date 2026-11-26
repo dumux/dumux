@@ -391,7 +391,12 @@ public:
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx)
     {
         if (phaseIdx == liquidPhaseIdx)
+        {
+            if (Policy::useBrineDensityAsLiquidMixtureDensity())
+                return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
+
             return Brine::molarDensity(BrineAdapter<FluidState>(fluidState), Brine::liquidPhaseIdx);
+        }
         else if (phaseIdx == phase1Idx)
         {
             // for the gas phase assume an ideal gas

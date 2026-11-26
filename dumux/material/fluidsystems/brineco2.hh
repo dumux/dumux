@@ -365,12 +365,7 @@ public:
         if (phaseIdx == liquidPhaseIdx)
             return density(fluidState, phaseIdx)/fluidState.averageMolarMass(phaseIdx);
         else if (phaseIdx == gasPhaseIdx)
-        {
-            if (Policy::useCO2GasDensityAsGasMixtureDensity())
-                return CO2::gasMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-            else
-                return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
-        }
+            return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 

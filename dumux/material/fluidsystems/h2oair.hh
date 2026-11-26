@@ -427,8 +427,10 @@ public:
 
         if (phaseIdx == phase0Idx)
         {
-            // assume pure water or that each gas molecule displaces exactly one
-            // molecule in the liquid.
+            if (Policy::useH2ODensityAsLiquidMixtureDensity())
+                return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
+
+            // assume that each gas molecule displaces exactly one molecule in the liquid
             return H2O::liquidMolarDensity(T, p);
         }
         else if (phaseIdx == phase1Idx)

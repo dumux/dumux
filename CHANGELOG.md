@@ -159,7 +159,9 @@ differs if a component is a real gas (`Components::H2O`, tabulated `H2O`, `CO2`)
 primary variables (`useMoles`) transported a different mass in the component balances than in the energy balance. The
 difference is of order 1e-5 at room temperature and grows with temperature and water content, e.g. 7e-3 at 250 °C and 35
 bar for a gas of steam and air with a steam mole fraction of 0.9. The ideal-gas policies (`useIdealGasDensity`) are
-unchanged.
+unchanged. The molar density of the liquid phase with the policies `useH2ODensityAsLiquidMixtureDensity` and
+`useBrineDensityAsLiquidMixtureDensity` and of the gas phase of `BrineCO2` with `useCO2GasDensityAsGasMixtureDensity` is
+computed in the same way; before, it ignored the composition of the phase.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 
