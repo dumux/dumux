@@ -35,10 +35,32 @@ def checkLocalCounts(discMethod):
             raise Exception(f"{discMethod}: numScvf is {fvGeometry.numScvf}, iterated {numScvf}")
         differ = differ or numScv != numScvf
     if not differ:
-        raise Exception(f"{discMethod}: no element has more faces than sub-control volumes, so "
-                        f"this grid cannot tell the two counts apart")
+        raise Exception(
+            f"{discMethod}: no element has more faces than sub-control volumes, so "
+            f"this grid cannot tell the two counts apart"
+        )
     print(f"{discMethod}: local numScv/numScvf agree with the iterated entities")
 
 
 checkLocalCounts("cctpfa")
 checkLocalCounts("box")
+
+
+def checkTemporaryLocalView(discMethod):
+    """Iterating the entities of a local view nobody holds on to has to keep the view alive."""
+    localGridGeometry = GridGeometry(gridView, discMethod=discMethod)
+    numScv, numScvf = localGridGeometry.numScv, localGridGeometry.numScvf
+    dofs = set()
+    for element in gridView.elements:
+        for scv in localGridGeometry.boundLocalView(element).scvs:
+            dofs.add(scv.dofIndex)
+        for scvf in localGridGeometry.boundLocalView(element).scvfs:
+            if not (scvf.index < numScvf and scvf.insideScvIdx < numScv):
+                raise Exception(f"{discMethod}: scvfs of a dropped local view read freed memory")
+    if dofs != set(range(localGridGeometry.numDofs)):
+        raise Exception(f"{discMethod}: the scvs of a dropped local view read freed memory")
+    print(f"{discMethod}: the entities of a temporary local view are valid")
+
+
+checkTemporaryLocalView("cctpfa")
+checkTemporaryLocalView("box")
