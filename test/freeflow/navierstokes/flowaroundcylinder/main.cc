@@ -30,6 +30,7 @@
 #include <dumux/io/grid/gridmanager_ug.hh>
 
 #include <dumux/linear/istlsolvers.hh>
+#include <dumux/linear/mumpssolver.hh>
 #include <dumux/linear/stokes_solver.hh>
 
 #include <dumux/multidomain/fvassembler.hh>
@@ -213,23 +214,30 @@ int main(int argc, char** argv)
     const auto withNewtonSolver = [&](auto assembler, auto&& apply)
     {
         using Assembler = typename decltype(assembler)::element_type;
+        const auto applyWithLinearSolver = [&](auto linearSolver)
+        {
+            using LinearSolver = typename decltype(linearSolver)::element_type;
+            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+            apply(std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager));
+        };
+
+        using LATraits = LinearAlgebraTraitsFromAssembler<Assembler>;
         if (useStokesSolver)
         {
             using Matrix = typename Assembler::JacobianMatrix;
             using Vector = typename Assembler::ResidualType;
-            using LinearSolver = StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>;
             auto dDofs = dirichletDofs<Vector>(momentumGridGeometry, massGridGeometry, momentumProblem, momentumIdx, massIdx);
-            auto linearSolver = std::make_shared<LinearSolver>(momentumGridGeometry, massGridGeometry, dDofs);
-            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-            apply(std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager));
+            applyWithLinearSolver(std::make_shared<StokesSolver<Matrix, Vector, MomentumGridGeometry, MassGridGeometry>>(
+                momentumGridGeometry, massGridGeometry, dDofs));
         }
+#if DUMUX_HAVE_MUMPS && NEW_PROBLEM_INTERFACE
+        // MUMPS keeps the symbolic analysis over the many factorizations of the time-dependent cases (same matrix pattern)
+        else if (!isStationary)
+            applyWithLinearSolver(std::make_shared<DirectSolverMumps<LinearSolverTraits<MomentumGridGeometry>, LATraits>>(
+                std::make_tuple(momentumGridGeometry, massGridGeometry)));
+#endif
         else
-        {
-            using LinearSolver = UMFPackIstlSolver<SeqLinearSolverTraits, LinearAlgebraTraitsFromAssembler<Assembler>>;
-            auto linearSolver = std::make_shared<LinearSolver>();
-            using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-            apply(std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager));
-        }
+            applyWithLinearSolver(std::make_shared<UMFPackIstlSolver<SeqLinearSolverTraits, LATraits>>());
     };
 
     if (isStationary)

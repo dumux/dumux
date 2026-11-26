@@ -40,6 +40,7 @@ PriVarMagnitude = 1.0 1.0
 BaseEpsilon = 0.01
 
 [Newton]
-# the multi-stage assembler cannot assemble the residual alone, so only the shift criterion is used
 MinSteps = 1
 MaxRelativeShift = 1e-8
+# keep the Jacobian matrix and its factorization while the updates contract, also over stages and time steps
+EnableJacobianReuse = true

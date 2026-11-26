@@ -149,8 +149,10 @@ The time-dependent cases use the second-order DIRK scheme of Alexander @cite Ale
   `Experimental::MultiStageTimeStepper`). These are only available for the CVFE schemes with the new problem
   interface, i.e. the PQ1Bubble/Box variant.
 * The time-dependent inflow (Dirichlet constraints) is updated at each stage time.
-* Newton's method uses the shift criterion (`Newton.MaxRelativeShift`), since the multi-stage assembler
-  cannot assemble the residual alone.
+* Newton's method uses the shift criterion (`Newton.MaxRelativeShift`).
+* The Jacobian matrix is reused (`Newton.EnableJacobianReuse = true`) while the Newton updates contract. With DIRK2 and a
+  fixed time step size, the stage weights do not change, so a Jacobian matrix can be reused over stages and time steps.
+* The linear systems are solved with MUMPS (`DirectSolverMumps`) if available, otherwise with UMFPack.
 
 Fixed time step sizes are used, following the benchmark description:
 
