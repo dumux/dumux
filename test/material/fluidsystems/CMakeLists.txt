@@ -3,3 +3,6 @@
 
 dumux_add_test(SOURCES test_fluidsystems.cc
               LABELS unit material)
+
+dumux_add_test(SOURCES test_fluidsystems_molardensity.cc
+              LABELS unit material)
