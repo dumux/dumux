@@ -11,7 +11,10 @@
  * Every rank p creates sums (p, k). Rank r holds a term of sum (p, k) if r == p or (r + p + k) is even,
  * and needs the sum if r == p or r == p + 1 (modulo the number of ranks). Ranks insert the sums in
  * different orders. Every rank that needs a sum compares its own term plus the received terms with the
- * sum computed from the formula for the terms, for two different sets of terms.
+ * sum computed from the formula for the terms, for two different sets of terms, and for a third set
+ * received into separate values, which must not change the received sums. Ranks also send lists of
+ * different lengths, some empty, along the sums; a rank that needs a sum receives the lists of the other
+ * ranks holding a term, in the order of their ranks.
  */
 #include <config.h>
 
@@ -42,6 +45,25 @@ bool needsSum(int r, int p, int numRanks)
 
 double term(int r, int p, int k, std::size_t c, int round)
 { return (r + 1)*(p + 2)*(k + 3)*(c + 1) + 0.25*round*r; }
+
+struct ListItem
+{
+    int rank;
+    int p;
+    int k;
+    int j;
+
+    bool operator==(const ListItem&) const = default;
+};
+
+//! the list of rank r for sum (p, k)
+std::vector<ListItem> list(int r, int p, int k)
+{
+    std::vector<ListItem> items;
+    for (int j = 0; j < (r + k) % 3; ++j)
+        items.push_back({r, p, k, j});
+    return items;
+}
 
 } // end anonymous namespace
 
@@ -117,6 +139,71 @@ int main(int argc, char** argv)
                     ++failures;
                 }
             }
+        }
+    }
+
+    std::vector<double> values;
+    sums.exchange([&](std::size_t i, std::span<double> v)
+    {
+        const auto [p, k] = sums.key(i);
+        for (std::size_t c = 0; c < v.size(); ++c)
+            v[c] = term(rank, p, k, c, 2);
+    }, values);
+
+    for (std::size_t i = 0; i < sums.size(); ++i)
+    {
+        const auto [p, k] = sums.key(i);
+        bool othersHoldTerms = false;
+        for (int r = 0; r < numRanks; ++r)
+            othersHoldTerms = othersHoldTerms || (r != rank && holdsTerm(r, p, k));
+        if (sums.receives(i) != (needsSum(rank, p, numRanks) && othersHoldTerms))
+        {
+            std::cerr << "rank " << rank << ": receives() of sum (" << p << ", " << k << ") is wrong" << std::endl;
+            ++failures;
+        }
+
+        if (!needsSum(rank, p, numRanks))
+            continue;
+
+        for (std::size_t c = 0; c < numComponents(k); ++c)
+        {
+            double expectedValues = 0.0, expectedReceived = 0.0;
+            for (int r = 0; r < numRanks; ++r)
+            {
+                if (r != rank && holdsTerm(r, p, k))
+                {
+                    expectedValues += term(r, p, k, c, 2);
+                    expectedReceived += term(r, p, k, c, 1);
+                }
+            }
+            if (std::abs(sums.received(i, values)[c] - expectedValues) > 1e-12*std::abs(expectedValues)
+                || std::abs(sums.received(i)[c] - expectedReceived) > 1e-12*std::abs(expectedReceived))
+            {
+                std::cerr << "rank " << rank << ": sum (" << p << ", " << k << ") component " << c
+                          << " received into separate values is wrong or changed the received sums" << std::endl;
+                ++failures;
+            }
+        }
+    }
+
+    const auto lists = sums.exchangeLists<ListItem>([&](std::size_t i)
+    {
+        const auto [p, k] = sums.key(i);
+        return list(rank, p, k);
+    });
+    for (std::size_t i = 0; i < sums.size(); ++i)
+    {
+        const auto [p, k] = sums.key(i);
+        std::vector<ListItem> expected;
+        if (needsSum(rank, p, numRanks))
+            for (int r = 0; r < numRanks; ++r)
+                if (r != rank && holdsTerm(r, p, k))
+                    for (const auto& item : list(r, p, k))
+                        expected.push_back(item);
+        if (lists[i] != expected)
+        {
+            std::cerr << "rank " << rank << ": the lists of sum (" << p << ", " << k << ") are wrong" << std::endl;
+            ++failures;
         }
     }
 
