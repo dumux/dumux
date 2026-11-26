@@ -147,18 +147,24 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of the pure solids \f$\mathrm{[J/(kg K)]}\f$.
+     * \brief Specific isobaric heat capacity of the solid phase \f$\mathrm{[J/(kg K)]}\f$.
+     *
+     * The mass-weighted average of the component heat capacities, such that the
+     * heat capacity times the density is the volume-weighted average of the
+     * component heat capacities per volume.
      */
     template <class SolidState>
     static Scalar heatCapacity(const SolidState &solidState)
     {
         Scalar c1 = ComponentOne::solidHeatCapacity(solidState.temperature());
         Scalar c2 = ComponentTwo::solidHeatCapacity(solidState.temperature());
+        Scalar rho1 = ComponentOne::solidDensity(solidState.temperature());
+        Scalar rho2 = ComponentTwo::solidDensity(solidState.temperature());
         Scalar volFrac1 = solidState.volumeFraction(comp0Idx);
         Scalar volFrac2 = solidState.volumeFraction(comp1Idx);
 
-        return (c1*volFrac1+
-               c2*volFrac2)/(volFrac1+volFrac2);
+        return (c1*rho1*volFrac1+
+               c2*rho2*volFrac2)/(rho1*volFrac1+rho2*volFrac2);
     }
 
 };

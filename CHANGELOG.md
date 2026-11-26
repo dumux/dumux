@@ -151,6 +151,10 @@ instead of the coordinate type. For real-valued unknowns with the same precision
 - __Periodic boundaries__: `periodicDofMap()` of the grid geometries maps each degree of freedom to a range of periodically
 identified degrees of freedom (`std::vector` for box, pq1bubble, pq2, pq3 and finite-element discretizations,
 `std::array` with one entry for face-centered schemes) instead of a single index.
+- __Solid systems__: The specific heat capacity of `CompositionalSolidPhase` is the mass-weighted average of the heat
+capacities of its components. Before, it was the volume-weighted average, and the energy stored in the solid, which is
+the heat capacity times the density times the solid volume fraction, was not the sum of the energies stored in the
+components if they differ in density.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 

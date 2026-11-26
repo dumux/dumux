@@ -11,7 +11,9 @@
  */
 
 #include <config.h>
+#include <cmath>
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include "checksolidsystem.hh"
@@ -26,6 +28,39 @@
 #include <dumux/material/components/granite.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/solid.hh>
+
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
+
+namespace Dumux {
+
+//! Returns 1 if the heat capacity times the density of the solid phase is not
+//! the volume average of the heat capacities per volume of its components
+template<class Scalar, class SolidSystem>
+int checkCompositionalHeatCapacity(Scalar volFrac0, Scalar volFrac1)
+{
+    using Component0 = typename SolidSystem::ComponentOne;
+    using Component1 = typename SolidSystem::ComponentTwo;
+
+    CompositionalSolidState<Scalar, SolidSystem> solidState;
+    const Scalar temperature = 293.15;
+    solidState.setTemperature(temperature);
+    solidState.setVolumeFraction(SolidSystem::comp0Idx, volFrac0);
+    solidState.setVolumeFraction(SolidSystem::comp1Idx, volFrac1);
+
+    const Scalar expected = volFrac0*Component0::solidDensity(temperature)*Component0::solidHeatCapacity(temperature)
+                            + volFrac1*Component1::solidDensity(temperature)*Component1::solidHeatCapacity(temperature);
+    const Scalar actual = (volFrac0 + volFrac1)*SolidSystem::density(solidState)*SolidSystem::heatCapacity(solidState);
+
+    if (std::abs(actual - expected) < 1e-12*expected)
+        return 0;
+
+    std::cout << "heat capacity per volume of " << SolidSystem::componentName(SolidSystem::comp0Idx)
+              << " (volume fraction " << volFrac0 << ") and " << SolidSystem::componentName(SolidSystem::comp1Idx)
+              << " (volume fraction " << volFrac1 << "): " << actual << " instead of " << expected << std::endl;
+    return 1;
+}
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -101,6 +136,15 @@ int main(int argc, char** argv)
         using Component2 = Components::NaCl<Scalar>;
         using SolidSystem = SolidSystems::CompositionalSolidPhase<Scalar, Component1, Component2, 0>;
         success += checkSolidSystem<Scalar, SolidSystem>();
+    }
+
+    // check the heat capacity of SolidSystems::CompositionalSolidPhase
+    for (const auto& [volFrac0, volFrac1] : std::vector<std::pair<Scalar, Scalar>>{{0.6, 0.1}, {0.05, 0.7}, {0.95, 0.005}})
+    {
+        using CaOSystem = SolidSystems::CompositionalSolidPhase<Scalar, Components::CaO<Scalar>, Components::CaO2H2<Scalar>>;
+        success += checkCompositionalHeatCapacity<Scalar, CaOSystem>(volFrac0, volFrac1);
+        using GraniteSystem = SolidSystems::CompositionalSolidPhase<Scalar, Components::Granite<Scalar>, Components::NaCl<Scalar>>;
+        success += checkCompositionalHeatCapacity<Scalar, GraniteSystem>(volFrac0, volFrac1);
     }
 
     return success;
