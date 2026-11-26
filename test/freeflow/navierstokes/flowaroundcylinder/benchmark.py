@@ -86,6 +86,10 @@ def readReferences():
     return {"cDrag": featflow["CD"], "cLift": featflow["CL"], "pDiff": featflow["dP"]}
 
 
+# time stepping schemes of the cases 2D-2 and 2D-3 (TimeLoop.Scheme)
+TIME_SCHEMES = ["DIRK2", "DIRK3", "ImplicitEuler", "CrankNicolson"]
+
+
 def runsDir(case):
     """Folder with the runs of a case"""
     return os.path.join("runs", f"2d{case}")
@@ -377,7 +381,7 @@ def main():
     # the choices of TimeLoop.Scheme in main.cc
     parser.add_argument(
         "--time-scheme",
-        choices=["DIRK2", "DIRK3", "ImplicitEuler", "CrankNicolson"],
+        choices=TIME_SCHEMES,
         default="DIRK2",
         help="2D-2, 2D-3: time stepping scheme (TimeLoop.Scheme)",
     )

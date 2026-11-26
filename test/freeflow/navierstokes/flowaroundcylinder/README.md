@@ -313,6 +313,7 @@ python3 visualize.py --case 3
 | `--foreground` | wait for the run instead of starting it in the background |
 | `--overwrite` | replace the results of an existing run |
 | `--tstart` (`visualize.py`) | 2D-2: the periodic regime is evaluated for $t \geq$ `tstart` (default $9\,\text{s}$, as the FeatFlow time series) |
+| `--time-schemes` (`visualize.py`) | evaluate only the runs with these time stepping schemes (default `DIRK2`, `all` also includes older runs without the scheme in the name) |
 
 Each run has its own folder `runs/2d<case>/<scheme>_r<level>[_dt<dt>]_<time scheme in lower case>/`, e.g.
 `runs/2d2/pq1bubble_box_r0_dirk2/`:
@@ -354,6 +355,23 @@ The results go to three files in `results/`:
 | `case_2d_<case>.md` | all quantities of each run, compared with the bounds of @cite SchaeferTurek1996 and the finest FeatFlow $Q_2/P_1^\text{disc}$ run (level 6, $\Delta t = 1/1600\,\text{s}$) |
 | `indicators_2d_<case>.png` | $C_{D,\max}$, $C_{L,\max}$ and $\Delta p$ of each run over its number of unknowns $N$, together with the FeatFlow results of all levels and time step sizes and the bounds of the paper |
 | `case_2d_<case>.png` | the time series of each run (2D-2: $t \in [9, 10]\,\text{s}$, see below), plus `case_2d_2_olddata.png` with the old FeatFlow data |
+
+All plots (also of case 2D-1) use the same conventions:
+
+* The color shows the DuMux scheme.
+* In the indicator plots, the marker shows the grid cell shape: triangles for the triangular grids, squares for the
+  quadrilateral grids (also for the FeatFlow results). Several runs of the same scheme differ in the marker filling.
+* The time series are plotted without markers, and several runs of the same scheme differ in the line style.
+
+The time series are not given at the same points in time:
+
+* FeatFlow stores the values at the half steps of the Crank-Nicolson method ($t_n + \Delta t/2$).
+* DuMux stores them at the time steps $t_n$ (DIRK2; a Crank-Nicolson run also at the half steps).
+* The time step sizes differ in case 2D-2 ($\Delta t = 0.001\,\text{s}$ vs. $1/1600\,\text{s}$).
+
+Before plotting, `visualize.py` prints for each series how many of its time points coincide with the first FeatFlow
+series, together with both time step sizes and the largest offset. For the plotted runs, the offset is at most
+$\Delta t/2$, far below the period of about $0.33\,\text{s}$.
 
 If the FeatFlow time series have been downloaded (see below), the time series plots also show FeatFlow results
 on level 6:

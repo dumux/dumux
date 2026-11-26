@@ -39,10 +39,11 @@ import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
 from matplotlib.patches import Patch
 from matplotlib.ticker import NullFormatter
 
-from benchmark import RESULTS_DIR, SCHEMES, runsDir
+from benchmark import RESULTS_DIR, SCHEMES, TIME_SCHEMES, runsDir
 
 plt.rcParams.update({"mathtext.fontset": "cm", "font.family": "serif", "font.size": 11})
 
@@ -59,12 +60,19 @@ LABELS = {
     "pq1bubble_diamond": "PQ1Bubble / Diamond (quadrilaterals)",
     "hybrid_pq1bubble_box": "PQ1Bubble (hybrid) / Box",
 }
-MARKERS = {
-    "diamond_tpfa": "^",
-    "pq1bubble_box": "v",
-    "pq1bubble_diamond": "s",
-    "hybrid_pq1bubble_box": "D",
+# the marker shows the grid cell shape (also of the FeatFlow results), the color the scheme
+CELL_MARKERS = {"triangles": "^", "quadrilaterals": "s"}
+CELL_SHAPES = {
+    "diamond_tpfa": "triangles",
+    "pq1bubble_box": "triangles",
+    "pq1bubble_diamond": "quadrilaterals",
+    "hybrid_pq1bubble_box": "triangles",
 }
+MARKERS = {scheme: CELL_MARKERS[shape] for scheme, shape in CELL_SHAPES.items()}
+COLORS = {scheme: f"C{i}" for i, scheme in enumerate(SCHEMES)}
+# further runs of the same scheme in the time-dependent cases
+RUN_LINESTYLES = ["-", "--", ":", "-."]
+RUN_FILLSTYLES = ["full", "none", "left", "right"]
 SYMBOLS = {"cDrag": r"$C_D$", "cLift": r"$C_L$", "pDiff": r"$\Delta p$ [Pa]"}
 
 REFERENCE_STYLE = {"color": "k", "linestyle": "-", "linewidth": 1.0}
@@ -250,8 +258,8 @@ def plotSchemes(axes):
     Indicators of all schemes over the number of unknowns: lines for the refined coarse meshes,
     unfilled markers (same color) for the default meshes of the regression tests
     """
-    for i, scheme in enumerate(SCHEMES):
-        color = f"C{i}"
+    for scheme in SCHEMES:
+        color = COLORS[scheme]
         runs = sorted(readRuns(1, f"{scheme}_r*").values(), key=lambda run: run["numDofs"]["total"])
         default = readRuns(1, f"{scheme}_default").get(f"{scheme}_default")
         for axis, key in zip(axes, SYMBOLS):
@@ -285,12 +293,20 @@ def plotConvergence(resultsDir):
         axis.grid(True, which="both", linewidth=0.3)
         axis.xaxis.set_minor_formatter(NullFormatter())
     handles, labels = axes[0].get_legend_handles_labels()
-    defaultMarker = plt.Line2D(
-        [], [], linestyle="none", marker="o", markersize=10, markerfacecolor="none", color="k"
+    defaultMarker = tuple(
+        plt.Line2D([], [], linestyle="none", marker=m, markersize=10, mfc="none", color="k")
+        for m in CELL_MARKERS.values()
     )
     handles += [defaultMarker, plt.Line2D([], [], **REFERENCE_STYLE), Patch(**BOUNDS_STYLE)]
     labels += ["default mesh (regression tests)", "FeatFlow reference value", PAPER_LABEL]
-    figure.legend(handles, labels, loc="lower center", ncol=3, fontsize=9)
+    figure.legend(
+        handles,
+        labels,
+        loc="lower center",
+        ncol=3,
+        fontsize=9,
+        handler_map={tuple: HandlerTuple(ndivide=None)},
+    )
     figure.suptitle(r"Case 2D-1 ($\mathrm{Re} = 20$): grid convergence")
     figure.tight_layout(rect=(0.0, 0.12, 1.0, 1.0))
     saveFigure(figure, resultsDir, "convergence_2d1.png")
@@ -528,25 +544,55 @@ def trimmed(series, window):
     return {key: np.asarray(values)[inside] for key, values in series.items()}
 
 
+def checkTimePoints(plotName, namedSeries, tolerance=1e-8):
+    """
+    Report whether the time series of a plot are given at the same points in time as the first
+    one (FeatFlow: half steps of the Crank-Nicolson method, DuMux: the time steps)
+    """
+    namedSeries = [(name, np.asarray(s["time"])) for name, s in namedSeries if len(s["time"]) > 1]
+    if len(namedSeries) < 2:
+        return
+    reference, referenceTimes = namedSeries[0]
+    for name, times in namedSeries[1:]:
+        nearest = np.clip(np.searchsorted(referenceTimes, times), 1, len(referenceTimes) - 1)
+        distance = np.minimum(
+            np.abs(times - referenceTimes[nearest - 1]), np.abs(times - referenceTimes[nearest])
+        )
+        shared = int(np.count_nonzero(distance < tolerance))
+        if shared == len(times) == len(referenceTimes):
+            print(f"{plotName}: {name} has the same time points as {reference}")
+            continue
+        print(
+            f"{plotName}: {name} shares {shared} of its {len(times)} time points with the "
+            f"{len(referenceTimes)} of {reference} (time step {np.median(np.diff(times)):.6g} s"
+            f" vs. {np.median(np.diff(referenceTimes)):.6g} s,"
+            f" largest offset {distance.max():.3g} s)"
+        )
+
+
 def plotTimeSeries(curves, seriesOfRuns, window, title, fileName):
     """
     Time series of the indicators of the FeatFlow curves (label, series, style) and the DuMux
-    runs inside the time window
+    runs inside the time window, without markers since the time points of the series differ
     """
+    curves = [(label, trimmed(series, window), style) for label, series, style in curves]
+    seriesOfRuns = {name: trimmed(series, window) for name, series in seriesOfRuns.items()}
+    checkTimePoints(
+        os.path.basename(fileName),
+        [(label, series) for label, series, _ in curves] + list(seriesOfRuns.items()),
+    )
+
     figure, axes = plt.subplots(len(KEYS), 1, figsize=(8, 9), sharex=True)
     for label, series, style in curves:
-        series = trimmed(series, window)
         for axis, key in zip(axes, KEYS):
             axis.plot(series["time"], series[key], linewidth=1.2, zorder=3, label=label, **style)
-    for (name, series), marker in zip(seriesOfRuns.items(), "osd^v<>"):
-        series = trimmed(series, window)
+    for (name, series), run in zip(seriesOfRuns.items(), runIndicesPerScheme(seriesOfRuns)):
         for axis, key in zip(axes, KEYS):
             axis.plot(
                 series["time"],
                 series[key],
-                marker=marker,
-                markevery=max(1, len(series["time"]) // 40),
-                markersize=4,
+                color=COLORS[schemeOfRun(name)],
+                linestyle=RUN_LINESTYLES[run % len(RUN_LINESTYLES)],
                 label=name,
             )
 
@@ -617,18 +663,31 @@ def schemeOfRun(name):
     return max((scheme for scheme in SCHEMES if name.startswith(scheme)), key=len)
 
 
+def runIndicesPerScheme(names):
+    """Index of each run among the runs of its scheme (0 for the first run of a scheme)"""
+    counts = {}
+    indices = []
+    for name in names:
+        scheme = schemeOfRun(name)
+        indices.append(counts.get(scheme, 0))
+        counts[scheme] = indices[-1] + 1
+    return indices
+
+
 def plotDumuxIndicators(axes, case, runs, results):
     """Indicators of the evaluated DuMux runs at their number of unknowns"""
     evaluated = [name for name, result in results.items() if result is not None]
-    for i, name in enumerate(evaluated):
+    for name, run in zip(evaluated, runIndicesPerScheme(evaluated)):
+        scheme = schemeOfRun(name)
         for axis, (key, _) in zip(axes, INDICATORS[case]):
             axis.semilogx(
                 runs[name]["numDofs"]["total"],
                 results[name][key],
                 linestyle="none",
-                marker=MARKERS[schemeOfRun(name)],
+                marker=MARKERS[scheme],
+                fillstyle=RUN_FILLSTYLES[run % len(RUN_FILLSTYLES)],
                 markersize=8,
-                color=f"C{i}",
+                color=COLORS[scheme],
                 label=f"DuMux {name}",
             )
 
@@ -658,10 +717,23 @@ def plotIndicators(case, runs, results, references, resultsDir):
     saveFigure(figure, resultsDir, f"indicators_2d_{case}.png")
 
 
+def timeSchemeOfRun(name):
+    """The time stepping scheme of a run from the suffix of its name, None for older runs"""
+    suffix = name.split(" ")[0].rsplit("_", 1)[-1]
+    return next((scheme for scheme in TIME_SCHEMES if scheme.lower() == suffix), None)
+
+
 def evaluateCase(case, args):
-    """Evaluate all runs of case 2D-2 or 2D-3, write the report and plot the time series"""
+    """
+    Evaluate the runs of case 2D-2 or 2D-3 with the selected time stepping schemes, write the
+    report and plot the time series
+    """
     references = readReferences()
-    runs = readRuns(case)
+    runs = {
+        name: run
+        for name, run in readRuns(case).items()
+        if "all" in args.time_schemes or timeSchemeOfRun(name) in args.time_schemes
+    }
     seriesOfRuns = {name: timeSeries(run) for name, run in runs.items()}
     if not seriesOfRuns:
         print(f"No runs of case 2D-{case} found in {runsDir(case)}/, plotting the references only")
@@ -691,6 +763,14 @@ def main():
         type=float,
         default=9.0,
         help="2D-2: the periodic regime is evaluated for t >= tstart (FeatFlow window [9, 10] s)",
+    )
+    parser.add_argument(
+        "--time-schemes",
+        nargs="+",
+        choices=TIME_SCHEMES + ["all"],
+        default=["DIRK2"],
+        help="2D-2, 2D-3: evaluate the runs with these time stepping schemes (all: also older runs"
+        " without the scheme in the name)",
     )
     parser.add_argument("--results-dir", default=RESULTS_DIR, help="output folder")
     args = parser.parse_args()
