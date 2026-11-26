@@ -203,11 +203,17 @@ int main(int argc, char** argv)
     collector["numDofs"]["total"] = momentumGridGeometry->numDofs()*dim + massGridGeometry->numDofs();
     const auto indicatorFile = getParam<std::string>("Problem.IndicatorFile", massProblem->name());
 
+    // The iterative Stokes solver is preconditioned for the symmetric Stokes system and is no suitable
+    // solver for the Navier-Stokes equations, which are solved with a direct solver
+    const bool useStokesSolver = getParam<bool>("LinearSolver.UseIterativeSolver", false);
+    if (useStokesSolver && momentumProblem->enableInertiaTerms())
+        DUNE_THROW(ParameterException, "LinearSolver.UseIterativeSolver = true (Stokes solver) requires Problem.EnableInertiaTerms = false");
+
     // create a Newton solver with the chosen linear solver for the given assembler and pass it to apply
     const auto withNewtonSolver = [&](auto assembler, auto&& apply)
     {
         using Assembler = typename decltype(assembler)::element_type;
-        if (getParam<bool>("LinearSolver.UseIterativeSolver", false))
+        if (useStokesSolver)
         {
             using Matrix = typename Assembler::JacobianMatrix;
             using Vector = typename Assembler::ResidualType;
