@@ -427,7 +427,7 @@ int main(int argc, char** argv)
         {
             const auto imbalance = std::abs(r->total[0] + r->total[1]);
             const auto scale = r->magnitude[0] + r->magnitude[1];
-            if (imbalance > tolerance*scale)
+            if (!(imbalance <= tolerance*scale))
                 fail(std::string(r == &ref ? "sequential" : "distributed") + " state " + std::to_string(state)
                      + ": the coupling terms do not cancel, imbalance " + std::to_string(imbalance/scale));
         }
@@ -449,6 +449,8 @@ int main(int argc, char** argv)
                     fail(domainNames[domain] + ": an owned dof is not in the reference");
                     continue;
                 }
+                if (!std::isfinite(value))
+                    fail(domainNames[domain] + ": a coupling term is not finite");
                 maxDiff = std::max(maxDiff, std::abs(value - it->second));
             }
 
