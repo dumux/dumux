@@ -310,3 +310,117 @@ dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_kernel_boxbox
                MPI_RANKS 1 2 4
                TIMEOUT 1200
                CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_line_tpfatpfa
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Line
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_line_boxbox
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Line
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_tpfatpfa
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_boxbox
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_average_tpfatpfa
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Average
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_average_boxbox
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Average
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_kernel_tpfatpfa
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_kernel_boxbox
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_boxtpfa
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_tpfabox
+               SOURCES main_solver.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_tpfatpfa_gmres
+               TARGET test_md_embedded_1d3d_parallel_solver_surface_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Test.Krylov GMRes)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_boxbox_gmres
+               TARGET test_md_embedded_1d3d_parallel_solver_surface_boxbox
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection -Test.Krylov GMRes)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_solver_surface_boxtpfa_gmres
+               TARGET test_md_embedded_1d3d_parallel_solver_surface_boxtpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND AND HAVE_UMFPACK )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Partition Bisection -Test.Krylov GMRes)
