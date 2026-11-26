@@ -31,3 +31,12 @@ Multithreading = false
 [Component]
 LiquidKinematicViscosity = 1
 LiquidDensity = 1
+
+[Newton]
+MaxRelativeShift = 1e-6
+Verbosity = 0
+
+# the problem is linear in the pressures: a larger step of the numeric differentiation has no truncation error
+# and less round-off
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-6

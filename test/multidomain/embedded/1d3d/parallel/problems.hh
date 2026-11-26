@@ -74,12 +74,22 @@ public:
     void enableCoupling(bool enable)
     { couplingEnabled_ = enable; }
 
+    //! Dirichlet conditions on the whole boundary instead of no flow, which makes the coupled problem uniquely solvable
+    void setDirichletBoundary(bool dirichlet)
+    { dirichlet_ = dirichlet; }
+
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
+        if (dirichlet_)
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
         return values;
     }
+
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(1.0 + 0.5*globalPos[0] - 0.25*globalPos[2]); }
 
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
     { return NumEqVector(0.0); }
@@ -138,6 +148,7 @@ public:
 private:
     std::shared_ptr<CouplingManager> couplingManager_;
     bool couplingEnabled_ = true;
+    bool dirichlet_ = false;
 };
 
 template<class TypeTag>

@@ -206,3 +206,107 @@ dumux_add_test(NAME test_md_embedded_1d3d_parallel_kernel_tpfatpfa_emptyprocesse
                MPI_RANKS 2 4
                TIMEOUT 1200
                CMD_ARGS params.input -Tissue.Grid.UpperRight "3 1 1" -Tissue.Grid.Cells "30 10 10")
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_line_tpfatpfa
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Line
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_line_tpfatpfa_bisection
+               TARGET test_md_embedded_1d3d_parallel_jacobian_line_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_line_boxbox
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Line
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_surface_tpfatpfa
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_surface_tpfatpfa_bisection
+               TARGET test_md_embedded_1d3d_parallel_jacobian_surface_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_surface_boxbox
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Surface
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_average_tpfatpfa
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Average
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_average_tpfatpfa_bisection
+               TARGET test_md_embedded_1d3d_parallel_jacobian_average_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_average_boxbox
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Average
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_kernel_tpfatpfa
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueCC LOWDIMTYPETAG=NetworkCC COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_kernel_tpfatpfa_bisection
+               TARGET test_md_embedded_1d3d_parallel_jacobian_kernel_tpfatpfa
+               LABELS multidomain multidomain_embedded parallel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Network.Partition Bisection)
+
+dumux_add_test(NAME test_md_embedded_1d3d_parallel_jacobian_kernel_boxbox
+               SOURCES main_jacobian.cc
+               LABELS multidomain multidomain_embedded parallel
+               COMPILE_DEFINITIONS BULKTYPETAG=TissueBox LOWDIMTYPETAG=NetworkBox COUPLINGMODE=Embedded1d3dCouplingMode::Kernel
+               CMAKE_GUARD "( dune-foamgrid_FOUND AND MPI_FOUND )"
+               MPI_RANKS 1 2 4
+               TIMEOUT 1200
+               CMD_ARGS params.input -Tissue.Grid.Overlap 0 -Network.Grid.Overlap 0 -Network.Partition Bisection)
