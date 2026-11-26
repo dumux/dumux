@@ -394,16 +394,11 @@ public:
             return Brine::molarDensity(BrineAdapter<FluidState>(fluidState), Brine::liquidPhaseIdx);
         else if (phaseIdx == phase1Idx)
         {
-            const Scalar T = fluidState.temperature(phaseIdx);
-
             // for the gas phase assume an ideal gas
             if (Policy::useIdealGasDensity())
-                return IdealGas::molarDensity(T, fluidState.pressure(phaseIdx));
+                return IdealGas::molarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
 
-            // if useComplexRelations = true, compute density. NaCl is assumed
-            // not to be present in gas phase, NaCl has only solid interfaces implemented
-            return H2O::gasMolarDensity(T, fluidState.partialPressure(phase1Idx, H2OIdx))
-                   + Air::gasMolarDensity(T, fluidState.partialPressure(phase1Idx, AirIdx));
+            return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);

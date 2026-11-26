@@ -362,7 +362,6 @@ public:
     template <class FluidState>
     static Scalar molarDensity(const FluidState& fluidState, int phaseIdx)
     {
-        Scalar T = fluidState.temperature(phaseIdx);
         if (phaseIdx == liquidPhaseIdx)
             return density(fluidState, phaseIdx)/fluidState.averageMolarMass(phaseIdx);
         else if (phaseIdx == gasPhaseIdx)
@@ -370,12 +369,7 @@ public:
             if (Policy::useCO2GasDensityAsGasMixtureDensity())
                 return CO2::gasMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
             else
-            {
-                // assume ideal mixture: steam and CO2 don't "see" each other
-                Scalar rhoMolar_gH2O = H2O::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, BrineOrH2OIdx));
-                Scalar rhoMolar_gCO2 = CO2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, CO2Idx));
-                return rhoMolar_gH2O + rhoMolar_gCO2;
-            }
+                return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }

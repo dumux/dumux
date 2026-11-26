@@ -154,8 +154,8 @@ public:
      * \brief Calculate the molar density \f$\mathrm{[mol/m^3]}\f$ of a fluid phase.
      *
      * The molar density is defined by the
-     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$ after
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$ after
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
      *
      * \param fluidState The fluid state
      * \param paramCache mutable parameters
@@ -441,6 +441,28 @@ public:
                                int phaseIdx)
     {
         return Implementation::heatCapacity(fluidState, phaseIdx);
+    }
+
+protected:
+    /*!
+     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of a phase with the given density \f$\mathrm{[kg/m^3]}\f$
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \sum_\kappa x^\kappa_\alpha \;,\f]
+     * such that \f$\rho_{mol,\alpha} x^\kappa_\alpha M^\kappa = \rho_\alpha X^\kappa_\alpha\f$ with the mass fractions
+     * \f$X^\kappa_\alpha = x^\kappa_\alpha M^\kappa \sum_\lambda x^\lambda_\alpha / \overline M_\alpha\f$, also for mole fractions
+     * that do not sum up to one, e.g. those of a phase that is not present.
+     *
+     * \param fluidState The fluid state
+     * \param phaseIdx Index of the fluid phase
+     * \param density The density of the phase
+     */
+    template <class FluidState>
+    static Scalar molarDensityFromDensity_(const FluidState& fluidState, int phaseIdx, Scalar density)
+    {
+        Scalar sumMoleFractions = 0.0;
+        for (int compIdx = 0; compIdx < Implementation::numComponents; ++compIdx)
+            sumMoleFractions += fluidState.moleFraction(phaseIdx, compIdx);
+        return sumMoleFractions*density/fluidState.averageMolarMass(phaseIdx);
     }
 };
 

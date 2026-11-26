@@ -417,10 +417,7 @@ public:
             return IdealGas::molarDensity(T, p);
         }
 
-        // assume ideal mixture: steam and nitrogen don't "see" each other
-        Scalar rho_gH2O = H2O::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx));
-        Scalar rho_gN2 = N2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx));
-        return rho_gH2O + rho_gN2;
+        return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
     }
 
     using Base<Scalar, ThisType>::viscosity;

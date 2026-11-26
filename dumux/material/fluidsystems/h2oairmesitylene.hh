@@ -284,9 +284,7 @@ public:
         }
         else
         {
-            return H2O::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, H2OIdx))
-                   + NAPL::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, NAPLIdx))
-                   + Air::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, AirIdx));
+            return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
         }
     }
 

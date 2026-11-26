@@ -494,9 +494,7 @@ public:
                 return IdealGas::molarDensity(T,p);
             }
 
-            return H2O::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx))
-                   + N2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx))
-                   + O2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, O2Idx));
+            return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
         }
     }
 

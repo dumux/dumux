@@ -151,6 +151,15 @@ instead of the coordinate type. For real-valued unknowns with the same precision
 - __Periodic boundaries__: `periodicDofMap()` of the grid geometries maps each degree of freedom to a range of periodically
 identified degrees of freedom (`std::vector` for box, pq1bubble, pq2, pq3 and finite-element discretizations,
 `std::array` with one entry for face-centered schemes) instead of a single index.
+- __Fluid systems__: The molar density of the gas phase of `BrineAir`, `BrineCO2`, `H2OAir`, `H2OAirMesitylene`,
+`H2OAirXylene`, `H2OHeavyOil`, `H2ON2` and `H2ON2O2` is the density divided by the average molar mass, times the sum of
+the mole fractions (one for a present phase). The molar and the mass concentrations of the components then agree.
+Before, the molar density was the sum of the molar densities of the components at their partial pressures. This sum
+differs if a component is a real gas (`Components::H2O`, tabulated `H2O`, `CO2`), and models with mole fractions as
+primary variables (`useMoles`) transported a different mass in the component balances than in the energy balance. The
+difference is of order 1e-5 at room temperature and grows with temperature and water content, e.g. 7e-3 at 250 °C and 35
+bar for a gas of steam and air with a steam mole fraction of 0.9. The ideal-gas policies (`useIdealGasDensity`) are
+unchanged.
 
 ### Deprecated properties/classes/functions/files, to be removed after 3.11:
 

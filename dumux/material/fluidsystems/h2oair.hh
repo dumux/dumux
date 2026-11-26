@@ -437,8 +437,7 @@ public:
                 // for the gas phase assume an ideal gas
             { return IdealGas::molarDensity(T, p); }
 
-            return H2O::gasMolarDensity(T, fluidState.partialPressure(phase1Idx, H2OIdx))
-                   + Air::gasMolarDensity(T, fluidState.partialPressure(phase1Idx, AirIdx));
+            return Base<Scalar, ThisType>::molarDensityFromDensity_(fluidState, phaseIdx, density(fluidState, phaseIdx));
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
