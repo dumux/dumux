@@ -99,14 +99,16 @@ void registerFVElementGeometry(pybind11::handle scope)
             self.bindElement(element);
         }, "element"_a);
 
-        cls.def_property_readonly("scvs", [](FVEG& self){
+        // the iterator keeps the local view alive; a getter passed to def_property_readonly as
+        // a lambda silently drops keep_alive, so it has to be built into the cpp_function
+        cls.def_property_readonly("scvs", pybind11::cpp_function([](FVEG& self){
             const auto range = scvs(self);
             return pybind11::make_iterator(range.begin(), range.end());
-        }, pybind11::keep_alive<0, 1>());
-        cls.def_property_readonly("scvfs", [](FVEG& self){
+        }, pybind11::keep_alive<0, 1>()));
+        cls.def_property_readonly("scvfs", pybind11::cpp_function([](FVEG& self){
             const auto range = scvfs(self);
             return pybind11::make_iterator(range.begin(), range.end());
-        }, pybind11::keep_alive<0, 1>());
+        }, pybind11::keep_alive<0, 1>()));
     }
 }
 
