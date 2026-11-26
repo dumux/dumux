@@ -54,6 +54,7 @@ namespace TTag {
 struct DFGChannelTest {};
 struct DFGChannelTestMomentumDiamond { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumCVFE, FaceCenteredDiamondModel>; };
 struct DFGChannelTestMomentumPQ1Bubble { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumCVFE, PQ1BubbleModel>; };
+struct DFGChannelTestMomentumPQ1BubbleHybrid { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMomentumCVFE, PQ1BubbleHybridModel>; };
 struct DFGChannelTestMassTpfa { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMassOneP, CCTpfaModel>; };
 struct DFGChannelTestMassBox { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMassOneP, BoxModel>; };
 struct DFGChannelTestMassDiamond { using InheritsFrom = std::tuple<DFGChannelTest, NavierStokesMassOneP, FaceCenteredDiamondModel>; };
@@ -96,7 +97,7 @@ struct Problem<TypeTag, TTag::TYPETAG_MASS>
 };
 
 #if NEW_PROBLEM_INTERFACE
-//! The grid variables with the CVFE grid variables cache (momentum and mass)
+//! The grid variables with the CVFE grid variables cache (PQ1Bubble momentum and mass, the hybrid PQ1Bubble scheme has its own)
 template<class TypeTag>
 using DFGChannelTestCVFEGridVariables = Dumux::Experimental::GridVariables<
     GetPropType<TypeTag, Properties::GridGeometry>,
@@ -111,7 +112,7 @@ using DFGChannelTestCVFEGridVariables = Dumux::Experimental::GridVariables<
 >;
 
 template<class TypeTag>
-struct GridVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
+struct GridVariables<TypeTag, TTag::DFGChannelTestMomentumPQ1Bubble>
 { using type = DFGChannelTestCVFEGridVariables<TypeTag>; };
 
 template<class TypeTag>
@@ -120,7 +121,7 @@ struct GridVariables<TypeTag, TTag::TYPETAG_MASS>
 
 //! The CVFE variables for the momentum problem
 template<class TypeTag>
-struct VolumeVariables<TypeTag, TTag::TYPETAG_MOMENTUM>
+struct VolumeVariables<TypeTag, TTag::DFGChannelTestMomentumPQ1Bubble>
 {
 private:
     using PV = GetPropType<TypeTag, Properties::PrimaryVariables>;

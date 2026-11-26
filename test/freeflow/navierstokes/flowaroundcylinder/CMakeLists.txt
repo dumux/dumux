@@ -61,6 +61,33 @@ dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_pq1bubble_box
                              -LinearSolver.UseIterativeSolver true")
 
 # Navier-Stokes version of the test (Re=20)
+dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
+               SOURCES main.cc
+               COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1BubbleHybrid
+               COMPILE_DEFINITIONS TYPETAG_MASS=DFGChannelTestMassBox
+               COMPILE_DEFINITIONS NEW_PROBLEM_INTERFACE=1
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box params_1.input
+                             -Problem.Name test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box -Problem.EnableInertiaTerms true")
+
+# Stokes version of the test (no inertia)
+dumux_add_test(NAME test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
+               TARGET test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
+               LABELS freeflow navierstokes
+               CMAKE_GUARD "( HAVE_UMFPACK AND dune-uggrid_FOUND )"
+               COMMAND ${DUMUX_RUNTEST}
+               CMD_ARGS      --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box params_1.input
+                             -Problem.Name test_ff_stokes_dfg_benchmark_stationary_hybrid_pq1bubble_box -Problem.EnableInertiaTerms false")
+
+# Navier-Stokes version of the test (Re=20)
 dumux_add_test(NAME test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
                SOURCES main.cc
                COMPILE_DEFINITIONS TYPETAG_MOMENTUM=DFGChannelTestMomentumPQ1Bubble

@@ -15,9 +15,10 @@ The errors with respect to the FeatFlow reference values (reference/featflow.jso
 experimental orders of convergence are written to results/convergence_2d1.md.
 
 Cases 2D-2 and 2D-3 (--case 2, --case 3): one time-dependent run (Re = 100) with the PQ1Bubble/Box
-scheme and the DIRK2 method (--time-scheme). These runs take days, so they are started in the
-background, detached from the terminal (--foreground waits for them). The process id is written to
-<name>.pid in the run folder, and the run is stopped with kill $(cat <run folder>/<name>.pid).
+or the hybrid PQ1Bubble/Box scheme (--scheme) and the DIRK2 method (--time-scheme). These runs take
+hours, so they are started in the background, detached from the terminal (--foreground waits for
+them). The process id is written to <name>.pid in the run folder, and the run is stopped with
+kill $(cat <run folder>/<name>.pid).
 
 All cases use central differences for the advective term (Flux.UpwindWeight = 0.5). Each run gets
 its own folder runs/2d<case>/<name>/ with the log, the benchmark indicators (<name>.json) and the
@@ -29,6 +30,7 @@ Usage (in the build directory test/freeflow/navierstokes/flowaroundcylinder):
     python3 benchmark.py --schemes pq1bubble_box --levels 0 1 2
     python3 benchmark.py --case 2
     python3 benchmark.py --case 3 --dt 0.00125
+    python3 benchmark.py --case 2 --scheme hybrid_pq1bubble_box
     python3 benchmark.py -- -Newton.MaxRelativeShift 1e-10   # further simulation parameters
     python3 visualize.py --case 1
 """
@@ -58,6 +60,10 @@ SCHEMES = {
         "test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond",
         "meshes/cylinder_channel_quad_coarse.msh",
     ),
+    "hybrid_pq1bubble_box": (
+        "test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box",
+        "meshes/cylinder_channel_coarse.msh",
+    ),
 }
 
 # default meshes of the regression tests (mesh size 0.01 in the channel, 0.002 on the cylinder)
@@ -65,10 +71,11 @@ DEFAULT_MESHES = {
     "diamond_tpfa": "meshes/cylinder_channel.msh",
     "pq1bubble_box": "meshes/cylinder_channel.msh",
     "pq1bubble_diamond": "meshes/cylinder_channel_quad.msh",
+    "hybrid_pq1bubble_box": "meshes/cylinder_channel.msh",
 }
 
-# the time-dependent cases are only implemented for this scheme
-TRANSIENT_SCHEME = "pq1bubble_box"
+# the time-dependent cases are only implemented for the schemes with the new problem interface
+TRANSIENT_SCHEMES = ["pq1bubble_box", "hybrid_pq1bubble_box"]
 
 
 def readReferences():
@@ -289,11 +296,11 @@ def transientArgs(case, args):
 
 def runTransient(case, args, extraArgs):
     """Run case 2D-2 or 2D-3 (in the background unless --foreground is given)"""
-    executable = SCHEMES[TRANSIENT_SCHEME][0]
+    executable = SCHEMES[args.scheme][0]
     if not os.path.exists(executable):
         sys.exit(f"Executable {executable} not found, build it first.")
 
-    name = runName(TRANSIENT_SCHEME, args.level, args.dt, args.time_scheme)
+    name = runName(args.scheme, args.level, args.dt, args.time_scheme)
     folder = os.path.join(runsDir(case), name)
     pidFile = os.path.join(folder, f"{name}.pid")
     pid = runningProcess(pidFile)
@@ -353,6 +360,12 @@ def main():
     )
     parser.add_argument(
         "--levels", nargs="+", type=int, default=[0, 1, 2, 3], help="2D-1: Grid.Refinement values"
+    )
+    parser.add_argument(
+        "--scheme",
+        choices=TRANSIENT_SCHEMES,
+        default=TRANSIENT_SCHEMES[0],
+        help="2D-2, 2D-3: scheme",
     )
     parser.add_argument(
         "--level", type=int, default=0, help="2D-2, 2D-3: Grid.Refinement of the default mesh"

@@ -57,8 +57,14 @@ LABELS = {
     "diamond_tpfa": "Diamond / CCTpfa",
     "pq1bubble_box": "PQ1Bubble / Box",
     "pq1bubble_diamond": "PQ1Bubble / Diamond (quadrilaterals)",
+    "hybrid_pq1bubble_box": "PQ1Bubble (hybrid) / Box",
 }
-MARKERS = {"diamond_tpfa": "^", "pq1bubble_box": "v", "pq1bubble_diamond": "s"}
+MARKERS = {
+    "diamond_tpfa": "^",
+    "pq1bubble_box": "v",
+    "pq1bubble_diamond": "s",
+    "hybrid_pq1bubble_box": "D",
+}
 SYMBOLS = {"cDrag": r"$C_D$", "cLift": r"$C_L$", "pDiff": r"$\Delta p$ [Pa]"}
 
 REFERENCE_STYLE = {"color": "k", "linestyle": "-", "linewidth": 1.0}
@@ -606,6 +612,11 @@ def plotFeatflowIndicators(axes, case, references):
     return handles, labels
 
 
+def schemeOfRun(name):
+    """The scheme of a run, the longest scheme name the run name starts with"""
+    return max((scheme for scheme in SCHEMES if name.startswith(scheme)), key=len)
+
+
 def plotDumuxIndicators(axes, case, runs, results):
     """Indicators of the evaluated DuMux runs at their number of unknowns"""
     evaluated = [name for name, result in results.items() if result is not None]
@@ -615,7 +626,7 @@ def plotDumuxIndicators(axes, case, runs, results):
                 runs[name]["numDofs"]["total"],
                 results[name][key],
                 linestyle="none",
-                marker=MARKERS["pq1bubble_box"],
+                marker=MARKERS[schemeOfRun(name)],
                 markersize=8,
                 color=f"C{i}",
                 label=f"DuMux {name}",

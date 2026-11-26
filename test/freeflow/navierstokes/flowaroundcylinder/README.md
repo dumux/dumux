@@ -10,7 +10,7 @@ and a pressure difference.
 All three 2D cases are implemented:
 
 * the stationary case 2D-1 ($\text{Re} = 20$) for all discretization variants;
-* the time-dependent cases 2D-2 and 2D-3 ($\text{Re} = 100$) for the PQ1Bubble/Box variant.
+* the time-dependent cases 2D-2 and 2D-3 ($\text{Re} = 100$) for the PQ1Bubble/Box variants.
 
 ## Problem description
 
@@ -111,15 +111,19 @@ computed with $Q_2/P_1^\text{disc}$ elements on level 6 and the Crank-Nicolson m
 ## Discretization
 
 The momentum balance and the mass balance are discretized separately and coupled by the
-`FreeFlowCouplingManager`. Three combinations of discretization schemes are tested:
+`FreeFlowCouplingManager`. Four combinations of discretization schemes are tested:
 
 | Momentum | Mass | Grid |
 | :--- | :--- | :--- |
 | @ref DiamondDiscretization | @ref CCTpfaDiscretization | triangles |
 | @ref PQ1BubbleDiscretization | @ref BoxDiscretization | triangles |
+| @ref PQ1BubbleDiscretization (hybrid) | @ref BoxDiscretization | triangles |
 | @ref PQ1BubbleDiscretization | @ref DiamondDiscretization | quadrilaterals |
 
-The PQ1Bubble/Box variant uses the new CVFE problem and variables interfaces (`problem_newinterface.hh`,
+The hybrid PQ1Bubble scheme (`PQ1BubbleHybridModel`) uses the same basis functions. Only the vertex dofs have
+control volumes, the bubble dofs are treated with the finite element method.
+
+The two PQ1Bubble/Box variants use the new CVFE problem and variables interfaces (`problem_newinterface.hh`,
 compile definition `NEW_PROBLEM_INTERFACE=1`). The other two variants use the established interface (`problem.hh`).
 The two problem files differ as follows:
 
@@ -147,7 +151,7 @@ The time-dependent cases use the second-order DIRK scheme of Alexander @cite Ale
   method damp the oscillations @cite SchaeferTurek1996.
 * It is run with the multi-stage assembler and time stepper (`Experimental::MultiStageMultiDomainAssembler`,
   `Experimental::MultiStageTimeStepper`). These are only available for the CVFE schemes with the new problem
-  interface, i.e. the PQ1Bubble/Box variant.
+  interface, i.e. the two PQ1Bubble/Box variants.
 * The time-dependent inflow (Dirichlet constraints) is updated at each stage time.
 * Newton's method uses the shift criterion (`Newton.MaxRelativeShift`).
 * The Jacobian matrix is reused (`Newton.EnableJacobianReuse = true`) while the Newton updates contract. With DIRK2 and a
@@ -195,7 +199,8 @@ make test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box
 ./test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box params_3.input  # case 2D-3 (days)
 ```
 
-The executable is named after its regression test (case 2D-1), but runs all three cases.
+The executable is named after its regression test (case 2D-1), but runs all three cases. The hybrid variant
+(`test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box`) is run in the same way.
 
 The ctest regression tests only cover the stationary case 2D-1. The time-dependent cases are run
 with `benchmark.py` (see below).
@@ -216,12 +221,13 @@ values. This only passes on refined grids.
 | :--- | :---: | :---: | :---: |
 | Diamond / CCTpfa | $5.5664$ | $0.00949407$ | $0.115135$ |
 | PQ1Bubble / Box | $5.51483$ | $0.00896245$ | $0.118022$ |
+| PQ1Bubble (hybrid) / Box | $5.5236$ | $0.00892858$ | $0.118087$ |
 | PQ1Bubble / Diamond (quadrilaterals) | $5.61234$ | $0.00387379$ | $0.118366$ |
 | Reference (FeatFlow) | $5.57953523384$ | $0.010618948146$ | $0.11752016697$ |
 
 ## Grid convergence study (case 2D-1)
 
-`benchmark.py` runs case 2D-1 for all three variants on a sequence of uniformly refined grids.
+`benchmark.py` runs case 2D-1 for all four variants on a sequence of uniformly refined grids.
 The advective term uses central differences (`Flux.UpwindWeight = 0.5`).
 
 The sequence starts from two coarse Gmsh meshes. Each level is refined uniformly with `Grid.Refinement`
@@ -254,7 +260,8 @@ convergence of all indicators.
 cd build-cmake/test/freeflow/navierstokes/flowaroundcylinder
 make test_ff_navierstokes_dfg_benchmark_stationary_diamond_tpfa \
      test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_box \
-     test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
+     test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond \
+     test_ff_navierstokes_dfg_benchmark_stationary_hybrid_pq1bubble_box
 python3 benchmark.py                                       # all schemes, levels 0 to 3
 python3 benchmark.py --schemes pq1bubble_box --levels 0 1  # a subset
 python3 visualize.py
@@ -283,19 +290,22 @@ A failed run is reported and skipped (missing data in the table and the plot).
 
 ## Running and evaluating the cases 2D-2 and 2D-3
 
-`benchmark.py --case 2` and `--case 3` run one time-dependent case with the PQ1Bubble/Box variant.
+`benchmark.py --case 2` and `--case 3` run one time-dependent case with the PQ1Bubble/Box variant, or with the
+hybrid variant (`--scheme hybrid_pq1bubble_box`).
 The runs take days on the default grid, so they are started in the background, detached from the terminal.
 
 ```bash
 cd build-cmake/test/freeflow/navierstokes/flowaroundcylinder
 python3 benchmark.py --case 2                        # 2D-2, default grid and time steps
 python3 benchmark.py --case 3 --dt 0.00125 --tend 8  # 2D-3 with a larger time step
+python3 benchmark.py --case 2 --scheme hybrid_pq1bubble_box  # 2D-2 with the hybrid variant
 python3 visualize.py --case 2                        # evaluate (also while a run is going on)
 python3 visualize.py --case 3
 ```
 
 | Option | Purpose |
 | :--- | :--- |
+| `--scheme` | `pq1bubble_box` (default) or `hybrid_pq1bubble_box` |
 | `--level` | `Grid.Refinement` of the default mesh (default 0) |
 | `--dt` | fixed time step size (2D-2: the fine one after $3.5\,\text{s}$) |
 | `--tend` | end time |
@@ -304,7 +314,7 @@ python3 visualize.py --case 3
 | `--overwrite` | replace the results of an existing run |
 | `--tstart` (`visualize.py`) | 2D-2: the periodic regime is evaluated for $t \geq$ `tstart` (default $9\,\text{s}$, as the FeatFlow time series) |
 
-Each run has its own folder `runs/2d<case>/pq1bubble_box_r<level>[_dt<dt>]_<time scheme in lower case>/`, e.g.
+Each run has its own folder `runs/2d<case>/<scheme>_r<level>[_dt<dt>]_<time scheme in lower case>/`, e.g.
 `runs/2d2/pq1bubble_box_r0_dirk2/`:
 
 * the log file and the process id (`<name>.pid`, stop the run with `kill $(cat <name>.pid)`);
@@ -420,7 +430,7 @@ python3 reference/fetch_featflow.py --no-download # regenerate from the unpacked
 
 ## Known limitations
 
-* The time-dependent cases 2D-2 and 2D-3 are only implemented for the PQ1Bubble/Box variant.
+* The time-dependent cases 2D-2 and 2D-3 are only implemented for the two PQ1Bubble/Box variants.
 * The Crank-Nicolson method is not suitable for the pressure-dependent indicators (see above).
 * The polygonal approximation of the cylinder limits the accuracy of all indicators on coarse grids.
 
