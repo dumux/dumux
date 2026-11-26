@@ -6,7 +6,8 @@
  * \brief Test for the sequential MUMPS solver backend: one solver instance solves a sequence of
  *        systems whose values, sparsity pattern and size change, and reuses a factorization for
  *        several right-hand sides, one by one and in one solve, single-type (also with 4x4 blocks)
- *        and MultiType; several solver instances keep their own factorizations at the same time
+ *        and MultiType; several solver instances keep their own factorizations at the same time; entries
+ *        that are not part of the matrix are added with setAdditionalEntries
  */
 #include <config.h>
 
@@ -15,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
@@ -261,6 +263,62 @@ void solveSeveralRightHandSides(Solver& solver, const M& A, const std::vector<V>
 
 } // end namespace Dumux::Test
 
+/*!
+ * \brief Solves with the matrix A whose entries in the blocks off the diagonal (MultiType) or above the diagonal are
+ *        zero and are given to setAdditionalEntries instead, which has to give the solution of A; the function is
+ *        called with rebuild true only for the first factorization
+ */
+template<class Solver, class M, class V>
+void solveWithAdditionalEntries(Solver& solver, const M& A, const V& xExact, const std::string& name)
+{
+    struct Entry { std::size_t rowDomain, row, columnDomain, column; double value; };
+    std::vector<Entry> entries;
+    M reduced = A;
+    const auto take = [&](auto& block, std::size_t rowDomain, std::size_t columnDomain, bool all)
+    {
+        for (auto rowIt = block.begin(); rowIt != block.end(); ++rowIt)
+            for (auto colIt = rowIt->begin(); colIt != rowIt->end(); ++colIt)
+                if (all || colIt.index() > rowIt.index())
+                {
+                    entries.push_back({rowDomain, rowIt.index(), columnDomain, colIt.index(), (*colIt)[0][0]});
+                    *colIt = 0.0;
+                }
+    };
+    if constexpr (std::is_same_v<M, Dumux::Test::Matrix>)
+        take(reduced, 0, 0, false);
+    else
+    {
+        using namespace Dune::Indices;
+        take(reduced[_0][_1], 0, 1, true);
+        take(reduced[_1][_0], 1, 0, true);
+    }
+
+    std::vector<bool> rebuilds;
+    solver.setAdditionalEntries([&](bool rebuild, const auto& globalIndex, const auto& add)
+    {
+        rebuilds.push_back(rebuild);
+        for (const auto& e : entries)
+            add(e.rowDomain, e.row, 0, globalIndex(e.columnDomain, e.column), e.value);
+    });
+
+    V b = xExact;
+    A.mv(xExact, b);
+    for (int k = 0; k < 2; ++k)
+    {
+        V x = xExact;
+        x = 0.0;
+        solver.solve(reduced, x, b);
+        x -= xExact;
+        const double error = x.infinity_norm();
+        std::cout << name << ": max error " << error << std::endl;
+        if (!(error < 1e-12))
+            DUNE_THROW(Dune::Exception, name << ": wrong solution, max error " << error);
+    }
+
+    if (rebuilds.empty() || !rebuilds.front() || std::any_of(rebuilds.begin() + 1, rebuilds.end(), [](bool r){ return r; }))
+        DUNE_THROW(Dune::Exception, name << ": the additional entries are not rebuilt exactly at the first factorization");
+}
+
 int main(int argc, char* argv[])
 {
     using namespace Dumux;
@@ -314,6 +372,13 @@ int main(int argc, char* argv[])
     }
 
     solveWithSeveralInstances();
+
+    {
+        DirectSolverMumps<SeqLinearSolverTraits, LinearAlgebraTraits> additionalSolver;
+        solveWithAdditionalEntries(additionalSolver, bandMatrix(100, 100, {-1, 0, 1, 2}, 3.0, 1.0), exactSolution(100, 0.2), "additional entries");
+        DirectSolverMumps<SeqLinearSolverTraits, MTLinearAlgebraTraits> additionalMTSolver;
+        solveWithAdditionalEntries(additionalMTSolver, coupledMatrix(40, 60, {0, 1}, 1.0), coupledExactSolution(40, 60), "multitype: additional entries");
+    }
 
     return 0;
 }

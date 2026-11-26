@@ -311,6 +311,33 @@ public:
     void setMatrix(std::shared_ptr<Matrix> A)
     { setMatrix(*A); }
 
+    //! the function adding the entries of setAdditionalEntries, see there
+    using AdditionalEntries = std::function<void(bool rebuild,
+                                                 const std::function<GlobalIndex(std::size_t, std::size_t)>& globalIndex,
+                                                 const std::function<void(std::size_t, std::size_t, std::size_t, GlobalIndex, double)>& add)>;
+
+    /*!
+     * \brief Add entries to every matrix that is factorized that are not part of the matrix, e.g. entries whose
+     *        column is an unknown of another process
+     *
+     * The function is called as entries(rebuild, globalIndex, add) on all processes whenever a matrix is factorized:
+     * - globalIndex(domainIdx, dofIdx) is the global index of the first unknown of the degree of freedom dofIdx of
+     *   subdomain domainIdx (0 for a single-domain system) on this process; its unknown k has the index
+     *   globalIndex(domainIdx, dofIdx) + k
+     * - add(domainIdx, dofIdx, eqIdx, column, value) adds value to the entry of the row of equation eqIdx of the
+     *   degree of freedom dofIdx of this process and the global column index column; rows that this process does not
+     *   contribute to the distributed matrix are skipped
+     * - rebuild is true for the first call after the global indices have been (re)computed; only then the function may
+     *   communicate (all processes call it with the same value)
+     * The function has to add the entries in the same order in every call as long as their pattern does not change.
+     */
+    void setAdditionalEntries(AdditionalEntries entries)
+    {
+        additionalEntries_ = std::move(entries);
+        additionalEntriesRebuild_ = true;
+        analyzed_ = false;
+    }
+
     /*!
      * \brief Solve the linear system Ax = b with the factorization of the matrix set with setMatrix
      */
@@ -460,6 +487,7 @@ private:
     {
         const std::size_t nLocal = mapper.size();
         localToGlobal_.assign(nLocal, std::numeric_limits<GlobalIndex>::max());
+        additionalEntriesRebuild_ = true;
         isOwned_.assign(nLocal, false);
         isGhost_.assign(nLocal, false);
 
@@ -611,6 +639,7 @@ private:
     {
         constexpr std::size_t numSubDomains = std::tuple_size_v<GGTuple>;
         localToGlobal_.clear();
+        additionalEntriesRebuild_ = true;
         isOwned_.clear();
         isGhost_.clear();
         rowComplete_.clear();
@@ -794,6 +823,7 @@ private:
     {
         numBlocksGlobal_ = nDofs;
         localToGlobal_.resize(nDofs);
+        additionalEntriesRebuild_ = true;
         isOwned_.assign(nDofs, true);
         isGhost_.assign(nDofs, false);
         rowComplete_.assign(nDofs, true);
@@ -899,6 +929,7 @@ private:
                 }
             });
         });
+        addAdditionalEntries_(addTriplet);
         return samePattern && k == aLoc_.size();
     }
 
@@ -930,8 +961,50 @@ private:
                 }
             }
         }
+        addAdditionalEntries_(addTriplet);
         return samePattern && k == aLoc_.size();
     }
+
+    //! Add the entries of the function set with setAdditionalEntries with the given triplet writer
+    template<class AddTriplet>
+    void addAdditionalEntries_(AddTriplet& addTriplet)
+    {
+        if (!additionalEntries_)
+            return;
+
+        const bool rebuild = additionalEntriesRebuild_;
+        additionalEntriesRebuild_ = false;
+        additionalEntries_(rebuild,
+            [this](std::size_t domainIdx, std::size_t dofIdx) { return localToGlobal_[localScalarRow_(domainIdx, dofIdx, 0)] * localBlockSize_(); },
+            [&](std::size_t domainIdx, std::size_t dofIdx, std::size_t eqIdx, GlobalIndex column, double value)
+            {
+                const auto r = localScalarRow_(domainIdx, dofIdx, eqIdx);
+                if constexpr (isMultiType)
+                {
+                    if (isSrcRow_[r])
+                        addTriplet(localToGlobal_[r], column, value);
+                }
+                else
+                {
+                    if (isSrcRow_[dofIdx])
+                        addTriplet(localToGlobal_[dofIdx] * blockSize + eqIdx, column, value);
+                }
+            });
+    }
+
+    //! The local index of equation eqIdx of dof dofIdx of a subdomain: in the flattened scalar vector for
+    //! MultiType systems, the block index otherwise
+    std::size_t localScalarRow_(std::size_t domainIdx, std::size_t dofIdx, std::size_t eqIdx) const
+    {
+        if constexpr (isMultiType)
+            return subs_[domainIdx].scalarOffset + subs_[domainIdx].scalarBS*dofIdx + eqIdx;
+        else
+            return dofIdx;
+    }
+
+    //! The factor from an entry of localToGlobal_ to the global index of the first unknown of a dof
+    static constexpr GlobalIndex localBlockSize_()
+    { return isMultiType ? 1 : static_cast<GlobalIndex>(blockSize); }
 
     /*!
      * One-time gather metadata for the centralized (host) dense RHS/solution. Each rank's owned
@@ -1374,6 +1447,8 @@ private:
     std::vector<GlobalIndex> localToGlobal_;
     std::vector<bool> isOwned_;
     std::vector<bool> isGhost_;
+    AdditionalEntries additionalEntries_;
+    bool additionalEntriesRebuild_ = true;
     std::vector<bool> isSrcRow_; // block rows this rank contributes to the distributed assembly
     std::vector<bool> rowComplete_; // per (scalar) row: owner row already complete? (MultiType)
 
