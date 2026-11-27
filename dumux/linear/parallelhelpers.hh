@@ -27,6 +27,7 @@
 #include <dumux/common/multimapperview.hh>
 #include <dumux/common/parameters.hh>
 
+#include <set>
 #include <string>
 #include <utility>
 
@@ -404,7 +405,11 @@ public:
             std::set<int> neighbours;
             NeighbourGatherScatter ngs(mapper_, gridView_.comm().rank(), neighbours);
             gridView_.communicate(ngs, Dune::All_All_Interface, Dune::ForwardCommunication);
-            comm.remoteIndices().setNeighbours(neighbours);
+
+            // a process without neighbours exchanges its indices with all processes in a ring,
+            // so the neighbours are only used if every process has one
+            const bool allHaveNeighbours = gridView_.comm().min(int(!neighbours.empty())) == 1;
+            comm.remoteIndices().setNeighbours(allHaveNeighbours ? neighbours : std::set<int>{});
 
             comm.remoteIndices().template rebuild<false>();
         }
