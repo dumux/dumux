@@ -33,7 +33,7 @@
 #include <dumux/io/grid/porenetwork/gridmanager.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
-#include <dumux/porenetwork/2p/static/staticdrainge.hh>
+#include <dumux/porenetwork/2p/static/staticpnm.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
 namespace Dumux::Properties {
@@ -124,9 +124,21 @@ int main(int argc, char** argv)
                                                                  shapeFactor);
     };
 
+    // helper function to evaluate the snap-off capillary pressure
+    auto getPcSnapOff = [&](const std::size_t eIdx)
+    {
+        const Scalar throatRadius =  gridGeometry->throatInscribedRadius(eIdx);
+        const auto shape = gridGeometry->throatCrossSectionShape(eIdx);
+        return PoreNetwork::ThresholdCapillaryPressures::pcSnapoff(surfaceTension,
+                                                                    contactAngle,
+                                                                    throatRadius,
+                                                                    shape);
+    };
+
     // simulation data
     std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
     std::vector<Scalar> pcEntry(leafGridView.size(0));
+    std::vector<Scalar> pcSnapOff(leafGridView.size(0));
     std::vector<int> throatLabel(leafGridView.size(0));
     std::vector<Scalar> poreVolume(leafGridView.size(1));
     std::vector<Scalar> pc(leafGridView.size(1), 0.0);
@@ -139,6 +151,7 @@ int main(int argc, char** argv)
     auto writer = std::make_shared<Dune::VTKWriter<GridView>>(leafGridView);
     Dune::VTKSequenceWriter<GridView> sequenceWriter(writer, name);
     sequenceWriter.addCellData(pcEntry , "pcEntry");
+    sequenceWriter.addCellData(pcSnapOff , "pcSnapOff");
     sequenceWriter.addCellData(elementIsInvaded , "invaded");
     sequenceWriter.addCellData(throatLabel , "throatLabel");
     sequenceWriter.addVertexData(poreLabel , "poreLabel");
@@ -151,6 +164,7 @@ int main(int argc, char** argv)
     {
         const auto eIdx = leafGridView.indexSet().index(element);
         pcEntry[eIdx] = getPcEntry(eIdx);
+        pcSnapOff[eIdx] = getPcSnapOff(eIdx);
         throatLabel[eIdx] = gridGeometry->throatLabel(eIdx);
 
         for (int i = 0; i < 2; ++i)
@@ -167,7 +181,7 @@ int main(int argc, char** argv)
     Scalar pcGlobal = initialPc;
 
     // get the drainage model
-    PoreNetwork::TwoPStaticDrainage<GridGeometry, Scalar> drainageModel(*gridGeometry, pcEntry, throatLabel,
+    PoreNetwork::TwoPStatic<GridGeometry, Scalar> staticModel(*gridGeometry, pcEntry, pcSnapOff, throatLabel,
                                                                         inletThroatLabel, outletThroatLabel,
                                                                         allowDraingeOfOutlet);
 
@@ -188,10 +202,10 @@ int main(int argc, char** argv)
     std::cout << "total pore volume is " << totalPoreVolume << std::endl;
 
     // do the actual drainage process
-    for (int step = 0; step < numSteps + 1; ++step)
+    for (int step = 0; step < 2*numSteps + 1; ++step)
     {
         std::cout << "Step " << step << ": Applying global pc of " << pcGlobal << " --> ";
-        drainageModel.updateInvasionState(elementIsInvaded, pcGlobal);
+        staticModel.updateInvasionState(elementIsInvaded, pcGlobal);
 
         // calculate the average saturation of the network
         averageSaturation = 0;
@@ -247,9 +261,12 @@ int main(int argc, char** argv)
         logfile << averageSaturation << " " << pcGlobal << std::endl;
 
         // increment the global capillary pressure
-        pcGlobal += deltaPc;
+        if (step < numSteps)
+            pcGlobal += deltaPc;
+        else
+            pcGlobal -= deltaPc;
 
-        std::cout << drainageModel.numThroatsInvaded() << " of " << elementIsInvaded.size() << " throats invaded; S_avg " << averageSaturation << std::endl;
+        std::cout << staticModel.numThroatsInvaded() << " of " << elementIsInvaded.size() << " throats invaded; S_avg " << averageSaturation << std::endl;
         sequenceWriter.write(step);
     }
 
