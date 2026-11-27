@@ -1,0 +1,59 @@
+[Grid]
+UpperRight = 4e-4 4e-4 4e-4
+NumPores = 20 20 20
+ParameterType = lognormal
+MeanPoreInscribedRadius = 1e-5
+# a pore-size distribution this wide (standard deviation 1.6x the mean) is what gives this
+# network a realistically broad range of throat snap-off thresholds -- and hence genuine,
+# spread-out imbibition trapping -- instead of all throats snapping off within a narrow pc
+# window near the end of the cycle; see "Why network heterogeneity matters" in the README
+StandardDeviationPoreInscribedRadius = 1.6e-5
+PoreGeometry = Cube
+ThroatCrossSectionShape = Square
+ParameterRandomNumberSeed = 1
+BoundaryPoreLabels = xMin:1 xMax:2 yMin:3 yMax:4 zMin:5 zMax:6
+MinThroatLength = 1e-10
+DeletionProbability = 0.0 0.6 0.98 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9 0.9
+RemoveThroatsOnBoundary = 0 1 2 3 4 5
+CapPoresOnBoundaries = 0 1 2 3 4 5
+Sanitize = true
+DeletionRandomNumberSeed = 33
+
+[Problem]
+Name = pnm_2p_upscaling
+InitialPc = 1000 # [Pa]
+FinalPc = 80000 # [Pa]
+NumSteps = 60 # the number of pc increments for the drainage (and, reversed, the imbibition) leg
+PlotPcS = true
+SurfaceTension = 0.0725
+ContactAngle = 0.0
+InletPoreLabel = 1
+OutletPoreLabel = 2
+Directions = 0 # the directions to be plotted 0 1 2
+AllowDraingeOfOutlet = true
+EnableGravity = 0 # disable gravity
+MaximumPressureGradient = 1e10 #Pa/m
+MinimumPressureGradient = 1e1 #Pa/m
+Epsilon = 1e-13
+
+[SpatialParams]
+HighSwRegularizationMethod = Spline
+
+[Component]
+LiquidKinematicViscosity = 1e-6
+LiquidDensity = 1e3
+
+GasKinematicViscosity = 1.561e-5
+GasDensity = 1.184
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+
+[Newton]
+# the gas-phase single-phase solve sees throat conductances spanning many orders of magnitude
+# (real non-wetting-phase conductances for invaded throats vs. the small placeholder, 1e-6 times
+# the single-phase conductance, used for not-yet-invaded throats, see problem_static.hh), which
+# limits the accuracy the direct linear solver can reach; a slightly looser MaxRelativeShift than
+# the default (1e-8) keeps Newton from running out of steps
+MaxRelativeShift = 1e-6
+MaxSteps = 25
