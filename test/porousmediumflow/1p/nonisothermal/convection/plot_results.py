@@ -327,7 +327,7 @@ def convergence_table(results: list[Result], analytical: Analytical) -> None:
     print()
     print("  cells  dx [m]  Pe_grid |  barycenter [m]  minus v_T t [m] |  L2 vs Ogata-Banks [K]   rate")
 
-    previous = None
+    previous = None  # error and cell width of the previous level
     for result in results:
         x, temperature = sorted_profile(pv.read(result.vtp), TEMPERATURE_FIELD)
         cell_width = DOMAIN_LENGTH / result.case.cells
@@ -335,14 +335,15 @@ def convergence_table(results: list[Result], analytical: Analytical) -> None:
         centre = barycenter(x, temperature, cell_width, analytical)
         shape_error = l2_error(x, temperature, analytical.ogata_banks, time, cell_width)
 
+        # convergence rate in the cell size between successive levels
         rate = "     -"
         if previous is not None:
-            rate = "  %5.2f" % math.log2(previous / shape_error)
+            rate = "  %5.2f" % (math.log(previous[0] / shape_error) / math.log(previous[1] / cell_width))
 
         print("  %5d  %6.4f  %7.2f |  %12.6f  %+15.2e |  %.6f            %s"
               % (result.case.cells, cell_width, analytical.v * cell_width / analytical.d,
                  centre, centre - sharp_front, shape_error, rate))
-        previous = shape_error
+        previous = (shape_error, cell_width)
 
 
 def create_line_plot(results: list[Result], analytical: Analytical, image_file: Path) -> None:
@@ -367,9 +368,10 @@ def create_line_plot(results: list[Result], analytical: Analytical, image_file: 
     ax.plot(step_x, step_t, linewidth=1.4, color="#b03030", linestyle=":",
             label=r"$T$ retarded step front")
 
-    ax.set_xlabel("x [m]")
-    ax.set_ylabel(r"Temperature $T$ [K]")
-    ax.set_title(rf"Thermal front at $t$ = {time / 3600:.2f} h")
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel(r"Temperature $T$ (K)")
+    scheme = TARGET.rsplit("_", 1)[-1].upper()
+    ax.set_title(rf"{scheme}, $L_x$ = {DOMAIN_LENGTH:g} m, thermal front at $t$ = {time / 3600:.2f} h")
     ax.set_xlim(*X_LIMITS)
     ax.set_ylim(*TEMPERATURE_LIMITS)
     ax.grid(True, alpha=0.3)
