@@ -1,0 +1,26 @@
+{
+    "README.md" : [
+        "doc/_intro.md"
+    ],
+
+    "doc/main.md" : [
+        "doc/main_intro.md",
+        "main.cc"
+    ],
+
+    "doc/postprocessing.md" : [
+        "doc/postprocessing_intro.md"
+    ],
+
+    "navigation" : {
+        "mainpage" : "README.md",
+        "subpages" : [
+            "doc/main.md",
+            "doc/postprocessing.md"
+        ],
+        "subtitles" : [
+            "Main program flow",
+            "Postprocessing/Visualization of a pore-network model"
+        ]
+    }
+}
