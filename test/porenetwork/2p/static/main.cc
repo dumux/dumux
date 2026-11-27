@@ -137,6 +137,7 @@ int main(int argc, char** argv)
 
     // simulation data
     std::vector<bool> elementIsInvaded(leafGridView.size(0), false);
+    std::vector<bool> elementIsTrapped(leafGridView.size(0), false);
     std::vector<Scalar> pcEntry(leafGridView.size(0));
     std::vector<Scalar> pcSnapOff(leafGridView.size(0));
     std::vector<int> throatLabel(leafGridView.size(0));
@@ -205,7 +206,7 @@ int main(int argc, char** argv)
     for (int step = 0; step < 2*numSteps + 1; ++step)
     {
         std::cout << "Step " << step << ": Applying global pc of " << pcGlobal << " --> ";
-        staticModel.updateInvasionState(elementIsInvaded, pcGlobal);
+        staticModel.updateInvasionState(elementIsInvaded, elementIsTrapped, pcGlobal);
 
         // calculate the average saturation of the network
         averageSaturation = 0;
