@@ -6,6 +6,7 @@ add_subdirectory(kepsilon)
 add_subdirectory(komega)
 add_subdirectory(lowrekepsilon)
 add_subdirectory(oneeq)
+add_subdirectory(sst)
 add_subdirectory(zeroeq)
 
 file(GLOB DUMUX_FREEFLOW_RANS_HEADERS *.hh *.inc)

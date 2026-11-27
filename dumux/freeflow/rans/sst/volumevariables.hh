@@ -1,0 +1,266 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+//
+// SPDX-FileCopyrightText: Copyright © DuMux Project contributors, see AUTHORS.md in root folder
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+/*!
+ * \file
+ * \ingroup FreeflowModels
+ * \copydoc Dumux::SSTMassVolumeVariables
+ */
+#ifndef DUMUX_RANS_SST_MASS_VOLUME_VARIABLES_HH
+#define DUMUX_RANS_SST_MASS_VOLUME_VARIABLES_HH
+
+#include <algorithm>
+#include <cmath>
+
+#include <dumux/common/parameters.hh>
+#include <dumux/freeflow/turbulencemodel.hh>
+#include <dumux/freeflow/navierstokes/mass/1p/volumevariables.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup FreeflowModels
+ * \brief Volume variables for the single-phase Navier-Stokes mass balance fused with the
+ *        two-equation SST (Menter 1994) turbulence closure for the turbulent kinetic energy k
+ *        and the specific dissipation rate omega, solved as two extra equations on the mass
+ *        sub-model.
+ *
+ * The stressTensorScalarProduct(), vorticityTensorScalarProduct(), wallDistance() and
+ * kinematicViscosity() are read from the problem (which forwards them from the momentum
+ * domain's Dumux::RANSMomentumProblem). The lagged storedTurbulentKineticEnergy(),
+ * storedDissipation() and storedCrossDiffusionGradientProduct() are read from the mass
+ * problem (see massproblem.hh). Only the product of the k and omega gradients is stored,
+ * since it is the only gradient quantity needed by F1() and the cross-diffusion source term.
+ */
+template<class Traits>
+class SSTMassVolumeVariables
+: public NavierStokesMassOnePVolumeVariables<Traits>
+{
+    using ParentType = NavierStokesMassOnePVolumeVariables<Traits>;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+
+public:
+    using Indices = typename Traits::ModelTraits::Indices;
+
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
+    void update(const ElementSolution& elemSol,
+                const Problem& problem,
+                const Element& element,
+                const SubControlVolume& scv)
+    {
+        ParentType::update(elemSol, problem, element, scv);
+
+        const auto eIdx = scv.elementIndex();
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct(eIdx);
+        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct(eIdx);
+        wallDistance_ = problem.wallDistance(eIdx);
+        kinematicViscosity_ = problem.kinematicViscosity(eIdx);
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy(eIdx);
+        storedDissipation_ = problem.storedDissipation(eIdx);
+        crossDiffusionGradientProduct_ = problem.storedCrossDiffusionGradientProduct(eIdx);
+
+        // The eddy viscosity is cached so that it can be accessed through the argument-free
+        // dynamicEddyViscosity(), which is the signature the coupling manager looks for when
+        // providing the turbulent viscosity to the momentum domain. It is updated with every
+        // update() call.
+        dynamicEddyViscosity_ = calculateEddyViscosity(problem);
+
+        // Nonisothermal only: the effective thermal conductivity including the eddy
+        // contribution (see dumux/freeflow/rans/common/thermalconductivitymodel.hh)
+        if constexpr (Traits::ModelTraits::enableEnergyBalance())
+        {
+            using FluidSystem = typename Traits::FluidSystem;
+            static const Scalar turbulentPrandtlNumber = getParam<Scalar>("RANS.TurbulentPrandtlNumber", 1.0);
+            this->lambdaEff_ = this->fluidThermalConductivity()
+                + dynamicEddyViscosity_*FluidSystem::heatCapacity(this->fluidState(), 0)/turbulentPrandtlNumber;
+        }
+    }
+
+    //! The turbulent kinetic energy primary variable.
+    Scalar turbulentKineticEnergy() const
+    { return this->priVar(Indices::turbulentKineticEnergyIdx); }
+
+    //! The specific dissipation rate primary variable.
+    Scalar dissipation() const
+    { return this->priVar(Indices::dissipationIdx); }
+
+    Scalar storedTurbulentKineticEnergy() const
+    { return storedTurbulentKineticEnergy_; }
+
+    Scalar storedDissipation() const
+    { return storedDissipation_; }
+
+    //! grad(k).grad(omega), from the problem's stored (lagged) gradients - needed by F1() and
+    //! (only when positive) the cross-diffusion source term.
+    Scalar storedCrossDiffusionGradientProduct() const
+    { return crossDiffusionGradientProduct_; }
+
+    Scalar stressTensorScalarProduct() const
+    { return stressTensorScalarProduct_; }
+
+    Scalar vorticityTensorScalarProduct() const
+    { return vorticityTensorScalarProduct_; }
+
+    Scalar wallDistance() const
+    { return wallDistance_; }
+
+    Scalar kinematicViscosity() const
+    { return kinematicViscosity_; }
+
+    //! \brief Returns the absolute value of the vorticity, Omega = sqrt(2*vorticityTensorScalarProduct).
+    Scalar absoluteValueVorticity() const
+    {
+        using std::sqrt;
+        return sqrt(2.0*vorticityTensorScalarProduct());
+    }
+
+    //! The dynamic eddy viscosity of the current solution, cached in update().
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
+    //! \brief Computes the dynamic eddy viscosity for the selected SST model version.
+    //!        Called from update(), use dynamicEddyViscosity() to access the cached value.
+    template<class Problem>
+    Scalar calculateEddyViscosity(const Problem& problem) const
+    {
+        using std::max;
+
+        if (problem.sstModelVersion() == SSTModel::BSL)
+            return turbulentKineticEnergy()/dissipation()*this->density();
+        else
+        {
+            const Scalar dividend = a1SST()*turbulentKineticEnergy();
+            const Scalar divisor = max(a1SST()*dissipation(), absoluteValueVorticity()*F2());
+            return dividend/divisor*this->density();
+        }
+    }
+
+    //! \brief Returns the transformation function F1 blending the near-wall (k-omega) and
+    //!        far-field (transformed k-epsilon) closure-constant sets.
+    //! \note Returns zero as long as the stored dissipation is zero (i.e. before the first
+    //! updateDynamicWallProperties() call) to avoid a division by zero.
+    Scalar F1() const
+    {
+        using std::max;
+        using std::min;
+        using std::sqrt;
+        using std::tanh;
+
+        if (storedDissipation() <= 0.0)
+            return 0.0;
+
+        Scalar positiveCrossDiffusion = 2.0*this->density()*sigmaOmega2()/storedDissipation()*storedCrossDiffusionGradientProduct();
+        positiveCrossDiffusion = max(positiveCrossDiffusion, 1e-20);
+
+        const Scalar possibleMin2 = (4.0*this->density()*sigmaOmega2()*storedTurbulentKineticEnergy())
+                                  / (positiveCrossDiffusion*wallDistance()*wallDistance());
+
+        const Scalar possibleMax1 = sqrt(storedTurbulentKineticEnergy())/(0.09*storedDissipation()*wallDistance());
+        const Scalar possibleMax2 = (500.0*kinematicViscosity())/(wallDistance()*wallDistance()*storedDissipation());
+        const Scalar possibleMin1 = max(possibleMax1, possibleMax2);
+
+        const Scalar argument = min(possibleMin1, possibleMin2);
+        return tanh(argument*argument*argument*argument);
+    }
+
+    //! \brief Returns the transformation function F2 used only by the eddy-viscosity limiter
+    //!        (SST model version).
+    Scalar F2() const
+    {
+        using std::max;
+        using std::sqrt;
+        using std::tanh;
+
+        if (storedDissipation() <= 0.0)
+            return 0.0;
+
+        const Scalar possibleMax1 = 2.0*sqrt(storedTurbulentKineticEnergy())/(0.09*storedDissipation()*wallDistance());
+        const Scalar possibleMax2 = (500.0*kinematicViscosity())/(wallDistance()*wallDistance()*storedDissipation());
+        const Scalar argument = max(possibleMax1, possibleMax2);
+        return tanh(argument*argument);
+    }
+
+    //! \name Closure constants (near-wall "1" set, far-field "2" set, and the two blended sets)
+    // \{
+    Scalar betaOmega() const { return 0.0708; }
+
+    Scalar sigmaK1BSL() const { return 0.5; }
+    Scalar sigmaK1SST() const { return 0.85; }
+    Scalar sigmaK2() const { return 1.0; }
+
+    Scalar sigmaOmega1BSL() const { return 0.5; }
+    Scalar sigmaOmega1SST() const { return 0.5; }
+    Scalar sigmaOmega2() const { return 0.856; }
+
+    Scalar beta1BSL() const { return 0.0750; }
+    Scalar beta1SST() const { return 0.0750; }
+    Scalar beta2() const { return 0.0820; }
+
+    Scalar betaStar1BSL() const { return 0.09; }
+    Scalar betaStar1SST() const { return 0.09; }
+    Scalar betaStar2() const { return 0.09; }
+
+    Scalar kappa1BSL() const { return 0.41; }
+    Scalar kappa1SST() const { return 0.41; }
+    Scalar kappa2() const { return 0.41; }
+
+    Scalar gamma1BSL() const
+    {
+        using std::sqrt;
+        return beta1BSL()/betaStar1BSL() - sigmaOmega1BSL()*kappa1BSL()*kappa1BSL()/sqrt(betaStar1BSL());
+    }
+    Scalar gamma1SST() const
+    {
+        using std::sqrt;
+        return beta1SST()/betaStar1SST() - sigmaOmega1SST()*kappa1SST()*kappa1SST()/sqrt(betaStar1SST());
+    }
+    Scalar gamma2() const
+    {
+        using std::sqrt;
+        return beta2()/betaStar2() - sigmaOmega2()*kappa2()*kappa2()/sqrt(betaStar2());
+    }
+
+    Scalar a1SST() const { return 0.31; }
+
+    Scalar sigmaKSST() const { return F1()*sigmaK1SST() + (1.0 - F1())*sigmaK2(); }
+    Scalar sigmaOmegaSST() const { return F1()*sigmaOmega1SST() + (1.0 - F1())*sigmaOmega2(); }
+    Scalar betaSST() const { return F1()*beta1SST() + (1.0 - F1())*beta2(); }
+    Scalar betaStarSST() const { return F1()*betaStar1SST() + (1.0 - F1())*betaStar2(); }
+    Scalar gammaSST() const { return F1()*gamma1SST() + (1.0 - F1())*gamma2(); }
+
+    Scalar sigmaKBSL() const { return F1()*sigmaK1BSL() + (1.0 - F1())*sigmaK2(); }
+    Scalar sigmaOmegaBSL() const { return F1()*sigmaOmega1BSL() + (1.0 - F1())*sigmaOmega2(); }
+    Scalar betaBSL() const { return F1()*beta1BSL() + (1.0 - F1())*beta2(); }
+    Scalar betaStarBSL() const { return F1()*betaStar1BSL() + (1.0 - F1())*betaStar2(); }
+    Scalar gammaBSL() const { return F1()*gamma1BSL() + (1.0 - F1())*gamma2(); }
+    // \}
+
+    //! \name Model-version-dependent accessors, used by the diffusive flux (localresidual.hh)
+    //!       so it does not need to branch on problem.sstModelVersion() itself.
+    // \{
+    template<class Problem>
+    Scalar sigmaK(const Problem& problem) const
+    { return problem.sstModelVersion() == SSTModel::SST ? sigmaKSST() : sigmaKBSL(); }
+
+    template<class Problem>
+    Scalar sigmaOmega(const Problem& problem) const
+    { return problem.sstModelVersion() == SSTModel::SST ? sigmaOmegaSST() : sigmaOmegaBSL(); }
+    // \}
+
+protected:
+    Scalar stressTensorScalarProduct_ = 0.0;
+    Scalar vorticityTensorScalarProduct_ = 0.0;
+    Scalar wallDistance_ = 0.0;
+    Scalar kinematicViscosity_ = 0.0;
+    Scalar storedTurbulentKineticEnergy_ = 0.0;
+    Scalar storedDissipation_ = 0.0;
+    Scalar crossDiffusionGradientProduct_ = 0.0;
+    Scalar dynamicEddyViscosity_ = 0.0;
+};
+
+} // end namespace Dumux
+
+#endif
