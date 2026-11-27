@@ -1,0 +1,31 @@
+[TimeLoop]
+DtInitial = 1 # s
+TEnd = 1e5 # s
+MaxTimeStepSize = 50 # s, keeps the time discretization error below the spatial error
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 5 1
+Cells = 200 1
+
+[Problem]
+Name = 1pnifv_conduction # name passed to the output routines
+OutputInterval = 100 # every n-th timestep an output file is written
+EnableGravity = false
+
+[Vtk]
+AddVelocity = true
+
+[MpfaTest.Vtk]
+AddVelocity = false
+
+[Component]
+# constant fluid properties (same values as Components::SimpleH2O)
+LiquidDensity = 1000 # kg/m^3
+LiquidHeatCapacity = 4180 # J/(kg K)
+LiquidThermalConductivity = 0.679 # W/(m K)
+LiquidDynamicViscosity = 1e-3 # Pa s
+# solid properties
+SolidDensity = 2700 # kg/m^3
+SolidThermalConductivity = 2.8 # W/(m K)
+SolidHeatCapacity = 790 # J/(kg K)

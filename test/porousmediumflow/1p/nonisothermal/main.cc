@@ -6,7 +6,7 @@
 //
 /*!
  * \file
- * \brief Test for the 1pni CC model
+ * \brief Main file shared by the 1pni conduction and convection tests
  */
 
 #include <config.h>
@@ -17,6 +17,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 
+// the properties of the test (conduction or convection) found via the include path set in its CMakeLists.txt
 #include "properties.hh"
 
 #include <dumux/common/initialize.hh>
@@ -37,6 +38,18 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager_yasp.hh>
 #include <dumux/io/loadsolution.hh>
+
+namespace Dumux {
+
+//! Write the errors with respect to the analytical solution, if the problem provides them (conduction test)
+template<class Problem, class SolutionVector, class Scalar>
+void writeErrorsIfAvailable(const Problem& problem, const SolutionVector& x, Scalar time)
+{
+    if constexpr (requires { problem.writeErrors(x, time); })
+        problem.writeErrors(x, time);
+}
+
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
@@ -161,6 +174,9 @@ int main(int argc, char** argv)
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    // errors at the end time with respect to the analytical solution
+    writeErrorsIfAvailable(*problem, x, timeLoop->time());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
