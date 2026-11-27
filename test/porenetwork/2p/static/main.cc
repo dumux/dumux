@@ -14,6 +14,7 @@
  #include <ctime>
  #include <iostream>
 
+ #include <dune/common/exceptions.hh>
  #include <dune/common/parallel/mpihelper.hh>
  #include <dune/common/timer.hh>
  #include <dune/grid/io/file/dgfparser/dgfexception.hh>
@@ -32,6 +33,48 @@
 #include <dumux/porenetwork/2p/static/staticpnm.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
+namespace Dumux::PoreNetwork {
+
+/*!
+ * \brief Inverts a pore's local pc-Sw curve for the given pore shape.
+ *
+ * Only "platonic body" pore shapes have a pc-Sw relation implemented
+ * (see dumux/material/fluidmatrixinteractions/porenetwork/pore/2p); any
+ * other shape (e.g. Sphere, Circle, Cylinder) throws Dune::NotImplemented.
+ */
+template<class Scalar>
+Scalar poreSaturation(Pore::Shape shape,
+                      const Scalar poreRadius, const Scalar surfaceTension, const Scalar pc)
+{
+    auto invert = [&](auto shapeTag)
+    {
+        constexpr auto s = decltype(shapeTag)::value;
+        using MaterialLaw = FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<s>;
+        using BasicParams = typename MaterialLaw::BasicParams;
+        using RegularizationParams = typename MaterialLaw::RegularizationParams;
+
+        const auto params = BasicParams().setPoreInscribedRadius(poreRadius).setPoreShape(s).setSurfaceTension(surfaceTension);
+        auto fluidMatrixInteraction = makeFluidMatrixInteraction(MaterialLaw(params, RegularizationParams(), "SpatialParams"));
+        return fluidMatrixInteraction.sw(pc);
+    };
+
+    using Pore::Shape;
+    switch (shape)
+    {
+        case Shape::tetrahedron:  return invert(std::integral_constant<Shape, Shape::tetrahedron>{});
+        case Shape::cube:         return invert(std::integral_constant<Shape, Shape::cube>{});
+        case Shape::octahedron:   return invert(std::integral_constant<Shape, Shape::octahedron>{});
+        case Shape::dodecahedron: return invert(std::integral_constant<Shape, Shape::dodecahedron>{});
+        case Shape::icosahedron:  return invert(std::integral_constant<Shape, Shape::icosahedron>{});
+        default:
+            DUNE_THROW(Dune::NotImplemented,
+                       "No pc-Sw relation available for pore shape '" << Pore::shapeToString(shape)
+                       << "'. Supported shapes: Tetrahedron, Cube, Octahedron, Dodecahedron, Icosahedron "
+                       << "(see dumux/material/fluidmatrixinteractions/porenetwork/pore/2p).");
+    }
+}
+
+} // end namespace Dumux::PoreNetwork
 
 int main(int argc, char** argv)
 {
@@ -224,12 +267,9 @@ int main(int argc, char** argv)
 
                 if (pc[dofIdx] > 0.0)
                 {
-                    using MaterialLaw = PoreNetwork::FluidMatrix::TwoPLocalRulesPlatonicBodyDefault<PoreNetwork::Pore::Shape::cube>;
                     const Scalar poreRadius = gridGeometry->poreInscribedRadius(dofIdx);
-
-                    const auto params = MaterialLaw::BasicParams().setPoreInscribedRadius(poreRadius).setPoreShape(PoreNetwork::Pore::Shape::cube).setSurfaceTension(surfaceTension);
-                    auto fluidMatrixInteraction = makeFluidMatrixInteraction(MaterialLaw(params, MaterialLaw::RegularizationParams(), "SpatialParams"));
-                    sw[dofIdx] = fluidMatrixInteraction.sw(pc[dofIdx]);
+                    const auto poreShape = gridGeometry->poreGeometry(dofIdx);
+                    sw[dofIdx] = PoreNetwork::poreSaturation(poreShape, poreRadius, surfaceTension, pc[dofIdx]);
                 }
                 else
                     sw[dofIdx] = 1.0;
