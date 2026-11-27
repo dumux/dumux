@@ -83,6 +83,14 @@ dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxtpfa_line
               CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxtpfa_line)
 
+dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxtpfa_line_nearfaces
+              LABELS multidomain multidomain_embedded 1p
+              TARGET test_md_embedded_1d3d_1p1p_boxtpfa_line
+              COMMAND ./test_md_embedded_1d3d_1p1p_boxtpfa_line
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMD_ARGS params.input -Vtk.OutputName test_md_embedded_1d3d_1p1p_boxtpfa_line_nearfaces
+                       -Vessel.Grid.LowerLeft "6e-9 6e-9 0" -Vessel.Grid.UpperRight "6e-9 6e-9 1")
+
 dumux_add_test(NAME test_md_embedded_1d3d_1p1p_boxbox_line
               LABELS multidomain multidomain_embedded 1p
               SOURCES main.cc

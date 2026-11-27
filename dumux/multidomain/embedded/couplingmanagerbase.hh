@@ -31,6 +31,7 @@
 #include <dumux/assembly/coloring.hh>
 #include <dumux/geometry/distance.hh>
 #include <dumux/geometry/intersectingentities.hh>
+#include <dumux/discretization/elementscontainingpoint.hh>
 #include <dumux/discretization/method.hh>
 #include <dumux/common/typetraits/localdofs_.hh>
 #include <dumux/multidomain/couplingmanager.hh>
@@ -296,21 +297,25 @@ public:
             // iterate over all quadrature points
             for (auto&& qp : quad)
             {
-                // compute the coupling stencils
+                // the intersection with a bulk element can also be found for a point just outside of it
+                const auto globalPos = intersectionGeometry.global(qp.position());
+                std::vector<std::size_t> bulkElementIndices;
+                bulkElementIndices.reserve(is.numDomainNeighbors());
                 for (std::size_t outsideIdx = 0; outsideIdx < is.numDomainNeighbors(); ++outsideIdx)
-                {
-                    const auto& outside = is.domainEntity(outsideIdx);
-                    const std::size_t bulkElementIdx = bulkGridGeometry.elementMapper().index(outside);
+                    bulkElementIndices.push_back(bulkGridGeometry.elementMapper().index(is.domainEntity(outsideIdx)));
+                removeElementsNotContainingPoint(bulkElementIndices, bulkGridGeometry, globalPos);
 
+                // compute the coupling stencils
+                for (const std::size_t bulkElementIdx : bulkElementIndices)
+                {
                     // each quadrature point will be a point source for the sub problem
-                    const auto globalPos = intersectionGeometry.global(qp.position());
                     const auto id = idCounter_++;
                     const auto qpweight = qp.weight();
                     const auto ie = intersectionGeometry.integrationElement(qp.position());
                     pointSources(bulkIdx).emplace_back(globalPos, id, qpweight, ie, bulkElementIdx);
-                    pointSources(bulkIdx).back().setEmbeddings(is.numDomainNeighbors());
+                    pointSources(bulkIdx).back().setEmbeddings(bulkElementIndices.size());
                     pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, lowDimElementIdx);
-                    pointSources(lowDimIdx).back().setEmbeddings(is.numDomainNeighbors());
+                    pointSources(lowDimIdx).back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
                     // the actual solution dependent source term
@@ -347,7 +352,7 @@ public:
                     this->pointSourceData().emplace_back(std::move(psData));
 
                     // compute average distance to bulk cell
-                    averageDistanceToBulkCell_.push_back(averageDistancePointGeometry(globalPos, outside.geometry()));
+                    averageDistanceToBulkCell_.push_back(averageDistancePointGeometry(globalPos, bulkGridGeometry.element(bulkElementIdx).geometry()));
 
                     // export the lowdim coupling stencil
                     // we insert all dofs / elements and make it unique later

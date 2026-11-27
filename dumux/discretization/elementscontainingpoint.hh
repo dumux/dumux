@@ -54,20 +54,22 @@ Dune::ReservedVector<std::size_t, maxNumScvs> scvsContainingPoint(const ElementD
 
 /*!
  * \ingroup Discretization
- * \brief The indices of the elements that contain a point
+ * \brief Remove the elements that do not contain a point from the elements a search of the grid returns
  *
  * For discretizations with sub-control volumes, an element contains a point if one of its sub-control volumes
- * does; sub-control volumes that overlap others are not needed for that. The search of the grid alone also
+ * does; sub-control volumes that overlap others are not needed for that. The search of the grid also
  * returns elements that the point lies just outside of, within its tolerance, which can be larger than the one
  * of the sub-control volumes, so a point source of such an element would have no sub-control volume.
  *
- * \return the element indices, see the function `element` of the grid discretization
+ * \param elementIndices the indices of the elements the search returns
+ * \param gridDiscretization the grid discretization
+ * \param globalPos the point
  */
 template<class GridDiscretization, class GlobalPosition>
-std::vector<std::size_t> elementsContainingPoint(const GridDiscretization& gridDiscretization,
-                                                 const GlobalPosition& globalPos)
+void removeElementsNotContainingPoint(std::vector<std::size_t>& elementIndices,
+                                      const GridDiscretization& gridDiscretization,
+                                      const GlobalPosition& globalPos)
 {
-    auto elementIndices = intersectingEntities(globalPos, gridDiscretization.boundingBoxTree());
     if constexpr (Detail::locatesPointsInScvs<GridDiscretization>)
     {
         auto elemDisc = localView(gridDiscretization);
@@ -103,6 +105,23 @@ std::vector<std::size_t> elementsContainingPoint(const GridDiscretization& gridD
             return true;
         });
     }
+}
+
+/*!
+ * \ingroup Discretization
+ * \brief The indices of the elements that contain a point
+ *
+ * For discretizations with sub-control volumes, an element contains a point if one of its sub-control volumes
+ * does, see `removeElementsNotContainingPoint`.
+ *
+ * \return the element indices, see the function `element` of the grid discretization
+ */
+template<class GridDiscretization, class GlobalPosition>
+std::vector<std::size_t> elementsContainingPoint(const GridDiscretization& gridDiscretization,
+                                                 const GlobalPosition& globalPos)
+{
+    auto elementIndices = intersectingEntities(globalPos, gridDiscretization.boundingBoxTree());
+    removeElementsNotContainingPoint(elementIndices, gridDiscretization, globalPos);
     return elementIndices;
 }
 
