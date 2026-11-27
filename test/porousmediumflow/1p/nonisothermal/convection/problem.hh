@@ -22,6 +22,7 @@
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/numeqvector.hh>
+#include <dumux/discretization/method.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 namespace Dumux {
@@ -33,8 +34,10 @@ namespace Dumux {
  * at a constant rate on the left hand side.
  *
  * Initially the domain is fully saturated with water at a constant temperature.
- * On the left hand side water is injected at a constant rate and on the right hand side
+ * On the left hand side water is injected at a constant rate and temperature and on the right hand side
  * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
+ * The inlet temperature is a Dirichlet value for the box scheme and a Robin condition for the
+ * cell-centered schemes, which do not support mixed boundary conditions.
  *
  * The result of the analytical solution is written into the vtu files.
  * This problem uses the \ref OnePModel and \ref NIModel model.
@@ -181,8 +184,14 @@ public:
 
         if(globalPos[0] > this->gridGeometry().bBoxMax()[0] - eps_)
             bcTypes.setAllDirichlet();
+        else if constexpr (GridGeometry::discMethod == DiscretizationMethods::box)
+        {
+            // prescribed mass influx and constant inlet temperature
+            bcTypes.setNeumann(conti0EqIdx);
+            bcTypes.setDirichlet(energyEqIdx);
+        }
         else
-            bcTypes.setAllNeumann();
+            bcTypes.setAllNeumann(); // inlet temperature as Robin condition in neumann()
 
         return bcTypes;
     }
@@ -196,7 +205,10 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initial_(globalPos);
+        auto priVars = initial_(globalPos);
+        if (globalPos[0] < eps_)
+            priVars[temperatureIdx] = temperatureHigh_; // inlet temperature (box scheme)
+        return priVars;
     }
 
     /*!
@@ -227,7 +239,15 @@ public:
         if(globalPos[0] < eps_)
         {
             values[conti0EqIdx] = -darcyVelocity_*volVars.density();
-            values[energyEqIdx] = values[conti0EqIdx]*FluidSystem::enthalpy(temperatureHigh_, volVars.pressure());
+            if constexpr (GridGeometry::discMethod != DiscretizationMethods::box)
+            {
+                // Robin condition for the inlet temperature: advective flux with the inlet temperature
+                // and conduction over the distance between cell center and boundary face
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                const Scalar distance = (scvf.ipGlobal() - insideScv.dofPosition()).two_norm();
+                values[energyEqIdx] = values[conti0EqIdx]*FluidSystem::enthalpy(temperatureHigh_, volVars.pressure())
+                                      + volVars.effectiveThermalConductivity()*(volVars.temperature() - temperatureHigh_)/distance;
+            }
         }
         return values;
     }

@@ -168,13 +168,11 @@ T(x,0)=T_{\text{init}} = 290\ \text{K} \, , \qquad
 p(x,0)=p_{\text{init}} = 10^5\ \text{Pa}.
 $$
 
-At the left boundary a Neumann condition prescribes the mass influx and the energy influx
-that the injected water carries,
+At the left boundary the mass influx and the temperature are prescribed,
 
 $$
 (\rho_f \boldsymbol{v}_D) \cdot \boldsymbol{n} = -v_D\,\rho_f \, , \qquad
-(\rho_f h_f \boldsymbol{v}_D) \cdot \boldsymbol{n} = -v_D\,\rho_f\,h_f(T_{\text{high}}, p) \, ,
-\qquad T_{\text{high}} = 291\ \text{K},
+T(0,t) = T_{\text{high}} = 291\ \text{K},
 $$
 
 with $v_D = 10^{-4}\ \mathrm{m\,s^{-1}}$. At the right boundary temperature and pressure are
@@ -185,13 +183,13 @@ T(L_x,t)=T_{\text{init}} = 290\ \text{K} \, , \qquad
 p(L_x,t)=p_{\text{init}} = 10^5\ \text{Pa}.
 $$
 
-@note The inlet condition is not the constant-temperature inlet that the Ogata-Banks
-solution assumes. The solution of prescribing the *total* energy influx
-is presented by van Genuchten and Alves
-@cite vanGenuchtenAlves1982 in A3. At the Péclet number of this benchmark
-($v_T L_x / D_T \approx 4.3\cdot10^{3}$ for $L_x = 20\ \mathrm{m}$) the two solutions differ by less than
-$10^{-4}\ \mathrm{K}$, which is two orders of magnitude below the discretization error,
-so the simpler Ogata-Banks form is used as the reference.
+The inlet temperature is the constant-temperature inlet that the Ogata-Banks solution assumes. The box scheme imposes it as a Dirichlet value. The cell-centered schemes do not support mixed boundary conditions, so the temperature is imposed as a Robin condition: the energy flux through the boundary is the advective flux with the inlet temperature plus the conductive flux over the distance $d$ between the cell center and the boundary,
+
+$$
+\boldsymbol{q}_e \cdot \boldsymbol{n} = -v_D\,\rho_f\,h_f(T_{\text{high}}, p) + \lambda_{\text{eff}}\,\frac{T_i - T_{\text{high}}}{d} \, ,
+$$
+
+with the temperature $T_i$ of the cell at the boundary.
 
 The boundary conditions and the simulation domain are shown below.
 
