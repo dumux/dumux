@@ -1,6 +1,6 @@
 # 1D Heat Convection with a Retarded Thermal Front {#benchmark-1pni-convection}
 
-## Problem Description
+## Problem Description {#1pni-convection-problem-description}
 
 This benchmark verifies the non-isothermal model for combined advective and conductive
 heat transport in a fully saturated porous medium. Physically the setup represents a
@@ -13,7 +13,7 @@ The benchmark therefore tests two things at once: whether the model reproduces t
 correct *retarded front velocity*, and whether it reproduces the correct *front width*,
 which is set by heat conduction.
 
-### Governing Equations
+### Governing Equations {#1pni-convection-governing-equations}
 
 Assumptions:
 
@@ -78,7 +78,7 @@ the heat stored in the fluid alone. For the parameters of this benchmark $R = 1.
 the thermal front moves at $v_T = 1.42 \cdot 10^{-4}\ \mathrm{m\,s^{-1}}$ while the water
 moves at $v_D/\phi = 2.5 \cdot 10^{-4}\ \mathrm{m\,s^{-1}}$.
 
-## Analytical Solution
+## Analytical Solution {#1pni-convection-analytical-solution}
 
 Two analytical solutions of the equation above are used, one for each of the two things
 the benchmark checks.
@@ -117,7 +117,7 @@ end of the simulation, and which is broadened by conduction as $\sqrt{4 D_T t}$.
 the solution of the equation the model actually solves, so it is the reference for the
 shape of the front.
 
-## Parameters
+## Parameters {#1pni-convection-parameters}
 
 | Parameter                        | Symbol               | Value | Unit  |
 |----------------------------------|---------------------:|:------|:------|
@@ -146,7 +146,7 @@ quantities are
 | Retarded front velocity         | $v_T$                  | 1.42e-4  | m s$^{-1}$ |
 | Effective thermal diffusivity   | $D_T$                  | 6.61e-7  | m$^2$ s$^{-1}$ |
 
-##  Simulation Setup
+## Simulation Setup {#1pni-convection-simulation-setup}
 
 We solve the energy and mass balance using the single phase, non-isothermal model in
 DuMux @ref OnePModel @ref NIModel. For the spatial discretization we choose a finite
@@ -155,10 +155,10 @@ volume discretization with a cell-centered TPFA (@ref CCTpfaDiscretization) or M
 (@ref BoxDiscretization). The shipped test runs with the box and the cell-centered TPFA scheme;
 a restart test checks that the box simulation can be continued from an intermediate VTK output file.
 
-### Simulation Domain
+### Simulation Domain {#1pni-convection-simulation-domain}
 The computational domain is represented by a one-dimensional `Dune::YaspGrid` of length $L_x$. The shipped test uses $L_x = 20\ \mathrm{m}$ with $80$ cells. The benchmark script uses a shortened domain of $L_x = 8\ \mathrm{m}$ (all results below), so that the refined grids stay affordable. For the simulated time of $3 \cdot 10^4\ \mathrm{s}$ the thermal front reaches $x = 4.25\ \mathrm{m}$ and its tail remains sufficiently far from the right boundary, so the finite domain is suitable to be compared to the semi-infinite analytical solution.
 
-### Initial and Boundary Conditions
+### Initial and Boundary Conditions {#1pni-convection-initial-and-boundary-conditions}
 Initially, the temperature and pressure are set to
 
 $$
@@ -195,7 +195,7 @@ The boundary conditions and the simulation domain are shown below.
 
 ![Simulation domain and boundary conditions](1pni_1d_convection_benchmark_domain.svg){html: width=70%}
 
-### Resolution
+### Resolution {#1pni-convection-resolution}
 Four uniformly refined grids of the benchmark domain ($L_x = 8\ \mathrm{m}$) are tested, so that the front is resolved to a different
 degree on each. Cell size and time step are both refined by a factor of four per level:
 
@@ -206,7 +206,7 @@ degree on each. Cell size and time step are both refined by a factor of four per
 | 3     | 1600  | 0.005          | 10                    |
 | 4     | 6400  | 0.00125        | 2.5                   |
 
-## Results
+## Results {#1pni-convection-results}
 
 To reproduce the benchmark results, run one of the tests from the build directory:
 
@@ -250,7 +250,7 @@ produces one figure in the `build-cmake` directory:
 The plot shows how the numerical profiles approach the Ogata-Banks solution under
 refinement, and how far both are from the pure-advection step.
 
-### What is compared
+### What is compared {#1pni-convection-what-is-compared}
 For comparing  the numerical results against the analytical solutions, we do this for two separate quantities.
 
 *1. Front position, against the step front.* Because the step carries only a position,
@@ -276,7 +276,7 @@ that the $L^2$ norm is taken over the temperature profile and has nothing to do 
 barycenters, and that the barycenters are positions, not errors: there is no exact value
 for them to converge to other than the two analytical positions quoted above.
 
-### Front position 
+### Front position {#1pni-convection-front-position}
 Barycenters of the numerical profiles, next to the analytical
 positions:
 
@@ -289,13 +289,7 @@ positions:
 
 The position of the barycenters from the numerical and the analytical solutions agree upto $5.7$mm against the sharp front and upto $1.1$mm against the Ogata-Banks solution on a $8$m long domain.
 
-The difference of the numerical solution against the step function splits into the two contributions. Most of it,
-$D_T / v_T = 4.6\ \mathrm{mm}$, is the diffusive shift that the Ogata-Banks barycenter
-already has over the step front. What is left is the $1.1\ \mathrm{mm}$ of the third
-column, the distance to the Ogata-Banks barycenter, which is related to the constant-property
-assumption of the analytical solutions.
-
-### Front shape
+### Front shape {#1pni-convection-front-shape}
 $L^2$ error of the temperature profile against the Ogata-Banks solution, the advective-diffusion solution,
 with the convergence rate between successive levels:
 
