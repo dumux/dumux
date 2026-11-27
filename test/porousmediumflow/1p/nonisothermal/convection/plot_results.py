@@ -41,8 +41,8 @@ TIME_STEP_SIZES = (160.0, 40.0, 10.0, 2.5)
 X_LIMITS = (2.5, 6.5)
 TEMPERATURE_LIMITS = (289.9, 291.1)
 
-# ordinal blue ramp (light -> dark) encoding the ordered refinement levels
-PROFILE_COLORS = ("#a6c9f0", "#5b9ae4", "#2a6fc4", "#0f3f7a")
+# ordinal blue ramp (light -> dark) encoding the ordered refinement levels (as in the conduction test)
+PROFILE_COLORS = ("#86b6ef", "#5598e7", "#1c5cab", "#104281")
 
 
 @dataclass(frozen=True)
@@ -82,9 +82,8 @@ def last_reported(output: str, label: str) -> float:
     `OnePNIConvectionProblem::updateExactTemperature()` prints the material
     properties it derives from the current solution once per time step. Taking
     them from there keeps the analytical references consistent with the
-    temperature- and pressure-dependent water properties of the simulation,
-    which is more accurate than reading the front position off the discrete
-    `temperatureExact` field, whose jump is quantized by the cell width.
+    simulation, which is more accurate than reading the front position off the
+    discrete `temperatureExact` field, whose jump is quantized by the cell width.
     """
     values = [line.split(label, 1)[1] for line in output.splitlines() if label in line]
     if not values:
@@ -133,6 +132,8 @@ def build_and_run() -> list[Result]:
             "-TimeLoop.MaxTimeStepSize", str(max_dt),
             # only the final time step is needed for the comparison
             "-Problem.OutputInterval", "1000000",
+            # single precision output would quantize the temperature to about 1e-3 K
+            "-Vtk.Precision", "Float64",
         ], cwd=case_build_dir())
         results.append(final_output(case, output))
 
@@ -246,22 +247,32 @@ class Analytical:
         return self.v * time + self.d / self.v
 
 
+def read_params(input_file: str = INPUT_FILE) -> dict[str, str]:
+    """Read the parameters of the input file into a dict with keys of the form Group.Key."""
+    import configparser
+    parser = configparser.ConfigParser(inline_comment_prefixes=("#",))
+    parser.optionxform = str  # keep the case of the keys
+    parser.read(case_build_dir() / input_file)
+    return {f"{section}.{key}": value for section in parser.sections() for key, value in parser[section].items()}
+
+
 def front_parameters(results: list[Result]) -> Analytical:
     """Build the analytical references from the values the simulation reported.
 
     The front velocity v = v_D rho_w c_w / C_tot and the total volumetric heat
-    capacity C_tot are taken from the test problem itself, so that the
-    references use the same temperature- and pressure-dependent water
-    properties as the simulation. Only the thermal conductivities, which the
-    problem does not report, are taken from the benchmark parameters.
+    capacity C_tot are taken from the test problem itself. Only the thermal
+    conductivities, which the problem does not report, are read from the
+    input file, so that the references use the same constant properties as
+    the simulation.
     """
     pv, _ = require_plot_modules()
     _, step = sorted_profile(pv.read(results[-1].vtp), STEP_FIELD)
 
     porosity = 0.4
-    # thermal conductivity of water at the initial state, and of the solid as
-    # set in params.input; the model averages them by volume fraction
-    lambda_fluid, lambda_solid = 0.598, 2.8
+    # thermal conductivities of the fluid and the solid as set in params.input;
+    # the model averages them by volume fraction
+    lambda_fluid = float(read_params()["Component.LiquidThermalConductivity"])
+    lambda_solid = float(read_params()["Component.SolidThermalConductivity"])
     lambda_eff = porosity * lambda_fluid + (1 - porosity) * lambda_solid
 
     return Analytical(front_velocity=results[-1].front_velocity,
