@@ -156,13 +156,7 @@ volume discretization with a cell-centered TPFA (@ref CCTpfaDiscretization) or M
 a restart test checks that the box simulation can be continued from an intermediate VTK output file.
 
 ### Simulation Domain
-The computational domain is a one-dimensional `Dune::YaspGrid`. The default test uses a
-$20\ \mathrm{m}$ domain with $80$ cells; the benchmark script below uses a shortened
-$8\ \mathrm{m}$ domain, which still keeps the outlet far behind the front, so that the
-refined grids stay affordable. For the simulated time of $3 \cdot 10^4\ \mathrm{s}$ the
-thermal front reaches $x = 4.25\ \mathrm{m}$ and its conductive tail does not reach the
-outlet, so the finite domain is suitable to be compared to the semi-infinite analytical
-solution.
+The computational domain is represented by a one-dimensional `Dune::YaspGrid` of length $L_x$. The shipped test uses $L_x = 20\ \mathrm{m}$ with $80$ cells. The benchmark script uses a shortened domain of $L_x = 8\ \mathrm{m}$ (all results below), so that the refined grids stay affordable. For the simulated time of $3 \cdot 10^4\ \mathrm{s}$ the thermal front reaches $x = 4.25\ \mathrm{m}$ and its tail remains sufficiently far from the right boundary, so the finite domain is suitable to be compared to the semi-infinite analytical solution.
 
 ### Initial and Boundary Conditions
 Initially, the temperature and pressure are set to
@@ -185,20 +179,24 @@ with $v_D = 10^{-4}\ \mathrm{m\,s^{-1}}$. At the right boundary temperature and 
 both fixed at their initial values,
 
 $$
-T(L,t)=T_{\text{init}} = 290\ \text{K} \, , \qquad
-p(L,t)=p_{\text{init}} = 10^5\ \text{Pa}.
+T(L_x,t)=T_{\text{init}} = 290\ \text{K} \, , \qquad
+p(L_x,t)=p_{\text{init}} = 10^5\ \text{Pa}.
 $$
 
 @note The inlet condition is not the constant-temperature inlet that the Ogata-Banks
 solution assumes. The solution of prescribing the *total* energy influx
 is presented by van Genuchten and Alves
 @cite vanGenuchtenAlves1982 in A3. At the Péclet number of this benchmark
-($v_T L / D_T \approx 4.4\cdot10^{3}$) the two solutions differ by less than
+($v_T L_x / D_T \approx 4.3\cdot10^{3}$ for $L_x = 20\ \mathrm{m}$) the two solutions differ by less than
 $10^{-4}\ \mathrm{K}$, which is two orders of magnitude below the discretization error,
 so the simpler Ogata-Banks form is used as the reference.
 
+The boundary conditions and the simulation domain are shown below.
+
+![Simulation domain and boundary conditions](1pni_1d_convection_benchmark_domain.svg){html: width=70%}
+
 ### Resolution
-Four uniformly refined grids are tested, so that the front is resolved to a different
+Four uniformly refined grids of the benchmark domain ($L_x = 8\ \mathrm{m}$) are tested, so that the front is resolved to a different
 degree on each. Cell size and time step are both refined by a factor of four per level:
 
 | Level | Cells | $\Delta x$ [m] | $\Delta t_{\max}$ [s] |
@@ -259,7 +257,7 @@ For comparing  the numerical results against the analytical solutions, we do thi
 it is compared against the position of the numerical front, its **barycenter**
 
 $$ x_{\text{bary}} = \frac{1}{T_{\text{high}} - T_{\text{init}}}
-\int_0^L \left(T - T_{\text{init}}\right)\,\mathrm{d}x \; , $$
+\int_0^{L_x} \left(T - T_{\text{init}}\right)\,\mathrm{d}x \; , $$
 
 that is, the position of the step front that stores the same heat as the smeared profile. Inserting the two analytical
 solutions into this definition gives the two reference positions
