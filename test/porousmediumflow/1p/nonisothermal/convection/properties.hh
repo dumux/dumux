@@ -25,9 +25,9 @@
 
 #include <dumux/porousmediumflow/1p/model.hh>
 
-#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
+#include "constantfluidnopressurework.hh"
 #include "problem.hh"
 #include "../spatialparams.hh"
 
@@ -49,13 +49,22 @@ struct Grid<TypeTag, TTag::OnePNIConvection> { using type = Dune::YaspGrid<1>; }
 template<class TypeTag>
 struct Problem<TypeTag, TTag::OnePNIConvection> { using type = OnePNIConvectionProblem<TypeTag>; };
 
-// Set the fluid system: a liquid with constant properties (set in params.input, group [Component]),
-// as assumed by the analytical solution
+// Set the fluid system: a liquid with constant properties (set in params.input, group [Component])
+// and without pressure work, as assumed by the analytical solution
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::OnePNIConvection>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar>>;
+    using type = FluidSystems::OnePLiquid<Scalar, ConstantLiquidNoPressureWork<1, Scalar>>;
+};
+
+// Set the fluid state: the internal energy is the enthalpy
+template<class TypeTag>
+struct FluidState<TypeTag, TTag::OnePNIConvection>
+{
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using type = ImmiscibleFluidStateNoPressureWork<Scalar, FluidSystem>;
 };
 
 // Set the spatial parameters

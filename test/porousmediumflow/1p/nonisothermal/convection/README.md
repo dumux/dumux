@@ -154,6 +154,8 @@ volume discretization with a cell-centered TPFA (@ref CCTpfaDiscretization) or M
 (@ref CCMpfaDiscretization) scheme, or use the vertex-centered box scheme
 (@ref BoxDiscretization). The shipped test runs with the box and the cell-centered TPFA scheme;
 a restart test checks that the box simulation can be continued from an intermediate VTK output file.
+As assumed by the analytical solution, the model neglects the pressure work: the enthalpy of the fluid is its
+internal energy, $h_f = u_f = c_f\,(T - T_{\text{ref}})$, which is set by the test-specific fluid in `constantfluidnopressurework.hh`.
 
 ### Simulation Domain {#1pni-convection-simulation-domain}
 The computational domain is represented by a one-dimensional `Dune::YaspGrid` of length $L_x$. The shipped test uses $L_x = 20\ \mathrm{m}$ with $80$ cells. The benchmark script uses a shortened domain of $L_x = 8\ \mathrm{m}$ (all results below), so that the refined grids stay affordable. For the simulated time of $3 \cdot 10^4\ \mathrm{s}$ the thermal front reaches $x = 4.25\ \mathrm{m}$ and its tail remains sufficiently far from the right boundary, so the finite domain is suitable to be compared to the semi-infinite analytical solution.
