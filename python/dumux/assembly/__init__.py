@@ -72,6 +72,8 @@ def _createFVAssembler(*, problem, gridVariables, model, diffMethod="numeric", i
         assemblerType,
         moduleName,
         holder="std::shared_ptr",
+        # setPreviousSolution keeps its argument alive as an attribute of the assembler
+        dynamicAttr=True,
         preamble=model.cppHeader,
         # make sure the assembler is compiled with the Serial backend
         # as currently the assembly in combination with Python is not thread-safe

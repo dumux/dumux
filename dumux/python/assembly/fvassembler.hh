@@ -12,8 +12,12 @@
 #ifndef DUMUX_PYTHON_COMMON_FVASSEMBLER_HH
 #define DUMUX_PYTHON_COMMON_FVASSEMBLER_HH
 
+#include <memory>
+
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
+
+#include <dumux/common/timeloop.hh>
 
 namespace Dumux::Python {
 
@@ -27,6 +31,7 @@ void registerFVAssembler(pybind11::handle scope, pybind11::class_<FVAssembler, o
     using GridGeometry = typename FVAssembler::GridGeometry;
     using GridVariables = typename FVAssembler::GridVariables;
     using SolutionVector = typename FVAssembler::SolutionVector;
+    using Scalar = typename FVAssembler::Scalar;
 
     static_assert(std::is_same_v<GridGeometry, typename Problem::GridGeometry>);
     cls.def(pybind11::init([](std::shared_ptr<const Problem> problem,
@@ -35,7 +40,17 @@ void registerFVAssembler(pybind11::handle scope, pybind11::class_<FVAssembler, o
         return std::make_shared<FVAssembler>(problem, gridGeometry, gridVariables);
     }));
 
-    // TODO assembler with time loop
+    cls.def("setTimeLoop", [](FVAssembler& self,
+                              std::shared_ptr<const CheckPointTimeLoop<Scalar>> timeLoop){
+        self.setTimeLoop(timeLoop);
+    }, "timeLoop"_a);
+
+    // the assembler stores only the address of the previous solution, so the Python object is
+    // held as an attribute of the assembler until the next call replaces it
+    cls.def("setPreviousSolution", [](pybind11::object self, pybind11::object prevSol){
+        self.cast<FVAssembler&>().setPreviousSolution(prevSol.cast<const SolutionVector&>());
+        self.attr("_previousSolution") = prevSol;
+    }, "prevSol"_a);
 
     cls.def_property_readonly("numDofs", &FVAssembler::numDofs);
     cls.def_property_readonly("problem", &FVAssembler::problem);
