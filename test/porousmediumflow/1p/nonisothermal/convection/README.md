@@ -228,8 +228,8 @@ Next to the numerical temperature field `T`, the output contains the VTK field
 `temperatureExact`, which `OnePNIConvectionProblem::updateExactTemperature()` fills with
 the moving step front described above.
 
-To build and run the refinement sequence and produce the plot and the table below in one
-step, execute:
+To build and run the refinement sequence with the cell-centered TPFA scheme and produce the plot and the
+tables below in one step, execute:
 
 ```bash
 python3 plot_results.py
@@ -262,8 +262,8 @@ $$ x_{\text{bary}} = \frac{1}{T_{\text{high}} - T_{\text{init}}}
 that is, the position of the step front that stores the same heat as the smeared profile. Inserting the two analytical
 solutions into this definition gives the two reference positions
 
-$$ x_{\text{bary}}^{\text{step}} = v_T t = 4.24896\ \mathrm{m}\; , \qquad
-   x_{\text{bary}}^{\text{OB}} = v_T t + \frac{D_T}{v_T} = 4.25355\ \mathrm{m} \; . $$
+$$ x_{\text{bary}}^{\text{step}} = v_T t = 4.24827\ \mathrm{m}\; , \qquad
+   x_{\text{bary}}^{\text{OB}} = v_T t + \frac{D_T}{v_T} = 4.25294\ \mathrm{m} \; . $$
 
 *2. Front shape, against Ogata-Banks.* The whole profile is compared in the discrete
 $L^2$ norm, normalized by the domain length,
@@ -277,27 +277,31 @@ barycenters, and that the barycenters are positions, not errors: there is no exa
 for them to converge to other than the two analytical positions quoted above.
 
 ### Front position {#1pni-convection-front-position}
-Barycenters of the numerical profiles, next to the analytical
+Barycenters of the numerical profiles (TPFA scheme), next to the analytical
 positions:
 
 | Cells | $x_{\text{bary}}$ [m] | $x_{\text{bary}} - x_{\text{bary}}^{\text{step}}$ [m] | $x_{\text{bary}} - x_{\text{bary}}^{\text{OB}}$ [m] |
 |------:|----------------------:|-----------------------------------------------------:|---------------------------------------------------:|
-| 100   | 4.25417               | $+5.21\cdot10^{-3}$                                  | $+0.62\cdot10^{-3}$                                 |
-| 400   | 4.25452               | $+5.56\cdot10^{-3}$                                  | $+0.97\cdot10^{-3}$                                 |
-| 1600  | 4.25465               | $+5.69\cdot10^{-3}$                                  | $+1.10\cdot10^{-3}$                                 |
-| 6400  | 4.25464               | $+5.68\cdot10^{-3}$                                  | $+1.09\cdot10^{-3}$                                 |
+| 100   | 4.25711               | $+8.83\cdot10^{-3}$                                  | $+4.17\cdot10^{-3}$                                 |
+| 400   | 4.25611               | $+7.84\cdot10^{-3}$                                  | $+3.17\cdot10^{-3}$                                 |
+| 1600  | 4.25455               | $+6.28\cdot10^{-3}$                                  | $+1.61\cdot10^{-3}$                                 |
+| 6400  | 4.25348               | $+5.21\cdot10^{-3}$                                  | $+0.54\cdot10^{-3}$                                 |
 
-The position of the barycenters from the numerical and the analytical solutions agree upto $5.7$mm against the sharp front and upto $1.1$mm against the Ogata-Banks solution on a $8$m long domain.
+The position of the numerical front converges to the Ogata-Banks position: the offset decreases from $4.17$mm on $100$ cells to $0.54$mm on $6400$ cells on the benchmark domain ($L_x = 8\ \mathrm{m}$). The model neglects the pressure work and prescribes the inlet temperature, as the Ogata-Banks solution assumes, so this offset is a discretization error.
+
+The Ogata-Banks solution is the reference for the position, as it accounts for the diffusion, which the sharp front does not.
 
 ### Front shape {#1pni-convection-front-shape}
-$L^2$ error of the temperature profile against the Ogata-Banks solution, the advective-diffusion solution,
-with the convergence rate between successive levels:
+$L^2$ error of the temperature profile (TPFA scheme) against the Ogata-Banks solution, the advective-diffusion solution,
+with the convergence rate in the cell size between successive levels:
 
 | Cells | $\lVert T - T^{\text{OB}} \rVert_{L^2}$ [K] | rate |
 |------:|--------------------------------------------:|-----:|
-| 100   | 0.0947                                      | –    |
-| 400   | 0.0456                                      | 1.06 |
-| 1600  | 0.0168                                      | 1.44 |
-| 6400  | 0.0053                                      | 1.68 |
+| 100   | 0.0942                                      | –    |
+| 400   | 0.0451                                      | 0.53 |
+| 1600  | 0.0165                                      | 0.73 |
+| 6400  | 0.0048                                      | 0.89 |
 
 The shape of the front, unlike its position, is recovered by resolving it.
+
+The scheme is first order: upwind for the advective flux and implicit Euler in time. Its numerical diffusion $v_T\,\Delta x/2 + v_T^2\,\Delta t/2$ adds to $D_T$. The errors agree within $0.5\ \%$ with the difference between the Ogata-Banks solutions for $D_T$ and for $D_T$ plus the numerical diffusion. The rate therefore approaches one when the numerical diffusion becomes small against $D_T$. On the finest grid it is still $0.17\,D_T$.
