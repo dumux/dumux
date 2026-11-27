@@ -123,6 +123,8 @@ def _loadAssembler(assemblerType, headers, *, problem, gridVariables, model, mul
         assemblerType,
         moduleName,
         holder="std::shared_ptr",
+        # setPreviousSolution keeps its argument alive as an attribute of the assembler
+        dynamicAttr=True,
         preamble=model.cppHeader,
         # by default the assembler is compiled with the Serial backend, as a problem that calls
         # into Python during assembly is not thread-safe

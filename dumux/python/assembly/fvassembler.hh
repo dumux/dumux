@@ -12,7 +12,7 @@
 #ifndef DUMUX_PYTHON_COMMON_FVASSEMBLER_HH
 #define DUMUX_PYTHON_COMMON_FVASSEMBLER_HH
 
-#include <limits>
+#include <memory>
 
 #include <dune/python/pybind11/pybind11.h>
 #include <dune/python/pybind11/stl.h>
@@ -40,27 +40,16 @@ void registerFVAssembler(pybind11::handle scope, pybind11::class_<FVAssembler, o
         return std::make_shared<FVAssembler>(problem, gridGeometry, gridVariables);
     }));
 
-    // instationary assembly; the time loop is created here so that none has to be passed
-    // across the language boundary
-    cls.def("assembleJacobianAndResidual",
-        [](FVAssembler& self, const SolutionVector& curSol,
-           const SolutionVector& prevSol, Scalar dt){
-            auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(
-                Scalar(0), dt, std::numeric_limits<Scalar>::max(), /*verbose=*/false);
-            self.setTimeLoop(timeLoop);
-            self.setPreviousSolution(prevSol);
-            self.assembleJacobianAndResidual(curSol);
-        }, "curSol"_a, "prevSol"_a, "dt"_a);
-
-    // a nonlinear solver drives the iteration itself and calls the stationary assembly, so the
-    // time level has to be set on the assembler once per step rather than passed per call
     cls.def("setTimeLoop", [](FVAssembler& self,
                               std::shared_ptr<const CheckPointTimeLoop<Scalar>> timeLoop){
         self.setTimeLoop(timeLoop);
     }, "timeLoop"_a);
 
-    cls.def("setPreviousSolution", [](FVAssembler& self, const SolutionVector& prevSol){
-        self.setPreviousSolution(prevSol);
+    // the assembler stores only the address of the previous solution, so the Python object is
+    // held as an attribute of the assembler until the next call replaces it
+    cls.def("setPreviousSolution", [](pybind11::object self, pybind11::object prevSol){
+        self.cast<FVAssembler&>().setPreviousSolution(prevSol.cast<const SolutionVector&>());
+        self.attr("_previousSolution") = prevSol;
     }, "prevSol"_a);
 
     cls.def_property_readonly("numDofs", &FVAssembler::numDofs);

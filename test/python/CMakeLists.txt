@@ -46,6 +46,12 @@ dune_python_add_test(NAME test_python_fvproblem
                      LABELS python unit)
 set_tests_properties(test_python_fvproblem PROPERTIES TIMEOUT 1200)
 
+dune_python_add_test(NAME test_python_fvassembler
+                     SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test_fvassembler.py
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                     LABELS python unit)
+set_tests_properties(test_python_fvassembler PROPERTIES TIMEOUT 1200)
+
 dune_python_add_test(NAME test_python_explicit_transport_cctpfa
                      LABELS python
                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
