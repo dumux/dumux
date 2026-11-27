@@ -15,6 +15,8 @@
 #include <array>
 #include <bitset>
 
+#include <dune/common/std/type_traits.hh>
+
 #include <dumux/common/numeqvector.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/exceptions.hh>
@@ -297,6 +299,45 @@ public:
 
         // Account for the orientation of the face.
         result *= scvf.directionSign();
+        return result;
+    }
+
+private:
+    //! Detects whether a problem provides turbulentKineticEnergy(element, fvGeometry, scvf),
+    //! used by turbulentKineticEnergyContribution() below.
+    template<class P>
+    using TurbulentKineticEnergyDetector = decltype(
+        std::declval<P>().turbulentKineticEnergy(std::declval<const Element&>(),
+                                                  std::declval<const FVElementGeometry&>(),
+                                                  std::declval<const SubControlVolumeFace&>())
+    );
+
+public:
+    /*!
+     * \brief Returns the isotropic turbulent normal-stress contribution (2/dim*rho*k) to
+     *        the frontal momentum flux, for turbulence models that solve the turbulent
+     *        kinetic energy k as a transported variable (k-omega, k-epsilon, ...).
+     *        Zero for problems that do not provide a
+     *        turbulentKineticEnergy(element, fvGeometry, scvf) method.
+     */
+    NumEqVector turbulentKineticEnergyContribution() const
+    {
+        NumEqVector result(0.0);
+        const auto& scvf = this->scvFace();
+        if (scvf.isLateral() || scvf.boundary())
+            return result;
+
+        if constexpr (Dune::Std::is_detected<TurbulentKineticEnergyDetector, Problem>::value)
+        {
+            const auto& insideVolVars = this->elemVolVars()[scvf.insideScvIdx()];
+            const auto density = this->problem().density(this->element(), this->fvGeometry(), scvf);
+            const auto k = this->problem().turbulentKineticEnergy(this->element(), this->fvGeometry(), scvf);
+
+            result = 2.0/ModelTraits::dim() * density * k
+                     * Extrusion::area(this->fvGeometry(), scvf) * insideVolVars.extrusionFactor();
+            result *= scvf.directionSign();
+        }
+
         return result;
     }
 
