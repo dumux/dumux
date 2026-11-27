@@ -201,11 +201,14 @@ public:
 
     /*!
      * \brief Constructor for sequential solvers
+     * \note With linear solver traits without a grid (SeqLinearSolverTraits) every process solves its own system,
+     *       also in a parallel run.
      */
     IstlIterativeLinearSolver(const ParameterInitializer& params = "")
     {
-        if (Dune::MPIHelper::getCommunication().size() > 1)
-            DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
+        if constexpr (requires { typename LinearSolverTraits::GridView; })
+            if (Dune::MPIHelper::getCommunication().size() > 1)
+                DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
 
         initializeParameters_(params);
         solverCategory_ = Dune::SolverCategory::sequential;
@@ -896,6 +899,19 @@ public:
      */
     void setMatrix(Matrix& A)
     { setMatrix(Dune::stackobject_to_shared_ptr(A)); }
+
+    /*!
+     * \brief The 2-norm of a vector
+     * \note With linear solver traits without a grid (SeqLinearSolverTraits) every process solves its own system,
+     *       also in a parallel run, so the norm is the one of the vector of this process.
+     */
+    auto norm(const XVector& x) const
+    {
+        if constexpr (requires { typename LSTraits::GridView; })
+            return LinearSolver::norm(x);
+        else
+            return Dune::SeqScalarProduct<XVector>().norm(x);
+    }
 
     /*!
      * \brief name of the linear solver
