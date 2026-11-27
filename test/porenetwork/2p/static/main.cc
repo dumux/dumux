@@ -304,10 +304,27 @@ int main(int argc, char** argv)
     {
         Dumux::GnuplotInterface<Scalar> gnuplot(true);
         gnuplot.setOpenPlotWindow(true);
-        gnuplot.addFileToPlot(logfileName);
-        gnuplot.setXlabel("S_w [-]");
-        gnuplot.setYlabel("p_c [P]");
-        gnuplot.setXRange(0, 1.01);
+        gnuplot.setXlabel("Average wetting-phase saturation S_w [-]");
+        gnuplot.setYlabel("Global capillary pressure p_c [Pa]");
+        gnuplot.setXRange(0, 1.02);
+
+        // general layout: title, light grid, open border and legend
+        gnuplot.setOption("set title 'Quasi-static pore-network model: p_c-S_w curve' font ',14'");
+        gnuplot.setOption("set grid lc rgb '#e4e3df' lw 1");
+        gnuplot.setOption("set border 3 lc rgb '#52514e'");
+        gnuplot.setOption("set tics nomirror textcolor rgb '#52514e'");
+        gnuplot.setOption("set key top right nobox");
+        gnuplot.setOption("set style line 1 lc rgb '#2a78d6' lw 2 pt 7 ps 0.8");
+        gnuplot.setOption("set style line 2 lc rgb '#eb6834' lw 2 pt 5 ps 0.8");
+
+        // mark the non-wetting phase which remains trapped at the end of imbibition
+        gnuplot.setOption("set label 'trapped non-wetting phase: S_{n,r} = " + std::to_string(1.0 - averageSaturation).substr(0, 4)
+                          + "' at " + std::to_string(averageSaturation) + "," + std::to_string(pcGlobal + deltaPc)
+                          + " offset -2,2 right point pt 6 ps 2 lc rgb '#52514e'");
+
+        // the first numSteps+1 lines are drainage (increasing pc), the remaining ones imbibition (decreasing pc)
+        gnuplot.addFileToPlot(logfileName, "every ::0::" + std::to_string(numSteps) + " with linespoints ls 1 title 'Drainage (p_c increasing)'");
+        gnuplot.addFileToPlot(logfileName, "every ::" + std::to_string(numSteps) + " with linespoints ls 2 title 'Imbibition (p_c decreasing)'");
         gnuplot.plot("plot");
     }
 #endif
